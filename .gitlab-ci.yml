@@ -1,0 +1,14 @@
+image: python:2.7
+
+stages:
+  - build
+  
+
+before_script:
+  - "pip install -U platformio"
+
+pool-controller:
+  stage: build
+  script: 
+    - platformio run
+    - cd ..
