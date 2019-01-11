@@ -6,9 +6,9 @@
  *
  * Wird über openHAB gesteurt.
  */
-
-#include <Arduino.h>
+#include <Homie.h>
 #include <ESPBASE.h>
+
 
 //*** Normal code definition here ...
 #include <PubSubClient.h>
@@ -18,17 +18,13 @@
 #include "RemoteDebug.h"        //https://github.com/JoaoLopesF/RemoteDebug
 #include "esp_system.h"
 
+#include "pool-control.h"
+
 extern "C" {
 
 uint8_t temprature_sens_read();
 
 }
-
-#define PIN_DS_SOLAR 16 // Temp-Sensor Solar
-#define PIN_DS_POOL 17  // Temp-Sensor Pool
-#define PIN_RSSWITCH 18 // für 433MHz Sender
-
-#define TEMP_READ_INTERVALL 60   //Sekunden zwischen Updates der Temperaturen.
 
 //MQTT settings
 const char* MQTT_SERVER = "192.168.178.25";
@@ -60,6 +56,8 @@ portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
 
 uint32_t cp0_regs[18];
 
+HomieNode solarTemperatureNode("solarTemp", "Solar Temperature", "temperature");
+
 /**
  *  Connect MQTT Server
  */
@@ -89,6 +87,28 @@ void connectMQTT() {
         break;
     }
   }
+}
+
+
+/**
+ *  MQTT publish
+ */
+void publish(String sensor, String type, String value) {
+  char topic[48];
+  memset(&topic, 0, sizeof(topic));
+  sprintf(topic, "%s/%s/%s", MQTT_TOPIC, sensor.c_str(), type.c_str());
+
+  char msg[256];
+  memset(&msg, 0, sizeof(msg));
+  sprintf(msg, "{\"device\": \"%s\", \"sensor\": \"%s\", \"type\": \"%s\", \"value\": \"%s\"}\n",
+           DEVICE_NAME, sensor.c_str(), type.c_str(), value.c_str());
+
+  if (!mqttClient.connected()) {
+    connectMQTT();
+  }
+
+  DEBUG_V("publish on Topic [%s] message: [%s]\r", topic, msg);
+  mqttClient.publish(topic, msg);
 }
 
 /**
@@ -225,27 +245,6 @@ void onMqttCallback(char* topic, byte* payload, unsigned int length) {
 }
 
 /**
- *  MQTT publish
- */
-void publish(String sensor, String type, String value) {
-  char topic[48];
-  memset(&topic, 0, sizeof(topic));
-  sprintf(topic, "%s/%s/%s", MQTT_TOPIC, sensor.c_str(), type.c_str());
-
-  char msg[256];
-  memset(&msg, 0, sizeof(msg));
-  sprintf(msg, "{\"device\": \"%s\", \"sensor\": \"%s\", \"type\": \"%s\", \"value\": \"%s\"}\n",
-           DEVICE_NAME, sensor.c_str(), type.c_str(), value.c_str());
-
-  if (!mqttClient.connected()) {
-    connectMQTT();
-  }
-
-  DEBUG_V("publish on Topic [%s] message: [%s]\r", topic, msg);
-  mqttClient.publish(topic, msg);
-}
-
-/**
 
 */
 void setup() {
@@ -255,6 +254,7 @@ void setup() {
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
   }
+
 
  	Debug.begin(config.DeviceName.c_str(), Debug.VERBOSE); // Initiaze the telnet server
   Debug.setResetCmdEnabled(true); // Enable the reset command
@@ -316,6 +316,14 @@ void setup() {
       timerAlarmEnable(timerIntervall); //enable interrupt
     });
 
+    Homie_setFirmware("pool-controller", "1.0.0"); // The underscore is not a typo! See Magic bytes
+    //Homie.setLoopFunction(loopHandler);
+
+    solarTemperatureNode.advertise("degrees").setName("Degrees")
+                                      .setDatatype("float")
+                                      .setUnit("ºC");
+    Homie.setup();    
+
     publish("pool", "device", "started"); //pubish started event
   }
 
@@ -329,8 +337,7 @@ void loop() {
   // OTA request handling
   ArduinoOTA.handle();
 
-  //  WebServer requests handling
-  server.handleClient();
+  Homie.loop();
 
   //  feed de DOG :)
   customWatchdog = millis();
