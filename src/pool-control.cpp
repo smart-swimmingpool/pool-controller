@@ -264,10 +264,19 @@ void setup() {
 void loop() {
 
   Homie.loop();
-
   // Remote debug over telnet
   Debug.handle();
 
+  if (Homie.isConfigured()) {
+    // The device is configured, in normal mode
+    if (Homie.isConnected()) {
+      // The device is connected
+    } else {
+      // The device is not connected
+    }
+  } else {
+    // The device is not configured, in either configuration or standalone mode
+  }
   if (interruptCounter > 0) {
 
     portENTER_CRITICAL(&timerMux);
