@@ -93,7 +93,7 @@ double getTemperature(DallasTemperature sensor) {
     if (cnt > 3) {
       return -127.0;
     }
-  } while (t == 85.0 || t == -127.0);
+  } while (t >= 50.0 || t <= -50.0);
 
   return t;
 }
