@@ -1,0 +1,21 @@
+{
+  "name": "Pool Controller",
+  "wifi": {
+    "ssid": "xxx",
+    "password": "xxx"
+  },
+  "mqtt": {
+    "host": "192.168.178.25",
+    "port": 1883
+  },
+  "ota": {
+    "enabled": false
+  },
+  "settings": {
+    "temperaturePublishInterval": 60,
+    "temperatureMaxPoolSetting": 29,
+    "temperatureMinSolarSetting": 50,
+    "temperatureHysteresisSetting": 1
+
+  }
+}

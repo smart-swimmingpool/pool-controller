@@ -11,22 +11,16 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <RCSwitch.h>
-#include "RemoteDebug.h"  //https://github.com/JoaoLopesF/RemoteDebug
 
-#include "pool-control.h"
+#include "pool-control.hpp"
+#include "Rule.hpp"
 
 extern "C" {
 
 uint8_t temprature_sens_read();
 }
 
-//MQTT settings
-const char* MQTT_SERVER = "192.168.178.25";
-const char* DEVICE_NAME = "ESP32-POOLSENSOR";
-//MQTT-Topic receiving RC switch on/off
-const char* MQTT_MESSAGE_RCSENDER = "/pool/switch/";
 
-RemoteDebug Debug;
 
 //GPIO12 & GPIO14 -> Temperatur
 OneWire dsSolar(PIN_DS_SOLAR);
@@ -43,7 +37,12 @@ HomieNode ctrlTemperatureNode("controllerTemp", "Controller Temperature", "tempe
 HomieNode poolPumpNode("poolPump", "Pool Pump", "switch");
 HomieNode solarPumpNode("solarPump", "Solar Pump", "switch");
 
-HomieSetting<long> temperatureIntervalSetting("temperatureInterval", "The temperature interval in seconds");
+HomieSetting<long> temperaturePublishIntervalSetting("temperaturePublishInterval", "The temperature publish interval in seconds");
+
+HomieSetting<long> temperatureMaxPoolSetting("temperatureMaxPoolSetting", "Maximum temperature of solar");
+HomieSetting<long> temperatureMinSolarSetting("temperatureMinSolarSetting", "Minimum temperature of solar");
+HomieSetting<long> temperatureHysteresisSetting("temperatureHysteresisSetting", "Temperature hysteresis");
+
 
 //RS Switches via 433MHz
 RCSwitch mySwitch = RCSwitch();
@@ -214,7 +213,9 @@ void setupHandler() {
   solarPumpNode.advertise("on").setName("On").setDatatype("boolean").settable(solarPumpSwitchOnHandler);
 
   //default intervall of sending Temperature values
-  temperatureIntervalSetting.setDefaultValue(TEMP_READ_INTERVALL).setValidator([](long candidate) { return candidate > 0; });
+  temperaturePublishIntervalSetting.setDefaultValue(TEMP_READ_INTERVALL).setValidator([](long candidate) {
+    return (candidate >= 0) && (candidate <= 300);
+  });
 }
 
 /**
@@ -249,13 +250,13 @@ void setup() {
     timerAttachInterrupt(timerIntervall, &onTimer, true);
     /* Set alarm to call onTimer function every second 1 tick is 1us => 1 second is 1000000us */
     /* Repeat the alarm (third parameter) */
-    timerAlarmWrite(timerIntervall, 1e+6 * temperatureIntervalSetting.get(), true);
+    timerAlarmWrite(timerIntervall, 1e+6 * temperaturePublishIntervalSetting.get(), true);
     timerAlarmEnable(timerIntervall);  //enable interrupt
 
     //publish("pool", "device", "started"); //pubish started event
   }
 
-  DEBUG_I("Setup ready");
+  Homie.getLogger() << "Setup ready";
 }
 
 /**
@@ -264,8 +265,6 @@ void setup() {
 void loop() {
 
   Homie.loop();
-  // Remote debug over telnet
-  Debug.handle();
 
   if (Homie.isConfigured()) {
     // The device is configured, in normal mode
