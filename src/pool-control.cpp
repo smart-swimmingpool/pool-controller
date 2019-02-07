@@ -20,8 +20,6 @@ extern "C" {
 uint8_t temprature_sens_read();
 }
 
-
-
 //GPIO12 & GPIO14 -> Temperatur
 OneWire dsSolar(PIN_DS_SOLAR);
 OneWire dsPool(PIN_DS_POOL);
@@ -42,7 +40,6 @@ HomieSetting<long> temperaturePublishIntervalSetting("temperaturePublishInterval
 HomieSetting<long> temperatureMaxPoolSetting("temperatureMaxPoolSetting", "Maximum temperature of solar");
 HomieSetting<long> temperatureMinSolarSetting("temperatureMinSolarSetting", "Minimum temperature of solar");
 HomieSetting<long> temperatureHysteresisSetting("temperatureHysteresisSetting", "Temperature hysteresis");
-
 
 //RS Switches via 433MHz
 RCSwitch mySwitch = RCSwitch();
@@ -107,7 +104,7 @@ void IRAM_ATTR onTimer() {
  * called on Timer.
  */
 void onTemperatureTimer(void* parameter) {
-  Serial.println("onTermperatureTimer ->");
+  Homie.getLogger() << "onTermperatureTimer ->" << endl;
 
   // get FPU state
   uint32_t cp_state = xthal_get_cpenable();
@@ -147,7 +144,7 @@ void onTemperatureTimer(void* parameter) {
     xthal_set_cpenable(0);
   }
 
-  Serial.println("onTermperatureTimer <-");
+  Homie.getLogger() << "onTermperatureTimer <-" << endl;
 }
 
 /**
@@ -157,6 +154,7 @@ bool poolPumpSwitchOnHandler(HomieRange range, String value) {
   bool retval;
 
   if (value != "true" && value != "false") {
+
     retval = false;
   } else {
 
@@ -170,8 +168,10 @@ bool poolPumpSwitchOnHandler(HomieRange range, String value) {
     poolPumpNode.setProperty("on").send(value);
     bool on = (value == "true");
     Homie.getLogger() << "Switch is " << (on ? "on" : "off") << endl;
+
     retval = true;
   }
+
   return retval;
 }
 
@@ -216,6 +216,15 @@ void setupHandler() {
   temperaturePublishIntervalSetting.setDefaultValue(TEMP_READ_INTERVALL).setValidator([](long candidate) {
     return (candidate >= 0) && (candidate <= 300);
   });
+
+  temperatureMaxPoolSetting.setDefaultValue(28.5).setValidator(
+      [](long candidate) { return (candidate >= 0) && (candidate <= 30); });
+
+  temperatureMinSolarSetting.setDefaultValue(50.0).setValidator(
+      [](long candidate) { return (candidate >= 0) && (candidate <= 100); });
+
+  temperatureHysteresisSetting.setDefaultValue(1.0).setValidator(
+      [](long candidate) { return (candidate >= 0) && (candidate <= 10); });
 }
 
 /**
@@ -240,7 +249,7 @@ void setup() {
 
   if (Homie.isConnected()) {
 
-    mySwitch.enableTransmit(PIN_RSSWITCH);
+    //mySwitch.enableTransmit(PIN_RSSWITCH);
     //mySwitch.setRepeatTransmit(10);
     //mySwitch.setPulseLength(350);
 
@@ -268,20 +277,22 @@ void loop() {
 
   if (Homie.isConfigured()) {
     // The device is configured, in normal mode
+
     if (Homie.isConnected()) {
       // The device is connected
+      if (interruptCounter > 0) {
+
+        portENTER_CRITICAL(&timerMux);
+        interruptCounter--;
+        portEXIT_CRITICAL(&timerMux);
+
+        onTemperatureTimer(NULL);
+      }
+
     } else {
       // The device is not connected
     }
   } else {
     // The device is not configured, in either configuration or standalone mode
-  }
-  if (interruptCounter > 0) {
-
-    portENTER_CRITICAL(&timerMux);
-    interruptCounter--;
-    portEXIT_CRITICAL(&timerMux);
-
-    onTemperatureTimer(NULL);
   }
 }
