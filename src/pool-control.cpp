@@ -6,20 +6,10 @@
  *
  * Wird über openHAB gesteurt.
  */
-#include <Homie.h>
-#include <Ticker.h>
-
-#include <OneWire.h>
-#include <DallasTemperature.h>
-#include <RCSwitch.h>
 
 #include "pool-control.hpp"
 #include "Rule.hpp"
 
-extern "C" {
-
-uint8_t temprature_sens_read();
-}
 
 //GPIO12 & GPIO14 -> Temperatur
 OneWire dsSolar(PIN_DS_SOLAR);
@@ -45,32 +35,11 @@ HomieSetting<long> temperatureHysteresisSetting("temperatureHysteresisSetting", 
 //RS Switches via 433MHz
 RCSwitch mySwitch = RCSwitch();
 
-//Ticker
-Ticker tickerTemperaturePool;
-Ticker tickerTemperatureSolar;
-Ticker tickerTemperatureCtrl;
 
 /**
- * https://stackoverflow.com/questions/9072320/split-string-into-string-array
- */
-String getValue(String data, char separator, int index) {
-  int found      = 0;
-  int strIndex[] = {0, -1};
-  int maxIndex   = data.length() - 1;
-
-  for (int i = 0; i <= maxIndex && found <= index; i++) {
-    if (data.charAt(i) == separator || i == maxIndex) {
-      found++;
-      strIndex[0] = strIndex[1] + 1;
-      strIndex[1] = (i == maxIndex) ? i + 1 : i;
-    }
-  }
-
-  return found > index ? data.substring(strIndex[0], strIndex[1]) : "";
-}
-
-/**
+ * Get temperature of temperature sensor.
  *
+ * @param sensor
  */
 double getTemperature(DallasTemperature sensor) {
   // call sensors.requestTemperatures() to issue a global temperature
@@ -94,58 +63,66 @@ double getTemperature(DallasTemperature sensor) {
 }
 
 /**
- *
+ * Ticker to publish solar temperature.
  */
 void onTickerTemperatureSolar() {
-  Homie.getLogger() << "onTickerTemperatureSolar ->" << endl;
+  Homie.getLogger() << "〽 onTickerTemperatureSolar ->" << endl;
 
-  double temp = getTemperature(sensorSolar);
+  const double temp = getTemperature(sensorSolar);
   if (temp > -127.0) {
-    Homie.getLogger() << " • Temperature=" << temp << "°C" << endl;
+    Homie.getLogger() << "  • Temperature=" << temp << "°C" << endl;
     solarTemperatureNode.setProperty("degrees").send(String(temp, 1));
+    solarTemperatureNode.setProperty("status").send("");
   } else {
+    Homie.getLogger() << "  ✖ Error reading sensor" << endl;
+    solarTemperatureNode.setProperty("degrees").send("");
     solarTemperatureNode.setProperty("status").send("Error reading sensor");
   }
 
-  Homie.getLogger() << "onTickerTemperatureSolar <-" << endl;
+  Homie.getLogger() << "  onTickerTemperatureSolar <-" << endl;
 }
 
 /**
- *
+ * Ticker to publish pool temperature.
  */
 void onTickerTemperaturePool() {
-  Homie.getLogger() << "onTickerTemperaturePool ->" << endl;
+  Homie.getLogger() << "〽 onTickerTemperaturePool ->" << endl;
 
-  double temp = getTemperature(sensorPool);
-  Homie.getLogger() << " • Temperature=" << temp << "°C" << endl;
+  const double temp = getTemperature(sensorPool);
+
   if (temp > -127.0) {
+    Homie.getLogger() << "  • Temperature=" << temp << "°C" << endl;
     poolTemperatureNode.setProperty("degrees").send(String(temp, 1));
+    poolTemperatureNode.setProperty("status").send("");
   } else {
+    Homie.getLogger() << "  ✖ Error reading sensor" << endl;
+    poolTemperatureNode.setProperty("degrees").send("");
     poolTemperatureNode.setProperty("status").send("Error reading sensor");
   }
 
-  Homie.getLogger() << "onTickerTemperaturePool <-" << endl;
+  Homie.getLogger() << "  onTickerTemperaturePool <-" << endl;
 }
 
 /**
- * Internal Temperature of ESP32
+ * Ticker to publish internal temperature of ESP32.
  */
 void onTickerTemperatureCtrl() {
-  Homie.getLogger() << "onTickerTemperatureCtrl ->" << endl;
+  Homie.getLogger() << "〽 onTickerTemperatureCtrl ->" << endl;
 
   //internal temp of ESP
   uint8_t temp_farenheit = temprature_sens_read();
-  double  temp          = (temp_farenheit - 32) / 1.8;
-  Homie.getLogger() << " • Temperature=" << temp << "°C" << endl;
+  const double  temp   = (temp_farenheit - 32) / 1.8;
+  Homie.getLogger() << "  • Temperature=" << temp << "°C" << endl;
   ctrlTemperatureNode.setProperty("degrees").send(String(temp, 1));
 
-  Homie.getLogger() << "onTickerTemperatureCtrl <-" << endl;
+  Homie.getLogger() << "  onTickerTemperatureCtrl <-" << endl;
 }
 
 /**
  * Handler for switching pool Pump on/off.
  */
-bool poolPumpSwitchOnHandler(HomieRange range, String value) {
+bool onPoolPumpSwitchHandler(HomieRange range, String value) {
+  Homie.getLogger() << "〽 poolPumpSwitchOnHandler -> range=" << range << ", value=" << value << endl;
   bool retval;
 
   if (value != "true" && value != "false") {
@@ -167,13 +144,16 @@ bool poolPumpSwitchOnHandler(HomieRange range, String value) {
     retval = true;
   }
 
+  Homie.getLogger() << "〽 poolPumpSwitchOnHandler <-" << retval << endl;
   return retval;
 }
 
 /**
  * Handler for switching solar Pump on/off.
  */
-bool solarPumpSwitchOnHandler(HomieRange range, String value) {
+bool onSolarPumpSwitchHandler(HomieRange range, String value) {
+  Homie.getLogger() << "〽 solarPumpSwitchOnHandler -> range=" << range << ", value=" << value << endl;
+
   bool retval;
 
   if (value != "true" && value != "false") {
@@ -189,9 +169,11 @@ bool solarPumpSwitchOnHandler(HomieRange range, String value) {
 
     solarPumpNode.setProperty("on").send(value);
     bool on = (value == "true");
-    Homie.getLogger() << "Switch is " << (on ? "on" : "off") << endl;
+    Homie.getLogger() << "Switch is " << (on ? "on" : "off")  << endl;
     retval = true;
   }
+
+  Homie.getLogger() << "〽 solarPumpSwitchOnHandler <-" << retval << endl;
   return retval;
 }
 
@@ -199,30 +181,33 @@ bool solarPumpSwitchOnHandler(HomieRange range, String value) {
  * Homie Setup handler.
  */
 void setupHandler() {
- 
-  solarTemperatureNode.advertise("degrees").setName("Temperature").setDatatype("float").setUnit("°C");
+
+  solarTemperatureNode.advertise("degrees").setDatatype("float").setFormat("-50:50").setUnit("°C");
   solarTemperatureNode.advertise("status");
-  poolTemperatureNode.advertise("degrees").setName("Temperature").setDatatype("float").setUnit("°C");
+  poolTemperatureNode.advertise("degrees").setDatatype("float").setFormat("-50:50").setUnit("°C");
   poolTemperatureNode.advertise("status");
-  ctrlTemperatureNode.advertise("degrees").setName("Temperature").setDatatype("float").setUnit("°C");
+  ctrlTemperatureNode.advertise("degrees").setDatatype("float").setFormat("-50:100").setUnit("°C");
   ctrlTemperatureNode.advertise("status");
 
-  poolPumpNode.advertise("on").setName("On").setDatatype("boolean").settable(poolPumpSwitchOnHandler);
-  solarPumpNode.advertise("on").setName("On").setDatatype("boolean").settable(solarPumpSwitchOnHandler);
+  poolPumpNode.advertise("switch").setDatatype("boolean").settable(onPoolPumpSwitchHandler);
+  solarPumpNode.advertise("switch").setDatatype("boolean").settable(onSolarPumpSwitchHandler);
 
   //default intervall of sending Temperature values
   temperaturePublishIntervalSetting.setDefaultValue(TEMP_READ_INTERVALL).setValidator([](long candidate) {
     return (candidate >= 0) && (candidate <= 300);
   });
 
-  temperatureMaxPoolSetting.setDefaultValue(28.5).setValidator(
-      [](long candidate) { return (candidate >= 0) && (candidate <= 30); });
+  temperatureMaxPoolSetting.setDefaultValue(28.5).setValidator( [](long candidate) {
+    return (candidate >= 0) && (candidate <= 30);
+  });
 
-  temperatureMinSolarSetting.setDefaultValue(50.0).setValidator(
-      [](long candidate) { return (candidate >= 0) && (candidate <= 100); });
+  temperatureMinSolarSetting.setDefaultValue(50.0).setValidator( [](long candidate) {
+    return (candidate >= 0) && (candidate <= 100);
+  });
 
-  temperatureHysteresisSetting.setDefaultValue(1.0).setValidator(
-      [](long candidate) { return (candidate >= 0) && (candidate <= 10); });
+  temperatureHysteresisSetting.setDefaultValue(1.0).setValidator( [](long candidate) {
+    return (candidate >= 0) && (candidate <= 10);
+  });
 }
 
 /**
@@ -236,7 +221,7 @@ void setup() {
   }
 
   Serial.println(F("-------------------------------------"));
-  Serial.println(F(" Pool Controller "));
+  Serial.println(F(" Pool Controller                     "));
   Serial.println(F("-------------------------------------"));
 
   //Homie.disableLogging();
@@ -244,7 +229,6 @@ void setup() {
   Homie.setSetupFunction(setupHandler);           //.setLoopFunction(loopHandler);
 
   Homie.setup();
-
 
   //mySwitch.enableTransmit(PIN_RSSWITCH);
   //mySwitch.setRepeatTransmit(10);
@@ -254,7 +238,7 @@ void setup() {
   tickerTemperaturePool.attach(temperaturePublishIntervalSetting.get(), onTickerTemperaturePool);
   tickerTemperatureCtrl.attach(temperaturePublishIntervalSetting.get(), onTickerTemperatureCtrl);
 
-  Homie.getLogger() << "Setup ready" << endl;
+  Homie.getLogger() << "✔ Setup ready" << endl;
 }
 
 /**
