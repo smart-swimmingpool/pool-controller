@@ -7,6 +7,7 @@
  * Wird über openHAB gesteurt.
  */
 #include <Homie.h>
+#include <Ticker.h>
 
 #include <OneWire.h>
 #include <DallasTemperature.h>
@@ -44,12 +45,10 @@ HomieSetting<long> temperatureHysteresisSetting("temperatureHysteresisSetting", 
 //RS Switches via 433MHz
 RCSwitch mySwitch = RCSwitch();
 
-// the timer objects
-volatile int interruptCounter;
-hw_timer_t*  timerIntervall = NULL;
-portMUX_TYPE timerMux       = portMUX_INITIALIZER_UNLOCKED;
-
-uint32_t cp0_regs[18];
+//Ticker
+Ticker tickerTemperaturePool;
+Ticker tickerTemperatureSolar;
+Ticker tickerTemperatureCtrl;
 
 /**
  * https://stackoverflow.com/questions/9072320/split-string-into-string-array
@@ -84,7 +83,7 @@ double getTemperature(DallasTemperature sensor) {
     t = sensor.getTempCByIndex(0);  // Why "byIndex"?  You can have more than one DS18B20 on the same bus.
     // 0 refers to the first IC on the wire
     delay(1);
-    Serial.print(".");
+    Homie.getLogger() << ".";
     cnt++;
     if (cnt > 3) {
       return -127.0;
@@ -94,57 +93,53 @@ double getTemperature(DallasTemperature sensor) {
   return t;
 }
 
-void IRAM_ATTR onTimer() {
-  portENTER_CRITICAL_ISR(&timerMux);
-  interruptCounter++;
-  portEXIT_CRITICAL_ISR(&timerMux);
-}
-
 /**
- * called on Timer.
+ *
  */
-void onTemperatureTimer(void* parameter) {
-  Homie.getLogger() << "onTermperatureTimer ->" << endl;
+void onTickerTemperatureSolar() {
+  Homie.getLogger() << "onTickerTemperatureSolar ->" << endl;
 
-  // get FPU state
-  uint32_t cp_state = xthal_get_cpenable();
-
-  if (cp_state) {
-    // Save FPU registers
-    xthal_save_cp0(cp0_regs);
-  } else {
-    // enable FPU
-    xthal_set_cpenable(1);
-  }
-
-  double temp1 = getTemperature(sensorSolar);
-  if (temp1 > -127.0) {
-    solarTemperatureNode.setProperty("degrees").send(String(temp1, 1));
+  double temp = getTemperature(sensorSolar);
+  if (temp > -127.0) {
+    Homie.getLogger() << " • Temperature=" << temp << "°C" << endl;
+    solarTemperatureNode.setProperty("degrees").send(String(temp, 1));
   } else {
     solarTemperatureNode.setProperty("status").send("Error reading sensor");
   }
 
-  double temp2 = getTemperature(sensorPool);
-  if (temp2 > -127.0) {
-    poolTemperatureNode.setProperty("degrees").send(String(temp2, 1));
+  Homie.getLogger() << "onTickerTemperatureSolar <-" << endl;
+}
+
+/**
+ *
+ */
+void onTickerTemperaturePool() {
+  Homie.getLogger() << "onTickerTemperaturePool ->" << endl;
+
+  double temp = getTemperature(sensorPool);
+  Homie.getLogger() << " • Temperature=" << temp << "°C" << endl;
+  if (temp > -127.0) {
+    poolTemperatureNode.setProperty("degrees").send(String(temp, 1));
   } else {
     poolTemperatureNode.setProperty("status").send("Error reading sensor");
   }
 
+  Homie.getLogger() << "onTickerTemperaturePool <-" << endl;
+}
+
+/**
+ * Internal Temperature of ESP32
+ */
+void onTickerTemperatureCtrl() {
+  Homie.getLogger() << "onTickerTemperatureCtrl ->" << endl;
+
   //internal temp of ESP
   uint8_t temp_farenheit = temprature_sens_read();
-  double  temp3          = (temp_farenheit - 32) / 1.8;
-  ctrlTemperatureNode.setProperty("degrees").send(String(temp3, 1));
+  double  temp          = (temp_farenheit - 32) / 1.8;
+  Homie.getLogger() << " • Temperature=" << temp << "°C" << endl;
+  ctrlTemperatureNode.setProperty("degrees").send(String(temp, 1));
 
-  if (cp_state) {
-    // Restore FPU registers
-    xthal_restore_cp0(cp0_regs);
-  } else {
-    // turn it back off
-    xthal_set_cpenable(0);
-  }
-
-  Homie.getLogger() << "onTermperatureTimer <-" << endl;
+  Homie.getLogger() << "onTickerTemperatureCtrl <-" << endl;
 }
 
 /**
@@ -204,10 +199,13 @@ bool solarPumpSwitchOnHandler(HomieRange range, String value) {
  * Homie Setup handler.
  */
 void setupHandler() {
-
-  solarTemperatureNode.advertise("degrees").setName("Degrees").setDatatype("float").setUnit("ºC");
-  poolTemperatureNode.advertise("degrees").setName("Degrees").setDatatype("float").setUnit("ºC");
-  ctrlTemperatureNode.advertise("degrees").setName("Degrees").setDatatype("float").setUnit("ºC");
+ 
+  solarTemperatureNode.advertise("degrees").setName("Temperature").setDatatype("float").setUnit("°C");
+  solarTemperatureNode.advertise("status");
+  poolTemperatureNode.advertise("degrees").setName("Temperature").setDatatype("float").setUnit("°C");
+  poolTemperatureNode.advertise("status");
+  ctrlTemperatureNode.advertise("degrees").setName("Temperature").setDatatype("float").setUnit("°C");
+  ctrlTemperatureNode.advertise("status");
 
   poolPumpNode.advertise("on").setName("On").setDatatype("boolean").settable(poolPumpSwitchOnHandler);
   solarPumpNode.advertise("on").setName("On").setDatatype("boolean").settable(solarPumpSwitchOnHandler);
@@ -247,25 +245,16 @@ void setup() {
 
   Homie.setup();
 
-  if (Homie.isConnected()) {
 
-    //mySwitch.enableTransmit(PIN_RSSWITCH);
-    //mySwitch.setRepeatTransmit(10);
-    //mySwitch.setPulseLength(350);
+  //mySwitch.enableTransmit(PIN_RSSWITCH);
+  //mySwitch.setRepeatTransmit(10);
+  //mySwitch.setPulseLength(350);
 
-    /* 2nd tick take 1/(80MHZ/80) = 1us so we set divider 80 and count up */
-    timerIntervall = timerBegin(0, 80, true);  //timer 1, div 80
-    /* Attach onTimer function to our timer */
-    timerAttachInterrupt(timerIntervall, &onTimer, true);
-    /* Set alarm to call onTimer function every second 1 tick is 1us => 1 second is 1000000us */
-    /* Repeat the alarm (third parameter) */
-    timerAlarmWrite(timerIntervall, 1e+6 * temperaturePublishIntervalSetting.get(), true);
-    timerAlarmEnable(timerIntervall);  //enable interrupt
+  tickerTemperatureSolar.attach(temperaturePublishIntervalSetting.get(), onTickerTemperatureSolar);
+  tickerTemperaturePool.attach(temperaturePublishIntervalSetting.get(), onTickerTemperaturePool);
+  tickerTemperatureCtrl.attach(temperaturePublishIntervalSetting.get(), onTickerTemperatureCtrl);
 
-    //publish("pool", "device", "started"); //pubish started event
-  }
-
-  Homie.getLogger() << "Setup ready";
+  Homie.getLogger() << "Setup ready" << endl;
 }
 
 /**
@@ -279,15 +268,6 @@ void loop() {
     // The device is configured, in normal mode
 
     if (Homie.isConnected()) {
-      // The device is connected
-      if (interruptCounter > 0) {
-
-        portENTER_CRITICAL(&timerMux);
-        interruptCounter--;
-        portEXIT_CRITICAL(&timerMux);
-
-        onTemperatureTimer(NULL);
-      }
 
     } else {
       // The device is not connected
