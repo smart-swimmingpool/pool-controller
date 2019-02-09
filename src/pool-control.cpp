@@ -35,6 +35,8 @@ HomieSetting<long> temperatureHysteresisSetting("temperatureHysteresisSetting", 
 //RS Switches via 433MHz
 RCSwitch mySwitch = RCSwitch();
 
+CurrentValues currentValues = CurrentValues();
+
 
 /**
  * Get temperature of temperature sensor.
@@ -71,6 +73,7 @@ void onTickerTemperatureSolar() {
   const double temp = getTemperature(sensorSolar);
   if (temp > -127.0) {
     Homie.getLogger() << "  • Temperature=" << temp << "°C" << endl;
+    currentValues.setTemperatureSolar(temp);
     solarTemperatureNode.setProperty("degrees").send(String(temp, 1));
     solarTemperatureNode.setProperty("status").send("");
   } else {
@@ -92,6 +95,7 @@ void onTickerTemperaturePool() {
 
   if (temp > -127.0) {
     Homie.getLogger() << "  • Temperature=" << temp << "°C" << endl;
+    currentValues.setTemperaturePool(temp);
     poolTemperatureNode.setProperty("degrees").send(String(temp, 1));
     poolTemperatureNode.setProperty("status").send("");
   } else {
@@ -122,7 +126,7 @@ void onTickerTemperatureCtrl() {
  * Handler for switching pool Pump on/off.
  */
 bool onPoolPumpSwitchHandler(HomieRange range, String value) {
-  Homie.getLogger() << "〽 poolPumpSwitchOnHandler -> range=" << range << ", value=" << value << endl;
+  Homie.getLogger() << "〽 poolPumpSwitchOnHandler -> value=" << value << endl;
   bool retval;
 
   if (value != "true" && value != "false") {
@@ -152,7 +156,7 @@ bool onPoolPumpSwitchHandler(HomieRange range, String value) {
  * Handler for switching solar Pump on/off.
  */
 bool onSolarPumpSwitchHandler(HomieRange range, String value) {
-  Homie.getLogger() << "〽 solarPumpSwitchOnHandler -> range=" << range << ", value=" << value << endl;
+  Homie.getLogger() << "〽 solarPumpSwitchOnHandler -> value=" << value << endl;
 
   bool retval;
 
@@ -182,15 +186,15 @@ bool onSolarPumpSwitchHandler(HomieRange range, String value) {
  */
 void setupHandler() {
 
-  solarTemperatureNode.advertise("degrees").setDatatype("float").setFormat("-50:50").setUnit("°C");
-  solarTemperatureNode.advertise("status");
-  poolTemperatureNode.advertise("degrees").setDatatype("float").setFormat("-50:50").setUnit("°C");
-  poolTemperatureNode.advertise("status");
-  ctrlTemperatureNode.advertise("degrees").setDatatype("float").setFormat("-50:100").setUnit("°C");
-  ctrlTemperatureNode.advertise("status");
+  solarTemperatureNode.advertise("degrees").setName("Degrees").setDatatype("float").setFormat("-50:50").setUnit("°C");
+  solarTemperatureNode.advertise("status").setName("Status");
+  poolTemperatureNode.advertise("degrees").setName("Degrees").setDatatype("float").setFormat("-50:50").setUnit("°C");
+  poolTemperatureNode.advertise("status").setName("Status");
+  ctrlTemperatureNode.advertise("degrees").setName("Degrees").setDatatype("float").setFormat("-50:100").setUnit("°C");
+  ctrlTemperatureNode.advertise("status").setName("Status");
 
-  poolPumpNode.advertise("switch").setDatatype("boolean").settable(onPoolPumpSwitchHandler);
-  solarPumpNode.advertise("switch").setDatatype("boolean").settable(onSolarPumpSwitchHandler);
+  poolPumpNode.advertise("switch").setName("Switch").setDatatype("boolean").settable(onPoolPumpSwitchHandler);
+  solarPumpNode.advertise("switch").setName("Switch").setDatatype("boolean").settable(onSolarPumpSwitchHandler);
 
   //default intervall of sending Temperature values
   temperaturePublishIntervalSetting.setDefaultValue(TEMP_READ_INTERVALL).setValidator([](long candidate) {
