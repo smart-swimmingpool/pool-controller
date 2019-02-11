@@ -8,11 +8,19 @@
 
 #include "CurrentValue.hpp"
 
-#define PIN_DS_SOLAR 16 // Temp-Sensor Solar
-#define PIN_DS_POOL 17  // Temp-Sensor Pool
-#define PIN_RSSWITCH 18 // für 433MHz Sender
+#define cStatus "status"
+#define cStatusName "Status"
+#define cTemperature "temperature"
+#define cTemperatureName "Temperature"
 
-#define TEMP_READ_INTERVALL 60   //Sekunden zwischen Updates der Temperaturen.
+#define cHumidity "humidity"
+#define cSwitch "switch"
+#define cVoltage "voltage"
+
+#define cDataTypFloat "float"
+#define cDataTypBoolean "boolean"
+
+#define cUnitTemperature "°C"
 
 extern "C" {
 
