@@ -1,5 +1,8 @@
 ﻿# Pool Control 2.0
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+
 Homie 3.0 compatible pool controller.
 
 ## Hardware
