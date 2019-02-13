@@ -8,10 +8,6 @@
 
 #include "CurrentValue.hpp"
 
-#define cStatus "status"
-#define cStatusName "Status"
-#define cTemperature "temperature"
-#define cTemperatureName "Temperature"
 
 #define cHumidity "humidity"
 #define cSwitch "switch"
