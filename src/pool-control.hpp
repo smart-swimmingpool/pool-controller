@@ -17,13 +17,3 @@
 #define cDataTypBoolean "boolean"
 
 #define cUnitTemperature "°C"
-
-extern "C" {
-
-uint8_t temprature_sens_read();
-}
-
-//Ticker
-Ticker tickerTemperaturePool;
-Ticker tickerTemperatureSolar;
-Ticker tickerTemperatureCtrl;
