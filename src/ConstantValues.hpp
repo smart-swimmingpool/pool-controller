@@ -1,13 +1,5 @@
 #pragma once
 
-#include <Homie.h>
-
-#include <OneWire.h>
-#include <DallasTemperature.h>
-#include <RCSwitch.h>
-
-#include "CurrentValue.hpp"
-
 
 #define cHumidity "humidity"
 #define cSwitch "switch"

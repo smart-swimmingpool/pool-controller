@@ -7,20 +7,28 @@
  * Wird über openHAB gesteurt.
  */
 
-#include "pool-control.hpp"
+#include <Homie.h>
+
+#include <OneWire.h>
+#include <DallasTemperature.h>
+#include <RCSwitch.h>
+
+#include "ConstantValues.hpp"
+#include "CurrentValue.hpp"
+
 #include "DallasTemperatureNode.hpp"
 #include "ESP32TemperatureNode.hpp"
 #include "Rule.hpp"
 
-const int PIN_DS_SOLAR = 16;  // Temp-Sensor Solar
-const int PIN_DS_POOL  = 17;  // Temp-Sensor Pool
-const int PIN_RSSWITCH = 18;  // für 433MHz Sender
+const int PIN_DS_SOLAR = 16;  // Pin of Temp-Sensor Solar
+const int PIN_DS_POOL  = 17;  // Pin of Temp-Sensor Pool
+const int PIN_RSSWITCH = 18;  // Data-Pin of 433MHz Sender
 
 const int TEMP_READ_INTERVALL = 60;  //Sekunden zwischen Updates der Temperaturen.
 
-//DallasTemperatureNode solarTemperatureNode("solarTemp", PIN_DS_SOLAR);
-//DallasTemperatureNode poolTemperatureNode("poolTemp", PIN_DS_POOL);
-//ESP32TemperatureNode ctrlTemperatureNode("controllerTemp");
+DallasTemperatureNode solarTemperatureNode("solarTemp", PIN_DS_SOLAR, TEMP_READ_INTERVALL);
+DallasTemperatureNode poolTemperatureNode("poolTemp", PIN_DS_POOL, TEMP_READ_INTERVALL);
+ESP32TemperatureNode  ctrlTemperatureNode("controllerTemp", TEMP_READ_INTERVALL);
 
 HomieNode poolPumpNode("poolPump", "Pool Pump", cSwitch);
 HomieNode solarPumpNode("solarPump", "Solar Pump", cSwitch);
@@ -133,38 +141,37 @@ void setupHandler() {
   Homie.getLogger() << "〽 setupHandler <-" << endl;
 }
 
-
-  /**
+/**
  * Startup of controller.
  */
-  void setup() {
-    Serial.begin(115200);
+void setup() {
+  Serial.begin(115200);
 
-    while (!Serial) {
-      ;  // wait for serial port to connect. Needed for native USB port only
-    }
-
-    Serial.println(F("-------------------------------------"));
-    Serial.println(F(" Pool Controller                     "));
-    Serial.println(F("-------------------------------------"));
-
-    //Homie.disableLogging();
-    Homie_setFirmware("pool-controller", "1.0.0");  // The underscore is not a typo! See Magic bytes
-    Homie.setSetupFunction(setupHandler);
-
-    Homie.setup();
-
-    //mySwitch.enableTransmit(PIN_RSSWITCH);
-    //mySwitch.setRepeatTransmit(10);
-    //mySwitch.setPulseLength(350);
-
-    Homie.getLogger() << "✔ Setup ready" << endl;
+  while (!Serial) {
+    ;  // wait for serial port to connect. Needed for native USB port only
   }
 
-  /**
+  Serial.println(F("-------------------------------------"));
+  Serial.println(F(" Pool Controller                     "));
+  Serial.println(F("-------------------------------------"));
+
+  //Homie.disableLogging();
+  Homie_setFirmware("pool-controller", "1.0.0");  // The underscore is not a typo! See Magic bytes
+  Homie.setSetupFunction(setupHandler);
+
+  Homie.setup();
+
+  //mySwitch.enableTransmit(PIN_RSSWITCH);
+  //mySwitch.setRepeatTransmit(10);
+  //mySwitch.setPulseLength(350);
+
+  Homie.getLogger() << "✔ Setup ready" << endl;
+}
+
+/**
  * Main loop of ESP.
  */
-  void loop() {
+void loop() {
 
-    Homie.loop();
-  }
+  Homie.loop();
+}

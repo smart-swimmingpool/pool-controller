@@ -13,6 +13,19 @@ uint8_t temprature_sens_read();
 }
 
 class ESP32TemperatureNode : public HomieNode {
+
+public:
+  ESP32TemperatureNode(const char *id, const int measurementInterval = MEASUREMENT_INTERVAL);
+
+  float getTemperature() const {
+    return temperature;
+  }
+
+protected:
+  void setup() override;
+  void loop() override;
+  void onReadyToOperate() override;
+  
 private:
   // suggested rate is 1/60Hz (1m)
   static const int MIN_INTERVAL = 60; // in seconds
@@ -35,17 +48,5 @@ private:
 
   void printCaption();
 
-protected:
-  void setup() override;
-  void loop() override;
-  void onReadyToOperate() override;
-
-
-public:
-  ESP32TemperatureNode(const char *id, const int measurementInterval = MEASUREMENT_INTERVAL);
-
-  float getTemperature() const {
-    return temperature;
-  }
 
 };
