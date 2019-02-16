@@ -19,26 +19,21 @@
 # Travis CI documentation (see above).
 #
 
+language: python
+python:
+  - "2.7"
 
-#
-# Template #1: General project. Test it using existing `platformio.ini`.
-#
+sudo: false
+cache:
+  directories:
+    - "~/.platformio"
 
-# language: python
-# python:
-#     - "2.7"
-#
-# sudo: false
-# cache:
-#     directories:
-#         - "~/.platformio"
-#
-# install:
-#     - pip install -U platformio
-#     - platformio update
-#
-# script:
-#     - platformio run
+install:
+  - pip install -U platformio
+  - platformio update
+
+script:
+  - platformio run
 
 
 #
