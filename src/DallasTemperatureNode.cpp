@@ -49,7 +49,7 @@ void DallasTemperatureNode::loop() {
 
         Homie.getLogger() << "  • Status=ok" << endl;
         setProperty(cStatus).send("ok");
-        H setProperty(cTemperature).send(String(temperature));
+        setProperty(cTemperature).send(String(temperature));
       }
     } else {
       //Homie.getLogger() << "No Sensor found!" << endl;
@@ -58,11 +58,19 @@ void DallasTemperatureNode::loop() {
   }
 }
 
-void DallasTemperatureNode::onReadyToOperate() {}
+/**
+ *
+ */
+void DallasTemperatureNode::onReadyToOperate() {
+  Homie.getLogger() << "• DallasTemperatureNode - onReadyToOperate" << endl;
+}
 
+/**
+ *
+ */
 void DallasTemperatureNode::setup() {
 
-  Homie.getLogger() << "〽 DallasTemperatureNode::setup" << endl;
+  Homie.getLogger() << "• DallasTemperatureNode::setup" << endl;
 
   advertise(cStatus).setName(cStatusName);
 
