@@ -5,8 +5,8 @@
 #include <Homie.hpp>
 #include "DallasTemperatureNode.hpp"
 
-DallasTemperatureNode::DallasTemperatureNode(const char* id, const int pin, const int measurementInterval)
-    : HomieNode(id, "DallasTemperature", "temperature") {
+DallasTemperatureNode::DallasTemperatureNode(const char* id, const char* name, const int pin, const int measurementInterval)
+    : HomieNode(id, name, "temperature") {
 
   _pin                 = pin;
   _measurementInterval = (measurementInterval > MIN_INTERVAL) ? measurementInterval : MIN_INTERVAL;
@@ -47,8 +47,9 @@ void DallasTemperatureNode::loop() {
           } while (temperature >= 50.0 || temperature <= -50.0);
         }
 
-        Homie.getLogger() << "  • Status=ok" << endl;
+        Homie.getLogger() << cIndent << "Status=ok" << endl;
         setProperty(cStatus).send("ok");
+        Homie.getLogger() << cIndent << "Temperature=" << temperature << endl;
         setProperty(cTemperature).send(String(temperature));
       }
     } else {
@@ -62,32 +63,13 @@ void DallasTemperatureNode::loop() {
  *
  */
 void DallasTemperatureNode::onReadyToOperate() {
-  Homie.getLogger() << "• DallasTemperatureNode - onReadyToOperate" << endl;
-}
-
-/**
- *
- */
-void DallasTemperatureNode::setup() {
-
-  Homie.getLogger() << "• DallasTemperatureNode::setup" << endl;
 
   advertise(cStatus).setName(cStatusName);
-
-  advertise(cTemperature).setName(cTemperature).setDatatype("float").setFormat("-50:50").setUnit(cTemperatureUnit);
-
-  OneWire oneWire(_pin);
-
-  DallasTemperature sensor(&oneWire);
-
-  // Start up the library
-  sensor.begin();
+  advertise(getId()).setName(cTemperatureName).setDatatype("float").setFormat("-50:50").setUnit(cTemperatureUnit);
 
   // Grab a count of devices on the wire
   numberOfDevices = sensor.getDeviceCount();
-
-  Homie.getLogger() << cCaption << endl;
-  Homie.getLogger() << cIndent << "Devices found: " << numberOfDevices << " at PIN " << _pin << endl;
+  Homie.getLogger() << cIndent << "Devices found at PIN " << _pin << ": " << numberOfDevices << endl;
   // report parasite power requirements
   Homie.getLogger() << cIndent << "Parasite power is: " << sensor.isParasitePowerMode() << endl;
 
@@ -109,4 +91,17 @@ void DallasTemperatureNode::setup() {
     Homie.getLogger() << "✖ No sensors found at pin " << _pin << endl;
     setProperty(cStatus).send("no sensors found");
   }
+}
+
+/**
+ *
+ */
+void DallasTemperatureNode::setup() {
+  Homie.getLogger() << cCaption << endl;
+
+  OneWire oneWire(_pin);
+  DallasTemperature sensor(&oneWire);
+
+  // Start up the library
+  sensor.begin();
 }

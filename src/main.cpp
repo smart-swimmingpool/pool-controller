@@ -26,9 +26,9 @@ const int PIN_RSSWITCH = 18;  // Data-Pin of 433MHz Sender
 
 const int TEMP_READ_INTERVALL = 60;  //Sekunden zwischen Updates der Temperaturen.
 
-DallasTemperatureNode solarTemperatureNode("solarTemp", PIN_DS_SOLAR, TEMP_READ_INTERVALL);
-DallasTemperatureNode poolTemperatureNode("poolTemp", PIN_DS_POOL, TEMP_READ_INTERVALL);
-ESP32TemperatureNode  ctrlTemperatureNode("controllerTemp", TEMP_READ_INTERVALL);
+DallasTemperatureNode solarTemperatureNode("solarTemp", "Solar Temperature", PIN_DS_SOLAR, TEMP_READ_INTERVALL);
+DallasTemperatureNode poolTemperatureNode("poolTemp", "Pool Temperature", PIN_DS_POOL, TEMP_READ_INTERVALL);
+ESP32TemperatureNode  ctrlTemperatureNode("controllerTemp", "Controller Temperature", TEMP_READ_INTERVALL);
 
 HomieNode poolPumpNode("poolPump", "Pool Pump", cSwitch);
 HomieNode solarPumpNode("solarPump", "Solar Pump", cSwitch);
@@ -116,7 +116,6 @@ bool onSolarPumpSwitchHandler(const HomieRange& range, const String& value) {
  * Only called when wifi and mqtt are connected.
  */
 void setupHandler() {
-  Homie.getLogger() << "〽 setupHandler ->" << endl;
 
   poolPumpNode.advertise(cSwitch).setName("Switch").setDatatype(cDataTypBoolean).settable(onPoolPumpSwitchHandler);
   poolPumpNode.advertise("status").setName("Status");
@@ -138,7 +137,8 @@ void setupHandler() {
   temperatureHysteresisSetting.setDefaultValue(1.0).setValidator(
       [](long candidate) { return (candidate >= 0) && (candidate <= 10); });
 
-  Homie.getLogger() << "〽 setupHandler <-" << endl;
+  ctrlTemperatureNode.setMeasurementInterval(temperaturePublishIntervalSetting.get());
+
 }
 
 /**
@@ -155,15 +155,15 @@ void setup() {
   Serial.println(F(" Pool Controller                     "));
   Serial.println(F("-------------------------------------"));
 
-  //Homie.disableLogging();
-  Homie_setFirmware("pool-controller", "1.0.0");  // The underscore is not a typo! See Magic bytes
-  Homie.setSetupFunction(setupHandler);
-
-  Homie.setup();
-
   //mySwitch.enableTransmit(PIN_RSSWITCH);
   //mySwitch.setRepeatTransmit(10);
   //mySwitch.setPulseLength(350);
+
+  Homie_setFirmware("pool-controller", "1.0.0");  // The underscore is not a typo! See Magic bytes
+  //Homie.disableLogging();
+  Homie.setSetupFunction(setupHandler);
+
+  Homie.setup();
 
   Homie.getLogger() << "✔ Setup ready" << endl;
 }

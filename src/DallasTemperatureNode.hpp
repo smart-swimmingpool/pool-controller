@@ -13,11 +13,13 @@ class DallasTemperatureNode : public HomieNode {
 
 public:
   DallasTemperatureNode(const char *id,
+             const char* name,
              const int pin,
              const int measurementInterval = MEASUREMENT_INTERVAL);
 
   int getPin() const { return _pin; }
-  int getMeasurementInterval() const { return _measurementInterval; }
+  void setMeasurementInterval(unsigned long interval) { _measurementInterval = interval; }
+  unsigned long getMeasurementInterval() const { return _measurementInterval; }
   float getTemperature() const { return temperature; }
 
 protected:
