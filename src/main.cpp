@@ -18,11 +18,16 @@
 
 #include "DallasTemperatureNode.hpp"
 #include "ESP32TemperatureNode.hpp"
+#include "RelayModuleNode.hpp"
 #include "Rule.hpp"
 
 const int PIN_DS_SOLAR = 16;  // Pin of Temp-Sensor Solar
 const int PIN_DS_POOL  = 17;  // Pin of Temp-Sensor Pool
 const int PIN_RSSWITCH = 18;  // Data-Pin of 433MHz Sender
+
+const int PIN_RELAY_POOL  = 19;
+const int PIN_RELAY_SOLAR = 20;
+
 
 const int TEMP_READ_INTERVALL = 60;  //Sekunden zwischen Updates der Temperaturen.
 
@@ -30,8 +35,8 @@ DallasTemperatureNode solarTemperatureNode("solarTemp", "Solar Temperature", PIN
 DallasTemperatureNode poolTemperatureNode("poolTemp", "Pool Temperature", PIN_DS_POOL, TEMP_READ_INTERVALL);
 ESP32TemperatureNode  ctrlTemperatureNode("controllerTemp", "Controller Temperature", TEMP_READ_INTERVALL);
 
-HomieNode poolPumpNode("poolPump", "Pool Pump", cSwitch);
-HomieNode solarPumpNode("solarPump", "Solar Pump", cSwitch);
+RelayModuleNode poolPumpNode("poolPump", "Pool Pump", PIN_RELAY_POOL);
+RelayModuleNode solarPumpNode("solarPump", "Solar Pump", PIN_RELAY_SOLAR);
 
 HomieSetting<long> temperaturePublishIntervalSetting("temperaturePublishInterval", "The temperature publish interval in seconds");
 
