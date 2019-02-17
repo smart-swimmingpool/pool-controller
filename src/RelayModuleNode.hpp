@@ -37,7 +37,7 @@ private:
   unsigned long _lastMeasurement;
   RelayModule* relay = NULL;
 
-  HomieSetting<boolean> relayModuleSetting;
+  HomieSetting<boolean>* relayModuleSetting = NULL;
 
   void printCaption();
 };
