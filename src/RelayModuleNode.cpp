@@ -19,7 +19,8 @@ void RelayModuleNode::printCaption() {
 void RelayModuleNode::loop() {
   if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {
     Homie.getLogger() << "〽 Sending Switch status: " << getId() << endl;
-    boolean state= relay->isOn();
+
+    const boolean state= relay->isOn();
     Homie.getLogger() << cIndent << "switch: " << state << endl;
 
     if(state) {
@@ -35,8 +36,18 @@ void RelayModuleNode::loop() {
 void RelayModuleNode::onReadyToOperate() {
 
   advertise("switch").setName("Switch").setDatatype("boolean");
+
+  //restore from settings
+  if(relayModuleSetting.get()) {
+    relay->on();
+  } else {
+    relay->off();
+  }
 }
 
 void RelayModuleNode::setup() {
   relay = new RelayModule(_pin);
+
+  HomieSetting<boolean> relayModuleSetting( getId(), "stored switch configuration");
+  relayModuleSetting.setDefaultValue(false);
 }

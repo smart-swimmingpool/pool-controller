@@ -36,6 +36,8 @@ private:
   unsigned long _measurementInterval;
   unsigned long _lastMeasurement;
   RelayModule* relay = NULL;
-  
+
+  HomieSetting<boolean> relayModuleSetting;
+
   void printCaption();
 };
