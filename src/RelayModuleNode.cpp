@@ -35,6 +35,9 @@ void RelayModuleNode::loop() {
 
 void RelayModuleNode::onReadyToOperate() {
 
+  relayModuleSetting = new HomieSetting<boolean>( getId(), "stored switch configuration");
+  relayModuleSetting->setDefaultValue(false);
+
   advertise("switch").setName("Switch").setDatatype("boolean");
 
   //restore from settings
@@ -48,6 +51,4 @@ void RelayModuleNode::onReadyToOperate() {
 void RelayModuleNode::setup() {
   relay = new RelayModule(_pin);
 
-  relayModuleSetting = new HomieSetting<boolean>( getId(), "stored switch configuration");
-  relayModuleSetting->setDefaultValue(false);
 }

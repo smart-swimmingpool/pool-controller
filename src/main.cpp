@@ -31,13 +31,6 @@ const int PIN_RELAY_SOLAR = 20;
 
 const int TEMP_READ_INTERVALL = 60;  //Sekunden zwischen Updates der Temperaturen.
 
-DallasTemperatureNode solarTemperatureNode("solarTemp", "Solar Temperature", PIN_DS_SOLAR, TEMP_READ_INTERVALL);
-DallasTemperatureNode poolTemperatureNode("poolTemp", "Pool Temperature", PIN_DS_POOL, TEMP_READ_INTERVALL);
-ESP32TemperatureNode  ctrlTemperatureNode("controllerTemp", "Controller Temperature", TEMP_READ_INTERVALL);
-
-RelayModuleNode poolPumpNode("poolPump", "Pool Pump", PIN_RELAY_POOL);
-RelayModuleNode solarPumpNode("solarPump", "Solar Pump", PIN_RELAY_SOLAR);
-
 HomieSetting<long> temperaturePublishIntervalSetting("temperaturePublishInterval", "The temperature publish interval in seconds");
 
 HomieSetting<long> temperatureMaxPoolSetting("temperatureMaxPoolSetting", "Maximum temperature of solar");
@@ -45,6 +38,13 @@ HomieSetting<long> temperatureMinSolarSetting("temperatureMinSolarSetting", "Min
 HomieSetting<long> temperatureHysteresisSetting("temperatureHysteresisSetting", "Temperature hysteresis");
 
 HomieSetting<long> operationStatusSetting("operationStatusSetting", "Operational Status");
+
+DallasTemperatureNode solarTemperatureNode("solarTemp", "Solar Temperature", PIN_DS_SOLAR, TEMP_READ_INTERVALL);
+DallasTemperatureNode poolTemperatureNode("poolTemp", "Pool Temperature", PIN_DS_POOL, TEMP_READ_INTERVALL);
+ESP32TemperatureNode  ctrlTemperatureNode("controllerTemp", "Controller Temperature", TEMP_READ_INTERVALL);
+
+RelayModuleNode poolPumpNode("poolPump", "Pool Pump", PIN_RELAY_POOL);
+RelayModuleNode solarPumpNode("solarPump", "Solar Pump", PIN_RELAY_SOLAR);
 
 //RS Switches via 433MHz
 RCSwitch mySwitch = RCSwitch();
