@@ -44,6 +44,8 @@ HomieSetting<long> temperatureMaxPoolSetting("temperatureMaxPoolSetting", "Maxim
 HomieSetting<long> temperatureMinSolarSetting("temperatureMinSolarSetting", "Minimum temperature of solar");
 HomieSetting<long> temperatureHysteresisSetting("temperatureHysteresisSetting", "Temperature hysteresis");
 
+HomieSetting<long> operationStatusSetting("operationStatusSetting", "Operational Status");
+
 //RS Switches via 433MHz
 RCSwitch mySwitch = RCSwitch();
 
@@ -142,8 +144,11 @@ void setupHandler() {
   temperatureHysteresisSetting.setDefaultValue(1.0).setValidator(
       [](long candidate) { return (candidate >= 0) && (candidate <= 10); });
 
-  ctrlTemperatureNode.setMeasurementInterval(temperaturePublishIntervalSetting.get());
 
+  operationStatusSetting.setDefaultValue(0).setValidator(
+    [](int candidate) { return (candidate >= 0) && (candidate <= 3); });
+
+  ctrlTemperatureNode.setMeasurementInterval(temperaturePublishIntervalSetting.get());
 }
 
 /**
