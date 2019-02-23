@@ -10,13 +10,14 @@
 class OperationStatusNode : public HomieNode {
 
 public:
-  OperationStatusNode(const char* id);
+  OperationStatusNode(const char* id, const char* name, const int measurementInterval = MEASUREMENT_INTERVAL);
 
   int getStatu() const { return status; }
 
 protected:
   void setup() override;
   void loop() override;
+  void onReadyToOperate() override;
 
 private:
   // suggested rate is 1/60Hz (1m)
@@ -25,9 +26,12 @@ private:
   const char*      cCaption             = "• Operation Status:";
   const char*      cIndent              = "  ◦ ";
 
-  const char* cStatus          = "status";
-  const char* cStatusName      = "Status";
-  int status = 0;
+  const char* cStatus     = "status";
+  const char* cStatusName = "Status";
+  int         status      = 0;
+
+  unsigned long _measurementInterval;
+  unsigned long _lastMeasurement;
 
   void printCaption();
 };
