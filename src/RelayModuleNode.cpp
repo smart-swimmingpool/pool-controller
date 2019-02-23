@@ -9,8 +9,6 @@ RelayModuleNode::RelayModuleNode(const char* id, const char* name, const int pin
   _pin                 = pin;
   _measurementInterval = (measurementInterval > MIN_INTERVAL) ? measurementInterval : MIN_INTERVAL;
   _lastMeasurement     = 0;
-
-  relay = new RelayModule(_pin);
 }
 
 /**
@@ -20,11 +18,15 @@ void RelayModuleNode::setState(const boolean state) {
 
   if (state) {
     relay->on();
-    setProperty("switch").send("on");
+    setProperty(cSwitch).send(cFlagOn);
   } else {
     relay->off();
-    setProperty("switch").send("off");
+    setProperty(cSwitch).send(cFlagOff);
   }
+
+  preferences.begin(getId(), false);
+  preferences.putBool(cSwitch, state);
+  preferences.end();
 }
 
 /**
@@ -52,9 +54,9 @@ void RelayModuleNode::loop() {
     Homie.getLogger() << cIndent << "switch: " << state << endl;
 
     if (state) {
-      setProperty("switch").send("on");
+      setProperty(cSwitch).send(cFlagOn);
     } else {
-      setProperty("switch").send("off");
+      setProperty(cSwitch).send(cFlagOff);
     }
 
     _lastMeasurement = millis();
@@ -66,22 +68,24 @@ void RelayModuleNode::loop() {
  */
 void RelayModuleNode::onReadyToOperate() {
 
-  relayModuleSetting = new HomieSetting<boolean>(getId(), "stored switch configuration");
-  relayModuleSetting->setDefaultValue(false);
-
-  advertise("switch").setName("Switch").setDatatype("boolean");
-
-  //restore from settings
-  if (relayModuleSetting->get()) {
-    relay->on();
-  } else {
-    relay->off();
-  }
+  advertise(cSwitch).setName("Switch").setDatatype("boolean");
 }
 
 /**
  *
  */
 void RelayModuleNode::setup() {
+  relay = new RelayModule(_pin);
 
+  preferences.begin(getId(), false);
+  boolean storedSwitchValue = preferences.getBool(cSwitch, false);
+  // Close the Preferences
+  preferences.end();
+
+  //restore from preferences
+  if (storedSwitchValue) {
+    relay->on();
+  } else {
+    relay->off();
+  }
 }

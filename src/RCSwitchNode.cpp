@@ -32,12 +32,15 @@ void RCSwitchNode::setState(const boolean state) {
 
   if (state) {
     rcSwitch->switchOn(_group, _device);
-    setProperty("switch").send("on");
+    setProperty(cSwitch).send(cFlagOn);
   } else {
     rcSwitch->switchOff(_group, _device);
-    setProperty("switch").send("off");
+    setProperty(cSwitch).send(cFlagOff);
   }
   _state = state;
+  preferences.begin(getId(), false);
+  preferences.putBool(cSwitch, _state);
+  preferences.end();
 }
 
 /**
@@ -49,9 +52,9 @@ void RCSwitchNode::loop() {
     Homie.getLogger() << cIndent << "switch: " << _state << endl;
 
     if (_state) {
-      setProperty("switch").send("on");
+      setProperty(cSwitch).send(cFlagOn);
     } else {
-      setProperty("switch").send("off");
+      setProperty(cSwitch).send(cFlagOff);
     }
 
     _lastMeasurement = millis();
@@ -63,9 +66,7 @@ void RCSwitchNode::loop() {
  */
 void RCSwitchNode::onReadyToOperate() {
 
-  advertise("switch").setName("Switch").setDatatype("boolean");
-
-  setState(false);
+  advertise(cSwitch).setName("Switch").setDatatype("boolean");
 }
 
 /**
@@ -78,4 +79,16 @@ void RCSwitchNode::setup() {
   rcSwitch->enableTransmit(_pin);
   rcSwitch->setRepeatTransmit(10);
   rcSwitch->setPulseLength(350);
+
+  preferences.begin(getId(), false);
+  boolean storedSwitchValue = preferences.getBool(cSwitch, false);
+  // Close the Preferences
+  preferences.end();
+
+  //restore from preferences
+  if (storedSwitchValue) {
+    rcSwitch->switchOn(_group, _device);
+  } else {
+    rcSwitch->switchOff(_group, _device);
+  }
 }

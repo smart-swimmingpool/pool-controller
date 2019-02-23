@@ -7,6 +7,7 @@
 
 #include <Homie.hpp>
 #include <RelayModule.h>
+#include <Preferences.h>
 
 class RelayModuleNode : public HomieNode {
 
@@ -32,12 +33,16 @@ private:
   const char* cCaption = "• Relay Module:";
   const char* cIndent  = "  ◦ ";
 
+  const char* cSwitch = "switch";
+  const char* cFlagOn = "on";
+  const char* cFlagOff = "off";
+
   int           _pin;
   unsigned long _measurementInterval;
   unsigned long _lastMeasurement;
   RelayModule*  relay = NULL;
 
-  HomieSetting<boolean>* relayModuleSetting = NULL;
+  Preferences preferences;
 
   void printCaption();
 };

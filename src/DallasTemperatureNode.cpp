@@ -96,7 +96,6 @@ void DallasTemperatureNode::onReadyToOperate() {
  *
  */
 void DallasTemperatureNode::setup() {
-  Homie.getLogger() << cCaption << endl;
 
   OneWire           oneWire(_pin);
   DallasTemperature sensor(&oneWire);

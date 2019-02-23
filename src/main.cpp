@@ -29,7 +29,6 @@ const int PIN_RSSWITCH = 18;  // Data-Pin of 433MHz Sender
 const int PIN_RELAY_POOL  = 19;
 const int PIN_RELAY_SOLAR = 20;
 
-
 const int TEMP_READ_INTERVALL = 60;  //Sekunden zwischen Updates der Temperaturen.
 
 HomieSetting<long> temperaturePublishIntervalSetting("temperaturePublishInterval", "The temperature publish interval in seconds");
@@ -74,7 +73,7 @@ bool onPoolPumpSwitchHandler(const HomieRange& range, const String& value) {
       mySwitch.switchOff("11111", "10000");  //todo: make configurable
     }
 
-    poolPumpNode.setProperty(cSwitch).send(value);
+    poolPumpNode.setProperty("switch").send(value);
     bool on = (value == "true");
     Homie.getLogger() << "Switch is " << (on ? "on" : "off") << endl;
 
@@ -112,7 +111,7 @@ bool onSolarPumpSwitchHandler(const HomieRange& range, const String& value) {
     const bool on = (value == "true");
 
     Homie.getLogger() << "Switch is " << (on ? "on" : "off") << endl;
-    solarPumpNode.setProperty(cSwitch).send(value);
+    solarPumpNode.setProperty("switch").send(value);
     solarPumpNode.setProperty("status").send("ok");
 
     retval = true;
@@ -128,12 +127,6 @@ bool onSolarPumpSwitchHandler(const HomieRange& range, const String& value) {
  */
 void setupHandler() {
 
-  poolPumpNode.advertise(cSwitch).setName("Switch").setDatatype(cDataTypBoolean).settable(onPoolPumpSwitchHandler);
-  poolPumpNode.advertise("status").setName("Status");
-
-  solarPumpNode.advertise(cSwitch).setName("Switch").setDatatype(cDataTypBoolean).settable(onSolarPumpSwitchHandler);
-  solarPumpNode.advertise("status").setName("Status");
-
   //default intervall of sending Temperature values
   temperaturePublishIntervalSetting.setDefaultValue(TEMP_READ_INTERVALL).setValidator([](long candidate) {
     return (candidate >= 0) && (candidate <= 300);
@@ -148,9 +141,7 @@ void setupHandler() {
   temperatureHysteresisSetting.setDefaultValue(1.0).setValidator(
       [](long candidate) { return (candidate >= 0) && (candidate <= 10); });
 
-
-  operationStatusSetting.setDefaultValue(0).setValidator(
-    [](int candidate) { return (candidate >= 0) && (candidate <= 3); });
+  operationStatusSetting.setDefaultValue(0).setValidator([](int candidate) { return (candidate >= 0) && (candidate <= 3); });
 
   ctrlTemperatureNode.setMeasurementInterval(temperaturePublishIntervalSetting.get());
 }
@@ -174,6 +165,7 @@ void setup() {
   //mySwitch.setPulseLength(350);
 
   Homie_setFirmware("pool-controller", "1.0.0");  // The underscore is not a typo! See Magic bytes
+  Homie_setBrand("SmartSwimmingpool");
   //Homie.disableLogging();
   Homie.setSetupFunction(setupHandler);
 
