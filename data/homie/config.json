@@ -15,7 +15,8 @@
     "temperaturePublishInterval": 60,
     "temperatureMaxPoolSetting": 29,
     "temperatureMinSolarSetting": 50,
-    "temperatureHysteresisSetting": 1
+    "temperatureHysteresisSetting": 1,
+    "operationStatusSetting": 0
 
   }
 }
