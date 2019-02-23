@@ -17,7 +17,7 @@ public:
   void          setMeasurementInterval(unsigned long interval) { _measurementInterval = interval; }
   unsigned long getMeasurementInterval() const { return _measurementInterval; }
   void          setState(const boolean state);
-  boolean       getState() const {return _state};
+  boolean       getState() const {return _state;};
 
 protected:
   void setup() override;
