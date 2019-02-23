@@ -9,6 +9,8 @@ RelayModuleNode::RelayModuleNode(const char* id, const char* name, const int pin
   _pin                 = pin;
   _measurementInterval = (measurementInterval > MIN_INTERVAL) ? measurementInterval : MIN_INTERVAL;
   _lastMeasurement     = 0;
+
+  relay = new RelayModule(_pin);
 }
 
 /**
@@ -81,5 +83,5 @@ void RelayModuleNode::onReadyToOperate() {
  *
  */
 void RelayModuleNode::setup() {
-  relay = new RelayModule(_pin);
+
 }

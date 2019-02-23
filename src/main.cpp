@@ -19,6 +19,7 @@
 #include "DallasTemperatureNode.hpp"
 #include "ESP32TemperatureNode.hpp"
 #include "RelayModuleNode.hpp"
+#include "RCSwitchNode.hpp"
 #include "Rule.hpp"
 
 const int PIN_DS_SOLAR = 16;  // Pin of Temp-Sensor Solar
@@ -45,6 +46,9 @@ ESP32TemperatureNode  ctrlTemperatureNode("controllerTemp", "Controller Temperat
 
 RelayModuleNode poolPumpNode("poolPump", "Pool Pump", PIN_RELAY_POOL);
 RelayModuleNode solarPumpNode("solarPump", "Solar Pump", PIN_RELAY_SOLAR);
+
+RCSwitchNode poolPumpeRCNode("poolPumpRC", "Pool Pump RC", PIN_RSSWITCH, "11111", "10000");
+RCSwitchNode solarPumpeRCNode("solarPumpRC", "Solar Pump RC", PIN_RSSWITCH, "11111", "01000");
 
 //RS Switches via 433MHz
 RCSwitch mySwitch = RCSwitch();
