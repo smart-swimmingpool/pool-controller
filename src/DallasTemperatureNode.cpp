@@ -2,7 +2,6 @@
  * Homie Node for Dallas Temperature sensors.
  *
  */
-#include <Homie.hpp>
 #include "DallasTemperatureNode.hpp"
 
 DallasTemperatureNode::DallasTemperatureNode(const char* id, const char* name, const int pin, const int measurementInterval)
@@ -99,7 +98,7 @@ void DallasTemperatureNode::onReadyToOperate() {
 void DallasTemperatureNode::setup() {
   Homie.getLogger() << cCaption << endl;
 
-  OneWire oneWire(_pin);
+  OneWire           oneWire(_pin);
   DallasTemperature sensor(&oneWire);
 
   // Start up the library
