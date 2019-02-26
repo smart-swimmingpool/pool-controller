@@ -27,6 +27,8 @@ void ESP32TemperatureNode::printCaption() {
  */
 void ESP32TemperatureNode::loop() {
   if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {
+    _lastMeasurement = millis();
+    
     Homie.getLogger() << "〽 Sending Temperature: " << getId() << endl;
 
     //internal temp of ESP
@@ -35,8 +37,6 @@ void ESP32TemperatureNode::loop() {
 
     Homie.getLogger() << cIndent << "Temperature = " << temp << cTemperatureUnit << endl;
     setProperty(cTemperature).send(String(temp, 2));
-
-    _lastMeasurement = millis();
   }
 }
 

@@ -84,7 +84,7 @@ void RelayModuleNode::loop() {
     Homie.getLogger() << "〽 Sending Switch status: " << getId() << endl;
 
     const boolean state = getState();
-    Homie.getLogger() << cIndent << "switch: " << state << endl;
+    Homie.getLogger() << cIndent << "switch: " << (state ? cFlagOn : cFlagOff) << endl;
 
     setProperty(cSwitch).send((state ? cFlagOn : cFlagOff));
   }
@@ -94,7 +94,7 @@ void RelayModuleNode::loop() {
  *
  */
 void RelayModuleNode::onReadyToOperate() {
-  advertise(cSwitch).setName("Switch").setDatatype("boolean").settable();
+  advertise(cSwitch).setName("Switch").setRetained(true).setDatatype("boolean").settable();
   advertise(cStatus).setName("Satus").setDatatype("string");
 }
 
@@ -104,11 +104,7 @@ void RelayModuleNode::onReadyToOperate() {
 void RelayModuleNode::setup() {
   printCaption();
 
-
   relay = new RelayModule(_pin);
-
-  relay->on();
-  relay->off();
 
   preferences.begin(getId(), false);
   boolean storedSwitchValue = preferences.getBool(cSwitch, false);

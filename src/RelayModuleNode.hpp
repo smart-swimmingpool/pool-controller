@@ -24,7 +24,7 @@ protected:
   void         setup() override;
   void         loop() override;
   void         onReadyToOperate() override;
-  virtual bool handleInput(const HomieRange& range, const String& property, const String& value) override;
+  bool handleInput(const HomieRange& range, const String& property, const String& value) override;
 
 private:
   // suggested rate is 1/60Hz (1m)
