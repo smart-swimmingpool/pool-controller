@@ -25,7 +25,6 @@ const int PIN_RSSWITCH = 18;  // Data-Pin of 433MHz Sender
 const int PIN_RELAY_POOL  = 18;
 const int PIN_RELAY_SOLAR = 19;
 
-
 const int TEMP_READ_INTERVALL = 60;  //Sekunden zwischen Updates der Temperaturen.
 
 HomieSetting<long> temperaturePublishIntervalSetting("temperaturePublishInterval", "The temperature publish interval in seconds");
@@ -50,6 +49,17 @@ RelayModuleNode solarPumpNode("solarPump", "Solar Pump", PIN_RELAY_SOLAR);
 CurrentValues currentValues = CurrentValues();
 
 /**
+ *
+ */
+void loopHandler() {
+  if (millis() - _lastLoop >= _loopInterval * 1000UL || _lastLoop == 0) {
+
+    _lastLoop = millis();
+  }
+}
+
+/**
+>>>>>>> 4be6c4edd235479387b9d6a8e148888b128b0725
  * Homie Setup handler.
  * Only called when wifi and mqtt are connected.
  */
@@ -69,11 +79,12 @@ void setupHandler() {
   temperatureHysteresisSetting.setDefaultValue(1.0).setValidator(
       [](long candidate) { return (candidate >= 0) && (candidate <= 10); });
 
+  operationStatusSetting.setDefaultValue(0).setValidator([](int candidate) { return (candidate >= 0) && (candidate <= 3); });
 
-  operationStatusSetting.setDefaultValue(0).setValidator(
-    [](int candidate) { return (candidate >= 0) && (candidate <= 3); });
-
+  // set mesurement intervals
   ctrlTemperatureNode.setMeasurementInterval(temperaturePublishIntervalSetting.get());
+  solarTemperatureNode.setMeasurementInterval(temperaturePublishIntervalSetting.get());
+  poolTemperatureNode.setMeasurementInterval(temperaturePublishIntervalSetting.get());
 }
 
 /**
@@ -95,8 +106,10 @@ void setup() {
   //mySwitch.setPulseLength(350);
 
   Homie_setFirmware("pool-controller", "1.0.0");  // The underscore is not a typo! See Magic bytes
+  Homie_setBrand("SmartSwimmingpool");
   //Homie.disableLogging();
   Homie.setSetupFunction(setupHandler);
+  Homie.setLoopFunction(loopHandler);
 
   Homie.setup();
 

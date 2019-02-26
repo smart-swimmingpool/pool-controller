@@ -9,8 +9,6 @@ RelayModuleNode::RelayModuleNode(const char* id, const char* name, const int pin
   _pin                 = pin;
   _measurementInterval = (measurementInterval > MIN_INTERVAL) ? measurementInterval : MIN_INTERVAL;
   _lastMeasurement     = 0;
-
-  relay = new RelayModule(_pin);
 }
 
 /**
@@ -20,11 +18,20 @@ void RelayModuleNode::setState(const boolean state) {
 
   if (state) {
     relay->on();
-    setProperty("switch").send("on");
   } else {
     relay->off();
-    setProperty("switch").send("off");
   }
+
+  setProperty(cSwitch).send((state ? cFlagOn : cFlagOff));
+
+  // persist value
+  preferences.begin(getId(), false);
+  preferences.putBool(cSwitch, state);
+  preferences.end();
+
+  setProperty(cStatus).send("ok");
+
+  Homie.getLogger() << cIndent << "Relay is " << (state ? cFlagOn : cFlagOff) << endl;
 }
 
 /**
@@ -44,6 +51,32 @@ void RelayModuleNode::printCaption() {
 /**
  *
  */
+bool RelayModuleNode::handleInput(const HomieRange& range, const String& property, const String& value) {
+
+  printCaption();
+
+  Homie.getLogger() << cIndent << "〽 handleInput -> property '" << property << "' value=" << value << endl;
+  bool retval;
+
+  if (value != cFlagOn && value != cFlagOff) {
+    Homie.getLogger() << "reveived invalid value for property [" + property + "]: " + value << endl;
+    setProperty(cStatus).send("reveived invalid value for property [" + property + "]: " + value);
+
+    retval = false;
+  } else {
+    const bool flag = (value == cFlagOn);
+    setState(flag);
+
+    retval = true;
+  }
+
+  Homie.getLogger() << "〽 handleInput <-" << retval << endl;
+  return retval;
+}
+
+/**
+ *
+ */
 void RelayModuleNode::loop() {
   if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {
     _lastMeasurement = millis();
@@ -53,11 +86,7 @@ void RelayModuleNode::loop() {
     const boolean state = getState();
     Homie.getLogger() << cIndent << "switch: " << state << endl;
 
-    if (state) {
-      setProperty("switch").send("on");
-    } else {
-      setProperty("switch").send("off");
-    }
+    setProperty(cSwitch).send((state ? cFlagOn : cFlagOff));
   }
 }
 
@@ -65,18 +94,8 @@ void RelayModuleNode::loop() {
  *
  */
 void RelayModuleNode::onReadyToOperate() {
-
-  relayModuleSetting = new HomieSetting<boolean>(getId(), "stored switch configuration");
-  relayModuleSetting->setDefaultValue(false);
-
-  advertise("switch").setName("Switch").setDatatype("boolean");
-
-  //restore from settings
-  if (relayModuleSetting->get()) {
-    relay->on();
-  } else {
-    relay->off();
-  }
+  advertise(cSwitch).setName("Switch").setDatatype("boolean").settable();
+  advertise(cStatus).setName("Satus").setDatatype("string");
 }
 
 /**
@@ -85,6 +104,21 @@ void RelayModuleNode::onReadyToOperate() {
 void RelayModuleNode::setup() {
   printCaption();
 
+
+  relay = new RelayModule(_pin);
+
   relay->on();
   relay->off();
+
+  preferences.begin(getId(), false);
+  boolean storedSwitchValue = preferences.getBool(cSwitch, false);
+  // Close the Preferences
+  preferences.end();
+
+  //restore from preferences
+  if (storedSwitchValue) {
+    relay->on();
+  } else {
+    relay->off();
+  }
 }

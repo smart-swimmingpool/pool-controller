@@ -7,6 +7,7 @@
 
 #include <Homie.hpp>
 #include <RelayModule.h>
+#include <Preferences.h>
 
 class RelayModuleNode : public HomieNode {
 
@@ -20,9 +21,10 @@ public:
   boolean       getState();
 
 protected:
-  void setup() override;
-  void loop() override;
-  void onReadyToOperate() override;
+  void         setup() override;
+  void         loop() override;
+  void         onReadyToOperate() override;
+  virtual bool handleInput(const HomieRange& range, const String& property, const String& value) override;
 
 private:
   // suggested rate is 1/60Hz (1m)
@@ -32,12 +34,17 @@ private:
   const char* cCaption = "• Relay Module:";
   const char* cIndent  = "  ◦ ";
 
+  const char* cSwitch  = "switch";
+  const char* cFlagOn  = "on";
+  const char* cFlagOff = "off";
+  const char* cStatus  = "status";
+
   int           _pin;
   unsigned long _measurementInterval;
   unsigned long _lastMeasurement;
   RelayModule*  relay = NULL;
 
-  HomieSetting<boolean>* relayModuleSetting = NULL;
+  Preferences preferences;
 
   void printCaption();
 };

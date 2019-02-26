@@ -82,11 +82,14 @@ void DallasTemperatureNode::onReadyToOperate() {
 
       if (sensor.getAddress(tempDeviceAddress, i)) {
         Homie.getLogger() << cIndent << "Device " << i << " using address ";
+
         for (uint8_t i = 0; i < 8; i++) {
-          if (tempDeviceAddress[i] < 16)
-            Serial.print("0");
-          Serial.print(tempDeviceAddress[i], HEX);
+          if (tempDeviceAddress[i] < 16) {
+            Homie.getLogger() << "0";
+          }
+          Homie.getLogger() << String(tempDeviceAddress[i], HEX);
         }
+        Homie.getLogger() << endl;
       }
     }
   } else {
