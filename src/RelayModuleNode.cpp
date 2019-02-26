@@ -46,6 +46,8 @@ void RelayModuleNode::printCaption() {
  */
 void RelayModuleNode::loop() {
   if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {
+    _lastMeasurement = millis();
+
     Homie.getLogger() << "〽 Sending Switch status: " << getId() << endl;
 
     const boolean state = getState();
@@ -56,8 +58,6 @@ void RelayModuleNode::loop() {
     } else {
       setProperty("switch").send("off");
     }
-
-    _lastMeasurement = millis();
   }
 }
 
@@ -83,5 +83,8 @@ void RelayModuleNode::onReadyToOperate() {
  *
  */
 void RelayModuleNode::setup() {
+  printCaption();
 
+  relay->on();
+  relay->off();
 }
