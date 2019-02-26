@@ -12,14 +12,16 @@
 #include "ConstantValues.hpp"
 #include "CurrentValue.hpp"
 
-#include "DallasTemperatureNode.hpp"
+#include "DS18B20TemperatureNode.hpp"
 #include "ESP32TemperatureNode.hpp"
 #include "RelayModuleNode.hpp"
 #include "RCSwitchNode.hpp"
 #include "Rule.hpp"
 
-const int PIN_DS_SOLAR = 16;  // Pin of Temp-Sensor Solar
-const int PIN_DS_POOL  = 17;  // Pin of Temp-Sensor Pool
+const int PIN_DS_SOLAR = 15;  // Pin of Temp-Sensor Solar
+const int PIN_DS_POOL  = 16;  // Pin of Temp-Sensor Pool
+const int PIN_DHT11    = 17;
+
 const int PIN_RSSWITCH = 18;  // Data-Pin of 433MHz Sender
 
 const int PIN_RELAY_POOL  = 18;
@@ -35,8 +37,8 @@ HomieSetting<long> temperatureHysteresisSetting("temperatureHysteresisSetting", 
 
 HomieSetting<long> operationStatusSetting("operationStatusSetting", "Operational Status");
 
-DallasTemperatureNode solarTemperatureNode("solarTemp", "Solar Temperature", PIN_DS_SOLAR, TEMP_READ_INTERVALL);
-DallasTemperatureNode poolTemperatureNode("poolTemp", "Pool Temperature", PIN_DS_POOL, TEMP_READ_INTERVALL);
+DS18B20TemperatureNode solarTemperatureNode("solarTemp", "Solar Temperature", PIN_DS_SOLAR, TEMP_READ_INTERVALL);
+DS18B20TemperatureNode poolTemperatureNode("poolTemp", "Pool Temperature", PIN_DS_POOL, TEMP_READ_INTERVALL);
 ESP32TemperatureNode  ctrlTemperatureNode("controllerTemp", "Controller Temperature", TEMP_READ_INTERVALL);
 
 RelayModuleNode poolPumpNode("poolPump", "Pool Pump", PIN_RELAY_POOL);
@@ -85,6 +87,9 @@ void setupHandler() {
   ctrlTemperatureNode.setMeasurementInterval(temperaturePublishIntervalSetting.get());
   solarTemperatureNode.setMeasurementInterval(temperaturePublishIntervalSetting.get());
   poolTemperatureNode.setMeasurementInterval(temperaturePublishIntervalSetting.get());
+
+  poolPumpNode.setMeasurementInterval(temperaturePublishIntervalSetting.get());
+  solarPumpNode.setMeasurementInterval(temperaturePublishIntervalSetting.get());
 }
 
 /**
@@ -113,7 +118,7 @@ void setup() {
 
   Homie.setup();
 
-  Homie.getLogger() << "✔ Setup ready" << endl;
+  Homie.getLogger() << "✔ main: Setup ready" << endl;
 }
 
 /**

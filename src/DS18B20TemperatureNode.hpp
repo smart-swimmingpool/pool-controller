@@ -9,10 +9,10 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
-class DallasTemperatureNode : public HomieNode {
+class DS18B20TemperatureNode : public HomieNode {
 
 public:
-  DallasTemperatureNode(const char* id, const char* name, const int pin, const int measurementInterval = MEASUREMENT_INTERVAL);
+  DS18B20TemperatureNode(const char* id, const char* name, const int pin, const int measurementInterval = MEASUREMENT_INTERVAL);
 
   int           getPin() const { return _pin; }
   void          setMeasurementInterval(unsigned long interval) { _measurementInterval = interval; }

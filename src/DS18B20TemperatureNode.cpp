@@ -2,9 +2,9 @@
  * Homie Node for Dallas Temperature sensors.
  *
  */
-#include "DallasTemperatureNode.hpp"
+#include "DS18B20TemperatureNode.hpp"
 
-DallasTemperatureNode::DallasTemperatureNode(const char* id, const char* name, const int pin, const int measurementInterval)
+DS18B20TemperatureNode::DS18B20TemperatureNode(const char* id, const char* name, const int pin, const int measurementInterval)
     : HomieNode(id, name, "temperature") {
 
   _pin                 = pin;
@@ -12,14 +12,14 @@ DallasTemperatureNode::DallasTemperatureNode(const char* id, const char* name, c
   _lastMeasurement     = 0;
 }
 
-void DallasTemperatureNode::printCaption() {
+void DS18B20TemperatureNode::printCaption() {
   Homie.getLogger() << cCaption << endl;
 }
 
 /**
  *
  */
-void DallasTemperatureNode::loop() {
+void DS18B20TemperatureNode::loop() {
   if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {
     _lastMeasurement = millis();
 
@@ -46,7 +46,7 @@ void DallasTemperatureNode::loop() {
 
               return;
             }
-          } while (temperature >= 50.0 || temperature <= -50.0);
+          } while (temperature >= -50.0 || temperature <= -120.0);
         }
 
         Homie.getLogger() << cIndent << "Status=ok" << endl;
@@ -55,6 +55,7 @@ void DallasTemperatureNode::loop() {
         setProperty(cTemperature).send(String(temperature));
       }
     } else {
+      numberOfDevices = sensor.getDeviceCount();
       //Homie.getLogger() << "No Sensor found!" << endl;
       //setProperty(cStatus).send("no sensor found.");
     }
@@ -64,10 +65,10 @@ void DallasTemperatureNode::loop() {
 /**
  *
  */
-void DallasTemperatureNode::onReadyToOperate() {
+void DS18B20TemperatureNode::onReadyToOperate() {
 
   advertise(cStatus).setName(cStatusName);
-  advertise(cTemperature).setName(cTemperatureName).setRetained(true).setDatatype("float").setFormat("-50:100").setUnit(cTemperatureUnit);
+  advertise(cTemperature).setName(cTemperatureName).setRetained(true).setDatatype("float").setFormat("-50:120").setUnit(cTemperatureUnit);
 
   // Grab a count of devices on the wire
   numberOfDevices = sensor.getDeviceCount();
@@ -101,7 +102,7 @@ void DallasTemperatureNode::onReadyToOperate() {
 /**
  *
  */
-void DallasTemperatureNode::setup() {
+void DS18B20TemperatureNode::setup() {
   printCaption();
 
   OneWire           oneWire(_pin);
