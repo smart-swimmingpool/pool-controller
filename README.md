@@ -20,6 +20,10 @@ PIN Usage:
 * PIN_DS_POOL  = 17; // Temp Pool
 * PIN_RSSWITCH = 18; // für 433MHz Sender
 
+### Layout
+
+see: [data/pool-controller.fzz](data/pool-controller.fzz)
+
 
 ## Implementation
 
