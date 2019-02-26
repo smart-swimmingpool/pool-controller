@@ -16,8 +16,12 @@ void DallasTemperatureNode::printCaption() {
   Homie.getLogger() << cCaption << endl;
 }
 
+/**
+ *
+ */
 void DallasTemperatureNode::loop() {
   if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {
+    _lastMeasurement = millis();
 
     if (numberOfDevices > 0) {
       Homie.getLogger() << "〽 Sending Temperature: " << getId() << endl;
@@ -32,7 +36,6 @@ void DallasTemperatureNode::loop() {
           do {
             temperature = sensor.getTempC(tempDeviceAddress);
 
-            _lastMeasurement = millis();
             cnt++;
             delay(1);
 
@@ -64,7 +67,7 @@ void DallasTemperatureNode::loop() {
 void DallasTemperatureNode::onReadyToOperate() {
 
   advertise(cStatus).setName(cStatusName);
-  advertise(getId()).setName(cTemperatureName).setDatatype("float").setFormat("-50:50").setUnit(cTemperatureUnit);
+  advertise(cTemperature).setName(cTemperatureName).setRetained(true).setDatatype("float").setFormat("-50:100").setUnit(cTemperatureUnit);
 
   // Grab a count of devices on the wire
   numberOfDevices = sensor.getDeviceCount();
@@ -96,7 +99,7 @@ void DallasTemperatureNode::onReadyToOperate() {
  *
  */
 void DallasTemperatureNode::setup() {
-  Homie.getLogger() << cCaption << endl;
+  printCaption();
 
   OneWire           oneWire(_pin);
   DallasTemperature sensor(&oneWire);
