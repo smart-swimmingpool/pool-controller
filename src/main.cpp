@@ -122,10 +122,26 @@ bool onSolarPumpSwitchHandler(const HomieRange& range, const String& value) {
 }
 
 /**
+ *
+ */
+void loopHandler() {
+  if (millis() - _lastLoop >= _loopInterval * 1000UL || _lastLoop == 0) {
+
+    _lastLoop = millis();
+  }
+}
+
+/**
  * Homie Setup handler.
  * Only called when wifi and mqtt are connected.
  */
 void setupHandler() {
+
+  //poolPumpNode.advertise("switch").setName("Switch").setDatatype(cDataTypBoolean).settable(onPoolPumpSwitchHandler);
+  //poolPumpNode.advertise("status").setName("Status");
+
+  //solarPumpNode.advertise("switch").setName("Switch").setDatatype(cDataTypBoolean).settable(onSolarPumpSwitchHandler);
+  //solarPumpNode.advertise("status").setName("Status");
 
   //default intervall of sending Temperature values
   temperaturePublishIntervalSetting.setDefaultValue(TEMP_READ_INTERVALL).setValidator([](long candidate) {
@@ -143,7 +159,10 @@ void setupHandler() {
 
   operationStatusSetting.setDefaultValue(0).setValidator([](int candidate) { return (candidate >= 0) && (candidate <= 3); });
 
+  // set mesurement intervals
   ctrlTemperatureNode.setMeasurementInterval(temperaturePublishIntervalSetting.get());
+  solarTemperatureNode.setMeasurementInterval(temperaturePublishIntervalSetting.get());
+  poolTemperatureNode.setMeasurementInterval(temperaturePublishIntervalSetting.get());
 }
 
 /**
@@ -168,6 +187,7 @@ void setup() {
   Homie_setBrand("SmartSwimmingpool");
   //Homie.disableLogging();
   Homie.setSetupFunction(setupHandler);
+  Homie.setLoopFunction(loopHandler);
 
   Homie.setup();
 

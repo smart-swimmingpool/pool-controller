@@ -30,8 +30,8 @@ void ESP32TemperatureNode::loop() {
     Homie.getLogger() << "〽 Sending Temperature: " << getId() << endl;
 
     //internal temp of ESP
-    uint8_t      temp_farenheit = temprature_sens_read();
-    const double temp           = (temp_farenheit - 32) / 1.8;
+    const uint8_t temp_farenheit = temprature_sens_read();
+    const double  temp           = (temp_farenheit - 32) / 1.8;
 
     Homie.getLogger() << cIndent << "Temperature = " << temp << cTemperatureUnit << endl;
     setProperty(cTemperature).send(String(temp, 2));

@@ -18,15 +18,20 @@ void RelayModuleNode::setState(const boolean state) {
 
   if (state) {
     relay->on();
-    setProperty(cSwitch).send(cFlagOn);
   } else {
     relay->off();
-    setProperty(cSwitch).send(cFlagOff);
   }
 
+  setProperty(cSwitch).send((state ? cFlagOn : cFlagOff));
+
+  // persist value
   preferences.begin(getId(), false);
   preferences.putBool(cSwitch, state);
   preferences.end();
+
+  setProperty(cStatus).send("ok");
+
+  Homie.getLogger() << cIndent << "Relay is " << (state ? cFlagOn : cFlagOff) << endl;
 }
 
 /**
@@ -46,6 +51,32 @@ void RelayModuleNode::printCaption() {
 /**
  *
  */
+bool RelayModuleNode::handleInput(const HomieRange& range, const String& property, const String& value) {
+
+  printCaption();
+
+  Homie.getLogger() << cIndent << "〽 handleInput -> property '" << property << "' value=" << value << endl;
+  bool retval;
+
+  if (value != cFlagOn && value != cFlagOff) {
+    Homie.getLogger() << "reveived invalid value for property [" + property + "]: " + value << endl;
+    setProperty(cStatus).send("reveived invalid value for property [" + property + "]: " + value);
+
+    retval = false;
+  } else {
+    const bool flag = (value == cFlagOn);
+    setState(flag);
+
+    retval = true;
+  }
+
+  Homie.getLogger() << "〽 handleInput <-" << retval << endl;
+  return retval;
+}
+
+/**
+ *
+ */
 void RelayModuleNode::loop() {
   if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {
     Homie.getLogger() << "〽 Sending Switch status: " << getId() << endl;
@@ -53,11 +84,7 @@ void RelayModuleNode::loop() {
     const boolean state = getState();
     Homie.getLogger() << cIndent << "switch: " << state << endl;
 
-    if (state) {
-      setProperty(cSwitch).send(cFlagOn);
-    } else {
-      setProperty(cSwitch).send(cFlagOff);
-    }
+    setProperty(cSwitch).send((state ? cFlagOn : cFlagOff));
 
     _lastMeasurement = millis();
   }
@@ -67,8 +94,8 @@ void RelayModuleNode::loop() {
  *
  */
 void RelayModuleNode::onReadyToOperate() {
-
-  advertise(cSwitch).setName("Switch").setDatatype("boolean");
+  advertise(cSwitch).setName("Switch").setDatatype("boolean").settable();
+  advertise(cStatus).setName("Satus").setDatatype("string");
 }
 
 /**
