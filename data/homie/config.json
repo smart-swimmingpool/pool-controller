@@ -12,11 +12,11 @@
     "enabled": false
   },
   "settings": {
-    "temperaturePublishInterval": 60,
-    "temperatureMaxPoolSetting": 29,
-    "temperatureMinSolarSetting": 50,
-    "temperatureHysteresisSetting": 1,
-    "operationStatusSetting": 0
+    "temperature-publish-interval": 60,
+    "temperature-max-pool": 29,
+    "temperature-min-solar": 50,
+    "temperature-hysteresis": 1,
+    "operation-status": 0
 
   }
 }

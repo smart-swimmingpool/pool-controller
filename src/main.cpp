@@ -29,20 +29,20 @@ const int PIN_RELAY_SOLAR = 19;
 
 const int TEMP_READ_INTERVALL = 60;  //Sekunden zwischen Updates der Temperaturen.
 
-HomieSetting<long> temperaturePublishIntervalSetting("temperaturePublishInterval", "The temperature publish interval in seconds");
+HomieSetting<long> temperaturePublishIntervalSetting("temperature-publish-interval", "The temperature publish interval in seconds");
 
-HomieSetting<long> temperatureMaxPoolSetting("temperatureMaxPoolSetting", "Maximum temperature of solar");
-HomieSetting<long> temperatureMinSolarSetting("temperatureMinSolarSetting", "Minimum temperature of solar");
-HomieSetting<long> temperatureHysteresisSetting("temperatureHysteresisSetting", "Temperature hysteresis");
+HomieSetting<long> temperatureMaxPoolSetting("temperature-max-pool", "Maximum temperature of solar");
+HomieSetting<long> temperatureMinSolarSetting("temperature-min-solar", "Minimum temperature of solar");
+HomieSetting<long> temperatureHysteresisSetting("temperature-hysteresis", "Temperature hysteresis");
 
-HomieSetting<long> operationStatusSetting("operationStatusSetting", "Operational Status");
+HomieSetting<long> operationStatusSetting("operation-status", "Operational Status");
 
-DS18B20TemperatureNode solarTemperatureNode("solarTemp", "Solar Temperature", PIN_DS_SOLAR, TEMP_READ_INTERVALL);
-DS18B20TemperatureNode poolTemperatureNode("poolTemp", "Pool Temperature", PIN_DS_POOL, TEMP_READ_INTERVALL);
-ESP32TemperatureNode  ctrlTemperatureNode("controllerTemp", "Controller Temperature", TEMP_READ_INTERVALL);
+DS18B20TemperatureNode solarTemperatureNode("solar-temp", "Solar Temperature", PIN_DS_SOLAR, TEMP_READ_INTERVALL);
+DS18B20TemperatureNode poolTemperatureNode("pool-temp", "Pool Temperature", PIN_DS_POOL, TEMP_READ_INTERVALL);
+ESP32TemperatureNode  ctrlTemperatureNode("controller-temp", "Controller Temperature", TEMP_READ_INTERVALL);
 
-RelayModuleNode poolPumpNode("poolPump", "Pool Pump", PIN_RELAY_POOL);
-RelayModuleNode solarPumpNode("solarPump", "Solar Pump", PIN_RELAY_SOLAR);
+RelayModuleNode poolPumpNode("pool-pump", "Pool Pump", PIN_RELAY_POOL);
+RelayModuleNode solarPumpNode("solar-pump", "Solar Pump", PIN_RELAY_SOLAR);
 
 //RCSwitchNode poolPumpeRCNode("poolPumpRC", "Pool Pump RC", PIN_RSSWITCH, "11111", "10000");
 //RCSwitchNode solarPumpeRCNode("solarPumpRC", "Solar Pump RC", PIN_RSSWITCH, "11111", "01000");
@@ -117,7 +117,6 @@ void setup() {
   Homie.setLoopFunction(loopHandler);
 
   Homie.setup();
-
   Homie.getLogger() << "✔ main: Setup ready" << endl;
 }
 
