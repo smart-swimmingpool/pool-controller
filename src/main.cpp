@@ -18,6 +18,7 @@
 #include "RCSwitchNode.hpp"
 #include "Rule.hpp"
 
+#ifdef ESP32
 const int PIN_DS_SOLAR = 15;  // Pin of Temp-Sensor Solar
 const int PIN_DS_POOL  = 16;  // Pin of Temp-Sensor Pool
 const int PIN_DHT11    = 17;
@@ -26,7 +27,16 @@ const int PIN_RSSWITCH = 18;  // Data-Pin of 433MHz Sender
 
 const int PIN_RELAY_POOL  = 18;
 const int PIN_RELAY_SOLAR = 19;
+#else
+const int PIN_DS_SOLAR = D5;  // Pin of Temp-Sensor Solar
+const int PIN_DS_POOL  = D6;  // Pin of Temp-Sensor Pool
+const int PIN_DHT11    = D7;
 
+const int PIN_RSSWITCH = 18;  // Data-Pin of 433MHz Sender
+
+const int PIN_RELAY_POOL  = D1;
+const int PIN_RELAY_SOLAR = D2;
+#endif
 const int TEMP_READ_INTERVALL = 60;  //Sekunden zwischen Updates der Temperaturen.
 
 HomieSetting<long> temperaturePublishIntervalSetting("temperature-publish-interval",
@@ -64,7 +74,6 @@ void loopHandler() {
 }
 
 /**
->>>>>>> 4be6c4edd235479387b9d6a8e148888b128b0725
  * Homie Setup handler.
  * Only called when wifi and mqtt are connected.
  */
@@ -135,6 +144,6 @@ void loop() {
 
   if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {
     _lastMeasurement = millis();
-    
+
   }
 }
