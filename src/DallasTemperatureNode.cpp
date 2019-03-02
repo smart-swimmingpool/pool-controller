@@ -67,7 +67,7 @@ void DallasTemperatureNode::onReadyToOperate() {
 
       if (sensor->getAddress(tempDeviceAddress, i)) {
         String adr = address2String(tempDeviceAddress);
-        Homie.getLogger() << cIndent << "Device " << i << " using address " << adr << endl;
+        Homie.getLogger() << cIndent << "PIN " << _pin << ": "<< "Device " << i << " using address " << adr << endl;
       }
     }
   } else {
@@ -99,14 +99,14 @@ void DallasTemperatureNode::loop() {
             cnt++;
             delay(1);
 
-            if (cnt > 3) {
+            if (cnt > 5) {
               temperature = NAN;
-              Homie.getLogger() << " Error reading sensor: " << getId() << endl;
+              Homie.getLogger() << " Error reading sensor: " << getId() << " count: " << cnt << endl;
               setProperty(cStatus).send("Error reading sensor");
 
               return;
             }
-          } while (temperature >= -50.0 || temperature <= -120.0);
+          } while (temperature >= 120.0 || temperature <= -50.0);
         }
 
         Homie.getLogger() << cIndent << "Status=ok" << endl;
