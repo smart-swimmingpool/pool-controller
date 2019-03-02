@@ -41,9 +41,14 @@ void RCSwitchNode::setState(const boolean state) {
   _state = state;
 
   //store state
+
+#ifdef ESP32
   preferences.begin(getId(), false);
   preferences.putBool(cSwitch, _state);
   preferences.end();
+#elif defined(ESP8266)
+
+#endif
 
   setProperty(cStatus).send("ok");
 
@@ -85,12 +90,12 @@ bool RCSwitchNode::handleInput(const HomieRange& range, const String& property, 
  */
 void RCSwitchNode::loop() {
   if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {
+    _lastMeasurement = millis();
+
     Homie.getLogger() << "〽 Sending Switch status: " << getId() << endl;
     Homie.getLogger() << cIndent << "switch: " << _state << endl;
 
     setProperty(cSwitch).send((_state ? cFlagOn : cFlagOff));
-
-    _lastMeasurement = millis();
   }
 }
 
@@ -117,10 +122,15 @@ void RCSwitchNode::setup() {
   printCaption();
   Homie.getLogger() << cIndent << "RCSwitch Pin: " << _pin << endl;
 
+#ifdef ESP32
   preferences.begin(getId(), false);
   boolean storedSwitchValue = preferences.getBool(cSwitch, false);
   // Close the Preferences
   preferences.end();
+#elif defined(ESP8266)
+  boolean storedSwitchValue = false;
+#endif
+
   Homie.getLogger() << cIndent << "Restore status: " << storedSwitchValue << endl;
 
   //restore from preferences

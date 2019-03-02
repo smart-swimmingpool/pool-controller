@@ -7,7 +7,11 @@
 
 #include <Homie.hpp>
 #include <RelayModule.h>
+#ifdef ESP32
 #include <Preferences.h>
+#elif defined(ESP8266)
+
+#endif
 
 class RelayModuleNode : public HomieNode {
 
@@ -21,10 +25,10 @@ public:
   boolean       getState();
 
 protected:
-  void         setup() override;
-  void         onReadyToOperate() override;
-  virtual bool handleInput(const HomieRange& range, const String& property, const String& value);
-	virtual void loop() override;
+  virtual void setup() override;
+  virtual void onReadyToOperate() override;
+  virtual bool handleInput(const HomieRange& range, const String& property, const String& value) override;
+  virtual void loop() override;
 
 private:
   // suggested rate is 1/60Hz (1m)
@@ -44,7 +48,11 @@ private:
   unsigned long _lastMeasurement;
   RelayModule*  relay = NULL;
 
+#ifdef ESP32
   Preferences preferences;
+#elif defined(ESP8266)
+
+#endif
 
   void printCaption();
 };

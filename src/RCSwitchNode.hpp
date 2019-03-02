@@ -7,7 +7,12 @@
 
 #include <Homie.hpp>
 #include <RCSwitch.h>
+
+#ifdef ESP32
 #include <Preferences.h>
+#elif defined(ESP8266)
+
+#endif
 
 class RCSwitchNode : public HomieNode {
 
@@ -48,7 +53,12 @@ private:
   RCSwitch*   rcSwitch = NULL;
   boolean     _state;
 
+#ifdef ESP32
   Preferences preferences;
+#elif defined(ESP8266)
+
+#endif
+
 
   void printCaption();
 };

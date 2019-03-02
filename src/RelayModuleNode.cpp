@@ -1,6 +1,8 @@
 /**
  * Homie Node for Relay Module.
  *
+ * Used lib:
+ * https://github.com/YuriiSalimov/RelayModule
  */
 #include "RelayModuleNode.hpp"
 
@@ -25,9 +27,13 @@ void RelayModuleNode::setState(const boolean state) {
   setProperty(cSwitch).send((state ? cFlagOn : cFlagOff));
 
   // persist value
+#ifdef ESP32
   preferences.begin(getId(), false);
   preferences.putBool(cSwitch, state);
   preferences.end();
+#elif defined(ESP8266)
+
+#endif
 
   setProperty(cStatus).send("ok");
 
@@ -106,10 +112,14 @@ void RelayModuleNode::setup() {
 
   relay = new RelayModule(_pin);
 
+#ifdef ESP32
   preferences.begin(getId(), false);
   boolean storedSwitchValue = preferences.getBool(cSwitch, false);
   // Close the Preferences
   preferences.end();
+#elif defined(ESP8266)
+  boolean storedSwitchValue = false;
+#endif
 
   //restore from preferences
   if (storedSwitchValue) {

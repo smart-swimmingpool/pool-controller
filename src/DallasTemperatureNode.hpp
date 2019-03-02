@@ -9,10 +9,10 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
-class DS18B20TemperatureNode : public HomieNode {
+class DallasTemperatureNode : public HomieNode {
 
 public:
-  DS18B20TemperatureNode(const char* id, const char* name, const int pin, const int measurementInterval = MEASUREMENT_INTERVAL);
+  DallasTemperatureNode(const char* id, const char* name, const int pin, const int measurementInterval = MEASUREMENT_INTERVAL);
 
   int           getPin() const { return _pin; }
   void          setMeasurementInterval(unsigned long interval) { _measurementInterval = interval; }
@@ -46,8 +46,10 @@ private:
 
   float temperature = NAN;
 
-  DallasTemperature sensor;
-  int               numberOfDevices;  // Number of temperature devices found
+  OneWire*           oneWire;
+  DallasTemperature* sensor;
+  int                numberOfDevices;  // Number of temperature devices found
 
-  void printCaption();
+  void   printCaption();
+  String address2String(const DeviceAddress deviceAddress);
 };

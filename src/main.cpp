@@ -12,7 +12,7 @@
 #include "ConstantValues.hpp"
 #include "CurrentValue.hpp"
 
-#include "DS18B20TemperatureNode.hpp"
+#include "DallasTemperatureNode.hpp"
 #include "ESP32TemperatureNode.hpp"
 #include "RelayModuleNode.hpp"
 #include "RCSwitchNode.hpp"
@@ -29,7 +29,8 @@ const int PIN_RELAY_SOLAR = 19;
 
 const int TEMP_READ_INTERVALL = 60;  //Sekunden zwischen Updates der Temperaturen.
 
-HomieSetting<long> temperaturePublishIntervalSetting("temperature-publish-interval", "The temperature publish interval in seconds");
+HomieSetting<long> temperaturePublishIntervalSetting("temperature-publish-interval",
+                                                     "The temperature publish interval in seconds");
 
 HomieSetting<long> temperatureMaxPoolSetting("temperature-max-pool", "Maximum temperature of solar");
 HomieSetting<long> temperatureMinSolarSetting("temperature-min-solar", "Minimum temperature of solar");
@@ -37,8 +38,8 @@ HomieSetting<long> temperatureHysteresisSetting("temperature-hysteresis", "Tempe
 
 HomieSetting<long> operationStatusSetting("operation-status", "Operational Status");
 
-DS18B20TemperatureNode solarTemperatureNode("solar-temp", "Solar Temperature", PIN_DS_SOLAR, TEMP_READ_INTERVALL);
-DS18B20TemperatureNode poolTemperatureNode("pool-temp", "Pool Temperature", PIN_DS_POOL, TEMP_READ_INTERVALL);
+DallasTemperatureNode solarTemperatureNode("solar-temp", "Solar Temperature", PIN_DS_SOLAR, TEMP_READ_INTERVALL);
+DallasTemperatureNode poolTemperatureNode("pool-temp", "Pool Temperature", PIN_DS_POOL, TEMP_READ_INTERVALL);
 ESP32TemperatureNode  ctrlTemperatureNode("controller-temp", "Controller Temperature", TEMP_READ_INTERVALL);
 
 RelayModuleNode poolPumpNode("pool-pump", "Pool Pump", PIN_RELAY_POOL);
@@ -47,8 +48,10 @@ RelayModuleNode solarPumpNode("solar-pump", "Solar Pump", PIN_RELAY_SOLAR);
 //RCSwitchNode poolPumpeRCNode("poolPumpRC", "Pool Pump RC", PIN_RSSWITCH, "11111", "10000");
 //RCSwitchNode solarPumpeRCNode("solarPumpRC", "Solar Pump RC", PIN_RSSWITCH, "11111", "01000");
 
-
 CurrentValues currentValues = CurrentValues();
+
+unsigned long _measurementInterval;
+unsigned long _lastMeasurement;
 
 /**
  *
@@ -84,12 +87,13 @@ void setupHandler() {
   operationStatusSetting.setDefaultValue(0).setValidator([](int candidate) { return (candidate >= 0) && (candidate <= 3); });
 
   // set mesurement intervals
-  ctrlTemperatureNode.setMeasurementInterval(temperaturePublishIntervalSetting.get());
-  solarTemperatureNode.setMeasurementInterval(temperaturePublishIntervalSetting.get());
-  poolTemperatureNode.setMeasurementInterval(temperaturePublishIntervalSetting.get());
+  _measurementInterval = temperaturePublishIntervalSetting.get();
+  ctrlTemperatureNode.setMeasurementInterval(_measurementInterval);
+  solarTemperatureNode.setMeasurementInterval(_measurementInterval);
+  poolTemperatureNode.setMeasurementInterval(_measurementInterval);
 
-  poolPumpNode.setMeasurementInterval(temperaturePublishIntervalSetting.get());
-  solarPumpNode.setMeasurementInterval(temperaturePublishIntervalSetting.get());
+  poolPumpNode.setMeasurementInterval(_measurementInterval);
+  solarPumpNode.setMeasurementInterval(_measurementInterval);
 }
 
 /**
@@ -117,6 +121,8 @@ void setup() {
   Homie.setLoopFunction(loopHandler);
 
   Homie.setup();
+
+  _lastMeasurement = 0;
   Homie.getLogger() << "✔ main: Setup ready" << endl;
 }
 
@@ -126,4 +132,9 @@ void setup() {
 void loop() {
 
   Homie.loop();
+
+  if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {
+    _lastMeasurement = millis();
+    
+  }
 }
