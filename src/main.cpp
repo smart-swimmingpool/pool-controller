@@ -107,20 +107,17 @@ void setupHandler() {
 }
 
 bool globalInputHandler(const HomieNode& node, const HomieRange& range, const String& property, const String& value) {
-  Homie.getLogger() << "Global input: " << node.getId()  << " property: " << property << " value: " << value << endl;
-
+  Homie.getLogger() << "Received on node " << node.getId() << ": " << property << " = " << value << endl;
   return false;
 }
 
 bool broadcastHandler(const String& level, const String& value) {
-  Homie.getLogger()  << "Received broadcast level " << level << ": " << value << endl;
+  Homie.getLogger() << "Received broadcast level " << level << ": " << value << endl;
   return true;
 }
 
 void onMessage(char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total) {
    Homie.getLogger()  << "Received message " << topic << ": " << payload << endl;
-
-
 }
 /**
  * Startup of controller.
