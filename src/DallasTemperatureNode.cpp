@@ -37,20 +37,20 @@ void DallasTemperatureNode::setup() {
   sensor->begin();
   // set global resolution to 9, 10, 11, or 12 bits
   sensor->setResolution(12);
-}
 
-/**
- *
- */
-void DallasTemperatureNode::onReadyToOperate() {
-
-  //advertise(cStatus).setName(cStatusName);
+    //advertise(cStatus).setName(cStatusName);
   advertise(cTemperature)
       .setName(cTemperatureName)
       .setRetained(true)
       .setDatatype("float")
       .setFormat("-50:120")
       .setUnit(cTemperatureUnit);
+}
+
+/**
+ *
+ */
+void DallasTemperatureNode::onReadyToOperate() {
 
   // Grab a count of devices on the wire
   numberOfDevices = sensor->getDeviceCount();

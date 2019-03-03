@@ -100,8 +100,7 @@ void RelayModuleNode::loop() {
  *
  */
 void RelayModuleNode::onReadyToOperate() {
-  advertise(cSwitch).setName("Switch").setRetained(true).setDatatype("boolean");//.settable();
-  advertise(cStatus).setName("Satus").setDatatype("string");
+
 }
 
 /**
@@ -109,6 +108,9 @@ void RelayModuleNode::onReadyToOperate() {
  */
 void RelayModuleNode::setup() {
   printCaption();
+
+  advertise(cSwitch).setName("Switch").setRetained(true).setDatatype("boolean").settable();
+  advertise(cStatus).setName("Satus").setDatatype("string");
 
   relay = new RelayModule(_pin);
 
