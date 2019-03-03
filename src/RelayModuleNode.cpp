@@ -16,7 +16,7 @@ RelayModuleNode::RelayModuleNode(const char* id, const char* name, const int pin
 /**
  *
  */
-void RelayModuleNode::setState(const boolean state) {
+void RelayModuleNode::setSwitch(const boolean state) {
 
   if (state) {
     relay->on();
@@ -43,7 +43,7 @@ void RelayModuleNode::setState(const boolean state) {
 /**
  *
  */
-boolean RelayModuleNode::getState() {
+boolean RelayModuleNode::getSwitch() {
   return relay->isOn();
 }
 
@@ -55,10 +55,10 @@ void RelayModuleNode::printCaption() {
 }
 
 /**
+ * Handles the received MQTT messages from Homie.
  *
  */
 bool RelayModuleNode::handleInput(const HomieRange& range, const String& property, const String& value) {
-
   printCaption();
 
   Homie.getLogger() << cIndent << "〽 handleInput -> property '" << property << "' value=" << value << endl;
@@ -71,7 +71,7 @@ bool RelayModuleNode::handleInput(const HomieRange& range, const String& propert
     retval = false;
   } else {
     const bool flag = (value == cFlagOn);
-    setState(flag);
+    setSwitch(flag);
 
     retval = true;
   }
@@ -89,10 +89,10 @@ void RelayModuleNode::loop() {
 
     Homie.getLogger() << "〽 Sending Switch status: " << getId() << endl;
 
-    const boolean state = getState();
-    Homie.getLogger() << cIndent << "switch: " << (state ? cFlagOn : cFlagOff) << endl;
+    const boolean isOn = getSwitch();
+    Homie.getLogger() << cIndent << "switch: " << (isOn ? cFlagOn : cFlagOff) << endl;
 
-    setProperty(cSwitch).send((state ? cFlagOn : cFlagOff));
+    setProperty(cSwitch).send((isOn ? cFlagOn : cFlagOff));
   }
 }
 
@@ -100,7 +100,7 @@ void RelayModuleNode::loop() {
  *
  */
 void RelayModuleNode::onReadyToOperate() {
-  advertise(cSwitch).setName("Switch").setRetained(true).setDatatype("boolean").settable();
+  advertise(cSwitch).setName("Switch").setRetained(true).setDatatype("boolean");//.settable();
   advertise(cStatus).setName("Satus").setDatatype("string");
 }
 

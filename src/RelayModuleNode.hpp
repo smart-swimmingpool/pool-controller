@@ -21,13 +21,14 @@ public:
   int           getPin() const { return _pin; }
   void          setMeasurementInterval(unsigned long interval) { _measurementInterval = interval; }
   unsigned long getMeasurementInterval() const { return _measurementInterval; }
-  void          setState(const boolean state);
-  boolean       getState();
+  void          setSwitch(const boolean state);
+  boolean       getSwitch();
 
 protected:
   virtual void setup() override;
   virtual void onReadyToOperate() override;
-  virtual bool handleInput(const HomieRange& range, const String& property, const String& value) override;
+  virtual bool handleInput(const HomieRange& range, const String& property, const String& value);
+
   virtual void loop() override;
 
 private:

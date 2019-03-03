@@ -33,8 +33,6 @@ DallasTemperatureNode::DallasTemperatureNode(const char* id, const char* name, c
  *
  */
 void DallasTemperatureNode::setup() {
-  printCaption();
-
   // Start up the library
   sensor->begin();
   // set global resolution to 9, 10, 11, or 12 bits
@@ -46,7 +44,7 @@ void DallasTemperatureNode::setup() {
  */
 void DallasTemperatureNode::onReadyToOperate() {
 
-  advertise(cStatus).setName(cStatusName);
+  //advertise(cStatus).setName(cStatusName);
   advertise(cTemperature)
       .setName(cTemperatureName)
       .setRetained(true)
@@ -56,9 +54,9 @@ void DallasTemperatureNode::onReadyToOperate() {
 
   // Grab a count of devices on the wire
   numberOfDevices = sensor->getDeviceCount();
-  Homie.getLogger() << cIndent << "Devices found at PIN " << _pin << ": " << numberOfDevices << endl;
+  Homie.getLogger() << cIndent << F("Devices found at PIN ") << _pin << F(": ") << numberOfDevices << endl;
   // report parasite power requirements
-  Homie.getLogger() << cIndent << "Parasite power is: " << sensor->isParasitePowerMode() << endl;
+  Homie.getLogger() << cIndent << F("Parasite power is: ") << sensor->isParasitePowerMode() << endl;
 
   if (numberOfDevices > 0) {
     for (int i = 0; i < numberOfDevices; i++) {
@@ -67,12 +65,12 @@ void DallasTemperatureNode::onReadyToOperate() {
 
       if (sensor->getAddress(tempDeviceAddress, i)) {
         String adr = address2String(tempDeviceAddress);
-        Homie.getLogger() << cIndent << "PIN " << _pin << ": "<< "Device " << i << " using address " << adr << endl;
+        Homie.getLogger() << cIndent << F("PIN ") << _pin << F(": ") << F("Device ") << i << F(" using address ") << adr << endl;
       }
     }
   } else {
-    Homie.getLogger() << "✖ No sensors found at pin " << _pin << endl;
-    setProperty(cStatus).send("no sensors found");
+    Homie.getLogger() << F("✖ No sensors found at pin ") << _pin << endl;
+    //setProperty(cStatus).send("no sensors found");
   }
 }
 
@@ -84,7 +82,7 @@ void DallasTemperatureNode::loop() {
     _lastMeasurement = millis();
 
     if (numberOfDevices > 0) {
-      Homie.getLogger() << "〽 Sending Temperature: " << getId() << endl;
+      Homie.getLogger() << F("〽 Sending Temperature: ") << getId() << endl;
       // call sensors.requestTemperatures() to issue a global temperature
       // request to all devices on the bus
       sensor->requestTemperatures();  // Send the command to get temperature readings
@@ -101,17 +99,18 @@ void DallasTemperatureNode::loop() {
 
             if (cnt > 5) {
               temperature = NAN;
-              Homie.getLogger() << " Error reading sensor: " << getId() << " count: " << cnt << endl;
-              setProperty(cStatus).send("Error reading sensor");
+              Homie.getLogger() << F(" Error reading sensor: ") << getId() << F(" count: ") << cnt << endl;
+             //setProperty(cStatus).send("Error reading sensor");
 
               return;
             }
           } while (temperature >= 120.0 || temperature <= -50.0);
         }
 
-        Homie.getLogger() << cIndent << "Status=ok" << endl;
-        setProperty(cStatus).send("ok");
-        Homie.getLogger() << cIndent << "Temperature=" << temperature << endl;
+        Homie.getLogger() << cIndent << F("Status=ok") << endl;
+        //setProperty(cStatus).send("ok");
+
+        Homie.getLogger() << cIndent << F("Temperature=") << temperature << endl;
         setProperty(cTemperature).send(String(temperature));
       }
     } else {
