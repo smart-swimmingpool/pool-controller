@@ -32,8 +32,6 @@ const int PIN_DS_SOLAR = D5;  // Pin of Temp-Sensor Solar
 const int PIN_DS_POOL  = D6;  // Pin of Temp-Sensor Pool
 const int PIN_DHT11    = D7;
 
-const int PIN_RSSWITCH = 18;  // Data-Pin of 433MHz Sender
-
 const int PIN_RELAY_POOL  = D1;
 const int PIN_RELAY_SOLAR = D2;
 #endif
@@ -50,8 +48,9 @@ HomieSetting<long> operationStatusSetting("operation-status", "Operational Statu
 
 DallasTemperatureNode solarTemperatureNode("solar-temp", "Solar Temperature", PIN_DS_SOLAR, TEMP_READ_INTERVALL);
 DallasTemperatureNode poolTemperatureNode("pool-temp", "Pool Temperature", PIN_DS_POOL, TEMP_READ_INTERVALL);
+#ifdef ESP32
 ESP32TemperatureNode  ctrlTemperatureNode("controller-temp", "Controller Temperature", TEMP_READ_INTERVALL);
-
+#endif
 RelayModuleNode poolPumpNode("pool-pump", "Pool Pump", PIN_RELAY_POOL);
 RelayModuleNode solarPumpNode("solar-pump", "Solar Pump", PIN_RELAY_SOLAR);
 
@@ -97,7 +96,9 @@ void setupHandler() {
 
   // set mesurement intervals
   _measurementInterval = temperaturePublishIntervalSetting.get();
+  #ifdef ESP32
   ctrlTemperatureNode.setMeasurementInterval(_measurementInterval);
+  #endif
   solarTemperatureNode.setMeasurementInterval(_measurementInterval);
   poolTemperatureNode.setMeasurementInterval(_measurementInterval);
 
@@ -105,6 +106,22 @@ void setupHandler() {
   solarPumpNode.setMeasurementInterval(_measurementInterval);
 }
 
+bool globalInputHandler(const HomieNode& node, const HomieRange& range, const String& property, const String& value) {
+  Homie.getLogger() << "Global input: " << node.getId()  << " property: " << property << " value: " << value << endl;
+
+  return false;
+}
+
+bool broadcastHandler(const String& level, const String& value) {
+  Homie.getLogger()  << "Received broadcast level " << level << ": " << value << endl;
+  return true;
+}
+
+void onMessage(char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total) {
+   Homie.getLogger()  << "Received message " << topic << ": " << payload << endl;
+
+
+}
 /**
  * Startup of controller.
  */
@@ -119,20 +136,19 @@ void setup() {
   Serial.println(F(" Pool Controller                     "));
   Serial.println(F("-------------------------------------"));
 
-  //mySwitch.enableTransmit(PIN_RSSWITCH);
-  //mySwitch.setRepeatTransmit(10);
-  //mySwitch.setPulseLength(350);
-
   Homie_setFirmware("pool-controller", "1.0.0");  // The underscore is not a typo! See Magic bytes
   Homie_setBrand("SmartSwimmingpool");
   //Homie.disableLogging();
   Homie.setSetupFunction(setupHandler);
   Homie.setLoopFunction(loopHandler);
+  Homie.setGlobalInputHandler(globalInputHandler); // before Homie.setup()
+  Homie.setBroadcastHandler(broadcastHandler);
 
+  Homie.getMqttClient().onMessage(onMessage);
   Homie.setup();
 
   _lastMeasurement = 0;
-  Homie.getLogger() << "✔ main: Setup ready" << endl;
+  Homie.getLogger() << F("✔ main: Setup ready") << endl;
 }
 
 /**
@@ -141,9 +157,4 @@ void setup() {
 void loop() {
 
   Homie.loop();
-
-  if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {
-    _lastMeasurement = millis();
-
-  }
 }
