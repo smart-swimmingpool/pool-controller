@@ -59,8 +59,8 @@ RelayModuleNode solarPumpNode("solar-pump", "Solar Pump", PIN_RELAY_SOLAR);
 
 CurrentValues currentValues = CurrentValues();
 
-unsigned long _measurementInterval;
-unsigned long _lastMeasurement;
+unsigned long _loopInterval;
+unsigned long _lastLoop;
 
 /**
  *
@@ -78,32 +78,16 @@ void loopHandler() {
  */
 void setupHandler() {
 
-  //default intervall of sending Temperature values
-  temperaturePublishIntervalSetting.setDefaultValue(TEMP_READ_INTERVALL).setValidator([](long candidate) {
-    return (candidate >= 0) && (candidate <= 300);
-  });
-
-  temperatureMaxPoolSetting.setDefaultValue(28.5).setValidator(
-      [](long candidate) { return (candidate >= 0) && (candidate <= 30); });
-
-  temperatureMinSolarSetting.setDefaultValue(50.0).setValidator(
-      [](long candidate) { return (candidate >= 0) && (candidate <= 100); });
-
-  temperatureHysteresisSetting.setDefaultValue(1.0).setValidator(
-      [](long candidate) { return (candidate >= 0) && (candidate <= 10); });
-
-  operationStatusSetting.setDefaultValue(0).setValidator([](int candidate) { return (candidate >= 0) && (candidate <= 3); });
-
   // set mesurement intervals
-  _measurementInterval = temperaturePublishIntervalSetting.get();
+  _loopInterval = temperaturePublishIntervalSetting.get();
   #ifdef ESP32
-  ctrlTemperatureNode.setMeasurementInterval(_measurementInterval);
+  ctrlTemperatureNode.setMeasurementInterval(_loopInterval);
   #endif
-  solarTemperatureNode.setMeasurementInterval(_measurementInterval);
-  poolTemperatureNode.setMeasurementInterval(_measurementInterval);
+  solarTemperatureNode.setMeasurementInterval(_loopInterval);
+  poolTemperatureNode.setMeasurementInterval(_loopInterval);
 
-  poolPumpNode.setMeasurementInterval(_measurementInterval);
-  solarPumpNode.setMeasurementInterval(_measurementInterval);
+  poolPumpNode.setMeasurementInterval(_loopInterval);
+  solarPumpNode.setMeasurementInterval(_loopInterval);
 }
 
 bool globalInputHandler(const HomieNode& node, const HomieRange& range, const String& property, const String& value) {
@@ -116,9 +100,6 @@ bool broadcastHandler(const String& level, const String& value) {
   return true;
 }
 
-void onMessage(char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total) {
-   Homie.getLogger()  << "Received message " << topic << ": " << payload << endl;
-}
 /**
  * Startup of controller.
  */
@@ -141,10 +122,27 @@ void setup() {
   Homie.setGlobalInputHandler(globalInputHandler); // before Homie.setup()
   Homie.setBroadcastHandler(broadcastHandler);
 
-  Homie.getMqttClient().onMessage(onMessage);
+    //default intervall of sending Temperature values
+  temperaturePublishIntervalSetting.setDefaultValue(TEMP_READ_INTERVALL).setValidator(
+    [](long candidate) {
+    return (candidate >= 0) && (candidate <= 300);
+  });
+
+  temperatureMaxPoolSetting.setDefaultValue(28.5).setValidator(
+      [](long candidate) { return (candidate >= 0) && (candidate <= 30); });
+
+  temperatureMinSolarSetting.setDefaultValue(50.0).setValidator(
+      [](long candidate) { return (candidate >= 0) && (candidate <= 100); });
+
+  temperatureHysteresisSetting.setDefaultValue(1.0).setValidator(
+      [](long candidate) { return (candidate >= 0) && (candidate <= 10); });
+
+  operationStatusSetting.setDefaultValue(0).setValidator(
+      [](int candidate) { return (candidate >= 0) && (candidate <= 3); });
+
   Homie.setup();
 
-  _lastMeasurement = 0;
+  _lastLoop = 0;
   Homie.getLogger() << F("✔ main: Setup ready") << endl;
 }
 
@@ -154,4 +152,9 @@ void setup() {
 void loop() {
 
   Homie.loop();
+
+    if (millis() - _lastLoop >= _loopInterval * 1000UL || _lastLoop == 0) {
+
+    _lastLoop = millis();
+  }
 }
