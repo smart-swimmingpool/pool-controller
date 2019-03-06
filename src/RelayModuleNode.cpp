@@ -51,7 +51,7 @@ boolean RelayModuleNode::getSwitch() {
  *
  */
 void RelayModuleNode::printCaption() {
-  Homie.getLogger() << cCaption << endl;
+  Homie.getLogger() << cCaption << " pin[" << _pin << "]:" << endl;
 }
 
 /**
