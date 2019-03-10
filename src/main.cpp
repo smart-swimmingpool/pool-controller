@@ -16,6 +16,7 @@
 #include "ESP32TemperatureNode.hpp"
 #include "RelayModuleNode.hpp"
 #include "RCSwitchNode.hpp"
+#include "OperationModeNode.hpp"
 #include "Rule.hpp"
 
 #ifdef ESP32
@@ -44,15 +45,17 @@ HomieSetting<long> temperatureMaxPoolSetting("temperature-max-pool", "Maximum te
 HomieSetting<long> temperatureMinSolarSetting("temperature-min-solar", "Minimum temperature of solar");
 HomieSetting<long> temperatureHysteresisSetting("temperature-hysteresis", "Temperature hysteresis");
 
-HomieSetting<long> operationStatusSetting("operation-status", "Operational Status");
+HomieSetting<const char*> operationModeSetting("operation-mode", "Operational Mode");
 
 DallasTemperatureNode solarTemperatureNode("solar-temp", "Solar Temperature", PIN_DS_SOLAR, TEMP_READ_INTERVALL);
 DallasTemperatureNode poolTemperatureNode("pool-temp", "Pool Temperature", PIN_DS_POOL, TEMP_READ_INTERVALL);
 #ifdef ESP32
-ESP32TemperatureNode  ctrlTemperatureNode("controller-temp", "Controller Temperature", TEMP_READ_INTERVALL);
+ESP32TemperatureNode ctrlTemperatureNode("controller-temp", "Controller Temperature", TEMP_READ_INTERVALL);
 #endif
 RelayModuleNode poolPumpNode("pool-pump", "Pool Pump", PIN_RELAY_POOL);
 RelayModuleNode solarPumpNode("solar-pump", "Solar Pump", PIN_RELAY_SOLAR);
+
+OperationModeNode operationModeNode("operation-mode", "Operation Mode");
 
 //RCSwitchNode poolPumpeRCNode("poolPumpRC", "Pool Pump RC", PIN_RSSWITCH, "11111", "10000");
 //RCSwitchNode solarPumpeRCNode("solarPumpRC", "Solar Pump RC", PIN_RSSWITCH, "11111", "01000");
@@ -80,24 +83,18 @@ void setupHandler() {
 
   // set mesurement intervals
   _loopInterval = temperaturePublishIntervalSetting.get();
-  #ifdef ESP32
+#ifdef ESP32
   ctrlTemperatureNode.setMeasurementInterval(_loopInterval);
-  #endif
+#endif
   solarTemperatureNode.setMeasurementInterval(_loopInterval);
   poolTemperatureNode.setMeasurementInterval(_loopInterval);
 
   poolPumpNode.setMeasurementInterval(_loopInterval);
   solarPumpNode.setMeasurementInterval(_loopInterval);
-}
 
-bool globalInputHandler(const HomieNode& node, const HomieRange& range, const String& property, const String& value) {
-  Homie.getLogger() << "Received on node " << node.getId() << ": " << property << " = " << value << endl;
-  return false;
-}
-
-bool broadcastHandler(const String& level, const String& value) {
-  Homie.getLogger() << "Received broadcast level " << level << ": " << value << endl;
-  return true;
+  char* mode;
+  strcpy(mode, operationModeSetting.get());
+  operationModeNode.setMode(mode);
 }
 
 /**
@@ -119,12 +116,9 @@ void setup() {
   //Homie.disableLogging();
   Homie.setSetupFunction(setupHandler);
   Homie.setLoopFunction(loopHandler);
-  Homie.setGlobalInputHandler(globalInputHandler); // before Homie.setup()
-  Homie.setBroadcastHandler(broadcastHandler);
 
-    //default intervall of sending Temperature values
-  temperaturePublishIntervalSetting.setDefaultValue(TEMP_READ_INTERVALL).setValidator(
-    [](long candidate) {
+  //default intervall of sending Temperature values
+  temperaturePublishIntervalSetting.setDefaultValue(TEMP_READ_INTERVALL).setValidator([](long candidate) {
     return (candidate >= 0) && (candidate <= 300);
   });
 
@@ -137,8 +131,9 @@ void setup() {
   temperatureHysteresisSetting.setDefaultValue(1.0).setValidator(
       [](long candidate) { return (candidate >= 0) && (candidate <= 10); });
 
-  operationStatusSetting.setDefaultValue(0).setValidator(
-      [](int candidate) { return (candidate >= 0) && (candidate <= 3); });
+  operationModeSetting.setDefaultValue("auto").setValidator([](const char* candidate) {
+    return (strcmp(candidate, "auto")) || (strcmp(candidate, "manu")) || (strcmp(candidate, "boost"));
+  });
 
   Homie.setup();
 
@@ -153,8 +148,13 @@ void loop() {
 
   Homie.loop();
 
-    if (millis() - _lastLoop >= _loopInterval * 1000UL || _lastLoop == 0) {
+  if (millis() - _lastLoop >= _loopInterval * 1000UL || _lastLoop == 0) {
 
     _lastLoop = millis();
+
+    float poolTemp  = poolTemperatureNode.getTemperature();
+    float solarTemp = solarTemperatureNode.getTemperature();
+
+    //Rule rule = operationModeNode.getRule();
   }
 }
