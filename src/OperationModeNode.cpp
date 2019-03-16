@@ -1,6 +1,8 @@
 
 #include "OperationModeNode.hpp"
-#include "Rule.hpp"
+#include "RuleManu.hpp"
+#include "RuleAuto.hpp"
+#include "RuleBoost.hpp"
 
 /**
  *
@@ -10,16 +12,51 @@ OperationModeNode::OperationModeNode(const char* id, const char* name, const int
 
   _measurementInterval = (measurementInterval > MIN_INTERVAL) ? measurementInterval : MIN_INTERVAL;
   _lastMeasurement     = 0;
+
+  setRunLoopDisconnected(true);
 }
 
 /**
  *
  */
-void OperationModeNode::setMode(char* mode) {
+void OperationModeNode::addRule(Rule* rule) {
 
-  _mode = mode;
+  _ruleVec.PushBack(rule);
+}
 
-  setProperty(cMode).send(_mode);
+/**
+ *
+ */
+Rule* OperationModeNode::getRule() {
+
+  for (int i = 0; i < _ruleVec.Size(); i++) {
+    if (_ruleVec[i]->getMode() == _mode) {
+      return _ruleVec[i];
+    }
+  }
+
+  //return nullptr;
+}
+/**
+ *
+ */
+bool OperationModeNode::setMode(char* mode) {
+  Homie.getLogger() << cIndent << "mode=" << mode << endl;
+
+  bool retval;
+
+  if ((mode == STATUS_AUTO) || (mode == STATUS_MANU) || (mode == STATUS_BOOST)) {
+
+    _mode  = mode;
+    retval = true;
+
+  } else {
+
+    Homie.getLogger() << "UNDEFINED Status. Current unchanged mode: " << _mode << endl;
+    retval = false;
+  }
+
+  return retval;
 }
 
 /**
@@ -34,7 +71,23 @@ char* OperationModeNode::getMode() {
  */
 void OperationModeNode::setup() {
 
-  advertise(cMode).setName(cModeName).setRetained(true).setDatatype("enum").setFormat("manu,auto,boost");
+  advertise(cMode).setName(cModeName).setRetained(true).setDatatype("enum").setFormat("manu,auto,boost").settable();
+
+  advertise(cPoolMaxTemp)
+      .setName(cPoolMaxTempName)
+      .setRetained(true)
+      .setDatatype("float")
+      .setFormat("0:40")
+      .setUnit("°C")
+      .settable();
+
+  advertise(cSolarMinTemp)
+      .setName(cSolarMinTempName)
+      .setRetained(true)
+      .setDatatype("float")
+      .setFormat("0:100")
+      .setUnit("°C")
+      .settable();
 }
 
 /**
@@ -51,7 +104,12 @@ void OperationModeNode::loop() {
     Homie.getLogger() << "〽 Sending mode: " << getId() << endl;
     Homie.getLogger() << cIndent << "mode: " << _mode << endl;
 
-    //setProperty(cStatus).send(_state);
+    if (Homie.isConnected()) {
+      setProperty(cMode).send(_mode);
+    }
+
+    //call loop to evaluate the current rule
+    getRule()->loop();
   }
 }
 
@@ -62,28 +120,34 @@ bool OperationModeNode::handleInput(const HomieRange& range, const String& prope
   printCaption();
 
   Homie.getLogger() << cIndent << "〽 handleInput -> property '" << property << "' value=" << value << endl;
+  bool retval;
 
-  if (value == STATUS_AUTO) {
-    Homie.getLogger() << "AUTO" << endl;
+  if (property.equalsIgnoreCase(cMode)) {
+    //set operational mode
+    retval = this->setMode(string2char(value));
 
-  } else if (value == STATUS_MANU) {
+  } else if (property.equalsIgnoreCase(cSolarMinTemp)) {
+    //solar min temp
 
-    Homie.getLogger() << "MANU" << endl;
-
-  } else if (value == STATUS_BOOST) {
-    Homie.getLogger() << "BOOST" << endl;
+  } else if (property.equalsIgnoreCase(cPoolMaxTemp)) {
+    // pool max temp
 
   } else {
-    Homie.getLogger() << "UNDEFINED Status" << endl;
-
-    return false;
+    retval = false;
   }
 
-  return true;
+  return retval;
 }
 /**
  *
  */
 void OperationModeNode::printCaption() {
   Homie.getLogger() << cCaption << endl;
+}
+
+char* OperationModeNode::string2char(String comand) {
+  if (comand.length() != 0) {
+    char* p = const_cast<char*>(comand.c_str());
+    return p;
+  }
 }

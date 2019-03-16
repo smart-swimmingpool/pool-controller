@@ -6,6 +6,8 @@
 #pragma once
 
 #include <Homie.hpp>
+#include <Vector.h>
+
 #include "Rule.hpp"
 
 class OperationModeNode : public HomieNode {
@@ -15,8 +17,10 @@ public:
 
   void          setMeasurementInterval(unsigned long interval) { _measurementInterval = interval; }
   unsigned long getMeasurementInterval() const { return _measurementInterval; }
-  void          setMode(char* mode);
+  bool          setMode(char* mode);
   char*         getMode();
+  void          addRule(Rule* rule);
+  Rule*         getRule();
 
   enum MODE { AUTO, MANU, BOOST };
   const char* STATUS_AUTO  = "auto";
@@ -39,9 +43,18 @@ private:
   const char* cMode     = "mode";
   const char* cModeName = "Mode";
 
+  const char* cPoolMaxTemp     = "pool-max-temp";
+  const char* cPoolMaxTempName = "Max. Pool Temperature";
+
+  const char* cSolarMinTemp     = "solar-min-temp";
+  const char* cSolarMinTempName = "Min. Solar Temperature";
+
   char*         _mode;
+  Vector<Rule*> _ruleVec;
+
   unsigned long _measurementInterval;
   unsigned long _lastMeasurement;
 
-  void printCaption();
+  void  printCaption();
+  char* string2char(String comand);
 };

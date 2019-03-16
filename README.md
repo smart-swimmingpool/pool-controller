@@ -1,11 +1,11 @@
 ﻿# Pool Control 2.0
 
+[!🏊 Smart Swimmingpool](https://img.shields.io/badge/%F0%9F%8F%8A%20-Smart%20Swimmingpool-blue.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+🏊 Homie 3.0 compatible swimmingpool controller 🎛️.
 
-Homie 3.0 compatible pool controller.
-
-## Hardware
+## Hardware / BOM
 
 - ESP32 Controller ([Amazon](https://amzn.to/2CVjDCI))
 - Temperature Sensor Pool ([Amazon](https://amzn.to/2HJHdrL))
@@ -16,20 +16,30 @@ Homie 3.0 compatible pool controller.
 ### Configuration
 
 PIN Usage:
-* PIN_DS_SOLAR = 16; // Temp Solar
-* PIN_DS_POOL  = 17; // Temp Pool
-* PIN_RSSWITCH = 18; // für 433MHz Sender
+
+- PIN_DS_SOLAR = 16; // Temp Solar
+- PIN_DS_POOL = 17; // Temp Pool
+- PIN_RSSWITCH = 18; // für 433MHz Sender
 
 ### Layout
 
 see: [data/pool-controller.fzz](data/pool-controller.fzz)
 
-
 ## Implementation
 
 ## Used Libraries
 
-* Homie-esp8266
-* DallasTemperature
-* DHT
-* rc-switch
+- Homie-esp8266
+- DallasTemperature
+- DHT
+- rc-switch
+- [RelayModule](https://github.com/YuriiSalimov/RelayModule)
+- [Vector](https://github.com/tomstewart89/Vector)
+
+# License
+
+[LICENSE](LICENSE)
+
+---
+
+DIY My Smart Home: (https://medium.com/diy-my-smart-home)
