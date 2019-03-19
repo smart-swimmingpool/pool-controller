@@ -42,6 +42,19 @@ see: [data/pool-controller.fzz](data/pool-controller.fzz)
 - [RelayModule](https://github.com/YuriiSalimov/RelayModule)
 - [Vector](https://github.com/tomstewart89/Vector)
 
+
+### Clearing retained messages
+In some cases some retained messages can be wanted and we don’t want to clear all the retained messages.
+
+The messages will have to be cleared one by one using the topic
+
+To clear a specific message:
+
+```bash
+mosquitto_pub -h hostname -t homie -n -r -d
+```
+
+
 # License
 
 [LICENSE](LICENSE)
