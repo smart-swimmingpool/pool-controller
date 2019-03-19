@@ -1,6 +1,6 @@
 ﻿# 🏊 Smart Swimmingpool Controller 2.0
 
-[!Smart Swimmingpool](https://img.shields.io/badge/%F0%9F%8F%8A%20-Smart%20Swimmingpool-blue.svg)
+[![Smart Swimmingpool](https://img.shields.io/badge/%F0%9F%8F%8A%20-Smart%20Swimmingpool-blue.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 🏊 Homie 3.0 compatible smart swimmingpool controller 🎛️:
