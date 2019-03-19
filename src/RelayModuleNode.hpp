@@ -26,7 +26,6 @@ public:
 
 protected:
   virtual void setup() override;
-  virtual void onReadyToOperate() override;
   virtual bool handleInput(const HomieRange& range, const String& property, const String& value);
 
   virtual void loop() override;
@@ -40,8 +39,8 @@ private:
   const char* cIndent  = "  ◦ ";
 
   const char* cSwitch  = "switch";
-  const char* cFlagOn  = "on";
-  const char* cFlagOff = "off";
+  const char* cFlagOn  = "true";
+  const char* cFlagOff = "false";
   const char* cStatus  = "status";
 
   int           _pin;

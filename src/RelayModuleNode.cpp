@@ -35,8 +35,6 @@ void RelayModuleNode::setSwitch(const boolean state) {
 
 #endif
 
-  setProperty(cStatus).send("ok");
-
   Homie.getLogger() << cIndent << "Relay is " << (state ? cFlagOn : cFlagOff) << endl;
 }
 
@@ -66,7 +64,8 @@ bool RelayModuleNode::handleInput(const HomieRange& range, const String& propert
 
   if (value != cFlagOn && value != cFlagOff) {
     Homie.getLogger() << "reveived invalid value for property [" + property + "]: " + value << endl;
-    setProperty(cStatus).send("reveived invalid value for property [" + property + "]: " + value);
+
+    //setProperty(cStatus).send("reveived invalid value for property [" + property + "]: " + value);
 
     retval = false;
   } else {
@@ -99,18 +98,11 @@ void RelayModuleNode::loop() {
 /**
  *
  */
-void RelayModuleNode::onReadyToOperate() {
-
-}
-
-/**
- *
- */
 void RelayModuleNode::setup() {
   printCaption();
 
   advertise(cSwitch).setName("Switch").setRetained(true).setDatatype("boolean").settable();
-  advertise(cStatus).setName("Satus").setDatatype("string");
+  //advertise(cStatus).setName("Satus").setDatatype("string");
 
   relay = new RelayModule(_pin);
 

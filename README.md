@@ -1,11 +1,17 @@
-﻿# Pool Control 2.0
+﻿# 🏊 Smart Swimmingpool Controller 2.0
 
+[![Smart Swimmingpool](https://img.shields.io/badge/%F0%9F%8F%8A%20-Smart%20Swimmingpool-blue.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+🏊 Homie 3.0 compatible smart swimmingpool controller 🎛️:
 
-Homie 3.0 compatible pool controller.
+- [ ] Manage water timed circulation for cleaning
+- [ ] Manage water heating by additional pump for solar circuit
+- [ ] [Homie 3](https://homieiot.github.io/) compatible MQTT messaging
+- [ ] Independent of smarthome servers
+- [ ] Integration for OpenHab > 2.4
 
-## Hardware
+## Hardware / BOM
 
 - ESP32 Controller ([Amazon](https://amzn.to/2CVjDCI))
 - Temperature Sensor Pool ([Amazon](https://amzn.to/2HJHdrL))
@@ -16,23 +22,25 @@ Homie 3.0 compatible pool controller.
 ### Configuration
 
 PIN Usage:
-* PIN_DS_SOLAR = 16; // Temp Solar
-* PIN_DS_POOL  = 17; // Temp Pool
-* PIN_RSSWITCH = 18; // für 433MHz Sender
+
+- PIN_DS_SOLAR = 16; // Temp Solar
+- PIN_DS_POOL = 17; // Temp Pool
+- PIN_RSSWITCH = 18; // für 433MHz Sender
 
 ### Layout
 
 see: [data/pool-controller.fzz](data/pool-controller.fzz)
 
-
 ## Implementation
 
 ## Used Libraries
 
-* Homie-esp8266
-* DallasTemperature
-* DHT
-* rc-switch
+- Homie-esp8266
+- DallasTemperature
+- DHT
+- rc-switch
+- [RelayModule](https://github.com/YuriiSalimov/RelayModule)
+- [Vector](https://github.com/tomstewart89/Vector)
 
 
 ### Clearing retained messages
@@ -42,4 +50,15 @@ The messages will have to be cleared one by one using the topic
 
 To clear a specific message:
 
+```bash
 mosquitto_pub -h hostname -t homie -n -r -d
+```
+
+
+# License
+
+[LICENSE](LICENSE)
+
+---
+
+DIY My Smart Home: (https://medium.com/diy-my-smart-home)
