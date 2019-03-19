@@ -33,3 +33,13 @@ see: [data/pool-controller.fzz](data/pool-controller.fzz)
 * DallasTemperature
 * DHT
 * rc-switch
+
+
+### Clearing retained messages
+In some cases some retained messages can be wanted and we don’t want to clear all the retained messages.
+
+The messages will have to be cleared one by one using the topic
+
+To clear a specific message:
+
+mosquitto_pub -h hostname -t homie -n -r -d
