@@ -17,8 +17,8 @@ public:
 
   void          setMeasurementInterval(unsigned long interval) { _measurementInterval = interval; }
   unsigned long getMeasurementInterval() const { return _measurementInterval; }
-  bool          setMode(char* mode);
-  char*         getMode();
+  bool          setMode(String mode);
+  String        getMode();
   void          addRule(Rule* rule);
   Rule*         getRule();
 
@@ -49,7 +49,7 @@ private:
   const char* cSolarMinTemp     = "solar-min-temp";
   const char* cSolarMinTempName = "Min. Solar Temperature";
 
-  char*         _mode;
+  String        _mode;
   Vector<Rule*> _ruleVec;
 
   unsigned long _measurementInterval;

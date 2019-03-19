@@ -30,28 +30,27 @@ void OperationModeNode::addRule(Rule* rule) {
 Rule* OperationModeNode::getRule() {
 
   for (int i = 0; i < _ruleVec.Size(); i++) {
-    if (_ruleVec[i]->getMode() == _mode) {
+    if (_mode.equals(_ruleVec[i]->getMode())) {
       return _ruleVec[i];
     }
   }
 
   //return nullptr;
 }
+
 /**
  *
  */
-bool OperationModeNode::setMode(char* mode) {
+bool OperationModeNode::setMode(String mode) {
   Homie.getLogger() << cIndent << "mode=" << mode << endl;
 
   bool retval;
 
-  if ((mode == STATUS_AUTO) || (mode == STATUS_MANU) || (mode == STATUS_BOOST)) {
-
+  if (mode.equals(STATUS_AUTO) || mode.equals(STATUS_MANU) || mode.equals(STATUS_BOOST)) {
     _mode  = mode;
     retval = true;
 
   } else {
-
     Homie.getLogger() << "UNDEFINED Status. Current unchanged mode: " << _mode << endl;
     retval = false;
   }
@@ -62,7 +61,7 @@ bool OperationModeNode::setMode(char* mode) {
 /**
  *
  */
-char* OperationModeNode::getMode() {
+String OperationModeNode::getMode() {
   return _mode;
 }
 

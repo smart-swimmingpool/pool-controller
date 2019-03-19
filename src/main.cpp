@@ -4,10 +4,12 @@
  * - Interner Temperatur-Sensor
  * - 433MHz Sender für Pumpnsteuerung
  *
- * Wird über openHAB gesteurt.
+ * Wird über openHAB gesteuert.
  */
 
+#include <Arduino.h>
 #include <Homie.h>
+//#include <ezTime.h>
 
 #include "ConstantValues.hpp"
 
@@ -40,6 +42,9 @@ const int PIN_RELAY_SOLAR = D2;
 #endif
 const int TEMP_READ_INTERVALL = 60;  //Sekunden zwischen Updates der Temperaturen.
 
+//#define LOCALTZ_POSIX "CET-1CEST,M3.4.0/2,M10.4.0/3"  // Time in Berlin
+//Timezone tz;
+
 HomieSetting<long> loopIntervalSetting("loop-interval", "The processing interval in seconds");
 
 HomieSetting<long> temperatureMaxPoolSetting("temperature-max-pool", "Maximum temperature of solar");
@@ -57,9 +62,6 @@ RelayModuleNode poolPumpNode("pool-pump", "Pool Pump", PIN_RELAY_POOL);
 RelayModuleNode solarPumpNode("solar-pump", "Solar Pump", PIN_RELAY_SOLAR);
 
 OperationModeNode operationModeNode("operation-mode", "Operation Mode");
-
-//RCSwitchNode poolPumpeRCNode("poolPumpRC", "Pool Pump RC", PIN_RSSWITCH, "11111", "10000");
-//RCSwitchNode solarPumpeRCNode("solarPumpRC", "Solar Pump RC", PIN_RSSWITCH, "11111", "01000");
 
 /**
  * Homie Setup handler.
@@ -80,8 +82,7 @@ void setupHandler() {
   ctrlTemperatureNode.setMeasurementInterval(_loopInterval);
 #endif
 
-  char* mode;
-  strcpy(mode, operationModeSetting.get());
+  String mode = String(operationModeSetting.get());
   operationModeNode.setMode(mode);
 }
 
@@ -139,6 +140,13 @@ void setup() {
   //Homie.disableLogging();
   Homie.setSetupFunction(setupHandler);
   Homie.setup();
+
+  //etTime
+  //setInterval(60);
+  //setDebug(INFO);
+  //tz.setPosix(LOCALTZ_POSIX);
+  //tz.setLocation(F("de"));
+
   Homie.getLogger() << F("✔ main: Setup ready") << endl;
 }
 
@@ -148,4 +156,10 @@ void setup() {
 void loop() {
 
   Homie.loop();
+
+  if (Homie.isConnected()) {
+    //Homie.getLogger() << F("Germany: ") << tz.dateTime() << endl;
+  }
+  //ezTime
+  //events();
 }

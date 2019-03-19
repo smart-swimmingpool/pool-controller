@@ -1,23 +1,49 @@
 
 #include "RuleAuto.hpp"
 
+/**
+ *
+ */
 RuleAuto::RuleAuto(RelayModuleNode* solarRelay, RelayModuleNode* poolRelay) {
   _solarRelay = solarRelay;
   _poolRelay  = poolRelay;
 }
 
+/**
+ *
+ */
 void RuleAuto::addPumpSwitchNode(RelayModuleNode* node) {
   _poolRelay = node;
 }
+
+/**
+ *
+ */
 void RuleAuto::addSolarSwitchNode(RelayModuleNode* node) {
   _solarRelay = node;
 }
 
+/**
+ *
+ */
 void RuleAuto::loop() {
+  if (_poolRelay->getSwitch()) {
+    if ((!_solarRelay->getSwitch()) && (getPoolTemperature() <= (getPoolMaxTemperature() - getTemperaturHysteresis()))) {
+      Homie.getLogger() << cIndent << "Boost: below max. Temperature. Switch solar on" << endl;
+      _solarRelay->setSwitch(true);
 
-  if (getSolarTemperature() > 50) {
-  }
+    } else if ((_solarRelay->getSwitch()) && (getPoolTemperature() > (getPoolMaxTemperature() + getTemperaturHysteresis()))) {
+      Homie.getLogger() << cIndent << "Boost: Max. Temperature reached. Switch solar off" << endl;
+      _solarRelay->setSwitch(false);
 
-  if (getSolarTemperature() > getPoolTemperature()) {
+    } else {
+      // no change of status
+    }
+  } else {
+    Homie.getLogger() << cIndent << "pool pump is disabled." << endl;
   }
+}
+
+bool RuleAuto::checkPoolPumpTimer() {
+  
 }
