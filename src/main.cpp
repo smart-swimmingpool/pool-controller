@@ -9,7 +9,8 @@
 
 #include <Arduino.h>
 #include <Homie.h>
-//#include <ezTime.h>
+#include <time.h>
+#include <simpleDSTadjust.h>
 
 #include "ConstantValues.hpp"
 
@@ -22,6 +23,13 @@
 #include "RuleManu.hpp"
 #include "RuleAuto.hpp"
 #include "RuleBoost.hpp"
+#ifdef ESP32
+
+#elif ESP8266
+//#include <ESP8266WiFi.h>
+#endif
+
+
 
 #ifdef ESP32
 const int PIN_DS_SOLAR = 15;  // Pin of Temp-Sensor Solar
@@ -42,8 +50,10 @@ const int PIN_RELAY_SOLAR = D2;
 #endif
 const int TEMP_READ_INTERVALL = 60;  //Sekunden zwischen Updates der Temperaturen.
 
-//#define LOCALTZ_POSIX "CET-1CEST,M3.4.0/2,M10.4.0/3"  // Time in Berlin
-//Timezone tz;
+struct dstRule StartRule = {"MESZ", Last, Sun, Mar, 1, 3600};    // Daylight time = UTC/GMT -4 hours
+struct dstRule EndRule = {"MEZ", Last, Sun, Oct, 1, 0};       // Standard time = UTC/GMT -5 hour
+// Setup simpleDSTadjust Library rules
+simpleDSTadjust dstAdjusted(StartRule, EndRule);
 
 HomieSetting<long> loopIntervalSetting("loop-interval", "The processing interval in seconds");
 
@@ -62,6 +72,32 @@ RelayModuleNode poolPumpNode("pool-pump", "Pool Pump", PIN_RELAY_POOL);
 RelayModuleNode solarPumpNode("solar-pump", "Solar Pump", PIN_RELAY_SOLAR);
 
 OperationModeNode operationModeNode("operation-mode", "Operation Mode");
+
+
+unsigned long _measurementInterval = 10;
+unsigned long _lastMeasurement;
+
+/**
+ *
+ */
+tm* getDateTime(time_t offset) {
+
+  char *dstAbbrev;
+  time_t t = dstAdjusted.time(&dstAbbrev)+offset;
+  struct tm *timeinfo = localtime (&t);
+
+  return timeinfo;
+}
+
+void printTime(time_t offset) {
+  struct tm *timeinfo = getDateTime(offset);
+
+  int hour = (timeinfo->tm_hour+11)%12+1;  // take care of noon and midnight
+  char buf[30];
+  //sprintf(buf, "%02d/%02d/%04d %02d:%02d:%02d%s %s \n",timeinfo->tm_mon+1, timeinfo->tm_mday, timeinfo->tm_year+1900, hour, timeinfo->tm_min, timeinfo->tm_sec, timeinfo->tm_hour>=12?"pm":"am" /*, dstAbbrev*/);
+  sprintf(buf, "%02d/%02d/%04d %02d:%02d:%02d%s \n",timeinfo->tm_mon+1, timeinfo->tm_mday, timeinfo->tm_year+1900, hour, timeinfo->tm_min, timeinfo->tm_sec, timeinfo->tm_hour>=12?"pm":"am");
+  Homie.getLogger() << buf << endl;
+}
 
 /**
  * Homie Setup handler.
@@ -84,6 +120,16 @@ void setupHandler() {
 
   String mode = String(operationModeSetting.get());
   operationModeNode.setMode(mode);
+
+  configTime(1 * 3600, 0 * 3600, "europe.pool.ntp.org", "time.nist.gov");
+  Homie.getLogger() << "Waiting for time" << endl;
+  while (!time(nullptr)) {
+    Homie.getLogger() << ".";
+    delay(1000);
+  }
+  Homie.getLogger() << endl;
+  printTime(0);
+  _lastMeasurement     = 0;
 }
 
 /**
@@ -140,14 +186,6 @@ void setup() {
   //Homie.disableLogging();
   Homie.setSetupFunction(setupHandler);
   Homie.setup();
-
-  //etTime
-  //setInterval(60);
-  //setDebug(INFO);
-  //tz.setPosix(LOCALTZ_POSIX);
-  //tz.setLocation(F("de"));
-
-  Homie.getLogger() << F("✔ main: Setup ready") << endl;
 }
 
 /**
@@ -156,10 +194,14 @@ void setup() {
 void loop() {
 
   Homie.loop();
+  if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {
+    _lastMeasurement = millis();
+    if (Homie.isConnected()) {
 
-  if (Homie.isConnected()) {
-    //Homie.getLogger() << F("Germany: ") << tz.dateTime() << endl;
+      time_t now = time(nullptr);
+      Serial.println(ctime(&now));
+      printTime(0);
+      
+    }
   }
-  //ezTime
-  //events();
 }
