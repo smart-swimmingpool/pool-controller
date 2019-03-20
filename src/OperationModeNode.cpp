@@ -42,8 +42,6 @@ Rule* OperationModeNode::getRule() {
  *
  */
 bool OperationModeNode::setMode(String mode) {
-  Homie.getLogger() << cIndent << "mode=" << mode << endl;
-
   bool retval;
 
   if (mode.equals(STATUS_AUTO) || mode.equals(STATUS_MANU) || mode.equals(STATUS_BOOST)) {
