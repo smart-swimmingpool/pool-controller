@@ -50,6 +50,8 @@ private:
   const char* cSolarMinTempName = "Min. Solar Temperature";
 
   String        _mode;
+  float         _poolMaxTemp;
+  float         _solarMinTemp;
   Vector<Rule*> _ruleVec;
 
   unsigned long _measurementInterval;

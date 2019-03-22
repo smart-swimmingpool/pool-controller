@@ -6,7 +6,7 @@
  */
 #include "RelayModuleNode.hpp"
 
-RelayModuleNode::RelayModuleNode(const char* id, const char* name, const int pin, const int measurementInterval)
+RelayModuleNode::RelayModuleNode(const char* id, const char* name, const uint8_t pin, const int measurementInterval)
     : HomieNode(id, name, "switch") {
   _pin                 = pin;
   _measurementInterval = (measurementInterval > MIN_INTERVAL) ? measurementInterval : MIN_INTERVAL;

@@ -16,9 +16,9 @@
 class RelayModuleNode : public HomieNode {
 
 public:
-  RelayModuleNode(const char* id, const char* name, const int pin, const int measurementInterval = MEASUREMENT_INTERVAL);
+  RelayModuleNode(const char* id, const char* name, const uint8_t pin, const int measurementInterval = MEASUREMENT_INTERVAL);
 
-  int           getPin() const { return _pin; }
+  uint8_t       getPin() const { return _pin; }
   void          setMeasurementInterval(unsigned long interval) { _measurementInterval = interval; }
   unsigned long getMeasurementInterval() const { return _measurementInterval; }
   void          setSwitch(const boolean state);
@@ -43,7 +43,7 @@ private:
   const char* cFlagOff = "false";
   const char* cStatus  = "status";
 
-  int           _pin;
+  uint8_t       _pin;
   unsigned long _measurementInterval;
   unsigned long _lastMeasurement;
   RelayModule*  relay = NULL;

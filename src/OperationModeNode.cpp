@@ -72,7 +72,6 @@ void OperationModeNode::setup() {
 
   advertise(cPoolMaxTemp)
       .setName(cPoolMaxTempName)
-      .setRetained(true)
       .setDatatype("float")
       .setFormat("0:40")
       .setUnit("°C")
@@ -80,7 +79,6 @@ void OperationModeNode::setup() {
 
   advertise(cSolarMinTemp)
       .setName(cSolarMinTempName)
-      .setRetained(true)
       .setDatatype("float")
       .setFormat("0:100")
       .setUnit("°C")
@@ -100,9 +98,13 @@ void OperationModeNode::loop() {
 
     Homie.getLogger() << "〽 Sending mode: " << getId() << endl;
     Homie.getLogger() << cIndent << "mode: " << _mode << endl;
+    Homie.getLogger() << cIndent << "SolarMinTemp: " << _solarMinTemp << endl;
+    Homie.getLogger() << cIndent << "PoolMaxTemp:  " << _poolMaxTemp << endl;
 
     if (Homie.isConnected()) {
-      setProperty(cMode).send(_mode);
+      setProperty(cMode).setRetained(true).send(_mode);
+      setProperty(cSolarMinTemp).setRange(true).send(String(_solarMinTemp));
+      setProperty(cPoolMaxTemp).setRange(true).send(String(_poolMaxTemp));
     }
 
     //call loop to evaluate the current rule
@@ -124,10 +126,12 @@ bool OperationModeNode::handleInput(const HomieRange& range, const String& prope
     retval = this->setMode(string2char(value));
 
   } else if (property.equalsIgnoreCase(cSolarMinTemp)) {
-    //solar min temp
+    //TODO: solar min temp
+    //_solarMinTemp = value;
 
   } else if (property.equalsIgnoreCase(cPoolMaxTemp)) {
-    // pool max temp
+    //TODO: pool max temp
+    //_poolMaxTemp = value;
 
   } else {
     retval = false;
@@ -135,6 +139,7 @@ bool OperationModeNode::handleInput(const HomieRange& range, const String& prope
 
   return retval;
 }
+
 /**
  *
  */

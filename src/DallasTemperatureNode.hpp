@@ -12,9 +12,10 @@
 class DallasTemperatureNode : public HomieNode {
 
 public:
-  DallasTemperatureNode(const char* id, const char* name, const int pin, const int measurementInterval = MEASUREMENT_INTERVAL);
+  DallasTemperatureNode(const char* id, const char* name, const uint8_t pin,
+                        const int measurementInterval = MEASUREMENT_INTERVAL);
 
-  int           getPin() const { return _pin; }
+  uint8_t       getPin() const { return _pin; }
   void          setMeasurementInterval(unsigned long interval) { _measurementInterval = interval; }
   unsigned long getMeasurementInterval() const { return _measurementInterval; }
   float         getTemperature() const { return temperature; }
@@ -40,7 +41,7 @@ private:
 
   bool _sensorFound = false;
 
-  int           _pin;
+  uint8_t       _pin;
   unsigned long _measurementInterval;
   unsigned long _lastMeasurement;
 
@@ -48,7 +49,7 @@ private:
 
   OneWire*           oneWire;
   DallasTemperature* sensor;
-  int                numberOfDevices;  // Number of temperature devices found
+  uint8_t            numberOfDevices;  // Number of temperature devices found
 
   void   printCaption();
   String address2String(const DeviceAddress deviceAddress);

@@ -24,34 +24,32 @@
 #include "RuleAuto.hpp"
 #include "RuleBoost.hpp"
 #ifdef ESP32
-
-#elif ESP8266
+//#include <WiFi.h>
+#elif defined(ESP8266)
 //#include <ESP8266WiFi.h>
 #endif
 
-
-
 #ifdef ESP32
-const int PIN_DS_SOLAR = 15;  // Pin of Temp-Sensor Solar
-const int PIN_DS_POOL  = 16;  // Pin of Temp-Sensor Pool
-const int PIN_DHT11    = 17;
+const uint8_t PIN_DS_SOLAR = 15;  // Pin of Temp-Sensor Solar
+const uint8_t PIN_DS_POOL  = 16;  // Pin of Temp-Sensor Pool
+const uint8_t PIN_DHT11    = 17;
 
-const int PIN_RSSWITCH = 18;  // Data-Pin of 433MHz Sender
+const uint8_t PIN_RSSWITCH = 18;  // Data-Pin of 433MHz Sender
 
-const int PIN_RELAY_POOL  = 18;
-const int PIN_RELAY_SOLAR = 19;
-#else
-const int PIN_DS_SOLAR = D5;  // Pin of Temp-Sensor Solar
-const int PIN_DS_POOL  = D6;  // Pin of Temp-Sensor Pool
-const int PIN_DHT11    = D7;
+const uint8_t PIN_RELAY_POOL  = 18;
+const uint8_t PIN_RELAY_SOLAR = 19;
+#elif defined(ESP8266)
+const uint8_t PIN_DS_SOLAR = D5;  // Pin of Temp-Sensor Solar
+const uint8_t PIN_DS_POOL  = D6;  // Pin of Temp-Sensor Pool
+const uint8_t PIN_DHT11    = D7;
 
-const int PIN_RELAY_POOL  = D1;
-const int PIN_RELAY_SOLAR = D2;
+const uint8_t PIN_RELAY_POOL  = D1;
+const uint8_t PIN_RELAY_SOLAR = D2;
 #endif
-const int TEMP_READ_INTERVALL = 60;  //Sekunden zwischen Updates der Temperaturen.
+const uint8_t TEMP_READ_INTERVALL = 60;  //Sekunden zwischen Updates der Temperaturen.
 
-struct dstRule StartRule = {"MESZ", Last, Sun, Mar, 1, 3600};    // Daylight time = UTC/GMT -4 hours
-struct dstRule EndRule = {"MEZ", Last, Sun, Oct, 1, 0};       // Standard time = UTC/GMT -5 hour
+struct dstRule StartRule = {"MESZ", Last, Sun, Mar, 1, 3600};  // Daylight time = UTC/GMT -4 hours
+struct dstRule EndRule   = {"MEZ", Last, Sun, Oct, 1, 0};      // Standard time = UTC/GMT -5 hour
 // Setup simpleDSTadjust Library rules
 simpleDSTadjust dstAdjusted(StartRule, EndRule);
 
@@ -73,7 +71,6 @@ RelayModuleNode solarPumpNode("solar-pump", "Solar Pump", PIN_RELAY_SOLAR);
 
 OperationModeNode operationModeNode("operation-mode", "Operation Mode");
 
-
 unsigned long _measurementInterval = 10;
 unsigned long _lastMeasurement;
 
@@ -82,20 +79,21 @@ unsigned long _lastMeasurement;
  */
 tm* getDateTime(time_t offset) {
 
-  char *dstAbbrev;
-  time_t t = dstAdjusted.time(&dstAbbrev)+offset;
-  struct tm *timeinfo = localtime (&t);
+  char*      dstAbbrev;
+  time_t     t        = dstAdjusted.time(&dstAbbrev) + offset;
+  struct tm* timeinfo = localtime(&t);
 
   return timeinfo;
 }
 
 void printTime(time_t offset) {
-  struct tm *timeinfo = getDateTime(offset);
+  struct tm* timeinfo = getDateTime(offset);
 
-  int hour = (timeinfo->tm_hour+11)%12+1;  // take care of noon and midnight
+  int  hour = (timeinfo->tm_hour + 11) % 12 + 1;  // take care of noon and midnight
   char buf[30];
   //sprintf(buf, "%02d/%02d/%04d %02d:%02d:%02d%s %s \n",timeinfo->tm_mon+1, timeinfo->tm_mday, timeinfo->tm_year+1900, hour, timeinfo->tm_min, timeinfo->tm_sec, timeinfo->tm_hour>=12?"pm":"am" /*, dstAbbrev*/);
-  sprintf(buf, "%02d/%02d/%04d %02d:%02d:%02d%s \n",timeinfo->tm_mon+1, timeinfo->tm_mday, timeinfo->tm_year+1900, hour, timeinfo->tm_min, timeinfo->tm_sec, timeinfo->tm_hour>=12?"pm":"am");
+  sprintf(buf, "%02d/%02d/%04d %02d:%02d:%02d%s \n", timeinfo->tm_mon + 1, timeinfo->tm_mday, timeinfo->tm_year + 1900, hour,
+          timeinfo->tm_min, timeinfo->tm_sec, timeinfo->tm_hour >= 12 ? "pm" : "am");
   Homie.getLogger() << buf << endl;
 }
 
@@ -129,7 +127,7 @@ void setupHandler() {
   }
   Homie.getLogger() << endl;
   printTime(0);
-  _lastMeasurement     = 0;
+  _lastMeasurement = 0;
 }
 
 /**
@@ -201,7 +199,6 @@ void loop() {
       time_t now = time(nullptr);
       Serial.println(ctime(&now));
       printTime(0);
-      
     }
   }
 }

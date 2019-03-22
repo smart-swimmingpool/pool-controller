@@ -17,7 +17,7 @@
 class RCSwitchNode : public HomieNode {
 
 public:
-  RCSwitchNode(const char* id, const char* name, const int pin, const char* group, const char* device,
+  RCSwitchNode(const char* id, const char* name, const uint8_t pin, const char* group, const char* device,
                const int measurementInterval = MEASUREMENT_INTERVAL);
 
   void          setMeasurementInterval(unsigned long interval) { _measurementInterval = interval; }
@@ -47,7 +47,7 @@ private:
   unsigned long _measurementInterval;
   unsigned long _lastMeasurement;
 
-  int         _pin;
+  uint8_t     _pin;
   const char* _group;
   const char* _device;
   RCSwitch*   rcSwitch = NULL;
@@ -58,7 +58,6 @@ private:
 #elif defined(ESP8266)
 
 #endif
-
 
   void printCaption();
 };

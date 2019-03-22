@@ -7,7 +7,7 @@
 /**
  *
  */
-RCSwitchNode::RCSwitchNode(const char* id, const char* name, const int pin, const char* group, const char* device,
+RCSwitchNode::RCSwitchNode(const char* id, const char* name, const uint8_t pin, const char* group, const char* device,
                            const int measurementInterval)
     : HomieNode(id, name, "switch") {
 
