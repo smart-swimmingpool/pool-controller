@@ -55,9 +55,9 @@ simpleDSTadjust dstAdjusted(StartRule, EndRule);
 
 HomieSetting<long> loopIntervalSetting("loop-interval", "The processing interval in seconds");
 
-HomieSetting<long> temperatureMaxPoolSetting("temperature-max-pool", "Maximum temperature of solar");
-HomieSetting<long> temperatureMinSolarSetting("temperature-min-solar", "Minimum temperature of solar");
-HomieSetting<long> temperatureHysteresisSetting("temperature-hysteresis", "Temperature hysteresis");
+HomieSetting<double> temperatureMaxPoolSetting("temperature-max-pool", "Maximum temperature of solar");
+HomieSetting<double> temperatureMinSolarSetting("temperature-min-solar", "Minimum temperature of solar");
+HomieSetting<double> temperatureHysteresisSetting("temperature-hysteresis", "Temperature hysteresis");
 
 HomieSetting<const char*> operationModeSetting("operation-mode", "Operational Mode");
 
@@ -118,15 +118,15 @@ void setupHandler() {
 
   String mode = String(operationModeSetting.get());
   operationModeNode.setMode(mode);
+  operationModeNode.setPoolMaxTemp(temperatureMaxPoolSetting.get());
+  operationModeNode.setSolarMinTemp(temperatureMinSolarSetting.get());
 
   configTime(1 * 3600, 0 * 3600, "europe.pool.ntp.org", "time.nist.gov");
-  Homie.getLogger() << "Waiting for time" << endl;
+  //Waiting for time:
   while (!time(nullptr)) {
-    Homie.getLogger() << ".";
     delay(1000);
   }
-  Homie.getLogger() << endl;
-  printTime(0);
+
   _lastMeasurement = 0;
 }
 
@@ -196,9 +196,11 @@ void loop() {
     _lastMeasurement = millis();
     if (Homie.isConnected()) {
 
+/*
       time_t now = time(nullptr);
       Serial.println(ctime(&now));
       printTime(0);
+      */
     }
   }
 }

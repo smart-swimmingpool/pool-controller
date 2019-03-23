@@ -22,6 +22,9 @@ public:
   void          addRule(Rule* rule);
   Rule*         getRule();
 
+  void setPoolMaxTemp(double temp) { _poolMaxTemp = temp; }
+  void setSolarMinTemp(double temp) {_solarMinTemp = temp;}
+
   enum MODE { AUTO, MANU, BOOST };
   const char* STATUS_AUTO  = "auto";
   const char* STATUS_MANU  = "manu";
@@ -49,8 +52,8 @@ private:
   const char* cSolarMinTempName = "Min. Solar Temperature";
 
   String        _mode;
-  float         _poolMaxTemp;
-  float         _solarMinTemp;
+  double         _poolMaxTemp;
+  double         _solarMinTemp;
   Vector<Rule*> _ruleVec;
 
   unsigned long _measurementInterval;

@@ -70,9 +70,9 @@ void OperationModeNode::setup() {
 
   advertise(cMode).setName(cModeName).setRetained(true).setDatatype("enum").setFormat("manu,auto,boost").settable();
 
-  advertise(cPoolMaxTemp).setName(cPoolMaxTempName).setDatatype("float").setFormat("0:40").setUnit("°C").settable();
+  advertise(cPoolMaxTemp).setName(cPoolMaxTempName).setDatatype("float").setUnit("°C").settable();
 
-  advertise(cSolarMinTemp).setName(cSolarMinTempName).setDatatype("float").setFormat("0:100").setUnit("°C").settable();
+  advertise(cSolarMinTemp).setName(cSolarMinTempName).setDatatype("float").setUnit("°C").settable();
 }
 
 /**
@@ -80,21 +80,24 @@ void OperationModeNode::setup() {
  */
 void OperationModeNode::loop() {
   if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {
-    _lastMeasurement = millis();
 
     Homie.getLogger() << "〽 Sending mode: " << getId() << endl;
     Homie.getLogger() << cIndent << "mode: " << _mode << endl;
     Homie.getLogger() << cIndent << "SolarMinTemp: " << _solarMinTemp << endl;
     Homie.getLogger() << cIndent << "PoolMaxTemp:  " << _poolMaxTemp << endl;
+    time_t now = time(nullptr);
+    Homie.getLogger() << cIndent << ctime(&now) << endl;
 
     if (Homie.isConnected()) {
-      setProperty(cMode).setRetained(true).send(_mode);
-      setProperty(cSolarMinTemp).setRange(true).send(String(_solarMinTemp));
-      setProperty(cPoolMaxTemp).setRange(true).send(String(_poolMaxTemp));
+      setProperty(cMode).send(_mode);
+      setProperty(cSolarMinTemp).send(String(_solarMinTemp));
+      setProperty(cPoolMaxTemp).send(String(_poolMaxTemp));
     }
 
     //call loop to evaluate the current rule
     getRule()->loop();
+
+    _lastMeasurement = millis();
   }
 }
 
@@ -114,7 +117,7 @@ bool OperationModeNode::handleInput(const HomieRange& range, const String& prope
   } else if (property.equalsIgnoreCase(cSolarMinTemp)) {
     //solar min temp
     _solarMinTemp = value.toFloat();
-    retval        = true
+    retval        = true;
 
   } else if (property.equalsIgnoreCase(cPoolMaxTemp)) {
     //pool max temp
