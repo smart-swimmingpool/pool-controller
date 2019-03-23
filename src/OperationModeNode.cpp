@@ -35,7 +35,7 @@ Rule* OperationModeNode::getRule() {
     }
   }
 
-  //return nullptr;
+  return nullptr;
 }
 
 /**
@@ -70,25 +70,11 @@ void OperationModeNode::setup() {
 
   advertise(cMode).setName(cModeName).setRetained(true).setDatatype("enum").setFormat("manu,auto,boost").settable();
 
-  advertise(cPoolMaxTemp)
-      .setName(cPoolMaxTempName)
-      .setDatatype("float")
-      .setFormat("0:40")
-      .setUnit("°C")
-      .settable();
+  advertise(cPoolMaxTemp).setName(cPoolMaxTempName).setDatatype("float").setFormat("0:40").setUnit("°C").settable();
 
-  advertise(cSolarMinTemp)
-      .setName(cSolarMinTempName)
-      .setDatatype("float")
-      .setFormat("0:100")
-      .setUnit("°C")
-      .settable();
+  advertise(cSolarMinTemp).setName(cSolarMinTempName).setDatatype("float").setFormat("0:100").setUnit("°C").settable();
 }
 
-/**
- *
- */
-void OperationModeNode::onReadyToOperate() {}
 /**
  *
  */
@@ -126,12 +112,14 @@ bool OperationModeNode::handleInput(const HomieRange& range, const String& prope
     retval = this->setMode(string2char(value));
 
   } else if (property.equalsIgnoreCase(cSolarMinTemp)) {
-    //TODO: solar min temp
-    //_solarMinTemp = value;
+    //solar min temp
+    _solarMinTemp = value.toFloat();
+    retval        = true
 
   } else if (property.equalsIgnoreCase(cPoolMaxTemp)) {
-    //TODO: pool max temp
-    //_poolMaxTemp = value;
+    //pool max temp
+    _poolMaxTemp = value.toFloat();
+    retval       = true;
 
   } else {
     retval = false;
