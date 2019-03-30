@@ -197,11 +197,9 @@ void loop() {
     _lastMeasurement = millis();
     if (Homie.isConnected()) {
 
-/*
       time_t now = time(nullptr);
       Serial.println(ctime(&now));
       printTime(0);
-      */
     }
 
   }
