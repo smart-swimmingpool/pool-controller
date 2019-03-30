@@ -65,7 +65,7 @@ bool RelayModuleNode::handleInput(const HomieRange& range, const String& propert
   if (value != cFlagOn && value != cFlagOff) {
     Homie.getLogger() << "reveived invalid value for property [" + property + "]: " + value << endl;
 
-    //setProperty(cStatus).send("reveived invalid value for property [" + property + "]: " + value);
+    setProperty(cState).send("reveived invalid value for property [" + property + "]: " + value);
 
     retval = false;
   } else {
@@ -84,14 +84,17 @@ bool RelayModuleNode::handleInput(const HomieRange& range, const String& propert
  */
 void RelayModuleNode::loop() {
   if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {
+
+    if (Homie.isConnected()) {
+
+      const boolean isOn = getSwitch();
+      Homie.getLogger() << cIndent << "〽 Sending Switch status: " << getId() << "switch: " << (isOn ? cFlagOn : cFlagOff)
+                        << endl;
+
+      setProperty(cSwitch).send((isOn ? cFlagOn : cFlagOff));
+    }
+
     _lastMeasurement = millis();
-
-    Homie.getLogger() << "〽 Sending Switch status: " << getId() << endl;
-
-    const boolean isOn = getSwitch();
-    Homie.getLogger() << cIndent << "switch: " << (isOn ? cFlagOn : cFlagOff) << endl;
-
-    setProperty(cSwitch).send((isOn ? cFlagOn : cFlagOff));
   }
 }
 
@@ -101,8 +104,8 @@ void RelayModuleNode::loop() {
 void RelayModuleNode::setup() {
   printCaption();
 
-  advertise(cSwitch).setName("Switch").setRetained(true).setDatatype("boolean").settable();
-  //advertise(cStatus).setName("Satus").setDatatype("string");
+  advertise(cSwitch).setName("Switch").setDatatype("boolean").settable();
+  advertise(cState).setName("Sate").setDatatype("string");
 
   relay = new RelayModule(_pin);
 

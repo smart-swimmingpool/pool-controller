@@ -33,8 +33,8 @@ private:
   const char* cCaption = "• DallasTemperature sensor:";
   const char* cIndent  = "  ◦ ";
 
-  const char* cStatus          = "status";
-  const char* cStatusName      = "Status";
+  const char* cState           = "state";
+  const char* cStateName       = "State";
   const char* cTemperature     = "temperature";
   const char* cTemperatureName = "Temperature";
   const char* cTemperatureUnit = "°C";

@@ -49,9 +49,12 @@ bool OperationModeNode::setMode(String mode) {
     retval = true;
 
   } else {
-    Homie.getLogger() << "UNDEFINED Status. Current unchanged mode: " << _mode << endl;
+    Homie.getLogger() << F("UNDEFINED Status. Current unchanged mode: ") << _mode << endl;
+    setProperty(cState).send(F("Undefined mode."));
     retval = false;
   }
+
+  setProperty(cMode).send(_mode);
 
   return retval;
 }
@@ -68,11 +71,10 @@ String OperationModeNode::getMode() {
  */
 void OperationModeNode::setup() {
 
-  advertise(cMode).setName(cModeName).setRetained(true).setDatatype("enum").setFormat("manu,auto,boost").settable();
-
-  advertise(cPoolMaxTemp).setName(cPoolMaxTempName).setDatatype("float").setUnit("°C").settable();
-
-  advertise(cSolarMinTemp).setName(cSolarMinTempName).setDatatype("float").setUnit("°C").settable();
+  advertise(cState).setName(cStateName);
+  advertise(cMode).setName(cModeName).setDatatype("enum").setFormat("manu,auto,boost").settable();
+  advertise(cPoolMaxTemp).setName(cPoolMaxTempName).setDatatype("float").setFormat("0:40").setUnit("°C").settable();
+  advertise(cSolarMinTemp).setName(cSolarMinTempName).setDatatype("float").setFormat("0:100").setUnit("°C").settable();
 }
 
 /**
@@ -107,24 +109,25 @@ void OperationModeNode::loop() {
 bool OperationModeNode::handleInput(const HomieRange& range, const String& property, const String& value) {
   printCaption();
 
-  Homie.getLogger() << cIndent << "〽 handleInput -> property '" << property << "' value=" << value << endl;
+  Homie.getLogger() << cIndent << F("〽 handleInput -> property '") << property << F("' value=") << value << endl;
   bool retval;
 
   if (property.equalsIgnoreCase(cMode)) {
-    //set operational mode
+    Homie.getLogger() << cIndent << F("✔ set operational mode") << endl;
     retval = this->setMode(string2char(value));
 
   } else if (property.equalsIgnoreCase(cSolarMinTemp)) {
-    //solar min temp
+    Homie.getLogger() << cIndent << F("✔ solar min temp") << endl;
     _solarMinTemp = value.toFloat();
     retval        = true;
 
   } else if (property.equalsIgnoreCase(cPoolMaxTemp)) {
-    //pool max temp
+    Homie.getLogger() << cIndent << F("✔ pool max temp");
     _poolMaxTemp = value.toFloat();
     retval       = true;
 
   } else {
+    Homie.getLogger() << cIndent << F("unmanaged property: ") << property << endl;
     retval = false;
   }
 

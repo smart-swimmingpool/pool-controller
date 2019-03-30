@@ -192,6 +192,7 @@ void setup() {
 void loop() {
 
   Homie.loop();
+  /*
   if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {
     _lastMeasurement = millis();
     if (Homie.isConnected()) {
@@ -202,5 +203,7 @@ void loop() {
       printTime(0);
       */
     }
+
   }
+  */
 }

@@ -44,6 +44,4 @@ void RuleAuto::loop() {
   }
 }
 
-bool RuleAuto::checkPoolPumpTimer() {
-
-}
+bool RuleAuto::checkPoolPumpTimer() {}

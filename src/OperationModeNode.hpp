@@ -42,6 +42,9 @@ private:
   const char*      cCaption             = "• Operation Status:";
   const char*      cIndent              = "  ◦ ";
 
+  const char* cState     = "state";
+  const char* cStateName = "State";
+
   const char* cMode     = "mode";
   const char* cModeName = "Mode";
 

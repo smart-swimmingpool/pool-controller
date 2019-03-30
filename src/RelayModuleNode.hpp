@@ -41,7 +41,7 @@ private:
   const char* cSwitch  = "switch";
   const char* cFlagOn  = "true";
   const char* cFlagOff = "false";
-  const char* cStatus  = "status";
+  const char* cState   = "state";
 
   uint8_t       _pin;
   unsigned long _measurementInterval;
