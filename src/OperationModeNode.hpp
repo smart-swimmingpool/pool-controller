@@ -22,8 +22,14 @@ public:
   void          addRule(Rule* rule);
   Rule*         getRule();
 
-  void setPoolMaxTemp(double temp) { _poolMaxTemp = temp; }
-  void setSolarMinTemp(double temp) {_solarMinTemp = temp;}
+  void  setPoolMaxTemperatur(float temp) { _poolMaxTemp = temp; };
+  float getPoolMaxTemperature() { return _poolMaxTemp; };
+
+  void  setSolarMinTemperature(float temp) { _solarMinTemp = temp; };
+  float getSolarMinTemperature() { return _solarMinTemp; };
+
+  void  setTemperaturHysteresis(float temp) { _hysteresis = temp; };
+  float getTemperaturHysteresis() { return _hysteresis; };
 
   enum MODE { AUTO, MANU, BOOST };
   const char* STATUS_AUTO  = "auto";
@@ -54,14 +60,18 @@ private:
   const char* cSolarMinTemp     = "solar-min-temp";
   const char* cSolarMinTempName = "Min. Solar Temperature";
 
+
+  const char* cHysteresis     = "hysteresis";
+  const char* cHysteresisName = "Hysterese";
+
   String        _mode;
-  double         _poolMaxTemp;
-  double         _solarMinTemp;
+  float         _poolMaxTemp;
+  float         _solarMinTemp;
+  float         _hysteresis;
   Vector<Rule*> _ruleVec;
 
   unsigned long _measurementInterval;
   unsigned long _lastMeasurement;
 
   void  printCaption();
-  char* string2char(String comand);
 };

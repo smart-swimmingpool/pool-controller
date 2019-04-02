@@ -26,7 +26,6 @@ protected:
 
   bool checkPoolPumpTimer();
   tm*  getCurrentDateTime();
-  void computeTimeDifference(struct tm t1, struct tm t2, struct tm* difference);
 
 private:
   const char* cCaption = "• RuleAuto:";

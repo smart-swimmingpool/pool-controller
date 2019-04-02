@@ -9,8 +9,9 @@ RuleAuto::RuleAuto(RelayModuleNode* solarRelay, RelayModuleNode* poolRelay) {
   _poolRelay  = poolRelay;
 
   // Setup simpleDSTadjust Library rules
-  struct dstRule startRule = {"MESZ", Last, Sun, Mar, 1, 3600};  // Daylight time = UTC/GMT -4 hours
-  struct dstRule endRule   = {"MEZ", Last, Sun, Oct, 1, 0};      // Standard time = UTC/GMT -5 hour
+  // TODO: externalize to make it configurable
+  struct dstRule startRule = {"MESZ", Last, Sun, Mar, 2, 0};  // Daylight time = UTC/GMT -0 hours
+  struct dstRule endRule   = {"MEZ", Last, Sun, Oct, 2, 3600};      // Standard time = UTC/GMT +1 hour
   _dstAdjusted             = new simpleDSTadjust(startRule, endRule);
 }
 
@@ -32,6 +33,9 @@ void RuleAuto::addSolarSwitchNode(RelayModuleNode* node) {
  *
  */
 void RuleAuto::loop() {
+
+  _poolRelay->setSwitch(checkPoolPumpTimer());
+
   if (_poolRelay->getSwitch()) {
     if ((!_solarRelay->getSwitch()) && (getPoolTemperature() <= (getPoolMaxTemperature() - getTemperaturHysteresis()))) {
       Homie.getLogger() << cIndent << "RuleAuto: below max. Temperature. Switch solar on" << endl;
@@ -53,7 +57,7 @@ void RuleAuto::loop() {
  *
  */
 bool RuleAuto::checkPoolPumpTimer() {
-  Homie.getLogger() << "checkPoolPumpTimer" << endl;
+  Homie.getLogger() << cIndent << "checkPoolPumpTimer" << endl;
 
   tm*  time = getCurrentDateTime();
   bool retval;
@@ -70,13 +74,18 @@ bool RuleAuto::checkPoolPumpTimer() {
   endTime->tm_hour = endHour;
   endTime->tm_min  = endMin;
 
-  if (difftime(mktime(time), mktime(startTime)) > 0 && difftime(mktime(time), mktime(endTime)) < 0) {
+  Homie.getLogger() << cIndent << "time= " << asctime(time) << endl;
+  Homie.getLogger() << cIndent << "startTime= " << asctime(startTime) << endl;
+  Homie.getLogger() << cIndent << "endTime= " << asctime(endTime) << endl;
+
+  if (difftime(mktime(time), mktime(startTime)) >= 0 && difftime(mktime(time), mktime(endTime)) <= 0) {
     retval = true;
 
   } else {
     retval = false;
   }
 
+  Homie.getLogger() << cIndent << "checkPoolPumpTimer() = " << retval << endl;
   return retval;
 }
 
@@ -90,20 +99,4 @@ tm* RuleAuto::getCurrentDateTime() {
   struct tm* timeinfo = localtime(&t);
 
   return timeinfo;
-}
-
-void computeTimeDifference(struct tm t1, struct tm t2, struct tm* difference) {
-
-  if (t2.tm_sec > t1.tm_sec) {
-    --t1.tm_min;
-    t1.tm_sec += 60;
-  }
-
-  difference->tm_sec = t1.tm_sec - t2.tm_sec;
-  if (t2.tm_min > t1.tm_min) {
-    --t1.tm_hour;
-    t1.tm_min += 60;
-  }
-  difference->tm_min  = t1.tm_min - t2.tm_min;
-  difference->tm_hour = t1.tm_hour - t2.tm_hour;
 }

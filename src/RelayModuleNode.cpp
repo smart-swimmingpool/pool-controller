@@ -88,8 +88,7 @@ void RelayModuleNode::loop() {
     if (Homie.isConnected()) {
 
       const boolean isOn = getSwitch();
-      Homie.getLogger() << cIndent << "〽 Sending Switch status: " << getId() << "switch: " << (isOn ? cFlagOn : cFlagOff)
-                        << endl;
+      Homie.getLogger() << "〽 Sending Switch status: " << getId() << "switch: " << (isOn ? cFlagOn : cFlagOff) << endl;
 
       setProperty(cSwitch).send((isOn ? cFlagOn : cFlagOff));
     }

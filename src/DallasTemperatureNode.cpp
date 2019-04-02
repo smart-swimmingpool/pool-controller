@@ -95,7 +95,7 @@ void DallasTemperatureNode::loop() {
 
             if (cnt > 5) {
               temperature = NAN;
-              Homie.getLogger() << F(" Error reading sensor: ") << getId() << F(" request count: ") << cnt << endl;
+              Homie.getLogger() << cIndent << F("✖ Error reading sensor. Request count: ") << cnt << endl;
               setProperty(cState).send("Error reading sensor");
 
               return;

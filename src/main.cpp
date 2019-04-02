@@ -46,7 +46,7 @@ const uint8_t PIN_DHT11    = D7;
 const uint8_t PIN_RELAY_POOL  = D1;
 const uint8_t PIN_RELAY_SOLAR = D2;
 #endif
-const uint8_t TEMP_READ_INTERVALL = 60;  //Sekunden zwischen Updates der Temperaturen.
+const uint8_t TEMP_READ_INTERVALL = 30;  //Sekunden zwischen Updates der Temperaturen.
 
 struct dstRule StartRule = {"MESZ", Last, Sun, Mar, 1, 3600};  // Daylight time = UTC/GMT -4 hours
 struct dstRule EndRule   = {"MEZ", Last, Sun, Oct, 1, 0};      // Standard time = UTC/GMT -5 hour
@@ -118,10 +118,11 @@ void setupHandler() {
 
   String mode = String(operationModeSetting.get());
   operationModeNode.setMode(mode);
-  operationModeNode.setPoolMaxTemp(temperatureMaxPoolSetting.get());
-  operationModeNode.setSolarMinTemp(temperatureMinSolarSetting.get());
+  operationModeNode.setPoolMaxTemperatur(temperatureMaxPoolSetting.get());
+  operationModeNode.setSolarMinTemperature(temperatureMinSolarSetting.get());
+  operationModeNode.setTemperaturHysteresis(temperatureHysteresisSetting.get());
 
-  configTime(1 * 3600, 0 * 3600, "europe.pool.ntp.org", "time.nist.gov");
+  configTime(1 * 3600, 0 * 3600, "fritz.box", "europe.pool.ntp.org", "time.nist.gov");
   //Waiting for time:
   while (!time(nullptr)) {
     delay(1000);
@@ -170,6 +171,9 @@ void setup() {
 
   // add the rules
   RuleAuto* autoRule = new RuleAuto(&solarPumpNode, &poolPumpNode);
+  autoRule->setPoolMaxTemperatur(temperatureMaxPoolSetting.get());
+  autoRule->setSolarMinTemperature(temperatureMinSolarSetting.get());  // TODO make changeable
+  autoRule->setTemperaturHysteresis(temperatureHysteresisSetting.get());
   operationModeNode.addRule(autoRule);
 
   RuleManu* manuRule = new RuleManu();
@@ -178,6 +182,7 @@ void setup() {
   RuleBoost* boostRule = new RuleBoost(&solarPumpNode, &poolPumpNode);
   boostRule->setPoolMaxTemperatur(temperatureMaxPoolSetting.get());
   boostRule->setSolarMinTemperature(temperatureMinSolarSetting.get());  // TODO make changeable
+  boostRule->setTemperaturHysteresis(temperatureHysteresisSetting.get());
 
   operationModeNode.addRule(boostRule);
 
