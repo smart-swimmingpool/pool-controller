@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <time.h>
+#include "simpleDSTadjust.h"
 #include "Rule.hpp"
 #include "RelayModuleNode.hpp"
 
@@ -23,8 +25,15 @@ protected:
   RelayModuleNode* _poolRelay;
 
   bool checkPoolPumpTimer();
+  tm*  getCurrentDateTime();
+  void computeTimeDifference(struct tm t1, struct tm t2, struct tm* difference);
 
 private:
   const char* cCaption = "• RuleAuto:";
   const char* cIndent  = "  ◦ ";
+
+  String poolPumpStart = "10:30";
+  String poolPumpEnd   = "16:45";
+
+  simpleDSTadjust* _dstAdjusted;
 };
