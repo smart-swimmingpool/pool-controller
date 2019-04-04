@@ -12,8 +12,6 @@
 #include <time.h>
 #include <simpleDSTadjust.h>
 
-#include "ConstantValues.hpp"
-
 #include "DallasTemperatureNode.hpp"
 #include "ESP32TemperatureNode.hpp"
 #include "RelayModuleNode.hpp"
