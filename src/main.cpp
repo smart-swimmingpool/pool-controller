@@ -8,7 +8,9 @@
  */
 
 #include <Arduino.h>
+#include <ezTime.h>
 #include <Homie.h>
+
 #include <time.h>
 #include <simpleDSTadjust.h>
 
@@ -120,11 +122,23 @@ void setupHandler() {
   operationModeNode.setSolarMinTemperature(temperatureMinSolarSetting.get());
   operationModeNode.setTemperaturHysteresis(temperatureHysteresisSetting.get());
 
+  /*
   configTime(1 * 3600, 0 * 3600, "fritz.box", "europe.pool.ntp.org", "time.nist.gov");
   //Waiting for time:
   while (!time(nullptr)) {
     delay(1000);
   }
+  */
+
+  // Wait for ezTime to get its time synchronized
+  waitForSync();
+
+  // Or country codes for countries that do not span multiple timezones
+  Timezone myTZ;
+  myTZ.setLocation(F("de"));
+  Homie.getLogger() << F("Germany: ")) << myTZ.dateTime() << endl;
+  // Make ezTime show us what it is doing
+  setDebug(INFO);
 
   _lastMeasurement = 0;
 }
@@ -195,6 +209,9 @@ void setup() {
 void loop() {
 
   Homie.loop();
+
+  events();
+
   /*
   if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {
     _lastMeasurement = millis();
