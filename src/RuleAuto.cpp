@@ -1,5 +1,6 @@
 
 #include "RuleAuto.hpp"
+#include "TimeClientHelper.hpp"
 
 /**
  *
@@ -8,11 +9,6 @@ RuleAuto::RuleAuto(RelayModuleNode* solarRelay, RelayModuleNode* poolRelay) {
   _solarRelay = solarRelay;
   _poolRelay  = poolRelay;
 
-  // Setup simpleDSTadjust Library rules
-  // TODO: externalize to make it configurable
-  struct dstRule startRule = {"MESZ", Last, Sun, Mar, 2, 0};  // Daylight time = UTC/GMT -0 hours
-  struct dstRule endRule   = {"MEZ", Last, Sun, Oct, 2, 3600};      // Standard time = UTC/GMT +1 hour
-  _dstAdjusted             = new simpleDSTadjust(startRule, endRule);
 }
 
 /**
@@ -59,26 +55,28 @@ void RuleAuto::loop() {
 bool RuleAuto::checkPoolPumpTimer() {
   Homie.getLogger() << cIndent << "checkPoolPumpTimer" << endl;
 
-  tm*  time = getCurrentDateTime();
+  tm  time = getCurrentDateTime();
   bool retval;
 
   int startHour      = poolPumpStart.substring(0, 2).toInt();
-  int startMin       = poolPumpStart.substring(2, 2).toInt();
-  tm* startTime      = getCurrentDateTime();
-  startTime->tm_hour = startHour;
-  startTime->tm_min  = startMin;
+  int startMin       = poolPumpStart.substring(3, 5).toInt();
+  tm startTime      = getCurrentDateTime();
+  startTime.tm_hour = startHour;
+  startTime.tm_min  = startMin;
+  startTime.tm_sec  = 0;
 
   int endHour      = poolPumpEnd.substring(0, 2).toInt();
-  int endMin       = poolPumpEnd.substring(2, 2).toInt();
-  tm* endTime      = getCurrentDateTime();
-  endTime->tm_hour = endHour;
-  endTime->tm_min  = endMin;
+  int endMin       = poolPumpEnd.substring(3, 5).toInt();
+  tm endTime      = getCurrentDateTime();
+  endTime.tm_hour = endHour;
+  endTime.tm_min  = endMin;
+  endTime.tm_sec  = 0;
 
-  Homie.getLogger() << cIndent << "time= " << asctime(time) << endl;
-  Homie.getLogger() << cIndent << "startTime= " << asctime(startTime) << endl;
-  Homie.getLogger() << cIndent << "endTime= " << asctime(endTime) << endl;
+  Homie.getLogger() << cIndent << "time=      " << asctime(&time);
+  Homie.getLogger() << cIndent << "startTime= " << asctime(&startTime);
+  Homie.getLogger() << cIndent << "endTime=   " << asctime(&endTime);
 
-  if (difftime(mktime(time), mktime(startTime)) >= 0 && difftime(mktime(time), mktime(endTime)) <= 0) {
+  if (difftime(mktime(&time), mktime(&startTime)) >= 0 && difftime(mktime(&time), mktime(&endTime)) <= 0) {
     retval = true;
 
   } else {
@@ -92,11 +90,11 @@ bool RuleAuto::checkPoolPumpTimer() {
 /**
  *
  */
-tm* RuleAuto::getCurrentDateTime() {
+tm RuleAuto::getCurrentDateTime() {
 
-  char*      dstAbbrev;
-  time_t     t        = _dstAdjusted->time(&dstAbbrev);
-  struct tm* timeinfo = localtime(&t);
+  TimeChangeRule *tcr = NULL;
+  time_t     t        = getTimeFor(0, &tcr);
+  struct tm timeinfo =  *localtime(&t);
 
   return timeinfo;
 }
