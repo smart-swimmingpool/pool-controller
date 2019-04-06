@@ -53,7 +53,7 @@ void RuleAuto::loop() {
  *
  */
 bool RuleAuto::checkPoolPumpTimer() {
-  Homie.getLogger() << cIndent << "checkPoolPumpTimer" << endl;
+  Homie.getLogger() << "↕  checkPoolPumpTimer" << endl;
 
   tm  time = getCurrentDateTime();
   bool retval;
@@ -83,7 +83,7 @@ bool RuleAuto::checkPoolPumpTimer() {
     retval = false;
   }
 
-  Homie.getLogger() << cIndent << "checkPoolPumpTimer() = " << retval << endl;
+  Homie.getLogger() << cIndent << "checkPoolPumpTimer = " << retval << endl;
   return retval;
 }
 

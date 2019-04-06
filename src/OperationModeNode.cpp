@@ -87,13 +87,16 @@ void OperationModeNode::setup() {
 void OperationModeNode::loop() {
   if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {
 
-    Homie.getLogger() << F("〽 Sending mode: ") << getId() << endl;
-    Homie.getLogger() << cIndent << "mode: " << _mode << endl;
-    Homie.getLogger() << cIndent << "SolarMinTemp: " << _solarMinTemp << endl;
-    Homie.getLogger() << cIndent << "PoolMaxTemp:  " << _poolMaxTemp << endl;
-    Homie.getLogger() << cIndent << "Hysteresis:   " << _hysteresis << endl;
+    //call loop to evaluate the current rule
+    getRule()->loop();
 
     if (Homie.isConnected()) {
+      Homie.getLogger() << F("〽 Sending mode: ") << getId() << endl;
+      Homie.getLogger() << cIndent << "mode: " << _mode << endl;
+      Homie.getLogger() << cIndent << "SolarMinTemp: " << _solarMinTemp << endl;
+      Homie.getLogger() << cIndent << "PoolMaxTemp:  " << _poolMaxTemp << endl;
+      Homie.getLogger() << cIndent << "Hysteresis:   " << _hysteresis << endl;
+
       setProperty(cMode).send(_mode);
       setProperty(cSolarMinTemp).send(String(_solarMinTemp));
       setProperty(cPoolMaxTemp).send(String(_poolMaxTemp));
@@ -102,8 +105,6 @@ void OperationModeNode::loop() {
       Homie.getLogger() << F("✖ not connected.") << endl;
     }
 
-    //call loop to evaluate the current rule
-    getRule()->loop();
 
     _lastMeasurement = millis();
   }
