@@ -55,6 +55,9 @@ To clear a specific message:
 mosquitto_pub -h hostname -t homie -n -r -d
 ```
 
+# Credits
+
+- Lübbe Onken (http://github.com/luebbe) for `TimeClientHelper`
 
 # License
 

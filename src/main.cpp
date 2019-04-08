@@ -8,11 +8,7 @@
  */
 
 #include <Arduino.h>
-#include <ezTime.h>
 #include <Homie.h>
-
-#include <time.h>
-#include <simpleDSTadjust.h>
 
 #include "DallasTemperatureNode.hpp"
 #include "ESP32TemperatureNode.hpp"
@@ -23,6 +19,9 @@
 #include "RuleManu.hpp"
 #include "RuleAuto.hpp"
 #include "RuleBoost.hpp"
+
+#include "TimeClientHelper.hpp"
+
 #ifdef ESP32
 //#include <WiFi.h>
 #elif defined(ESP8266)
@@ -48,10 +47,6 @@ const uint8_t PIN_RELAY_SOLAR = D2;
 #endif
 const uint8_t TEMP_READ_INTERVALL = 30;  //Sekunden zwischen Updates der Temperaturen.
 
-struct dstRule StartRule = {"MESZ", Last, Sun, Mar, 1, 3600};  // Daylight time = UTC/GMT -4 hours
-struct dstRule EndRule   = {"MEZ", Last, Sun, Oct, 1, 0};      // Standard time = UTC/GMT -5 hour
-// Setup simpleDSTadjust Library rules
-simpleDSTadjust dstAdjusted(StartRule, EndRule);
 
 HomieSetting<long> loopIntervalSetting("loop-interval", "The processing interval in seconds");
 
@@ -74,28 +69,6 @@ OperationModeNode operationModeNode("operation-mode", "Operation Mode");
 unsigned long _measurementInterval = 10;
 unsigned long _lastMeasurement;
 
-/**
- *
- */
-tm* getDateTime(time_t offset) {
-
-  char*      dstAbbrev;
-  time_t     t        = dstAdjusted.time(&dstAbbrev) + offset;
-  struct tm* timeinfo = localtime(&t);
-
-  return timeinfo;
-}
-
-void printTime(time_t offset) {
-  struct tm* timeinfo = getDateTime(offset);
-
-  int  hour = (timeinfo->tm_hour + 11) % 12 + 1;  // take care of noon and midnight
-  char buf[30];
-  //sprintf(buf, "%02d/%02d/%04d %02d:%02d:%02d%s %s \n",timeinfo->tm_mon+1, timeinfo->tm_mday, timeinfo->tm_year+1900, hour, timeinfo->tm_min, timeinfo->tm_sec, timeinfo->tm_hour>=12?"pm":"am" /*, dstAbbrev*/);
-  sprintf(buf, "%02d/%02d/%04d %02d:%02d:%02d%s \n", timeinfo->tm_mon + 1, timeinfo->tm_mday, timeinfo->tm_year + 1900, hour,
-          timeinfo->tm_min, timeinfo->tm_sec, timeinfo->tm_hour >= 12 ? "pm" : "am");
-  Homie.getLogger() << buf << endl;
-}
 
 /**
  * Homie Setup handler.
@@ -122,23 +95,7 @@ void setupHandler() {
   operationModeNode.setSolarMinTemperature(temperatureMinSolarSetting.get());
   operationModeNode.setTemperaturHysteresis(temperatureHysteresisSetting.get());
 
-  /*
-  configTime(1 * 3600, 0 * 3600, "fritz.box", "europe.pool.ntp.org", "time.nist.gov");
-  //Waiting for time:
-  while (!time(nullptr)) {
-    delay(1000);
-  }
-  */
-
-  // Wait for ezTime to get its time synchronized
-  waitForSync();
-
-  // Or country codes for countries that do not span multiple timezones
-  Timezone myTZ;
-  myTZ.setLocation(F("de"));
-  Homie.getLogger() << F("Germany: ")) << myTZ.dateTime() << endl;
-  // Make ezTime show us what it is doing
-  setDebug(INFO);
+  timeClientSetup();
 
   _lastMeasurement = 0;
 }
@@ -209,8 +166,6 @@ void setup() {
 void loop() {
 
   Homie.loop();
-
-  events();
 
   /*
   if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {

@@ -1,8 +1,12 @@
 
 #pragma once
 
-#include <time.h>
-#include "simpleDSTadjust.h"
+
+#include "TimeLib.h"
+#include "Timezone.h"
+#include <WiFiUdp.h>
+#include <NTPClient.h>
+
 #include "Rule.hpp"
 #include "RelayModuleNode.hpp"
 
@@ -25,7 +29,7 @@ protected:
   RelayModuleNode* _poolRelay;
 
   bool checkPoolPumpTimer();
-  tm*  getCurrentDateTime();
+  tm  getCurrentDateTime();
 
 private:
   const char* cCaption = "• RuleAuto:";
@@ -34,5 +38,4 @@ private:
   String poolPumpStart = "10:30";
   String poolPumpEnd   = "16:45";
 
-  simpleDSTadjust* _dstAdjusted;
 };
