@@ -33,13 +33,15 @@ DallasTemperatureNode::DallasTemperatureNode(const char* id, const char* name, c
  *
  */
 void DallasTemperatureNode::setup() {
-  // Start up the library
-  sensor->begin();
-  // set global resolution to 9, 10, 11, or 12 bits
-  sensor->setResolution(12);
 
   advertise(cState).setName(cStateName);
   advertise(cTemperature).setName(cTemperatureName).setDatatype("float").setUnit(cTemperatureUnit);
+
+  // Start up the library
+  sensor->begin();
+  Homie.getLogger() << cIndent << "Found " << sensor->getDS18Count() << " sensors." << endl;
+  // set global resolution to 9, 10, 11, or 12 bits
+  sensor->setResolution(9);
 }
 
 /**
@@ -87,32 +89,24 @@ void DallasTemperatureNode::loop() {
 
         DeviceAddress tempDeviceAddress;
         if (sensor->getAddress(tempDeviceAddress, i)) {
-          do {
-            temperature = sensor->getTempC(tempDeviceAddress);
 
-            cnt++;
-            delay(1);
-
-            if (cnt > 5) {
-              temperature = NAN;
-              Homie.getLogger() << cIndent << F("✖ Error reading sensor. Request count: ") << cnt << endl;
-              setProperty(cState).send("Error reading sensor");
-
-              return;
-            }
-          } while (temperature >= getUpper() || temperature <= getLower());
+          temperature = sensor->getTempC(tempDeviceAddress);
+          if (DEVICE_DISCONNECTED_C == temperature) {
+            Homie.getLogger() << cIndent << F("✖ Error reading sensor. Request count: ") << cnt << endl;
+            setProperty(cState).send("error");
+          } else {
+            Homie.getLogger() << cIndent << F("Status=ok") << endl;
+            setProperty(cState).send("ok");
+            Homie.getLogger() << cIndent << F("Temperature=") << temperature << endl;
+            setProperty(cTemperature).send(String(temperature));
+          }
         }
 
-        Homie.getLogger() << cIndent << F("Status=ok") << endl;
-        setProperty(cState).send("ok");
-
-        Homie.getLogger() << cIndent << F("Temperature=") << temperature << endl;
-        setProperty(cTemperature).send(String(temperature));
       }
     } else {
 
       Homie.getLogger() << "No Sensor found!" << endl;
-      setProperty(cState).send("no sensor found.");
+      setProperty(cState).send("no sensor");
 
       //retry to get
       numberOfDevices = sensor->getDeviceCount();
