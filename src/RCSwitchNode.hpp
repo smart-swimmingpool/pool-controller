@@ -39,10 +39,14 @@ private:
   const char* cCaption = "• RC 433MHz switch:";
   const char* cIndent  = "  ◦ ";
 
-  const char* cSwitch  = "switch";
+  const char* cSwitch      = "switch";
+  const char* cSwitchName  = "Switch";
+
   const char* cFlagOn  = "on";
   const char* cFlagOff = "off";
-  const char* cStatus  = "status";
+
+  const char* cState     = "state";
+  const char* cStateName = "State";
 
   unsigned long _measurementInterval;
   unsigned long _lastMeasurement;

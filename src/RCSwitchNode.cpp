@@ -37,6 +37,7 @@ void RCSwitchNode::setState(const boolean state) {
   }
 
   setProperty(cSwitch).send((state ? cFlagOn : cFlagOff));
+  setProperty(cState).send("ok");
 
   _state = state;
 
@@ -49,8 +50,6 @@ void RCSwitchNode::setState(const boolean state) {
 #elif defined(ESP8266)
 
 #endif
-
-  setProperty(cStatus).send("ok");
 
   Homie.getLogger() << cIndent << "RCSwitch is " << (state ? cFlagOn : cFlagOff) << endl;
 }
@@ -69,7 +68,7 @@ bool RCSwitchNode::handleInput(const HomieRange& range, const String& property, 
   if (value != cFlagOn && value != cFlagOff) {
 
     Homie.getLogger() << "reveived invalid value for property [" + property + "]: " + value << endl;
-    setProperty(cStatus).send("reveived invalid value for property [" + property + "]: " + value);
+    setProperty(cState).send("error");
 
     retval = false;
 
@@ -104,8 +103,8 @@ void RCSwitchNode::loop() {
  */
 void RCSwitchNode::onReadyToOperate() {
 
-  advertise(cSwitch).setName("Switch").setDatatype("boolean").settable();
-  advertise(cStatus).setName("Satus").setDatatype("string");
+  advertise(cSwitch).setName(cSwitchName).setDatatype("boolean").settable();
+  advertise(cState).setName(cStateName).setDatatype("string");
 }
 
 /**
