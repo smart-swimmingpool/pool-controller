@@ -52,7 +52,7 @@ private:
   const char* cStateName = "State";
 
   const char* cMode     = "mode";
-  const char* cModeName = "Mode";
+  const char* cModeName = "Operation Mode";
 
   const char* cPoolMaxTemp     = "pool-max-temp";
   const char* cPoolMaxTempName = "Max. Pool Temperature";
@@ -60,9 +60,14 @@ private:
   const char* cSolarMinTemp     = "solar-min-temp";
   const char* cSolarMinTempName = "Min. Solar Temperature";
 
-
   const char* cHysteresis     = "hysteresis";
   const char* cHysteresisName = "Hysterese";
+
+  const char* cTimerStartHour = "timer-start-h";
+  const char* cTimerStartMin  = "timer-start-min";
+
+  const char* cTimerEndHour = "timer-end-h";
+  const char* cTimerEndMin  = "timer-end-min";
 
   String        _mode;
   float         _poolMaxTemp;
@@ -73,5 +78,5 @@ private:
   unsigned long _measurementInterval;
   unsigned long _lastMeasurement;
 
-  void  printCaption();
+  void printCaption();
 };
