@@ -38,10 +38,14 @@ private:
   const char* cCaption = "• Relay Module:";
   const char* cIndent  = "  ◦ ";
 
-  const char* cSwitch  = "switch";
+  const char* cSwitch      = "switch";
+  const char* cSwitchName  = "Switch";
+
   const char* cFlagOn  = "true";
   const char* cFlagOff = "false";
-  const char* cState   = "state";
+
+  const char* cState     = "state";
+  const char* cStateName = "State";
 
   uint8_t       _pin;
   unsigned long _measurementInterval;

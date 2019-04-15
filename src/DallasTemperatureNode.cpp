@@ -39,9 +39,8 @@ void DallasTemperatureNode::setup() {
 
   // Start up the library
   sensor->begin();
-  Homie.getLogger() << cIndent << "Found " << sensor->getDS18Count() << " sensors." << endl;
   // set global resolution to 9, 10, 11, or 12 bits
-  sensor->setResolution(9);
+  //sensor->setResolution(12);
 }
 
 /**
@@ -68,7 +67,7 @@ void DallasTemperatureNode::onReadyToOperate() {
     }
   } else {
     Homie.getLogger() << F("✖ No sensors found on pin ") << _pin << endl;
-    setProperty(cState).send("no sensors found");
+    setProperty(cState).send(F("error"));
   }
 }
 
@@ -95,18 +94,20 @@ void DallasTemperatureNode::loop() {
             Homie.getLogger() << cIndent << F("✖ Error reading sensor. Request count: ") << cnt << endl;
             setProperty(cState).send("error");
           } else {
-            Homie.getLogger() << cIndent << F("Status=ok") << endl;
-            setProperty(cState).send("ok");
             Homie.getLogger() << cIndent << F("Temperature=") << temperature << endl;
-            setProperty(cTemperature).send(String(temperature));
+
+            if(Homie.isConnected()) {
+              setProperty(cTemperature).send(String(temperature));
+              setProperty(cState).send("ok");
+            }
           }
         }
 
       }
     } else {
 
-      Homie.getLogger() << "No Sensor found!" << endl;
-      setProperty(cState).send("no sensor");
+      Homie.getLogger() << F("No Sensor found!") << endl;
+      setProperty(cState).send(F("no sensor"));
 
       //retry to get
       numberOfDevices = sensor->getDeviceCount();

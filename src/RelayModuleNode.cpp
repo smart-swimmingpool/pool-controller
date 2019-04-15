@@ -24,8 +24,10 @@ void RelayModuleNode::setSwitch(const boolean state) {
     relay->off();
   }
 
-  setProperty(cSwitch).send((state ? cFlagOn : cFlagOff));
-
+  if(Homie.isConnected()){
+    setProperty(cSwitch).send((state ? cFlagOn : cFlagOff));
+    setProperty(cState).send(F("ok"));
+  }
   // persist value
 #ifdef ESP32
   preferences.begin(getId(), false);
@@ -35,7 +37,7 @@ void RelayModuleNode::setSwitch(const boolean state) {
 
 #endif
 
-  Homie.getLogger() << cIndent << "Relay is " << (state ? cFlagOn : cFlagOff) << endl;
+  Homie.getLogger() << cIndent << F("Relay is ") << (state ? cFlagOn : cFlagOff) << endl;
 }
 
 /**
@@ -49,7 +51,7 @@ boolean RelayModuleNode::getSwitch() {
  *
  */
 void RelayModuleNode::printCaption() {
-  Homie.getLogger() << cCaption << " pin[" << _pin << "]:" << endl;
+  Homie.getLogger() << cCaption << F(" pin[") << _pin << F("]:") << endl;
 }
 
 /**
@@ -59,13 +61,13 @@ void RelayModuleNode::printCaption() {
 bool RelayModuleNode::handleInput(const HomieRange& range, const String& property, const String& value) {
   printCaption();
 
-  Homie.getLogger() << cIndent << "〽 handleInput -> property '" << property << "' value=" << value << endl;
+  Homie.getLogger() << cIndent << F("〽 handleInput -> property '") << property << F("' value=") << value << endl;
   bool retval;
 
   if (value != cFlagOn && value != cFlagOff) {
-    Homie.getLogger() << "reveived invalid value for property [" + property + "]: " + value << endl;
+    Homie.getLogger() << F("invalid value for property '") << property << F("' value=") << value << endl;
 
-    setProperty(cState).send("reveived invalid value for property [" + property + "]: " + value);
+    setProperty(cState).send(F("error"));
 
     retval = false;
   } else {
@@ -75,7 +77,7 @@ bool RelayModuleNode::handleInput(const HomieRange& range, const String& propert
     retval = true;
   }
 
-  Homie.getLogger() << "〽 handleInput <-" << retval << endl;
+  Homie.getLogger() << F("〽 handleInput <-") << retval << endl;
   return retval;
 }
 
@@ -88,7 +90,7 @@ void RelayModuleNode::loop() {
     if (Homie.isConnected()) {
 
       const boolean isOn = getSwitch();
-      Homie.getLogger() << "〽 Sending Switch status: " << getId() << "switch: " << (isOn ? cFlagOn : cFlagOff) << endl;
+      Homie.getLogger() << F("〽 Sending Switch status: ") << getId() << F("switch: ") << (isOn ? cFlagOn : cFlagOff) << endl;
 
       setProperty(cSwitch).send((isOn ? cFlagOn : cFlagOff));
     }
@@ -103,8 +105,8 @@ void RelayModuleNode::loop() {
 void RelayModuleNode::setup() {
   printCaption();
 
-  advertise(cSwitch).setName("Switch").setDatatype("boolean").settable();
-  advertise(cState).setName("Sate").setDatatype("string");
+  advertise(cSwitch).setName(cSwitchName).setDatatype("boolean").settable();
+  advertise(cState).setName(cStateName).setDatatype("string");
 
   relay = new RelayModule(_pin);
 
