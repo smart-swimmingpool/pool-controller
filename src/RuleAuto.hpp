@@ -9,6 +9,7 @@
 
 #include "Rule.hpp"
 #include "RelayModuleNode.hpp"
+#include "TimeClientHelper.hpp"
 
 class RuleAuto : public Rule {
 public:
@@ -29,7 +30,6 @@ protected:
   RelayModuleNode* _poolRelay;
 
   bool checkPoolPumpTimer();
-  tm  getCurrentDateTime();
 
 private:
   const char* cCaption = "• RuleAuto:";

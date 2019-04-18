@@ -9,6 +9,7 @@
 #include <Vector.h>
 
 #include "Rule.hpp"
+#include "TimeClientHelper.hpp"
 
 class OperationModeNode : public HomieNode {
 
@@ -74,6 +75,11 @@ private:
   float         _solarMinTemp;
   float         _hysteresis;
   Vector<Rule*> _ruleVec;
+
+  float _timerStartHour;
+  float _timerStartMin;
+  float _timerEndHour;
+  float _timerEndMin;
 
   unsigned long _measurementInterval;
   unsigned long _lastMeasurement;

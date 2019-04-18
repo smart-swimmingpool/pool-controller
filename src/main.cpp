@@ -69,6 +69,65 @@ OperationModeNode operationModeNode("operation-mode", "Operation Mode");
 unsigned long _measurementInterval = 10;
 unsigned long _lastMeasurement;
 
+void onHomieEvent(const HomieEvent& event) {
+  switch(event.type) {
+    case HomieEventType::STANDALONE_MODE:
+      // Do whatever you want when standalone mode is started
+      break;
+    case HomieEventType::CONFIGURATION_MODE:
+      // Do whatever you want when configuration mode is started
+      break;
+    case HomieEventType::NORMAL_MODE:
+      // Do whatever you want when normal mode is started
+      break;
+    case HomieEventType::OTA_STARTED:
+      // Do whatever you want when OTA is started
+      break;
+    case HomieEventType::OTA_PROGRESS:
+      // Do whatever you want when OTA is in progress
+
+      // You can use event.sizeDone and event.sizeTotal
+      break;
+    case HomieEventType::OTA_FAILED:
+      // Do whatever you want when OTA is failed
+      break;
+    case HomieEventType::OTA_SUCCESSFUL:
+      // Do whatever you want when OTA is successful
+      break;
+    case HomieEventType::ABOUT_TO_RESET:
+      // Do whatever you want when the device is about to reset
+      break;
+    case HomieEventType::WIFI_CONNECTED:
+      // Do whatever you want when Wi-Fi is connected in normal mode
+      Homie.getLogger() << F("WIFI_CONNECTED: timeClientSetup.") << endl;
+      timeClientSetup();
+      break;
+    case HomieEventType::WIFI_DISCONNECTED:
+      // Do whatever you want when Wi-Fi is disconnected in normal mode
+      Homie.getLogger() << F("WIFI_DISCONNECTED: reason: ") << event.wifiReason << endl;
+      // You can use event.wifiReason
+      break;
+    case HomieEventType::MQTT_READY:
+      // Do whatever you want when MQTT is connected in normal mode
+      break;
+    case HomieEventType::MQTT_DISCONNECTED:
+      // Do whatever you want when MQTT is disconnected in normal mode
+
+      // You can use event.mqttReason
+      break;
+    case HomieEventType::MQTT_PACKET_ACKNOWLEDGED:
+      // Do whatever you want when an MQTT packet with QoS > 0 is acknowledged by the broker
+
+      // You can use event.packetId
+      break;
+    case HomieEventType::READY_TO_SLEEP:
+      // After you've called `prepareToSleep()`, the event is triggered when MQTT is disconnected
+      break;
+    case HomieEventType::SENDING_STATISTICS:
+      // Do whatever you want when statistics are sent in normal mode
+      break;
+  }
+}
 
 /**
  * Homie Setup handler.
@@ -95,8 +154,6 @@ void setupHandler() {
   operationModeNode.setSolarMinTemperature(temperatureMinSolarSetting.get());
   operationModeNode.setTemperaturHysteresis(temperatureHysteresisSetting.get());
 
-  timeClientSetup();
-
   _lastMeasurement = 0;
 }
 
@@ -110,10 +167,6 @@ void setup() {
     ;  // wait for serial port to connect. Needed for native USB port only
   }
 
-  Serial.println(F("-------------------------------------"));
-  Serial.println(F(" Pool Controller                     "));
-  Serial.println(F("-------------------------------------"));
-
   Homie_setFirmware("pool-controller", "1.0.0");  // The underscore is not a typo! See Magic bytes
   Homie_setBrand("smart-swimmingpool");
 
@@ -125,7 +178,7 @@ void setup() {
   temperatureMaxPoolSetting.setDefaultValue(28.5).setValidator(
       [](long candidate) { return (candidate >= 0) && (candidate <= 30); });
 
-  temperatureMinSolarSetting.setDefaultValue(50.0).setValidator(
+  temperatureMinSolarSetting.setDefaultValue(25.0).setValidator(
       [](long candidate) { return (candidate >= 0) && (candidate <= 100); });
 
   temperatureHysteresisSetting.setDefaultValue(1.0).setValidator(
@@ -157,6 +210,7 @@ void setup() {
 
   //Homie.disableLogging();
   Homie.setSetupFunction(setupHandler);
+  Homie.onEvent(onHomieEvent);
   Homie.setup();
 }
 
@@ -167,16 +221,12 @@ void loop() {
 
   Homie.loop();
 
-  /*
+/*
   if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {
+
+    Homie.getLogger() << "main::loop" << endl;
+
     _lastMeasurement = millis();
-    if (Homie.isConnected()) {
-
-      time_t now = time(nullptr);
-      Serial.println(ctime(&now));
-      printTime(0);
-    }
-
   }
-  */
+*/
 }

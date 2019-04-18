@@ -90,3 +90,15 @@ String getFormattedTime(time_t rawTime)
 
   return hoursStr + ":" + minuteStr + ":" + secondStr;
 }
+
+/**
+ *
+ */
+tm getCurrentDateTime() {
+
+  TimeChangeRule *tcr = NULL;
+  time_t     t        = getTimeFor(0, &tcr);
+  struct tm timeinfo =  *localtime(&t);
+
+  return timeinfo;
+}
