@@ -1,15 +1,15 @@
 {
   "name": "Pool Controller",
   "wifi": {
-    "ssid": "stephan@st-strittmatter.name",
-    "password": "16Jo09as21Li10nda"
+    "ssid": "xx",
+    "password": "xxx"
   },
   "mqtt": {
     "host": "192.168.178.25",
     "port": 1883
   },
   "ota": {
-    "enabled": false
+    "enabled": true
   },
   "settings": {
     "loop-interval": 60,

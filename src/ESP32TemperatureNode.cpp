@@ -53,5 +53,5 @@ void ESP32TemperatureNode::loop() {
  */
 void ESP32TemperatureNode::onReadyToOperate() {
   advertise(cTemperature).setName(cTemperatureName).setDatatype("float").setFormat("-50:100").setUnit(cTemperatureUnit);
-  advertise(cStatus).setName("Status");
+  advertise(cStatus).setName("Status").setDatatype("string");
 }

@@ -35,7 +35,8 @@ Rule* OperationModeNode::getRule() {
       _ruleVec[i]->setSolarMinTemperature(getSolarMinTemperature());
       _ruleVec[i]->setTemperaturHysteresis(getTemperaturHysteresis());
       if (_mode.equals(STATUS_AUTO)) {
-        //special handling
+        //TODO: special handling start/stop time
+
       }
       return _ruleVec[i];
     }
@@ -52,6 +53,7 @@ bool OperationModeNode::setMode(String mode) {
 
   if (mode.equals(STATUS_AUTO) || mode.equals(STATUS_MANU) || mode.equals(STATUS_BOOST)) {
     _mode = mode;
+
     setProperty(cMode).send(_mode);
     setProperty(cState).send(F("ok"));
     retval = true;
@@ -77,7 +79,7 @@ String OperationModeNode::getMode() {
  */
 void OperationModeNode::setup() {
 
-  advertise(cState).setName(cStateName);
+  advertise(cState).setName(cStateName).setDatatype("string");
   advertise(cMode).setName(cModeName).setDatatype("enum").setFormat("manu,auto,boost").settable();
   advertise(cPoolMaxTemp).setName(cPoolMaxTempName).setDatatype("float").setFormat("0:40").setUnit("°C").settable();
   advertise(cSolarMinTemp).setName(cSolarMinTempName).setDatatype("float").setFormat("0:100").setUnit("°C").settable();
@@ -139,6 +141,11 @@ bool OperationModeNode::handleInput(const HomieRange& range, const String& prope
     Homie.getLogger() << cIndent << F("✔ set operational mode: ") << value << endl;
     retval = this->setMode(value);
 
+  } else if (property.equalsIgnoreCase(cHysteresis)) {
+    Homie.getLogger() << cIndent << F("✔ hysteresis: ") << value << endl;
+    _hysteresis = value.toFloat();
+    retval      = true;
+
   } else if (property.equalsIgnoreCase(cSolarMinTemp)) {
     Homie.getLogger() << cIndent << F("✔ solar min temp: ") << value << endl;
     _solarMinTemp = value.toFloat();
@@ -174,6 +181,8 @@ bool OperationModeNode::handleInput(const HomieRange& range, const String& prope
     retval = false;
 
   }
+
+  getRule()->loop(); //update rule immediatly
 
   return retval;
 }

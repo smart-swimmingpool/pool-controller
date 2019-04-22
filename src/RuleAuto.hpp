@@ -35,6 +35,7 @@ private:
   const char* cCaption = "• RuleAuto:";
   const char* cIndent  = "  ◦ ";
 
+  //TODO: make configurable
   String poolPumpStart = "10:30";
   String poolPumpEnd   = "16:45";
 

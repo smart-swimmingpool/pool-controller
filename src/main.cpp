@@ -31,7 +31,7 @@
 #ifdef ESP32
 const uint8_t PIN_DS_SOLAR = 15;  // Pin of Temp-Sensor Solar
 const uint8_t PIN_DS_POOL  = 16;  // Pin of Temp-Sensor Pool
-const uint8_t PIN_DHT11    = 17;
+//const uint8_t PIN_DHT11    = 17;
 
 const uint8_t PIN_RSSWITCH = 18;  // Data-Pin of 433MHz Sender
 
@@ -40,7 +40,7 @@ const uint8_t PIN_RELAY_SOLAR = 19;
 #elif defined(ESP8266)
 const uint8_t PIN_DS_SOLAR = D5;  // Pin of Temp-Sensor Solar
 const uint8_t PIN_DS_POOL  = D6;  // Pin of Temp-Sensor Pool
-const uint8_t PIN_DHT11    = D7;
+//const uint8_t PIN_DHT11    = D7;
 
 const uint8_t PIN_RELAY_POOL  = D1;
 const uint8_t PIN_RELAY_SOLAR = D2;
@@ -68,66 +68,6 @@ OperationModeNode operationModeNode("operation-mode", "Operation Mode");
 
 unsigned long _measurementInterval = 10;
 unsigned long _lastMeasurement;
-
-void onHomieEvent(const HomieEvent& event) {
-  switch(event.type) {
-    case HomieEventType::STANDALONE_MODE:
-      // Do whatever you want when standalone mode is started
-      break;
-    case HomieEventType::CONFIGURATION_MODE:
-      // Do whatever you want when configuration mode is started
-      break;
-    case HomieEventType::NORMAL_MODE:
-      // Do whatever you want when normal mode is started
-      break;
-    case HomieEventType::OTA_STARTED:
-      // Do whatever you want when OTA is started
-      break;
-    case HomieEventType::OTA_PROGRESS:
-      // Do whatever you want when OTA is in progress
-
-      // You can use event.sizeDone and event.sizeTotal
-      break;
-    case HomieEventType::OTA_FAILED:
-      // Do whatever you want when OTA is failed
-      break;
-    case HomieEventType::OTA_SUCCESSFUL:
-      // Do whatever you want when OTA is successful
-      break;
-    case HomieEventType::ABOUT_TO_RESET:
-      // Do whatever you want when the device is about to reset
-      break;
-    case HomieEventType::WIFI_CONNECTED:
-      // Do whatever you want when Wi-Fi is connected in normal mode
-      Homie.getLogger() << F("WIFI_CONNECTED: timeClientSetup.") << endl;
-      timeClientSetup();
-      break;
-    case HomieEventType::WIFI_DISCONNECTED:
-      // Do whatever you want when Wi-Fi is disconnected in normal mode
-      Homie.getLogger() << F("WIFI_DISCONNECTED: reason: ") << event.wifiReason << endl;
-      // You can use event.wifiReason
-      break;
-    case HomieEventType::MQTT_READY:
-      // Do whatever you want when MQTT is connected in normal mode
-      break;
-    case HomieEventType::MQTT_DISCONNECTED:
-      // Do whatever you want when MQTT is disconnected in normal mode
-
-      // You can use event.mqttReason
-      break;
-    case HomieEventType::MQTT_PACKET_ACKNOWLEDGED:
-      // Do whatever you want when an MQTT packet with QoS > 0 is acknowledged by the broker
-
-      // You can use event.packetId
-      break;
-    case HomieEventType::READY_TO_SLEEP:
-      // After you've called `prepareToSleep()`, the event is triggered when MQTT is disconnected
-      break;
-    case HomieEventType::SENDING_STATISTICS:
-      // Do whatever you want when statistics are sent in normal mode
-      break;
-  }
-}
 
 /**
  * Homie Setup handler.
@@ -160,8 +100,9 @@ void setupHandler() {
 /**
  * Startup of controller.
  */
-void setup() {
-  Serial.begin(115200);
+void
+setup() {
+  Serial.begin(SERIAL_SPEED);
 
   while (!Serial) {
     ;  // wait for serial port to connect. Needed for native USB port only
@@ -210,8 +151,9 @@ void setup() {
 
   //Homie.disableLogging();
   Homie.setSetupFunction(setupHandler);
-  Homie.onEvent(onHomieEvent);
   Homie.setup();
+
+  Homie.getLogger() << F("✔ setup ready.") << endl;
 }
 
 /**

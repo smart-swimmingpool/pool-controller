@@ -34,7 +34,7 @@ DallasTemperatureNode::DallasTemperatureNode(const char* id, const char* name, c
  */
 void DallasTemperatureNode::setup() {
 
-  advertise(cState).setName(cStateName);
+  advertise(cState).setName(cStateName).setDatatype("string");
   advertise(cTemperature).setName(cTemperatureName).setDatatype("float").setUnit(cTemperatureUnit);
 
   // Start up the library
