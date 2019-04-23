@@ -13,7 +13,6 @@
 #include "DallasTemperatureNode.hpp"
 #include "ESP32TemperatureNode.hpp"
 #include "RelayModuleNode.hpp"
-#include "RCSwitchNode.hpp"
 #include "OperationModeNode.hpp"
 #include "Rule.hpp"
 #include "RuleManu.hpp"
@@ -167,6 +166,8 @@ void setup() {
     ;  // wait for serial port to connect. Needed for native USB port only
   }
 
+  WiFi.disconnect();
+  
   Homie_setFirmware("pool-controller", "1.0.0");  // The underscore is not a typo! See Magic bytes
   Homie_setBrand("smart-swimmingpool");
 
