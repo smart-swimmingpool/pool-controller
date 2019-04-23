@@ -22,20 +22,13 @@ public:
 
   virtual void loop();
 
-  virtual void addPumpSwitchNode(RelayModuleNode* node);
-  virtual void addSolarSwitchNode(RelayModuleNode* node);
-
 protected:
-  RelayModuleNode* _solarRelay;
-  RelayModuleNode* _poolRelay;
-
   bool checkPoolPumpTimer();
 
 private:
+  RelayModuleNode* _solarRelay;
+  RelayModuleNode* _poolRelay;
+
   const char* cCaption = "• RuleAuto:";
   const char* cIndent  = "  ◦ ";
-
-  String poolPumpStart = "10:30";
-  String poolPumpEnd   = "16:45";
-
 };

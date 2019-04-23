@@ -9,6 +9,7 @@
 #include <Vector.h>
 
 #include "Rule.hpp"
+#include "Timer.hpp"
 #include "TimeClientHelper.hpp"
 
 class OperationModeNode : public HomieNode {
@@ -31,6 +32,9 @@ public:
 
   void  setTemperaturHysteresis(float temp) { _hysteresis = temp; };
   float getTemperaturHysteresis() { return _hysteresis; };
+
+  void  setTimerSetting(TimerSetting setting) { _timerSetting = setting; };
+  TimerSetting getTimerSetting() { return _timerSetting; };
 
   enum MODE { AUTO, MANU, BOOST };
   const char* STATUS_AUTO  = "auto";
@@ -76,10 +80,7 @@ private:
   float         _hysteresis;
   Vector<Rule*> _ruleVec;
 
-  float _timerStartHour;
-  float _timerStartMin;
-  float _timerEndHour;
-  float _timerEndMin;
+  TimerSetting _timerSetting;
 
   unsigned long _measurementInterval;
   unsigned long _lastMeasurement;

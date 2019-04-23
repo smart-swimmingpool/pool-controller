@@ -34,9 +34,8 @@ Rule* OperationModeNode::getRule() {
       _ruleVec[i]->setPoolMaxTemperatur(getPoolMaxTemperature());
       _ruleVec[i]->setSolarMinTemperature(getSolarMinTemperature());
       _ruleVec[i]->setTemperaturHysteresis(getTemperaturHysteresis());
-      if (_mode.equals(STATUS_AUTO)) {
-        //special handling
-      }
+      _ruleVec[i]->setTimerSetting(getTimerSetting()) ;
+
       return _ruleVec[i];
     }
   }
@@ -112,11 +111,11 @@ void OperationModeNode::loop() {
       setProperty(cPoolMaxTemp).send(String(_poolMaxTemp));
       setProperty(cHysteresis).send(String(_hysteresis));
 
-      setProperty(cTimerStartHour).send(String(_timerStartHour));
-      setProperty(cTimerStartMin).send(String(_timerStartMin));
+      setProperty(cTimerStartHour).send(String(_timerSetting.timerStartHour));
+      setProperty(cTimerStartMin).send(String(_timerSetting.timerStartMinutes));
 
-      setProperty(cTimerEndHour).send(String(_timerEndHour));
-      setProperty(cTimerEndMin).send(String(_timerEndMin));
+      setProperty(cTimerEndHour).send(String(_timerSetting.timerEndHour));
+      setProperty(cTimerEndMin).send(String(_timerSetting.timerEndMinutes));
     } else {
       Homie.getLogger() << F("✖ OperationalMode: not connected.") << endl;
 
@@ -151,22 +150,22 @@ bool OperationModeNode::handleInput(const HomieRange& range, const String& prope
 
   } else if (property.equalsIgnoreCase(cTimerStartHour)) {
     Homie.getLogger() << cIndent << F("✔ Timer start hh: ") << value << endl;
-    _timerStartHour = value.toFloat();
+    _timerSetting.timerStartHour = value.toInt();
     retval = true;
 
   } else if (property.equalsIgnoreCase(cTimerStartMin)) {
     Homie.getLogger() << cIndent << F("✔  Timer start min.: ") << value << endl;
-    _timerStartMin = value.toFloat();
+    _timerSetting.timerStartMinutes = value.toInt();
     retval = true;
 
   } else if (property.equalsIgnoreCase(cTimerEndHour)) {
     Homie.getLogger() << cIndent << F("✔ Timer end h: ") << value << endl;
-    _timerEndHour = value.toFloat();
+    _timerSetting.timerEndHour = value.toInt();
     retval = true;
 
   } else if (property.equalsIgnoreCase(cTimerEndMin)) {
     Homie.getLogger() << cIndent << F("✔ Timer end min.: ") << value << endl;
-    _timerEndMin = value.toFloat();
+    _timerSetting.timerEndMinutes = value.toInt();
     retval = true;
 
   } else {

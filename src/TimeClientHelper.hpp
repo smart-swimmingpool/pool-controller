@@ -21,4 +21,3 @@ time_t getUtcTime();
 time_t getTimeFor(int index, TimeChangeRule **tcr);
 String getTimeInfoFor(int index);
 String getFormattedTime(time_t rawTime);
-tm getCurrentDateTime();
