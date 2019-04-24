@@ -24,8 +24,7 @@ TimeZoneInfo _timezones[2] = {
   {"Tokyo", &Japan}
 };
 
-void timeClientSetup()
-{
+void timeClientSetup() {
   // initialize NTP Client
   timeClient.begin();
 
@@ -34,51 +33,37 @@ void timeClientSetup()
   setSyncInterval(0);
 }
 
-int getTzCount()
-{
+int getTzCount() {
   return (sizeof(_timezones) / sizeof(_timezones[0]));
 }
 
-time_t getUtcTime()
-{
-  if (timeClient.update())
-  {
+time_t getUtcTime() {
+  if (timeClient.update()) {
     return timeClient.getEpochTime();
-  }
-  else
-  {
+  }   else {
     return 0;
   }
 }
 
-time_t getTimeFor(int index, TimeChangeRule **tcr)
-{
-  if (index < getTzCount())
-  {
+time_t getTimeFor(int index, TimeChangeRule **tcr) {
+  if (index < getTzCount()) {
     // Zeturn the time for the selected time zone
     return _timezones[index].timezone->toLocal(getUtcTime(), tcr);
-  }
-  else
-  {
+  } else {
     return getUtcTime();
   }
 }
 
-String getTimeInfoFor(int index)
-{
-  if (index < getTzCount())
-  {
+String getTimeInfoFor(int index) {
+  if (index < getTzCount()) {
     // Return the time for the selected time zone
     return _timezones[index].description;
-  }
-  else
-  {
+  } else {
     return "UTC";
   }
 }
 
-String getFormattedTime(time_t rawTime)
-{
+String getFormattedTime(time_t rawTime) {
   unsigned long hours = (rawTime % 86400L) / 3600;
   String hoursStr = hours < 10 ? "0" + String(hours) : String(hours);
 
@@ -90,4 +75,3 @@ String getFormattedTime(time_t rawTime)
 
   return hoursStr + ":" + minuteStr + ":" + secondStr;
 }
-
