@@ -6,10 +6,10 @@
 
 🏊 Homie 3.0 compatible smart swimmingpool controller 🎛️:
 
-- [ ] Manage water timed circulation for cleaning
-- [ ] Manage water heating by additional pump for solar circuit
-- [ ] [Homie 3](https://homieiot.github.io/) compatible MQTT messaging
-- [ ] Independent of smarthome servers
+- [x] Manage water timed circulation for cleaning
+- [x] Manage water heating by additional pump for solar circuit
+- [x] [Homie 3](https://homieiot.github.io/) compatible MQTT messaging
+- [x] Independent of smarthome servers
 - [ ] Integration for OpenHab > 2.4
 
 ## Hardware / BOM
