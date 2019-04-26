@@ -52,12 +52,12 @@ bool OperationModeNode::setMode(String mode) {
   if (mode.equals(STATUS_AUTO) || mode.equals(STATUS_MANU) || mode.equals(STATUS_BOOST)) {
     _mode = mode;
     setProperty(cMode).send(_mode);
-    setProperty(cState).send(F("ok"));
+    setProperty(cHomieNodeState).send(cHomieNodeState_OK);
     retval = true;
 
   } else {
     Homie.getLogger() << F("✖ UNDEFINED Mode. Current unchanged mode: ") << _mode << endl;
-    setProperty(cState).send(F("error"));
+    setProperty(cHomieNodeState).send(cHomieNodeState_Error);
     retval = false;
   }
 
@@ -76,7 +76,7 @@ String OperationModeNode::getMode() {
  */
 void OperationModeNode::setup() {
 
-  advertise(cState).setName(cStateName);
+  advertise(cHomieNodeState).setName(cHomieNodeStateName);
   advertise(cMode).setName(cModeName).setDatatype("enum").setFormat("manu,auto,boost").settable();
   advertise(cPoolMaxTemp).setName(cPoolMaxTempName).setDatatype("float").setFormat("0:40").setUnit("°C").settable();
   advertise(cSolarMinTemp).setName(cSolarMinTempName).setDatatype("float").setFormat("0:100").setUnit("°C").settable();
@@ -118,7 +118,6 @@ void OperationModeNode::loop() {
       setProperty(cTimerEndMin).send(String(_timerSetting.timerEndMinutes));
     } else {
       Homie.getLogger() << F("✖ OperationalMode: not connected.") << endl;
-
     }
 
     _lastMeasurement = millis();

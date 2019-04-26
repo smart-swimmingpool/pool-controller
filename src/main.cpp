@@ -167,7 +167,7 @@ void setup() {
   }
 
   WiFi.disconnect();
-  
+
   Homie_setFirmware("pool-controller", "1.0.0");  // The underscore is not a typo! See Magic bytes
   Homie_setBrand("smart-swimmingpool");
 
@@ -213,6 +213,8 @@ void setup() {
   Homie.setSetupFunction(setupHandler);
   Homie.onEvent(onHomieEvent);
   Homie.setup();
+
+  Homie.getLogger() << F("Free heap: ") << ESP.getFreeHeap() << endl;
 }
 
 /**
@@ -222,12 +224,12 @@ void loop() {
 
   Homie.loop();
 
-/*
   if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {
 
-    Homie.getLogger() << "main::loop" << endl;
+    //Homie.getLogger() << "main::loop" << endl;
+    Homie.getLogger() << F("Free heap: ") << ESP.getFreeHeap() << F(" max. free block size: ") << ESP.getMaxFreeBlockSize() << endl;
 
     _lastMeasurement = millis();
   }
-*/
+
 }

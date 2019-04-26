@@ -53,8 +53,6 @@ private:
   const char*      cCaption             = "• Operation Status:";
   const char*      cIndent              = "  ◦ ";
 
-  const char* cState     = "state";
-  const char* cStateName = "State";
 
   const char* cMode     = "mode";
   const char* cModeName = "Operation Mode";
@@ -73,6 +71,12 @@ private:
 
   const char* cTimerEndHour = "timer-end-h";
   const char* cTimerEndMin  = "timer-end-min";
+
+  const char* cHomieNodeState      = "state";
+  const char* cHomieNodeStateName  = "State";
+
+  const char* cHomieNodeState_OK    = "OK";
+  const char* cHomieNodeState_Error = "Error";
 
   String        _mode;
   float         _poolMaxTemp;

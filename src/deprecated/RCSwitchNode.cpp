@@ -37,7 +37,6 @@ void RCSwitchNode::setState(const boolean state) {
   }
 
   setProperty(cSwitch).send((state ? cFlagOn : cFlagOff));
-  setProperty(cState).send("ok");
 
   _state = state;
 
@@ -51,7 +50,8 @@ void RCSwitchNode::setState(const boolean state) {
 
 #endif
 
-  Homie.getLogger() << cIndent << "RCSwitch is " << (state ? cFlagOn : cFlagOff) << endl;
+  setProperty(cHomieNodeState).send(cHomieNodeState_OK);
+  Homie.getLogger() << cIndent << F("RCSwitch is ") << (state ? cFlagOn : cFlagOff) << endl;
 }
 
 /**
@@ -61,14 +61,14 @@ bool RCSwitchNode::handleInput(const HomieRange& range, const String& property, 
 
   printCaption();
 
-  Homie.getLogger() << cIndent << "〽 handleInput -> property '" << property << "' value=" << value << endl;
+  Homie.getLogger() << cIndent << F("〽 handleInput -> property '") << property << F("' value=") << value << endl;
 
   bool retval;
 
   if (value != cFlagOn && value != cFlagOff) {
 
-    Homie.getLogger() << "reveived invalid value for property [" + property + "]: " + value << endl;
-    setProperty(cState).send("error");
+    Homie.getLogger() << F("reveived invalid value for property [") << property << F("]: ") << value << endl;
+    setProperty(cHomieNodeState).send(cHomieNodeState_Error);
 
     retval = false;
 
@@ -80,7 +80,7 @@ bool RCSwitchNode::handleInput(const HomieRange& range, const String& property, 
     retval = true;
   }
 
-  Homie.getLogger() << "〽 handleInput <-" << retval << endl;
+  Homie.getLogger() << F("〽 handleInput <-") << retval << endl;
   return retval;
 }
 
@@ -91,8 +91,8 @@ void RCSwitchNode::loop() {
   if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {
     _lastMeasurement = millis();
 
-    Homie.getLogger() << "〽 Sending Switch status: " << getId() << endl;
-    Homie.getLogger() << cIndent << "switch: " << _state << endl;
+    Homie.getLogger() << F("〽 Sending Switch status: ") << getId() << endl;
+    Homie.getLogger() << cIndent << F("switch: ") << _state << endl;
 
     setProperty(cSwitch).send((_state ? cFlagOn : cFlagOff));
   }
@@ -104,7 +104,7 @@ void RCSwitchNode::loop() {
 void RCSwitchNode::onReadyToOperate() {
 
   advertise(cSwitch).setName(cSwitchName).setDatatype("boolean").settable();
-  advertise(cState).setName(cStateName).setDatatype("string");
+  advertise(cHomieNodeState).setName(cHomieNodeStateName).setDatatype("string");
 }
 
 /**
@@ -119,7 +119,7 @@ void RCSwitchNode::setup() {
   rcSwitch->setPulseLength(350);
 
   printCaption();
-  Homie.getLogger() << cIndent << "RCSwitch Pin: " << _pin << endl;
+  Homie.getLogger() << cIndent << F("RCSwitch Pin: ") << _pin << endl;
 
 #ifdef ESP32
   preferences.begin(getId(), false);
@@ -130,7 +130,7 @@ void RCSwitchNode::setup() {
   boolean storedSwitchValue = false;
 #endif
 
-  Homie.getLogger() << cIndent << "Restore status: " << storedSwitchValue << endl;
+  Homie.getLogger() << cIndent << F("Restore status: ") << storedSwitchValue << endl;
 
   //restore from preferences
   setState(storedSwitchValue);
