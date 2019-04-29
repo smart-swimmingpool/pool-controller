@@ -147,11 +147,20 @@ void setupHandler() {
   ctrlTemperatureNode.setMeasurementInterval(_loopInterval);
 #endif
 
-  String mode = String(operationModeSetting.get());
-  operationModeNode.setMode(mode);
+  operationModeNode.setMode(operationModeSetting.get());
   operationModeNode.setPoolMaxTemperatur(temperatureMaxPoolSetting.get());
   operationModeNode.setSolarMinTemperature(temperatureMinSolarSetting.get());
   operationModeNode.setTemperaturHysteresis(temperatureHysteresisSetting.get());
+
+  // add the rules
+  RuleAuto* autoRule = new RuleAuto(&solarPumpNode, &poolPumpNode);
+  operationModeNode.addRule(autoRule);
+
+  RuleManu* manuRule = new RuleManu();
+  operationModeNode.addRule(manuRule);
+
+  RuleBoost* boostRule = new RuleBoost(&solarPumpNode, &poolPumpNode);
+  operationModeNode.addRule(boostRule);
 
   _lastMeasurement = 0;
 }
@@ -188,26 +197,6 @@ void setup() {
   operationModeSetting.setDefaultValue("auto").setValidator([](const char* candidate) {
     return (strcmp(candidate, "auto")) || (strcmp(candidate, "manu")) || (strcmp(candidate, "boost"));
   });
-  // set default configured OperationMode
-  String mode = operationModeSetting.get();
-  operationModeNode.setMode((char*)mode.c_str());
-
-  // add the rules
-  RuleAuto* autoRule = new RuleAuto(&solarPumpNode, &poolPumpNode);
-  autoRule->setPoolMaxTemperatur(temperatureMaxPoolSetting.get());
-  autoRule->setSolarMinTemperature(temperatureMinSolarSetting.get());  // TODO make changeable
-  autoRule->setTemperaturHysteresis(temperatureHysteresisSetting.get());
-  operationModeNode.addRule(autoRule);
-
-  RuleManu* manuRule = new RuleManu();
-  operationModeNode.addRule(manuRule);
-
-  RuleBoost* boostRule = new RuleBoost(&solarPumpNode, &poolPumpNode);
-  boostRule->setPoolMaxTemperatur(temperatureMaxPoolSetting.get());
-  boostRule->setSolarMinTemperature(temperatureMinSolarSetting.get());  // TODO make changeable
-  boostRule->setTemperaturHysteresis(temperatureHysteresisSetting.get());
-
-  operationModeNode.addRule(boostRule);
 
   //Homie.disableLogging();
   Homie.setSetupFunction(setupHandler);
