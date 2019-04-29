@@ -100,7 +100,6 @@ void OperationModeNode::loop() {
 
     if (Homie.isConnected()) {
 /*
-
       Homie.getLogger() << cIndent << F("mode: ") << _mode << endl;
       Homie.getLogger() << cIndent << F("SolarMinTemp: ") << _solarMinTemp << endl;
       Homie.getLogger() << cIndent << F("PoolMaxTemp:  ") << _poolMaxTemp << endl;
@@ -172,6 +171,9 @@ bool OperationModeNode::handleInput(const HomieRange& range, const String& prope
     retval = false;
 
   }
+
+  //call loop of selected Rule explicite on changes
+  getRule()->loop();
 
   return retval;
 }
