@@ -27,9 +27,11 @@ void OperationModeNode::addRule(Rule* rule) {
  *
  */
 Rule* OperationModeNode::getRule() {
+  Homie.getLogger() << F("getRule: mode=") << _mode << endl;
 
   for (int i = 0; i < _ruleVec.Size(); i++) {
     if (_mode.equals(_ruleVec[i]->getMode())) {
+      Homie.getLogger() << F("getRule: Active Rule: ") << _ruleVec[i]->getMode() << endl;
       //update the properties
       _ruleVec[i]->setPoolMaxTemperatur(getPoolMaxTemperature());
       _ruleVec[i]->setSolarMinTemperature(getSolarMinTemperature());
@@ -51,12 +53,13 @@ bool OperationModeNode::setMode(String mode) {
 
   if (mode.equals(STATUS_AUTO) || mode.equals(STATUS_MANU) || mode.equals(STATUS_BOOST)) {
     _mode = mode;
+    Homie.getLogger() << F("set mode: ") << _mode << endl;
     setProperty(cMode).send(_mode);
     setProperty(cHomieNodeState).send(cHomieNodeState_OK);
     retval = true;
 
   } else {
-    Homie.getLogger() << F("✖ UNDEFINED Mode. Current unchanged mode: ") << _mode << endl;
+    Homie.getLogger() << F("✖ UNDEFINED Mode: ") << mode << F(" Current unchanged mode: ") << _mode << endl;
     setProperty(cHomieNodeState).send(cHomieNodeState_Error);
     retval = false;
   }
@@ -96,8 +99,12 @@ void OperationModeNode::loop() {
   if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {
     Homie.getLogger() << F("〽 OperatioalMode update rule ") << endl;
     //call loop to evaluate the current rule
-    getRule()->loop();
-
+    Rule* rule = getRule();
+    if( rule != nullptr) {
+      rule->loop();
+    } else {
+      Homie.getLogger() << cIndent << F("✖ no rule defined: ") << _mode << endl;
+    }
     if (Homie.isConnected()) {
 /*
       Homie.getLogger() << cIndent << F("mode: ") << _mode << endl;
