@@ -67,7 +67,9 @@ void DallasTemperatureNode::onReadyToOperate() {
     }
   } else {
     Homie.getLogger() << F("✖ No sensors found on pin ") << _pin << endl;
-    setProperty(cHomieNodeState).send(cHomieNodeState_Error);
+    if(Homie.isConnected()) {
+      setProperty(cHomieNodeState).send(cHomieNodeState_Error);
+    }
   }
 }
 
@@ -92,7 +94,9 @@ void DallasTemperatureNode::loop() {
           temperature = sensor->getTempC(tempDeviceAddress);
           if (DEVICE_DISCONNECTED_C == temperature) {
             Homie.getLogger() << cIndent << F("✖ Error reading sensor. Request count: ") << cnt << endl;
-            setProperty(cHomieNodeState).send(cHomieNodeState_Error);
+            if(Homie.isConnected()) {
+              setProperty(cHomieNodeState).send(cHomieNodeState_Error);
+            }
           } else {
             Homie.getLogger() << cIndent << F("Temperature=") << temperature << endl;
 
@@ -107,8 +111,9 @@ void DallasTemperatureNode::loop() {
     } else {
 
       Homie.getLogger() << F("No Sensor found!") << endl;
-      setProperty(cHomieNodeState).send(cHomieNodeState_Error);
-
+      if(Homie.isConnected()) {
+        setProperty(cHomieNodeState).send(cHomieNodeState_Error);
+      }
       //retry to get
       numberOfDevices = sensor->getDeviceCount();
     }

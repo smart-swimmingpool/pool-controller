@@ -36,7 +36,9 @@ void RCSwitchNode::setState(const boolean state) {
     rcSwitch->switchOff(_group, _device);
   }
 
-  setProperty(cSwitch).send((state ? cFlagOn : cFlagOff));
+  if(Homie.isConnected()) {
+    setProperty(cSwitch).send((state ? cFlagOn : cFlagOff));
+  }
 
   _state = state;
 
@@ -50,7 +52,9 @@ void RCSwitchNode::setState(const boolean state) {
 
 #endif
 
-  setProperty(cHomieNodeState).send(cHomieNodeState_OK);
+  if(Homie.isConnected()) {
+    setProperty(cHomieNodeState).send(cHomieNodeState_OK);
+  }
   Homie.getLogger() << cIndent << F("RCSwitch is ") << (state ? cFlagOn : cFlagOff) << endl;
 }
 
@@ -68,7 +72,9 @@ bool RCSwitchNode::handleInput(const HomieRange& range, const String& property, 
   if (value != cFlagOn && value != cFlagOff) {
 
     Homie.getLogger() << F("reveived invalid value for property [") << property << F("]: ") << value << endl;
-    setProperty(cHomieNodeState).send(cHomieNodeState_Error);
+    if(Homie.isConnected()) {
+      setProperty(cHomieNodeState).send(cHomieNodeState_Error);
+    }
 
     retval = false;
 
@@ -94,7 +100,9 @@ void RCSwitchNode::loop() {
     Homie.getLogger() << F("〽 Sending Switch status: ") << getId() << endl;
     Homie.getLogger() << cIndent << F("switch: ") << _state << endl;
 
-    setProperty(cSwitch).send((_state ? cFlagOn : cFlagOff));
+    if(Homie.isConnected()) {
+      setProperty(cSwitch).send((_state ? cFlagOn : cFlagOff));
+    }
   }
 }
 
