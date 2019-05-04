@@ -151,6 +151,12 @@ void setupHandler() {
   operationModeNode.setPoolMaxTemperatur(temperatureMaxPoolSetting.get());
   operationModeNode.setSolarMinTemperature(temperatureMinSolarSetting.get());
   operationModeNode.setTemperaturHysteresis(temperatureHysteresisSetting.get());
+  TimerSetting ts = operationModeNode.getTimerSetting(); //TODO: Configurable
+  ts.timerStartHour = 10;
+  ts.timerStartMinutes = 0;
+  ts.timerEndHour = 17;
+  ts.timerEndMinutes = 30;
+  operationModeNode.setTimerSetting(ts);
 
   // add the rules
   RuleAuto* autoRule = new RuleAuto(&solarPumpNode, &poolPumpNode);
@@ -175,8 +181,6 @@ void setup() {
     ;  // wait for serial port to connect. Needed for native USB port only
   }
 
-  WiFi.disconnect();
-
   Homie_setFirmware("pool-controller", "1.0.0");  // The underscore is not a typo! See Magic bytes
   Homie_setBrand("smart-swimmingpool");
 
@@ -198,6 +202,8 @@ void setup() {
     return (strcmp(candidate, "auto")) || (strcmp(candidate, "manu")) || (strcmp(candidate, "boost"));
   });
 
+  //WiFi.disconnect();
+
   //Homie.disableLogging();
   Homie.setSetupFunction(setupHandler);
   Homie.onEvent(onHomieEvent);
@@ -212,7 +218,7 @@ void setup() {
 void loop() {
 
   Homie.loop();
-
+/*
   if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {
 
     //Homie.getLogger() << "main::loop" << endl;
@@ -220,5 +226,5 @@ void loop() {
 
     _lastMeasurement = millis();
   }
-
+*/
 }

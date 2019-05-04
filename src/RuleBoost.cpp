@@ -13,7 +13,7 @@ RuleBoost::RuleBoost(RelayModuleNode* solarRelay, RelayModuleNode* poolRelay) {
  *
  */
 void RuleBoost::loop() {
-
+  Homie.getLogger() << cIndent << F("§ RuleBoost: loop") << endl;
   if (_poolRelay->getSwitch()) {
     if ((!_solarRelay->getSwitch())
       && (getPoolTemperature() < (getPoolMaxTemperature() - getTemperaturHysteresis()))

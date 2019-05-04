@@ -15,6 +15,7 @@ RuleAuto::RuleAuto(RelayModuleNode* solarRelay, RelayModuleNode* poolRelay) {
  *
  */
 void RuleAuto::loop() {
+  Homie.getLogger() << cIndent << F("§ RuleAuto: loop") << endl;
 
   _poolRelay->setSwitch(checkPoolPumpTimer());
 
@@ -63,8 +64,8 @@ bool RuleAuto::checkPoolPumpTimer() {
   tm  time = getCurrentDateTime();
   bool retval;
 
-  tm startTime = getStartTime(_timerSetting);
-  tm endTime   = getEndTime(_timerSetting);
+  tm startTime = getStartTime(getTimerSetting());
+  tm endTime   = getEndTime(getTimerSetting());
 
   Homie.getLogger() << cIndent << F("time=      ") << asctime(&time);
   Homie.getLogger() << cIndent << F("startTime= ") << asctime(&startTime);

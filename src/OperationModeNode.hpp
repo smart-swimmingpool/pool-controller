@@ -78,7 +78,7 @@ private:
   const char* cHomieNodeState_OK    = "OK";
   const char* cHomieNodeState_Error = "Error";
 
-  String        _mode;
+  String        _mode = STATUS_AUTO;
   float         _poolMaxTemp;
   float         _solarMinTemp;
   float         _hysteresis;
