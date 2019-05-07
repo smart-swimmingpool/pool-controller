@@ -9,6 +9,7 @@
 #include <Vector.h>
 
 #include "Rule.hpp"
+#include "Timer.hpp"
 #include "TimeClientHelper.hpp"
 
 class OperationModeNode : public HomieNode {
@@ -32,10 +33,14 @@ public:
   void  setTemperaturHysteresis(float temp) { _hysteresis = temp; };
   float getTemperaturHysteresis() { return _hysteresis; };
 
+  void  setTimerSetting(TimerSetting setting) { _timerSetting = setting; };
+  TimerSetting getTimerSetting() { return _timerSetting; };
+
   enum MODE { AUTO, MANU, BOOST };
   const char* STATUS_AUTO  = "auto";
   const char* STATUS_MANU  = "manu";
   const char* STATUS_BOOST = "boost";
+  const char* STATUS_TIMER = "timer";
 
 protected:
   void setup() override;
@@ -49,8 +54,6 @@ private:
   const char*      cCaption             = "• Operation Status:";
   const char*      cIndent              = "  ◦ ";
 
-  const char* cState     = "state";
-  const char* cStateName = "State";
 
   const char* cMode     = "mode";
   const char* cModeName = "Operation Mode";
@@ -70,16 +73,19 @@ private:
   const char* cTimerEndHour = "timer-end-h";
   const char* cTimerEndMin  = "timer-end-min";
 
-  String        _mode;
+  const char* cHomieNodeState      = "state";
+  const char* cHomieNodeStateName  = "State";
+
+  const char* cHomieNodeState_OK    = "OK";
+  const char* cHomieNodeState_Error = "Error";
+
+  String        _mode = STATUS_AUTO;
   float         _poolMaxTemp;
   float         _solarMinTemp;
   float         _hysteresis;
   Vector<Rule*> _ruleVec;
 
-  float _timerStartHour;
-  float _timerStartMin;
-  float _timerEndHour;
-  float _timerEndMin;
+  TimerSetting _timerSetting;
 
   unsigned long _measurementInterval;
   unsigned long _lastMeasurement;

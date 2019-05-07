@@ -27,25 +27,24 @@ void ESP32TemperatureNode::printCaption() {
  */
 void ESP32TemperatureNode::loop() {
 
+#ifdef ESP32
   if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {
     _lastMeasurement = millis();
 
-#ifdef ESP32
-
-    Homie.getLogger() << "〽 Sending Temperature: " << getId() << endl;
+    Homie.getLogger() << F("〽 Sending Temperature: ") << getId() << endl;
 
     //internal temp of ESP
     const uint8_t temp_farenheit = temprature_sens_read();
     const double  temp           = (temp_farenheit - 32) / 1.8;
 
-    Homie.getLogger() << cIndent << "Temperature = " << temp << cTemperatureUnit << endl;
-    setProperty(cTemperature).send(String(temp, 2));
-    setProperty(cStatus).send("OK");
+    Homie.getLogger() << cIndent << F("Temperature = ") << temp << cTemperatureUnit << endl;
+    if(Homie.isConnected()) {
+      setProperty(cTemperature).send(String(temp, 2));
+      setProperty(cHomieNodeState).send(cHomieNodeState_OK);
+    }
 
-#else
-    setProperty(cStatus).send("Sorry device is not an ESP32");
-#endif
   }
+#endif
 }
 
 /**
@@ -53,5 +52,5 @@ void ESP32TemperatureNode::loop() {
  */
 void ESP32TemperatureNode::onReadyToOperate() {
   advertise(cTemperature).setName(cTemperatureName).setDatatype("float").setFormat("-50:100").setUnit(cTemperatureUnit);
-  advertise(cStatus).setName("Status").setDatatype("string");
+  advertise(cHomieNodeState).setName(cHomieNodeStateName);
 }

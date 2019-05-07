@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include "Homie.hpp"
 #include "Rule.hpp"
 
 class RuleManu : public Rule {

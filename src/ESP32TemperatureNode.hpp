@@ -34,11 +34,15 @@ private:
   const char*      cCaption             = "• ESP32 Internal Temperature sensor:";
   const char*      cIndent              = "  ◦ ";
 
-  const char* cStatus          = "status";
-  const char* cStatusName      = "Status";
   const char* cTemperature     = "temperature";
   const char* cTemperatureName = "Temperature";
   const char* cTemperatureUnit = "°C";
+
+  const char* cHomieNodeState      = "state";
+  const char* cHomieNodeStateName  = "State";
+
+  const char* cHomieNodeState_OK    = "OK";
+  const char* cHomieNodeState_Error = "Error";
 
   bool          _sensorFound = false;
   unsigned int  _pin;

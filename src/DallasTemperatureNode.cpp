@@ -34,7 +34,7 @@ DallasTemperatureNode::DallasTemperatureNode(const char* id, const char* name, c
  */
 void DallasTemperatureNode::setup() {
 
-  advertise(cState).setName(cStateName).setDatatype("string");
+  advertise(cHomieNodeState).setName(cHomieNodeStateName);
   advertise(cTemperature).setName(cTemperatureName).setDatatype("float").setUnit(cTemperatureUnit);
 
   // Start up the library
@@ -67,7 +67,9 @@ void DallasTemperatureNode::onReadyToOperate() {
     }
   } else {
     Homie.getLogger() << F("✖ No sensors found on pin ") << _pin << endl;
-    setProperty(cState).send(F("error"));
+    if(Homie.isConnected()) {
+      setProperty(cHomieNodeState).send(cHomieNodeState_Error);
+    }
   }
 }
 
@@ -92,13 +94,15 @@ void DallasTemperatureNode::loop() {
           temperature = sensor->getTempC(tempDeviceAddress);
           if (DEVICE_DISCONNECTED_C == temperature) {
             Homie.getLogger() << cIndent << F("✖ Error reading sensor. Request count: ") << cnt << endl;
-            setProperty(cState).send("error");
+            if(Homie.isConnected()) {
+              setProperty(cHomieNodeState).send(cHomieNodeState_Error);
+            }
           } else {
             Homie.getLogger() << cIndent << F("Temperature=") << temperature << endl;
 
             if(Homie.isConnected()) {
               setProperty(cTemperature).send(String(temperature));
-              setProperty(cState).send("ok");
+              setProperty(cHomieNodeState).send(cHomieNodeState_OK);
             }
           }
         }
@@ -107,8 +111,9 @@ void DallasTemperatureNode::loop() {
     } else {
 
       Homie.getLogger() << F("No Sensor found!") << endl;
-      setProperty(cState).send(F("no sensor"));
-
+      if(Homie.isConnected()) {
+        setProperty(cHomieNodeState).send(cHomieNodeState_Error);
+      }
       //retry to get
       numberOfDevices = sensor->getDeviceCount();
     }
@@ -132,7 +137,7 @@ String DallasTemperatureNode::address2String(const DeviceAddress deviceAddress) 
     // zero pad the address if necessary
 
     if (deviceAddress[i] < 16) {
-      adr = adr + "0";
+      adr = adr + F("0");
     }
     adr = adr + String(deviceAddress[i], HEX);
   }

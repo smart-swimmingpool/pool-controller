@@ -45,8 +45,11 @@ private:
   const char* cFlagOn  = "on";
   const char* cFlagOff = "off";
 
-  const char* cState     = "state";
-  const char* cStateName = "State";
+  const char* cHomieNodeState      = "state";
+  const char* cHomieNodeStateName  = "State";
+
+  const char* cHomieNodeState_OK    = "OK";
+  const char* cHomieNodeState_Error = "Error";
 
   unsigned long _measurementInterval;
   unsigned long _lastMeasurement;

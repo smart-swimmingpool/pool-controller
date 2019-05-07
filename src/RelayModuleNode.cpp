@@ -26,7 +26,7 @@ void RelayModuleNode::setSwitch(const boolean state) {
 
   if(Homie.isConnected()){
     setProperty(cSwitch).send((state ? cFlagOn : cFlagOff));
-    setProperty(cState).send(F("ok"));
+    setProperty(cHomieNodeState).send(cHomieNodeState_OK);
   }
   // persist value
 #ifdef ESP32
@@ -67,8 +67,9 @@ bool RelayModuleNode::handleInput(const HomieRange& range, const String& propert
   if (value != cFlagOn && value != cFlagOff) {
     Homie.getLogger() << F("invalid value for property '") << property << F("' value=") << value << endl;
 
-    setProperty(cState).send(F("error"));
-
+    if(Homie.isConnected()) {
+      setProperty(cHomieNodeState).send(cHomieNodeState_Error);
+    }
     retval = false;
   } else {
     const bool flag = (value == cFlagOn);
@@ -92,7 +93,9 @@ void RelayModuleNode::loop() {
       const boolean isOn = getSwitch();
       Homie.getLogger() << F("〽 Sending Switch status: ") << getId() << F("switch: ") << (isOn ? cFlagOn : cFlagOff) << endl;
 
-      setProperty(cSwitch).send((isOn ? cFlagOn : cFlagOff));
+      if(Homie.isConnected()) {
+        setProperty(cSwitch).send((isOn ? cFlagOn : cFlagOff));
+      }
     }
 
     _lastMeasurement = millis();
@@ -106,7 +109,7 @@ void RelayModuleNode::setup() {
   printCaption();
 
   advertise(cSwitch).setName(cSwitchName).setDatatype("boolean").settable();
-  advertise(cState).setName(cStateName).setDatatype("string");
+  advertise(cHomieNodeState).setName(cHomieNodeStateName).setDatatype("string");
 
   relay = new RelayModule(_pin);
 

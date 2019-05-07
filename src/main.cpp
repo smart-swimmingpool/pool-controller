@@ -13,12 +13,12 @@
 #include "DallasTemperatureNode.hpp"
 #include "ESP32TemperatureNode.hpp"
 #include "RelayModuleNode.hpp"
-#include "RCSwitchNode.hpp"
 #include "OperationModeNode.hpp"
 #include "Rule.hpp"
 #include "RuleManu.hpp"
 #include "RuleAuto.hpp"
 #include "RuleBoost.hpp"
+#include "RuleTimer.hpp"
 
 #include "TimeClientHelper.hpp"
 
@@ -40,7 +40,6 @@ const uint8_t PIN_RELAY_SOLAR = 19;
 #elif defined(ESP8266)
 const uint8_t PIN_DS_SOLAR = D5;  // Pin of Temp-Sensor Solar
 const uint8_t PIN_DS_POOL  = D6;  // Pin of Temp-Sensor Pool
-//const uint8_t PIN_DHT11    = D7;
 
 const uint8_t PIN_RELAY_POOL  = D1;
 const uint8_t PIN_RELAY_SOLAR = D2;
@@ -88,11 +87,29 @@ void setupHandler() {
   ctrlTemperatureNode.setMeasurementInterval(_loopInterval);
 #endif
 
-  String mode = String(operationModeSetting.get());
-  operationModeNode.setMode(mode);
+  operationModeNode.setMode(operationModeSetting.get());
   operationModeNode.setPoolMaxTemperatur(temperatureMaxPoolSetting.get());
   operationModeNode.setSolarMinTemperature(temperatureMinSolarSetting.get());
   operationModeNode.setTemperaturHysteresis(temperatureHysteresisSetting.get());
+  TimerSetting ts = operationModeNode.getTimerSetting(); //TODO: Configurable
+  ts.timerStartHour = 10;
+  ts.timerStartMinutes = 0;
+  ts.timerEndHour = 17;
+  ts.timerEndMinutes = 30;
+  operationModeNode.setTimerSetting(ts);
+
+  // add the rules
+  RuleAuto* autoRule = new RuleAuto(&solarPumpNode, &poolPumpNode);
+  operationModeNode.addRule(autoRule);
+
+  RuleManu* manuRule = new RuleManu();
+  operationModeNode.addRule(manuRule);
+
+  RuleBoost* boostRule = new RuleBoost(&solarPumpNode, &poolPumpNode);
+  operationModeNode.addRule(boostRule);
+
+  RuleTimer* timerRule = new RuleTimer(&solarPumpNode, &poolPumpNode);
+  operationModeNode.addRule(timerRule);
 
   _lastMeasurement = 0;
 }
@@ -128,32 +145,14 @@ setup() {
   operationModeSetting.setDefaultValue("auto").setValidator([](const char* candidate) {
     return (strcmp(candidate, "auto")) || (strcmp(candidate, "manu")) || (strcmp(candidate, "boost"));
   });
-  // set default configured OperationMode
-  String mode = operationModeSetting.get();
-  operationModeNode.setMode((char*)mode.c_str());
 
-  // add the rules
-  RuleAuto* autoRule = new RuleAuto(&solarPumpNode, &poolPumpNode);
-  autoRule->setPoolMaxTemperatur(temperatureMaxPoolSetting.get());
-  autoRule->setSolarMinTemperature(temperatureMinSolarSetting.get());  // TODO make changeable
-  autoRule->setTemperaturHysteresis(temperatureHysteresisSetting.get());
-  operationModeNode.addRule(autoRule);
-
-  RuleManu* manuRule = new RuleManu();
-  operationModeNode.addRule(manuRule);
-
-  RuleBoost* boostRule = new RuleBoost(&solarPumpNode, &poolPumpNode);
-  boostRule->setPoolMaxTemperatur(temperatureMaxPoolSetting.get());
-  boostRule->setSolarMinTemperature(temperatureMinSolarSetting.get());  // TODO make changeable
-  boostRule->setTemperaturHysteresis(temperatureHysteresisSetting.get());
-
-  operationModeNode.addRule(boostRule);
+  //WiFi.disconnect();
 
   //Homie.disableLogging();
   Homie.setSetupFunction(setupHandler);
   Homie.setup();
 
-  Homie.getLogger() << F("✔ setup ready.") << endl;
+  Homie.getLogger() << F("Free heap: ") << ESP.getFreeHeap() << endl;
 }
 
 /**
@@ -162,11 +161,11 @@ setup() {
 void loop() {
 
   Homie.loop();
-
 /*
   if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {
 
-    Homie.getLogger() << "main::loop" << endl;
+    //Homie.getLogger() << "main::loop" << endl;
+    Homie.getLogger() << F("Free heap: ") << ESP.getFreeHeap() << F(" max. free block size: ") << ESP.getMaxFreeBlockSize() << endl;
 
     _lastMeasurement = millis();
   }

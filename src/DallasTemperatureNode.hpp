@@ -33,11 +33,15 @@ private:
   const char* cCaption = "• DallasTemperature sensor:";
   const char* cIndent  = "  ◦ ";
 
-  const char* cState           = "state";
-  const char* cStateName       = "State";
   const char* cTemperature     = "temperature";
   const char* cTemperatureName = "Temperature";
   const char* cTemperatureUnit = "°C";
+
+  const char* cHomieNodeState      = "state";
+  const char* cHomieNodeStateName  = "State";
+
+  const char* cHomieNodeState_OK    = "OK";
+  const char* cHomieNodeState_Error = "Error";
 
   bool _sensorFound = false;
 

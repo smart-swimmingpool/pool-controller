@@ -27,17 +27,17 @@ void OperationModeNode::addRule(Rule* rule) {
  *
  */
 Rule* OperationModeNode::getRule() {
+  Homie.getLogger() << F("getRule: mode=") << _mode << endl;
 
   for (int i = 0; i < _ruleVec.Size(); i++) {
     if (_mode.equals(_ruleVec[i]->getMode())) {
+      Homie.getLogger() << F("getRule: Active Rule: ") << _ruleVec[i]->getMode() << endl;
       //update the properties
       _ruleVec[i]->setPoolMaxTemperatur(getPoolMaxTemperature());
       _ruleVec[i]->setSolarMinTemperature(getSolarMinTemperature());
       _ruleVec[i]->setTemperaturHysteresis(getTemperaturHysteresis());
-      if (_mode.equals(STATUS_AUTO)) {
-        //TODO: special handling start/stop time
+      _ruleVec[i]->setTimerSetting(getTimerSetting()) ;
 
-      }
       return _ruleVec[i];
     }
   }
@@ -51,16 +51,16 @@ Rule* OperationModeNode::getRule() {
 bool OperationModeNode::setMode(String mode) {
   bool retval;
 
-  if (mode.equals(STATUS_AUTO) || mode.equals(STATUS_MANU) || mode.equals(STATUS_BOOST)) {
+  if (mode.equals(STATUS_AUTO) || mode.equals(STATUS_MANU) || mode.equals(STATUS_BOOST) || mode.equals(STATUS_TIMER)) {
     _mode = mode;
-
+    Homie.getLogger() << F("set mode: ") << _mode << endl;
     setProperty(cMode).send(_mode);
-    setProperty(cState).send(F("ok"));
+    setProperty(cHomieNodeState).send(cHomieNodeState_OK);
     retval = true;
 
   } else {
-    Homie.getLogger() << F("✖ UNDEFINED Mode. Current unchanged mode: ") << _mode << endl;
-    setProperty(cState).send(F("error"));
+    Homie.getLogger() << F("✖ UNDEFINED Mode: ") << mode << F(" Current unchanged mode: ") << _mode << endl;
+    setProperty(cHomieNodeState).send(cHomieNodeState_Error);
     retval = false;
   }
 
@@ -79,8 +79,8 @@ String OperationModeNode::getMode() {
  */
 void OperationModeNode::setup() {
 
-  advertise(cState).setName(cStateName).setDatatype("string");
-  advertise(cMode).setName(cModeName).setDatatype("enum").setFormat("manu,auto,boost").settable();
+  advertise(cHomieNodeState).setName(cHomieNodeStateName);
+  advertise(cMode).setName(cModeName).setDatatype("enum").setFormat("manu,auto,boost,timer").settable();
   advertise(cPoolMaxTemp).setName(cPoolMaxTempName).setDatatype("float").setFormat("0:40").setUnit("°C").settable();
   advertise(cSolarMinTemp).setName(cSolarMinTempName).setDatatype("float").setFormat("0:100").setUnit("°C").settable();
   advertise(cHysteresis).setName(cHysteresisName).setDatatype("float").setFormat("0:10").setUnit("K").settable();
@@ -99,11 +99,14 @@ void OperationModeNode::loop() {
   if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {
     Homie.getLogger() << F("〽 OperatioalMode update rule ") << endl;
     //call loop to evaluate the current rule
-    getRule()->loop();
-
+    Rule* rule = getRule();
+    if( rule != nullptr) {
+      rule->loop();
+    } else {
+      Homie.getLogger() << cIndent << F("✖ no rule defined: ") << _mode << endl;
+    }
     if (Homie.isConnected()) {
 /*
-
       Homie.getLogger() << cIndent << F("mode: ") << _mode << endl;
       Homie.getLogger() << cIndent << F("SolarMinTemp: ") << _solarMinTemp << endl;
       Homie.getLogger() << cIndent << F("PoolMaxTemp:  ") << _poolMaxTemp << endl;
@@ -114,14 +117,13 @@ void OperationModeNode::loop() {
       setProperty(cPoolMaxTemp).send(String(_poolMaxTemp));
       setProperty(cHysteresis).send(String(_hysteresis));
 
-      setProperty(cTimerStartHour).send(String(_timerStartHour));
-      setProperty(cTimerStartMin).send(String(_timerStartMin));
+      setProperty(cTimerStartHour).send(String(_timerSetting.timerStartHour));
+      setProperty(cTimerStartMin).send(String(_timerSetting.timerStartMinutes));
 
-      setProperty(cTimerEndHour).send(String(_timerEndHour));
-      setProperty(cTimerEndMin).send(String(_timerEndMin));
+      setProperty(cTimerEndHour).send(String(_timerSetting.timerEndHour));
+      setProperty(cTimerEndMin).send(String(_timerSetting.timerEndMinutes));
     } else {
       Homie.getLogger() << F("✖ OperationalMode: not connected.") << endl;
-
     }
 
     _lastMeasurement = millis();
@@ -158,31 +160,38 @@ bool OperationModeNode::handleInput(const HomieRange& range, const String& prope
 
   } else if (property.equalsIgnoreCase(cTimerStartHour)) {
     Homie.getLogger() << cIndent << F("✔ Timer start hh: ") << value << endl;
-    _timerStartHour = value.toFloat();
+    TimerSetting timerSetting = getTimerSetting();
+    timerSetting.timerStartHour = value.toInt();
+    setTimerSetting(timerSetting);
     retval = true;
 
   } else if (property.equalsIgnoreCase(cTimerStartMin)) {
     Homie.getLogger() << cIndent << F("✔  Timer start min.: ") << value << endl;
-    _timerStartMin = value.toFloat();
+    TimerSetting timerSetting = getTimerSetting();
+    timerSetting.timerStartMinutes = value.toInt();
+    setTimerSetting(timerSetting);
     retval = true;
 
   } else if (property.equalsIgnoreCase(cTimerEndHour)) {
     Homie.getLogger() << cIndent << F("✔ Timer end h: ") << value << endl;
-    _timerEndHour = value.toFloat();
+    TimerSetting timerSetting = getTimerSetting();
+    timerSetting.timerEndHour = value.toInt();
+    setTimerSetting(timerSetting);
     retval = true;
 
   } else if (property.equalsIgnoreCase(cTimerEndMin)) {
     Homie.getLogger() << cIndent << F("✔ Timer end min.: ") << value << endl;
-    _timerEndMin = value.toFloat();
+    TimerSetting timerSetting = getTimerSetting();
+    timerSetting.timerEndMinutes = value.toInt();
+    setTimerSetting(timerSetting);
     retval = true;
 
   } else {
-    Homie.getLogger() << cIndent << F("✖ unmanaged property: ") << property << endl;
     retval = false;
-
   }
 
-  getRule()->loop(); //update rule immediatly
+  //set 0 to force call of loop explicite on changes
+  _lastMeasurement = 0;
 
   return retval;
 }
