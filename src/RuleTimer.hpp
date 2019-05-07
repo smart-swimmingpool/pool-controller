@@ -5,11 +5,11 @@
 #include "RelayModuleNode.hpp"
 #include "TimeClientHelper.hpp"
 
-class RuleAuto : public Rule {
+class RuleTimer : public Rule {
 public:
-  RuleAuto(RelayModuleNode* solarRelay, RelayModuleNode* poolRelay);
+  RuleTimer(RelayModuleNode* solarRelay, RelayModuleNode* poolRelay);
 
-  const char* getMode() { return "auto"; };
+  const char* getMode() { return "timer"; };
 
   void setSolarRelayNode(RelayModuleNode* relay) { _solarRelay = relay; };
   void setPoolRelayNode(RelayModuleNode* relay) { _poolRelay = relay; };
@@ -23,6 +23,6 @@ private:
   RelayModuleNode* _solarRelay;
   RelayModuleNode* _poolRelay;
 
-  const char* cCaption = "• RuleAuto:";
+  const char* cCaption = "• RuleTimer:";
   const char* cIndent  = "  ◦ ";
 };

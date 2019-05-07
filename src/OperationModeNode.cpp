@@ -51,7 +51,7 @@ Rule* OperationModeNode::getRule() {
 bool OperationModeNode::setMode(String mode) {
   bool retval;
 
-  if (mode.equals(STATUS_AUTO) || mode.equals(STATUS_MANU) || mode.equals(STATUS_BOOST)) {
+  if (mode.equals(STATUS_AUTO) || mode.equals(STATUS_MANU) || mode.equals(STATUS_BOOST) || mode.equals(STATUS_TIMER)) {
     _mode = mode;
     Homie.getLogger() << F("set mode: ") << _mode << endl;
     setProperty(cMode).send(_mode);
@@ -80,7 +80,7 @@ String OperationModeNode::getMode() {
 void OperationModeNode::setup() {
 
   advertise(cHomieNodeState).setName(cHomieNodeStateName);
-  advertise(cMode).setName(cModeName).setDatatype("enum").setFormat("manu,auto,boost").settable();
+  advertise(cMode).setName(cModeName).setDatatype("enum").setFormat("manu,auto,boost,timer").settable();
   advertise(cPoolMaxTemp).setName(cPoolMaxTempName).setDatatype("float").setFormat("0:40").setUnit("°C").settable();
   advertise(cSolarMinTemp).setName(cSolarMinTempName).setDatatype("float").setFormat("0:100").setUnit("°C").settable();
   advertise(cHysteresis).setName(cHysteresisName).setDatatype("float").setFormat("0:10").setUnit("K").settable();
@@ -155,32 +155,38 @@ bool OperationModeNode::handleInput(const HomieRange& range, const String& prope
 
   } else if (property.equalsIgnoreCase(cTimerStartHour)) {
     Homie.getLogger() << cIndent << F("✔ Timer start hh: ") << value << endl;
-    _timerSetting.timerStartHour = value.toInt();
+    TimerSetting timerSetting = getTimerSetting();
+    timerSetting.timerStartHour = value.toInt();
+    setTimerSetting(timerSetting);
     retval = true;
 
   } else if (property.equalsIgnoreCase(cTimerStartMin)) {
     Homie.getLogger() << cIndent << F("✔  Timer start min.: ") << value << endl;
-    _timerSetting.timerStartMinutes = value.toInt();
+    TimerSetting timerSetting = getTimerSetting();
+    timerSetting.timerStartMinutes = value.toInt();
+    setTimerSetting(timerSetting);
     retval = true;
 
   } else if (property.equalsIgnoreCase(cTimerEndHour)) {
     Homie.getLogger() << cIndent << F("✔ Timer end h: ") << value << endl;
-    _timerSetting.timerEndHour = value.toInt();
+    TimerSetting timerSetting = getTimerSetting();
+    timerSetting.timerEndHour = value.toInt();
+    setTimerSetting(timerSetting);
     retval = true;
 
   } else if (property.equalsIgnoreCase(cTimerEndMin)) {
     Homie.getLogger() << cIndent << F("✔ Timer end min.: ") << value << endl;
-    _timerSetting.timerEndMinutes = value.toInt();
+    TimerSetting timerSetting = getTimerSetting();
+    timerSetting.timerEndMinutes = value.toInt();
+    setTimerSetting(timerSetting);
     retval = true;
 
   } else {
-    Homie.getLogger() << cIndent << F("✖ unmanaged property: ") << property << endl;
     retval = false;
-
   }
 
-  //call loop of selected Rule explicite on changes
-  getRule()->loop();
+  //set 0 to force call of loop explicite on changes
+  _lastMeasurement = 0;
 
   return retval;
 }

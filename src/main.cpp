@@ -18,6 +18,7 @@
 #include "RuleManu.hpp"
 #include "RuleAuto.hpp"
 #include "RuleBoost.hpp"
+#include "RuleTimer.hpp"
 
 #include "TimeClientHelper.hpp"
 
@@ -39,7 +40,6 @@ const uint8_t PIN_RELAY_SOLAR = 19;
 #elif defined(ESP8266)
 const uint8_t PIN_DS_SOLAR = D5;  // Pin of Temp-Sensor Solar
 const uint8_t PIN_DS_POOL  = D6;  // Pin of Temp-Sensor Pool
-const uint8_t PIN_DHT11    = D7;
 
 const uint8_t PIN_RELAY_POOL  = D1;
 const uint8_t PIN_RELAY_SOLAR = D2;
@@ -167,6 +167,9 @@ void setupHandler() {
 
   RuleBoost* boostRule = new RuleBoost(&solarPumpNode, &poolPumpNode);
   operationModeNode.addRule(boostRule);
+
+  RuleTimer* timerRule = new RuleTimer(&solarPumpNode, &poolPumpNode);
+  operationModeNode.addRule(timerRule);
 
   _lastMeasurement = 0;
 }

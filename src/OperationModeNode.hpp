@@ -40,6 +40,7 @@ public:
   const char* STATUS_AUTO  = "auto";
   const char* STATUS_MANU  = "manu";
   const char* STATUS_BOOST = "boost";
+  const char* STATUS_TIMER = "timer";
 
 protected:
   void setup() override;
