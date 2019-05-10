@@ -20,6 +20,8 @@
 # Guides
 
 - [Users Guide](docs/users-guide.md)
+- [Hardware Guide](docs/hardware-guide.md)
+- [Software Guide](docs/software-guide.md)
 
 # Development
 
