@@ -22,34 +22,44 @@ void RuleAuto::loop() {
   float hyst = getTemperaturHysteresis();
 
   if (_poolRelay->getSwitch()) {
-    if((_solarRelay->getSwitch() && getSolarTemperature() < getSolarMinTemperature() + hyst)) {
-      Homie.getLogger() << cIndent << F("§ RuleAuto: Solar below min. Temperature (") << getSolarMinTemperature() << F("). Switch solar off") << endl;
-      _solarRelay->setSwitch(false);
+    //pool pump is running
 
-    } else {
+    if (_solarRelay->getSwitch()) {
+      //solar is on
+      if (getSolarTemperature() < (getSolarMinTemperature() - hyst)) {
+        Homie.getLogger() << cIndent << F("§ RuleAuto: Solar below min. required solar temp. (") << getSolarMinTemperature() << F("). Switch solar off") << endl;
+        _solarRelay->setSwitch(false);
 
-      if ((!_solarRelay->getSwitch()) &&
-        ((getPoolTemperature() < (getPoolMaxTemperature() - hyst))
-        || (getPoolTemperature() < (getSolarTemperature() - hyst)))
-        ) {
-        Homie.getLogger() << cIndent << F("§ RuleAuto: below max. Temperature (") << getPoolMaxTemperature() << F("). Switch solar on") << endl;
-        _solarRelay->setSwitch(true);
+      } else if(getPoolTemperature() >= (getSolarTemperature() + hyst)) {
+         Homie.getLogger() << cIndent << F("§ RuleAuto: Pool temp. (") << getPoolTemperature() << F(") reaches solar temp (") << getSolarTemperature() << F("). Switch solar off") << endl;
+        _solarRelay->setSwitch(false);
 
-      } else if ((_solarRelay->getSwitch()) &&
-        ((getPoolTemperature() > (getPoolMaxTemperature() + hyst ))
-        || (getPoolTemperature() > (getSolarTemperature() + hyst)))
-        ) {
-        Homie.getLogger() << cIndent << F("§ RuleAuto: Max. Temperature (") << getPoolMaxTemperature() << F(") reached. Switch solar off") << endl;
+      } else if (getPoolTemperature() >= (getPoolMaxTemperature() + hyst)) {
+        Homie.getLogger() << cIndent << F("§ RuleAuto: Pool temp. (") << getPoolTemperature() << F(") above max. temperature (") << getPoolMaxTemperature() << F("). Switch solar off") << endl;
         _solarRelay->setSwitch(false);
 
       } else {
+        // leave it on.
+        Homie.getLogger() << cIndent << F("§ RuleAuto: Solar on -> no change")<< endl;
+      }
+
+    } else {
+      //solar is off: !_solarRelay->getSwitch()
+      if ((getPoolTemperature() < (getPoolMaxTemperature() - hyst))
+        && (getPoolTemperature() < (getSolarTemperature() - hyst))
+        && (getSolarTemperature() > (getSolarMinTemperature() + hyst))) {
+        Homie.getLogger() << cIndent << F("§ RuleAuto: below max. Temperature (") << getPoolMaxTemperature() << F("). Switch solar on") << endl;
+        _solarRelay->setSwitch(true);
+
+      } else {
         // no change of status
-        Homie.getLogger() << cIndent << F("§ RuleAuto: no change")<< endl;
+        Homie.getLogger() << cIndent << F("§ RuleAuto: Solar off -> no change")<< endl;
       }
     }
   } else {
-    Homie.getLogger() << cIndent << F("§ RuleAuto: pool pump is disabled.") << endl;
+
     if (_solarRelay->getSwitch()) {
+      Homie.getLogger() << cIndent << F("§ RuleAuto: pool pump is disabled. Switch solar off") << endl;
       _solarRelay->setSwitch(false);
     }
   }
