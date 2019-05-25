@@ -93,10 +93,13 @@ void setupHandler() {
   operationModeNode.setTemperaturHysteresis(temperatureHysteresisSetting.get());
   TimerSetting ts = operationModeNode.getTimerSetting(); //TODO: Configurable
   ts.timerStartHour = 10;
-  ts.timerStartMinutes = 0;
+  ts.timerStartMinutes = 30;
   ts.timerEndHour = 17;
   ts.timerEndMinutes = 30;
   operationModeNode.setTimerSetting(ts);
+
+  operationModeNode.setPoolTemperaturNode(&poolTemperatureNode);
+  operationModeNode.setSolarTemperatureNode(&solarTemperatureNode);
 
   // add the rules
   RuleAuto* autoRule = new RuleAuto(&solarPumpNode, &poolPumpNode);
@@ -136,7 +139,7 @@ setup() {
   temperatureMaxPoolSetting.setDefaultValue(28.5).setValidator(
       [](long candidate) { return (candidate >= 0) && (candidate <= 30); });
 
-  temperatureMinSolarSetting.setDefaultValue(25.0).setValidator(
+  temperatureMinSolarSetting.setDefaultValue(55.0).setValidator(
       [](long candidate) { return (candidate >= 0) && (candidate <= 100); });
 
   temperatureHysteresisSetting.setDefaultValue(1.0).setValidator(
@@ -161,13 +164,4 @@ setup() {
 void loop() {
 
   Homie.loop();
-/*
-  if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {
-
-    //Homie.getLogger() << "main::loop" << endl;
-    Homie.getLogger() << F("Free heap: ") << ESP.getFreeHeap() << F(" max. free block size: ") << ESP.getMaxFreeBlockSize() << endl;
-
-    _lastMeasurement = millis();
-  }
-*/
 }

@@ -1,9 +1,7 @@
 
 #include "RuleAuto.hpp"
 
-/**
- *
- */
+
 RuleAuto::RuleAuto(RelayModuleNode* solarRelay, RelayModuleNode* poolRelay) {
   _solarRelay = solarRelay;
   _poolRelay  = poolRelay;
@@ -11,21 +9,19 @@ RuleAuto::RuleAuto(RelayModuleNode* solarRelay, RelayModuleNode* poolRelay) {
 }
 
 
-/**
- *
- */
 void RuleAuto::loop() {
   Homie.getLogger() << cIndent << F("§ RuleAuto: loop") << endl;
 
   _poolRelay->setSwitch(checkPoolPumpTimer());
 
-  float hyst = getTemperaturHysteresis();
 
   if (_poolRelay->getSwitch()) {
     //pool pump is running
 
     if (_solarRelay->getSwitch()) {
       //solar is on
+
+      float hyst = getTemperaturHysteresis();
       if (getSolarTemperature() < (getSolarMinTemperature() - hyst)) {
         Homie.getLogger() << cIndent << F("§ RuleAuto: Solar below min. required solar temp. (") << getSolarMinTemperature() << F("). Switch solar off") << endl;
         _solarRelay->setSwitch(false);
@@ -45,15 +41,16 @@ void RuleAuto::loop() {
 
     } else {
       //solar is off: !_solarRelay->getSwitch()
-      if ((getPoolTemperature() < (getPoolMaxTemperature() - hyst))
-        && (getPoolTemperature() < (getSolarTemperature() - hyst))
-        && (getSolarTemperature() > (getSolarMinTemperature() + hyst))) {
+      if ((getPoolTemperature() <= getPoolMaxTemperature())
+        && (getPoolTemperature() <= getSolarTemperature())
+        && (getSolarMinTemperature() <= getSolarTemperature())) {
         Homie.getLogger() << cIndent << F("§ RuleAuto: below max. Temperature (") << getPoolMaxTemperature() << F("). Switch solar on") << endl;
         _solarRelay->setSwitch(true);
 
       } else {
         // no change of status
         Homie.getLogger() << cIndent << F("§ RuleAuto: Solar off -> no change")<< endl;
+
       }
     }
   } else {
@@ -63,11 +60,13 @@ void RuleAuto::loop() {
       _solarRelay->setSwitch(false);
     }
   }
+  Homie.getLogger() << cIndent << F("§ RuleAuto: Pool temp. :     ") << getPoolTemperature() << endl;
+  Homie.getLogger() << cIndent << F("§ RuleAuto: max. Pool temp.: ") << getPoolMaxTemperature() << endl;
+  Homie.getLogger() << cIndent << F("§ RuleAuto: Solar temp. :     ") << getSolarTemperature() << endl;
+  Homie.getLogger() << cIndent << F("§ RuleAuto: min. Solar temp.: ") << getSolarMinTemperature() << endl;
 }
 
-/**
- *
- */
+
 bool RuleAuto::checkPoolPumpTimer() {
   Homie.getLogger() << F("↕  checkPoolPumpTimer") << endl;
 
@@ -77,9 +76,9 @@ bool RuleAuto::checkPoolPumpTimer() {
   tm startTime = getStartTime(getTimerSetting());
   tm endTime   = getEndTime(getTimerSetting());
 
-  Homie.getLogger() << cIndent << F("time=      ") << asctime(&time);
-  Homie.getLogger() << cIndent << F("startTime= ") << asctime(&startTime);
-  Homie.getLogger() << cIndent << F("endTime=   ") << asctime(&endTime);
+  Homie.getLogger() << cIndent << F("currenttime=") << asctime(&time);
+  Homie.getLogger() << cIndent << F("startTime=  ") << asctime(&startTime);
+  Homie.getLogger() << cIndent << F("endTime=    ") << asctime(&endTime);
 
   if (difftime(mktime(&time), mktime(&startTime)) >= 0
     && difftime(mktime(&time), mktime(&endTime)) <= 0) {
