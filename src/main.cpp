@@ -22,22 +22,16 @@
 
 #include "TimeClientHelper.hpp"
 
-#ifdef ESP32
-//#include <WiFi.h>
-#elif defined(ESP8266)
-//#include <ESP8266WiFi.h>
-#endif
 
 #ifdef ESP32
 const uint8_t PIN_DS_SOLAR = 15;  // Pin of Temp-Sensor Solar
 const uint8_t PIN_DS_POOL  = 16;  // Pin of Temp-Sensor Pool
-//const uint8_t PIN_DHT11    = 17;
-
-const uint8_t PIN_RSSWITCH = 18;  // Data-Pin of 433MHz Sender
 
 const uint8_t PIN_RELAY_POOL  = 18;
 const uint8_t PIN_RELAY_SOLAR = 19;
 #elif defined(ESP8266)
+
+// see: https://randomnerdtutorials.com/esp8266-pinout-reference-gpios/
 const uint8_t PIN_DS_SOLAR = D5;  // Pin of Temp-Sensor Solar
 const uint8_t PIN_DS_POOL  = D6;  // Pin of Temp-Sensor Pool
 
@@ -146,8 +140,6 @@ setup() {
     return (strcmp(candidate, "auto")) || (strcmp(candidate, "manu")) || (strcmp(candidate, "boost"));
   });
 
-  //WiFi.disconnect();
-
   //Homie.disableLogging();
   Homie.setSetupFunction(setupHandler);
   Homie.setup();
@@ -161,13 +153,5 @@ setup() {
 void loop() {
 
   Homie.loop();
-/*
-  if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {
 
-    //Homie.getLogger() << "main::loop" << endl;
-    Homie.getLogger() << F("Free heap: ") << ESP.getFreeHeap() << F(" max. free block size: ") << ESP.getMaxFreeBlockSize() << endl;
-
-    _lastMeasurement = millis();
-  }
-*/
 }
