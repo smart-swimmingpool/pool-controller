@@ -8,6 +8,7 @@
 #include <Homie.hpp>
 #include <Vector.h>
 
+#include "DallasTemperatureNode.hpp"
 #include "Rule.hpp"
 #include "Timer.hpp"
 #include "TimeClientHelper.hpp"
@@ -23,6 +24,10 @@ public:
   String        getMode();
   void          addRule(Rule* rule);
   Rule*         getRule();
+
+
+  void  setPoolTemperaturNode(DallasTemperatureNode* node) { _currentPoolTempNode = node; };
+  void  setSolarTemperatureNode(DallasTemperatureNode* node) { _currentSolarTempNode = node; };
 
   void  setPoolMaxTemperatur(float temp) { _poolMaxTemp = temp; };
   float getPoolMaxTemperature() { return _poolMaxTemp; };
@@ -84,6 +89,9 @@ private:
   float         _solarMinTemp;
   float         _hysteresis;
   Vector<Rule*> _ruleVec;
+
+  DallasTemperatureNode* _currentPoolTempNode;
+  DallasTemperatureNode* _currentSolarTempNode;
 
   TimerSetting _timerSetting;
 

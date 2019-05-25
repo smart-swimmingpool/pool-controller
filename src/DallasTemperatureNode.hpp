@@ -18,7 +18,7 @@ public:
   uint8_t       getPin() const { return _pin; }
   void          setMeasurementInterval(unsigned long interval) { _measurementInterval = interval; }
   unsigned long getMeasurementInterval() const { return _measurementInterval; }
-  float         getTemperature() const { return temperature; }
+  float         getTemperature() const { return _temperature; }
 
 protected:
   void setup() override;
@@ -49,7 +49,7 @@ private:
   unsigned long _measurementInterval;
   unsigned long _lastMeasurement;
 
-  float temperature = NAN;
+  float _temperature = NAN;
 
   OneWire*           oneWire;
   DallasTemperature* sensor;

@@ -4,59 +4,30 @@
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v1.4%20adopted-ff69b4.svg)](code-of-conduct.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-🏊 Homie 3.0 compatible smart swimmingpool controller 🎛️:
+**🏊 The Homie 3.0 compatible Smart Swimmingpool Controller 🎛️**
 
+## Main Features
 - [x] Manage water timed circulation for cleaning
 - [x] Manage water heating by additional pump for solar circuit
 - [x] [Homie 3](https://homieiot.github.io/) compatible MQTT messaging
 - [x] Independent of smarthome servers
-- [ ] Integration for OpenHab > 2.4
+- [x] Compatibility with openHAB > 2.4 using Homie
 
-## Hardware / BOM
+## Planned Features
+- [ ] Improvements to work without WiFi connection
+- [ ] be more smart: self learning for improved pool pump timed circulation for cleaning and heating
+- [ ] store configuration changes persistent on conroller 
 
-- ESP32 Controller ([Amazon](https://amzn.to/2CVjDCI))
-- Temperature Sensor Pool ([Amazon](https://amzn.to/2HJHdrL))
-- Temperature Sensor Solar ([Amazon](https://amzn.to/2HJHdrL))
-- 433MHz-Receiver Module ([Amazon](https://amzn.to/2HXrbLl))
-- 433MHz Radio sockets for Solar- and Pool-Pumps ([Amazon](https://amzn.to/2G3VONo))
+# Guides
 
-### Configuration
+- [Users Guide](docs/users-guide.md)
+- [Hardware Guide](docs/hardware-guide.md)
+- [Software Guide](docs/software-guide.md)
 
-PIN Usage:
-
-- PIN_DS_SOLAR = 16; // Temp Solar
-- PIN_DS_POOL = 17; // Temp Pool
-- PIN_RSSWITCH = 18; // für 433MHz Sender
-
-### Layout
-
-see: [data/pool-controller.fzz](data/pool-controller.fzz)
-
-## Implementation
-
-## Used Libraries
-
-- Homie-esp8266
-- DallasTemperature
-- DHT
-- rc-switch
-- [RelayModule](https://github.com/YuriiSalimov/RelayModule)
-- [Vector](https://github.com/tomstewart89/Vector)
-
-
-### Clearing retained messages
-In some cases some retained messages can be wanted and we don’t want to clear all the retained messages.
-
-The messages will have to be cleared one by one using the topic
-
-To clear a specific message:
-
-```bash
-mosquitto_pub -h hostname -t homie -n -r -d
-```
 
 # Credits
 
+- [Community of Homie-ESP8266](https://gitter.im/homie-iot/ESP8266)
 - Lübbe Onken (http://github.com/luebbe) for `TimeClientHelper`
 
 # License

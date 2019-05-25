@@ -91,17 +91,17 @@ void DallasTemperatureNode::loop() {
         DeviceAddress tempDeviceAddress;
         if (sensor->getAddress(tempDeviceAddress, i)) {
 
-          temperature = sensor->getTempC(tempDeviceAddress);
-          if (DEVICE_DISCONNECTED_C == temperature) {
+          _temperature = sensor->getTempC(tempDeviceAddress);
+          if (DEVICE_DISCONNECTED_C == _temperature) {
             Homie.getLogger() << cIndent << F("✖ Error reading sensor. Request count: ") << cnt << endl;
             if(Homie.isConnected()) {
               setProperty(cHomieNodeState).send(cHomieNodeState_Error);
             }
           } else {
-            Homie.getLogger() << cIndent << F("Temperature=") << temperature << endl;
+            Homie.getLogger() << cIndent << F("Temperature=") << _temperature << endl;
 
             if(Homie.isConnected()) {
-              setProperty(cTemperature).send(String(temperature));
+              setProperty(cTemperature).send(String(_temperature));
               setProperty(cHomieNodeState).send(cHomieNodeState_OK);
             }
           }

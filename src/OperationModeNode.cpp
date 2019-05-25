@@ -36,7 +36,10 @@ Rule* OperationModeNode::getRule() {
       _ruleVec[i]->setPoolMaxTemperatur(getPoolMaxTemperature());
       _ruleVec[i]->setSolarMinTemperature(getSolarMinTemperature());
       _ruleVec[i]->setTemperaturHysteresis(getTemperaturHysteresis());
-      _ruleVec[i]->setTimerSetting(getTimerSetting()) ;
+      _ruleVec[i]->setTimerSetting(getTimerSetting());
+
+      _ruleVec[i]->setPoolTemperatur(_currentPoolTempNode->getTemperature());
+      _ruleVec[i]->setSolarTemperatur(_currentSolarTempNode->getTemperature());
 
       return _ruleVec[i];
     }
