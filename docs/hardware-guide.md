@@ -11,7 +11,7 @@
 
 ### PCB Layout
 
-see: [data/pool-controller.fzz](pool-controller.fzz) //TODO: update to new version
+see: [data/pool-controller.fzz](pool-controller.fzz)
 
 ### ESP8266 PIN Usage
 
