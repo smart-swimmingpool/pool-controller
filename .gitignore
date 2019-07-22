@@ -91,6 +91,7 @@ dkms.conf
 *_REMOTE_*.txt
 
 ### PlatformIO ###
+.pio
 .pioenvs
 .piolibdeps
 .clang_complete
