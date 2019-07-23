@@ -25,4 +25,34 @@ const uint8_t PIN_RELAY_POOL  = D1;
 const uint8_t PIN_RELAY_SOLAR = D2;
 
 const uint8_t TEMP_READ_INTERVALL = 30;
+
+```
+
+## Configuration
+
+How to upload JSON-config see Homie-esp8266 docu: https://homieiot.github.io/homie-esp8266/docs/develop/configuration/json-configuration-file/
+
+### Example `config.json`
+```
+{
+  "name": "Pool Controller",
+  "device_id": "pool-controller",
+  "wifi": {
+    "ssid": "<SSID>",
+    "password": "<XXX>"
+  },
+  "mqtt": {
+    "host": "<MQTT_HOST>",
+    "port": 1883
+  },
+  "ota": {
+    "enabled": true
+  },
+  "settings": {
+    "loop-interval": 60,
+    "temperature-max-pool": 28,
+    "temperature-min-solar": 50,
+    "temperature-hysteresis": 0.5
+  }
+}
 ```
