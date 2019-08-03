@@ -30,7 +30,7 @@ const uint8_t TEMP_READ_INTERVALL = 30;
 
 ## Configuration
 
-How to upload JSON-config see Homie-esp8266 docu: https://homieiot.github.io/homie-esp8266/docs/develop/configuration/json-configuration-file/
+How to upload JSON-config see the [Homie-esp8266 docu](https://homieiot.github.io/homie-esp8266/docs/develop/configuration/json-configuration-file/)
 
 ### Example `config.json`
 ```
