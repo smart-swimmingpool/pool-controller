@@ -1,8 +1,10 @@
-# 🏊 Smart Swimmingpool Controller 2.0 - Software Guide
+# Pool Controller 2.0 | 🏊 Smart Swimmingpool
 
-## Development Environment
+## Software Guide
 
-## Required Libraries
+### Development Environment
+
+### Required Libraries
 
 
 - [Homie-ESP8266 (develop-v3)](https://github.com/homieiot/homie-esp8266)
@@ -15,7 +17,7 @@
 - TimeZone
 - [Time](https://github.com/xoseperez/Time)
 
-## Defines
+### Defines
 
 ```cpp
 const uint8_t PIN_DS_SOLAR = D5;  // Pin of Temp-Sensor Solar
@@ -28,11 +30,11 @@ const uint8_t TEMP_READ_INTERVALL = 30;
 
 ```
 
-## Configuration
+### Configuration
 
 How to upload JSON-config see the [Homie-esp8266 docu](https://homieiot.github.io/homie-esp8266/docs/develop/configuration/json-configuration-file/)
 
-### Example `config.json`
+#### Example `config.json`
 ```
 {
   "name": "Pool Controller",

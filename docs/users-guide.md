@@ -1,8 +1,9 @@
-# 🏊 Smart Swimmingpool Controller 2.0 - Users Guide
+# Pool Controller 2.0 | 🏊 Smart Swimmingpool
+
+## Users Guide
 
 
-
-## Settings
+### Settings
 
 There are some specific settings for the controller:
 
@@ -30,20 +31,20 @@ There are some specific settings for the controller:
   - Unit: `sec`
   - Default value: `30`
 
-## Rules
+### Rules
 
 The **Smart Swimmingpool Controller** implements `Rules` to handle different situations:
 
-### Rule: Manual
+#### Rule: Manual
 
 The pump for cleaning and solar heating are enabled/disabled completely manual and independent.
 
-### Rule: Timer
+#### Rule: Timer
 
 This rule enables the cleaning pump based on timer settings. 
 Solar heating is disabled.
 
-### Rule: Auto
+#### Rule: Auto
 
 This rule enables the cleaning pump based on timer settings. 
 Solar heating is enabled **smart** if cleaning pump is enabled by timer and the heat storage tank has enough temperature. 
@@ -51,18 +52,18 @@ Solar heating is enabled **smart** if cleaning pump is enabled by timer and the 
 If the maximum temperature of the pool water is reached, the solar heating is disabled.
 
 
-### Rule: Boost
+#### Rule: Boost
 
 Heating of pool water with all power.
 
-## MQTT Interface
+### MQTT Interface
 
 The **Smart Swimmingpool Controller** uses [MQTT](http://mqtt.org/) to communicate with your smart home. For the transmission of data the IoT standard [Homie 3.0](https://homieiot.github.io) is used.
 
 Using Homie 3.0 it is possible to integrate **Smart Pool Controller** directly in open source smarthome server [openHAB](https://www.openhab.org/) or [Home Assistant](https://www.home-assistant.io/).
 
 
-### Clearing retained messages
+#### Clearing retained messages
 
 In some cases some retained messages can be wanted and we don’t want to clear all the retained messages.
 
@@ -75,7 +76,7 @@ mosquitto_pub -h hostname -t homie -n -r -d
 ```
 
 
-## OpenHAB Integration
+### OpenHAB Integration
 
 The **Smart Swimmingpool Controller** could be integrated in [openHAB](https://www.openhab.org) since version 2.4.
 
@@ -87,6 +88,6 @@ At least the [settings](#settings) could be updated, too.
 
 - TODO: add example of openhab config.
 
-### Device
+#### Device
 
-### Properties
+#### Properties
