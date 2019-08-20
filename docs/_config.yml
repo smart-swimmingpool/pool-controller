@@ -1,0 +1,7 @@
+theme: jekyll-theme-architect
+title: Smart Swimming Pool
+description: Make your Swimming Pool smarter
+show_downloads: false
+
+plugins:
+- jekyll-menus
