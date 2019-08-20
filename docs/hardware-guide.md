@@ -5,9 +5,9 @@
 
 ### Parts List (BOM)
 
-- ESP8266 NodeMCU Controller ([Amazon](https://amzn.to/2DPf0LJ))
-- 2 * DS18B20 Temperature Sensors ([Amazon](https://amzn.to/2HJHdrL))
-- Relais-Module 5V ([Amazon](https://amzn.to/2DWCVJw))
+- 1 * ESP8266 NodeMCU Controller ([Amazon](https://amzn.to/2Ze9DSh))
+- 2 * DS18B20 Temperature Sensors ([Amazon](https://amzn.to/2ZlfZ2c))
+- 1 * Relais-Module 5V ([Amazon](https://amzn.to/31RBd5s))
 
 ### Circuit
 
