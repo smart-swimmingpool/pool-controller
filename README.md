@@ -12,10 +12,14 @@
 - [x] [Homie 3](https://homieiot.github.io/) compatible MQTT messaging
 - [x] Independent of smarthome servers
 - [x] Compatibility with openHAB > 2.4 using Homie
+- [x] Timesync via NTP (europe.pool.ntp.org)
+- [x] Logging-Information via Homie-Node
 
 ## Planned Features
 - [ ] Improvements to work without WiFi connection
+- [ ] Configurable NTP Server (currently hardcoded: europe.pool.ntp.org)
 - [ ] be more smart: self learning for improved pool pump timed circulation for cleaning and heating
+- [ ] two separate circulation cycles
 - [ ] store configuration changes persistent on conroller 
 
 # Guides
@@ -28,7 +32,8 @@
 # Credits
 
 - [Community of Homie-ESP8266](https://gitter.im/homie-iot/ESP8266)
-- Lübbe Onken (http://github.com/luebbe) for `TimeClientHelper`
+- [Lübbe Onken](http://github.com/luebbe) for `TimeClientHelper`
+- [Ian Hubbertz](https://github.com/euphi) for [HomieLoggerNode](https://github.com/euphi/HomieLoggerNode)
 
 # License
 
