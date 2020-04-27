@@ -2,25 +2,34 @@
 
 [![Smart Swimmingpool](https://img.shields.io/badge/%F0%9F%8F%8A%20-Smart%20Swimmingpool-blue.svg)](https://github.com/smart-swimmingpool)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v1.4%20adopted-ff69b4.svg)](code-of-conduct.md)
+11[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **🏊 The Homie 3.0 compatible Smart Swimmingpool Controller 🎛️**
 
+Manage your swmming pool on the smart way to enjoy it in confortable and cheap (less than 100€) way.
+
 ## Main Features
+
 - [x] Manage water timed circulation for cleaning
 - [x] Manage water heating by additional pump for solar circuit
-- [x] [Homie 3](https://homieiot.github.io/) compatible MQTT messaging
+- [x] [Homie 3.0](https://homieiot.github.io/) compatible MQTT messaging
 - [x] Independent of smarthome servers
 - [x] Compatibility with openHAB > 2.4 using Homie
 - [x] Timesync via NTP (europe.pool.ntp.org)
 - [x] Logging-Information via Homie-Node
 
 ## Planned Features
-- [ ] Improvements to work without WiFi connection
+
 - [ ] Configurable NTP Server (currently hardcoded: europe.pool.ntp.org)
 - [ ] be more smart: self learning for improved pool pump timed circulation for cleaning and heating
 - [ ] two separate circulation cycles
-- [ ] store configuration changes persistent on conroller 
+- [ ] store configuration changes persistent on conroller
+- [ ] temperature based cleaning circulation time (colder == shorter, hotter == longer)
+- [ ] Improved sketch to work completly without WiFi connection
+      - Homie should run without WiFi connection
+      - enhance sketch using display and buttons to setup environment.
+- see also the [issue list](https://github.com/smart-swimmingpool/pool-controller/issues)
 
 # Guides
 
@@ -28,6 +37,19 @@
 - [Hardware Guide](docs/hardware-guide.md)
 - [Software Guide](docs/software-guide.md)
 
+# Contributors
+
+Thanks goes to these wonderful people
+([emoji key](https://github.com/all-contributors/all-contributors#emoji-key)):
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
+This project follows the
+[all-contributors](https://github.com/all-contributors/all-contributors)
+specification. Contributions of any kind welcome!
 
 # Credits
 
