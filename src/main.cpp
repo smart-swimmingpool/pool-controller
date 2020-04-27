@@ -1,10 +1,7 @@
 /**
- * ESP32 zur Steuerung des Pools:
- * - 2 Temperaturfühler
- * - Interner Temperatur-Sensor
- * - 433MHz Sender für Pumpnsteuerung
+ * Smart Swimming Pool - Pool Contoller
  *
- * Wird über openHAB gesteuert.
+ * Main entry of sketch.
  */
 
 #include <Arduino.h>
@@ -20,6 +17,7 @@
 #include "RuleBoost.hpp"
 #include "RuleTimer.hpp"
 
+#include "LoggerNode.hpp"
 #include "TimeClientHelper.hpp"
 
 
@@ -48,6 +46,8 @@ HomieSetting<double> temperatureMinSolarSetting("temperature-min-solar", "Minimu
 HomieSetting<double> temperatureHysteresisSetting("temperature-hysteresis", "Temperature hysteresis");
 
 HomieSetting<const char*> operationModeSetting("operation-mode", "Operational Mode");
+
+LoggerNode LN;
 
 DallasTemperatureNode solarTemperatureNode("solar-temp", "Solar Temperature", PIN_DS_SOLAR, TEMP_READ_INTERVALL);
 DallasTemperatureNode poolTemperatureNode("pool-temp", "Pool Temperature", PIN_DS_POOL, TEMP_READ_INTERVALL);
@@ -114,16 +114,18 @@ void setupHandler() {
 /**
  * Startup of controller.
  */
-void
-setup() {
+void setup() {
   Serial.begin(SERIAL_SPEED);
 
   while (!Serial) {
     ;  // wait for serial port to connect. Needed for native USB port only
   }
+  Homie.setLoggingPrinter(&Serial);
 
-  Homie_setFirmware("pool-controller", "1.0.0");  // The underscore is not a typo! See Magic bytes
+  Homie_setFirmware("pool-controller", "2.0.0");
   Homie_setBrand("smart-swimmingpool");
+
+  //WiFi.setSleepMode(WIFI_NONE_SLEEP); //see: https://github.com/esp8266/Arduino/issues/5083
 
   //default intervall of sending Temperature values
   loopIntervalSetting.setDefaultValue(TEMP_READ_INTERVALL).setValidator([](long candidate) {
@@ -145,8 +147,11 @@ setup() {
 
   //Homie.disableLogging();
   Homie.setSetupFunction(setupHandler);
+
+  LN.log(__PRETTY_FUNCTION__, LoggerNode::DEBUG, "Before Homie setup())");
   Homie.setup();
 
+  LN.logf(__PRETTY_FUNCTION__, LoggerNode::DEBUG, "Free heap: %d", ESP.getFreeHeap());
   Homie.getLogger() << F("Free heap: ") << ESP.getFreeHeap() << endl;
 }
 
