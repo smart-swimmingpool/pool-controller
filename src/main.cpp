@@ -6,7 +6,7 @@
 
 #include <Arduino.h>
 #include <Homie.h>
-
+#include <SPI.h>
 #include "DallasTemperatureNode.hpp"
 #include "ESP32TemperatureNode.hpp"
 #include "RelayModuleNode.hpp"
