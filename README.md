@@ -31,13 +31,13 @@ Manage your swmming pool on the smart way to enjoy it in confortable and cheap (
       - enhance sketch using display and buttons to setup environment.
 - see also the [issue list](https://github.com/smart-swimmingpool/pool-controller/issues)
 
-# Guides
+## Guides
 
 - [Users Guide](docs/users-guide.md)
 - [Hardware Guide](docs/hardware-guide.md)
 - [Software Guide](docs/software-guide.md)
 
-# Contributors
+## Contributors
 
 Thanks goes to these wonderful people
 ([emoji key](https://github.com/all-contributors/all-contributors#emoji-key)):
@@ -51,13 +51,13 @@ This project follows the
 [all-contributors](https://github.com/all-contributors/all-contributors)
 specification. Contributions of any kind welcome!
 
-# Credits
+## Credits
 
 - [Community of Homie-ESP8266](https://gitter.im/homie-iot/ESP8266)
 - [Lübbe Onken](http://github.com/luebbe) for `TimeClientHelper`
 - [Ian Hubbertz](https://github.com/euphi) for [HomieLoggerNode](https://github.com/euphi/HomieLoggerNode)
 
-# License
+## License
 
 [LICENSE](LICENSE)
 
