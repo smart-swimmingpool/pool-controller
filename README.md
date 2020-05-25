@@ -2,8 +2,10 @@
 
 [![Smart Swimmingpool](https://img.shields.io/badge/%F0%9F%8F%8A%20-Smart%20Swimmingpool-blue.svg)](https://github.com/smart-swimmingpool)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v1.4%20adopted-ff69b4.svg)](code-of-conduct.md)
-11[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors)
+[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+[![works with MQTT Homie](https://homieiot.github.io/img/works-with-homie.svg "[works with MQTT Homie")](https://homieiot.github.io/)
 
 **🏊 The Homie 3.0 compatible Smart Swimmingpool Controller 🎛️**
 
@@ -14,8 +16,9 @@ Manage your swmming pool on the smart way to enjoy it in confortable and cheap (
 - [x] Manage water timed circulation for cleaning
 - [x] Manage water heating by additional pump for solar circuit
 - [x] [Homie 3.0](https://homieiot.github.io/) compatible MQTT messaging
-- [x] Independent of smarthome servers
-- [x] Compatibility with openHAB > 2.4 using Homie
+- [x] Independent of specific smarthome servers
+  - [x] [openHAB](https://www.openhab.org) since Version 2.4 using MQTT Homie
+  - [x] [Home Assistant](home-assistant.io) using MQTT Homie
 - [x] Timesync via NTP (europe.pool.ntp.org)
 - [x] Logging-Information via Homie-Node
 
