@@ -11,9 +11,9 @@
 
 ### Circuit
 
-![Wireing of Pool Controller](pool-controller_Steckplatine.png)
+![Wireing of Pool Controller](../pool-controller_Steckplatine.png)
 
-see: [pool-controller.fzz](pool-controller.fzz)
+see: [pool-controller.fzz](../pool-controller.fzz)
 
 #### ESP8266 PIN Usage
 
@@ -22,4 +22,4 @@ see: [pool-controller.fzz](pool-controller.fzz)
 - PIN_RELAY_POOL  = D1 -> pin to connect relais for pool pump
 - PIN_RELAY_SOLAR = D2 -> pin to connect relais for solar pump
 
-| TODO: see https://randomnerdtutorials.com/esp8266-pinout-reference-gpios/ 
+| TODO: see https://randomnerdtutorials.com/esp8266-pinout-reference-gpios/
