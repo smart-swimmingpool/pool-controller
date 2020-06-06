@@ -23,7 +23,7 @@ menu:
 
 ## Circuit
 
-![Wireing of Pool Controller](../pool-controller_Steckplatine.png)
+{{< figure library="true" src="pool-controller_breadboard.png" title="Breadboard Circuit of Pool Controller" lightbox="true" >}}
 
 see: [pool-controller.fzz](../pool-controller.fzz)
 
