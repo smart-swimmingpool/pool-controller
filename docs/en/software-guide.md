@@ -1,11 +1,25 @@
-# Pool Controller 2.0 | 🏊 Smart Swimmingpool
+---
+title: Software Guide of Pool Controller | 🏊 Smart Swimmingpool
+summary:
+date: "2020-05-28"
+lastmod: "2020-06-02"
+draft: false
+toc: true
+type: docs
+featured: true
+tags: ["docs", "controller", "tutorial"]
+menu:
+  docs:
+    parent: Pool Controller
+    name: Software Guide
+    weight: 30
+---
 
 ## Software Guide
 
 ### Development Environment
 
 ### Required Libraries
-
 
 - [Homie-ESP8266 (develop-v3)](https://github.com/homieiot/homie-esp8266)
 - [RelayModule](https://github.com/YuriiSalimov/RelayModule)
@@ -35,7 +49,8 @@ const uint8_t TEMP_READ_INTERVALL = 30;
 How to upload JSON-config see the [Homie-esp8266 docu](https://homieiot.github.io/homie-esp8266/docs/develop/configuration/json-configuration-file/)
 
 #### Example `config.json`
-```
+
+```json
 {
   "name": "Pool Controller",
   "device_id": "pool-controller",

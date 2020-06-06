@@ -1,21 +1,33 @@
-# Pool Controller 2.0 | 🏊 Smart Swimmingpool
+---
+title: Hardware Guide of Pool Controller | 🏊 Smart Swimmingpool
+summary:
+date: "2020-05-28"
+lastmod: "2020-06-02"
+draft: false
+toc: true
+type: docs
+featured: true
+tags: ["docs", "controller", "tutorial"]
+menu:
+  docs:
+    parent: Pool Controller
+    name: Hardware Guide
+    weight: 20
+---
 
-## Hardware Guide
-
-
-### Parts List (BOM)
+## Parts List (BOM)
 
 - 1 * ESP8266 NodeMCU Controller ([Amazon](https://amzn.to/2Ze9DSh))
 - 2 * DS18B20 Temperature Sensors ([Amazon](https://amzn.to/2ZlfZ2c))
 - 1 * Relais-Module 5V ([Amazon](https://amzn.to/31RBd5s))
 
-### Circuit
+## Circuit
 
 ![Wireing of Pool Controller](../pool-controller_Steckplatine.png)
 
 see: [pool-controller.fzz](../pool-controller.fzz)
 
-#### ESP8266 PIN Usage
+### ESP8266 PIN Usage
 
 - PIN_DS_SOLAR = D5  -> Pin of temperature sensor for solar
 - PIN_DS_POOL  = D6  -> Pin of temperature sensor for pool water
