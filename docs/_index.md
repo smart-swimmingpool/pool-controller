@@ -1,4 +1,8 @@
 ---
+linktitle: Pool Controller
+summary: Control your Smart Swimming Pool smart
+weight: 2
+
 # page metadata.
 title: Pool Controller 2.0
 summary: Control your Smart Swimming Pool smart
