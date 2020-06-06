@@ -12,8 +12,8 @@ tags: ["docs", "controller", "tutorial"]
 
 menu:
   docs:
-    parent: Documents
-    name: Pool Controller
+    parent: Pool Controller
+    name: Overview
     weight: 10
 ---
 
@@ -50,12 +50,6 @@ Manage your swmming pool on the smart way to enjoy it in confortable and cheap (
       - Homie should run without WiFi connection
       - enhance sketch using display and buttons to setup environment.
 - see also the [issue list](https://github.com/smart-swimmingpool/pool-controller/issues)
-
-## Guides
-
-- [Software Guide](software-guide.md)
-- [Hardware Guide](hardware-guide.md)
-- [Users Guide](users-guide.md)
 
 [![works with MQTT Homie](https://homieiot.github.io/img/works-with-homie.svg "works with MQTT Homie")](https://homieiot.github.io/)
 
