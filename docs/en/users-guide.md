@@ -12,7 +12,7 @@ menu:
   docs:
     parent: Pool Controller
     name: Users Guide
-    weight: 10
+    weight: 40
 ---
 
 ## Settings
