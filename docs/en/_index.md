@@ -1,6 +1,6 @@
 ---
 # page metadata.
-title: Pool Controller 2.0 | 🏊 Smart Swimmingpool
+title: Pool Controller 2.0
 summary: Control your Smart Swimming Pool smart
 date: "2020-05-28"
 lastmod: "2020-06-02"
@@ -47,8 +47,8 @@ Manage your swmming pool on the smart way to enjoy it in confortable and cheap (
 - [ ] store configuration changes persistent on conroller
 - [ ] temperature based cleaning circulation time (colder == shorter, hotter == longer)
 - [ ] Improved sketch to work completly without WiFi connection
-      - Homie should run without WiFi connection
-      - enhance sketch using display and buttons to setup environment.
+- [ ] Homie should run without WiFi connection
+- [ ] enhance sketch using display and buttons to setup environment.
 - see also the [issue list](https://github.com/smart-swimmingpool/pool-controller/issues)
 
 [![works with MQTT Homie](https://homieiot.github.io/img/works-with-homie.svg "works with MQTT Homie")](https://homieiot.github.io/)

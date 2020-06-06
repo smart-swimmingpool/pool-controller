@@ -1,5 +1,5 @@
 ---
-title: Users Guide of Pool Controller | 🏊 Smart Swimmingpool
+title: Users Guide of Pool Controller
 summary: Control your Smart Swimming Pool smart
 date: "2020-05-28"
 lastmod: "2020-06-02"

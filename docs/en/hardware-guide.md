@@ -1,5 +1,5 @@
 ---
-title: Hardware Guide of Pool Controller | 🏊 Smart Swimmingpool
+title: Hardware Guide of Pool Controller
 summary:
 date: "2020-05-28"
 lastmod: "2020-06-02"
