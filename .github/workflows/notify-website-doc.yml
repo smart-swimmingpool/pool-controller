@@ -3,7 +3,7 @@ on: push
 
 jobs:
   build:
-    name: Dispatch to `website` repository
+    name: Dispatch to `website` repository for regeneration of docs
     runs-on: ubuntu-latest
     steps:
       - name: Emit repository_dispatch
