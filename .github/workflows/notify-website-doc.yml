@@ -1,4 +1,4 @@
-name: Alert repository on push
+name: Alert `website` repository on push
 on: push
 
 jobs:
