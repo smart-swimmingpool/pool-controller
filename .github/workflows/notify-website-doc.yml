@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Emit repository_dispatch
-        uses: peter-evans/repository-dispatch@v1
+        uses: peter-evans/repository-dispatch@v1.1.1
         with:
           token: ${{ secrets.HUGO_DEPLOY_TOKEN }}
           repository: smart-swimmingpool/website.git
