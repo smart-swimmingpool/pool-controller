@@ -1,6 +1,6 @@
 ---
 linktitle: Pool Controller
-summary: Steuer deinen Swimmingpool smart
+summary: Die smarte Steuerung deines Swimmingpools
 weight: 2
 
 # page metadata.
@@ -30,30 +30,29 @@ menu:
 [GitHub Quellcode](https://github.com/smart-swimmingpool/pool-controller)
 </span>
 
-Manage your swmming pool on the smart way to enjoy it in confortable and cheap (less than 100€) way.
+Steuer deinen Swimming-Pool auf smarte Art und Weise, um diesen bequem und günstig (weniger als 100€) zu genießen.
 
-## Main Features
+## Haupteigenschaften
 
-- [x] Manage water timed circulation for cleaning
-- [x] Manage water heating by additional pump for solar circuit
-- [x] [Homie 3.0](https://homieiot.github.io/) compatible MQTT messaging
-- [x] Independent of specific smarthome servers
-  - [x] [openHAB](https://www.openhab.org) since Version 2.4 using MQTT Homie
-  - [x] [Home Assistant](home-assistant.io) using MQTT Homie
-- [x] Timesync via NTP (europe.pool.ntp.org)
-- [x] Logging-Information via Homie-Node
+- [x] Verwaltung der zeitgesteuerten Wasserzirkulation für die Reinigung
+- [x] Steuerung der Wassererwärmung durch eine zusätzliche Pumpe für den Sonnenkreislauf
+- [x] [Homie 3.0](https://homieiot.github.io/) kompatibles MQTT Nachrichtenformat
+- [x] Unabhängig von einzelnen Smarthome-Servern
+  - [x] [openHAB](https://www.openhab.org) seit Version 2.4 unter Verwendung von MQTT Homie
+  - [x] [Home Assistant](home-assistant.io) unter Verwendung von MQTT Homie
+- [x] Automatische Zeitsynchroisierung mit NTP (europe.pool.ntp.org)
+- [x] Logging-Informationen via Homie-Node
 
-## Planned Features
+## Geplante Funktionen
 
-- [ ] Configurable NTP Server (currently hardcoded: europe.pool.ntp.org)
+- [ ] Konfigurierbarer NTP-Server (aktuell hardcoded: europe.pool.ntp.org)
 - [ ] be more smart: self learning for improved pool pump timed circulation for cleaning and heating
-- [ ] two separate circulation cycles
-- [ ] store configuration changes persistent on conroller
-- [ ] temperature based cleaning circulation time (colder == shorter, hotter == longer)
-- [ ] Improved sketch to work completly without WiFi connection
-- [ ] Homie should run without WiFi connection
-- [ ] enhance sketch using display and buttons to setup environment.
-- see also the [issue list](https://github.com/smart-swimmingpool/pool-controller/issues)
+- [ ] zwei getrennte Zirkulationszeiten
+- [ ] Konfigurationsänderungen dauerhaft auf dem Controller speichern
+- [ ] Temperaturabhängige Zirkulationszeiten (kühleres Wetter == kürzere Pumpenzeit, wäremer == längere Zeit)
+- [ ] Verbesserte Schaltung die komplett ohne WiFi-Verbindung funktioniert
+- [ ] Verbesserung der Schaltung mit Anzeige und Tasten zur Einrichtung der Konfiguration.
+- siehe auch: [Issue-Liste](https://github.com/smart-swimmingpool/pool-controller/issues)
 
 [![works with MQTT Homie](https://homieiot.github.io/img/works-with-homie.svg "works with MQTT Homie")](https://homieiot.github.io/)
 
