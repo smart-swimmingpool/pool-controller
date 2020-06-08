@@ -12,5 +12,5 @@ jobs:
           # You should create a personal access token and store it in your repository
           token: ${{ secrets.HUGO_DEPLOY_TOKEN }}
           repository: smart-swimmingpool/website.git
-          event_type: sample_push
+          event-type: sample_push
           client-payload: '{"github": ${{ toJson(github) }}}'
