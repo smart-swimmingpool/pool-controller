@@ -1,15 +1,14 @@
-name: Alert parent repository on push
+name: Alert repository on push
 on: push
 
 jobs:
   build:
-    name: Dispatch to `other-repo`
+    name: Dispatch to `website` repository
     runs-on: ubuntu-latest
     steps:
       - name: Emit repository_dispatch
         uses: peter-evans/repository-dispatch@v1
         with:
-          # You should create a personal access token and store it in your repository
           token: ${{ secrets.HUGO_DEPLOY_TOKEN }}
           repository: smart-swimmingpool/website.git
           event-type: sample_push
