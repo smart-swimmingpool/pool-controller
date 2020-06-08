@@ -7,10 +7,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Emit repository_dispatch
-        uses: mvasigh/dispatch-action@master
+        uses: peter-evans/repository-dispatch@v1
         with:
           # You should create a personal access token and store it in your repository
           token: ${{ secrets.HUGO_DEPLOY_TOKEN }}
-          repo: website/smart-swimmingpool.github.io
-          owner: stritti
+          repository: website/smart-swimmingpool.github.io
           event_type: sample_push
+          client-payload: '{"github": ${{ toJson(github) }}}'
