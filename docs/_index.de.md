@@ -46,12 +46,14 @@ Steuer deinen Swimming-Pool auf smarte Art und Weise, um diesen bequem und güns
 ## Geplante Funktionen
 
 - [ ] Konfigurierbarer NTP-Server (aktuell hardcoded: europe.pool.ntp.org)
-- [ ] be more smart: self learning for improved pool pump timed circulation for cleaning and heating
-- [ ] zwei getrennte Zirkulationszeiten
+- [ ] noch smarter: selbstanpassendes für eine verbesserte zeitgesteuerte Zirkulation der Poolpumpe zur
+      Reinigung und Erwärmung
+- [ ] Zwei getrennte Zirkulationszeiten
 - [ ] Konfigurationsänderungen dauerhaft auf dem Controller speichern
 - [ ] Temperaturabhängige Zirkulationszeiten (kühleres Wetter == kürzere Pumpenzeit, wäremer == längere Zeit)
 - [ ] Verbesserte Schaltung die komplett ohne WiFi-Verbindung funktioniert
 - [ ] Verbesserung der Schaltung mit Anzeige und Tasten zur Einrichtung der Konfiguration.
+- [ ] Eine Stromversorgung für die ganze Schaltung (ESP8266 und Relais)
 - siehe auch: [Issue-Liste](https://github.com/smart-swimmingpool/pool-controller/issues)
 
 [![works with MQTT Homie](https://homieiot.github.io/img/works-with-homie.svg "works with MQTT Homie")](https://homieiot.github.io/)

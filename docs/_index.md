@@ -46,13 +46,14 @@ Manage your swmming pool on the smart way to enjoy it in confortable and cheap (
 ## Planned Features
 
 - [ ] Configurable NTP Server (currently hardcoded: europe.pool.ntp.org)
-- [ ] be more smart: self learning for improved pool pump timed circulation for cleaning and heating
-- [ ] two separate circulation cycles
-- [ ] store configuration changes persistent on conroller
-- [ ] temperature based cleaning circulation time (colder == shorter, hotter == longer)
+- [ ] Be more smart: self learning for improved pool pump timed circulation for cleaning and heating
+- [ ] Two separate circulation cycles
+- [ ] Store configuration changes persistent on conroller
+- [ ] Temperature based cleaning circulation time (colder == shorter, hotter == longer)
 - [ ] Improved sketch to work completly without WiFi connection
 - [ ] Homie should run without WiFi connection
-- [ ] enhance sketch using display and buttons to setup environment.
+- [ ] Enhance sketch using display and buttons to setup environment.
+- [ ] Use only one power supply for ESP8266 (5V) and relais (230V)
 - see also the [issue list](https://github.com/smart-swimmingpool/pool-controller/issues)
 
 [![works with MQTT Homie](https://homieiot.github.io/img/works-with-homie.svg "works with MQTT Homie")](https://homieiot.github.io/)
