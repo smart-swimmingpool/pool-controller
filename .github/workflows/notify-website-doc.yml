@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - master
+      - main
 jobs:
   build:
     name: Dispatch to `website` repository for regeneration of documents
