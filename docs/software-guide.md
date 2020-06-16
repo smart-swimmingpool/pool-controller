@@ -19,7 +19,7 @@ menu:
 
 ## Required Libraries
 
-- [Homie-ESP8266 (develop-v3)](https://github.com/homieiot/homie-esp8266)
+- [Homie-ESP8266](https://github.com/homieiot/homie-esp8266)
 - [RelayModule](https://github.com/YuriiSalimov/RelayModule)
 - [Vector](https://github.com/tomstewart89/Vector)
 - DallasTemperature
@@ -29,7 +29,12 @@ menu:
 - TimeZone
 - [Time](https://github.com/xoseperez/Time)
 
+Many thanks to maintainers of these libraries!
+
 ## Defines
+
+Within the sources at `main.cpp` there are someconstant defined settings. For the PIN assignment
+see also the [Hardware Guide](../hardware-guide/#esp8266-pin-usage).
 
 ```cpp
 const uint8_t PIN_DS_SOLAR = D5;  // Pin of Temp-Sensor Solar
@@ -39,12 +44,12 @@ const uint8_t PIN_RELAY_POOL  = D1;
 const uint8_t PIN_RELAY_SOLAR = D2;
 
 const uint8_t TEMP_READ_INTERVALL = 30;
-
 ```
 
 ## Configuration
 
-How to upload JSON-config see the [Homie-esp8266 docu](https://homieiot.github.io/homie-esp8266/docs/develop/configuration/json-configuration-file/)
+Homie-ESP8266 supports configuration (e.g. WiFi credentials) using JSON-files.
+How to upload JSON config files see [Homie-esp8266 docu](https://homieiot.github.io/homie-esp8266/docs/develop/configuration/json-configuration-file/).
 
 ### Example `config.json`
 
