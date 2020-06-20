@@ -1,6 +1,11 @@
 ---
 name: Test clang-format
 
+#
+# Documentation:
+# https://github.com/marketplace/actions/clang-format-lint
+#
+
 on: [push]
 
 jobs:
