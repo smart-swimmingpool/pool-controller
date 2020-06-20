@@ -16,6 +16,6 @@ jobs:
       - uses: actions/checkout@v2
       - uses: DoozyX/clang-format-lint-action@v0.5
         with:
-          source: "./src"
-          exclude: "./lib ./pio"
-          extensions: "h,cpp"
+          source: ./src
+          exclude: ./lib ./pio
+          extensions: h,cpp
