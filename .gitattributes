@@ -1,0 +1,17 @@
+# Set the default behavior, in case people don't have core.autocrlf set.
+* text=auto
+
+# Explicitly declare text files you want to always be normalized and converted
+# to native line endings on checkout.
+*.c text
+*.cpp text
+*.h text
+*.ino text
+*.md text
+
+*.png binary
+*.jpg binary
+*.HMI binary
+*.tft binary
+*.pxf binary
+*.zi binary
