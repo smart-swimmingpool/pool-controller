@@ -37,9 +37,9 @@ Manage your swmming pool on the smart way to enjoy it in confortable and cheap (
 
 ## Guides
 
-- [Users Guide](docs/en/users-guide.md)
-- [Hardware Guide](docs/en/hardware-guide.md)
-- [Software Guide](docs/en/software-guide.md)
+- [Users Guide](docs/users-guide.md)
+- [Hardware Guide](docs/hardware-guide.md)
+- [Software Guide](docs/software-guide.md)
 
 ## Contributors
 
