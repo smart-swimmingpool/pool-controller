@@ -11,6 +11,7 @@
 HomieSetting<const char*> LoggerNode::default_loglevel("loglevel", "default loglevel");         // id, description
 HomieSetting<bool>        LoggerNode::logserial("logserial", "log to serial");                  // id, description
 HomieSetting<bool>        LoggerNode::flushlog("flushlog", "Flush serial log after each log");  // id, description
+static String             loggerString;
 
 LoggerNode::LoggerNode() : HomieNode("Log", "Logger", "Logger"), m_loglevel(DEBUG), logSerial(true), logJSON(true) {
   default_loglevel.setDefaultValue(levelstring[DEBUG].c_str()).setValidator([](const char* candidate) {
@@ -19,19 +20,19 @@ LoggerNode::LoggerNode() : HomieNode("Log", "Logger", "Logger"), m_loglevel(DEBU
   logserial.setDefaultValue(true);
   flushlog.setDefaultValue(false);
   advertise("log").setName("log output").setDatatype("String");
-  LoggerNode::updateLevelStrings();
-  advertise("Level").settable().setName("Loglevel").setDatatype("enum").setFormat(LoggerNode::loggerString.c_str());
+  advertise("Level").settable().setName("Loglevel").setDatatype("enum").setFormat(LoggerNode::updateLevelStrings().c_str());
   advertise("LogSerial").settable().setName("log to serial interface").setDatatype("boolean");
 }
 
 const String LoggerNode::levelstring[CRITICAL + 1] = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"};
 
-void LoggerNode::updateLevelStrings() {
+String& LoggerNode::updateLevelStrings() {
   for (int_fast8_t iLevel = DEBUG; iLevel <= CRITICAL; iLevel++) {
     loggerString.concat(levelstring[iLevel]);
     if (iLevel < CRITICAL)
       loggerString.concat(':');
   }
+  return loggerString;
 }
 
 void LoggerNode::setup() {

@@ -29,8 +29,6 @@ public:
       m_loglevel = l;
   }
 
-  static String loggerString;
-
 private:
   E_Loglevel                       m_loglevel;
   bool                             logSerial;
@@ -41,5 +39,5 @@ private:
   static HomieSetting<bool>        flushlog;
 
   static E_Loglevel convertToLevel(const String& level);
-  static void       updateLevelStrings();
+  static String&    updateLevelStrings();
 };

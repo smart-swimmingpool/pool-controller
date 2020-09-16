@@ -17,6 +17,11 @@ class OperationModeNode : public HomieNode {
 
 public:
   OperationModeNode(const char* id, const char* name, const int measurementInterval = MEASUREMENT_INTERVAL);
+  ~OperationModeNode() {
+    // This could cause use after free - to bad it is designed that way
+    for (int i = 0; i < _ruleVec.Size(); i++)  // Delete ruleset on deletion of this object
+      delete _ruleVec[i];
+  }
 
   void          setMeasurementInterval(unsigned long interval) { _measurementInterval = interval; }
   unsigned long getMeasurementInterval() const { return _measurementInterval; }
@@ -25,20 +30,19 @@ public:
   void          addRule(Rule* rule);
   Rule*         getRule();
 
+  void setPoolTemperatureNode(DallasTemperatureNode* node) { _currentPoolTempNode = node; };
+  void setSolarTemperatureNode(DallasTemperatureNode* node) { _currentSolarTempNode = node; };
 
-  void  setPoolTemperaturNode(DallasTemperatureNode* node) { _currentPoolTempNode = node; };
-  void  setSolarTemperatureNode(DallasTemperatureNode* node) { _currentSolarTempNode = node; };
-
-  void  setPoolMaxTemperatur(float temp) { _poolMaxTemp = temp; };
+  void  setPoolMaxTemperature(float temp) { _poolMaxTemp = temp; };
   float getPoolMaxTemperature() { return _poolMaxTemp; };
 
   void  setSolarMinTemperature(float temp) { _solarMinTemp = temp; };
   float getSolarMinTemperature() { return _solarMinTemp; };
 
-  void  setTemperaturHysteresis(float temp) { _hysteresis = temp; };
-  float getTemperaturHysteresis() { return _hysteresis; };
+  void  setTemperatureHysteresis(float temp) { _hysteresis = temp; };
+  float getTemperatureHysteresis() { return _hysteresis; };
 
-  void  setTimerSetting(TimerSetting setting) { _timerSetting = setting; };
+  void         setTimerSetting(TimerSetting setting) { _timerSetting = setting; };
   TimerSetting getTimerSetting() { return _timerSetting; };
 
   enum MODE { AUTO, MANU, BOOST };
@@ -59,7 +63,6 @@ private:
   const char*      cCaption             = "• Operation Status:";
   const char*      cIndent              = "  ◦ ";
 
-
   const char* cMode     = "mode";
   const char* cModeName = "Operation Mode";
 
@@ -78,8 +81,8 @@ private:
   const char* cTimerEndHour = "timer-end-h";
   const char* cTimerEndMin  = "timer-end-min";
 
-  const char* cHomieNodeState      = "state";
-  const char* cHomieNodeStateName  = "State";
+  const char* cHomieNodeState     = "state";
+  const char* cHomieNodeStateName = "State";
 
   const char* cHomieNodeState_OK    = "OK";
   const char* cHomieNodeState_Error = "Error";

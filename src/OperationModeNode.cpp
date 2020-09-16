@@ -33,13 +33,13 @@ Rule* OperationModeNode::getRule() {
     if (_mode.equals(_ruleVec[i]->getMode())) {
       Homie.getLogger() << F("getRule: Active Rule: ") << _ruleVec[i]->getMode() << endl;
       //update the properties
-      _ruleVec[i]->setPoolMaxTemperatur(getPoolMaxTemperature());
+      _ruleVec[i]->setPoolMaxTemperature(getPoolMaxTemperature());
       _ruleVec[i]->setSolarMinTemperature(getSolarMinTemperature());
-      _ruleVec[i]->setTemperaturHysteresis(getTemperaturHysteresis());
+      _ruleVec[i]->setTemperatureHysteresis(getTemperatureHysteresis());
       _ruleVec[i]->setTimerSetting(getTimerSetting());
 
-      _ruleVec[i]->setPoolTemperatur(_currentPoolTempNode->getTemperature());
-      _ruleVec[i]->setSolarTemperatur(_currentSolarTempNode->getTemperature());
+      _ruleVec[i]->setPoolTemperature(_currentPoolTempNode->getTemperature());
+      _ruleVec[i]->setSolarTemperature(_currentSolarTempNode->getTemperature());
 
       return _ruleVec[i];
     }
