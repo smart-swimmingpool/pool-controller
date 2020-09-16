@@ -5,6 +5,9 @@
     },
     "prettier.printWidth": 130,
     "files.associations": {
-        "functional": "cpp"
+        "functional": "cpp",
+        "istream": "cpp",
+        "ostream": "cpp",
+        "string": "cpp"
     }
 }

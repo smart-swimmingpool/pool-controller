@@ -37,8 +37,8 @@ private:
   const char* cTemperatureName = "Temperature";
   const char* cTemperatureUnit = "°C";
 
-  const char* cHomieNodeState      = "state";
-  const char* cHomieNodeStateName  = "State";
+  const char* cHomieNodeState     = "state";
+  const char* cHomieNodeStateName = "State";
 
   const char* cHomieNodeState_OK    = "OK";
   const char* cHomieNodeState_Error = "Error";
@@ -51,9 +51,9 @@ private:
 
   float _temperature = NAN;
 
-  OneWire*           oneWire;
-  DallasTemperature* sensor;
-  uint8_t            numberOfDevices;  // Number of temperature devices found
+  OneWire           oneWire;
+  DallasTemperature sensor;
+  uint8_t           numberOfDevices;  // Number of temperature devices found
 
   void   printCaption();
   String address2String(const DeviceAddress deviceAddress);
