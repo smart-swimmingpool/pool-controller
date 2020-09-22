@@ -15,6 +15,17 @@ menu:
     weight: 40
 ---
 
+## Setup
+
+## Booting Controller
+
+Booting the controller, it will give feedback on establishing WiFi connection andconnection to MQTT broker:
+
+* "LED" ![Slowly blinking LED](led_wifi.gif)
+    Slowly when connecting to the Wi-Fi
+* "LED" ![Fast blinking LED](led_mqtt.gif)
+    Faster when connecting to the MQTT broker
+
 ## Settings
 
 There are some specific settings for the controller:
@@ -29,7 +40,7 @@ There are some specific settings for the controller:
   - Unit: `°C`
   - Default value: `50`
 
-- **Hysteresis:** Hysteresis which is used to verify if heating should be enabled or disabled to prevent fast toggeling.
+- **Hysteresis:** Hysteresis in Kelvin which is used to verify if heating should be enabled or disabled to prevent fast toggeling.
 
   - Unit: `K`
   - Default value: `1`
@@ -73,18 +84,6 @@ The **Smart Swimmingpool Controller** uses [MQTT](http://mqtt.org/) to communica
 
 Using Homie 3.0 it is possible to integrate **Smart Pool Controller** directly in open source smarthome server [openHAB](https://www.openhab.org/) or [Home Assistant](https://www.home-assistant.io/).
 
-
-### Clearing retained messages
-
-In some cases some retained messages can be wanted and we don’t want to clear all the retained messages.
-
-The messages will have to be cleared one by one using the topic
-
-To clear a specific message:
-
-```bash
-mosquitto_pub -h hostname -t homie -n -r -d
-```
 
 ## OpenHAB Integration
 

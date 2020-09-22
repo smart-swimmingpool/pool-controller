@@ -34,7 +34,7 @@ Many thanks to maintainers of these libraries!
 ## Defines
 
 Within the sources at `main.cpp` there are someconstant defined settings. For the PIN assignment
-see also the [Hardware Guide](../hardware-guide/#esp8266-pin-usage).
+see also at [hardware guide](../hardware-guide/#esp8266-pin-usage).
 
 ```cpp
 const uint8_t PIN_DS_SOLAR = D5;  // Pin of Temp-Sensor Solar
@@ -75,4 +75,18 @@ How to upload JSON config files see [Homie-esp8266 docu](https://homieiot.github
     "temperature-hysteresis": 0.5
   }
 }
+```
+
+## MQTT Communication
+
+### Clearing retained messages
+
+In some cases some retained messages can be wanted and we don’t want to clear all the retained messages.
+
+The messages will have to be cleared one by one using the topic
+
+To clear a specific message:
+
+```bash
+mosquitto_pub -h hostname -t homie -n -r -d
 ```
