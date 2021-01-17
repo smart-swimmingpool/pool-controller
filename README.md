@@ -9,6 +9,8 @@
 
 [![works with MQTT Homie](https://homieiot.github.io/img/works-with-homie.svg "[works with MQTT Homie")](https://homieiot.github.io/)
 
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/J3J33A8DT)
+
 **🏊 The Homie 3.0 compatible Smart Swimmingpool Controller 🎛️**
 
 Manage your swmming pool on the smart way to enjoy it in confortable and cheap (less than 100€) way.
