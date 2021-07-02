@@ -18,6 +18,8 @@ class RelayModuleNode : public HomieNode {
 public:
   RelayModuleNode(const char* id, const char* name, const uint8_t pin, const int measurementInterval = MEASUREMENT_INTERVAL);
 
+  ~RelayModuleNode() { delete relay; }
+
   uint8_t       getPin() const { return _pin; }
   void          setMeasurementInterval(unsigned long interval) { _measurementInterval = interval; }
   unsigned long getMeasurementInterval() const { return _measurementInterval; }
@@ -38,14 +40,14 @@ private:
   const char* cCaption = "• Relay Module:";
   const char* cIndent  = "  ◦ ";
 
-  const char* cSwitch      = "switch";
-  const char* cSwitchName  = "Switch";
+  const char* cSwitch     = "switch";
+  const char* cSwitchName = "Switch";
 
   const char* cFlagOn  = "true";
   const char* cFlagOff = "false";
 
-  const char* cHomieNodeState      = "state";
-  const char* cHomieNodeStateName  = "State";
+  const char* cHomieNodeState     = "state";
+  const char* cHomieNodeStateName = "State";
 
   const char* cHomieNodeState_OK    = "OK";
   const char* cHomieNodeState_Error = "Error";

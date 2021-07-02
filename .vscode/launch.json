@@ -12,8 +12,8 @@
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug",
-            "executable": "C:/ssr/Projekte/smart-swimmingpool/pool-controller/.pio/build/nodemcuv2/firmware.elf",
-            "toolchainBinDir": "C:/Users/ssr/.platformio/packages/toolchain-xtensa/bin",
+            "executable": "c:/Users/MrTroble/Desktop/pool-controller/.pio/build/nodemcuv2/firmware.elf",
+            "toolchainBinDir": "C:/Users/MrTroble/.platformio/packages/toolchain-xtensa/bin",
             "preLaunchTask": {
                 "type": "PlatformIO",
                 "task": "Pre-Debug"
@@ -24,8 +24,8 @@
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug (skip Pre-Debug)",
-            "executable": "C:/ssr/Projekte/smart-swimmingpool/pool-controller/.pio/build/nodemcuv2/firmware.elf",
-            "toolchainBinDir": "C:/Users/ssr/.platformio/packages/toolchain-xtensa/bin",
+            "executable": "c:/Users/MrTroble/Desktop/pool-controller/.pio/build/nodemcuv2/firmware.elf",
+            "toolchainBinDir": "C:/Users/MrTroble/.platformio/packages/toolchain-xtensa/bin",
             "internalConsoleOptions": "openOnSessionStart"
         }
     ]

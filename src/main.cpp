@@ -20,7 +20,6 @@
 #include "LoggerNode.hpp"
 #include "TimeClientHelper.hpp"
 
-
 #ifdef ESP32
 const uint8_t PIN_DS_SOLAR = 15;  // Pin of Temp-Sensor Solar
 const uint8_t PIN_DS_POOL  = 16;  // Pin of Temp-Sensor Pool
@@ -37,7 +36,6 @@ const uint8_t PIN_RELAY_POOL  = D1;
 const uint8_t PIN_RELAY_SOLAR = D2;
 #endif
 const uint8_t TEMP_READ_INTERVALL = 30;  //Sekunden zwischen Updates der Temperaturen.
-
 
 HomieSetting<long> loopIntervalSetting("loop-interval", "The processing interval in seconds");
 
@@ -82,17 +80,17 @@ void setupHandler() {
 #endif
 
   operationModeNode.setMode(operationModeSetting.get());
-  operationModeNode.setPoolMaxTemperatur(temperatureMaxPoolSetting.get());
+  operationModeNode.setPoolMaxTemperature(temperatureMaxPoolSetting.get());
   operationModeNode.setSolarMinTemperature(temperatureMinSolarSetting.get());
-  operationModeNode.setTemperaturHysteresis(temperatureHysteresisSetting.get());
-  TimerSetting ts = operationModeNode.getTimerSetting(); //TODO: Configurable
-  ts.timerStartHour = 10;
+  operationModeNode.setTemperatureHysteresis(temperatureHysteresisSetting.get());
+  TimerSetting ts      = operationModeNode.getTimerSetting();  //TODO: Configurable
+  ts.timerStartHour    = 10;
   ts.timerStartMinutes = 30;
-  ts.timerEndHour = 17;
-  ts.timerEndMinutes = 30;
+  ts.timerEndHour      = 17;
+  ts.timerEndMinutes   = 30;
   operationModeNode.setTimerSetting(ts);
 
-  operationModeNode.setPoolTemperaturNode(&poolTemperatureNode);
+  operationModeNode.setPoolTemperatureNode(&poolTemperatureNode);
   operationModeNode.setSolarTemperatureNode(&solarTemperatureNode);
 
   // add the rules
