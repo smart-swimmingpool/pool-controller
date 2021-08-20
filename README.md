@@ -1,7 +1,6 @@
 ﻿# 🏊 Smart Swimmingpool Controller 2.0
 
 [![Smart Swimmingpool](https://img.shields.io/badge/%F0%9F%8F%8A%20-Smart%20Swimmingpool-blue.svg)](https://github.com/smart-swimmingpool)
-[![Join the community on Spectrum](https://withspectrum.github.io/badge/badge.svg)](https://spectrum.chat/smart-swimming-pool)
 [![PlatformIO CI](https://github.com/smart-swimmingpool/pool-controller/workflows/PlatformIO%20CI/badge.svg)](https://github.com/smart-swimmingpool/pool-controller/actions?query=workflow%3A%22PlatformIO+CI%22)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v1.4%20adopted-ff69b4.svg)](code-of-conduct.md)
 [![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors)
@@ -14,6 +13,8 @@
 **🏊 The Homie 3.0 compatible Smart Swimmingpool Controller 🎛️**
 
 Manage your swmming pool on the smart way to enjoy it in confortable and cheap (less than 100€) way.
+
+Discussions: <https://github.com/smart-swimmingpool/smart-swimmingpool.github.io/discussions>
 
 ## Main Features
 
