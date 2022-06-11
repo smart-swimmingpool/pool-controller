@@ -3,7 +3,6 @@
 [![Smart Swimmingpool](https://img.shields.io/badge/%F0%9F%8F%8A%20-Smart%20Swimmingpool-blue.svg)](https://github.com/smart-swimmingpool)
 [![PlatformIO CI](https://github.com/smart-swimmingpool/pool-controller/workflows/PlatformIO%20CI/badge.svg)](https://github.com/smart-swimmingpool/pool-controller/actions?query=workflow%3A%22PlatformIO+CI%22)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v1.4%20adopted-ff69b4.svg)](code-of-conduct.md)
-[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 [![works with MQTT Homie](https://homieiot.github.io/img/works-with-homie.svg "[works with MQTT Homie")](https://homieiot.github.io/)
@@ -44,20 +43,6 @@ Discussions: <https://github.com/smart-swimmingpool/smart-swimmingpool.github.io
 - [Users Guide](docs/users-guide.md)
 - [Hardware Guide](docs/hardware-guide.md)
 - [Software Guide](docs/software-guide.md)
-
-## Contributors
-
-Thanks goes to these wonderful people
-([emoji key](https://github.com/all-contributors/all-contributors#emoji-key)):
-
-<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
-<!-- prettier-ignore -->
-
-<!-- ALL-CONTRIBUTORS-LIST:END -->
-
-This project follows the
-[all-contributors](https://github.com/all-contributors/all-contributors)
-specification. Contributions of any kind welcome!
 
 ## Credits
 
