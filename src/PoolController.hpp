@@ -4,7 +4,10 @@
 
 namespace PoolController
 {
-    extern auto setupProxy() -> void;
+    namespace Detail
+    {
+        extern auto setupProxy() -> void;
+    }
 
     struct PoolControllerContext final
     {
@@ -19,7 +22,7 @@ namespace PoolController
         auto loop() -> void;
 
     private:
-        friend auto setupProxy() -> void;
+        friend auto Detail::setupProxy() -> void;
 
         auto setupHandler() -> void;
 

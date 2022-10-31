@@ -35,7 +35,7 @@ namespace PoolController
     static unsigned long _lastMeasurement;
 
     static PoolControllerContext* Self;
-    auto setupProxy() -> void
+    auto Detail::setupProxy() -> void
     {
         Self->setupHandler();
     }
@@ -155,7 +155,7 @@ namespace PoolController
             }
         );
 
-        Homie.setSetupFunction(&setupProxy);
+        Homie.setSetupFunction(&Detail::setupProxy);
 
         LN.log(__PRETTY_FUNCTION__, LoggerNode::DEBUG, "Before Homie setup())");
         Homie.setup();
