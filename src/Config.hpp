@@ -4,6 +4,36 @@
 
 namespace PoolController
 {
+
+    enum struct ControllerType : std::uint8_t
+    {
+        CT_ESP32 = 0,
+        CT_ESP8266
+    };
+
+    constexpr ControllerType CurrentControllerType
+    {
+        #ifdef ESP32
+            ControllerType::CT_ESP32
+        #elif defined(ESP8266)
+            ControllerType::CT_ESP8266
+        #else
+        #   error "Unknown platform"
+        #endif
+    };
+
+    constexpr std::uint8_t D0  { 16 };
+    constexpr std::uint8_t D1  { 5 };
+    constexpr std::uint8_t D2  { 4 };
+    constexpr std::uint8_t D3  { 0 };
+    constexpr std::uint8_t D4  { 2 };
+    constexpr std::uint8_t D5  { 14 };
+    constexpr std::uint8_t D6  { 12 };
+    constexpr std::uint8_t D7  { 13 };
+    constexpr std::uint8_t D8  { 15 };
+    constexpr std::uint8_t D9  { 3 };
+    constexpr std::uint8_t D10 { 1 };
+
     /**
      * Interval to temp updates.
     */
@@ -14,13 +44,7 @@ namespace PoolController
     */
     constexpr std::uint8_t PIN_DS_SOLAR
     {
-        #ifdef ESP32
-            15
-        #elif defined(ESP8266)
-            D5
-        #else
-        #   error "Unknown platform"
-        #endif
+        CurrentControllerType == ControllerType::CT_ESP32 ? 15 : D5
     };
 
     /**
@@ -28,37 +52,18 @@ namespace PoolController
     */
     constexpr std::uint8_t PIN_DS_POOL
     {
-        #ifdef ESP32
-            16
-        #elif defined(ESP8266)
-            D6
-        #else
-        #   error "Unknown platform"
-        #endif
+        CurrentControllerType == ControllerType::CT_ESP32 ? 16 : D6
     };
 
     constexpr std::uint8_t PIN_RELAY_POOL
     {
-        #ifdef ESP32
-            18
-        #elif defined(ESP8266)
-            D1
-        #else
-        #   error "Unknown platform"
-        #endif
+        CurrentControllerType == ControllerType::CT_ESP32 ? 18 : D1
     };
 
     constexpr std::uint8_t PIN_RELAY_SOLAR
     {
-        #ifdef ESP32
-            19
-        #elif defined(ESP8266)
-            D2
-        #else
-        #   error "Unknown platform"
-        #endif
+        CurrentControllerType == ControllerType::CT_ESP32 ? 19 : D2
     };
-
 
     #ifdef MOD_PROBE
         static_assert(sizeof(unsigned long int) == sizeof(std::uint32_t) && alignof(unsigned long int) == alignof(std::uint32_t), "Arch check failed");
