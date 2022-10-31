@@ -13,13 +13,15 @@ static PoolControllerContext context { };
 /**
  * Startup of controller.
  */
-auto setup() -> void {
+extern "C" auto setup() -> void
+{
   context.startup();
 }
 
 /**
  * Main loop of ESP.
  */
-auto loop() -> void {
+extern "C" auto loop() -> void
+{
   context.loop();
 }

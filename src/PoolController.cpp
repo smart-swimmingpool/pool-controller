@@ -92,26 +92,38 @@ namespace PoolController
     {
         Serial.begin(SERIAL_SPEED);
 
-        while (!Serial) {
-            ;  // wait for serial port to connect. Needed for native USB port only
-        }
+        // Wait for serial port to connect. Needed for native USB port only
+        while (!Serial);
+
         Homie.setLoggingPrinter(&Serial);
 
-        Homie_setFirmware("pool-controller", "2.0.0");
+        Homie_setFirmware("pool-controller", "3.0.0");
         Homie_setBrand("smart-swimmingpool");
 
-        //WiFi.setSleepMode(WIFI_NONE_SLEEP); //see: https://github.com/esp8266/Arduino/issues/5083
-
         //default intervall of sending Temperature values
-        loopIntervalSetting.setDefaultValue(TEMP_READ_INTERVALL).setValidator([](long candidate) {
-            return (candidate >= 0) && (candidate <= 300);
-        });
+        loopIntervalSetting.setDefaultValue(TEMP_READ_INTERVALL).setValidator
+        (
+            [](const long candidate) -> bool
+            {
+                return candidate >= 0 && candidate <= 300;
+            }
+        );
 
-        temperatureMaxPoolSetting.setDefaultValue(28.5).setValidator(
-            [](long candidate) { return (candidate >= 0) && (candidate <= 30); });
+        temperatureMaxPoolSetting.setDefaultValue(28.5).setValidator
+        (
+            [](const long candidate) -> bool
+            {
+                return candidate >= 0 && candidate <= 30;
+            }
+        );
 
-        temperatureMinSolarSetting.setDefaultValue(55.0).setValidator(
-            [](long candidate) { return (candidate >= 0) && (candidate <= 100); });
+        temperatureMinSolarSetting.setDefaultValue(55.0).setValidator
+        (
+            [](const long candidate) noexcept -> bool
+            {
+                return candidate >= 0 && candidate <= 100;
+            }
+        );
 
         temperatureHysteresisSetting.setDefaultValue(1.0).setValidator(
             [](long candidate) { return (candidate >= 0) && (candidate <= 10); });

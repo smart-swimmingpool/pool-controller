@@ -4,7 +4,6 @@
 
 namespace PoolController
 {
-
     enum struct ControllerType : std::uint8_t
     {
         CT_ESP32 = 0,
