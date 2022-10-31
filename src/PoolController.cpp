@@ -102,7 +102,7 @@ namespace PoolController
         _lastMeasurement = 0;
     }
 
-    auto PoolControllerContext::startup() -> void
+    auto PoolControllerContext::setup() -> void
     {
         Serial.begin(SERIAL_SPEED);
 

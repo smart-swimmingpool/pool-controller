@@ -11,11 +11,11 @@ using namespace PoolController;
 static PoolControllerContext context { };
 
 /**
- * Startup of controller.
+ * Setup of controller.
  */
 extern "C" auto setup() -> void
 {
-  context.startup();
+  context.setup();
 }
 
 /**

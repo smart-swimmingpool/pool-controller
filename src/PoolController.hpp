@@ -9,6 +9,10 @@ namespace PoolController
         extern auto setupProxy() -> void;
     }
 
+    /**
+     * Core controller class using RAII priniples.
+     * Only one instance allowed.
+    */
     struct PoolControllerContext final
     {
         PoolControllerContext();
@@ -18,7 +22,16 @@ namespace PoolController
         auto operator = (PoolControllerContext&&) -> PoolControllerContext& = delete; // no move
         ~PoolControllerContext();
 
-        auto startup() -> void;
+        /**
+         * Startup the controller.
+         * Should be called from the standard setup() entry function.
+        */
+        auto setup() -> void;
+
+        /**
+         * Invoked the loop event.
+         * Should be called from the standard loop() entry function.
+        */
         auto loop() -> void;
 
     private:
