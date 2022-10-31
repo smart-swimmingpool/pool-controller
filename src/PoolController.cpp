@@ -20,12 +20,7 @@
 
 namespace PoolController
 {
-    static HomieSetting<long> loopIntervalSetting("loop-interval", "The processing interval in seconds");
-    static HomieSetting<double> temperatureMaxPoolSetting("temperature-max-pool", "Maximum temperature of solar");
-    static HomieSetting<double> temperatureMinSolarSetting("temperature-min-solar", "Minimum temperature of solar");
-    static HomieSetting<double> temperatureHysteresisSetting("temperature-hysteresis", "Temperature hysteresis");
-    static HomieSetting<const char*> operationModeSetting("operation-mode", "Operational Mode");
-    static  LoggerNode LN;
+    static LoggerNode LN;
     static DallasTemperatureNode solarTemperatureNode("solar-temp", "Solar Temperature", PIN_DS_SOLAR, TEMP_READ_INTERVALL);
     static DallasTemperatureNode poolTemperatureNode("pool-temp", "Pool Temperature", PIN_DS_POOL, TEMP_READ_INTERVALL);
     #ifdef ESP32
@@ -39,14 +34,33 @@ namespace PoolController
     static unsigned long _measurementInterval = 10;
     static unsigned long _lastMeasurement;
 
+    static PoolControllerContext* Self;
+    auto setupProxy() -> void
+    {
+        Self->setupHandler();
+    }
+
+    PoolControllerContext::PoolControllerContext()
+    {
+        assert(!Self);
+        Self = this;
+    }
+
+    PoolControllerContext::~PoolControllerContext()
+    {
+        assert(Self);
+        Self = nullptr;
+    }
+
     /**
      * Homie Setup handler.
      * Only called when wifi and mqtt are connected.
      */
-    static void setupHandler() {
+    auto PoolControllerContext::setupHandler() -> void
+    {
 
         // set mesurement intervals
-        long _loopInterval = loopIntervalSetting.get();
+        const std::uint32_t _loopInterval = this->loopIntervalSetting_.get();
 
         solarTemperatureNode.setMeasurementInterval(_loopInterval);
         poolTemperatureNode.setMeasurementInterval(_loopInterval);
@@ -58,10 +72,10 @@ namespace PoolController
         ctrlTemperatureNode.setMeasurementInterval(_loopInterval);
         #endif
 
-        operationModeNode.setMode(operationModeSetting.get());
-        operationModeNode.setPoolMaxTemperature(temperatureMaxPoolSetting.get());
-        operationModeNode.setSolarMinTemperature(temperatureMinSolarSetting.get());
-        operationModeNode.setTemperatureHysteresis(temperatureHysteresisSetting.get());
+        operationModeNode.setMode(this->operationModeSetting_.get());
+        operationModeNode.setPoolMaxTemperature(this->temperatureMaxPoolSetting_.get());
+        operationModeNode.setSolarMinTemperature(this->temperatureMinSolarSetting_.get());
+        operationModeNode.setTemperatureHysteresis(this->temperatureHysteresisSetting_.get());
         TimerSetting ts      = operationModeNode.getTimerSetting();  //TODO: Configurable
         ts.timerStartHour    = 10;
         ts.timerStartMinutes = 30;
@@ -101,7 +115,7 @@ namespace PoolController
         Homie_setBrand("smart-swimmingpool");
 
         //default intervall of sending Temperature values
-        loopIntervalSetting.setDefaultValue(TEMP_READ_INTERVALL).setValidator
+        this->loopIntervalSetting_.setDefaultValue(TEMP_READ_INTERVALL).setValidator
         (
             [](const long candidate) -> bool
             {
@@ -109,7 +123,7 @@ namespace PoolController
             }
         );
 
-        temperatureMaxPoolSetting.setDefaultValue(28.5).setValidator
+        this->temperatureMaxPoolSetting_.setDefaultValue(28.5).setValidator
         (
             [](const long candidate) -> bool
             {
@@ -117,7 +131,7 @@ namespace PoolController
             }
         );
 
-        temperatureMinSolarSetting.setDefaultValue(55.0).setValidator
+        this->temperatureMinSolarSetting_.setDefaultValue(55.0).setValidator
         (
             [](const long candidate) noexcept -> bool
             {
@@ -125,15 +139,23 @@ namespace PoolController
             }
         );
 
-        temperatureHysteresisSetting.setDefaultValue(1.0).setValidator(
-            [](long candidate) { return (candidate >= 0) && (candidate <= 10); });
+        this->temperatureHysteresisSetting_.setDefaultValue(1.0).setValidator
+        (
+            [](const long candidate) -> bool
+            {
+                return candidate >= 0 && candidate <= 10;
+            }
+        );
 
-        operationModeSetting.setDefaultValue("auto").setValidator([](const char* candidate) {
-            return (strcmp(candidate, "auto")) || (strcmp(candidate, "manu")) || (strcmp(candidate, "boost"));
-        });
+        this->operationModeSetting_.setDefaultValue("auto").setValidator
+        (
+            [](const char* const candidate) -> bool
+            {
+                return std::strcmp(candidate, "auto") == 0 || std::strcmp(candidate, "manu") == 0 || std::strcmp(candidate, "boost") == 0;
+            }
+        );
 
-        //Homie.disableLogging();
-        Homie.setSetupFunction(&setupHandler);
+        Homie.setSetupFunction(&setupProxy);
 
         LN.log(__PRETTY_FUNCTION__, LoggerNode::DEBUG, "Before Homie setup())");
         Homie.setup();
