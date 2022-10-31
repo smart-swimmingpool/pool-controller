@@ -12,10 +12,10 @@ namespace PoolController
     struct PoolControllerContext final
     {
         PoolControllerContext();
-        PoolControllerContext(const PoolControllerContext&) = delete;
-        PoolControllerContext(PoolControllerContext&&) = delete;
-        auto operator = (const PoolControllerContext&) -> PoolControllerContext& = delete;
-        auto operator = (PoolControllerContext&&) -> PoolControllerContext& = delete;
+        PoolControllerContext(const PoolControllerContext&) = delete; // no copy
+        PoolControllerContext(PoolControllerContext&&) = delete; // no move
+        auto operator = (const PoolControllerContext&) -> PoolControllerContext& = delete; // no copy
+        auto operator = (PoolControllerContext&&) -> PoolControllerContext& = delete; // no move
         ~PoolControllerContext();
 
         auto startup() -> void;
