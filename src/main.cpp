@@ -13,7 +13,10 @@ static PoolControllerContext context { };
 /**
  * Setup of controller.
  */
-extern "C" auto setup() -> void
+#ifndef ESP32
+extern "C"
+#endif
+auto setup() -> void
 {
   Serial.begin(SERIAL_SPEED);
 
@@ -26,7 +29,10 @@ extern "C" auto setup() -> void
 /**
  * Main loop of ESP.
  */
-extern "C" auto loop() -> void
+#ifndef ESP32
+extern "C"
+#endif
+auto loop() -> void
 {
   context.loop();
 }
