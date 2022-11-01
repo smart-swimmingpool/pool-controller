@@ -15,6 +15,11 @@ static PoolControllerContext context { };
  */
 extern "C" auto setup() -> void
 {
+  Serial.begin(SERIAL_SPEED);
+
+  // Wait for serial port to connect. Needed for native USB port only
+  while (!Serial);
+
   context.setup();
 }
 

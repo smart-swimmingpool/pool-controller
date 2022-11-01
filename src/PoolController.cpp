@@ -104,11 +104,6 @@ namespace PoolController
 
     auto PoolControllerContext::setup() -> void
     {
-        Serial.begin(SERIAL_SPEED);
-
-        // Wait for serial port to connect. Needed for native USB port only
-        while (!Serial);
-
         Homie.setLoggingPrinter(&Serial);
 
         Homie_setFirmware("pool-controller", "3.0.0");
