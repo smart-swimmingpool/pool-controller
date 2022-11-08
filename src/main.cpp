@@ -6,9 +6,7 @@
 
 #include "PoolController.hpp"
 
-using namespace PoolController;
-
-static PoolControllerContext context { };
+static PoolController::PoolControllerContext context { };
 
 /**
  * Setup of controller.
@@ -16,8 +14,7 @@ static PoolControllerContext context { };
 #ifndef ESP32
 extern "C"
 #endif
-auto setup() -> void
-{
+auto setup() -> void {
   Serial.begin(SERIAL_SPEED);
 
   // Wait for serial port to connect. Needed for native USB port only
@@ -32,7 +29,6 @@ auto setup() -> void
 #ifndef ESP32
 extern "C"
 #endif
-auto loop() -> void
-{
+auto loop() -> void {
   context.loop();
 }

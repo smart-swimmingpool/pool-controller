@@ -18,8 +18,7 @@
 
 #include "Config.hpp"
 
-namespace PoolController
-{
+namespace PoolController {
     static LoggerNode LN;
     static DallasTemperatureNode solarTemperatureNode("solar-temp", "Solar Temperature", PIN_DS_SOLAR, TEMP_READ_INTERVALL);
     static DallasTemperatureNode poolTemperatureNode("pool-temp", "Pool Temperature", PIN_DS_POOL, TEMP_READ_INTERVALL);
@@ -35,19 +34,16 @@ namespace PoolController
     static unsigned long _lastMeasurement;
 
     static PoolControllerContext* Self;
-    auto Detail::setupProxy() -> void
-    {
+    auto Detail::setupProxy() -> void {
         Self->setupHandler();
     }
 
-    PoolControllerContext::PoolControllerContext()
-    {
+    PoolControllerContext::PoolControllerContext() {
         assert(!Self);
         Self = this;
     }
 
-    PoolControllerContext::~PoolControllerContext()
-    {
+    PoolControllerContext::~PoolControllerContext() {
         assert(Self);
         Self = nullptr;
     }
@@ -56,8 +52,7 @@ namespace PoolController
      * Homie Setup handler.
      * Only called when wifi and mqtt are connected.
      */
-    auto PoolControllerContext::setupHandler() -> void
-    {
+    auto PoolControllerContext::setupHandler() -> void {
 
         // set mesurement intervals
         const std::uint32_t _loopInterval = this->loopIntervalSetting_.get();
@@ -102,50 +97,40 @@ namespace PoolController
         _lastMeasurement = 0;
     }
 
-    auto PoolControllerContext::setup() -> void
-    {
+    auto PoolControllerContext::setup() -> void {
         Homie.setLoggingPrinter(&Serial);
 
         Homie_setFirmware("pool-controller", "3.0.0");
         Homie_setBrand("smart-swimmingpool");
 
         //default intervall of sending Temperature values
-        this->loopIntervalSetting_.setDefaultValue(TEMP_READ_INTERVALL).setValidator
-        (
-            [](const long candidate) -> bool
-            {
+        this->loopIntervalSetting_.setDefaultValue(TEMP_READ_INTERVALL).setValidator(
+            [](const long candidate) -> bool {
                 return candidate >= 0 && candidate <= 300;
             }
         );
 
-        this->temperatureMaxPoolSetting_.setDefaultValue(28.5).setValidator
-        (
-            [](const long candidate) -> bool
-            {
+        this->temperatureMaxPoolSetting_.setDefaultValue(28.5).setValidator(
+            [](const long candidate) -> bool {
                 return candidate >= 0 && candidate <= 30;
             }
         );
 
-        this->temperatureMinSolarSetting_.setDefaultValue(55.0).setValidator
-        (
-            [](const long candidate) noexcept -> bool
-            {
+        this->temperatureMinSolarSetting_.setDefaultValue(55.0).setValidator(
+            [](const long candidate) noexcept -> bool {
                 return candidate >= 0 && candidate <= 100;
             }
         );
 
-        this->temperatureHysteresisSetting_.setDefaultValue(1.0).setValidator
-        (
-            [](const long candidate) -> bool
-            {
+        this->temperatureHysteresisSetting_.setDefaultValue(1.0).setValidator(
+            [](const long candidate) -> bool {
                 return candidate >= 0 && candidate <= 10;
             }
         );
 
         this->operationModeSetting_.setDefaultValue("auto").setValidator
         (
-            [](const char* const candidate) -> bool
-            {
+            [](const char* const candidate) -> bool {
                 return std::strcmp(candidate, "auto") == 0 || std::strcmp(candidate, "manu") == 0 || std::strcmp(candidate, "boost") == 0;
             }
         );
@@ -159,8 +144,7 @@ namespace PoolController
         Homie.getLogger() << F("Free heap: ") << ESP.getFreeHeap() << endl;
     }
 
-    auto PoolControllerContext::loop() -> void
-    {
+    auto PoolControllerContext::loop() -> void {
         Homie.loop();
     }
 }

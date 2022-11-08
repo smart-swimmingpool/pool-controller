@@ -2,10 +2,8 @@
 
 #include <Homie.h>
 
-namespace PoolController
-{
-    namespace Detail
-    {
+namespace PoolController {
+    namespace Detail {
         extern auto setupProxy() -> void;
     }
 
@@ -13,8 +11,7 @@ namespace PoolController
      * Core controller class using RAII priniples.
      * Only one instance allowed.
     */
-    struct PoolControllerContext final
-    {
+    struct PoolControllerContext final {
         PoolControllerContext();
         PoolControllerContext(const PoolControllerContext&) = delete; // no copy
         PoolControllerContext(PoolControllerContext&&) = delete; // no move
