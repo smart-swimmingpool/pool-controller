@@ -26,7 +26,7 @@ class Logger:
     def _log(self, level: int, message: str) -> None:
         """Internal logging method"""
         if level >= self.level:
-            timestamp = time.ticks_ms()
+            timestamp = int(time.time() * 1000)
             level_name = self.LEVEL_NAMES.get(level, "UNKNOWN")
             print(f"[{timestamp}] {level_name}: {message}")
 
