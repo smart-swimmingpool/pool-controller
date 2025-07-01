@@ -1,0 +1,80 @@
+site_name: Pool Controller MicroPython
+site_description: Smart Swimming Pool Controller for MicroPython
+site_author: Smart Swimming Pool Team
+site_url: https://smart-swimmingpool.github.io/pool-controller
+
+repo_name: smart-swimmingpool/pool-controller
+repo_url: https://github.com/smart-swimmingpool/pool-controller
+edit_uri: edit/micropython/docs/
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: blue
+      accent: light blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: blue
+      accent: light blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.highlight
+    - search.share
+    - content.code.annotate
+
+plugins:
+  - search
+  - mermaid2
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:mermaid2.fence_mermaid
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - attr_list
+  - md_in_html
+
+nav:
+  - Home: index.md
+  - Installation:
+    - Quick Start: installation/quickstart.md
+    - Hardware Setup: installation/hardware.md
+    - Software Setup: installation/software.md
+  - Configuration:
+    - Basic Config: configuration/basic.md
+    - Advanced Config: configuration/advanced.md
+    - MQTT Setup: configuration/mqtt.md
+  - Operation:
+    - Operation Modes: operation/modes.md
+    - Control Interface: operation/control.md
+    - Monitoring: operation/monitoring.md
+  - Development:
+    - Contributing: development/contributing.md
+    - Testing: development/testing.md
+    - API Reference: development/api.md
+  - Troubleshooting: troubleshooting.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/smart-swimmingpool
+    - icon: fontawesome/brands/docker
+      link: https://hub.docker.com/u/smartswimmingpool

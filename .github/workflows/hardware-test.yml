@@ -1,0 +1,86 @@
+name: Hardware Integration Tests
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM
+  workflow_dispatch:
+
+jobs:
+  hardware-simulation:
+    runs-on: ubuntu-latest
+    name: Hardware Simulation Tests
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-mock
+        pip install micropython-stubs
+        
+    - name: Install hardware simulation dependencies
+      run: |
+        pip install paho-mqtt
+        pip install w1thermsensor  # For DS18B20 simulation
+        
+    - name: Run hardware simulation tests
+      run: |
+        pytest tests/hardware/ -v --tb=short
+        
+    - name: Generate hardware test report
+      run: |
+        pytest tests/hardware/ --html=hardware-test-report.html --self-contained-html
+        
+    - name: Upload test report
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: hardware-test-report
+        path: hardware-test-report.html
+
+  mqtt-integration:
+    runs-on: ubuntu-latest
+    name: MQTT Integration Test
+    
+    services:
+      mosquitto:
+        image: eclipse-mosquitto:2.0
+        ports:
+          - 1883:1883
+        options: >-
+          --health-cmd "mosquitto_pub -h localhost -t test -m test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 3
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest paho-mqtt
+        
+    - name: Wait for MQTT broker
+      run: |
+        sleep 10
+        
+    - name: Run MQTT integration tests
+      env:
+        MQTT_HOST: localhost
+        MQTT_PORT: 1883
+      run: |
+        pytest tests/integration/test_mqtt.py -v

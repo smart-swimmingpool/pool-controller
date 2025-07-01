@@ -1,0 +1,24 @@
+{
+  "device_id": "pool-controller",
+  "name": "Pool Controller",
+  "wifi": {
+    "ssid": "YOUR_WIFI_SSID",
+    "password": "YOUR_WIFI_PASSWORD"
+  },
+  "mqtt": {
+    "host": "YOUR_MQTT_BROKER",
+    "port": 1883,
+    "user": "",
+    "password": ""
+  },
+  "settings": {
+    "loop_interval": 30,
+    "temperature_max_pool": 28.5,
+    "temperature_min_solar": 55.0,
+    "temperature_hysteresis": 1.0,
+    "timer_start_hour": 10,
+    "timer_start_minutes": 30,
+    "timer_end_hour": 17,
+    "timer_end_minutes": 30
+  }
+}

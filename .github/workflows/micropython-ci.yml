@@ -1,0 +1,239 @@
+name: MicroPython CI/CD
+
+on:
+  push:
+    branches: [ micropython, main ]
+  pull_request:
+    branches: [ micropython, main ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    name: Code Quality & Linting
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 black isort mypy
+        
+    - name: Run Black (Code Formatting)
+      run: |
+        black --check --diff lib/ main.py boot.py
+        
+    - name: Run isort (Import Sorting)
+      run: |
+        isort --check-only --diff lib/ main.py boot.py
+        
+    - name: Run Flake8 (Linting)
+      run: |
+        flake8 lib/ main.py boot.py --max-line-length=100 --ignore=E203,W503
+        
+    - name: Run MyPy (Type Checking)
+      run: |
+        mypy lib/ main.py boot.py --ignore-missing-imports
+
+  test:
+    runs-on: ubuntu-latest
+    name: Unit Tests
+    needs: lint
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-cov pytest-mock
+        pip install micropython-stubs
+        
+    - name: Run tests
+      run: |
+        pytest tests/ -v --cov=lib --cov-report=xml --cov-report=html
+        
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+
+  security:
+    runs-on: ubuntu-latest
+    name: Security Scan
+    needs: lint
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install bandit
+      run: |
+        pip install bandit[toml]
+        
+    - name: Run Bandit Security Scan
+      run: |
+        bandit -r lib/ main.py boot.py -f json -o bandit-report.json
+        
+    - name: Upload security scan results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: bandit-report
+        path: bandit-report.json
+
+  build:
+    runs-on: ubuntu-latest
+    name: Build & Package
+    needs: [test, security]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Create release package
+      run: |
+        mkdir -p dist/pool-controller
+        cp -r lib/ dist/pool-controller/
+        cp main.py boot.py config.json dist/pool-controller/
+        cp README_micropython.md dist/pool-controller/README.md
+        cd dist && tar -czf pool-controller-micropython.tar.gz pool-controller/
+        
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: pool-controller-micropython
+        path: dist/pool-controller-micropython.tar.gz
+
+  firmware-test:
+    runs-on: ubuntu-latest
+    name: Firmware Compatibility Test
+    needs: build
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install MicroPython Unix port
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential libffi-dev pkg-config
+        git clone https://github.com/micropython/micropython.git
+        cd micropython
+        git submodule update --init
+        make -C mpy-cross
+        cd ports/unix
+        make
+        
+    - name: Test with MicroPython
+      run: |
+        cd micropython/ports/unix
+        echo "import sys; sys.path.append('../../../../'); import main" | ./micropython
+
+  release:
+    runs-on: ubuntu-latest
+    name: Create Release
+    needs: [build, firmware-test]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/micropython' || github.ref == 'refs/heads/main')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download build artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: pool-controller-micropython
+        
+    - name: Get version
+      id: version
+      run: |
+        VERSION=$(date +%Y.%m.%d)-$(echo $GITHUB_SHA | cut -c1-7)
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: micropython-v${{ steps.version.outputs.version }}
+        release_name: MicroPython Release v${{ steps.version.outputs.version }}
+        body: |
+          ## MicroPython Pool Controller Release
+          
+          ### Changes
+          - Automated release from micropython branch
+          - Commit: ${{ github.sha }}
+          
+          ### Installation
+          1. Download the pool-controller-micropython.tar.gz file
+          2. Extract to your ESP32
+          3. Configure config.json with your settings
+          4. Reset the device
+          
+        draft: false
+        prerelease: false
+        
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./pool-controller-micropython.tar.gz
+        asset_name: pool-controller-micropython.tar.gz
+        asset_content_type: application/gzip
+
+  deploy-docs:
+    runs-on: ubuntu-latest
+    name: Deploy Documentation
+    needs: release
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/micropython' || github.ref == 'refs/heads/main')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install MkDocs
+      run: |
+        pip install mkdocs mkdocs-material mkdocs-mermaid2-plugin
+        
+    - name: Build documentation
+      run: |
+        mkdocs build
+        
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./site
