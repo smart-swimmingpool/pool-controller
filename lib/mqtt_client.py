@@ -37,8 +37,7 @@ class MQTTClient:
         """Connect to MQTT broker"""
         try:
             self.client = UMQTTClient(
-                self.client_id, self.server, port=self.port, user=self.user,
-                password=self.password
+                self.client_id, self.server, port=self.port, user=self.user, password=self.password
             )
 
             if self.callback:
@@ -47,8 +46,7 @@ class MQTTClient:
             if self.client:
                 self.client.connect()
                 self.connected = True
-                self.logger.info(
-                    f"Connected to MQTT broker: {self.server}:{self.port}")
+                self.logger.info(f"Connected to MQTT broker: {self.server}:{self.port}")
                 return True
             return False
 
