@@ -37,18 +37,22 @@ class MQTTClient:
         """Connect to MQTT broker"""
         try:
             self.client = UMQTTClient(
-                self.client_id, self.server, port=self.port, user=self.user, password=self.password
+                self.client_id, self.server, port=self.port, user=self.user,
+                password=self.password
             )
 
             if self.callback:
                 self.client.set_callback(self.callback)
 
-            self.client.connect()
-            self.connected = True
-            self.logger.info(f"Connected to MQTT broker: {self.server}:{self.port}")
-            return True
+            if self.client:
+                self.client.connect()
+                self.connected = True
+                self.logger.info(
+                    f"Connected to MQTT broker: {self.server}:{self.port}")
+                return True
+            return False
 
-        except Exception as e:
+        except OSError as e:
             self.logger.error(f"MQTT connection failed: {e}")
             self.connected = False
             return False
@@ -60,7 +64,7 @@ class MQTTClient:
                 self.client.disconnect()
                 self.connected = False
                 self.logger.info("Disconnected from MQTT broker")
-            except Exception as e:
+            except OSError as e:
                 self.logger.error(f"Error disconnecting from MQTT: {e}")
 
     def publish(self, topic: str, message: str, retain: bool = False) -> bool:
@@ -72,7 +76,7 @@ class MQTTClient:
             self.client.publish(topic, message, retain=retain)
             self.logger.debug(f"Published: {topic} = {message}")
             return True
-        except Exception as e:
+        except OSError as e:
             self.logger.error(f"Error publishing to {topic}: {e}")
             return False
 
@@ -85,7 +89,7 @@ class MQTTClient:
             self.client.subscribe(topic)
             self.logger.debug(f"Subscribed to: {topic}")
             return True
-        except Exception as e:
+        except OSError as e:
             self.logger.error(f"Error subscribing to {topic}: {e}")
             return False
 
@@ -94,7 +98,7 @@ class MQTTClient:
         if self.connected and self.client:
             try:
                 self.client.check_msg()
-            except Exception as e:
+            except OSError as e:
                 self.logger.error(f"Error checking messages: {e}")
                 self.connected = False
 
