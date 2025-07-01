@@ -4,6 +4,7 @@ Sets up basic system configuration.
 """
 
 import gc
+
 import esp
 import network
 
