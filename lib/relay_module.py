@@ -3,9 +3,11 @@ Relay Module Node for Pool Controller
 Controls relay switches for pumps.
 """
 
-from machine import Pin
-from .logger import Logger
 from typing import Optional
+
+from machine import Pin
+
+from .logger import Logger
 
 
 class RelayModuleNode:
