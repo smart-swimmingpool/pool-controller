@@ -4,7 +4,7 @@ Implements different operational rules and modes.
 """
 
 import time
-from typing import Any, Optional, Tuple
+from typing import Any
 
 from .logger import Logger
 from .rules import RuleAuto, RuleBoost, RuleManual, RuleTimer

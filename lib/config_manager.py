@@ -5,7 +5,7 @@ Handles loading and saving of configuration settings.
 
 import json
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from .logger import Logger
 

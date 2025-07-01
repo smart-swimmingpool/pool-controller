@@ -4,9 +4,9 @@ Handles WiFi connection and management.
 """
 
 import time
+from typing import List, Optional, Tuple
 
 import network
-from typing import Any, Optional, List, Tuple
 
 from .config_manager import ConfigManager
 from .logger import Logger

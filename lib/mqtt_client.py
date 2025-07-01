@@ -3,14 +3,22 @@ MQTT Client wrapper for Pool Controller
 Provides simplified MQTT functionality.
 """
 
+from typing import Any, Optional
+
 from umqtt.simple import MQTTClient as UMQTTClient
 
 from .logger import Logger
-from typing import Any, Optional
 
 
 class MQTTClient:
-    def __init__(self, client_id: str, server: str, port: int = 1883, user: Optional[str] = None, password: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        client_id: str,
+        server: str,
+        port: int = 1883,
+        user: Optional[str] = None,
+        password: Optional[str] = None,
+    ) -> None:
         self.client_id = client_id
         self.server = server
         self.port = port
