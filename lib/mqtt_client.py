@@ -48,9 +48,7 @@ class MQTTClient:
             client.connect()
             self.client = client
             self.connected = True
-            self.logger.info(
-                f"Connected to MQTT broker: {self.server}:{self.port}"
-            )
+            self.logger.info(f"Connected to MQTT broker: {self.server}:{self.port}")
             return True
         except OSError as e:
             self.logger.error(f"MQTT connection failed: {e}")

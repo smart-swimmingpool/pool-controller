@@ -247,11 +247,13 @@ def publish_status() -> None:
             # Relay states
             if pool_pump_node is not None:
                 mqtt_client.publish(
-                    f"{base_topic}/pool-pump/switch", "true" if pool_pump_node.get_state() else "false"
+                    f"{base_topic}/pool-pump/switch",
+                    "true" if pool_pump_node.get_state() else "false",
                 )
             if solar_pump_node is not None:
                 mqtt_client.publish(
-                    f"{base_topic}/solar-pump/switch", "true" if solar_pump_node.get_state() else "false"
+                    f"{base_topic}/solar-pump/switch",
+                    "true" if solar_pump_node.get_state() else "false",
                 )
 
             # Operation mode status

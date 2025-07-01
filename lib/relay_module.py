@@ -1,9 +1,7 @@
-
 """
 Relay Module Node for Pool Controller
 Controls relay switches for pumps.
 """
-
 
 from machine import Pin
 from .logger import Logger
@@ -31,9 +29,7 @@ class RelayModuleNode:
         self.state = False
         self.set_state(False)  # Start with relay off
 
-        self.logger.info(
-            f"Relay module '{name}' initialized on pin {pin}"
-        )
+        self.logger.info(f"Relay module '{name}' initialized on pin {pin}")
 
     def set_state(self, state: bool) -> None:
         """Set relay state"""
