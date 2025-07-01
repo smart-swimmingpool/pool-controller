@@ -6,12 +6,9 @@ Main entry point for the pool controller.
 """
 
 import gc
-import json
 import time
 
-import ubinascii
-from machine import Pin, reset
-from network import STA_IF, WLAN
+from machine import reset
 
 from lib.config_manager import ConfigManager
 from lib.logger import Logger
@@ -133,7 +130,7 @@ def on_mqtt_message(topic, msg):
         # Parse topic to determine target node and property
         parts = topic_str.split("/")
         if len(parts) >= 4 and parts[-1] == "set":
-            device_id = parts[1]
+            # device_id = parts[1]
             node_id = parts[2]
             property_name = parts[3]
 

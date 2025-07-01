@@ -141,6 +141,7 @@ class OperationModeNode:
                 return True
         except ValueError as e:
             self.logger.error(f"Invalid value for {property_name}: {value}")
+            self.logger.error(str(e))
             return False
 
         return False
