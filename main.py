@@ -38,7 +38,7 @@ solar_pump_node = None
 operation_mode_node = None
 
 
-def setup_hardware():
+def setup_hardware() -> None:
     """Initialize hardware components"""
     global solar_temp_node, pool_temp_node, pool_pump_node, solar_pump_node, operation_mode_node
 
@@ -62,7 +62,7 @@ def setup_hardware():
     logger.info("Hardware setup complete")
 
 
-def setup_mqtt():
+def setup_mqtt() -> bool:
     """Initialize MQTT client and connect"""
     global mqtt_client
 
@@ -99,7 +99,7 @@ def setup_mqtt():
         return False
 
 
-def subscribe_topics():
+def subscribe_topics() -> None:
     """Subscribe to MQTT control topics"""
     device_id = config_manager.get_config().get("device_id", "pool-controller")
     base_topic = f"homie/{device_id}"
@@ -119,7 +119,7 @@ def subscribe_topics():
         logger.debug(f"Subscribed to: {topic}")
 
 
-def on_mqtt_message(topic, msg):
+def on_mqtt_message(topic: bytes, msg: bytes) -> None:
     """Handle incoming MQTT messages"""
     try:
         topic_str = topic.decode("utf-8")
@@ -146,7 +146,7 @@ def on_mqtt_message(topic, msg):
         logger.error(f"Error handling MQTT message: {e}")
 
 
-def publish_device_info():
+def publish_device_info() -> None:
     """Publish Homie device information"""
     device_id = config_manager.get_config().get("device_id", "pool-controller")
     base_topic = f"homie/{device_id}"
@@ -176,7 +176,7 @@ def publish_device_info():
         mqtt_client.publish(f"{node_topic}/$type", node_type, retain=True)
 
 
-def main_loop():
+def main_loop() -> None:
     """Main application loop"""
     last_update = 0
     update_interval = 30000  # 30 seconds
@@ -219,7 +219,7 @@ def main_loop():
             time.sleep(5)  # Wait before retrying
 
 
-def publish_status():
+def publish_status() -> None:
     """Publish current status to MQTT"""
     device_id = config_manager.get_config().get("device_id", "pool-controller")
     base_topic = f"homie/{device_id}"
@@ -250,7 +250,7 @@ def publish_status():
         logger.error(f"Error publishing status: {e}")
 
 
-def main():
+def main() -> None:
     """Main entry point"""
     logger.info("=== Pool Controller Starting ===")
     logger.info("MicroPython Version")

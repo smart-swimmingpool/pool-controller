@@ -9,7 +9,7 @@ from .logger import Logger
 
 
 class RelayModuleNode:
-    def __init__(self, node_id, name, pin, measurement_interval=30):
+    def __init__(self, node_id: str, name: str, pin: int, measurement_interval: int = 30) -> None:
         self.node_id = node_id
         self.name = name
         self.pin_num = pin
@@ -24,22 +24,22 @@ class RelayModuleNode:
 
         self.logger.info(f"Relay module '{name}' initialized on pin {pin}")
 
-    def set_state(self, state):
+    def set_state(self, state: bool) -> None:
         """Set relay state"""
         self.state = bool(state)
         # Most relay modules are active low
         self.relay_pin.value(0 if self.state else 1)
         self.logger.info(f"{self.name}: {'ON' if self.state else 'OFF'}")
 
-    def get_state(self):
+    def get_state(self) -> bool:
         """Get current relay state"""
         return self.state
 
-    def toggle(self):
+    def toggle(self) -> None:
         """Toggle relay state"""
         self.set_state(not self.state)
 
-    def handle_mqtt_message(self, property_name, value):
+    def handle_mqtt_message(self, property_name: str, value: str) -> bool:
         """Handle MQTT control message"""
         if property_name == "switch":
             if value.lower() in ["true", "on", "1"]:
@@ -53,10 +53,10 @@ class RelayModuleNode:
                 return False
         return False
 
-    def get_node_id(self):
+    def get_node_id(self) -> str:
         """Get node ID"""
         return self.node_id
 
-    def get_name(self):
+    def get_name(self) -> str:
         """Get node name"""
         return self.name

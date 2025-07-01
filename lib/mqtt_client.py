@@ -6,10 +6,11 @@ Provides simplified MQTT functionality.
 from umqtt.simple import MQTTClient as UMQTTClient
 
 from .logger import Logger
+from typing import Any, Optional
 
 
 class MQTTClient:
-    def __init__(self, client_id, server, port=1883, user=None, password=None):
+    def __init__(self, client_id: str, server: str, port: int = 1883, user: Optional[str] = None, password: Optional[str] = None) -> None:
         self.client_id = client_id
         self.server = server
         self.port = port
@@ -20,11 +21,11 @@ class MQTTClient:
         self.connected = False
         self.callback = None
 
-    def set_callback(self, callback):
+    def set_callback(self, callback: Any) -> None:
         """Set message callback function"""
         self.callback = callback
 
-    def connect(self):
+    def connect(self) -> bool:
         """Connect to MQTT broker"""
         try:
             self.client = UMQTTClient(
@@ -44,7 +45,7 @@ class MQTTClient:
             self.connected = False
             return False
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         """Disconnect from MQTT broker"""
         if self.client and self.connected:
             try:
@@ -54,7 +55,7 @@ class MQTTClient:
             except Exception as e:
                 self.logger.error(f"Error disconnecting from MQTT: {e}")
 
-    def publish(self, topic, message, retain=False):
+    def publish(self, topic: str, message: str, retain: bool = False) -> bool:
         """Publish message to topic"""
         if not self.connected or not self.client:
             return False
@@ -67,7 +68,7 @@ class MQTTClient:
             self.logger.error(f"Error publishing to {topic}: {e}")
             return False
 
-    def subscribe(self, topic):
+    def subscribe(self, topic: str) -> bool:
         """Subscribe to topic"""
         if not self.connected or not self.client:
             return False
@@ -80,7 +81,7 @@ class MQTTClient:
             self.logger.error(f"Error subscribing to {topic}: {e}")
             return False
 
-    def check_msg(self):
+    def check_msg(self) -> None:
         """Check for incoming messages"""
         if self.connected and self.client:
             try:
@@ -89,6 +90,6 @@ class MQTTClient:
                 self.logger.error(f"Error checking messages: {e}")
                 self.connected = False
 
-    def is_connected(self):
+    def is_connected(self) -> bool:
         """Check if connected to MQTT broker"""
         return self.connected

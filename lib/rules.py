@@ -4,6 +4,7 @@ Implements different control logic for various operation modes.
 """
 
 import time
+from typing import Any, Optional, Tuple
 
 from .logger import Logger
 
@@ -11,14 +12,14 @@ from .logger import Logger
 class BaseRule:
     """Base class for operation rules"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger = Logger()
 
-    def apply(self, **kwargs):
+    def apply(self, **kwargs: Any) -> None:
         """Apply the rule logic - to be implemented by subclasses"""
         pass
 
-    def is_timer_active(self, start_time, end_time):
+    def is_timer_active(self, start_time: Tuple[int, int], end_time: Tuple[int, int]) -> bool:
         """Check if current time is within timer range"""
         try:
             # Get current time (simplified - assumes RTC is set)
@@ -50,17 +51,17 @@ class RuleAuto(BaseRule):
 
     def apply(
         self,
-        pool_temp,
-        solar_temp,
-        pool_max_temp,
-        solar_min_temp,
-        hysteresis,
-        timer_start,
-        timer_end,
-        pool_pump,
-        solar_pump,
-        **kwargs,
-    ):
+        pool_temp: Optional[float] = None,
+        solar_temp: Optional[float] = None,
+        pool_max_temp: float = 0.0,
+        solar_min_temp: float = 0.0,
+        hysteresis: float = 0.0,
+        timer_start: Tuple[int, int] = (0, 0),
+        timer_end: Tuple[int, int] = (0, 0),
+        pool_pump: Any = None,
+        solar_pump: Any = None,
+        **kwargs: Any,
+    ) -> None:
 
         self.logger.debug("Applying AUTO rule")
 
@@ -110,7 +111,7 @@ class RuleAuto(BaseRule):
 class RuleManual(BaseRule):
     """Manual rule - no automatic control"""
 
-    def apply(self, **kwargs):
+    def apply(self, **kwargs: Any) -> None:
         self.logger.debug("Applying MANUAL rule - no automatic control")
         # In manual mode, don't change any pump states
         pass
@@ -119,7 +120,14 @@ class RuleManual(BaseRule):
 class RuleTimer(BaseRule):
     """Timer rule - pool pump based on timer, solar pump off"""
 
-    def apply(self, timer_start, timer_end, pool_pump, solar_pump, **kwargs):
+    def apply(
+        self,
+        timer_start: Tuple[int, int] = (0, 0),
+        timer_end: Tuple[int, int] = (0, 0),
+        pool_pump: Any = None,
+        solar_pump: Any = None,
+        **kwargs: Any,
+    ) -> None:
         self.logger.debug("Applying TIMER rule")
 
         # Pool pump control based on timer
@@ -139,15 +147,15 @@ class RuleBoost(BaseRule):
 
     def apply(
         self,
-        pool_temp,
-        solar_temp,
-        pool_max_temp,
-        solar_min_temp,
-        hysteresis,
-        pool_pump,
-        solar_pump,
-        **kwargs,
-    ):
+        pool_temp: Optional[float] = None,
+        solar_temp: Optional[float] = None,
+        pool_max_temp: float = 0.0,
+        solar_min_temp: float = 0.0,
+        hysteresis: float = 0.0,
+        pool_pump: Any = None,
+        solar_pump: Any = None,
+        **kwargs: Any,
+    ) -> None:
 
         self.logger.debug("Applying BOOST rule")
 

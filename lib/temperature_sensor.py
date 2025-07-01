@@ -4,6 +4,7 @@ Handles DS18B20 temperature sensors.
 """
 
 import time
+from typing import Optional
 
 from ds18x20 import DS18X20
 from machine import Pin
@@ -13,7 +14,7 @@ from .logger import Logger
 
 
 class DallasTemperatureNode:
-    def __init__(self, node_id, name, pin, measurement_interval=30):
+    def __init__(self, node_id: str, name: str, pin: int, measurement_interval: int = 30) -> None:
         self.node_id = node_id
         self.name = name
         self.pin = pin
@@ -34,7 +35,7 @@ class DallasTemperatureNode:
         if not self.devices:
             self.logger.warning(f"No temperature sensors found on pin {pin}")
 
-    def update(self):
+    def update(self) -> None:
         """Update temperature reading"""
         current_time = time.ticks_ms()
 
@@ -61,14 +62,14 @@ class DallasTemperatureNode:
                 except Exception as e:
                     self.logger.error(f"Error reading temperature from {self.name}: {e}")
 
-    def get_temperature(self):
+    def get_temperature(self) -> Optional[float]:
         """Get current temperature reading"""
         return self.temperature
 
-    def get_node_id(self):
+    def get_node_id(self) -> str:
         """Get node ID"""
         return self.node_id
 
-    def get_name(self):
+    def get_name(self) -> str:
         """Get node name"""
         return self.name

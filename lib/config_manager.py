@@ -5,14 +5,15 @@ Handles loading and saving of configuration settings.
 
 import json
 import os
+from typing import Any, Dict, Optional
 
 from .logger import Logger
 
 
 class ConfigManager:
-    def __init__(self, config_file="config.json"):
+    def __init__(self, config_file: str = "config.json") -> None:
         self.config_file = config_file
-        self.config = {}
+        self.config: Dict[str, Any] = {}
         self.logger = Logger()
 
         # Default configuration
@@ -33,7 +34,7 @@ class ConfigManager:
             },
         }
 
-    def load_config(self):
+    def load_config(self) -> None:
         """Load configuration from file"""
         try:
             if self.config_file in os.listdir():
@@ -48,7 +49,7 @@ class ConfigManager:
             self.logger.error(f"Error loading config: {e}")
             self.config = self.default_config.copy()
 
-    def save_config(self):
+    def save_config(self) -> None:
         """Save configuration to file"""
         try:
             with open(self.config_file, "w") as f:
@@ -57,25 +58,25 @@ class ConfigManager:
         except Exception as e:
             self.logger.error(f"Error saving config: {e}")
 
-    def get_config(self):
+    def get_config(self) -> Dict[str, Any]:
         """Get the current configuration"""
         return self.config
 
-    def get_setting(self, key, default=None):
+    def get_setting(self, key: str, default: Any = None) -> Any:
         """Get a specific setting value"""
         return self.config.get("settings", {}).get(key, default)
 
-    def set_setting(self, key, value):
+    def set_setting(self, key: str, value: Any) -> None:
         """Set a specific setting value"""
         if "settings" not in self.config:
             self.config["settings"] = {}
         self.config["settings"][key] = value
         self.save_config()
 
-    def get_wifi_config(self):
+    def get_wifi_config(self) -> Dict[str, Any]:
         """Get WiFi configuration"""
         return self.config.get("wifi", {})
 
-    def get_mqtt_config(self):
+    def get_mqtt_config(self) -> Dict[str, Any]:
         """Get MQTT configuration"""
         return self.config.get("mqtt", {})

@@ -4,13 +4,14 @@ Implements different operational rules and modes.
 """
 
 import time
+from typing import Any, Optional, Tuple
 
 from .logger import Logger
 from .rules import RuleAuto, RuleBoost, RuleManual, RuleTimer
 
 
 class OperationModeNode:
-    def __init__(self, node_id, name, measurement_interval=30):
+    def __init__(self, node_id: str, name: str, measurement_interval: int = 30) -> None:
         self.node_id = node_id
         self.name = name
         self.measurement_interval = measurement_interval
@@ -48,23 +49,23 @@ class OperationModeNode:
 
         self.logger.info(f"Operation mode controller initialized: {name}")
 
-    def set_pool_temperature_node(self, node):
+    def set_pool_temperature_node(self, node: Any) -> None:
         """Set pool temperature sensor node"""
         self.pool_temp_node = node
 
-    def set_solar_temperature_node(self, node):
+    def set_solar_temperature_node(self, node: Any) -> None:
         """Set solar temperature sensor node"""
         self.solar_temp_node = node
 
-    def set_pool_pump_node(self, node):
+    def set_pool_pump_node(self, node: Any) -> None:
         """Set pool pump relay node"""
         self.pool_pump_node = node
 
-    def set_solar_pump_node(self, node):
+    def set_solar_pump_node(self, node: Any) -> None:
         """Set solar pump relay node"""
         self.solar_pump_node = node
 
-    def set_mode(self, mode):
+    def set_mode(self, mode: str) -> bool:
         """Set operation mode"""
         if mode in self.available_modes:
             self.mode = mode
@@ -74,11 +75,11 @@ class OperationModeNode:
             self.logger.warning(f"Invalid operation mode: {mode}")
             return False
 
-    def get_mode(self):
+    def get_mode(self) -> str:
         """Get current operation mode"""
         return self.mode
 
-    def update(self):
+    def update(self) -> None:
         """Update operation mode logic"""
         current_time = time.ticks_ms()
 
@@ -106,7 +107,7 @@ class OperationModeNode:
                     solar_pump=self.solar_pump_node,
                 )
 
-    def handle_mqtt_message(self, property_name, value):
+    def handle_mqtt_message(self, property_name: str, value: str) -> bool:
         """Handle MQTT control message"""
         try:
             if property_name == "mode":
@@ -146,7 +147,7 @@ class OperationModeNode:
 
         return False
 
-    def publish_status(self, mqtt_client, base_topic):
+    def publish_status(self, mqtt_client: Any, base_topic: str) -> None:
         """Publish current status to MQTT"""
         node_topic = f"{base_topic}/{self.node_id}"
 
@@ -159,10 +160,10 @@ class OperationModeNode:
         mqtt_client.publish(f"{node_topic}/timer-end-hour", str(self.timer_end_hour))
         mqtt_client.publish(f"{node_topic}/timer-end-minutes", str(self.timer_end_minutes))
 
-    def get_node_id(self):
+    def get_node_id(self) -> str:
         """Get node ID"""
         return self.node_id
 
-    def get_name(self):
+    def get_name(self) -> str:
         """Get node name"""
         return self.name
