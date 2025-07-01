@@ -36,28 +36,31 @@ class MQTTClient:
     def connect(self) -> bool:
         """Connect to MQTT broker"""
         try:
-            self.client = UMQTTClient(
-                self.client_id, self.server, port=self.port, user=self.user, password=self.password
+            client = UMQTTClient(
+                self.client_id,
+                self.server,
+                port=self.port,
+                user=self.user,
+                password=self.password,
             )
-
-            if self.callback:
-                self.client.set_callback(self.callback)
-
-            if self.client:
-                self.client.connect()
-                self.connected = True
-                self.logger.info(f"Connected to MQTT broker: {self.server}:{self.port}")
-                return True
-            return False
-
+            if self.callback is not None:
+                client.set_callback(self.callback)
+            client.connect()
+            self.client = client
+            self.connected = True
+            self.logger.info(
+                f"Connected to MQTT broker: {self.server}:{self.port}"
+            )
+            return True
         except OSError as e:
             self.logger.error(f"MQTT connection failed: {e}")
             self.connected = False
+            self.client = None
             return False
 
     def disconnect(self) -> None:
         """Disconnect from MQTT broker"""
-        if self.client and self.connected:
+        if self.client is not None and self.connected:
             try:
                 self.client.disconnect()
                 self.connected = False
@@ -67,7 +70,7 @@ class MQTTClient:
 
     def publish(self, topic: str, message: str, retain: bool = False) -> bool:
         """Publish message to topic"""
-        if not self.connected or not self.client:
+        if not self.connected or self.client is None:
             return False
 
         try:
@@ -80,7 +83,7 @@ class MQTTClient:
 
     def subscribe(self, topic: str) -> bool:
         """Subscribe to topic"""
-        if not self.connected or not self.client:
+        if not self.connected or self.client is None:
             return False
 
         try:
@@ -93,7 +96,7 @@ class MQTTClient:
 
     def check_msg(self) -> None:
         """Check for incoming messages"""
-        if self.connected and self.client:
+        if self.connected and self.client is not None:
             try:
                 self.client.check_msg()
             except OSError as e:

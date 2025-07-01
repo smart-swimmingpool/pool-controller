@@ -22,14 +22,18 @@ class RelayModuleNode:
         self.state = False
         self.set_state(False)  # Start with relay off
 
-        self.logger.info(f"Relay module '{name}' initialized on pin {pin}")
+        self.logger.info(
+            f"Relay module '{name}' initialized on pin {pin}"
+        )
 
     def set_state(self, state: bool) -> None:
         """Set relay state"""
         self.state = bool(state)
         # Most relay modules are active low
         self.relay_pin.value(0 if self.state else 1)
-        self.logger.info(f"{self.name}: {'ON' if self.state else 'OFF'}")
+        self.logger.info(
+            f"{self.name}: {'ON' if self.state else 'OFF'}"
+        )
 
     def get_state(self) -> bool:
         """Get current relay state"""
@@ -42,15 +46,17 @@ class RelayModuleNode:
     def handle_mqtt_message(self, property_name: str, value: str) -> bool:
         """Handle MQTT control message"""
         if property_name == "switch":
-            if value.lower() in ["true", "on", "1"]:
+            value_lower = value.lower()
+            if value_lower in ["true", "on", "1"]:
                 self.set_state(True)
                 return True
-            elif value.lower() in ["false", "off", "0"]:
+            elif value_lower in ["false", "off", "0"]:
                 self.set_state(False)
                 return True
-            else:
-                self.logger.warning(f"Invalid switch value: {value}")
-                return False
+            self.logger.warning(
+                f"Invalid switch value: {value}"
+            )
+            return False
         return False
 
     def get_node_id(self) -> str:

@@ -115,8 +115,9 @@ def subscribe_topics() -> None:
     ]
 
     for topic in topics:
-        mqtt_client.subscribe(topic)
-        logger.debug(f"Subscribed to: {topic}")
+        if mqtt_client is not None:
+            mqtt_client.subscribe(topic)
+            logger.debug(f"Subscribed to: {topic}")
 
 
 def on_mqtt_message(topic: bytes, msg: bytes) -> None:
@@ -136,11 +137,14 @@ def on_mqtt_message(topic: bytes, msg: bytes) -> None:
 
             # Route message to appropriate node
             if node_id == "pool-pump" and property_name == "switch":
-                pool_pump_node.handle_mqtt_message(property_name, msg_str)
+                if pool_pump_node is not None:
+                    pool_pump_node.handle_mqtt_message(property_name, msg_str)
             elif node_id == "solar-pump" and property_name == "switch":
-                solar_pump_node.handle_mqtt_message(property_name, msg_str)
+                if solar_pump_node is not None:
+                    solar_pump_node.handle_mqtt_message(property_name, msg_str)
             elif node_id == "operation-mode":
-                operation_mode_node.handle_mqtt_message(property_name, msg_str)
+                if operation_mode_node is not None:
+                    operation_mode_node.handle_mqtt_message(property_name, msg_str)
 
     except Exception as e:
         logger.error(f"Error handling MQTT message: {e}")
@@ -172,8 +176,9 @@ def publish_device_info() -> None:
 
     for node_id, name, node_type in nodes:
         node_topic = f"{base_topic}/{node_id}"
-        mqtt_client.publish(f"{node_topic}/$name", name, retain=True)
-        mqtt_client.publish(f"{node_topic}/$type", node_type, retain=True)
+        if mqtt_client is not None:
+            mqtt_client.publish(f"{node_topic}/$name", name, retain=True)
+            mqtt_client.publish(f"{node_topic}/$type", node_type, retain=True)
 
 
 def main_loop() -> None:
@@ -188,20 +193,23 @@ def main_loop() -> None:
             current_time = time.ticks_ms()
 
             # Check MQTT connection
-            if mqtt_client:
+            if mqtt_client is not None:
                 mqtt_client.check_msg()
 
             # Update sensors and controllers periodically
             if time.ticks_diff(current_time, last_update) >= update_interval:
                 # Update temperature sensors
-                solar_temp_node.update()
-                pool_temp_node.update()
+                if solar_temp_node is not None:
+                    solar_temp_node.update()
+                if pool_temp_node is not None:
+                    pool_temp_node.update()
 
                 # Update operation mode (applies rules)
-                operation_mode_node.update()
+                if operation_mode_node is not None:
+                    operation_mode_node.update()
 
                 # Publish status to MQTT
-                if mqtt_client:
+                if mqtt_client is not None:
                     publish_status()
 
                 last_update = current_time
@@ -226,25 +234,29 @@ def publish_status() -> None:
 
     try:
         # Temperature readings
-        solar_temp = solar_temp_node.get_temperature()
-        pool_temp = pool_temp_node.get_temperature()
+        solar_temp = solar_temp_node.get_temperature() if solar_temp_node is not None else None
+        pool_temp = pool_temp_node.get_temperature() if pool_temp_node is not None else None
 
-        if solar_temp is not None:
-            mqtt_client.publish(f"{base_topic}/solar-temp/temperature", str(solar_temp))
+        if mqtt_client is not None:
+            if solar_temp is not None:
+                mqtt_client.publish(f"{base_topic}/solar-temp/temperature", str(solar_temp))
 
-        if pool_temp is not None:
-            mqtt_client.publish(f"{base_topic}/pool-temp/temperature", str(pool_temp))
+            if pool_temp is not None:
+                mqtt_client.publish(f"{base_topic}/pool-temp/temperature", str(pool_temp))
 
-        # Relay states
-        mqtt_client.publish(
-            f"{base_topic}/pool-pump/switch", "true" if pool_pump_node.get_state() else "false"
-        )
-        mqtt_client.publish(
-            f"{base_topic}/solar-pump/switch", "true" if solar_pump_node.get_state() else "false"
-        )
+            # Relay states
+            if pool_pump_node is not None:
+                mqtt_client.publish(
+                    f"{base_topic}/pool-pump/switch", "true" if pool_pump_node.get_state() else "false"
+                )
+            if solar_pump_node is not None:
+                mqtt_client.publish(
+                    f"{base_topic}/solar-pump/switch", "true" if solar_pump_node.get_state() else "false"
+                )
 
-        # Operation mode status
-        operation_mode_node.publish_status(mqtt_client, base_topic)
+            # Operation mode status
+            if operation_mode_node is not None:
+                operation_mode_node.publish_status(mqtt_client, base_topic)
 
     except Exception as e:
         logger.error(f"Error publishing status: {e}")
