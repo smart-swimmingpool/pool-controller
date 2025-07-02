@@ -16,8 +16,8 @@
     "python.formatting.blackArgs": ["--line-length=79"],
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
-        "source.organizeImports": true,
-        "source.fixAll": true
+        "source.organizeImports": "explicit",
+        "source.fixAll": "explicit"
     },
     "python.linting.enabled": true,
     "python.linting.flake8Enabled": true,
@@ -34,5 +34,7 @@
         "/home/codespace/.vscode-remote/extensions/joedevivo.vscode-circuitpython-0.2.0-linux-x64/stubs",
         "/home/codespace/.vscode-remote/data/User/globalStorage/joedevivo.vscode-circuitpython/bundle/20250628/adafruit-circuitpython-bundle-py-20250628/lib"
     ],
-    "circuitpython.board.version": null
+    "circuitpython.board.version": null,
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.typeCheckingMode": "standard"
 }

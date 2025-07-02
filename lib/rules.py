@@ -41,7 +41,7 @@ class BaseRule:
             else:
                 return current_minutes >= start_minutes or current_minutes <= end_minutes
 
-        except Exception as e:
+        except (ValueError, TypeError) as e:
             self.logger.error(f"Error checking timer: {e}")
             return False
 
