@@ -15,6 +15,8 @@
 
 #include "LoggerNode.hpp"
 #include "TimeClientHelper.hpp"
+#include "StateManager.hpp"
+#include "SystemMonitor.hpp"
 
 #include "Config.hpp"
 
@@ -54,6 +56,12 @@ namespace PoolController {
      */
     auto PoolControllerContext::setupHandler() -> void {
 
+        // Initialize state management
+        StateManager::begin();
+        
+        // Initialize system monitor and watchdog
+        SystemMonitor::begin();
+
         // set mesurement intervals
         const std::uint32_t _loopInterval = this->loopIntervalSetting_.get();
 
@@ -67,16 +75,22 @@ namespace PoolController {
         ctrlTemperatureNode.setMeasurementInterval(_loopInterval);
         #endif
 
+        // Load persisted state first, then override with config if different
+        operationModeNode.loadState();
+        
+        // Apply configuration settings (these will override persisted state if different)
         operationModeNode.setMode(this->operationModeSetting_.get());
         operationModeNode.setPoolMaxTemperature(this->temperatureMaxPoolSetting_.get());
         operationModeNode.setSolarMinTemperature(this->temperatureMinSolarSetting_.get());
         operationModeNode.setTemperatureHysteresis(this->temperatureHysteresisSetting_.get());
-        TimerSetting ts      = operationModeNode.getTimerSetting();  //TODO: Configurable
-        ts.timerStartHour    = 10;
-        ts.timerStartMinutes = 30;
-        ts.timerEndHour      = 17;
-        ts.timerEndMinutes   = 30;
-        operationModeNode.setTimerSetting(ts);
+        
+        // Timer settings are now loaded from state, but can be overridden here if needed
+        // TimerSetting ts = operationModeNode.getTimerSetting();
+        // ts.timerStartHour    = 10;
+        // ts.timerStartMinutes = 30;
+        // ts.timerEndHour      = 17;
+        // ts.timerEndMinutes   = 30;
+        // operationModeNode.setTimerSetting(ts);
 
         operationModeNode.setPoolTemperatureNode(&poolTemperatureNode);
         operationModeNode.setSolarTemperatureNode(&solarTemperatureNode);
@@ -95,6 +109,8 @@ namespace PoolController {
         operationModeNode.addRule(timerRule);
 
         _lastMeasurement = 0;
+        
+        LN.log(__PRETTY_FUNCTION__, LoggerNode::INFO, "State persistence and system monitoring initialized");
     }
 
     auto PoolControllerContext::setup() -> void {
@@ -152,6 +168,10 @@ namespace PoolController {
     }
 
     auto PoolControllerContext::loop() -> void {
+        // Feed watchdog and check memory
+        SystemMonitor::feedWatchdog();
+        SystemMonitor::checkMemory();
+        
         Homie.loop();
     }
 }

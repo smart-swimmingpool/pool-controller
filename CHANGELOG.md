@@ -10,6 +10,17 @@ All notable changes to this project will be documented in this file.
   - Home Assistant native auto-discovery via MQTT
   - Dual protocol support: choose between Homie Convention or Home Assistant Discovery
   - See [MQTT Configuration Guide](docs/mqtt-configuration.md) for details
+- **State Persistence**: All controller states now persisted across reboots
+  - Operation mode (auto/manual/boost/timer)
+  - Temperature settings (pool max, solar min, hysteresis)
+  - Timer settings (start/end times)
+  - Relay states (pool pump, solar pump)
+  - Automatic restoration after power failure or reboot
+- **System Health Monitoring**: Added watchdog and memory monitoring
+  - Automatic reboot on critical low memory conditions
+  - Hardware watchdog timer support (ESP32)
+  - Memory fragmentation monitoring (ESP8266)
+  - Low memory warnings logged
 
 ### Improved
 - **24/7 Operation Optimization**: Reduced memory usage and improved stability

@@ -3,6 +3,7 @@
 #include "RuleAuto.hpp"
 #include "RuleBoost.hpp"
 #include "Utils.hpp"
+#include "StateManager.hpp"
 
 /**
  *
@@ -59,6 +60,7 @@ bool OperationModeNode::setMode(String mode) {
     Homie.getLogger() << F("set mode: ") << _mode << endl;
     setProperty(cMode).send(_mode);
     setProperty(cHomieNodeState).send(cHomieNodeState_OK);
+    saveState();  // Persist mode change
     retval = true;
 
   } else {
@@ -220,4 +222,44 @@ bool OperationModeNode::handleInput(const HomieRange& range, const String& prope
  */
 void OperationModeNode::printCaption() {
   Homie.getLogger() << cCaption << endl;
+}
+
+/**
+ * Load persisted state from storage
+ */
+void OperationModeNode::loadState() {
+  using PoolController::StateManager;
+  
+  // Load operation mode
+  String savedMode = StateManager::loadString("opmode", STATUS_AUTO);
+  setMode(savedMode);
+  
+  // Load temperature settings
+  _poolMaxTemp = StateManager::loadFloat("poolMaxTemp", 28.5);
+  _solarMinTemp = StateManager::loadFloat("solarMinTemp", 55.0);
+  _hysteresis = StateManager::loadFloat("hysteresis", 1.0);
+  
+  // Load timer settings
+  _timerSetting.timerStartHour = StateManager::loadInt("timerStartH", 10);
+  _timerSetting.timerStartMinutes = StateManager::loadInt("timerStartM", 30);
+  _timerSetting.timerEndHour = StateManager::loadInt("timerEndH", 17);
+  _timerSetting.timerEndMinutes = StateManager::loadInt("timerEndM", 30);
+  
+  Homie.getLogger() << F("✓ State loaded from persistent storage") << endl;
+}
+
+/**
+ * Save current state to persistent storage
+ */
+void OperationModeNode::saveState() {
+  using PoolController::StateManager;
+  
+  StateManager::saveString("opmode", _mode);
+  StateManager::saveFloat("poolMaxTemp", _poolMaxTemp);
+  StateManager::saveFloat("solarMinTemp", _solarMinTemp);
+  StateManager::saveFloat("hysteresis", _hysteresis);
+  StateManager::saveInt("timerStartH", _timerSetting.timerStartHour);
+  StateManager::saveInt("timerStartM", _timerSetting.timerStartMinutes);
+  StateManager::saveInt("timerEndH", _timerSetting.timerEndHour);
+  StateManager::saveInt("timerEndM", _timerSetting.timerEndMinutes);
 }
