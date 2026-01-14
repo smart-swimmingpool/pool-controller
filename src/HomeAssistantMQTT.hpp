@@ -37,7 +37,7 @@ namespace HomeAssistant {
             char topic[128];
             snprintf(topic, sizeof(topic), "homeassistant/sensor/%s/%s/config", nodeId, objectId);
 
-            StaticJsonDocument<512> doc;
+            JsonDocument doc;
             
             // State topic
             char stateTopic[128];
@@ -56,7 +56,7 @@ namespace HomeAssistant {
             if (icon) doc["icon"] = icon;
             
             // Device information
-            JsonObject device = doc.createNestedObject("device");
+            JsonObject device = doc["device"].to<JsonObject>();
             device["identifiers"][0] = nodeId;
             device["name"] = "Pool Controller";
             device["manufacturer"] = "smart-swimmingpool";
@@ -82,7 +82,7 @@ namespace HomeAssistant {
             char topic[128];
             snprintf(topic, sizeof(topic), "homeassistant/switch/%s/%s/config", nodeId, objectId);
 
-            StaticJsonDocument<512> doc;
+            JsonDocument doc;
             
             // State and command topics
             char stateTopic[128];
@@ -108,7 +108,7 @@ namespace HomeAssistant {
             if (icon) doc["icon"] = icon;
             
             // Device information
-            JsonObject device = doc.createNestedObject("device");
+            JsonObject device = doc["device"].to<JsonObject>();
             device["identifiers"][0] = nodeId;
             device["name"] = "Pool Controller";
             device["manufacturer"] = "smart-swimmingpool";

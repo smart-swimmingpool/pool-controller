@@ -100,7 +100,7 @@ namespace PoolController {
     auto PoolControllerContext::setup() -> void {
         Homie.setLoggingPrinter(&Serial);
 
-        Homie_setFirmware("pool-controller", "3.0.0");
+        Homie_setFirmware("pool-controller", "3.1.0");
         Homie_setBrand("smart-swimmingpool");
 
         //default intervall of sending Temperature values

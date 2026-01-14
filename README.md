@@ -19,12 +19,15 @@ Discussions: <https://github.com/smart-swimmingpool/smart-swimmingpool.github.io
 
 - [x] Manage water timed circulation for cleaning
 - [x] Manage water heating by additional pump for solar circuit
-- [x] [Homie 3.0](https://homieiot.github.io/) compatible MQTT messaging
+- [x] Configurable MQTT protocols
+  - [x] [Homie 3.0](https://homieiot.github.io/) compatible MQTT messaging
+  - [x] [Home Assistant MQTT Discovery](https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery) (configurable alternative)
 - [x] Independent of specific smarthome servers
   - [x] [openHAB](https://www.openhab.org) since Version 2.4 using MQTT Homie
-  - [x] [Home Assistant](https://www.home-assistant.io/) using MQTT Homie
+  - [x] [Home Assistant](https://www.home-assistant.io/) using MQTT Homie or native MQTT Discovery
 - [x] Timesync via NTP (europe.pool.ntp.org)
 - [x] Logging-Information via Homie-Node
+- [x] Optimized for 24/7 operation with minimal memory footprint
 
 ## Planned Features
 
