@@ -37,17 +37,21 @@ jobs:
       # Checkout the code base #
       ##########################
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       ################################
       # Run Linter against code base #
       ################################
       - name: Lint Code Base
-        uses: docker://github/super-linter:v2.1.0
+        uses: github/super-linter@v5
         env:
           VALIDATE_ALL_CODEBASE: false
           VALIDATE_ANSIBLE: false
+          DEFAULT_BRANCH: master
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
       - name: Arduino Lint
-        uses: arduino/arduino-lint-action@v1.0.0
+        uses: arduino/arduino-lint-action@v1
   
