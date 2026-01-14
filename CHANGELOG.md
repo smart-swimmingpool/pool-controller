@@ -26,6 +26,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - **Code Quality Improvements**:
   - Fixed potential millis() overflow issues in timing loops
+  - **Fixed critical bug in LoggerNode::logf**: vsnprintf was commented out, causing uninitialized buffer usage and potential crashes
   - Removed duplicate `Homie.isConnected()` checks
   - Added overflow-safe timing utility functions
   - Improved code consistency across all sensor nodes

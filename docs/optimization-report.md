@@ -106,7 +106,42 @@ if (Homie.isConnected()) {
 }
 ```
 
-### 2. Removed Deprecated Code
+### 2. Fixed Critical Bug in LoggerNode
+
+**LoggerNode.cpp - Line 90**:
+```cpp
+// Before: Critical bug - vsnprintf commented out!
+void LoggerNode::logf(const String& function, const E_Loglevel level, const char* format, ...) const {
+  if (!loglevel(level))
+    return;
+  va_list arg;
+  va_start(arg, format);
+  char temp[100];
+  //size_t len = vsnprintf(temp, sizeof(temp), format, arg);  // BUG: Commented out!
+  va_end(arg);
+  log(function, level, temp);  // Using uninitialized buffer!
+}
+
+// After: Fixed
+void LoggerNode::logf(const String& function, const E_Loglevel level, const char* format, ...) const {
+  if (!loglevel(level))
+    return;
+  va_list arg;
+  va_start(arg, format);
+  char temp[100];
+  vsnprintf(temp, sizeof(temp), format, arg);  // FIXED: Properly format string
+  va_end(arg);
+  log(function, level, temp);
+}
+```
+
+**Impact**: 
+- This was a critical bug that caused undefined behavior
+- Uninitialized buffer could contain random data
+- Could lead to crashes, garbled log messages, or memory corruption
+- All logf() calls were affected (used throughout the codebase)
+
+### 3. Removed Deprecated Code
 - Deleted `deprecated/RCSwitchNode.*` - unused legacy code
 - Cleaner codebase, easier maintenance
 

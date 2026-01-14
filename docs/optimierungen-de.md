@@ -46,6 +46,7 @@ Dieses Dokument beschreibt die durchgeführten Optimierungen am Pool Controller 
 
 **Verbesserungen**:
 - Doppelte `Homie.isConnected()` Prüfungen entfernt
+- **Kritischen Bug in LoggerNode::logf behoben**: vsnprintf war auskommentiert, was zu uninitialisierten Puffern und potentiellen Abstürzen führte
 - Veralteten Code im `deprecated/` Ordner gelöscht
 - Code-Konsistenz über alle Sensor-Nodes verbessert
 
