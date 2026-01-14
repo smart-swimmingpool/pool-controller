@@ -1,8 +1,8 @@
-
 #include "OperationModeNode.hpp"
 #include "RuleManu.hpp"
 #include "RuleAuto.hpp"
 #include "RuleBoost.hpp"
+#include "Utils.hpp"
 
 /**
  *
@@ -99,7 +99,7 @@ void OperationModeNode::setup() {
  *
  */
 void OperationModeNode::loop() {
-  if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {
+  if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval)) {
     Homie.getLogger() << F("〽 OperatioalMode update rule ") << endl;
     //call loop to evaluate the current rule
     Rule* rule = getRule();
@@ -115,16 +115,31 @@ void OperationModeNode::loop() {
       Homie.getLogger() << cIndent << F("PoolMaxTemp:  ") << _poolMaxTemp << endl;
       Homie.getLogger() << cIndent << F("Hysteresis:   ") << _hysteresis << endl;
 */
+      // Optimize memory: avoid String allocations by using stack buffers
+      char buffer[16];
+      
       setProperty(cMode).send(_mode);
-      setProperty(cSolarMinTemp).send(String(_solarMinTemp));
-      setProperty(cPoolMaxTemp).send(String(_poolMaxTemp));
-      setProperty(cHysteresis).send(String(_hysteresis));
+      
+      Utils::floatToString(_solarMinTemp, buffer, sizeof(buffer));
+      setProperty(cSolarMinTemp).send(buffer);
+      
+      Utils::floatToString(_poolMaxTemp, buffer, sizeof(buffer));
+      setProperty(cPoolMaxTemp).send(buffer);
+      
+      Utils::floatToString(_hysteresis, buffer, sizeof(buffer));
+      setProperty(cHysteresis).send(buffer);
 
-      setProperty(cTimerStartHour).send(String(_timerSetting.timerStartHour));
-      setProperty(cTimerStartMin).send(String(_timerSetting.timerStartMinutes));
+      Utils::intToString(_timerSetting.timerStartHour, buffer, sizeof(buffer));
+      setProperty(cTimerStartHour).send(buffer);
+      
+      Utils::intToString(_timerSetting.timerStartMinutes, buffer, sizeof(buffer));
+      setProperty(cTimerStartMin).send(buffer);
 
-      setProperty(cTimerEndHour).send(String(_timerSetting.timerEndHour));
-      setProperty(cTimerEndMin).send(String(_timerSetting.timerEndMinutes));
+      Utils::intToString(_timerSetting.timerEndHour, buffer, sizeof(buffer));
+      setProperty(cTimerEndHour).send(buffer);
+      
+      Utils::intToString(_timerSetting.timerEndMinutes, buffer, sizeof(buffer));
+      setProperty(cTimerEndMin).send(buffer);
     } else {
       Homie.getLogger() << F("✖ OperationalMode: not connected.") << endl;
     }

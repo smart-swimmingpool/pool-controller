@@ -4,6 +4,7 @@
  */
 
 #include "ESP32TemperatureNode.hpp"
+#include "Utils.hpp"
 
 /**
  * @param id
@@ -28,7 +29,7 @@ void ESP32TemperatureNode::printCaption() {
 void ESP32TemperatureNode::loop() {
 
 #ifdef ESP32
-  if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {
+  if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval)) {
     _lastMeasurement = millis();
 
     Homie.getLogger() << F("〽 Sending Temperature: ") << getId() << endl;
@@ -39,7 +40,10 @@ void ESP32TemperatureNode::loop() {
 
     Homie.getLogger() << cIndent << F("Temperature = ") << temp << cTemperatureUnit << endl;
     if(Homie.isConnected()) {
-      setProperty(cTemperature).send(String(temp, 2));
+      // Optimize memory: avoid String allocation
+      char buffer[16];
+      Utils::floatToString(temp, buffer, sizeof(buffer));
+      setProperty(cTemperature).send(buffer);
       setProperty(cHomieNodeState).send(cHomieNodeState_OK);
     }
 

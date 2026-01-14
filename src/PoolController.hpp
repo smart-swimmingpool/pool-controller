@@ -41,5 +41,6 @@ namespace PoolController {
         HomieSetting<double>        temperatureMinSolarSetting_ { "temperature-min-solar", "Minimum temperature of solar" };
         HomieSetting<double>        temperatureHysteresisSetting_ { "temperature-hysteresis", "Temperature hysteresis" };
         HomieSetting<const char*>   operationModeSetting_ { "operation-mode", "Operational Mode" };
+        HomieSetting<const char*>   mqttProtocolSetting_ { "mqtt-protocol", "MQTT Protocol (homie or homeassistant)" };
     };
 }

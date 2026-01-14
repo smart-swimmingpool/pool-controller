@@ -5,6 +5,7 @@
  * https://github.com/YuriiSalimov/RelayModule
  */
 #include "RelayModuleNode.hpp"
+#include "Utils.hpp"
 
 RelayModuleNode::RelayModuleNode(const char* id, const char* name, const uint8_t pin, const int measurementInterval)
     : HomieNode(id, name, "switch") {
@@ -86,16 +87,14 @@ bool RelayModuleNode::handleInput(const HomieRange& range, const String& propert
  *
  */
 void RelayModuleNode::loop() {
-  if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {
+  if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval)) {
 
     if (Homie.isConnected()) {
 
       const boolean isOn = getSwitch();
       Homie.getLogger() << F("〽 Sending Switch status: ") << getId() << F("switch: ") << (isOn ? cFlagOn : cFlagOff) << endl;
 
-      if(Homie.isConnected()) {
-        setProperty(cSwitch).send((isOn ? cFlagOn : cFlagOff));
-      }
+      setProperty(cSwitch).send((isOn ? cFlagOn : cFlagOff));
     }
 
     _lastMeasurement = millis();

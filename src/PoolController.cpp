@@ -135,6 +135,13 @@ namespace PoolController {
             }
         );
 
+        this->mqttProtocolSetting_.setDefaultValue("homie").setValidator
+        (
+            [](const char* const candidate) -> bool {
+                return std::strcmp(candidate, "homie") == 0 || std::strcmp(candidate, "homeassistant") == 0;
+            }
+        );
+
         Homie.setSetupFunction(&Detail::setupProxy);
 
         LN.log(__PRETTY_FUNCTION__, LoggerNode::DEBUG, "Before Homie setup())");

@@ -17,6 +17,7 @@
  *
  */
 #include "DallasTemperatureNode.hpp"
+#include "Utils.hpp"
 
 DallasTemperatureNode::DallasTemperatureNode(const char* id, const char* name, const uint8_t pin, const int measurementInterval)
     : HomieNode(id, name, "temperature") {
@@ -77,7 +78,7 @@ void DallasTemperatureNode::onReadyToOperate() {
  *
  */
 void DallasTemperatureNode::loop() {
-  if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {
+  if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval)) {
     _lastMeasurement = millis();
 
     if (numberOfDevices > 0) {
@@ -101,7 +102,10 @@ void DallasTemperatureNode::loop() {
             Homie.getLogger() << cIndent << F("Temperature=") << _temperature << endl;
 
             if (Homie.isConnected()) {
-              setProperty(cTemperature).send(String(_temperature));
+              // Optimize memory: avoid String allocation
+              char buffer[16];
+              Utils::floatToString(_temperature, buffer, sizeof(buffer));
+              setProperty(cTemperature).send(buffer);
               setProperty(cHomieNodeState).send(cHomieNodeState_OK);
             }
           }
