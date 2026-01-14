@@ -25,7 +25,7 @@ void RelayModuleNode::setSwitch(const boolean state) {
     relay->off();
   }
 
-  if(Homie.isConnected()){
+  if (Homie.isConnected()) {
     setProperty(cSwitch).send((state ? cFlagOn : cFlagOff));
     setProperty(cHomieNodeState).send(cHomieNodeState_OK);
   }
@@ -68,7 +68,7 @@ bool RelayModuleNode::handleInput(const HomieRange& range, const String& propert
   if (value != cFlagOn && value != cFlagOff) {
     Homie.getLogger() << F("invalid value for property '") << property << F("' value=") << value << endl;
 
-    if(Homie.isConnected()) {
+    if (Homie.isConnected()) {
       setProperty(cHomieNodeState).send(cHomieNodeState_Error);
     }
     retval = false;

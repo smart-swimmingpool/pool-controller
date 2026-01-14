@@ -33,16 +33,28 @@ public:
   void setPoolTemperatureNode(DallasTemperatureNode* node) { _currentPoolTempNode = node; };
   void setSolarTemperatureNode(DallasTemperatureNode* node) { _currentSolarTempNode = node; };
 
-  void  setPoolMaxTemperature(float temp) { _poolMaxTemp = temp; saveState(); };
+  void setPoolMaxTemperature(float temp) {
+    _poolMaxTemp = temp;
+    saveState();
+  };
   float getPoolMaxTemperature() { return _poolMaxTemp; };
 
-  void  setSolarMinTemperature(float temp) { _solarMinTemp = temp; saveState(); };
+  void setSolarMinTemperature(float temp) {
+    _solarMinTemp = temp;
+    saveState();
+  };
   float getSolarMinTemperature() { return _solarMinTemp; };
 
-  void  setTemperatureHysteresis(float temp) { _hysteresis = temp; saveState(); };
+  void setTemperatureHysteresis(float temp) {
+    _hysteresis = temp;
+    saveState();
+  };
   float getTemperatureHysteresis() { return _hysteresis; };
 
-  void         setTimerSetting(TimerSetting setting) { _timerSetting = setting; saveState(); };
+  void setTimerSetting(TimerSetting setting) {
+    _timerSetting = setting;
+    saveState();
+  };
   TimerSetting getTimerSetting() { return _timerSetting; };
 
   void loadState();
