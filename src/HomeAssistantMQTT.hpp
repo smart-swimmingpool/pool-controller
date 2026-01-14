@@ -8,6 +8,11 @@
  * 
  * Discovery format: homeassistant/<component>/<node_id>/<object_id>/config
  * Example: homeassistant/sensor/pool-controller/pool-temp/config
+ * 
+ * Memory requirements:
+ * - Sensor discovery: ~400-450 bytes JSON payload
+ * - Switch discovery: ~450-500 bytes JSON payload
+ * - Buffer size: 512 bytes (with safety margin)
  */
 
 #include <Homie.h>
@@ -23,6 +28,7 @@ namespace HomeAssistant {
     public:
         /**
          * Publish a sensor discovery message
+         * @note Uses ~400 bytes of JSON, buffer is 512 bytes
          */
         static bool publishSensor(
             const char* nodeId,
@@ -65,11 +71,18 @@ namespace HomeAssistant {
             char buffer[512];
             size_t len = serializeJson(doc, buffer, sizeof(buffer));
             
+            // Check for truncation
+            if (len >= sizeof(buffer) - 1) {
+                Homie.getLogger() << F("✖ Warning: JSON buffer too small, message truncated") << endl;
+                return false;
+            }
+            
             return Homie.getMqttClient().publish(topic, 1, true, buffer, len);
         }
 
         /**
          * Publish a switch discovery message
+         * @note Uses ~450 bytes of JSON, buffer is 512 bytes
          */
         static bool publishSwitch(
             const char* nodeId,
@@ -116,6 +129,12 @@ namespace HomeAssistant {
             
             char buffer[512];
             size_t len = serializeJson(doc, buffer, sizeof(buffer));
+            
+            // Check for truncation
+            if (len >= sizeof(buffer) - 1) {
+                Homie.getLogger() << F("✖ Warning: JSON buffer too small, message truncated") << endl;
+                return false;
+            }
             
             return Homie.getMqttClient().publish(topic, 1, true, buffer, len);
         }

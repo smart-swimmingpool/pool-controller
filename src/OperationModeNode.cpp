@@ -116,7 +116,8 @@ void OperationModeNode::loop() {
       Homie.getLogger() << cIndent << F("Hysteresis:   ") << _hysteresis << endl;
 */
       // Optimize memory: avoid String allocations by using stack buffers
-      char buffer[16];
+      // Buffer size: 20 bytes sufficient for temperature values (-100.00 to 999.99)
+      char buffer[20];
       
       setProperty(cMode).send(_mode);
       
