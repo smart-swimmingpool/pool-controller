@@ -16,7 +16,7 @@ This document summarizes the optimizations made to the Pool Controller codebase 
 
 1. **DallasTemperatureNode.cpp**
    - Before: `setProperty(cTemperature).send(String(_temperature));`
-   - After: 
+   - After:
      ```cpp
      char buffer[16];
      Utils::floatToString(_temperature, buffer, sizeof(buffer));
@@ -72,7 +72,7 @@ inline bool shouldMeasure(unsigned long lastMeasurement, unsigned long intervalS
     }
     unsigned long currentMillis = millis();
     unsigned long intervalMillis = intervalSeconds * 1000UL;
-    
+
     // This handles overflow correctly due to unsigned arithmetic
     return (currentMillis - lastMeasurement) >= intervalMillis;
 }
@@ -135,7 +135,7 @@ void LoggerNode::logf(const String& function, const E_Loglevel level, const char
 }
 ```
 
-**Impact**: 
+**Impact**:
 - This was a critical bug that caused undefined behavior
 - Uninitialized buffer could contain random data
 - Could lead to crashes, garbled log messages, or memory corruption

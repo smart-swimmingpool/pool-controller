@@ -152,18 +152,18 @@ if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval))
 
 ## 5. Code-Vereinfachung
 
-### Entfernt:
+### Entfernt
 - ❌ `deprecated/RCSwitchNode.*` - Veralteter, ungenutzter Code
 - ❌ Doppelte Prüfungen
 - ❌ Unnötige Komplexität
 
-### Hinzugefügt:
+### Hinzugefügt
 - ✅ `src/Utils.hpp` - Hilfsfunktionen für speichereffiziente Operationen
 - ✅ `src/MQTTConfig.hpp` - MQTT-Protokoll Konfiguration
 - ✅ `src/HomeAssistantMQTT.hpp` - Home Assistant Support
 - ✅ Umfassende Dokumentation
 
-### Verbessert:
+### Verbessert
 - ✅ Code-Konsistenz über alle Nodes
 - ✅ Bessere Fehlerbehandlung
 - ✅ Klarere Kommentare
@@ -173,14 +173,14 @@ if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval))
 
 ## 6. Neue Dokumentation
 
-### Hinzugefügt:
+### Erstellte Dateien
 - 📄 `CHANGELOG.md` - Version 3.1.0 Details
 - 📄 `docs/mqtt-configuration.md` - MQTT Setup-Guide (Englisch)
 - 📄 `docs/optimization-report.md` - Technische Details (Englisch)
 - 📄 `docs/optimierungen-de.md` - Zusammenfassung (Deutsch)
 - 📄 `docs/summary-de.md` - Diese Datei
 
-### Aktualisiert:
+### Aktualisiert
 - 📝 `README.md` - Neue Features dokumentiert
 - 📝 Firmware-Version → 3.1.0
 
@@ -188,14 +188,14 @@ if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval))
 
 ## Performance-Verbesserungen
 
-### Speicherverbrauch:
+### Speicherverbrauch
 | Komponente | Vorher | Nachher | Einsparung |
 |------------|--------|---------|------------|
 | String Allokationen/Zyklus | 10+ | 0 | 100% |
 | Heap-Fragmentierung | Hoch | Minimal | ~90% |
 | Stack-Nutzung | Niedrig | +80 bytes | Akzeptabel |
 
-### Langzeit-Stabilität:
+### Langzeit-Stabilität
 - **millis() Überlauf**: ✅ Behoben (49,7 Tage Problem)
 - **Heap-Fragmentierung**: ✅ Minimiert
 - **Logging-Bug**: ✅ Behoben
@@ -205,7 +205,7 @@ if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval))
 
 ## Installation und Verwendung
 
-### MQTT-Protokoll konfigurieren:
+### MQTT-Protokoll konfigurieren
 
 #### Via Homie Web-UI:
 1. Mit WiFi-AP des Geräts verbinden (beim ersten Start)
@@ -223,7 +223,7 @@ if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval))
 }
 ```
 
-### Empfohlene Tests:
+### Empfohlene Tests
 
 1. **Kurzzeitbetrieb**: 24-48 Stunden mit Speicher-Monitoring
 2. **Langzeitbetrieb**: 60+ Tage für millis()-Überlauf Test
@@ -235,17 +235,17 @@ if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval))
 
 ## Migration von v3.0.0 zu v3.1.0
 
-### Breaking Changes:
+### Breaking Changes
 **Keine!** Alle Änderungen sind abwärtskompatibel.
 
-### Empfohlene Schritte:
+### Empfohlene Schritte
 1. Code auf v3.1.0 aktualisieren
 2. Bauen und flashen
 3. Optional: MQTT-Protokoll auf Home Assistant umstellen
 4. Speicher über 24h überwachen
 5. Logs auf Korrektheit prüfen
 
-### Rollback:
+### Rollback
 Falls Probleme auftreten, zurück zu v3.0.0 möglich:
 ```bash
 git checkout v3.0.0
@@ -255,24 +255,24 @@ git checkout v3.0.0
 
 ## Zusammenfassung der Verbesserungen
 
-### Zuverlässigkeit:
+### Zuverlässigkeit
 - ✅ Kritischer Logging-Bug behoben
 - ✅ millis() Überlauf behoben
 - ✅ Heap-Fragmentierung minimiert
 - ✅ Buffer-Überläufe verhindert
 
-### Features:
+### Features
 - ✅ Home Assistant MQTT Discovery
 - ✅ Konfigurierbare MQTT-Protokolle
 - ✅ Verbesserte Fehlerbehandlung
 
-### Wartbarkeit:
+### Wartbarkeit
 - ✅ Veralteter Code entfernt
 - ✅ Bessere Dokumentation
 - ✅ Klarerer Code
 - ✅ Aktuelle Bibliotheken
 
-### Performance:
+### Performance
 - ✅ 2.880-28.800 Heap-Operationen/Tag eingespart
 - ✅ Minimale Stack-Erhöhung (+80 bytes)
 - ✅ Schnellere String-Operationen
@@ -281,17 +281,17 @@ git checkout v3.0.0
 
 ## Nächste Schritte (Empfehlungen)
 
-### Kurzfristig:
+### Kurzfristig
 1. Build-Tests auf ESP32 und ESP8266
 2. Speicher-Tests über 24-48h
 3. MQTT-Funktionstest (beide Protokolle)
 
-### Mittelfristig:
+### Mittelfristig
 1. Watchdog-Timer implementieren
 2. NTP-Server konfigurierbar machen
 3. Persistente Einstellungen speichern
 
-### Langfristig:
+### Langfristig
 1. Zweite Zirkulationspumpe
 2. Temperatur-basierte Steuerung
 3. Selbst-lernende Algorithmen
@@ -300,7 +300,7 @@ git checkout v3.0.0
 
 ## Support und Dokumentation
 
-- **Code**: https://github.com/smart-swimmingpool/pool-controller
+- **Code**: <https://github.com/smart-swimmingpool/pool-controller>
 - **MQTT-Konfiguration**: `docs/mqtt-configuration.md`
 - **Technische Details**: `docs/optimization-report.md`
 - **Changelog**: `CHANGELOG.md`
@@ -309,8 +309,9 @@ git checkout v3.0.0
 
 ## Entwickler-Notizen
 
-### Neue Dateien:
-```
+### Neue Dateien
+
+```text
 src/Utils.hpp                    - Speicher-Hilfsfunktionen
 src/MQTTConfig.hpp               - MQTT-Protokoll Config
 src/HomeAssistantMQTT.hpp        - HA Discovery Support
@@ -320,8 +321,9 @@ docs/optimierungen-de.md         - Deutsche Zusammenfassung
 CHANGELOG.md                     - Versions-Historie
 ```
 
-### Geänderte Dateien:
-```
+### Geänderte Dateien
+
+```text
 platformio.ini                   - Library Updates
 src/PoolController.cpp           - MQTT-Setting, Version
 src/PoolController.hpp           - MQTT-Setting Declaration

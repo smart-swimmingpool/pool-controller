@@ -153,18 +153,18 @@ setProperty(cTemperature).send(buffer);
 
 ## Code Simplification
 
-### Removed:
+### Removed
 - ❌ `deprecated/RCSwitchNode.*` - Obsolete, unused code
 - ❌ Duplicate checks
 - ❌ Unnecessary complexity
 
-### Added:
+### Added
 - ✅ `src/Utils.hpp` - Memory-efficient utility functions
 - ✅ `src/MQTTConfig.hpp` - MQTT protocol configuration
 - ✅ `src/HomeAssistantMQTT.hpp` - Home Assistant support
 - ✅ Comprehensive documentation
 
-### Improved:
+### Improved
 - ✅ Code consistency across all nodes
 - ✅ Better error handling
 - ✅ Clearer comments
@@ -174,7 +174,7 @@ setProperty(cTemperature).send(buffer);
 
 ## Documentation
 
-### Added:
+### Added
 - 📄 `CHANGELOG.md` - Version 3.1.0 details
 - 📄 `docs/mqtt-configuration.md` - MQTT setup guide
 - 📄 `docs/optimization-report.md` - Technical details
@@ -182,7 +182,7 @@ setProperty(cTemperature).send(buffer);
 - 📄 `docs/summary-de.md` - Comprehensive German summary
 - 📄 `docs/summary.md` - This file
 
-### Updated:
+### Updated
 - 📝 `README.md` - New features documented
 - 📝 Firmware version → 3.1.0
 
@@ -200,7 +200,7 @@ setProperty(cTemperature).send(buffer);
 - Logs warning if buffer is too small
 - Returns false on serialization errors
 
-### Documentation
+### Documentation Added
 - Memory requirements documented for JSON buffers
 - Expected value ranges documented
 - Buffer sizes justified with comments
@@ -209,14 +209,14 @@ setProperty(cTemperature).send(buffer);
 
 ## Performance Metrics
 
-### Memory Usage:
+### Memory Usage
 | Metric | Before | After | Change |
 |--------|--------|-------|--------|
 | String allocations/cycle | 10+ | 0 | -100% |
 | Heap fragmentation | High | Minimal | ~-90% |
 | Stack usage | Low | +80 bytes | Acceptable |
 
-### Long-term Stability:
+### Long-term Stability
 - **millis() overflow**: ✅ Fixed (49.7 day issue)
 - **Heap fragmentation**: ✅ Minimized
 - **Logging bug**: ✅ Fixed
@@ -247,13 +247,13 @@ git checkout v3.0.0
 
 ## Testing Recommendations
 
-### Short-term:
+### Short-term
 1. ✅ Build tests on ESP32 and ESP8266
 2. ✅ Memory tests over 24-48h
 3. ✅ MQTT functional test (both protocols)
 4. ✅ Verify logging after bugfix
 
-### Long-term:
+### Long-term
 1. ⏳ 60+ day operation test (millis overflow)
 2. ⏳ Temperature extreme tests
 3. ⏳ Sensor disconnect/reconnect tests
@@ -263,12 +263,12 @@ git checkout v3.0.0
 
 ## Future Enhancements
 
-### Short-term:
+### Short-term
 1. Watchdog timer implementation
 2. Configurable NTP server
 3. Persistent settings storage
 
-### Long-term:
+### Long-term
 1. Second circulation pump
 2. Temperature-based control
 3. Self-learning algorithms
@@ -278,8 +278,8 @@ git checkout v3.0.0
 
 ## File Summary
 
-### New Files (7):
-```
+### New Files (7)
+```text
 src/Utils.hpp                    - Memory-efficient utilities
 src/MQTTConfig.hpp              - MQTT protocol config
 src/HomeAssistantMQTT.hpp       - HA Discovery support
@@ -290,8 +290,8 @@ docs/summary-de.md              - Comprehensive German summary
 CHANGELOG.md                    - Version history
 ```
 
-### Modified Files (10):
-```
+### Modified Files (10)
+```text
 platformio.ini                  - Library updates
 src/PoolController.cpp          - MQTT setting, version
 src/PoolController.hpp          - MQTT setting declaration
@@ -303,7 +303,7 @@ src/LoggerNode.cpp              - vsnprintf bug fixed
 README.md                       - Features documented
 ```
 
-### Deleted Files (2):
+### Deleted Files (2)
 ```
 deprecated/RCSwitchNode.cpp     - Obsolete code
 deprecated/RCSwitchNode.hpp     - Obsolete code
@@ -313,11 +313,11 @@ deprecated/RCSwitchNode.hpp     - Obsolete code
 
 ## Support and Resources
 
-- **Repository**: https://github.com/smart-swimmingpool/pool-controller
+- **Repository**: <https://github.com/smart-swimmingpool/pool-controller>
 - **MQTT Configuration**: `docs/mqtt-configuration.md`
 - **Technical Details**: `docs/optimization-report.md`
 - **Changelog**: `CHANGELOG.md`
-- **Discussions**: https://github.com/smart-swimmingpool/smart-swimmingpool.github.io/discussions
+- **Discussions**: <https://github.com/smart-swimmingpool/smart-swimmingpool.github.io/discussions>
 
 ---
 

@@ -112,7 +112,7 @@ Removed the static member initialization from the header file.
 ### Local Build Test
 
 Static initialization fix eliminates linker errors:
-```
+```bash
 Before: multiple definition of 'PoolController::SystemMonitor::lastMemoryCheck'
 After: Clean compilation
 ```

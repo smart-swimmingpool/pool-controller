@@ -42,14 +42,14 @@ This ensures that:
 
 ### Example Scenario
 
-```
+```text
 User sets:
   - Operation mode: auto
   - Pool max temp: 28.5°C
   - Timer: 10:30 - 17:30
-  
+
 Power failure occurs at 14:00
-  
+
 Controller reboots:
   - Loads saved state
   - Restores operation mode: auto
@@ -112,7 +112,7 @@ uint32_t uptime = SystemMonitor::getUptimeSeconds();
 
 // ESP8266 only: Get heap fragmentation percentage
 uint8_t fragmentation = SystemMonitor::getHeapFragmentation();
-```
+```text
 
 ## Configuration
 
@@ -141,13 +141,13 @@ Comment out the auto-reboot section in `src/SystemMonitor.hpp`:
 ```cpp
 // Critical memory - reboot immediately
 if (freeHeap < criticalThreshold) {
-    Serial.printf("CRITICAL: Free heap %d bytes < %d bytes. Rebooting...\n", 
+    Serial.printf("CRITICAL: Free heap %d bytes < %d bytes. Rebooting...\n",
                  freeHeap, criticalThreshold);
     // Serial.flush();
     // delay(1000);
     // ESP.restart();  // Comment this to disable auto-reboot
 }
-```
+```text
 
 ## Monitoring and Logs
 
@@ -158,24 +158,24 @@ if (freeHeap < criticalThreshold) {
 ✓ State loaded from persistent storage
 State persistence and system monitoring initialized
 Free heap: 28,456 bytes
-```
+```text
 
 **Low memory warning**:
 ```
 WARNING: Low memory detected. Free heap: 7,892 bytes (min: 7,456)
-```
+```text
 
 **Critical memory** (before reboot):
 ```
 CRITICAL: Free heap 3,842 bytes < 4,096 bytes. Rebooting...
-```
+```text
 
 ### MQTT Logs
 
 System status is published via the LoggerNode to MQTT topic:
 ```
 homie/pool-controller/log
-```
+```text
 
 Example messages:
 - `"State persistence and system monitoring initialized"`
@@ -221,7 +221,7 @@ If the controller reboots frequently:
 
 1. **Check memory usage**: Review logs for low memory warnings
 2. **Identify memory leak**: Look for pattern in when reboots occur
-3. **Reduce memory usage**: 
+3. **Reduce memory usage**:
    - Increase measurement intervals
    - Reduce MQTT message frequency
    - Disable features if possible
@@ -271,6 +271,6 @@ Planned improvements:
 
 ---
 
-**Version**: 3.1.0+  
-**Status**: Production Ready  
+**Version**: 3.1.0+
+**Status**: Production Ready
 **Platforms**: ESP32 (full support), ESP8266 (partial support)

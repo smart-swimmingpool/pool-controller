@@ -200,14 +200,14 @@ Dieses Dokument beschreibt die durchgeführten Optimierungen am Pool Controller 
 
 Siehe `CHANGELOG.md` für vollständige Details.
 
-## Zusammenfassung
+## Fazit
 
 Die durchgeführten Optimierungen verbessern die Eignung des Pool Controllers für 24/7-Betrieb erheblich:
 
-✅ **Heap-Fragmentierung eliminiert** durch Vermeidung wiederholter String-Allokationen  
-✅ **Timing-Fehler behoben** die nach 49,7 Tagen auftreten würden  
-✅ **Abhängigkeiten aktualisiert** für bessere Performance und Sicherheit  
-✅ **Flexibilität erweitert** durch Dual-MQTT-Protokoll-Support  
+✅ **Heap-Fragmentierung eliminiert** durch Vermeidung wiederholter String-Allokationen
+✅ **Timing-Fehler behoben** die nach 49,7 Tagen auftreten würden
+✅ **Abhängigkeiten aktualisiert** für bessere Performance und Sicherheit
+✅ **Flexibilität erweitert** durch Dual-MQTT-Protokoll-Support
 ✅ **Code-Qualität beibehalten** bei verbesserter Zuverlässigkeit
 
 Diese Änderungen stellen sicher, dass der Controller kontinuierlich ohne Speicherprobleme oder Timing-Fehler laufen kann.
