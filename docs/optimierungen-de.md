@@ -50,6 +50,61 @@ Dieses Dokument beschreibt die durchgeführten Optimierungen am Pool Controller 
 - Veralteten Code im `deprecated/` Ordner gelöscht
 - Code-Konsistenz über alle Sensor-Nodes verbessert
 
+### 4. Zustandspersistenz (NEU)
+
+**Problem**:
+- Nach Neustart oder Stromausfall gingen alle Einstellungen verloren
+- Benutzer mussten Controller neu konfigurieren
+- Pumpen blieben im undefinierten Zustand
+
+**Lösung**:
+- Alle Zustände werden automatisch im persistenten Speicher gesichert
+- Automatische Wiederherstellung nach Neustart/Stromausfall
+- ESP32: Nutzt Preferences API (NVS Storage)
+- ESP8266: Basis-Unterstützung (wird erweitert)
+
+**Persistierte Daten**:
+- Betriebsmodus (auto/manu/boost/timer)
+- Temperatureinstellungen (Pool Max, Solar Min, Hysterese)
+- Timer-Einstellungen (Start/Ende Zeiten)
+- Relais-Zustände (Pool-Pumpe, Solar-Pumpe)
+
+**Neue Dateien**:
+- `StateManager.hpp` - Verwaltung des persistenten Speichers
+
+### 5. System-Überwachung und Auto-Neustart (NEU)
+
+**Problem**:
+- Bei Speichermangel konnte Controller abstürzen
+- Keine automatische Wiederherstellung
+- Hängende Systeme blieben unentdeckt
+
+**Lösung**:
+- Kontinuierliche Speicherüberwachung (alle 10 Sekunden)
+- Automatischer Neustart bei kritischem Speichermangel
+- Hardware Watchdog Timer (ESP32)
+- Software Watchdog (ESP8266)
+
+**Schwellwerte**:
+- **ESP8266**: Warnung bei < 8KB, Neustart bei < 4KB
+- **ESP32**: Warnung bei < 16KB, Neustart bei < 8KB
+
+**Funktionen**:
+- Speicherüberwachung
+- Minimaler Heap-Tracking
+- Heap-Fragmentierung (ESP8266)
+- Watchdog-Timer (ESP32: 30s Hardware, ESP8266: Software)
+- Automatischer Neustart bei kritischem Speicher
+
+**Neue Dateien**:
+- `SystemMonitor.hpp` - System-Gesundheitsüberwachung
+
+**Vorteile**:
+- ✅ Automatische Erholung von Speicherproblemen
+- ✅ Erkennung und Behebung von System-Hängern
+- ✅ Keine manuelle Intervention erforderlich
+- ✅ 24/7 Betrieb ohne Ausfallzeiten
+
 ## Bibliotheks-Aktualisierungen
 
 ### ArduinoJson: 6.18.0 → 7.3.0

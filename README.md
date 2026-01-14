@@ -28,10 +28,14 @@ Discussions: <https://github.com/smart-swimmingpool/smart-swimmingpool.github.io
 - [x] Timesync via NTP (europe.pool.ntp.org)
 - [x] Logging-Information via Homie-Node
 - [x] Optimized for 24/7 operation with minimal memory footprint
+- [x] **State persistence** - All settings survive reboots and power failures
+- [x] **System health monitoring** - Auto-reboot on low memory, watchdog timer
+- [x] **Automatic recovery** - Self-healing from memory issues and system hangs
 
 ## Planned Features
 
 - [ ] Configurable NTP Server (currently hardcoded: europe.pool.ntp.org)
+- [x] ~~store configuration changes persistent on controller~~ ✅ Implemented in v3.1.0
 - [ ] be more smart: self learning for improved pool pump timed circulation for cleaning and heating
 - [ ] two separate circulation cycles
 - [ ] store configuration changes persistent on conroller
