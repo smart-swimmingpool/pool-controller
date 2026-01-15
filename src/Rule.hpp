@@ -28,8 +28,8 @@ public:
   /**
    * get the Mode for which the Rule is created.
    */
-  virtual const char* getMode();
-  virtual void        loop();
+  virtual const char* getMode() = 0;
+  virtual void        loop() = 0;
 
 protected:
   float _poolTemp;
