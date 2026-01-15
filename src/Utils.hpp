@@ -61,3 +61,6 @@ inline void intToString(int value, char* buffer, size_t bufferSize) {
 
 }  // namespace Utils
 }  // namespace PoolController
+
+// Make Utils accessible without PoolController:: prefix
+using namespace PoolController;
