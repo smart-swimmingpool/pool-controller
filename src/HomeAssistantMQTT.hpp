@@ -1,14 +1,16 @@
+// Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
+
 #pragma once
 
 /**
  * Home Assistant MQTT Discovery Support
- * 
+ *
  * This module provides Home Assistant auto-discovery functionality
  * as an alternative to the Homie convention.
- * 
+ *
  * Discovery format: homeassistant/<component>/<node_id>/<object_id>/config
  * Example: homeassistant/sensor/pool-controller/pool-temp/config
- * 
+ *
  * Memory requirements:
  * - Sensor discovery: ~400-450 bytes JSON payload
  * - Switch discovery: ~450-500 bytes JSON payload

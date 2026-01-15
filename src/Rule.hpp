@@ -1,3 +1,4 @@
+// Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
 
 #pragma once
 

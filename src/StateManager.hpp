@@ -1,8 +1,10 @@
+// Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
+
 #pragma once
 
 /**
  * State Manager for persisting controller state
- * 
+ *
  * Handles saving and restoring controller state across reboots and power failures.
  * Uses ESP32 Preferences on ESP32 and EEPROM emulation on ESP8266.
  */

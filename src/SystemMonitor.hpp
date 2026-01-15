@@ -1,8 +1,10 @@
+// Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
+
 #pragma once
 
 /**
  * Watchdog and Memory Monitor for 24/7 Operation
- * 
+ *
  * Monitors memory usage and automatically reboots if memory gets critically low.
  * Provides watchdog functionality to detect system hangs.
  */
