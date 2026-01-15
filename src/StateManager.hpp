@@ -23,10 +23,10 @@ namespace PoolController {
  * State Manager for persistent storage
  */
 class StateManager {
-public:
+ public:
   /**
-     * Initialize state manager
-     */
+   * Initialize state manager
+   */
   static void begin() {
 #ifdef ESP8266
     EEPROM.begin(512);  // Allocate 512 bytes for EEPROM emulation

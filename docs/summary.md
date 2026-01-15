@@ -16,7 +16,8 @@ This release addresses all requirements from the original issue:
 
 ### 1. Fixed Critical Bug in LoggerNode::logf
 
-**Issue**: The `vsnprintf` function was commented out, causing uninitialized buffer usage.
+**Issue**: The `vsnprintf` function was commented out, causing uninitialized
+buffer usage.
 
 ```cpp
 // BEFORE (dangerous):
@@ -32,13 +33,16 @@ va_end(arg);
 log(function, level, temp);
 ```
 
-**Impact**: This bug could cause crashes, garbled log messages, or memory corruption.
+**Impact**: This bug could cause crashes, garbled log messages, or memory
+corruption.
 
 ### 2. Fixed millis() Overflow Issues
 
-**Issue**: The code didn't properly handle millis() overflow (occurs every ~49.7 days).
+**Issue**: The code didn't properly handle millis() overflow (occurs every
+~49.7 days).
 
-**Solution**: Created `Utils::shouldMeasure()` with proper overflow handling using unsigned arithmetic.
+**Solution**: Created `Utils::shouldMeasure()` with proper overflow handling
+using unsigned arithmetic.
 
 **Impact**: Ensures reliable operation beyond 49.7 days.
 
@@ -48,13 +52,15 @@ log(function, level, temp);
 
 ### Problem: Heap Fragmentation
 
-The code was creating temporary String objects in every measurement loop, causing heap fragmentation over time in 24/7 operation.
+The code was creating temporary String objects in every measurement loop,
+causing heap fragmentation over time in 24/7 operation.
 
 ### Solution: Stack-Based Buffers
 
 Replaced all dynamic String allocations with stack-based character buffers:
 
 **DallasTemperatureNode.cpp**:
+
 ```cpp
 // Before:
 setProperty(cTemperature).send(String(_temperature));
@@ -68,13 +74,14 @@ setProperty(cTemperature).send(buffer);
 ### Results
 
 | Component | String Allocations Before | After | Savings |
-|-----------|---------------------------|-------|---------|
+| --- | --- | --- | --- |
 | DallasTemperatureNode | 1 per cycle | 0 | 100% |
 | ESP32TemperatureNode | 1 per cycle | 0 | 100% |
 | OperationModeNode | 7 per cycle | 0 | 100% |
 | **Total** | **10+ per cycle** | **0** | **100%** |
 
 **Daily Impact** (30-300 second measurement interval):
+
 - Saves **2,880 to 28,800** heap allocations/deallocations per day
 - Dramatically reduces heap fragmentation
 - Significantly improves long-term stability
@@ -87,7 +94,7 @@ setProperty(cTemperature).send(buffer);
 
 **New Feature**: Configurable MQTT protocols
 
-#### Configuration Options:
+#### Configuration Options
 
 1. **Homie Convention** (Default)
    - Topic format: `homie/<device>/<node>/<property>`
@@ -99,15 +106,17 @@ setProperty(cTemperature).send(buffer);
    - Native Home Assistant auto-discovery
    - Optimized for Home Assistant
 
-#### Setup:
+#### Setup
 
 **Via Web UI**:
+
 1. Connect to device WiFi AP during setup
 2. Navigate to configuration page
 3. Set "mqtt-protocol" to "homie" or "homeassistant"
 4. Save and reboot
 
 **Via config.json**:
+
 ```json
 {
   "name": "Pool Controller",
@@ -117,7 +126,8 @@ setProperty(cTemperature).send(buffer);
 }
 ```
 
-#### Implementation:
+#### Implementation
+
 - `src/MQTTConfig.hpp` - Protocol configuration
 - `src/HomeAssistantMQTT.hpp` - Discovery publisher
 - JSON-based auto-discovery messages
@@ -132,10 +142,12 @@ setProperty(cTemperature).send(buffer);
 **Major version update with breaking changes handled:**
 
 **Changes made**:
+
 - `StaticJsonDocument<N>` → `JsonDocument`
 - `createNestedObject()` → `doc["key"].to<JsonObject>()`
 
 **Benefits**:
+
 - ✅ Performance improvements
 - ✅ Better memory management
 - ✅ Security fixes
@@ -145,6 +157,7 @@ setProperty(cTemperature).send(buffer);
 ### NTPClient: 3.1.0 → 3.2.1
 
 **Bugfix update**:
+
 - ✅ Improved time synchronization
 - ✅ Better error handling
 - ✅ Stability improvements
@@ -154,17 +167,20 @@ setProperty(cTemperature).send(buffer);
 ## Code Simplification
 
 ### Removed
+
 - ❌ `deprecated/RCSwitchNode.*` - Obsolete, unused code
 - ❌ Duplicate checks
 - ❌ Unnecessary complexity
 
 ### Added
+
 - ✅ `src/Utils.hpp` - Memory-efficient utility functions
 - ✅ `src/MQTTConfig.hpp` - MQTT protocol configuration
 - ✅ `src/HomeAssistantMQTT.hpp` - Home Assistant support
 - ✅ Comprehensive documentation
 
 ### Improved
+
 - ✅ Code consistency across all nodes
 - ✅ Better error handling
 - ✅ Clearer comments
@@ -174,7 +190,8 @@ setProperty(cTemperature).send(buffer);
 
 ## Documentation
 
-### Added
+### Added Files
+
 - 📄 `CHANGELOG.md` - Version 3.1.0 details
 - 📄 `docs/mqtt-configuration.md` - MQTT setup guide
 - 📄 `docs/optimization-report.md` - Technical details
@@ -183,6 +200,7 @@ setProperty(cTemperature).send(buffer);
 - 📄 `docs/summary.md` - This file
 
 ### Updated
+
 - 📝 `README.md` - New features documented
 - 📝 Firmware version → 3.1.0
 
@@ -191,16 +209,19 @@ setProperty(cTemperature).send(buffer);
 ## Code Quality Improvements
 
 ### Buffer Validation
+
 - Added size validation in `Utils::floatToString()`
 - Checks for minimum buffer size (8 bytes)
 - Returns empty string on insufficient buffer
 
 ### Error Handling
+
 - JSON truncation detection in HomeAssistantMQTT
 - Logs warning if buffer is too small
 - Returns false on serialization errors
 
 ### Documentation Added
+
 - Memory requirements documented for JSON buffers
 - Expected value ranges documented
 - Buffer sizes justified with comments
@@ -210,13 +231,15 @@ setProperty(cTemperature).send(buffer);
 ## Performance Metrics
 
 ### Memory Usage
+
 | Metric | Before | After | Change |
-|--------|--------|-------|--------|
+| --- | --- | --- | --- |
 | String allocations/cycle | 10+ | 0 | -100% |
 | Heap fragmentation | High | Minimal | ~-90% |
 | Stack usage | Low | +80 bytes | Acceptable |
 
 ### Long-term Stability
+
 - **millis() overflow**: ✅ Fixed (49.7 day issue)
 - **Heap fragmentation**: ✅ Minimized
 - **Logging bug**: ✅ Fixed
@@ -231,6 +254,7 @@ setProperty(cTemperature).send(buffer);
 **Breaking Changes**: None! All changes are backward compatible.
 
 **Recommended Steps**:
+
 1. Update code to v3.1.0
 2. Build and flash
 3. Optional: Switch MQTT protocol to Home Assistant
@@ -239,6 +263,7 @@ setProperty(cTemperature).send(buffer);
 
 **Rollback**:
 If issues occur, rollback to v3.0.0 is possible:
+
 ```bash
 git checkout v3.0.0
 ```
@@ -248,12 +273,14 @@ git checkout v3.0.0
 ## Testing Recommendations
 
 ### Short-term
+
 1. ✅ Build tests on ESP32 and ESP8266
 2. ✅ Memory tests over 24-48h
 3. ✅ MQTT functional test (both protocols)
 4. ✅ Verify logging after bugfix
 
 ### Long-term
+
 1. ⏳ 60+ day operation test (millis overflow)
 2. ⏳ Temperature extreme tests
 3. ⏳ Sensor disconnect/reconnect tests
@@ -263,12 +290,14 @@ git checkout v3.0.0
 
 ## Future Enhancements
 
-### Short-term
+### Short-term Enhancements
+
 1. Watchdog timer implementation
 2. Configurable NTP server
 3. Persistent settings storage
 
-### Long-term
+### Long-term Enhancements
+
 1. Second circulation pump
 2. Temperature-based control
 3. Self-learning algorithms
@@ -279,6 +308,7 @@ git checkout v3.0.0
 ## File Summary
 
 ### New Files (7)
+
 ```text
 src/Utils.hpp                    - Memory-efficient utilities
 src/MQTTConfig.hpp              - MQTT protocol config
@@ -291,6 +321,7 @@ CHANGELOG.md                    - Version history
 ```
 
 ### Modified Files (10)
+
 ```text
 platformio.ini                  - Library updates
 src/PoolController.cpp          - MQTT setting, version
@@ -304,7 +335,8 @@ README.md                       - Features documented
 ```
 
 ### Deleted Files (2)
-```
+
+```text
 deprecated/RCSwitchNode.cpp     - Obsolete code
 deprecated/RCSwitchNode.hpp     - Obsolete code
 ```
@@ -317,21 +349,23 @@ deprecated/RCSwitchNode.hpp     - Obsolete code
 - **MQTT Configuration**: `docs/mqtt-configuration.md`
 - **Technical Details**: `docs/optimization-report.md`
 - **Changelog**: `CHANGELOG.md`
-- **Discussions**: <https://github.com/smart-swimmingpool/smart-swimmingpool.github.io/discussions>
+- **Discussions**:
+  <https://github.com/smart-swimmingpool/smart-swimmingpool.github.io/discussions>
 
 ---
 
 ## Conclusion
 
-This release significantly improves the Pool Controller's reliability and functionality:
+This release significantly improves the Pool Controller's reliability and
+functionality:
 
-✅ **Eliminated heap fragmentation** from repeated String allocations  
-✅ **Fixed timing bugs** that would appear after 49.7 days  
-✅ **Fixed critical logging bug** that could cause crashes  
-✅ **Added Home Assistant support** as configurable alternative  
-✅ **Updated dependencies** for better performance and security  
-✅ **Maintained code quality** while improving reliability  
+✅ **Eliminated heap fragmentation** from repeated String allocations
+✅ **Fixed timing bugs** that would appear after 49.7 days
+✅ **Fixed critical logging bug** that could cause crashes
+✅ **Added Home Assistant support** as configurable alternative
+✅ **Updated dependencies** for better performance and security
+✅ **Maintained code quality** while improving reliability
 
-**Version**: 3.1.0  
-**Date**: 2026-01-14  
+**Version**: 3.1.0
+**Date**: 2026-01-14
 **Status**: Production Ready ✅

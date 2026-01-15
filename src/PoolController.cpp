@@ -42,8 +42,8 @@ static RelayModuleNode solarPumpNode("solar-pump", "Solar Pump",
 
 static OperationModeNode operationModeNode("operation-mode", "Operation Mode");
 
-static unsigned long _measurementInterval = 10;
-static unsigned long _lastMeasurement;
+static uint32_t _measurementInterval = 10;
+static uint32_t _lastMeasurement;
 
 static PoolControllerContext* Self;
 auto                          Detail::setupProxy() -> void {
@@ -136,22 +136,22 @@ auto PoolControllerContext::setup() -> void {
 
   // default intervall of sending Temperature values
   this->loopIntervalSetting_.setDefaultValue(TEMP_READ_INTERVALL).
-      setValidator([](const long candidate) -> bool {
+      setValidator([](const int32_t candidate) -> bool {
     return candidate >= 0 && candidate <= 300;
   });
 
   this->temperatureMaxPoolSetting_.setDefaultValue(28.5).setValidator(
-      [](const long candidate) -> bool {
+      [](const double candidate) -> bool {
         return candidate >= 0 && candidate <= 30;
       });
 
   this->temperatureMinSolarSetting_.setDefaultValue(55.0).setValidator(
-      [](const long candidate) noexcept -> bool {
+      [](const double candidate) noexcept -> bool {
         return candidate >= 0 && candidate <= 100;
       });
 
   this->temperatureHysteresisSetting_.setDefaultValue(1.0).setValidator(
-      [](const long candidate) -> bool {
+      [](const double candidate) -> bool {
         return candidate >= 0 && candidate <= 10;
       });
 
@@ -173,7 +173,8 @@ auto PoolControllerContext::setup() -> void {
   LN.log(__PRETTY_FUNCTION__, LoggerNode::DEBUG, "Before Homie setup())");
   Homie.setup();
 
-  LN.logf(__PRETTY_FUNCTION__, LoggerNode::DEBUG, "Free heap: %d", ESP.getFreeHeap());
+  LN.logf(__PRETTY_FUNCTION__, LoggerNode::DEBUG,
+          "Free heap: %d", ESP.getFreeHeap());
   Homie.getLogger() << F("Free heap: ") << ESP.getFreeHeap() << endl;
 }
 

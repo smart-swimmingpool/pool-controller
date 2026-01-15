@@ -38,12 +38,12 @@ struct PoolControllerContext final {
    */
   auto loop() -> void;
 
-private:
+ private:
   friend auto Detail::setupProxy() -> void;
 
   auto setupHandler() -> void;
 
-  HomieSetting<long> loopIntervalSetting_{
+  HomieSetting<int32_t> loopIntervalSetting_{
       "loop-interval", "The processing interval in seconds"};
   HomieSetting<double> temperatureMaxPoolSetting_{
       "temperature-max-pool", "Maximum temperature of solar"};

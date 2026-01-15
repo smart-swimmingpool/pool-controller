@@ -43,7 +43,8 @@ void RelayModuleNode::setSwitch(const boolean state) {
 
 #endif
 
-  Homie.getLogger() << cIndent << F("Relay is ") << (state ? cFlagOn : cFlagOff) << endl;
+  Homie.getLogger() << cIndent << F("Relay is ")
+                    << (state ? cFlagOn : cFlagOff) << endl;
 }
 
 /**

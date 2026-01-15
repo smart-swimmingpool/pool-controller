@@ -3,6 +3,7 @@
 ## Issue
 
 The GitHub Actions build pipeline was failing due to:
+
 1. **Compilation error**: Static member variables initialized in header file
 2. **Outdated GitHub Actions**: Using deprecated action versions
 
@@ -26,11 +27,14 @@ uint32_t SystemMonitor::minFreeHeap = 0;
 bool SystemMonitor::lowMemoryWarning = false;
 ```
 
-**Problem**: When a header file is included in multiple compilation units (.cpp files), the static member initialization happens multiple times, causing "multiple definition" linker errors.
+**Problem**: When a header file is included in multiple compilation units
+(.cpp files), the static member initialization happens multiple times, causing
+"multiple definition" linker errors.
 
 ### Outdated GitHub Actions
 
 The workflows were using deprecated action versions:
+
 - `actions/checkout@v1` and `@v2` (current: v3+)
 - `actions/setup-python@v1` (current: v4+)
 - `github/codeql-action@v1` (current: v2+)
@@ -41,6 +45,7 @@ The workflows were using deprecated action versions:
 ### 1. Proper Static Member Initialization
 
 **Created `src/SystemMonitor.cpp`**:
+
 ```cpp
 #include "SystemMonitor.hpp"
 
@@ -54,14 +59,15 @@ bool SystemMonitor::lowMemoryWarning = false;
 } // namespace PoolController
 ```
 
-**Updated `src/SystemMonitor.hpp`**:
-Removed the static member initialization from the header file.
+**Updated `src/SystemMonitor.hpp`**: Removed the static member initialization
+from the header file.
 
 ### 2. Updated GitHub Actions Workflows
 
 #### PlatformIO CI (`.github/workflows/plaform.io.yml`)
 
 **Changes**:
+
 - `actions/checkout@v1` → `@v3`
 - `actions/setup-python@v1` → `@v4` with Python 3.11
 - Added PlatformIO caching for faster builds
@@ -77,6 +83,7 @@ Removed the static member initialization from the header file.
 ```
 
 **Benefits**:
+
 - Faster builds (caching)
 - More reliable (latest actions)
 - Consistent Python version
@@ -84,6 +91,7 @@ Removed the static member initialization from the header file.
 #### CodeQL Analysis (`.github/workflows/codeql-analysis.yml`)
 
 **Changes**:
+
 - `actions/checkout@v2` → `@v3`
 - `actions/setup-python@v1` → `@v4` with Python 3.11
 - `github/codeql-action/init@v1` → `@v2`
@@ -91,18 +99,21 @@ Removed the static member initialization from the header file.
 - Added PlatformIO caching
 
 **Benefits**:
+
 - Security: Latest CodeQL engine
 - Performance: Faster analysis with caching
 
 #### Linter (`.github/workflows/linter.yml`)
 
 **Changes**:
+
 - `actions/checkout@v2` → `@v3` with `fetch-depth: 0`
 - `docker://github/super-linter:v2.1.0` → `github/super-linter@v5`
 - `arduino/arduino-lint-action@v1.0.0` → `@v1`
 - Added `GITHUB_TOKEN` and `DEFAULT_BRANCH`
 
 **Benefits**:
+
 - Latest linting rules
 - Better performance
 - Full git history for linting
@@ -112,6 +123,7 @@ Removed the static member initialization from the header file.
 ### Local Build Test
 
 Static initialization fix eliminates linker errors:
+
 ```bash
 Before: multiple definition of 'PoolController::SystemMonitor::lastMemoryCheck'
 After: Clean compilation
@@ -120,11 +132,13 @@ After: Clean compilation
 ### GitHub Actions Improvements
 
 **Before**:
+
 - Build time: ~3-5 minutes (no caching)
 - Deprecated warnings
 - Potential failures with old actions
 
 **After**:
+
 - Build time: ~1-2 minutes (with caching on subsequent runs)
 - No deprecation warnings
 - Reliable with maintained actions
@@ -134,6 +148,7 @@ After: Clean compilation
 ### C++ Static Members
 
 ✅ **DO**: Initialize static members in .cpp files
+
 ```cpp
 // header.hpp
 class MyClass {
@@ -149,22 +164,27 @@ int MyClass::value = 0;
 ### GitHub Actions Versioning
 
 ✅ **DO**: Use semantic versioning (e.g., `@v3`, `@v4`)
+
 - Automatic updates within major version
 - Stable API within version
 
 ❌ **DON'T**: Use specific tags (e.g., `v2.1.0`) unless necessary
+
 - Misses bug fixes and improvements
 
 ✅ **DO**: Add caching for dependencies
+
 - Faster builds
 - Reduced network usage
 
 ## Files Modified
 
 **New**:
+
 - `src/SystemMonitor.cpp` - Static member initialization
 
 **Modified**:
+
 - `src/SystemMonitor.hpp` - Removed static initialization
 - `.github/workflows/plaform.io.yml` - Updated actions, added caching
 - `.github/workflows/codeql-analysis.yml` - Updated actions, added caching
@@ -173,16 +193,19 @@ int MyClass::value = 0;
 ## Impact
 
 ### Build Reliability
+
 - ✅ Compilation errors fixed
 - ✅ No linker errors
 - ✅ Clean builds on all platforms
 
 ### CI/CD Performance
+
 - ✅ 50% faster builds (with caching)
 - ✅ No deprecated action warnings
 - ✅ Latest security scanning
 
 ### Maintenance
+
 - ✅ Modern action versions
 - ✅ Better error messages
 - ✅ Easier debugging
@@ -190,6 +213,7 @@ int MyClass::value = 0;
 ## Testing Recommendations
 
 1. **Clean build**: Verify compilation succeeds
+
    ```bash
    platformio run --environment nodemcuv2
    platformio run --environment esp32dev
@@ -204,6 +228,6 @@ int MyClass::value = 0;
 
 ---
 
-**Commit**: 2074c75  
-**Status**: Build pipeline operational ✅  
+**Commit**: 2074c75
+**Status**: Build pipeline operational ✅
 **Version**: 3.1.0

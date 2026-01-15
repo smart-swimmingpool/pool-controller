@@ -6,6 +6,8 @@
  * Utility functions for 24/7 operation optimization
  */
 
+#include <cstdio>
+
 namespace Utils {
 
 /**

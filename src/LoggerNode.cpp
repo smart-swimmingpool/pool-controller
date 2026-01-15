@@ -8,6 +8,7 @@
  */
 
 #include "src/LoggerNode.hpp"
+#include <cstdio>
 #include <Homie.hpp>
 
 HomieSetting<const char*> LoggerNode::default_loglevel(

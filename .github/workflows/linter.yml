@@ -51,7 +51,6 @@ jobs:
           VALIDATE_ANSIBLE: false
           DEFAULT_BRANCH: master
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
+
       - name: Arduino Lint
         uses: arduino/arduino-lint-action@v1
-  

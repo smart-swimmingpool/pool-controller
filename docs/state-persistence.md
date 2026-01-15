@@ -2,15 +2,18 @@
 
 ## Overview
 
-The Pool Controller now includes comprehensive state persistence and system health monitoring to ensure reliable 24/7 operation.
+The Pool Controller now includes comprehensive state persistence and system
+health monitoring to ensure reliable 24/7 operation.
 
 ## State Persistence
 
 ### What Gets Persisted
 
-All controller states are automatically saved to non-volatile storage and restored after reboots or power failures:
+All controller states are automatically saved to non-volatile storage and
+restored after reboots or power failures:
 
 #### Operation Settings
+
 - **Operation mode**: auto, manual, boost, timer
 - **Pool maximum temperature**: Target pool temperature
 - **Solar minimum temperature**: Minimum solar temperature for activation
@@ -18,12 +21,14 @@ All controller states are automatically saved to non-volatile storage and restor
 - **Timer settings**: Start and end times for timer mode
 
 #### Relay States (ESP32)
+
 - **Pool pump**: On/Off state
 - **Solar pump**: On/Off state
 
 ### How It Works
 
-**ESP32**: Uses the Preferences library for persistent storage in NVS (Non-Volatile Storage).
+**ESP32**: Uses the Preferences library for persistent storage in NVS
+(Non-Volatile Storage).
 
 **ESP8266**: Currently basic support (to be enhanced in future updates).
 
@@ -36,6 +41,7 @@ When the controller reboots:
 3. **Last known state** is used if no config override exists
 
 This ensures that:
+
 - After a power failure, pumps return to their previous state
 - User-configured temperatures and timers are preserved
 - Operation mode is maintained across reboots
@@ -61,15 +67,18 @@ Controller reboots:
 
 ### Memory Monitoring
 
-The system continuously monitors free heap memory to prevent crashes from memory exhaustion.
+The system continuously monitors free heap memory to prevent crashes from
+memory exhaustion.
 
 #### Thresholds
 
 **ESP8266**:
+
 - **Low Memory Warning**: < 8 KB (8,192 bytes)
 - **Critical Memory**: < 4 KB (4,096 bytes) → Auto-reboot
 
 **ESP32**:
+
 - **Low Memory Warning**: < 16 KB (16,384 bytes)
 - **Critical Memory**: < 8 KB (8,192 bytes) → Auto-reboot
 
@@ -85,11 +94,13 @@ The system continuously monitors free heap memory to prevent crashes from memory
 Prevents system hangs and ensures recovery from software failures.
 
 #### ESP32
+
 - **Hardware watchdog**: 30-second timeout
 - **Automatic panic**: Reboots if watchdog not fed
 - **Fed in main loop**: Every cycle
 
 #### ESP8266
+
 - **Software watchdog**: Built-in
 - **yield() called**: Regular feeding in main loop
 
@@ -112,13 +123,14 @@ uint32_t uptime = SystemMonitor::getUptimeSeconds();
 
 // ESP8266 only: Get heap fragmentation percentage
 uint8_t fragmentation = SystemMonitor::getHeapFragmentation();
-```text
+```
 
 ## Configuration
 
 ### Enabling Features
 
-Both state persistence and system monitoring are **automatically enabled** in version 3.1.0+. No configuration required.
+Both state persistence and system monitoring are **automatically enabled** in
+version 3.1.0+. No configuration required.
 
 ### Customizing Thresholds
 
@@ -134,7 +146,8 @@ static constexpr uint32_t CRITICAL_MEMORY_THRESHOLD = 4096;  // ESP8266
 
 ### Disabling Auto-Reboot
 
-If you prefer to handle low memory manually (not recommended for 24/7 operation):
+If you prefer to handle low memory manually (not recommended for 24/7
+operation):
 
 Comment out the auto-reboot section in `src/SystemMonitor.hpp`:
 
@@ -147,55 +160,63 @@ if (freeHeap < criticalThreshold) {
     // delay(1000);
     // ESP.restart();  // Comment this to disable auto-reboot
 }
-```text
+```
 
 ## Monitoring and Logs
 
 ### Serial Output
 
 **Normal operation**:
-```
+
+```text
 ✓ State loaded from persistent storage
 State persistence and system monitoring initialized
 Free heap: 28,456 bytes
-```text
+```
 
 **Low memory warning**:
-```
-WARNING: Low memory detected. Free heap: 7,892 bytes (min: 7,456)
+
 ```text
+WARNING: Low memory detected. Free heap: 7,892 bytes (min: 7,456)
+```
 
 **Critical memory** (before reboot):
-```
-CRITICAL: Free heap 3,842 bytes < 4,096 bytes. Rebooting...
+
 ```text
+CRITICAL: Free heap 3,842 bytes < 4,096 bytes. Rebooting...
+```
 
 ### MQTT Logs
 
 System status is published via the LoggerNode to MQTT topic:
-```
-homie/pool-controller/log
+
 ```text
+homie/pool-controller/log
+```
 
 Example messages:
+
 - `"State persistence and system monitoring initialized"`
 - `"WARNING: Low memory detected. Free heap: 7892 bytes (min: 7456)"`
 
 ## Benefits for 24/7 Operation
 
 ### Reliability
+
 - ✅ Survives power failures
 - ✅ Recovers from memory issues automatically
 - ✅ Detects and recovers from system hangs
 - ✅ No manual intervention needed
 
 ### User Experience
+
 - ✅ Settings preserved across reboots
 - ✅ No reconfiguration after power loss
 - ✅ Seamless operation continuity
 - ✅ Predictable behavior
 
 ### Maintenance
+
 - ✅ Memory leak detection
 - ✅ Automatic problem recovery
 - ✅ Health status monitoring
@@ -206,11 +227,13 @@ Example messages:
 ### States Not Persisting
 
 **ESP32**:
+
 1. Check serial output for "State loaded from persistent storage"
 2. Verify NVS partition is available
 3. Check for Preferences errors in logs
 
 **ESP8266**:
+
 1. Currently limited support
 2. Will be enhanced in future updates
 3. Relay states not persisted on ESP8266
@@ -225,7 +248,8 @@ If the controller reboots frequently:
    - Increase measurement intervals
    - Reduce MQTT message frequency
    - Disable features if possible
-4. **Lower threshold**: Temporarily lower critical threshold to prevent reboots while debugging
+4. **Lower threshold**: Temporarily lower critical threshold to prevent reboots
+   while debugging
 
 ### Watchdog Timeouts
 
@@ -233,19 +257,22 @@ If watchdog triggers (ESP32):
 
 1. **Long-blocking operations**: Check for delays or long operations in code
 2. **Increase timeout**: Modify timeout in `SystemMonitor::begin()`
-3. **Feed more frequently**: Add `SystemMonitor::feedWatchdog()` in long operations
+3. **Feed more frequently**: Add `SystemMonitor::feedWatchdog()` in long
+   operations
 
 ## Technical Details
 
 ### Storage Usage
 
 **ESP32 NVS**:
+
 - Operation mode: ~10 bytes
 - Float values (3): 12 bytes
 - Integer values (4): 16 bytes
 - Total: ~40 bytes
 
 **ESP8266 EEPROM**:
+
 - Reserved: 512 bytes (for future expansion)
 - Currently minimal usage
 

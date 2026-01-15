@@ -2,7 +2,8 @@
 
 ## Überblick
 
-Dieses Projekt wurde umfassend analysiert und optimiert gemäß den Anforderungen:
+Dieses Projekt wurde umfassend analysiert und optimiert gemäß den
+Anforderungen:
 
 1. ✅ **Analyse auf Fehler und Memoryleaks**
 2. ✅ **Optimierung für 24/7-Betrieb**
@@ -15,7 +16,10 @@ Dieses Projekt wurde umfassend analysiert und optimiert gemäß den Anforderunge
 ## 1. Fehleranalyse und Behebung
 
 ### Kritischer Bug behoben: LoggerNode::logf
-**Problem**: Die vsnprintf-Funktion war auskommentiert, was zu uninitialisierten Puffern führte.
+
+**Problem**: Die vsnprintf-Funktion war auskommentiert, was zu
+uninitialisierten Puffern führte.
+
 ```cpp
 // VORHER (gefährlich):
 char temp[100];
@@ -29,10 +33,14 @@ vsnprintf(temp, sizeof(temp), format, arg);  // Jetzt korrekt
 va_end(arg);
 log(function, level, temp);
 ```
-**Auswirkung**: Dieser Bug konnte zu Abstürzen, unleserlichen Log-Nachrichten oder Speicherkorruption führen.
+
+**Auswirkung**: Dieser Bug konnte zu Abstürzen, unleserlichen Log-Nachrichten
+oder Speicherkorruption führen.
 
 ### Memory Leaks - Keine gefunden, aber Optimierungen durchgeführt
+
 **Analyse**: Der Code hatte keine echten Memory Leaks, aber:
+
 - 10+ String-Allokationen pro Messzyklus
 - Heap-Fragmentierung bei Langzeitbetrieb
 - Potenzielle Probleme nach Tagen/Wochen Betrieb
@@ -45,27 +53,34 @@ log(function, level, temp);
 
 ### Speicher-Optimierungen
 
-#### Eliminierte String-Allokationen pro Messzyklus:
+#### Eliminierte String-Allokationen pro Messzyklus
+
 - **DallasTemperatureNode**: 1 String-Allokation → 0
-- **ESP32TemperatureNode**: 1 String-Allokation → 0  
+- **ESP32TemperatureNode**: 1 String-Allokation → 0
 - **OperationModeNode**: 7 String-Allokationen → 0
 - **Gesamt**: 10+ Allokationen → 0
 
-#### Ergebnis:
+#### Ergebnis
+
 Bei typischem Messzyklus von 30-300 Sekunden:
+
 - **Pro Tag**: 2.880 bis 28.800 Allokationen eingespart
 - **Heap-Fragmentierung**: Dramatisch reduziert
 - **Langzeitstabilität**: Stark verbessert
 
 ### Timing-Zuverlässigkeit
 
-#### millis() Überlauf-Problem behoben:
+#### millis() Überlauf-Problem behoben
+
 **Problem**: millis() läuft nach ~49,7 Tagen über. Der alte Code:
+
 ```cpp
-if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0)
+if (millis() - _lastMeasurement >= _measurementInterval * 1000UL ||
+    _lastMeasurement == 0)
 ```
 
 **Lösung**: Neue overflow-sichere Funktion:
+
 ```cpp
 // Utils::shouldMeasure() mit korrekter Überlauf-Behandlung
 if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval))
@@ -88,7 +103,8 @@ if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval))
 
 **Neue Funktionalität**: Konfigurierbare MQTT-Protokolle
 
-#### Konfiguration:
+#### Konfiguration
+
 ```json
 {
   "mqtt-protocol": "homie"           // Standard (Homie 3.0)
@@ -97,7 +113,7 @@ if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval))
 }
 ```
 
-#### Unterstützte Protokolle:
+#### Unterstützte Protokolle
 
 1. **Homie Convention** (Standard)
    - Topic-Format: `homie/<device>/<node>/<property>`
@@ -109,13 +125,15 @@ if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval))
    - Native Home Assistant Auto-Discovery
    - Optimiert für Home Assistant
 
-#### Implementierung:
+#### Implementierung
+
 - `src/MQTTConfig.hpp` - Protokoll-Konfiguration
 - `src/HomeAssistantMQTT.hpp` - Discovery Publisher
 - JSON-basierte Auto-Discovery Nachrichten
 - Vollständige Geräte-Metadaten
 
-#### Vorteile:
+#### Vorteile
+
 - ✅ Flexibilität bei Smart Home Integration
 - ✅ Keine Breaking Changes (Homie bleibt Standard)
 - ✅ Einfache Konfiguration via Web-UI
@@ -128,10 +146,12 @@ if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval))
 ### ArduinoJson: 6.18.0 → 7.3.0
 
 **Major Version Update mit Breaking Changes:**
+
 - `StaticJsonDocument<N>` → `JsonDocument`
 - `createNestedObject()` → `doc["key"].to<JsonObject>()`
 
 **Vorteile:**
+
 - ✅ Performance-Verbesserungen
 - ✅ Bessere Speicherverwaltung
 - ✅ Sicherheitsfixes
@@ -139,11 +159,13 @@ if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval))
 - ✅ C++17 Kompatibilität
 
 **Alle Breaking Changes wurden behandelt** in:
+
 - `src/HomeAssistantMQTT.hpp`
 
 ### NTPClient: 3.1.0 → 3.2.1
 
 **Bugfix-Update:**
+
 - ✅ Verbesserte Zeitsynchronisierung
 - ✅ Bessere Fehlerbehandlung
 - ✅ Stabilität
@@ -153,17 +175,20 @@ if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval))
 ## 5. Code-Vereinfachung
 
 ### Entfernt
+
 - ❌ `deprecated/RCSwitchNode.*` - Veralteter, ungenutzter Code
 - ❌ Doppelte Prüfungen
 - ❌ Unnötige Komplexität
 
 ### Hinzugefügt
+
 - ✅ `src/Utils.hpp` - Hilfsfunktionen für speichereffiziente Operationen
 - ✅ `src/MQTTConfig.hpp` - MQTT-Protokoll Konfiguration
 - ✅ `src/HomeAssistantMQTT.hpp` - Home Assistant Support
 - ✅ Umfassende Dokumentation
 
 ### Verbessert
+
 - ✅ Code-Konsistenz über alle Nodes
 - ✅ Bessere Fehlerbehandlung
 - ✅ Klarere Kommentare
@@ -174,6 +199,7 @@ if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval))
 ## 6. Neue Dokumentation
 
 ### Erstellte Dateien
+
 - 📄 `CHANGELOG.md` - Version 3.1.0 Details
 - 📄 `docs/mqtt-configuration.md` - MQTT Setup-Guide (Englisch)
 - 📄 `docs/optimization-report.md` - Technische Details (Englisch)
@@ -181,6 +207,7 @@ if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval))
 - 📄 `docs/summary-de.md` - Diese Datei
 
 ### Aktualisiert
+
 - 📝 `README.md` - Neue Features dokumentiert
 - 📝 Firmware-Version → 3.1.0
 
@@ -189,13 +216,15 @@ if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval))
 ## Performance-Verbesserungen
 
 ### Speicherverbrauch
+
 | Komponente | Vorher | Nachher | Einsparung |
-|------------|--------|---------|------------|
+| --- | --- | --- | --- |
 | String Allokationen/Zyklus | 10+ | 0 | 100% |
 | Heap-Fragmentierung | Hoch | Minimal | ~90% |
 | Stack-Nutzung | Niedrig | +80 bytes | Akzeptabel |
 
 ### Langzeit-Stabilität
+
 - **millis() Überlauf**: ✅ Behoben (49,7 Tage Problem)
 - **Heap-Fragmentierung**: ✅ Minimiert
 - **Logging-Bug**: ✅ Behoben
@@ -207,13 +236,15 @@ if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval))
 
 ### MQTT-Protokoll konfigurieren
 
-#### Via Homie Web-UI:
+#### Via Homie Web-UI
+
 1. Mit WiFi-AP des Geräts verbinden (beim ersten Start)
 2. Zur Konfigurationsseite navigieren
 3. "mqtt-protocol" auf "homie" oder "homeassistant" setzen
 4. Speichern und neu starten
 
-#### Via config.json:
+#### Via config.json
+
 ```json
 {
   "name": "Pool Controller",
@@ -236,9 +267,11 @@ if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval))
 ## Migration von v3.0.0 zu v3.1.0
 
 ### Breaking Changes
+
 **Keine!** Alle Änderungen sind abwärtskompatibel.
 
 ### Empfohlene Schritte
+
 1. Code auf v3.1.0 aktualisieren
 2. Bauen und flashen
 3. Optional: MQTT-Protokoll auf Home Assistant umstellen
@@ -246,7 +279,9 @@ if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval))
 5. Logs auf Korrektheit prüfen
 
 ### Rollback
+
 Falls Probleme auftreten, zurück zu v3.0.0 möglich:
+
 ```bash
 git checkout v3.0.0
 ```
@@ -256,23 +291,27 @@ git checkout v3.0.0
 ## Zusammenfassung der Verbesserungen
 
 ### Zuverlässigkeit
+
 - ✅ Kritischer Logging-Bug behoben
 - ✅ millis() Überlauf behoben
 - ✅ Heap-Fragmentierung minimiert
 - ✅ Buffer-Überläufe verhindert
 
 ### Features
+
 - ✅ Home Assistant MQTT Discovery
 - ✅ Konfigurierbare MQTT-Protokolle
 - ✅ Verbesserte Fehlerbehandlung
 
 ### Wartbarkeit
+
 - ✅ Veralteter Code entfernt
 - ✅ Bessere Dokumentation
 - ✅ Klarerer Code
 - ✅ Aktuelle Bibliotheken
 
 ### Performance
+
 - ✅ 2.880-28.800 Heap-Operationen/Tag eingespart
 - ✅ Minimale Stack-Erhöhung (+80 bytes)
 - ✅ Schnellere String-Operationen
@@ -282,16 +321,19 @@ git checkout v3.0.0
 ## Nächste Schritte (Empfehlungen)
 
 ### Kurzfristig
+
 1. Build-Tests auf ESP32 und ESP8266
 2. Speicher-Tests über 24-48h
 3. MQTT-Funktionstest (beide Protokolle)
 
 ### Mittelfristig
+
 1. Watchdog-Timer implementieren
 2. NTP-Server konfigurierbar machen
 3. Persistente Einstellungen speichern
 
 ### Langfristig
+
 1. Zweite Zirkulationspumpe
 2. Temperatur-basierte Steuerung
 3. Selbst-lernende Algorithmen
@@ -337,6 +379,6 @@ README.md                        - Features dokumentiert
 
 ---
 
-**Version**: 3.1.0  
-**Datum**: 2026-01-14  
+**Version**: 3.1.0
+**Datum**: 2026-01-14
 **Status**: Produktionsbereit ✅

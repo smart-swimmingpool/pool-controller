@@ -16,9 +16,9 @@ OperationModeNode::OperationModeNode(const char* id,
     : HomieNode(id, name, "switch") {
   _measurementInterval = (measurementInterval > MIN_INTERVAL) ?
                          measurementInterval : MIN_INTERVAL;
-  _lastMeasurement     = 0;
+  _lastMeasurement = 0;
 
-  //setRunLoopDisconnected(true);
+  // setRunLoopDisconnected(true);
 }
 
 /**
@@ -134,8 +134,9 @@ void OperationModeNode::loop() {
       Homie.getLogger() << cIndent << F("Hysteresis:   ") <<
                            _hysteresis << endl;
 */
-      // Optimize memory: avoid String allocations by using stack buffers
-      // Buffer size: 20 bytes sufficient for temperature values (-100.00 to 999.99)
+      // Optimize memory: avoid String allocations by using stack
+      // buffers. Buffer size: 20 bytes sufficient for temperature
+      // values (-100.00 to 999.99)
       char buffer[20];
 
       setProperty(cMode).send(_mode);
@@ -149,13 +150,16 @@ void OperationModeNode::loop() {
       Utils::floatToString(_hysteresis, buffer, sizeof(buffer));
       setProperty(cHysteresis).send(buffer);
 
-      Utils::intToString(_timerSetting.timerStartHour, buffer, sizeof(buffer));
+      Utils::intToString(_timerSetting.timerStartHour, buffer,
+                         sizeof(buffer));
       setProperty(cTimerStartHour).send(buffer);
 
-      Utils::intToString(_timerSetting.timerStartMinutes, buffer, sizeof(buffer));
+      Utils::intToString(_timerSetting.timerStartMinutes, buffer,
+                         sizeof(buffer));
       setProperty(cTimerStartMin).send(buffer);
 
-      Utils::intToString(_timerSetting.timerEndHour, buffer, sizeof(buffer));
+      Utils::intToString(_timerSetting.timerEndHour, buffer,
+                         sizeof(buffer));
       setProperty(cTimerEndHour).send(buffer);
 
       Utils::intToString(_timerSetting.timerEndMinutes, buffer, sizeof(buffer));

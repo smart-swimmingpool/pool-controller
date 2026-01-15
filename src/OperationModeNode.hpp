@@ -16,8 +16,7 @@
 #include "src/TimeClientHelper.hpp"
 
 class OperationModeNode : public HomieNode {
-
-public:
+ public:
   OperationModeNode(const char* id, const char* name,
                     const int measurementInterval = MEASUREMENT_INTERVAL);
   ~OperationModeNode() {
@@ -27,16 +26,16 @@ public:
       delete _ruleVec[i];
   }
 
-  void setMeasurementInterval(unsigned long interval) {
+  void setMeasurementInterval(uint32_t interval) {
     _measurementInterval = interval;
   }
-  unsigned long getMeasurementInterval() const {
+  uint32_t getMeasurementInterval() const {
     return _measurementInterval;
   }
-  bool          setMode(String mode);
-  String        getMode();
-  void          addRule(Rule* rule);
-  Rule*         getRule();
+  bool setMode(String mode);
+  String getMode();
+  void addRule(Rule* rule);
+  Rule* getRule();
 
   void setPoolTemperatureNode(DallasTemperatureNode* node) {
     _currentPoolTempNode = node;
@@ -73,53 +72,52 @@ public:
   void saveState();
 
   enum MODE { AUTO, MANU, BOOST };
-  const char* STATUS_AUTO  = "auto";
-  const char* STATUS_MANU  = "manu";
+  const char* STATUS_AUTO = "auto";
+  const char* STATUS_MANU = "manu";
   const char* STATUS_BOOST = "boost";
   const char* STATUS_TIMER = "timer";
 
-protected:
+ protected:
   void setup() override;
   void loop() override;
-  bool handleInput(const HomieRange& range,
-                   const String& property,
+  bool handleInput(const HomieRange& range, const String& property,
                    const String& value) override;
 
-private:
+ private:
   // suggested rate is 1/60Hz (1m)
-  static const int MIN_INTERVAL         = 60;  // in seconds
+  static const int MIN_INTERVAL = 60;  // in seconds
   static const int MEASUREMENT_INTERVAL = 300;
-  const char*      cCaption             = "• Operation Status:";
-  const char*      cIndent              = "  ◦ ";
+  const char* cCaption = "• Operation Status:";
+  const char* cIndent = "  ◦ ";
 
-  const char* cMode     = "mode";
+  const char* cMode = "mode";
   const char* cModeName = "Operation Mode";
 
-  const char* cPoolMaxTemp     = "pool-max-temp";
+  const char* cPoolMaxTemp = "pool-max-temp";
   const char* cPoolMaxTempName = "Max. Pool Temperature";
 
-  const char* cSolarMinTemp     = "solar-min-temp";
+  const char* cSolarMinTemp = "solar-min-temp";
   const char* cSolarMinTempName = "Min. Solar Temperature";
 
-  const char* cHysteresis     = "hysteresis";
+  const char* cHysteresis = "hysteresis";
   const char* cHysteresisName = "Hysterese";
 
   const char* cTimerStartHour = "timer-start-h";
-  const char* cTimerStartMin  = "timer-start-min";
+  const char* cTimerStartMin = "timer-start-min";
 
   const char* cTimerEndHour = "timer-end-h";
-  const char* cTimerEndMin  = "timer-end-min";
+  const char* cTimerEndMin = "timer-end-min";
 
-  const char* cHomieNodeState     = "state";
+  const char* cHomieNodeState = "state";
   const char* cHomieNodeStateName = "State";
 
-  const char* cHomieNodeState_OK    = "OK";
+  const char* cHomieNodeState_OK = "OK";
   const char* cHomieNodeState_Error = "Error";
 
-  String        _mode = STATUS_AUTO;
-  float         _poolMaxTemp;
-  float         _solarMinTemp;
-  float         _hysteresis;
+  String _mode = STATUS_AUTO;
+  float _poolMaxTemp;
+  float _solarMinTemp;
+  float _hysteresis;
   Vector<Rule*> _ruleVec;
 
   DallasTemperatureNode* _currentPoolTempNode;
@@ -127,8 +125,8 @@ private:
 
   TimerSetting _timerSetting;
 
-  unsigned long _measurementInterval;
-  unsigned long _lastMeasurement;
+  uint32_t _measurementInterval;
+  uint32_t _lastMeasurement;
 
   void printCaption();
 };

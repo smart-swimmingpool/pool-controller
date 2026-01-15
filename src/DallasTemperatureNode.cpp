@@ -104,7 +104,6 @@ void DallasTemperatureNode::loop() {
 
         DeviceAddress tempDeviceAddress;
         if (sensor.getAddress(tempDeviceAddress, i)) {
-
           _temperature = sensor.getTempC(tempDeviceAddress);
           if (DEVICE_DISCONNECTED_C == _temperature) {
             Homie.getLogger() << cIndent
@@ -130,7 +129,6 @@ void DallasTemperatureNode::loop() {
         }
       }
     } else {
-
       Homie.getLogger() << F("No Sensor found!") << endl;
       if (Homie.isConnected()) {
         setProperty(cHomieNodeState).send(cHomieNodeState_Error);
@@ -151,7 +149,8 @@ void DallasTemperatureNode::printCaption() {
 /**
  *
  */
-String DallasTemperatureNode::address2String(const DeviceAddress deviceAddress) {
+String DallasTemperatureNode::address2String(
+    const DeviceAddress deviceAddress) {
   String adr;
 
   for (uint8_t i = 0; i < 8; i++) {

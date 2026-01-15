@@ -19,6 +19,7 @@
 
 #include <Homie.h>
 #include <ArduinoJson.h>
+#include <cstdio>
 
 namespace PoolController {
 namespace HomeAssistant {
@@ -27,7 +28,7 @@ namespace HomeAssistant {
  * Base class for Home Assistant MQTT Discovery
  */
 class DiscoveryPublisher {
-public:
+ public:
   /**
    * Publish a sensor discovery message
    * @note Uses ~400 bytes of JSON, buffer is 512 bytes
@@ -68,13 +69,13 @@ public:
       doc["icon"] = icon;
 
     // Device information
-    JsonObject device        = doc["device"].to<JsonObject>();
+    JsonObject device = doc["device"].to<JsonObject>();
     device["identifiers"][0] = nodeId;
-    device["name"]           = "Pool Controller";
-    device["manufacturer"]   = "smart-swimmingpool";
-    device["model"]          = "Pool Controller 2.0";
+    device["name"] = "Pool Controller";
+    device["manufacturer"] = "smart-swimmingpool";
+    device["model"] = "Pool Controller 2.0";
 
-    char   buffer[512];
+    char buffer[512];
     size_t len = serializeJson(doc, buffer, sizeof(buffer));
 
     // Check for truncation
