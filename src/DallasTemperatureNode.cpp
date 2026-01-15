@@ -21,16 +21,12 @@
 #include "src/DallasTemperatureNode.hpp"
 #include "src/Utils.hpp"
 
-DallasTemperatureNode::DallasTemperatureNode(
-    const char* id, const char* name, const uint8_t pin,
-    const int measurementInterval)
+DallasTemperatureNode::DallasTemperatureNode(const char* id, const char* name, const uint8_t pin, const int measurementInterval)
     : HomieNode(id, name, "temperature") {
 
-  _pin = pin;
-  _measurementInterval =
-      (measurementInterval > MIN_INTERVAL) ? measurementInterval
-                                           : MIN_INTERVAL;
-  _lastMeasurement = 0;
+  _pin                 = pin;
+  _measurementInterval = (measurementInterval > MIN_INTERVAL) ? measurementInterval : MIN_INTERVAL;
+  _lastMeasurement     = 0;
 
   oneWire.begin(_pin);
   sensor.setOneWire(&oneWire);
@@ -41,10 +37,7 @@ DallasTemperatureNode::DallasTemperatureNode(
  */
 void DallasTemperatureNode::setup() {
   advertise(cHomieNodeState).setName(cHomieNodeStateName);
-  advertise(cTemperature)
-      .setName(cTemperatureName)
-      .setDatatype("float")
-      .setUnit(cTemperatureUnit);
+  advertise(cTemperature).setName(cTemperatureName).setDatatype("float").setUnit(cTemperatureUnit);
 
   // Start up the library
   sensor.begin();
@@ -59,12 +52,10 @@ void DallasTemperatureNode::onReadyToOperate() {
   // Grab a count of devices on the wire
   numberOfDevices = sensor.getDeviceCount();
   // report parasite power requirements
-  Homie.getLogger() << cIndent << F("Parasite power is: ")
-                    << sensor.isParasitePowerMode() << endl;
+  Homie.getLogger() << cIndent << F("Parasite power is: ") << sensor.isParasitePowerMode() << endl;
 
   if (numberOfDevices > 0) {
-    Homie.getLogger() << cIndent << numberOfDevices
-                      << F(" devices found on PIN ") << _pin << endl;
+    Homie.getLogger() << cIndent << numberOfDevices << F(" devices found on PIN ") << _pin << endl;
 
     for (uint8_t i = 0; i < numberOfDevices; i++) {
       // Search the wire for address
@@ -73,9 +64,7 @@ void DallasTemperatureNode::onReadyToOperate() {
 
       if (sensor.getAddress(tempDeviceAddress, i)) {
         String adr = address2String(tempDeviceAddress);
-        Homie.getLogger() << cIndent << F("PIN ") << _pin << F(": ")
-                          << F("Device ") << i << F(" using address ")
-                          << adr << endl;
+        Homie.getLogger() << cIndent << F("PIN ") << _pin << F(": ") << F("Device ") << i << F(" using address ") << adr << endl;
       }
     }
   } else {
@@ -94,8 +83,7 @@ void DallasTemperatureNode::loop() {
     _lastMeasurement = millis();
 
     if (numberOfDevices > 0) {
-      Homie.getLogger() << F("〽 Sending Temperature: ") << getId()
-                        << endl;
+      Homie.getLogger() << F("〽 Sending Temperature: ") << getId() << endl;
       // call sensors.requestTemperatures() to issue a global temperature
       // request to all devices on the bus
       sensor.requestTemperatures();  // Send the command to get temperature
@@ -114,14 +102,12 @@ void DallasTemperatureNode::loop() {
               setProperty(cHomieNodeState).send(cHomieNodeState_Error);
             }
           } else {
-            Homie.getLogger() << cIndent << F("Temperature=")
-                              << _temperature << endl;
+            Homie.getLogger() << cIndent << F("Temperature=") << _temperature << endl;
 
             if (Homie.isConnected()) {
               // Optimize memory: avoid String allocation
               char buffer[16];
-              Utils::floatToString(_temperature, buffer,
-                                   sizeof(buffer));
+              Utils::floatToString(_temperature, buffer, sizeof(buffer));
               setProperty(cTemperature).send(buffer);
               setProperty(cHomieNodeState).send(cHomieNodeState_OK);
             }
@@ -149,8 +135,7 @@ void DallasTemperatureNode::printCaption() {
 /**
  *
  */
-String DallasTemperatureNode::address2String(
-    const DeviceAddress deviceAddress) {
+String DallasTemperatureNode::address2String(const DeviceAddress deviceAddress) {
   String adr;
 
   for (uint8_t i = 0; i < 8; i++) {

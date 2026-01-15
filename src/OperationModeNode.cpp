@@ -10,13 +10,10 @@
 /**
  *
  */
-OperationModeNode::OperationModeNode(const char* id,
-                                     const char* name,
-                                     const int measurementInterval)
+OperationModeNode::OperationModeNode(const char* id, const char* name, const int measurementInterval)
     : HomieNode(id, name, "switch") {
-  _measurementInterval = (measurementInterval > MIN_INTERVAL) ?
-                         measurementInterval : MIN_INTERVAL;
-  _lastMeasurement = 0;
+  _measurementInterval = (measurementInterval > MIN_INTERVAL) ? measurementInterval : MIN_INTERVAL;
+  _lastMeasurement     = 0;
 
   // setRunLoopDisconnected(true);
 }
@@ -36,8 +33,7 @@ Rule* OperationModeNode::getRule() {
 
   for (int i = 0; i < _ruleVec.Size(); i++) {
     if (_mode.equals(_ruleVec[i]->getMode())) {
-      Homie.getLogger() << F("getRule: Active Rule: ") <<
-                           _ruleVec[i]->getMode() << endl;
+      Homie.getLogger() << F("getRule: Active Rule: ") << _ruleVec[i]->getMode() << endl;
       // update the properties
       _ruleVec[i]->setPoolMaxTemperature(getPoolMaxTemperature());
       _ruleVec[i]->setSolarMinTemperature(getSolarMinTemperature());
@@ -60,8 +56,7 @@ Rule* OperationModeNode::getRule() {
 bool OperationModeNode::setMode(String mode) {
   bool retval;
 
-  if (mode.equals(STATUS_AUTO) || mode.equals(STATUS_MANU) ||
-      mode.equals(STATUS_BOOST) || mode.equals(STATUS_TIMER)) {
+  if (mode.equals(STATUS_AUTO) || mode.equals(STATUS_MANU) || mode.equals(STATUS_BOOST) || mode.equals(STATUS_TIMER)) {
     _mode = mode;
     Homie.getLogger() << F("set mode: ") << _mode << endl;
     setProperty(cMode).send(_mode);
@@ -70,8 +65,7 @@ bool OperationModeNode::setMode(String mode) {
     retval = true;
 
   } else {
-    Homie.getLogger() << F("✖ UNDEFINED Mode: ") << mode <<
-                         F(" Current unchanged mode: ") << _mode << endl;
+    Homie.getLogger() << F("✖ UNDEFINED Mode: ") << mode << F(" Current unchanged mode: ") << _mode << endl;
     setProperty(cHomieNodeState).send(cHomieNodeState_Error);
     retval = false;
   }
@@ -91,24 +85,16 @@ String OperationModeNode::getMode() {
  */
 void OperationModeNode::setup() {
   advertise(cHomieNodeState).setName(cHomieNodeStateName);
-  advertise(cMode).setName(cModeName).setDatatype("enum").
-      setFormat("manu,auto,boost,timer").settable();
-  advertise(cPoolMaxTemp).setName(cPoolMaxTempName).setDatatype("float").
-      setFormat("0:40").setUnit("°C").settable();
-  advertise(cSolarMinTemp).setName(cSolarMinTempName).setDatatype("float").
-      setFormat("0:100").setUnit("°C").settable();
-  advertise(cHysteresis).setName(cHysteresisName).setDatatype("float").
-      setFormat("0:10").setUnit("K").settable();
+  advertise(cMode).setName(cModeName).setDatatype("enum").setFormat("manu,auto,boost,timer").settable();
+  advertise(cPoolMaxTemp).setName(cPoolMaxTempName).setDatatype("float").setFormat("0:40").setUnit("°C").settable();
+  advertise(cSolarMinTemp).setName(cSolarMinTempName).setDatatype("float").setFormat("0:100").setUnit("°C").settable();
+  advertise(cHysteresis).setName(cHysteresisName).setDatatype("float").setFormat("0:10").setUnit("K").settable();
 
-  advertise(cTimerStartHour).setName("Timer Start").setDatatype("float").
-      setFormat("0:23").setUnit("hh").settable();
-  advertise(cTimerStartMin).setName("Timer Start").setDatatype("float").
-      setFormat("0:59").setUnit("MM").settable();
+  advertise(cTimerStartHour).setName("Timer Start").setDatatype("float").setFormat("0:23").setUnit("hh").settable();
+  advertise(cTimerStartMin).setName("Timer Start").setDatatype("float").setFormat("0:59").setUnit("MM").settable();
 
-  advertise(cTimerEndHour).setName("Timer End").setDatatype("float").
-      setFormat("0:23").setUnit("hh").settable();
-  advertise(cTimerEndMin).setName("Timer End").setDatatype("float").
-      setFormat("0:59").setUnit("MM").settable();
+  advertise(cTimerEndHour).setName("Timer End").setDatatype("float").setFormat("0:23").setUnit("hh").settable();
+  advertise(cTimerEndMin).setName("Timer End").setDatatype("float").setFormat("0:59").setUnit("MM").settable();
 }
 
 /**
@@ -150,16 +136,13 @@ void OperationModeNode::loop() {
       Utils::floatToString(_hysteresis, buffer, sizeof(buffer));
       setProperty(cHysteresis).send(buffer);
 
-      Utils::intToString(_timerSetting.timerStartHour, buffer,
-                         sizeof(buffer));
+      Utils::intToString(_timerSetting.timerStartHour, buffer, sizeof(buffer));
       setProperty(cTimerStartHour).send(buffer);
 
-      Utils::intToString(_timerSetting.timerStartMinutes, buffer,
-                         sizeof(buffer));
+      Utils::intToString(_timerSetting.timerStartMinutes, buffer, sizeof(buffer));
       setProperty(cTimerStartMin).send(buffer);
 
-      Utils::intToString(_timerSetting.timerEndHour, buffer,
-                         sizeof(buffer));
+      Utils::intToString(_timerSetting.timerEndHour, buffer, sizeof(buffer));
       setProperty(cTimerEndHour).send(buffer);
 
       Utils::intToString(_timerSetting.timerEndMinutes, buffer, sizeof(buffer));
@@ -175,18 +158,14 @@ void OperationModeNode::loop() {
 /**
  * Handle update by Homie message.
  */
-bool OperationModeNode::handleInput(const HomieRange& range,
-                                    const String& property,
-                                    const String& value) {
+bool OperationModeNode::handleInput(const HomieRange& range, const String& property, const String& value) {
   printCaption();
 
-  Homie.getLogger() << cIndent << F("〽 handleInput -> property '") <<
-                       property << F("' value=") << value << endl;
+  Homie.getLogger() << cIndent << F("〽 handleInput -> property '") << property << F("' value=") << value << endl;
   bool retval;
 
   if (property.equalsIgnoreCase(cMode)) {
-    Homie.getLogger() << cIndent << F("✔ set operational mode: ") <<
-                         value << endl;
+    Homie.getLogger() << cIndent << F("✔ set operational mode: ") << value << endl;
     retval = this->setMode(value);
 
   } else if (property.equalsIgnoreCase(cHysteresis)) {

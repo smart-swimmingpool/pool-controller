@@ -23,30 +23,30 @@ namespace PoolController {
  * Memory and Watchdog Monitor
  */
 class SystemMonitor {
- private:
-  static constexpr uint32_t LOW_MEMORY_THRESHOLD = 8192;
-  static constexpr uint32_t CRITICAL_MEMORY_THRESHOLD = 4096;
-  static constexpr uint32_t ESP32_LOW_MEMORY_THRESHOLD = 16384;
+private:
+  static constexpr uint32_t LOW_MEMORY_THRESHOLD            = 8192;
+  static constexpr uint32_t CRITICAL_MEMORY_THRESHOLD       = 4096;
+  static constexpr uint32_t ESP32_LOW_MEMORY_THRESHOLD      = 16384;
   static constexpr uint32_t ESP32_CRITICAL_MEMORY_THRESHOLD = 8192;
 
   static uint32_t lastMemoryCheck;
   static uint32_t minFreeHeap;
-  static bool lowMemoryWarning;
+  static bool     lowMemoryWarning;
 
- public:
+public:
   /**
    * Initialize system monitor and watchdog
    */
   static void begin() {
-    lastMemoryCheck = 0;
-    minFreeHeap = ESP.getFreeHeap();
+    lastMemoryCheck  = 0;
+    minFreeHeap      = ESP.getFreeHeap();
     lowMemoryWarning = false;
 
 #ifdef ESP32
     // Enable ESP32 Task Watchdog Timer (TWDT)
     // Default timeout is 5 seconds
     esp_task_wdt_init(30, true);  // 30 second timeout, panic on timeout
-    esp_task_wdt_add(NULL);  // Add current thread to WDT watch
+    esp_task_wdt_add(NULL);       // Add current thread to WDT watch
 #elif defined(ESP8266)
     // ESP8266 has software watchdog, just need to call yield() regularly
     // No explicit initialization needed
@@ -85,19 +85,16 @@ class SystemMonitor {
     }
 
 #ifdef ESP32
-    uint32_t lowThreshold = ESP32_LOW_MEMORY_THRESHOLD;
-    uint32_t criticalThreshold =
-        ESP32_CRITICAL_MEMORY_THRESHOLD;
+    uint32_t lowThreshold      = ESP32_LOW_MEMORY_THRESHOLD;
+    uint32_t criticalThreshold = ESP32_CRITICAL_MEMORY_THRESHOLD;
 #else
-    uint32_t lowThreshold = LOW_MEMORY_THRESHOLD;
+    uint32_t lowThreshold      = LOW_MEMORY_THRESHOLD;
     uint32_t criticalThreshold = CRITICAL_MEMORY_THRESHOLD;
 #endif
 
     // Critical memory - reboot immediately
     if (freeHeap < criticalThreshold) {
-      Serial.printf(
-          "CRITICAL: Free heap %d bytes < %d bytes. Rebooting...\n",
-          freeHeap, criticalThreshold);
+      Serial.printf("CRITICAL: Free heap %d bytes < %d bytes. Rebooting...\n", freeHeap, criticalThreshold);
       Serial.flush();
       delay(1000);
       ESP.restart();
@@ -105,10 +102,9 @@ class SystemMonitor {
 
     // Low memory - log warning
     if (freeHeap < lowThreshold && !lowMemoryWarning) {
-      Serial.printf(
-          "WARNING: Low memory detected. Free heap: %d bytes "
-          "(min: %d)\n",
-          freeHeap, minFreeHeap);
+      Serial.printf("WARNING: Low memory detected. Free heap: %d bytes "
+                    "(min: %d)\n",
+                    freeHeap, minFreeHeap);
       lowMemoryWarning = true;
     } else if (freeHeap >= lowThreshold && lowMemoryWarning) {
       // Memory recovered

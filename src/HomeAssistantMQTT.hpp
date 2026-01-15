@@ -28,30 +28,24 @@ namespace HomeAssistant {
  * Base class for Home Assistant MQTT Discovery
  */
 class DiscoveryPublisher {
- public:
+public:
   /**
    * Publish a sensor discovery message
    * @note Uses ~400 bytes of JSON, buffer is 512 bytes
    */
-  static bool publishSensor(const char* nodeId,
-                            const char* objectId,
-                            const char* name,
-                            const char* deviceClass = nullptr,
-                            const char* unitOfMeasurement = nullptr,
-                            const char* icon = nullptr) {
+  static bool publishSensor(const char* nodeId, const char* objectId, const char* name, const char* deviceClass = nullptr,
+                            const char* unitOfMeasurement = nullptr, const char* icon = nullptr) {
     if (!Homie.isConnected())
       return false;
 
     char topic[128];
-    snprintf(topic, sizeof(topic), "homeassistant/sensor/%s/%s/config",
-             nodeId, objectId);
+    snprintf(topic, sizeof(topic), "homeassistant/sensor/%s/%s/config", nodeId, objectId);
 
     JsonDocument doc;
 
     // State topic
     char stateTopic[128];
-    snprintf(stateTopic, sizeof(stateTopic),
-             "homeassistant/sensor/%s/%s/state", nodeId, objectId);
+    snprintf(stateTopic, sizeof(stateTopic), "homeassistant/sensor/%s/%s/state", nodeId, objectId);
     doc["state_topic"] = stateTopic;
 
     // Name and unique ID
@@ -69,19 +63,20 @@ class DiscoveryPublisher {
       doc["icon"] = icon;
 
     // Device information
-    JsonObject device = doc["device"].to<JsonObject>();
+    JsonObject device        = doc["device"].to<JsonObject>();
     device["identifiers"][0] = nodeId;
-    device["name"] = "Pool Controller";
-    device["manufacturer"] = "smart-swimmingpool";
-    device["model"] = "Pool Controller 2.0";
+    device["name"]           = "Pool Controller";
+    device["manufacturer"]   = "smart-swimmingpool";
+    device["model"]          = "Pool Controller 2.0";
 
-    char buffer[512];
+    char   buffer[512];
     size_t len = serializeJson(doc, buffer, sizeof(buffer));
 
     // Check for truncation
     if (len >= sizeof(buffer) - 1) {
       Homie.getLogger() << F("✖ Warning: JSON buffer too small, "
-                             "message truncated") << endl;
+                             "message truncated")
+                        << endl;
       return false;
     }
 
@@ -92,26 +87,20 @@ class DiscoveryPublisher {
    * Publish a switch discovery message
    * @note Uses ~450 bytes of JSON, buffer is 512 bytes
    */
-  static bool publishSwitch(const char* nodeId,
-                            const char* objectId,
-                            const char* name,
-                            const char* icon = nullptr) {
+  static bool publishSwitch(const char* nodeId, const char* objectId, const char* name, const char* icon = nullptr) {
     if (!Homie.isConnected())
       return false;
 
     char topic[128];
-    snprintf(topic, sizeof(topic), "homeassistant/switch/%s/%s/config",
-             nodeId, objectId);
+    snprintf(topic, sizeof(topic), "homeassistant/switch/%s/%s/config", nodeId, objectId);
 
     JsonDocument doc;
 
     // State and command topics
     char stateTopic[128];
     char commandTopic[128];
-    snprintf(stateTopic, sizeof(stateTopic),
-             "homeassistant/switch/%s/%s/state", nodeId, objectId);
-    snprintf(commandTopic, sizeof(commandTopic),
-             "homeassistant/switch/%s/%s/set", nodeId, objectId);
+    snprintf(stateTopic, sizeof(stateTopic), "homeassistant/switch/%s/%s/state", nodeId, objectId);
+    snprintf(commandTopic, sizeof(commandTopic), "homeassistant/switch/%s/%s/set", nodeId, objectId);
 
     doc["state_topic"]   = stateTopic;
     doc["command_topic"] = commandTopic;
@@ -144,7 +133,8 @@ class DiscoveryPublisher {
     // Check for truncation
     if (len >= sizeof(buffer) - 1) {
       Homie.getLogger() << F("✖ Warning: JSON buffer too small, "
-                             "message truncated") << endl;
+                             "message truncated")
+                        << endl;
       return false;
     }
 
@@ -154,15 +144,12 @@ class DiscoveryPublisher {
   /**
    * Publish state for a sensor
    */
-  static bool publishSensorState(const char* nodeId,
-                                 const char* objectId,
-                                 const char* value) {
+  static bool publishSensorState(const char* nodeId, const char* objectId, const char* value) {
     if (!Homie.isConnected())
       return false;
 
     char topic[128];
-    snprintf(topic, sizeof(topic), "homeassistant/sensor/%s/%s/state",
-             nodeId, objectId);
+    snprintf(topic, sizeof(topic), "homeassistant/sensor/%s/%s/state", nodeId, objectId);
 
     return Homie.getMqttClient().publish(topic, 1, true, value);
   }
@@ -170,15 +157,12 @@ class DiscoveryPublisher {
   /**
    * Publish state for a switch
    */
-  static bool publishSwitchState(const char* nodeId,
-                                 const char* objectId,
-                                 bool state) {
+  static bool publishSwitchState(const char* nodeId, const char* objectId, bool state) {
     if (!Homie.isConnected())
       return false;
 
     char topic[128];
-    snprintf(topic, sizeof(topic), "homeassistant/switch/%s/%s/state",
-             nodeId, objectId);
+    snprintf(topic, sizeof(topic), "homeassistant/switch/%s/%s/state", nodeId, objectId);
 
     return Homie.getMqttClient().publish(topic, 1, true, state ? "ON" : "OFF");
   }

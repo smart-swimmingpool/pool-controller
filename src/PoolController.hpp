@@ -20,8 +20,7 @@ struct PoolControllerContext final {
   // no move
   PoolControllerContext(PoolControllerContext&&) = delete;
   // no copy
-  auto operator=(const PoolControllerContext&) -> PoolControllerContext& =
-      delete;
+  auto operator=(const PoolControllerContext&) -> PoolControllerContext& = delete;
   // no move
   auto operator=(PoolControllerContext&&) -> PoolControllerContext& = delete;
   ~PoolControllerContext();
@@ -38,22 +37,16 @@ struct PoolControllerContext final {
    */
   auto loop() -> void;
 
- private:
+private:
   friend auto Detail::setupProxy() -> void;
 
   auto setupHandler() -> void;
 
-  HomieSetting<int32_t> loopIntervalSetting_{
-      "loop-interval", "The processing interval in seconds"};
-  HomieSetting<double> temperatureMaxPoolSetting_{
-      "temperature-max-pool", "Maximum temperature of solar"};
-  HomieSetting<double> temperatureMinSolarSetting_{
-      "temperature-min-solar", "Minimum temperature of solar"};
-  HomieSetting<double> temperatureHysteresisSetting_{
-      "temperature-hysteresis", "Temperature hysteresis"};
-  HomieSetting<const char*> operationModeSetting_{
-      "operation-mode", "Operational Mode"};
-  HomieSetting<const char*> mqttProtocolSetting_{
-      "mqtt-protocol", "MQTT Protocol (homie or homeassistant)"};
+  HomieSetting<int32_t>     loopIntervalSetting_{"loop-interval", "The processing interval in seconds"};
+  HomieSetting<double>      temperatureMaxPoolSetting_{"temperature-max-pool", "Maximum temperature of solar"};
+  HomieSetting<double>      temperatureMinSolarSetting_{"temperature-min-solar", "Minimum temperature of solar"};
+  HomieSetting<double>      temperatureHysteresisSetting_{"temperature-hysteresis", "Temperature hysteresis"};
+  HomieSetting<const char*> operationModeSetting_{"operation-mode", "Operational Mode"};
+  HomieSetting<const char*> mqttProtocolSetting_{"mqtt-protocol", "MQTT Protocol (homie or homeassistant)"};
 };
 }  // namespace PoolController

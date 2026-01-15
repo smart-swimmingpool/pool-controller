@@ -23,7 +23,7 @@ namespace PoolController {
  * State Manager for persistent storage
  */
 class StateManager {
- public:
+public:
   /**
    * Initialize state manager
    */

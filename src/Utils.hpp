@@ -38,8 +38,7 @@ inline bool shouldMeasure(uint32_t lastMeasurement, uint32_t intervalSeconds) {
  * @param decimals Number of decimal places (default: 2)
  * @note For typical temperature values (-50 to 100), 16 bytes is sufficient
  */
-inline void floatToString(float value, char* buffer, size_t bufferSize,
-                          int decimals = 2) {
+inline void floatToString(float value, char* buffer, size_t bufferSize, int decimals = 2) {
   // dtostrf needs minimum buffer size to avoid overflow
   if (bufferSize < 8) {
     buffer[0] = '\0';

@@ -5,8 +5,8 @@
 namespace PoolController {
 
 // Static member initialization
-uint32_t SystemMonitor::lastMemoryCheck = 0;
-uint32_t SystemMonitor::minFreeHeap = 0;
-bool SystemMonitor::lowMemoryWarning = false;
+uint32_t SystemMonitor::lastMemoryCheck  = 0;
+uint32_t SystemMonitor::minFreeHeap      = 0;
+bool     SystemMonitor::lowMemoryWarning = false;
 
 }  // namespace PoolController
