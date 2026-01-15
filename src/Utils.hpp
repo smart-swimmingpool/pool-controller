@@ -15,8 +15,7 @@ namespace Utils {
  * @param intervalSeconds The interval in seconds
  * @return true if enough time has elapsed
  */
-inline bool shouldMeasure(uint32_t lastMeasurement,
-                          uint32_t intervalSeconds) {
+inline bool shouldMeasure(uint32_t lastMeasurement, uint32_t intervalSeconds) {
   if (lastMeasurement == 0) {
     return true;  // First measurement
   }
@@ -37,8 +36,7 @@ inline bool shouldMeasure(uint32_t lastMeasurement,
  * @note For typical temperature values (-50 to 100),
  *       16 bytes is sufficient
  */
-inline void floatToString(float value, char* buffer,
-                          size_t bufferSize, int decimals = 2) {
+inline void floatToString(float value, char* buffer, size_t bufferSize, int decimals = 2) {
   // dtostrf needs minimum buffer size to avoid overflow
   if (bufferSize < 8) {
     buffer[0] = '\0';
