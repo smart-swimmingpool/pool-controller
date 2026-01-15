@@ -1,34 +1,44 @@
-#include "PoolController.hpp"
+// Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
+
+#include "src/PoolController.hpp"
 
 #include <Arduino.h>
 #include <Homie.h>
 #include <SPI.h>
-#include "DallasTemperatureNode.hpp"
-#include "ESP32TemperatureNode.hpp"
-#include "RelayModuleNode.hpp"
-#include "OperationModeNode.hpp"
-#include "Rule.hpp"
-#include "RuleManu.hpp"
-#include "RuleAuto.hpp"
-#include "RuleBoost.hpp"
-#include "RuleTimer.hpp"
+#include "src/DallasTemperatureNode.hpp"
+#include "src/ESP32TemperatureNode.hpp"
+#include "src/RelayModuleNode.hpp"
+#include "src/OperationModeNode.hpp"
+#include "src/Rule.hpp"
+#include "src/RuleManu.hpp"
+#include "src/RuleAuto.hpp"
+#include "src/RuleBoost.hpp"
+#include "src/RuleTimer.hpp"
 
-#include "LoggerNode.hpp"
-#include "TimeClientHelper.hpp"
-#include "StateManager.hpp"
-#include "SystemMonitor.hpp"
+#include "src/LoggerNode.hpp"
+#include "src/TimeClientHelper.hpp"
+#include "src/StateManager.hpp"
+#include "src/SystemMonitor.hpp"
 
-#include "Config.hpp"
+#include "src/Config.hpp"
 
 namespace PoolController {
 static LoggerNode            LN;
-static DallasTemperatureNode solarTemperatureNode("solar-temp", "Solar Temperature", PIN_DS_SOLAR, TEMP_READ_INTERVALL);
-static DallasTemperatureNode poolTemperatureNode("pool-temp", "Pool Temperature", PIN_DS_POOL, TEMP_READ_INTERVALL);
+static DallasTemperatureNode solarTemperatureNode(
+    "solar-temp", "Solar Temperature",
+    PIN_DS_SOLAR, TEMP_READ_INTERVALL);
+static DallasTemperatureNode poolTemperatureNode(
+    "pool-temp", "Pool Temperature",
+    PIN_DS_POOL, TEMP_READ_INTERVALL);
 #ifdef ESP32
-static ESP32TemperatureNode ctrlTemperatureNode("controller-temp", "Controller Temperature", TEMP_READ_INTERVALL);
+static ESP32TemperatureNode ctrlTemperatureNode("controller-temp",
+                                                "Controller Temperature",
+                                                TEMP_READ_INTERVALL);
 #endif
-static RelayModuleNode poolPumpNode("pool-pump", "Pool Pump", PIN_RELAY_POOL);
-static RelayModuleNode solarPumpNode("solar-pump", "Solar Pump", PIN_RELAY_SOLAR);
+static RelayModuleNode poolPumpNode("pool-pump", "Pool Pump",
+                                    PIN_RELAY_POOL);
+static RelayModuleNode solarPumpNode("solar-pump", "Solar Pump",
+                                     PIN_RELAY_SOLAR);
 
 static OperationModeNode operationModeNode("operation-mode", "Operation Mode");
 
@@ -51,11 +61,10 @@ PoolControllerContext::~PoolControllerContext() {
 }
 
 /**
-     * Homie Setup handler.
-     * Only called when wifi and mqtt are connected.
-     */
+ * Homie Setup handler.
+ * Only called when wifi and mqtt are connected.
+ */
 auto PoolControllerContext::setupHandler() -> void {
-
   // Initialize state management
   StateManager::begin();
 
@@ -78,13 +87,18 @@ auto PoolControllerContext::setupHandler() -> void {
   // Load persisted state first, then override with config if different
   operationModeNode.loadState();
 
-  // Apply configuration settings (these will override persisted state if different)
+  // Apply configuration settings (these will override persisted state
+  // if different)
   operationModeNode.setMode(this->operationModeSetting_.get());
-  operationModeNode.setPoolMaxTemperature(this->temperatureMaxPoolSetting_.get());
-  operationModeNode.setSolarMinTemperature(this->temperatureMinSolarSetting_.get());
-  operationModeNode.setTemperatureHysteresis(this->temperatureHysteresisSetting_.get());
+  operationModeNode.setPoolMaxTemperature(
+      this->temperatureMaxPoolSetting_.get());
+  operationModeNode.setSolarMinTemperature(
+      this->temperatureMinSolarSetting_.get());
+  operationModeNode.setTemperatureHysteresis(
+      this->temperatureHysteresisSetting_.get());
 
-  // Timer settings are now loaded from state, but can be overridden here if needed
+  // Timer settings are now loaded from state, but can be overridden here
+  // if needed
   // TimerSetting ts = operationModeNode.getTimerSetting();
   // ts.timerStartHour    = 10;
   // ts.timerStartMinutes = 30;
@@ -110,7 +124,8 @@ auto PoolControllerContext::setupHandler() -> void {
 
   _lastMeasurement = 0;
 
-  LN.log(__PRETTY_FUNCTION__, LoggerNode::INFO, "State persistence and system monitoring initialized");
+  LN.log(__PRETTY_FUNCTION__, LoggerNode::INFO,
+         "State persistence and system monitoring initialized");
 }
 
 auto PoolControllerContext::setup() -> void {
@@ -119,27 +134,39 @@ auto PoolControllerContext::setup() -> void {
   Homie_setFirmware("pool-controller", "3.1.0");
   Homie_setBrand("smart-swimmingpool");
 
-  //default intervall of sending Temperature values
-  this->loopIntervalSetting_.setDefaultValue(TEMP_READ_INTERVALL).setValidator([](const long candidate) -> bool {
+  // default intervall of sending Temperature values
+  this->loopIntervalSetting_.setDefaultValue(TEMP_READ_INTERVALL).
+      setValidator([](const long candidate) -> bool {
     return candidate >= 0 && candidate <= 300;
   });
 
   this->temperatureMaxPoolSetting_.setDefaultValue(28.5).setValidator(
-      [](const long candidate) -> bool { return candidate >= 0 && candidate <= 30; });
+      [](const long candidate) -> bool {
+        return candidate >= 0 && candidate <= 30;
+      });
 
   this->temperatureMinSolarSetting_.setDefaultValue(55.0).setValidator(
-      [](const long candidate) noexcept -> bool { return candidate >= 0 && candidate <= 100; });
+      [](const long candidate) noexcept -> bool {
+        return candidate >= 0 && candidate <= 100;
+      });
 
   this->temperatureHysteresisSetting_.setDefaultValue(1.0).setValidator(
-      [](const long candidate) -> bool { return candidate >= 0 && candidate <= 10; });
+      [](const long candidate) -> bool {
+        return candidate >= 0 && candidate <= 10;
+      });
 
-  this->operationModeSetting_.setDefaultValue("auto").setValidator([](const char* const candidate) -> bool {
-    return std::strcmp(candidate, "auto") == 0 || std::strcmp(candidate, "manu") == 0 || std::strcmp(candidate, "boost") == 0;
-  });
+  this->operationModeSetting_.setDefaultValue("auto").
+      setValidator([](const char* const candidate) -> bool {
+        return std::strcmp(candidate, "auto") == 0 ||
+               std::strcmp(candidate, "manu") == 0 ||
+               std::strcmp(candidate, "boost") == 0;
+      });
 
-  this->mqttProtocolSetting_.setDefaultValue("homie").setValidator([](const char* const candidate) -> bool {
-    return std::strcmp(candidate, "homie") == 0 || std::strcmp(candidate, "homeassistant") == 0;
-  });
+  this->mqttProtocolSetting_.setDefaultValue("homie").
+      setValidator([](const char* const candidate) -> bool {
+        return std::strcmp(candidate, "homie") == 0 ||
+               std::strcmp(candidate, "homeassistant") == 0;
+      });
 
   Homie.setSetupFunction(&Detail::setupProxy);
 

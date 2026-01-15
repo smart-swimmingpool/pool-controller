@@ -1,3 +1,5 @@
+// Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
+
 #pragma once
 
 #include <Homie.h>
@@ -8,27 +10,32 @@ extern auto setupProxy() -> void;
 }
 
 /**
-     * Core controller class using RAII priniples.
-     * Only one instance allowed.
-    */
+ * Core controller class using RAII priniples.
+ * Only one instance allowed.
+ */
 struct PoolControllerContext final {
   PoolControllerContext();
-  PoolControllerContext(const PoolControllerContext&)                    = delete;  // no copy
-  PoolControllerContext(PoolControllerContext&&)                         = delete;  // no move
-  auto operator=(const PoolControllerContext&) -> PoolControllerContext& = delete;  // no copy
-  auto operator=(PoolControllerContext&&) -> PoolControllerContext&      = delete;  // no move
+  // no copy
+  PoolControllerContext(const PoolControllerContext&) = delete;
+  // no move
+  PoolControllerContext(PoolControllerContext&&) = delete;
+  // no copy
+  auto operator=(const PoolControllerContext&) -> PoolControllerContext& =
+      delete;
+  // no move
+  auto operator=(PoolControllerContext&&) -> PoolControllerContext& = delete;
   ~PoolControllerContext();
 
   /**
-         * Startup the controller.
-         * Should be called from the standard setup() entry function.
-        */
+   * Startup the controller.
+   * Should be called from the standard setup() entry function.
+   */
   auto setup() -> void;
 
   /**
-         * Invoked the loop event.
-         * Should be called from the standard loop() entry function.
-        */
+   * Invoked the loop event.
+   * Should be called from the standard loop() entry function.
+   */
   auto loop() -> void;
 
 private:
@@ -36,11 +43,17 @@ private:
 
   auto setupHandler() -> void;
 
-  HomieSetting<long>        loopIntervalSetting_{"loop-interval", "The processing interval in seconds"};
-  HomieSetting<double>      temperatureMaxPoolSetting_{"temperature-max-pool", "Maximum temperature of solar"};
-  HomieSetting<double>      temperatureMinSolarSetting_{"temperature-min-solar", "Minimum temperature of solar"};
-  HomieSetting<double>      temperatureHysteresisSetting_{"temperature-hysteresis", "Temperature hysteresis"};
-  HomieSetting<const char*> operationModeSetting_{"operation-mode", "Operational Mode"};
-  HomieSetting<const char*> mqttProtocolSetting_{"mqtt-protocol", "MQTT Protocol (homie or homeassistant)"};
+  HomieSetting<long> loopIntervalSetting_{
+      "loop-interval", "The processing interval in seconds"};
+  HomieSetting<double> temperatureMaxPoolSetting_{
+      "temperature-max-pool", "Maximum temperature of solar"};
+  HomieSetting<double> temperatureMinSolarSetting_{
+      "temperature-min-solar", "Minimum temperature of solar"};
+  HomieSetting<double> temperatureHysteresisSetting_{
+      "temperature-hysteresis", "Temperature hysteresis"};
+  HomieSetting<const char*> operationModeSetting_{
+      "operation-mode", "Operational Mode"};
+  HomieSetting<const char*> mqttProtocolSetting_{
+      "mqtt-protocol", "MQTT Protocol (homie or homeassistant)"};
 };
 }  // namespace PoolController

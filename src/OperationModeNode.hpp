@@ -1,3 +1,5 @@
+// Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
+
 /**
  * Homie Node for Dallas sensors.
  *
@@ -8,54 +10,64 @@
 #include <Homie.hpp>
 #include <Vector.h>
 
-#include "DallasTemperatureNode.hpp"
-#include "Rule.hpp"
-#include "Timer.hpp"
-#include "TimeClientHelper.hpp"
+#include "src/DallasTemperatureNode.hpp"
+#include "src/Rule.hpp"
+#include "src/Timer.hpp"
+#include "src/TimeClientHelper.hpp"
 
 class OperationModeNode : public HomieNode {
 
 public:
-  OperationModeNode(const char* id, const char* name, const int measurementInterval = MEASUREMENT_INTERVAL);
+  OperationModeNode(const char* id, const char* name,
+                    const int measurementInterval = MEASUREMENT_INTERVAL);
   ~OperationModeNode() {
     // This could cause use after free - to bad it is designed that way
-    for (int i = 0; i < _ruleVec.Size(); i++)  // Delete ruleset on deletion of this object
+    // Delete ruleset on deletion of this object
+    for (int i = 0; i < _ruleVec.Size(); i++)
       delete _ruleVec[i];
   }
 
-  void          setMeasurementInterval(unsigned long interval) { _measurementInterval = interval; }
-  unsigned long getMeasurementInterval() const { return _measurementInterval; }
+  void setMeasurementInterval(unsigned long interval) {
+    _measurementInterval = interval;
+  }
+  unsigned long getMeasurementInterval() const {
+    return _measurementInterval;
+  }
   bool          setMode(String mode);
   String        getMode();
   void          addRule(Rule* rule);
   Rule*         getRule();
 
-  void setPoolTemperatureNode(DallasTemperatureNode* node) { _currentPoolTempNode = node; };
-  void setSolarTemperatureNode(DallasTemperatureNode* node) { _currentSolarTempNode = node; };
+  void setPoolTemperatureNode(DallasTemperatureNode* node) {
+    _currentPoolTempNode = node;
+  }
+  void setSolarTemperatureNode(DallasTemperatureNode* node) {
+    _currentSolarTempNode = node;
+  }
 
   void setPoolMaxTemperature(float temp) {
     _poolMaxTemp = temp;
     saveState();
-  };
-  float getPoolMaxTemperature() { return _poolMaxTemp; };
+  }
+  float getPoolMaxTemperature() { return _poolMaxTemp; }
 
   void setSolarMinTemperature(float temp) {
     _solarMinTemp = temp;
     saveState();
-  };
-  float getSolarMinTemperature() { return _solarMinTemp; };
+  }
+  float getSolarMinTemperature() { return _solarMinTemp; }
 
   void setTemperatureHysteresis(float temp) {
     _hysteresis = temp;
     saveState();
-  };
-  float getTemperatureHysteresis() { return _hysteresis; };
+  }
+  float getTemperatureHysteresis() { return _hysteresis; }
 
   void setTimerSetting(TimerSetting setting) {
     _timerSetting = setting;
     saveState();
-  };
-  TimerSetting getTimerSetting() { return _timerSetting; };
+  }
+  TimerSetting getTimerSetting() { return _timerSetting; }
 
   void loadState();
   void saveState();
@@ -69,7 +81,9 @@ public:
 protected:
   void setup() override;
   void loop() override;
-  bool handleInput(const HomieRange& range, const String& property, const String& value) override;
+  bool handleInput(const HomieRange& range,
+                   const String& property,
+                   const String& value) override;
 
 private:
   // suggested rate is 1/60Hz (1m)

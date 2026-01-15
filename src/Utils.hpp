@@ -1,4 +1,5 @@
-//  Copyright 2026 smart-swimmingpool
+// Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
+
 #pragma once
 
 /**
@@ -33,10 +34,10 @@ inline bool shouldMeasure(uint32_t lastMeasurement, uint32_t intervalSeconds) {
  * @param buffer The buffer to write to (min 16 bytes recommended)
  * @param bufferSize Size of the buffer (must be at least 8 bytes)
  * @param decimals Number of decimal places (default: 2)
- * @note For typical temperature values (-50 to 100),
- *       16 bytes is sufficient
+ * @note For typical temperature values (-50 to 100), 16 bytes is sufficient
  */
-inline void floatToString(float value, char* buffer, size_t bufferSize, int decimals = 2) {
+inline void floatToString(float value, char* buffer, size_t bufferSize,
+                          int decimals = 2) {
   // dtostrf needs minimum buffer size to avoid overflow
   if (bufferSize < 8) {
     buffer[0] = '\0';
