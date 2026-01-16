@@ -1,26 +1,26 @@
 // Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
 
-#include "src/PoolController.hpp"
+#include "PoolController.hpp"
 
 #include <Arduino.h>
 #include <Homie.h>
 #include <SPI.h>
-#include "src/DallasTemperatureNode.hpp"
-#include "src/ESP32TemperatureNode.hpp"
-#include "src/RelayModuleNode.hpp"
-#include "src/OperationModeNode.hpp"
-#include "src/Rule.hpp"
-#include "src/RuleManu.hpp"
-#include "src/RuleAuto.hpp"
-#include "src/RuleBoost.hpp"
-#include "src/RuleTimer.hpp"
+#include "DallasTemperatureNode.hpp"
+#include "ESP32TemperatureNode.hpp"
+#include "RelayModuleNode.hpp"
+#include "OperationModeNode.hpp"
+#include "Rule.hpp"
+#include "RuleManu.hpp"
+#include "RuleAuto.hpp"
+#include "RuleBoost.hpp"
+#include "RuleTimer.hpp"
 
-#include "src/LoggerNode.hpp"
-#include "src/TimeClientHelper.hpp"
-#include "src/StateManager.hpp"
-#include "src/SystemMonitor.hpp"
+#include "LoggerNode.hpp"
+#include "TimeClientHelper.hpp"
+#include "StateManager.hpp"
+#include "SystemMonitor.hpp"
 
-#include "src/Config.hpp"
+#include "Config.hpp"
 
 namespace PoolController {
 static LoggerNode            LN;

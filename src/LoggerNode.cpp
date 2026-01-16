@@ -7,7 +7,7 @@
  *      Author: ian
  */
 
-#include "src/LoggerNode.hpp"
+#include "LoggerNode.hpp"
 #include <cstdio>
 #include <Homie.hpp>
 

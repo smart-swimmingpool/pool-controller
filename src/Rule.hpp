@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "src/Timer.hpp"
+#include "Timer.hpp"
 
 class Rule {
 public:

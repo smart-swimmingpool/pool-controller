@@ -6,8 +6,8 @@
  * Used lib:
  * https://github.com/YuriiSalimov/RelayModule
  */
-#include "src/RelayModuleNode.hpp"
-#include "src/Utils.hpp"
+#include "RelayModuleNode.hpp"
+#include "Utils.hpp"
 
 RelayModuleNode::RelayModuleNode(const char* id, const char* name, const uint8_t pin, const int measurementInterval)
     : HomieNode(id, name, "switch") {

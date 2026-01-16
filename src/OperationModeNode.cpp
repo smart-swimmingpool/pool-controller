@@ -1,11 +1,11 @@
 // Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
 
-#include "src/OperationModeNode.hpp"
-#include "src/RuleManu.hpp"
-#include "src/RuleAuto.hpp"
-#include "src/RuleBoost.hpp"
-#include "src/Utils.hpp"
-#include "src/StateManager.hpp"
+#include "OperationModeNode.hpp"
+#include "RuleManu.hpp"
+#include "RuleAuto.hpp"
+#include "RuleBoost.hpp"
+#include "Utils.hpp"
+#include "StateManager.hpp"
 
 /**
  *

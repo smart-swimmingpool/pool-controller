@@ -5,8 +5,8 @@
  *
  */
 
-#include "src/ESP32TemperatureNode.hpp"
-#include "src/Utils.hpp"
+#include "ESP32TemperatureNode.hpp"
+#include "Utils.hpp"
 
 /**
  * @param id

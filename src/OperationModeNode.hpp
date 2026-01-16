@@ -10,10 +10,10 @@
 #include <Homie.hpp>
 #include <Vector.h>
 
-#include "src/DallasTemperatureNode.hpp"
-#include "src/Rule.hpp"
-#include "src/Timer.hpp"
-#include "src/TimeClientHelper.hpp"
+#include "DallasTemperatureNode.hpp"
+#include "Rule.hpp"
+#include "Timer.hpp"
+#include "TimeClientHelper.hpp"
 
 class OperationModeNode : public HomieNode {
 public:

@@ -18,8 +18,8 @@
  * https://www.milesburton.com/Dallas_Temperature_Control_Library
  *
  */
-#include "src/DallasTemperatureNode.hpp"
-#include "src/Utils.hpp"
+#include "DallasTemperatureNode.hpp"
+#include "Utils.hpp"
 
 DallasTemperatureNode::DallasTemperatureNode(const char* id, const char* name, const uint8_t pin, const int measurementInterval)
     : HomieNode(id, name, "temperature") {
