@@ -11,9 +11,8 @@
 #include <cstdio>
 #include <Homie.hpp>
 
-HomieSetting<const char*> LoggerNode::default_loglevel("loglevel", "default loglevel");  // id, description
-HomieSetting<bool>        LoggerNode::logserial("logserial",
-                                                "log to serial");                               // id, description
+HomieSetting<const char*> LoggerNode::default_loglevel("loglevel", "default loglevel");         // id, description
+HomieSetting<bool>        LoggerNode::logserial("logserial", "log to serial");                  // id, description
 HomieSetting<bool>        LoggerNode::flushlog("flushlog", "Flush serial log after each log");  // id, description
 static String             loggerString;
 
