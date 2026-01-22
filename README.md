@@ -56,9 +56,13 @@ Discussions: <https://github.com/smart-swimmingpool/smart-swimmingpool.github.io
 
 ### Developer Features
 
+- [x] **Over-The-Air (OTA) Updates** - Remote firmware updates via WiFi
+  - No physical access required for updates
+  - Password-protected secure updates
+  - mDNS discovery support
 - [x] Time sync via NTP (europe.pool.ntp.org)
 - [x] Logging information via MQTT
-- [x] Modern libraries (ArduinoJson 7.3.0, NTPClient 3.2.1)
+- [x] Modern libraries (ArduinoJson 6.21.5, NTPClient 3.2.1)
 - [x] Clean, formatted code following project standards
 
 ## Recent Updates (v3.1.0)
@@ -123,6 +127,7 @@ See [docs/state-persistence.md](docs/state-persistence.md) for details.
 - [Software Guide](docs/software-guide.md)
 - [MQTT Configuration Guide](docs/mqtt-configuration.md) (New in v3.1.0)
 - [State Persistence & Monitoring](docs/state-persistence.md) (New in v3.1.0)
+- [Over-The-Air Updates](docs/ota-updates.md) (New in v3.1.0)
 - [Optimization Report](docs/optimization-report.md) (New in v3.1.0)
 
 ## Credits

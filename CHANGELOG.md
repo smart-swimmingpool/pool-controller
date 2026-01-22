@@ -6,6 +6,13 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- **Over-The-Air (OTA) Updates**: Remote firmware updates via WiFi
+  - Password-protected secure updates through Homie library
+  - mDNS discovery support for easy device location
+  - PlatformIO and Arduino IDE integration
+  - Comprehensive documentation in [OTA Updates Guide](docs/ota-updates.md)
+  - Example configurations in `platformio.ini`
+
 - **Home Assistant MQTT Discovery Support**: Added configurable MQTT
   protocol support
   - New `mqtt-protocol` configuration setting (homie/homeassistant)
