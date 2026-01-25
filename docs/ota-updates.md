@@ -8,7 +8,7 @@ This feature is provided by the Homie library and is enabled by default.
 
 ## Features
 
-- **Network-based updates**: Upload firmware via WiFi
+- **Network-based updates**: Upload firmware via Wi-Fi
 - **Password-protected**: Secure updates with authentication
 - **Low memory footprint**: Optimized for ESP8266/ESP32
 - **Automatic discovery**: mDNS support for easy device location
@@ -16,7 +16,7 @@ This feature is provided by the Homie library and is enabled by default.
 
 ## Prerequisites
 
-- Pool Controller connected to WiFi network
+- Pool Controller connected to Wi-Fi network
 - PlatformIO installed (for uploading firmware)
 - Device IP address or mDNS hostname
 - OTA password (configured in Homie config)
@@ -80,7 +80,7 @@ device will automatically reboot with the new firmware.
 The OTA password is configured through the Homie configuration portal:
 
 1. **Reset device** to enter configuration mode (hold button during boot)
-2. Connect to WiFi AP `Homie-XXXXXX`
+2. Connect to Wi-Fi AP `Homie-XXXXXX`
 3. Open browser to `http://192.168.123.1`
 4. Set **OTA Password** in the configuration
 5. Save and reboot
@@ -139,7 +139,7 @@ pio run -e esp32dev
 
 ### 2. Network Security
 
-- Use WPA2/WPA3 WiFi encryption
+- Use WPA2/WPA3 Wi-Fi encryption
 - Isolate IoT devices on separate VLAN if possible
 - Restrict OTA port (8266) at firewall level
 
@@ -171,7 +171,7 @@ pio run -e esp32dev
 
 - Check mDNS is working: `avahi-browse -a` (Linux) or Bonjour (Windows)
 - Use IP address instead of mDNS hostname
-- Restart device and wait for WiFi connection
+- Restart device and wait for Wi-Fi connection
 - Check device is on same network/subnet
 
 ### Upload Successful but Device Not Responding
