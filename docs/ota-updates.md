@@ -366,18 +366,18 @@ cp .pio/build/nodemcuv2/firmware.bin \
 If OTA update fails and device becomes unresponsive:
 
 1. **Physical Access Recovery**:
-  - Connect via USB serial
-  - Upload firmware via serial: `pio run -e nodemcuv2 --target upload`
+- Connect via USB serial
+- Upload firmware via serial: `pio run -e nodemcuv2 --target upload`
 
 2. **Bootloader Recovery**:
-  - ESP8266/ESP32 bootloader allows serial recovery
-  - Hold BOOT button during power-on
-  - Upload firmware via esptool
+- ESP8266/ESP32 bootloader allows serial recovery
+- Hold BOOT button during power-on
+- Upload firmware via esptool
 
 3. **Factory Reset**:
-  - Clear EEPROM/NVS
-  - Reset Homie configuration
-  - Reconfigure via Homie AP
+- Clear EEPROM/NVS
+- Reset Homie configuration
+- Reconfigure via Homie AP
 
 ## Future Enhancements
 
