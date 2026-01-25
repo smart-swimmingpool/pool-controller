@@ -30,7 +30,7 @@ void timeClientSetup() {
 
   // Set callback for time library and leave the sync to the NTP client
   setSyncProvider(getUtcTime);
-  setSyncInterval(0);
+  setSyncInterval(3600);  // Sync every hour (3600 seconds)
 }
 
 int getTzCount() {
