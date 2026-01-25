@@ -7,6 +7,7 @@
 class Rule {
 public:
   Rule() : _poolTemp(0.0), _solarTemp(0.0), _poolMaxTemp(0.0), _solarMinTemp(0.0), _hysteresis(0.0) {}
+  virtual ~Rule() = default;
 
   void  setPoolTemperature(float temp) { _poolTemp = temp; }
   float getPoolTemperature() { return _poolTemp; }
