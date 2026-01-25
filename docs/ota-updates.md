@@ -60,14 +60,14 @@ device will automatically reboot with the new firmware.
 1. Open Arduino IDE
 2. Go to **Tools → Port**
 3. Select your device from the network ports list
-   (e.g., `pool-controller at 192.168.1.100`)
+  (e.g., `pool-controller at 192.168.1.100`)
 4. Click Upload button
 5. Enter OTA password when prompted
 
 ### Method 3: Web Interface (Homie UI)
 
 1. Access Homie web interface at `http://pool-controller.local/`
-   or `http://[DEVICE_IP]/`
+  or `http://[DEVICE_IP]/`
 2. Navigate to **Firmware Update** section
 3. Select compiled `.bin` file
 4. Click **Upload**
@@ -350,7 +350,7 @@ homie/pool-controller/$fw/name = "pool-controller"
 # Backup current firmware before update
 pio run -e nodemcuv2
 cp .pio/build/nodemcuv2/firmware.bin \
-   backups/firmware-v3.1.0-$(date +%Y%m%d).bin
+  backups/firmware-v3.1.0-$(date +%Y%m%d).bin
 ```
 
 ### 4. Schedule Updates
@@ -366,18 +366,18 @@ cp .pio/build/nodemcuv2/firmware.bin \
 If OTA update fails and device becomes unresponsive:
 
 1. **Physical Access Recovery**:
-   - Connect via USB serial
-   - Upload firmware via serial: `pio run -e nodemcuv2 --target upload`
+  - Connect via USB serial
+  - Upload firmware via serial: `pio run -e nodemcuv2 --target upload`
 
 2. **Bootloader Recovery**:
-   - ESP8266/ESP32 bootloader allows serial recovery
-   - Hold BOOT button during power-on
-   - Upload firmware via esptool
+  - ESP8266/ESP32 bootloader allows serial recovery
+  - Hold BOOT button during power-on
+  - Upload firmware via esptool
 
 3. **Factory Reset**:
-   - Clear EEPROM/NVS
-   - Reset Homie configuration
-   - Reconfigure via Homie AP
+  - Clear EEPROM/NVS
+  - Reset Homie configuration
+  - Reconfigure via Homie AP
 
 ## Future Enhancements
 
