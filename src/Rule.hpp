@@ -5,8 +5,9 @@
 #include "Timer.hpp"
 
 class Rule {
-public:
-  Rule() : _poolTemp(0.0), _solarTemp(0.0), _poolMaxTemp(0.0), _solarMinTemp(0.0), _hysteresis(0.0) {}
+ public:
+  Rule() : _poolTemp(0.0), _solarTemp(0.0), _poolMaxTemp(0.0),
+           _solarMinTemp(0.0), _hysteresis(0.0) {}
   virtual ~Rule() = default;
 
   void  setPoolTemperature(float temp) { _poolTemp = temp; }
@@ -23,7 +24,9 @@ public:
   void  setTemperatureHysteresis(float temp) { _hysteresis = temp; }
   float getTemperatureHysteresis() { return _hysteresis; }
 
-  void         setTimerSetting(TimerSetting setting) { _timerSetting = setting; }
+  void         setTimerSetting(TimerSetting setting) {
+    _timerSetting = setting;
+  }
   TimerSetting getTimerSetting() { return _timerSetting; }
 
   /**
@@ -32,7 +35,7 @@ public:
   virtual const char* getMode() = 0;
   virtual void        loop()    = 0;
 
-protected:
+ protected:
   float _poolTemp;
   float _solarTemp;
 
