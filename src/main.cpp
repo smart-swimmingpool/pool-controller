@@ -43,6 +43,9 @@ HomieSetting<double> temperatureMaxPoolSetting("temperature-max-pool", "Maximum 
 HomieSetting<double> temperatureMinSolarSetting("temperature-min-solar", "Minimum temperature of solar");
 HomieSetting<double> temperatureHysteresisSetting("temperature-hysteresis", "Temperature hysteresis");
 
+HomieSetting<double> poolVolumeSetting("pool-volume", "Pool volume in cubic meters");
+HomieSetting<double> pumpCapacitySetting("pump-capacity", "Pump capacity in cubic meters per hour");
+
 HomieSetting<const char*> operationModeSetting("operation-mode", "Operational Mode");
 
 LoggerNode LN;
@@ -83,6 +86,8 @@ void setupHandler() {
   operationModeNode.setPoolMaxTemperature(temperatureMaxPoolSetting.get());
   operationModeNode.setSolarMinTemperature(temperatureMinSolarSetting.get());
   operationModeNode.setTemperatureHysteresis(temperatureHysteresisSetting.get());
+  operationModeNode.setPoolVolume(poolVolumeSetting.get());
+  operationModeNode.setPumpCapacity(pumpCapacitySetting.get());
   TimerSetting ts      = operationModeNode.getTimerSetting();  //TODO: Configurable
   ts.timerStartHour    = 10;
   ts.timerStartMinutes = 30;
@@ -139,8 +144,17 @@ void setup() {
   temperatureHysteresisSetting.setDefaultValue(1.0).setValidator(
       [](long candidate) { return (candidate >= 0) && (candidate <= 10); });
 
+  // Pool volume default: 30 m³ (typical small pool)
+  poolVolumeSetting.setDefaultValue(30.0).setValidator(
+      [](double candidate) { return (candidate > 0) && (candidate <= 1000); });
+
+  // Pump capacity default: 6 m³/h (typical pool pump)
+  pumpCapacitySetting.setDefaultValue(6.0).setValidator(
+      [](double candidate) { return (candidate > 0) && (candidate <= 100); });
+
   operationModeSetting.setDefaultValue("auto").setValidator([](const char* candidate) {
-    return (strcmp(candidate, "auto")) || (strcmp(candidate, "manu")) || (strcmp(candidate, "boost"));
+    return (strcmp(candidate, "auto") == 0) || (strcmp(candidate, "manu") == 0) || 
+           (strcmp(candidate, "boost") == 0) || (strcmp(candidate, "timer") == 0);
   });
 
   //Homie.disableLogging();

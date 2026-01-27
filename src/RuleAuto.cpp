@@ -71,11 +71,32 @@ bool RuleAuto::checkPoolPumpTimer() {
   bool retval;
 
   tm startTime = getStartTime(getTimerSetting());
-  tm endTime   = getEndTime(getTimerSetting());
+  
+  // Calculate dynamic filtration duration based on temperature
+  float filtrationHours = calculateFiltrationDuration();
+  
+  // Check for invalid configuration
+  if (filtrationHours <= 0.0) {
+    Homie.getLogger() << cIndent << F("✖ Invalid filtration configuration (pool volume or pump capacity not set)") << endl;
+    Homie.getLogger() << cIndent << F("  Pool volume: ") << getPoolVolume() << F(" m³") << endl;
+    Homie.getLogger() << cIndent << F("  Pump capacity: ") << getPumpCapacity() << F(" m³/h") << endl;
+    // Return false to keep pump off when configuration is invalid
+    return false;
+  }
+  
+  // Calculate end time based on start time + filtration duration
+  tm endTime = startTime;
+  // Add hours and minutes separately for better precision
+  int hoursToAdd = (int)filtrationHours;
+  int minutesToAdd = (int)((filtrationHours - hoursToAdd) * 60.0 + 0.5);  // Round to nearest minute
+  endTime.tm_hour += hoursToAdd;
+  endTime.tm_min += minutesToAdd;
+  mktime(&endTime);  // Normalize the time structure
 
   Homie.getLogger() << cIndent << F("currenttime=") << asctime(&time);
   Homie.getLogger() << cIndent << F("startTime=  ") << asctime(&startTime);
-  Homie.getLogger() << cIndent << F("endTime=    ") << asctime(&endTime);
+  Homie.getLogger() << cIndent << F("filtration duration (h)= ") << filtrationHours << endl;
+  Homie.getLogger() << cIndent << F("endTime (calculated)=    ") << asctime(&endTime);
 
   if (difftime(mktime(&time), mktime(&startTime)) >= 0 && difftime(mktime(&time), mktime(&endTime)) <= 0) {
     retval = true;

@@ -42,6 +42,12 @@ public:
   void  setTemperatureHysteresis(float temp) { _hysteresis = temp; };
   float getTemperatureHysteresis() { return _hysteresis; };
 
+  void  setPoolVolume(float volume) { _poolVolume = volume; };
+  float getPoolVolume() { return _poolVolume; };
+
+  void  setPumpCapacity(float capacity) { _pumpCapacity = capacity; };
+  float getPumpCapacity() { return _pumpCapacity; };
+
   void         setTimerSetting(TimerSetting setting) { _timerSetting = setting; };
   TimerSetting getTimerSetting() { return _timerSetting; };
 
@@ -75,6 +81,12 @@ private:
   const char* cHysteresis     = "hysteresis";
   const char* cHysteresisName = "Hysterese";
 
+  const char* cPoolVolume     = "pool-volume";
+  const char* cPoolVolumeName = "Pool Volume";
+
+  const char* cPumpCapacity     = "pump-capacity";
+  const char* cPumpCapacityName = "Pump Capacity";
+
   const char* cTimerStartHour = "timer-start-h";
   const char* cTimerStartMin  = "timer-start-min";
 
@@ -91,6 +103,8 @@ private:
   float         _poolMaxTemp;
   float         _solarMinTemp;
   float         _hysteresis;
+  float         _poolVolume;     // Pool volume in m³
+  float         _pumpCapacity;   // Pump capacity in m³/h
   Vector<Rule*> _ruleVec;
 
   DallasTemperatureNode* _currentPoolTempNode;

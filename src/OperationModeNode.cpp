@@ -12,6 +12,8 @@ OperationModeNode::OperationModeNode(const char* id, const char* name, const int
 
   _measurementInterval = (measurementInterval > MIN_INTERVAL) ? measurementInterval : MIN_INTERVAL;
   _lastMeasurement     = 0;
+  _poolVolume          = 0.0;
+  _pumpCapacity        = 0.0;
 
   //setRunLoopDisconnected(true);
 }
@@ -36,6 +38,8 @@ Rule* OperationModeNode::getRule() {
       _ruleVec[i]->setPoolMaxTemperature(getPoolMaxTemperature());
       _ruleVec[i]->setSolarMinTemperature(getSolarMinTemperature());
       _ruleVec[i]->setTemperatureHysteresis(getTemperatureHysteresis());
+      _ruleVec[i]->setPoolVolume(getPoolVolume());
+      _ruleVec[i]->setPumpCapacity(getPumpCapacity());
       _ruleVec[i]->setTimerSetting(getTimerSetting());
 
       _ruleVec[i]->setPoolTemperature(_currentPoolTempNode->getTemperature());
@@ -87,6 +91,8 @@ void OperationModeNode::setup() {
   advertise(cPoolMaxTemp).setName(cPoolMaxTempName).setDatatype("float").setFormat("0:40").setUnit("°C").settable();
   advertise(cSolarMinTemp).setName(cSolarMinTempName).setDatatype("float").setFormat("0:100").setUnit("°C").settable();
   advertise(cHysteresis).setName(cHysteresisName).setDatatype("float").setFormat("0:10").setUnit("K").settable();
+  advertise(cPoolVolume).setName(cPoolVolumeName).setDatatype("float").setFormat("0:1000").setUnit("m³").settable();
+  advertise(cPumpCapacity).setName(cPumpCapacityName).setDatatype("float").setFormat("0:100").setUnit("m³/h").settable();
 
   advertise(cTimerStartHour).setName("Timer Start").setDatatype("float").setFormat("0:23").setUnit("hh").settable();
   advertise(cTimerStartMin).setName("Timer Start").setDatatype("float").setFormat("0:59").setUnit("MM").settable();
@@ -100,7 +106,7 @@ void OperationModeNode::setup() {
  */
 void OperationModeNode::loop() {
   if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {
-    Homie.getLogger() << F("〽 OperatioalMode update rule ") << endl;
+    Homie.getLogger() << F("〽 OperationalMode update rule ") << endl;
     //call loop to evaluate the current rule
     Rule* rule = getRule();
     if( rule != nullptr) {
@@ -119,6 +125,8 @@ void OperationModeNode::loop() {
       setProperty(cSolarMinTemp).send(String(_solarMinTemp));
       setProperty(cPoolMaxTemp).send(String(_poolMaxTemp));
       setProperty(cHysteresis).send(String(_hysteresis));
+      setProperty(cPoolVolume).send(String(_poolVolume));
+      setProperty(cPumpCapacity).send(String(_pumpCapacity));
 
       setProperty(cTimerStartHour).send(String(_timerSetting.timerStartHour));
       setProperty(cTimerStartMin).send(String(_timerSetting.timerStartMinutes));
@@ -160,6 +168,16 @@ bool OperationModeNode::handleInput(const HomieRange& range, const String& prope
     Homie.getLogger() << cIndent << F("✔ pool max temp: ") << value << endl;
     _poolMaxTemp = value.toFloat();
     retval       = true;
+
+  } else if (property.equalsIgnoreCase(cPoolVolume)) {
+    Homie.getLogger() << cIndent << F("✔ pool volume: ") << value << endl;
+    _poolVolume = value.toFloat();
+    retval      = true;
+
+  } else if (property.equalsIgnoreCase(cPumpCapacity)) {
+    Homie.getLogger() << cIndent << F("✔ pump capacity: ") << value << endl;
+    _pumpCapacity = value.toFloat();
+    retval        = true;
 
   } else if (property.equalsIgnoreCase(cTimerStartHour)) {
     Homie.getLogger() << cIndent << F("✔ Timer start hh: ") << value << endl;
