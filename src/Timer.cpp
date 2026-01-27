@@ -6,7 +6,7 @@
 tm getCurrentDateTime() {
 
   TimeChangeRule *tcr = NULL;
-  time_t     t        = getTimeFor(0, &tcr);
+  time_t     t        = getTimeFor(getTimezoneIndex(), &tcr);
   struct tm timeinfo =  *localtime(&t);
 
   return timeinfo;

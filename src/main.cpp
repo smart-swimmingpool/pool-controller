@@ -39,6 +39,8 @@ const uint8_t TEMP_READ_INTERVALL = 30;  //Sekunden zwischen Updates der Tempera
 
 HomieSetting<long> loopIntervalSetting("loop-interval", "The processing interval in seconds");
 
+HomieSetting<long> timezoneSetting("timezone", "Timezone index (0=Central EU, 1=Eastern EU, 2=Western EU, 3=US Eastern, 4=US Central, 5=US Mountain, 6=US Pacific, 7=Australian Eastern, 8=Japan, 9=China)");
+
 HomieSetting<double> temperatureMaxPoolSetting("temperature-max-pool", "Maximum temperature of solar");
 HomieSetting<double> temperatureMinSolarSetting("temperature-min-solar", "Minimum temperature of solar");
 HomieSetting<double> temperatureHysteresisSetting("temperature-hysteresis", "Temperature hysteresis");
@@ -68,6 +70,9 @@ void setupHandler() {
 
   // set mesurement intervals
   long _loopInterval = loopIntervalSetting.get();
+
+  // Set the timezone from configuration
+  setTimezoneIndex(timezoneSetting.get());
 
   solarTemperatureNode.setMeasurementInterval(_loopInterval);
   poolTemperatureNode.setMeasurementInterval(_loopInterval);
@@ -128,6 +133,10 @@ void setup() {
   //default intervall of sending Temperature values
   loopIntervalSetting.setDefaultValue(TEMP_READ_INTERVALL).setValidator([](long candidate) {
     return (candidate >= 0) && (candidate <= 300);
+  });
+
+  timezoneSetting.setDefaultValue(0).setValidator([](long candidate) {
+    return (candidate >= 0) && (candidate < getTzCount());
   });
 
   temperatureMaxPoolSetting.setDefaultValue(28.5).setValidator(
