@@ -15,18 +15,9 @@ FILTER_REGEX_EXCLUDE: |
 CPP_FILTER_REGEX_INCLUDE: |
   src/.*\.(cpp|hpp|h)
 
-# Disable certain linters that are not applicable or too strict
-VALIDATE_JSCPD: false  # Disable copy-paste detection (too noisy for embedded)
-VALIDATE_NATURAL_LANGUAGE: false  # Not needed for code
-VALIDATE_GO: false  # Not a Go project
-VALIDATE_PYTHON: false  # Not a Python project (unless you have Python scripts)
-VALIDATE_RUBY: false  # Not a Ruby project
-VALIDATE_TERRAFORM: false  # Not a Terraform project
-VALIDATE_KUBERNETES: false  # Not a Kubernetes project
-VALIDATE_OPENAPI: false  # Not applicable
-VALIDATE_PROTOBUF: false  # Not applicable
-VALIDATE_GITLEAKS: true  # Keep secret scanning enabled
-VALIDATE_ANSIBLE: false  # Not applicable
+# Enable only the linters we need for this project
+# All other linters are disabled by default when using selective validation
+VALIDATE_GITLEAKS: true  # Secret scanning
 
 # Markdown linting - more lenient for documentation
 MARKDOWN_CONFIG_FILE: .markdown-lint.yml
@@ -39,24 +30,16 @@ YAML_ERROR_ON_WARNING: false
 CPP_FILE_EXTENSIONS: "cpp,hpp,h"
 CLANG_FORMAT_CONFIG_FILE: .clang-format
 
-# EditorConfig validation
+# Enable specific linters needed for this PlatformIO project
 VALIDATE_EDITORCONFIG: true
-
-# Disable linters for files we don't control
-VALIDATE_CSS: false
-VALIDATE_HTML: false
-VALIDATE_JAVASCRIPT_STANDARD: false
-VALIDATE_TYPESCRIPT: false
-
-# GitHub Actions workflow linting
 VALIDATE_GITHUB_ACTIONS: true
-
-# Shell script linting (if you have any)
 VALIDATE_BASH: true
 VALIDATE_SHELL_SHFMT: true
-
-# JSON linting (for platformio.ini and other configs)
 VALIDATE_JSON: true
+VALIDATE_CLANG_FORMAT: true
+VALIDATE_CPP: true
+VALIDATE_MARKDOWN: true
+VALIDATE_YAML: true
 
 # Treat warnings as errors (set to false for more lenient linting)
 WARNINGS_AS_ERRORS: false
