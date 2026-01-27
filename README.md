@@ -24,6 +24,7 @@ Discussions: <https://github.com/smart-swimmingpool/smart-swimmingpool.github.io
   - [x] [openHAB](https://www.openhab.org) since Version 2.4 using MQTT Homie
   - [x] [Home Assistant](https://www.home-assistant.io/) using MQTT Homie
 - [x] Timesync via NTP (europe.pool.ntp.org)
+- [x] Configurable timezone with DST support (10 major timezones available)
 - [x] Logging-Information via Homie-Node
 
 ## Planned Features
