@@ -48,6 +48,9 @@ public:
   void  setPumpCapacity(float capacity) { _pumpCapacity = capacity; };
   float getPumpCapacity() { return _pumpCapacity; };
 
+  void setUseTemperatureBasedDuration(bool enable) { _useTemperatureBasedDuration = enable; };
+  bool getUseTemperatureBasedDuration() { return _useTemperatureBasedDuration; };
+
   void         setTimerSetting(TimerSetting setting) { _timerSetting = setting; };
   TimerSetting getTimerSetting() { return _timerSetting; };
 
@@ -87,6 +90,9 @@ private:
   const char* cPumpCapacity     = "pump-capacity";
   const char* cPumpCapacityName = "Pump Capacity";
 
+  const char* cUseTemperatureBasedDuration     = "use-temp-based-duration";
+  const char* cUseTemperatureBasedDurationName = "Temperature-based Duration";
+
   const char* cTimerStartHour = "timer-start-h";
   const char* cTimerStartMin  = "timer-start-min";
 
@@ -105,6 +111,7 @@ private:
   float         _hysteresis;
   float         _poolVolume;     // Pool volume in m³
   float         _pumpCapacity;   // Pump capacity in m³/h
+  bool          _useTemperatureBasedDuration;  // Enable/disable temperature-based duration
   Vector<Rule*> _ruleVec;
 
   DallasTemperatureNode* _currentPoolTempNode;

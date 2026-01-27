@@ -45,6 +45,7 @@ HomieSetting<double> temperatureHysteresisSetting("temperature-hysteresis", "Tem
 
 HomieSetting<double> poolVolumeSetting("pool-volume", "Pool volume in cubic meters");
 HomieSetting<double> pumpCapacitySetting("pump-capacity", "Pump capacity in cubic meters per hour");
+HomieSetting<bool> useTemperatureBasedDurationSetting("use-temp-based-duration", "Use temperature-based filtration duration");
 
 HomieSetting<const char*> operationModeSetting("operation-mode", "Operational Mode");
 
@@ -88,6 +89,7 @@ void setupHandler() {
   operationModeNode.setTemperatureHysteresis(temperatureHysteresisSetting.get());
   operationModeNode.setPoolVolume(poolVolumeSetting.get());
   operationModeNode.setPumpCapacity(pumpCapacitySetting.get());
+  operationModeNode.setUseTemperatureBasedDuration(useTemperatureBasedDurationSetting.get());
   TimerSetting ts      = operationModeNode.getTimerSetting();  //TODO: Configurable
   ts.timerStartHour    = 10;
   ts.timerStartMinutes = 30;
@@ -151,6 +153,11 @@ void setup() {
   // Pump capacity default: 6 m³/h (typical pool pump)
   pumpCapacitySetting.setDefaultValue(6.0).setValidator(
       [](double candidate) { return (candidate > 0) && (candidate <= 100); });
+
+  // Use temperature-based duration: default false (use fixed timer)
+  // This allows users to choose between dynamic temperature-based calculation
+  // and traditional fixed start/stop times
+  useTemperatureBasedDurationSetting.setDefaultValue(false);
 
   operationModeSetting.setDefaultValue("auto").setValidator([](const char* candidate) {
     return (strcmp(candidate, "auto") == 0) || (strcmp(candidate, "manu") == 0) || 

@@ -40,6 +40,7 @@ Rule* OperationModeNode::getRule() {
       _ruleVec[i]->setTemperatureHysteresis(getTemperatureHysteresis());
       _ruleVec[i]->setPoolVolume(getPoolVolume());
       _ruleVec[i]->setPumpCapacity(getPumpCapacity());
+      _ruleVec[i]->setUseTemperatureBasedDuration(getUseTemperatureBasedDuration());
       _ruleVec[i]->setTimerSetting(getTimerSetting());
 
       _ruleVec[i]->setPoolTemperature(_currentPoolTempNode->getTemperature());
@@ -93,6 +94,7 @@ void OperationModeNode::setup() {
   advertise(cHysteresis).setName(cHysteresisName).setDatatype("float").setFormat("0:10").setUnit("K").settable();
   advertise(cPoolVolume).setName(cPoolVolumeName).setDatatype("float").setFormat("0:1000").setUnit("m³").settable();
   advertise(cPumpCapacity).setName(cPumpCapacityName).setDatatype("float").setFormat("0:100").setUnit("m³/h").settable();
+  advertise(cUseTemperatureBasedDuration).setName(cUseTemperatureBasedDurationName).setDatatype("boolean").settable();
 
   advertise(cTimerStartHour).setName("Timer Start").setDatatype("float").setFormat("0:23").setUnit("hh").settable();
   advertise(cTimerStartMin).setName("Timer Start").setDatatype("float").setFormat("0:59").setUnit("MM").settable();
@@ -127,6 +129,7 @@ void OperationModeNode::loop() {
       setProperty(cHysteresis).send(String(_hysteresis));
       setProperty(cPoolVolume).send(String(_poolVolume));
       setProperty(cPumpCapacity).send(String(_pumpCapacity));
+      setProperty(cUseTemperatureBasedDuration).send(_useTemperatureBasedDuration ? "true" : "false");
 
       setProperty(cTimerStartHour).send(String(_timerSetting.timerStartHour));
       setProperty(cTimerStartMin).send(String(_timerSetting.timerStartMinutes));
@@ -178,6 +181,11 @@ bool OperationModeNode::handleInput(const HomieRange& range, const String& prope
     Homie.getLogger() << cIndent << F("✔ pump capacity: ") << value << endl;
     _pumpCapacity = value.toFloat();
     retval        = true;
+
+  } else if (property.equalsIgnoreCase(cUseTemperatureBasedDuration)) {
+    Homie.getLogger() << cIndent << F("✔ use temperature-based duration: ") << value << endl;
+    _useTemperatureBasedDuration = value.equalsIgnoreCase("true") || value.equals("1");
+    retval = true;
 
   } else if (property.equalsIgnoreCase(cTimerStartHour)) {
     Homie.getLogger() << cIndent << F("✔ Timer start hh: ") << value << endl;

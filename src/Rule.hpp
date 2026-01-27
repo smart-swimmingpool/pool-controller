@@ -6,7 +6,7 @@
 class Rule {
 
 public:
-  Rule() : _poolTemp(0.0), _solarTemp(0.0), _poolMaxTemp(0.0), _solarMinTemp(0.0), _hysteresis(0.0), _poolVolume(0.0), _pumpCapacity(0.0){};
+  Rule() : _poolTemp(0.0), _solarTemp(0.0), _poolMaxTemp(0.0), _solarMinTemp(0.0), _hysteresis(0.0), _poolVolume(0.0), _pumpCapacity(0.0), _useTemperatureBasedDuration(false){};
 
   void  setPoolTemperature(float temp) { _poolTemp = temp; };
   float getPoolTemperature() { return _poolTemp; };
@@ -27,6 +27,9 @@ public:
 
   void  setPumpCapacity(float capacity) { _pumpCapacity = capacity; };
   float getPumpCapacity() { return _pumpCapacity; };
+
+  void setUseTemperatureBasedDuration(bool enable) { _useTemperatureBasedDuration = enable; };
+  bool getUseTemperatureBasedDuration() { return _useTemperatureBasedDuration; };
 
   void         setTimerSetting(TimerSetting setting) { _timerSetting = setting; };
   TimerSetting getTimerSetting() { return _timerSetting; };
@@ -78,6 +81,8 @@ protected:
 
   float _poolVolume;    // Pool volume in m³
   float _pumpCapacity;  // Pump capacity in m³/h
+
+  bool _useTemperatureBasedDuration;  // Enable/disable temperature-based duration calculation
 
   TimerSetting _timerSetting;
 };
