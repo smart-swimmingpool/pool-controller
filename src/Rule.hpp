@@ -35,7 +35,8 @@ public:
    * Calculate required filtration duration in hours based on water temperature.
    * At 20°C: 1 complete turnover per day
    * At 28°C: 2 complete turnovers per day
-   * Linear interpolation between 20-28°C
+   * Linear interpolation between 20-28°C: turnover = 1.0 + ((temp - 20.0) / 8.0)
+   *   where 8.0 is the temperature range (28°C - 20°C)
    */
   float calculateFiltrationDuration() {
     if (_pumpCapacity <= 0.0 || _poolVolume <= 0.0) {
@@ -52,6 +53,7 @@ public:
       turnoverFactor = 2.0;  // 2 complete turnovers at 28°C or above
     } else {
       // Linear interpolation between 20°C and 28°C
+      // Formula: 1.0 + (temperature increase / temperature range)
       turnoverFactor = 1.0 + ((temp - 20.0) / 8.0);
     }
 

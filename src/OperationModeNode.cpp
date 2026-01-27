@@ -12,6 +12,8 @@ OperationModeNode::OperationModeNode(const char* id, const char* name, const int
 
   _measurementInterval = (measurementInterval > MIN_INTERVAL) ? measurementInterval : MIN_INTERVAL;
   _lastMeasurement     = 0;
+  _poolVolume          = 0.0;
+  _pumpCapacity        = 0.0;
 
   //setRunLoopDisconnected(true);
 }
@@ -104,7 +106,7 @@ void OperationModeNode::setup() {
  */
 void OperationModeNode::loop() {
   if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {
-    Homie.getLogger() << F("〽 OperatioalMode update rule ") << endl;
+    Homie.getLogger() << F("〽 OperationalMode update rule ") << endl;
     //call loop to evaluate the current rule
     Rule* rule = getRule();
     if( rule != nullptr) {

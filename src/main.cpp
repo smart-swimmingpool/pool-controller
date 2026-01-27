@@ -146,14 +146,15 @@ void setup() {
 
   // Pool volume default: 30 m³ (typical small pool)
   poolVolumeSetting.setDefaultValue(30.0).setValidator(
-      [](long candidate) { return (candidate > 0) && (candidate <= 1000); });
+      [](double candidate) { return (candidate > 0) && (candidate <= 1000); });
 
   // Pump capacity default: 6 m³/h (typical pool pump)
   pumpCapacitySetting.setDefaultValue(6.0).setValidator(
-      [](long candidate) { return (candidate > 0) && (candidate <= 100); });
+      [](double candidate) { return (candidate > 0) && (candidate <= 100); });
 
   operationModeSetting.setDefaultValue("auto").setValidator([](const char* candidate) {
-    return (strcmp(candidate, "auto")) || (strcmp(candidate, "manu")) || (strcmp(candidate, "boost"));
+    return (strcmp(candidate, "auto") == 0) || (strcmp(candidate, "manu") == 0) || 
+           (strcmp(candidate, "boost") == 0) || (strcmp(candidate, "timer") == 0);
   });
 
   //Homie.disableLogging();
