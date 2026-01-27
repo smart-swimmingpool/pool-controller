@@ -71,11 +71,20 @@ bool RuleAuto::checkPoolPumpTimer() {
   bool retval;
 
   tm startTime = getStartTime(getTimerSetting());
-  tm endTime   = getEndTime(getTimerSetting());
+  
+  // Calculate dynamic filtration duration based on temperature
+  float filtrationHours = calculateFiltrationDuration();
+  
+  // Calculate end time based on start time + filtration duration
+  tm endTime = startTime;
+  int totalMinutes = (int)(filtrationHours * 60.0);
+  endTime.tm_min += totalMinutes;
+  mktime(&endTime);  // Normalize the time structure
 
   Homie.getLogger() << cIndent << F("currenttime=") << asctime(&time);
   Homie.getLogger() << cIndent << F("startTime=  ") << asctime(&startTime);
-  Homie.getLogger() << cIndent << F("endTime=    ") << asctime(&endTime);
+  Homie.getLogger() << cIndent << F("filtration duration (h)= ") << filtrationHours << endl;
+  Homie.getLogger() << cIndent << F("endTime (calculated)=    ") << asctime(&endTime);
 
   if (difftime(mktime(&time), mktime(&startTime)) >= 0 && difftime(mktime(&time), mktime(&endTime)) <= 0) {
     retval = true;
