@@ -39,6 +39,8 @@ const uint8_t TEMP_READ_INTERVALL = 30;  //Sekunden zwischen Updates der Tempera
 
 HomieSetting<long> loopIntervalSetting("loop-interval", "The processing interval in seconds");
 
+HomieSetting<const char*> ntpServerSetting("ntp-server", "NTP server address");
+
 HomieSetting<double> temperatureMaxPoolSetting("temperature-max-pool", "Maximum temperature of solar");
 HomieSetting<double> temperatureMinSolarSetting("temperature-min-solar", "Minimum temperature of solar");
 HomieSetting<double> temperatureHysteresisSetting("temperature-hysteresis", "Temperature hysteresis");
@@ -65,6 +67,9 @@ unsigned long _lastMeasurement;
  * Only called when wifi and mqtt are connected.
  */
 void setupHandler() {
+
+  // Initialize NTP client with configured server
+  timeClientSetup(ntpServerSetting.get());
 
   // set mesurement intervals
   long _loopInterval = loopIntervalSetting.get();
@@ -129,6 +134,8 @@ void setup() {
   loopIntervalSetting.setDefaultValue(TEMP_READ_INTERVALL).setValidator([](long candidate) {
     return (candidate >= 0) && (candidate <= 300);
   });
+
+  ntpServerSetting.setDefaultValue("pool.ntp.org");
 
   temperatureMaxPoolSetting.setDefaultValue(28.5).setValidator(
       [](long candidate) { return (candidate >= 0) && (candidate <= 30); });

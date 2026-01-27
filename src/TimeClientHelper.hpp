@@ -15,7 +15,7 @@ struct TimeZoneInfo
   Timezone *timezone;
 };
 
-void timeClientSetup();
+void timeClientSetup(const char* ntpServer = "pool.ntp.org");
 int getTzCount();
 time_t getUtcTime();
 time_t getTimeFor(int index, TimeChangeRule **tcr);
