@@ -201,6 +201,8 @@ bool OperationModeNode::handleInput(const HomieRange& range, const String& prope
     if (tzIndex >= 0 && tzIndex < getTzCount()) {
       setTimezoneIndex(tzIndex);
       Homie.getLogger() << cIndent << F("  Set to: ") << getTimeInfoFor(tzIndex) << endl;
+      // Note: This is a runtime change. To persist across reboots, update the 
+      // 'timezone' HomieSetting in the configuration file.
       retval = true;
     } else {
       Homie.getLogger() << cIndent << F("✖ Invalid timezone index: ") << tzIndex << endl;

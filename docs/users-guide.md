@@ -69,6 +69,7 @@ There are some specific settings for the controller:
     - `9` - China Time (Beijing) - No DST
   - Default value: `0` (Central European Time)
   - This setting can be configured during initial setup or changed at runtime via MQTT
+  - **Note:** Runtime changes via MQTT (operation-mode/timezone) are temporary. To persist the timezone setting across reboots, update the `timezone` configuration in the Homie settings.
 
 ## Rules
 

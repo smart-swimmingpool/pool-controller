@@ -35,7 +35,8 @@ TimeChangeRule CDT = {"CDT", Second, Sun, Mar, 2, -300}; // Central Daylight Tim
 TimeChangeRule CST = {"CST", First, Sun, Nov, 2, -360};  // Central Standard Time (UTC-6)
 Timezone USCentral(CDT, CST);
 
-// US Mountain Time (Denver, Phoenix, ...)
+// US Mountain Time (Denver, ...)
+// Note: Most of Arizona does not observe DST
 TimeChangeRule MDT = {"MDT", Second, Sun, Mar, 2, -360}; // Mountain Daylight Time (UTC-6)
 TimeChangeRule MST = {"MST", First, Sun, Nov, 2, -420};  // Mountain Standard Time (UTC-7)
 Timezone USMountain(MDT, MST);
@@ -95,8 +96,8 @@ time_t getUtcTime() {
 }
 
 time_t getTimeFor(int index, TimeChangeRule **tcr) {
-  if (index < getTzCount()) {
-    // Zeturn the time for the selected time zone
+  if (index >= 0 && index < getTzCount()) {
+    // Return the time for the selected time zone
     return _timezones[index].timezone->toLocal(getUtcTime(), tcr);
   } else {
     return getUtcTime();
@@ -104,7 +105,7 @@ time_t getTimeFor(int index, TimeChangeRule **tcr) {
 }
 
 String getTimeInfoFor(int index) {
-  if (index < getTzCount()) {
+  if (index >= 0 && index < getTzCount()) {
     // Return the time for the selected time zone
     return _timezones[index].description;
   } else {
