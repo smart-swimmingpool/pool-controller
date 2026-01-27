@@ -135,7 +135,9 @@ void setup() {
     return (candidate >= 0) && (candidate <= 300);
   });
 
-  ntpServerSetting.setDefaultValue("pool.ntp.org");
+  ntpServerSetting.setDefaultValue("pool.ntp.org").setValidator([](const char* candidate) {
+    return (candidate != nullptr) && (strlen(candidate) > 0);
+  });
 
   temperatureMaxPoolSetting.setDefaultValue(28.5).setValidator(
       [](long candidate) { return (candidate >= 0) && (candidate <= 30); });
