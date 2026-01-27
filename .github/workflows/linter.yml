@@ -55,25 +55,10 @@ jobs:
           # Exclude build artifacts and dependencies
           FILTER_REGEX_EXCLUDE: .*/(\.pio|\.vscode|\.platformio|build|lib)/.*
           
-          # C/C++ Linting - Only validate source code
+          # Enable only relevant linters for PlatformIO project
+          # When using selective validation, all other linters are disabled automatically
           VALIDATE_CPP: true
           VALIDATE_CLANG_FORMAT: true
-          CPP_FILE_EXTENSIONS: "cpp,hpp,h"
-          
-          # Disable non-applicable linters
-          VALIDATE_ANSIBLE: false
-          VALIDATE_GO: false
-          VALIDATE_PYTHON: false
-          VALIDATE_RUBY: false
-          VALIDATE_TERRAFORM: false
-          VALIDATE_KUBERNETES: false
-          VALIDATE_JSCPD: false
-          VALIDATE_CSS: false
-          VALIDATE_HTML: false
-          VALIDATE_JAVASCRIPT_STANDARD: false
-          VALIDATE_TYPESCRIPT: false
-          
-          # Enable relevant linters
           VALIDATE_MARKDOWN: true
           VALIDATE_YAML: true
           VALIDATE_JSON: true
@@ -81,6 +66,9 @@ jobs:
           VALIDATE_EDITORCONFIG: true
           VALIDATE_GITLEAKS: true
           VALIDATE_BASH: true
+          
+          # C/C++ specific settings
+          CPP_FILE_EXTENSIONS: "cpp,hpp,h"
           
           # Linter configurations
           MARKDOWN_CONFIG_FILE: .markdown-lint.yml
