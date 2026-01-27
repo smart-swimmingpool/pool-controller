@@ -37,7 +37,7 @@ public:
   /**
    * Calculate required filtration duration in hours based on water temperature.
    * At 20°C: 1 complete turnover per day
-   * At 28°C: 2 complete turnovers per day
+   * At 28°C or when max pool temperature is reached: 2 complete turnovers per day
    * Linear interpolation between 20-28°C: turnover = 1.0 + ((temp - 20.0) / 8.0)
    *   where 8.0 is the temperature range (28°C - 20°C)
    */
@@ -49,8 +49,13 @@ public:
     float temp = getPoolTemperature();
     float turnoverFactor;
 
+    // If max pool temperature is reached, use maximum filtration time
+    // to help prevent water from getting warmer
+    if (temp >= getPoolMaxTemperature()) {
+      turnoverFactor = 2.0;  // Maximum filtration at max pool temperature
+    }
     // Calculate turnover factor based on temperature
-    if (temp <= 20.0) {
+    else if (temp <= 20.0) {
       turnoverFactor = 1.0;  // 1 complete turnover at 20°C or below
     } else if (temp >= 28.0) {
       turnoverFactor = 2.0;  // 2 complete turnovers at 28°C or above

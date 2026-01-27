@@ -98,6 +98,8 @@ bool RuleAuto::checkPoolPumpTimer() {
     endTime.tm_min += minutesToAdd;
     mktime(&endTime);  // Normalize the time structure
 
+    Homie.getLogger() << cIndent << F("Pool temp: ") << getPoolTemperature() << F("°C") << endl;
+    Homie.getLogger() << cIndent << F("Max pool temp: ") << getPoolMaxTemperature() << F("°C") << endl;
     Homie.getLogger() << cIndent << F("filtration duration (h)= ") << filtrationHours << endl;
   } else {
     // Use fixed timer end time from settings
