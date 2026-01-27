@@ -1,0 +1,68 @@
+# Super-Linter Configuration for PlatformIO Project
+# https://github.com/github/super-linter
+
+---
+# Exclude patterns for all linters
+FILTER_REGEX_EXCLUDE: |
+  .*/(\.pio|\.vscode|\.platformio|build|\.git|node_modules)/.*
+  .*/lib/.*
+  .*/data/.*
+  .*\.min\.(js|css)
+  .*/test/.*
+
+# C/C++ Configuration
+# Only validate source code, not library dependencies
+CPP_FILTER_REGEX_INCLUDE: |
+  src/.*\.(cpp|hpp|h)
+
+# Disable certain linters that are not applicable or too strict
+VALIDATE_JSCPD: false  # Disable copy-paste detection (too noisy for embedded)
+VALIDATE_NATURAL_LANGUAGE: false  # Not needed for code
+VALIDATE_GO: false  # Not a Go project
+VALIDATE_PYTHON: false  # Not a Python project (unless you have Python scripts)
+VALIDATE_RUBY: false  # Not a Ruby project
+VALIDATE_TERRAFORM: false  # Not a Terraform project
+VALIDATE_KUBERNETES: false  # Not a Kubernetes project
+VALIDATE_OPENAPI: false  # Not applicable
+VALIDATE_PROTOBUF: false  # Not applicable
+VALIDATE_GITLEAKS: true  # Keep secret scanning enabled
+VALIDATE_ANSIBLE: false  # Not applicable
+
+# Markdown linting - more lenient for documentation
+MARKDOWN_CONFIG_FILE: .markdown-lint.yml
+
+# YAML linting
+YAML_CONFIG_FILE: .yaml-lint.yml
+YAML_ERROR_ON_WARNING: false
+
+# C/C++ specific settings
+CPP_FILE_EXTENSIONS: "cpp,hpp,h"
+CLANG_FORMAT_CONFIG_FILE: .clang-format
+
+# EditorConfig validation
+VALIDATE_EDITORCONFIG: true
+
+# Disable linters for files we don't control
+VALIDATE_CSS: false
+VALIDATE_HTML: false
+VALIDATE_JAVASCRIPT_STANDARD: false
+VALIDATE_TYPESCRIPT: false
+
+# GitHub Actions workflow linting
+VALIDATE_GITHUB_ACTIONS: true
+
+# Shell script linting (if you have any)
+VALIDATE_BASH: true
+VALIDATE_SHELL_SHFMT: true
+
+# JSON linting (for platformio.ini and other configs)
+VALIDATE_JSON: true
+
+# Treat warnings as errors (set to false for more lenient linting)
+WARNINGS_AS_ERRORS: false
+
+# Only lint changed files in PR mode
+VALIDATE_ALL_CODEBASE: false
+
+# Logging
+LOG_LEVEL: NOTICE

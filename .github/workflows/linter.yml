@@ -48,9 +48,49 @@ jobs:
         uses: github/super-linter@v5
         env:
           VALIDATE_ALL_CODEBASE: false
-          VALIDATE_ANSIBLE: false
           DEFAULT_BRANCH: master
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+          # PlatformIO Project Optimizations
+          # Exclude build artifacts and dependencies
+          FILTER_REGEX_EXCLUDE: .*/(\.pio|\.vscode|\.platformio|build|lib)/.*
+          
+          # C/C++ Linting - Only validate source code
+          VALIDATE_CPP: true
+          VALIDATE_CLANG_FORMAT: true
+          CPP_FILE_EXTENSIONS: "cpp,hpp,h"
+          
+          # Disable non-applicable linters
+          VALIDATE_ANSIBLE: false
+          VALIDATE_GO: false
+          VALIDATE_PYTHON: false
+          VALIDATE_RUBY: false
+          VALIDATE_TERRAFORM: false
+          VALIDATE_KUBERNETES: false
+          VALIDATE_JSCPD: false
+          VALIDATE_CSS: false
+          VALIDATE_HTML: false
+          VALIDATE_JAVASCRIPT_STANDARD: false
+          VALIDATE_TYPESCRIPT: false
+          
+          # Enable relevant linters
+          VALIDATE_MARKDOWN: true
+          VALIDATE_YAML: true
+          VALIDATE_JSON: true
+          VALIDATE_GITHUB_ACTIONS: true
+          VALIDATE_EDITORCONFIG: true
+          VALIDATE_GITLEAKS: true
+          VALIDATE_BASH: true
+          
+          # Linter configurations
+          MARKDOWN_CONFIG_FILE: .markdown-lint.yml
+          YAML_CONFIG_FILE: .yaml-lint.yml
+          
+          # Don't treat warnings as errors
+          WARNINGS_AS_ERRORS: false
+          
+          # Logging
+          LOG_LEVEL: NOTICE
 
       - name: Arduino Lint
         uses: arduino/arduino-lint-action@v1
