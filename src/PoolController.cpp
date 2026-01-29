@@ -54,7 +54,7 @@ namespace PoolController {
      */
     auto PoolControllerContext::setupHandler() -> void {
 
-        // set mesurement intervals
+        // set measurement intervals
         const std::uint32_t _loopInterval = this->loopIntervalSetting_.get();
 
         solarTemperatureNode.setMeasurementInterval(_loopInterval);
