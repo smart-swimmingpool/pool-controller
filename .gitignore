@@ -2,6 +2,8 @@
 # Created by https://www.gitignore.io/api/c,git,c++,platformio,visualstudiocode
 # Edit at https://www.gitignore.io/?templates=c,git,c++,platformio,visualstudiocode
 
+/.vscode/
+
 ### C ###
 # Prerequisites
 *.d
