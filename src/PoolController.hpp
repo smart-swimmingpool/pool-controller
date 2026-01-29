@@ -37,6 +37,7 @@ namespace PoolController {
         auto setupHandler() -> void;
 
         HomieSetting<long>          loopIntervalSetting_ { "loop-interval", "The processing interval in seconds" };
+        HomieSetting<long>          timezoneSetting_ { "timezone", "Timezone index (0=Central EU, 1=Eastern EU, 2=Western EU, 3=US Eastern, 4=US Central, 5=US Mountain, 6=US Pacific, 7=Australian Eastern, 8=Japan, 9=China)" };
         HomieSetting<double>        temperatureMaxPoolSetting_ { "temperature-max-pool", "Maximum temperature of solar" };
         HomieSetting<double>        temperatureMinSolarSetting_ { "temperature-min-solar", "Minimum temperature of solar" };
         HomieSetting<double>        temperatureHysteresisSetting_ { "temperature-hysteresis", "Temperature hysteresis" };
