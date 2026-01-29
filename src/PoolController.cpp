@@ -103,7 +103,7 @@ namespace PoolController {
         Homie_setFirmware("pool-controller", "3.0.0");
         Homie_setBrand("smart-swimmingpool");
 
-        //default intervall of sending Temperature values
+        //default interval of sending Temperature values
         this->loopIntervalSetting_.setDefaultValue(TEMP_READ_INTERVALL).setValidator(
             [](const long candidate) -> bool {
                 return candidate >= 0 && candidate <= 300;
