@@ -8,7 +8,7 @@ namespace PoolController {
     }
 
     /**
-     * Core controller class using RAII priniples.
+     * Core controller class using RAII principles.
      * Only one instance allowed.
     */
     struct PoolControllerContext final {
