@@ -56,8 +56,8 @@ TimeChangeRule JST = {"JST", First, Sun, Mar, 0, 9 * 60}; // UTC + 9 hours
 Timezone Japan(JST, JST);
 
 // China Time Zone (Beijing) - No DST
-TimeChangeRule CST_CN = {"CST", First, Sun, Mar, 0, 8 * 60}; // UTC + 8 hours
-Timezone China(CST_CN, CST_CN);
+TimeChangeRule CST_CHINA = {"CST", First, Sun, Mar, 0, 8 * 60}; // UTC + 8 hours
+Timezone China(CST_CHINA, CST_CHINA);
 
 TimeZoneInfo _timezones[10] = {
   { "Central European", &Europe },
