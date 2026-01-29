@@ -57,6 +57,9 @@ namespace PoolController {
         // set measurement intervals
         const std::uint32_t _loopInterval = this->loopIntervalSetting_.get();
 
+        // Set the timezone from configuration
+        setTimezoneIndex(this->timezoneSetting_.get());
+
         solarTemperatureNode.setMeasurementInterval(_loopInterval);
         poolTemperatureNode.setMeasurementInterval(_loopInterval);
 
@@ -107,6 +110,12 @@ namespace PoolController {
         this->loopIntervalSetting_.setDefaultValue(TEMP_READ_INTERVALL).setValidator(
             [](const long candidate) -> bool {
                 return candidate >= 0 && candidate <= 300;
+            }
+        );
+
+        this->timezoneSetting_.setDefaultValue(0).setValidator(
+            [](const long candidate) -> bool {
+                return candidate >= 0 && candidate < getTzCount();
             }
         );
 

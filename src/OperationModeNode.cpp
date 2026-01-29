@@ -93,6 +93,9 @@ void OperationModeNode::setup() {
 
   advertise(cTimerEndHour).setName("Timer End").setDatatype("float").setFormat("0:23").setUnit("hh").settable();
   advertise(cTimerEndMin).setName("Timer End").setDatatype("float").setFormat("0:59").setUnit("MM").settable();
+
+  advertise(cTimezone).setName(cTimezoneName).setDatatype("integer").setFormat("0:9").settable();
+  advertise(cTimezoneInfo).setName(cTimezoneInfoName).setDatatype("string");
 }
 
 /**
@@ -125,6 +128,9 @@ void OperationModeNode::loop() {
 
       setProperty(cTimerEndHour).send(String(_timerSetting.timerEndHour));
       setProperty(cTimerEndMin).send(String(_timerSetting.timerEndMinutes));
+
+      setProperty(cTimezone).send(String(getTimezoneIndex()));
+      setProperty(cTimezoneInfo).send(getTimeInfoFor(getTimezoneIndex()));
     } else {
       Homie.getLogger() << F("✖ OperationalMode: not connected.") << endl;
     }
@@ -188,6 +194,19 @@ bool OperationModeNode::handleInput(const HomieRange& range, const String& prope
     timerSetting.timerEndMinutes = value.toInt();
     setTimerSetting(timerSetting);
     retval = true;
+
+  } else if (property.equalsIgnoreCase(cTimezone)) {
+    Homie.getLogger() << cIndent << F("✔ Timezone: ") << value << endl;
+    int tzIndex = value.toInt();
+    if (tzIndex >= 0 && tzIndex < getTzCount()) {
+      setTimezoneIndex(tzIndex);
+      Homie.getLogger() << cIndent << F("  Set to: ") << getTimeInfoFor(tzIndex) << endl;
+      // Note: This only updates the timezone at runtime; persistence is handled via configuration.
+      retval = true;
+    } else {
+      Homie.getLogger() << cIndent << F("✖ Invalid timezone index: ") << tzIndex << endl;
+      retval = false;
+    }
 
   } else {
     retval = false;
