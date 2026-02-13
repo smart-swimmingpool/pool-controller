@@ -20,10 +20,10 @@
 
 namespace PoolController {
     static LoggerNode LN;
-    static DallasTemperatureNode solarTemperatureNode("solar-temp", "Solar Temperature", PIN_DS_SOLAR, TEMP_READ_INTERVALL);
-    static DallasTemperatureNode poolTemperatureNode("pool-temp", "Pool Temperature", PIN_DS_POOL, TEMP_READ_INTERVALL);
+    static DallasTemperatureNode solarTemperatureNode("solar-temp", "Solar Temperature", PIN_DS_SOLAR, TEMP_READ_INTERVAL);
+    static DallasTemperatureNode poolTemperatureNode("pool-temp", "Pool Temperature", PIN_DS_POOL, TEMP_READ_INTERVAL);
     #ifdef ESP32
-        static ESP32TemperatureNode ctrlTemperatureNode("controller-temp", "Controller Temperature", TEMP_READ_INTERVALL);
+        static ESP32TemperatureNode ctrlTemperatureNode("controller-temp", "Controller Temperature", TEMP_READ_INTERVAL);
     #endif
     static RelayModuleNode poolPumpNode("pool-pump", "Pool Pump", PIN_RELAY_POOL);
     static RelayModuleNode solarPumpNode("solar-pump", "Solar Pump", PIN_RELAY_SOLAR);
@@ -107,7 +107,7 @@ namespace PoolController {
         Homie_setBrand("smart-swimmingpool");
 
         //default interval of sending Temperature values
-        this->loopIntervalSetting_.setDefaultValue(TEMP_READ_INTERVALL).setValidator(
+        this->loopIntervalSetting_.setDefaultValue(TEMP_READ_INTERVAL).setValidator(
             [](const long candidate) -> bool {
                 return candidate >= 0 && candidate <= 300;
             }
