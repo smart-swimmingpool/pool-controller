@@ -72,7 +72,10 @@ TimeZoneInfo _timezones[10] = {
 
 int _selectedTimezoneIndex = 0; // Default to Central European Time
 
-void timeClientSetup() {
+void timeClientSetup(const char* ntpServer) {
+  // Set the NTP server
+  timeClient.setPoolServerName(ntpServer);
+  
   // initialize NTP Client
   timeClient.begin();
 
