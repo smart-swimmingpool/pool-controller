@@ -33,9 +33,9 @@ Discussions: <https://github.com/smart-swimmingpool/smart-swimmingpool.github.io
 - [ ] two separate circulation cycles
 - [ ] store configuration changes persistent on conroller
 - [ ] temperature based cleaning circulation time (colder == shorter, hotter == longer)
-- [ ] Improved sketch to work completly without WiFi connection
-      - Homie should run without WiFi connection
-      - enhance sketch using display and buttons to setup environment.
+- [ ] Improved sketch to work completly without Wi-Fi connection
+  - Homie should run without Wi-Fi connection
+  - enhance sketch using display and buttons to setup environment.
 - see also the [issue list](https://github.com/smart-swimmingpool/pool-controller/issues)
 
 ## Guides
@@ -56,4 +56,4 @@ Discussions: <https://github.com/smart-swimmingpool/smart-swimmingpool.github.io
 
 ---
 
-DIY My Smart Home: (https://medium.com/diy-my-smart-home)
+DIY My Smart Home: <https://medium.com/diy-my-smart-home>
