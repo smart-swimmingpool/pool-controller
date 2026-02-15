@@ -98,6 +98,11 @@ private:
   const char* cTimerEndHour = "timer-end-h";
   const char* cTimerEndMin  = "timer-end-min";
 
+  const char* cTimezone     = "timezone";
+  const char* cTimezoneName = "Timezone";
+  const char* cTimezoneInfo = "timezone-info";
+  const char* cTimezoneInfoName = "Timezone Info";
+
   const char* cHomieNodeState     = "state";
   const char* cHomieNodeStateName = "State";
 

@@ -53,18 +53,18 @@ PoolControllerContext::~PoolControllerContext() {
 }
 
 /**
- * Homie Setup handler.
- * Only called when wifi and mqtt are connected.
+ * Initialize controller components that don't require WiFi/MQTT.
+ * This is called regardless of connection status to ensure offline operation.
  */
-auto PoolControllerContext::setupHandler() -> void {
-  // Initialize state management
-  StateManager::begin();
-
-  // Initialize system monitor and watchdog
-  SystemMonitor::begin();
-
-  // set mesurement intervals
+auto PoolControllerContext::initializeController() -> void {
+  // set measurement intervals
   const std::uint32_t _loopInterval = this->loopIntervalSetting_.get();
+
+  // Initialize NTP client with configured server
+  timeClientSetup(this->ntpServerSetting_.get());
+
+  // Set the timezone from configuration
+  setTimezoneIndex(this->timezoneSetting_.get());
 
   solarTemperatureNode.setMeasurementInterval(_loopInterval);
   poolTemperatureNode.setMeasurementInterval(_loopInterval);
@@ -76,24 +76,16 @@ auto PoolControllerContext::setupHandler() -> void {
   ctrlTemperatureNode.setMeasurementInterval(_loopInterval);
 #endif
 
-  // Load persisted state first, then override with config if different
-  operationModeNode.loadState();
-
-  // Apply configuration settings (these will override persisted state
-  // if different)
   operationModeNode.setMode(this->operationModeSetting_.get());
   operationModeNode.setPoolMaxTemperature(this->temperatureMaxPoolSetting_.get());
   operationModeNode.setSolarMinTemperature(this->temperatureMinSolarSetting_.get());
   operationModeNode.setTemperatureHysteresis(this->temperatureHysteresisSetting_.get());
-
-  // Timer settings are now loaded from state, but can be overridden here
-  // if needed
-  // TimerSetting ts = operationModeNode.getTimerSetting();
-  // ts.timerStartHour    = 10;
-  // ts.timerStartMinutes = 30;
-  // ts.timerEndHour      = 17;
-  // ts.timerEndMinutes   = 30;
-  // operationModeNode.setTimerSetting(ts);
+  TimerSetting ts      = operationModeNode.getTimerSetting();  //TODO: Configurable
+  ts.timerStartHour    = 10;
+  ts.timerStartMinutes = 30;
+  ts.timerEndHour      = 17;
+  ts.timerEndMinutes   = 30;
+  operationModeNode.setTimerSetting(ts);
 
   operationModeNode.setPoolTemperatureNode(&poolTemperatureNode);
   operationModeNode.setSolarTemperatureNode(&solarTemperatureNode);
@@ -112,6 +104,22 @@ auto PoolControllerContext::setupHandler() -> void {
   operationModeNode.addRule(timerRule);
 
   _lastMeasurement = 0;
+}
+
+/**
+ * Homie Setup handler.
+ * Only called when wifi and mqtt are connected.
+ * Non-network-dependent initialization is now in initializeController().
+ */
+auto PoolControllerContext::setupHandler() -> void {
+  // Initialize state management
+  StateManager::begin();
+
+  // Initialize system monitor and watchdog
+  SystemMonitor::begin();
+
+  // Load persisted state
+  operationModeNode.loadState();
 
   LN.log(__PRETTY_FUNCTION__, LoggerNode::INFO, "State persistence and system monitoring initialized");
 }
@@ -122,9 +130,17 @@ auto PoolControllerContext::setup() -> void {
   Homie_setFirmware("pool-controller", "3.1.0");
   Homie_setBrand("smart-swimmingpool");
 
-  // default intervall of sending Temperature values
+  // default interval of sending Temperature values
   this->loopIntervalSetting_.setDefaultValue(TEMP_READ_INTERVALL).setValidator([](const int32_t candidate) -> bool {
     return candidate >= 0 && candidate <= 300;
+  });
+
+  this->timezoneSetting_.setDefaultValue(0).setValidator([](const long candidate) -> bool {
+    return candidate >= 0 && candidate < getTzCount();
+  });
+
+  this->ntpServerSetting_.setDefaultValue("pool.ntp.org").setValidator([](const char* const candidate) -> bool {
+    return candidate != nullptr && strlen(candidate) > 0;
   });
 
   this->temperatureMaxPoolSetting_.setDefaultValue(28.5).setValidator(
@@ -148,6 +164,10 @@ auto PoolControllerContext::setup() -> void {
 
   LN.log(__PRETTY_FUNCTION__, LoggerNode::DEBUG, "Before Homie setup())");
   Homie.setup();
+
+  // Initialize controller regardless of WiFi/MQTT connection status
+  // This ensures offline operation works from startup
+  initializeController();
 
   LN.logf(__PRETTY_FUNCTION__, LoggerNode::DEBUG, "Free heap: %d", ESP.getFreeHeap());
   Homie.getLogger() << F("Free heap: ") << ESP.getFreeHeap() << endl;

@@ -14,6 +14,8 @@ RelayModuleNode::RelayModuleNode(const char* id, const char* name, const uint8_t
   _pin                 = pin;
   _measurementInterval = (measurementInterval > MIN_INTERVAL) ? measurementInterval : MIN_INTERVAL;
   _lastMeasurement     = 0;
+
+  setRunLoopDisconnected(true);
 }
 
 /**

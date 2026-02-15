@@ -54,6 +54,23 @@ There are some specific settings for the controller:
   - Unit: `sec`
   - Default value: `30`
 
+- **Timezone:** Select the timezone for the controller to properly handle local time and daylight saving time (DST) transitions.
+
+  - Available timezones:
+    - `0` - Central European Time (Berlin, Paris) with CEST/CET DST
+    - `1` - Eastern European Time (Helsinki, Athens) with EEST/EET DST
+    - `2` - Western European Time (London, Lisbon) with BST/GMT DST
+    - `3` - US Eastern Time (New York, Washington) with EDT/EST DST
+    - `4` - US Central Time (Chicago, Houston) with CDT/CST DST
+    - `5` - US Mountain Time (Denver) with MDT/MST DST
+    - `6` - US Pacific Time (Los Angeles, San Francisco) with PDT/PST DST
+    - `7` - Australian Eastern Time (Sydney, Melbourne) with AEDT/AEST DST
+    - `8` - Japan Time (Tokyo) - No DST
+    - `9` - China Time (Beijing) - No DST
+  - Default value: `0` (Central European Time)
+  - This setting can be configured during initial setup or changed at runtime via MQTT
+  - **Note:** Runtime changes via MQTT (operation-mode/timezone) are temporary. To persist the timezone setting across reboots, update the `timezone` configuration in the Homie settings.
+
 ## Rules
 
 The **Smart Swimmingpool Controller** implements `Rules` to handle different situations:

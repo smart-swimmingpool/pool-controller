@@ -15,6 +15,8 @@ ESP32TemperatureNode::ESP32TemperatureNode(const char* id, const char* name, con
     : HomieNode(id, name, "temperature") {
   _measurementInterval = (measurementInterval > MIN_INTERVAL) ? measurementInterval : MIN_INTERVAL;
   _lastMeasurement     = millis();
+
+  setRunLoopDisconnected(true);
 }
 
 /**
