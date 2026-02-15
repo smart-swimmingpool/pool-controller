@@ -19,6 +19,7 @@
 #include "TimeClientHelper.hpp"
 #include "StateManager.hpp"
 #include "SystemMonitor.hpp"
+#include "HomeAssistantMQTT.hpp"
 
 #include "Config.hpp"
 
@@ -36,6 +37,46 @@ static OperationModeNode operationModeNode("operation-mode", "Operation Mode");
 
 static uint32_t _measurementInterval = 10;
 static uint32_t _lastMeasurement;
+
+/**
+ * MQTT message callback for Home Assistant switch commands
+ */
+static void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total) {
+  if (!HomeAssistant::useHomeAssistant)
+    return;
+
+  // Check if this is a Home Assistant switch command
+  if (strstr(topic, "homeassistant/switch/pool-controller/") != nullptr && strstr(topic, "/set") != nullptr) {
+    // Extract the object ID from the topic
+    // Topic format: homeassistant/switch/pool-controller/<object-id>/set
+    char* objectIdStart = strstr(topic, "pool-controller/") + 16;
+    char* objectIdEnd = strstr(objectIdStart, "/set");
+    if (objectIdStart && objectIdEnd) {
+      size_t objectIdLen = objectIdEnd - objectIdStart;
+      char objectId[32];
+      if (objectIdLen < sizeof(objectId)) {
+        strncpy(objectId, objectIdStart, objectIdLen);
+        objectId[objectIdLen] = '\0';
+
+        // Null-terminate payload
+        char payloadStr[16];
+        size_t payloadLen = (len < sizeof(payloadStr) - 1) ? len : sizeof(payloadStr) - 1;
+        strncpy(payloadStr, payload, payloadLen);
+        payloadStr[payloadLen] = '\0';
+
+        // Determine state
+        bool state = (strcmp(payloadStr, "ON") == 0);
+
+        // Route to appropriate relay
+        if (strcmp(objectId, "pool-pump") == 0) {
+          poolPumpNode.setSwitch(state);
+        } else if (strcmp(objectId, "solar-pump") == 0) {
+          solarPumpNode.setSwitch(state);
+        }
+      }
+    }
+  }
+}
 
 static PoolControllerContext* Self;
 auto                          Detail::setupProxy() -> void {
@@ -120,6 +161,48 @@ auto PoolControllerContext::setupHandler() -> void {
 
   // Load persisted state
   operationModeNode.loadState();
+
+  // Configure MQTT protocol based on setting
+  const char* protocol = this->mqttProtocolSetting_.get();
+  HomeAssistant::useHomeAssistant = (std::strcmp(protocol, "homeassistant") == 0);
+
+  if (HomeAssistant::useHomeAssistant) {
+    LN.log(__PRETTY_FUNCTION__, LoggerNode::INFO, "Using Home Assistant MQTT Discovery");
+
+    // Register MQTT message callback for Home Assistant
+    Homie.getMqttClient().onMessage(onMqttMessage);
+
+    // Publish Home Assistant discovery messages for all sensors and switches
+    const char* deviceId = "pool-controller";
+
+    // Temperature sensors
+    HomeAssistant::DiscoveryPublisher::publishSensor(
+        deviceId, "solar-temp", "Solar Temperature",
+        "temperature", "°C", "mdi:solar-power");
+
+    HomeAssistant::DiscoveryPublisher::publishSensor(
+        deviceId, "pool-temp", "Pool Temperature",
+        "temperature", "°C", "mdi:pool");
+
+#ifdef ESP32
+    HomeAssistant::DiscoveryPublisher::publishSensor(
+        deviceId, "controller-temp", "Controller Temperature",
+        "temperature", "°C", "mdi:thermometer");
+#endif
+
+    // Switches (relays) - publish discovery and subscribe to command topics
+    HomeAssistant::DiscoveryPublisher::publishSwitch(
+        deviceId, "pool-pump", "Pool Pump", "mdi:pump");
+    HomeAssistant::DiscoveryPublisher::subscribeSwitch(deviceId, "pool-pump");
+
+    HomeAssistant::DiscoveryPublisher::publishSwitch(
+        deviceId, "solar-pump", "Solar Pump", "mdi:solar-panel");
+    HomeAssistant::DiscoveryPublisher::subscribeSwitch(deviceId, "solar-pump");
+
+    LN.log(__PRETTY_FUNCTION__, LoggerNode::INFO, "Home Assistant discovery messages published");
+  } else {
+    LN.log(__PRETTY_FUNCTION__, LoggerNode::INFO, "Using Homie MQTT Convention");
+  }
 
   LN.log(__PRETTY_FUNCTION__, LoggerNode::INFO, "State persistence and system monitoring initialized");
 }

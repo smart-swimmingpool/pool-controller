@@ -24,6 +24,9 @@
 namespace PoolController {
 namespace HomeAssistant {
 
+// Global flag to track whether Home Assistant mode is active
+extern bool useHomeAssistant;
+
 /**
  * Base class for Home Assistant MQTT Discovery
  */
@@ -165,6 +168,26 @@ public:
     snprintf(topic, sizeof(topic), "homeassistant/switch/%s/%s/state", nodeId, objectId);
 
     return Homie.getMqttClient().publish(topic, 1, true, state ? "ON" : "OFF");
+  }
+
+  /**
+   * Subscribe to switch command topic
+   */
+  static bool subscribeSwitch(const char* nodeId, const char* objectId) {
+    if (!Homie.isConnected())
+      return false;
+
+    char topic[128];
+    snprintf(topic, sizeof(topic), "homeassistant/switch/%s/%s/set", nodeId, objectId);
+
+    return Homie.getMqttClient().subscribe(topic, 1);
+  }
+
+  /**
+   * Get command topic for switch
+   */
+  static void getSwitchCommandTopic(char* buffer, size_t bufferSize, const char* nodeId, const char* objectId) {
+    snprintf(buffer, bufferSize, "homeassistant/switch/%s/%s/set", nodeId, objectId);
   }
 };
 

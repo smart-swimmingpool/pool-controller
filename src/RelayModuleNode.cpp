@@ -8,6 +8,7 @@
  */
 #include "RelayModuleNode.hpp"
 #include "Utils.hpp"
+#include "HomeAssistantMQTT.hpp"
 
 RelayModuleNode::RelayModuleNode(const char* id, const char* name, const uint8_t pin, const int measurementInterval)
     : HomieNode(id, name, "switch") {
@@ -29,8 +30,15 @@ void RelayModuleNode::setSwitch(const boolean state) {
   }
 
   if (Homie.isConnected()) {
-    setProperty(cSwitch).send((state ? cFlagOn : cFlagOff));
-    setProperty(cHomieNodeState).send(cHomieNodeState_OK);
+    if (PoolController::HomeAssistant::useHomeAssistant) {
+      // Publish to Home Assistant
+      PoolController::HomeAssistant::DiscoveryPublisher::publishSwitchState(
+          "pool-controller", getId(), state);
+    } else {
+      // Publish to Homie
+      setProperty(cSwitch).send((state ? cFlagOn : cFlagOff));
+      setProperty(cHomieNodeState).send(cHomieNodeState_OK);
+    }
   }
   // persist value
 #ifdef ESP32
@@ -95,7 +103,14 @@ void RelayModuleNode::loop() {
       const boolean isOn = getSwitch();
       Homie.getLogger() << F("〽 Sending Switch status: ") << getId() << F("switch: ") << (isOn ? cFlagOn : cFlagOff) << endl;
 
-      setProperty(cSwitch).send((isOn ? cFlagOn : cFlagOff));
+      if (PoolController::HomeAssistant::useHomeAssistant) {
+        // Publish to Home Assistant
+        PoolController::HomeAssistant::DiscoveryPublisher::publishSwitchState(
+            "pool-controller", getId(), isOn);
+      } else {
+        // Publish to Homie
+        setProperty(cSwitch).send((isOn ? cFlagOn : cFlagOff));
+      }
     }
 
     _lastMeasurement = millis();
