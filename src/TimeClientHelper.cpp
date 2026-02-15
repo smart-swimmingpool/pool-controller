@@ -5,10 +5,8 @@
 #include "TimeClientHelper.hpp"
 
 // NTP Client
-const char *TC_SERVER = "europe.pool.ntp.org";
-
 WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP, TC_SERVER);
+NTPClient* timeClient = nullptr;
 
 // Central European Time (Berlin, Paris, ...)
 TimeChangeRule CEST = {"CEST", Last, Sun, Mar, 2, 120}; // Central European Summer Time
@@ -74,9 +72,15 @@ TimeZoneInfo _timezones[10] = {
 
 int _selectedTimezoneIndex = 0; // Default to Central European Time
 
-void timeClientSetup() {
+void timeClientSetup(const char* ntpServer) {
+  // Create NTP client with configured server
+  if (timeClient != nullptr) {
+    delete timeClient;
+  }
+  timeClient = new NTPClient(ntpUDP, ntpServer);
+  
   // initialize NTP Client
-  timeClient.begin();
+  timeClient->begin();
 
   // Set callback for time library and leave the sync to the NTP client
   setSyncProvider(getUtcTime);
@@ -88,9 +92,9 @@ int getTzCount() {
 }
 
 time_t getUtcTime() {
-  if (timeClient.update()) {
-    return timeClient.getEpochTime();
-  }   else {
+  if (timeClient && timeClient->update()) {
+    return timeClient->getEpochTime();
+  } else {
     return 0;
   }
 }

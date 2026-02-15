@@ -56,6 +56,9 @@ namespace PoolController {
         // set measurement intervals
         const std::uint32_t _loopInterval = this->loopIntervalSetting_.get();
 
+        // Initialize NTP client with configured server
+        timeClientSetup(this->ntpServerSetting_.get());
+
         // Set the timezone from configuration
         setTimezoneIndex(this->timezoneSetting_.get());
 
@@ -125,6 +128,12 @@ namespace PoolController {
         this->timezoneSetting_.setDefaultValue(0).setValidator(
             [](const long candidate) -> bool {
                 return candidate >= 0 && candidate < getTzCount();
+            }
+        );
+
+        this->ntpServerSetting_.setDefaultValue("pool.ntp.org").setValidator(
+            [](const char* const candidate) -> bool {
+                return candidate != nullptr && strlen(candidate) > 0;
             }
         );
 

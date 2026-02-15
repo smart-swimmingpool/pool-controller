@@ -23,13 +23,12 @@ Discussions: <https://github.com/smart-swimmingpool/smart-swimmingpool.github.io
 - [x] Independent of specific smarthome servers
   - [x] [openHAB](https://www.openhab.org) since Version 2.4 using MQTT Homie
   - [x] [Home Assistant](https://www.home-assistant.io/) using MQTT Homie
-- [x] Timesync via NTP (europe.pool.ntp.org)
+- [x] Timesync via NTP (configurable server, default: pool.ntp.org)
 - [x] Configurable timezone with DST support (10 major timezones available)
 - [x] Logging-Information via Homie-Node
 
 ## Planned Features
 
-- [ ] Configurable NTP Server (currently hardcoded: europe.pool.ntp.org)
 - [ ] be more smart: self learning for improved pool pump timed circulation for cleaning and heating
 - [ ] two separate circulation cycles
 - [ ] store configuration changes persistent on conroller
