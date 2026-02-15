@@ -6,7 +6,7 @@
 
 // NTP Client
 WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP);
+NTPClient timeClient(ntpUDP, "pool.ntp.org");
 
 // Central European Time (Berlin, Paris, ...)
 TimeChangeRule CEST = {"CEST", Last, Sun, Mar, 2, 120}; // Central European Summer Time
