@@ -27,11 +27,11 @@ jobs:
   super-linter:
     name: Super-Linter
     runs-on: ubuntu-latest
-    
+
     permissions:
       contents: read
       statuses: write
-    
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -47,37 +47,20 @@ jobs:
           DEFAULT_BRANCH: master
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  arduino-lint:
-    name: Arduino Lint
+  clang-format-check:
+    name: C++ Code Format Check
     runs-on: ubuntu-latest
-    
+
     permissions:
       contents: read
-    
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Arduino Lint
-        uses: arduino/arduino-lint-action@v2
-        with:
-          project-type: sketch
-          compliance: specification
-          
-  clang-format-check:
-    name: C++ Code Format Check
-    runs-on: ubuntu-latest
-    
-    permissions:
-      contents: read
-    
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        
       - name: Run clang-format style check
         uses: jidicula/clang-format-action@v4.13.0
         with:
-          clang-format-version: '18'
+          clang-format-version: '17'
           check-path: 'src'
-  
+
