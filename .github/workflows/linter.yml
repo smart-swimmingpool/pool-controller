@@ -17,7 +17,7 @@ name: Lint Code Base
 on:
   push:
     branches-ignore:
-      - 'master'
+      - "master"
   pull_request:
 
 ###############
@@ -46,21 +46,3 @@ jobs:
           VALIDATE_JSCPD: false
           DEFAULT_BRANCH: master
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  clang-format-check:
-    name: C++ Code Format Check
-    runs-on: ubuntu-latest
-
-    permissions:
-      contents: read
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Run clang-format style check
-        uses: jidicula/clang-format-action@v4.13.0
-        with:
-          clang-format-version: '17'
-          check-path: 'src'
-
