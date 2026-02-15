@@ -27,7 +27,7 @@ jobs:
 
     strategy:
       matrix:
-        environment: [nodemcuv2]
+        environment: [nodemcuv2, esp32dev]
 
     steps:
       - name: Checkout
