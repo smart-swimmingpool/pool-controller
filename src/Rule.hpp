@@ -7,6 +7,7 @@ class Rule {
 
 public:
   Rule() : _poolTemp(0.0), _solarTemp(0.0), _poolMaxTemp(0.0), _solarMinTemp(0.0), _hysteresis(0.0){};
+  virtual ~Rule() = default;
 
   void  setPoolTemperature(float temp) { _poolTemp = temp; };
   float getPoolTemperature() { return _poolTemp; };
@@ -28,8 +29,8 @@ public:
   /**
    * get the Mode for which the Rule is created.
    */
-  virtual const char* getMode();
-  virtual void        loop();
+  virtual const char* getMode() = 0;
+  virtual void        loop() = 0;
 
 protected:
   float _poolTemp;

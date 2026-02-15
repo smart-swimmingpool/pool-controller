@@ -24,6 +24,9 @@ DallasTemperatureNode::DallasTemperatureNode(const char* id, const char* name, c
   _pin                 = pin;
   _measurementInterval = (measurementInterval > MIN_INTERVAL) ? measurementInterval : MIN_INTERVAL;
   _lastMeasurement     = 0;
+  numberOfDevices      = 0;
+
+  setRunLoopDisconnected(true);
 
   oneWire.begin(_pin);
   sensor.setOneWire(&oneWire);

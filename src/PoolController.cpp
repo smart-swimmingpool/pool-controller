@@ -20,10 +20,10 @@
 
 namespace PoolController {
     static LoggerNode LN;
-    static DallasTemperatureNode solarTemperatureNode("solar-temp", "Solar Temperature", PIN_DS_SOLAR, TEMP_READ_INTERVALL);
-    static DallasTemperatureNode poolTemperatureNode("pool-temp", "Pool Temperature", PIN_DS_POOL, TEMP_READ_INTERVALL);
+    static DallasTemperatureNode solarTemperatureNode("solar-temp", "Solar Temperature", PIN_DS_SOLAR, TEMP_READ_INTERVAL);
+    static DallasTemperatureNode poolTemperatureNode("pool-temp", "Pool Temperature", PIN_DS_POOL, TEMP_READ_INTERVAL);
     #ifdef ESP32
-        static ESP32TemperatureNode ctrlTemperatureNode("controller-temp", "Controller Temperature", TEMP_READ_INTERVALL);
+        static ESP32TemperatureNode ctrlTemperatureNode("controller-temp", "Controller Temperature", TEMP_READ_INTERVAL);
     #endif
     static RelayModuleNode poolPumpNode("pool-pump", "Pool Pump", PIN_RELAY_POOL);
     static RelayModuleNode solarPumpNode("solar-pump", "Solar Pump", PIN_RELAY_SOLAR);
@@ -49,12 +49,11 @@ namespace PoolController {
     }
 
     /**
-     * Homie Setup handler.
-     * Only called when wifi and mqtt are connected.
+     * Initialize controller components that don't require WiFi/MQTT.
+     * This is called regardless of connection status to ensure offline operation.
      */
-    auto PoolControllerContext::setupHandler() -> void {
-
-        // set mesurement intervals
+    auto PoolControllerContext::initializeController() -> void {
+        // set measurement intervals
         const std::uint32_t _loopInterval = this->loopIntervalSetting_.get();
 
         // Set the timezone from configuration
@@ -100,14 +99,24 @@ namespace PoolController {
         _lastMeasurement = 0;
     }
 
+    /**
+     * Homie Setup handler.
+     * Only called when wifi and mqtt are connected.
+     * Non-network-dependent initialization is now in initializeController().
+     */
+    auto PoolControllerContext::setupHandler() -> void {
+        // This is intentionally minimal now - core initialization happens in initializeController()
+        // which is called regardless of connection status
+    }
+
     auto PoolControllerContext::setup() -> void {
         Homie.setLoggingPrinter(&Serial);
 
         Homie_setFirmware("pool-controller", "3.0.0");
         Homie_setBrand("smart-swimmingpool");
 
-        //default intervall of sending Temperature values
-        this->loopIntervalSetting_.setDefaultValue(TEMP_READ_INTERVALL).setValidator(
+        //default interval of sending Temperature values
+        this->loopIntervalSetting_.setDefaultValue(TEMP_READ_INTERVAL).setValidator(
             [](const long candidate) -> bool {
                 return candidate >= 0 && candidate <= 300;
             }
@@ -148,6 +157,10 @@ namespace PoolController {
 
         LN.log(__PRETTY_FUNCTION__, LoggerNode::DEBUG, "Before Homie setup())");
         Homie.setup();
+
+        // Initialize controller regardless of WiFi/MQTT connection status
+        // This ensures offline operation works from startup
+        initializeController();
 
         LN.logf(__PRETTY_FUNCTION__, LoggerNode::DEBUG, "Free heap: %d", ESP.getFreeHeap());
         Homie.getLogger() << F("Free heap: ") << ESP.getFreeHeap() << endl;

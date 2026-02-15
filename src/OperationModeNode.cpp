@@ -13,7 +13,7 @@ OperationModeNode::OperationModeNode(const char* id, const char* name, const int
   _measurementInterval = (measurementInterval > MIN_INTERVAL) ? measurementInterval : MIN_INTERVAL;
   _lastMeasurement     = 0;
 
-  //setRunLoopDisconnected(true);
+  setRunLoopDisconnected(true);
 }
 
 /**

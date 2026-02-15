@@ -39,7 +39,7 @@ namespace PoolController
     /**
      * Interval to temp updates.
     */
-    constexpr std::uint8_t TEMP_READ_INTERVALL { 30 };
+    constexpr std::uint8_t TEMP_READ_INTERVAL { 30 };
 
     /**
      * Pin of Temp-Sensor Solar
