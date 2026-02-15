@@ -49,11 +49,10 @@ namespace PoolController {
     }
 
     /**
-     * Homie Setup handler.
-     * Only called when wifi and mqtt are connected.
+     * Initialize controller components that don't require WiFi/MQTT.
+     * This is called regardless of connection status to ensure offline operation.
      */
-    auto PoolControllerContext::setupHandler() -> void {
-
+    auto PoolControllerContext::initializeController() -> void {
         // set measurement intervals
         const std::uint32_t _loopInterval = this->loopIntervalSetting_.get();
 
@@ -98,6 +97,16 @@ namespace PoolController {
         operationModeNode.addRule(timerRule);
 
         _lastMeasurement = 0;
+    }
+
+    /**
+     * Homie Setup handler.
+     * Only called when wifi and mqtt are connected.
+     * Non-network-dependent initialization is now in initializeController().
+     */
+    auto PoolControllerContext::setupHandler() -> void {
+        // This is intentionally minimal now - core initialization happens in initializeController()
+        // which is called regardless of connection status
     }
 
     auto PoolControllerContext::setup() -> void {
@@ -148,6 +157,10 @@ namespace PoolController {
 
         LN.log(__PRETTY_FUNCTION__, LoggerNode::DEBUG, "Before Homie setup())");
         Homie.setup();
+
+        // Initialize controller regardless of WiFi/MQTT connection status
+        // This ensures offline operation works from startup
+        initializeController();
 
         LN.logf(__PRETTY_FUNCTION__, LoggerNode::DEBUG, "Free heap: %d", ESP.getFreeHeap());
         Homie.getLogger() << F("Free heap: ") << ESP.getFreeHeap() << endl;
