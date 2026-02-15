@@ -51,6 +51,9 @@ jobs:
     name: Arduino Lint
     runs-on: ubuntu-latest
     
+    permissions:
+      contents: read
+    
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -64,6 +67,9 @@ jobs:
   clang-format-check:
     name: C++ Code Format Check
     runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
     
     steps:
       - name: Checkout Code
