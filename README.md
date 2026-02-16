@@ -130,6 +130,8 @@ See [docs/state-persistence.md](docs/state-persistence.md) for details.
 - [State Persistence & Monitoring](docs/state-persistence.md) (New in v3.1.0)
 - [Over-The-Air Updates](docs/ota-updates.md) (New in v3.1.0)
 - [Optimization Report](docs/optimization-report.md) (New in v3.1.0)
+- [Edge Case Analysis](docs/edge-case-analysis.md) - Reliability analysis
+  and potential failure modes
 
 ## Contributing
 
