@@ -112,7 +112,7 @@ static Context context{};
 
 ## 🚀 Für Entwickler
 
-### Vor jedem Commit:
+### Vor jedem Commit
 
 ```bash
 # 1. C++ Code automatisch formatieren
@@ -126,7 +126,7 @@ git add .
 git commit -m "Beschreibung der Änderungen"
 ```
 
-### Bei Super-Linter Fehlern:
+### Bei Super-Linter Fehlern
 
 1. **Clang-format Fehler**: `clang-format -i <datei>`
 2. **EditorConfig Fehler**: Tabs durch 2 Leerzeichen ersetzen
@@ -136,13 +136,13 @@ Siehe [QUICK_REFERENCE.md](QUICK_REFERENCE.md) für Details.
 
 ## 📊 Testergebnisse
 
-### Vor den Fixes:
+### Vor den Fixes
 
 - ❌ 16 Dateien mit clang-format Violations
 - ❌ Über 50 einzelne Formatierungsfehler
 - ❌ CI Builds scheiterten am Linter
 
-### Nach den Fixes:
+### Nach den Fixes
 
 - ✅ 0 clang-format Violations
 - ✅ Alle Dateien entsprechen dem .clang-format Style

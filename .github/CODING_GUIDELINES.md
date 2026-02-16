@@ -164,7 +164,7 @@ run: >
 
 #### Markdown-Dateien
 
-- "Wi-Fi" (not "WiFi" - note the hyphen)
+- "Wi-Fi" (not "Wi-Fi" - note the hyphen)
 - URLs in spitze Klammern: `<https://example.com>`
 
 #### INI-Dateien (platformio.ini)
@@ -305,7 +305,7 @@ pio run -e nodemcuv2
 
 ### 6.2 Commit Messages
 
-```
+```text
 # Format: <type>: <subject>
 
 fix: Correct clang-format violations in PoolController.cpp
