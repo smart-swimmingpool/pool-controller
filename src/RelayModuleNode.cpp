@@ -1,3 +1,5 @@
+// Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
+
 /**
  * Homie Node for Relay Module.
  *
@@ -5,6 +7,8 @@
  * https://github.com/YuriiSalimov/RelayModule
  */
 #include "RelayModuleNode.hpp"
+#include "Utils.hpp"
+#include "MqttInterface.hpp"
 
 RelayModuleNode::RelayModuleNode(const char* id, const char* name, const uint8_t pin, const int measurementInterval)
     : HomieNode(id, name, "switch") {
@@ -13,13 +17,14 @@ RelayModuleNode::RelayModuleNode(const char* id, const char* name, const uint8_t
   _lastMeasurement     = 0;
 
   setRunLoopDisconnected(true);
+
+  setRunLoopDisconnected(true);
 }
 
 /**
  *
  */
 void RelayModuleNode::setSwitch(const boolean state) {
-
   if (state) {
     relay->on();
   } else {
@@ -27,8 +32,10 @@ void RelayModuleNode::setSwitch(const boolean state) {
   }
 
   if (Homie.isConnected()) {
-    setProperty(cSwitch).send((state ? cFlagOn : cFlagOff));
-    setProperty(cHomieNodeState).send(cHomieNodeState_OK);
+    PoolController::MqttInterface::publishSwitchState(
+        *this, cSwitch, getId(), state);
+    PoolController::MqttInterface::publishHomieProperty(
+        *this, cHomieNodeState, cHomieNodeState_OK);
   }
   // persist value
 #ifdef ESP32
@@ -88,16 +95,13 @@ bool RelayModuleNode::handleInput(const HomieRange& range, const String& propert
  *
  */
 void RelayModuleNode::loop() {
-  if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {
-
+  if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval)) {
     if (Homie.isConnected()) {
-
       const boolean isOn = getSwitch();
       Homie.getLogger() << F("〽 Sending Switch status: ") << getId() << F("switch: ") << (isOn ? cFlagOn : cFlagOff) << endl;
 
-      if (Homie.isConnected()) {
-        setProperty(cSwitch).send((isOn ? cFlagOn : cFlagOff));
-      }
+      PoolController::MqttInterface::publishSwitchState(
+          *this, cSwitch, getId(), isOn);
     }
 
     _lastMeasurement = millis();
@@ -124,7 +128,7 @@ void RelayModuleNode::setup() {
   boolean storedSwitchValue = false;
 #endif
 
-  //restore from preferences
+  // restore from preferences
   if (storedSwitchValue) {
     relay->on();
   } else {

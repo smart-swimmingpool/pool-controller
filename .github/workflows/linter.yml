@@ -47,6 +47,38 @@ jobs:
           VALIDATE_ALL_CODEBASE: false
           VALIDATE_ANSIBLE: false
 
+          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+          # PlatformIO Project Optimizations
+          # Exclude build artifacts and dependencies
+          FILTER_REGEX_EXCLUDE: .*/(\.pio|\.vscode|\.platformio|build|lib)/.*
+
+          # Enable only relevant linters for PlatformIO project
+          # When using selective validation, all other linters are disabled automatically
+          VALIDATE_CPP: true
+          VALIDATE_CLANG_FORMAT: true
+          VALIDATE_MARKDOWN: true
+          VALIDATE_YAML: true
+          VALIDATE_JSON: true
+          VALIDATE_GITHUB_ACTIONS: true
+          VALIDATE_EDITORCONFIG: true
+          VALIDATE_GITLEAKS: true
+          VALIDATE_BASH: true
+
+          # C/C++ specific settings
+          CPP_FILE_EXTENSIONS: "cpp,hpp,h"
+
+          # Linter configurations
+          MARKDOWN_CONFIG_FILE: .markdown-lint.yml
+          YAML_CONFIG_FILE: .yaml-lint.yml
+
+          # Don't treat warnings as errors
+          WARNINGS_AS_ERRORS: false
+
+          # Logging
+          LOG_LEVEL: NOTICE
+
       - name: Arduino Lint
         uses: arduino/arduino-lint-action@v1.0.0
 

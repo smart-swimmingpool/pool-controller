@@ -1,3 +1,5 @@
+// Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
+
 /**
  * Homie Node for Dallas sensors.
  *
@@ -14,36 +16,52 @@
 #include "TimeClientHelper.hpp"
 
 class OperationModeNode : public HomieNode {
-
 public:
   OperationModeNode(const char* id, const char* name, const int measurementInterval = MEASUREMENT_INTERVAL);
   ~OperationModeNode() {
     // This could cause use after free - to bad it is designed that way
-    for (int i = 0; i < _ruleVec.Size(); i++)  // Delete ruleset on deletion of this object
+    // Delete ruleset on deletion of this object
+    for (int i = 0; i < _ruleVec.Size(); i++)
       delete _ruleVec[i];
   }
 
-  void          setMeasurementInterval(unsigned long interval) { _measurementInterval = interval; }
-  unsigned long getMeasurementInterval() const { return _measurementInterval; }
-  bool          setMode(String mode);
-  String        getMode();
-  void          addRule(Rule* rule);
-  Rule*         getRule();
+  void     setMeasurementInterval(uint32_t interval) { _measurementInterval = interval; }
+  uint32_t getMeasurementInterval() const { return _measurementInterval; }
+  bool     setMode(String mode);
+  String   getMode();
+  void     addRule(Rule* rule);
+  Rule*    getRule();
 
-  void setPoolTemperatureNode(DallasTemperatureNode* node) { _currentPoolTempNode = node; };
-  void setSolarTemperatureNode(DallasTemperatureNode* node) { _currentSolarTempNode = node; };
+  void setPoolTemperatureNode(DallasTemperatureNode* node) { _currentPoolTempNode = node; }
+  void setSolarTemperatureNode(DallasTemperatureNode* node) { _currentSolarTempNode = node; }
 
-  void  setPoolMaxTemperature(float temp) { _poolMaxTemp = temp; };
-  float getPoolMaxTemperature() { return _poolMaxTemp; };
+  void setPoolMaxTemperature(float temp) {
+    _poolMaxTemp = temp;
+    saveState();
+  }
+  float getPoolMaxTemperature() { return _poolMaxTemp; }
 
-  void  setSolarMinTemperature(float temp) { _solarMinTemp = temp; };
-  float getSolarMinTemperature() { return _solarMinTemp; };
+  void setSolarMinTemperature(float temp) {
+    _solarMinTemp = temp;
+    saveState();
+  }
+  float getSolarMinTemperature() { return _solarMinTemp; }
 
-  void  setTemperatureHysteresis(float temp) { _hysteresis = temp; };
-  float getTemperatureHysteresis() { return _hysteresis; };
+  void setTemperatureHysteresis(float temp) {
+    _hysteresis = temp;
+    saveState();
+  }
+  float getTemperatureHysteresis() { return _hysteresis; }
 
-  void         setTimerSetting(TimerSetting setting) { _timerSetting = setting; };
-  TimerSetting getTimerSetting() { return _timerSetting; };
+  void setTimerSetting(TimerSetting setting) {
+    _timerSetting = setting;
+    saveState();
+  }
+  TimerSetting getTimerSetting() { return _timerSetting; }
+
+  void loadState();
+  void saveState();
+  bool handleHomeAssistantCommand(const char* property, const char* value);
 
   enum MODE { AUTO, MANU, BOOST };
   const char* STATUS_AUTO  = "auto";
@@ -81,9 +99,9 @@ private:
   const char* cTimerEndHour = "timer-end-h";
   const char* cTimerEndMin  = "timer-end-min";
 
-  const char* cTimezone         = "timezone";
-  const char* cTimezoneName     = "Timezone";
-  const char* cTimezoneInfo     = "timezone-info";
+  const char* cTimezone     = "timezone";
+  const char* cTimezoneName = "Timezone";
+  const char* cTimezoneInfo = "timezone-info";
   const char* cTimezoneInfoName = "Timezone Info";
 
   const char* cHomieNodeState     = "state";
@@ -103,8 +121,9 @@ private:
 
   TimerSetting _timerSetting;
 
-  unsigned long _measurementInterval;
-  unsigned long _lastMeasurement;
+  uint32_t _measurementInterval;
+  uint32_t _lastMeasurement;
 
+  bool applyProperty(const String& property, const String& value);
   void printCaption();
 };

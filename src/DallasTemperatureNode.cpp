@@ -1,3 +1,5 @@
+// Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
+
 /**
  * Homie Node for Maxime Temperature sensors.
  *
@@ -17,6 +19,8 @@
  *
  */
 #include "DallasTemperatureNode.hpp"
+#include "Utils.hpp"
+#include "MqttInterface.hpp"
 
 DallasTemperatureNode::DallasTemperatureNode(const char* id, const char* name, const uint8_t pin, const int measurementInterval)
     : HomieNode(id, name, "temperature") {
@@ -36,21 +40,19 @@ DallasTemperatureNode::DallasTemperatureNode(const char* id, const char* name, c
  *
  */
 void DallasTemperatureNode::setup() {
-
   advertise(cHomieNodeState).setName(cHomieNodeStateName);
   advertise(cTemperature).setName(cTemperatureName).setDatatype("float").setUnit(cTemperatureUnit);
 
   // Start up the library
   sensor.begin();
   // set global resolution to 9, 10, 11, or 12 bits
-  //sensor.setResolution(12);
+  // sensor.setResolution(12);
 }
 
 /**
  *
  */
 void DallasTemperatureNode::onReadyToOperate() {
-
   // Grab a count of devices on the wire
   numberOfDevices = sensor.getDeviceCount();
   // report parasite power requirements
@@ -61,7 +63,8 @@ void DallasTemperatureNode::onReadyToOperate() {
 
     for (uint8_t i = 0; i < numberOfDevices; i++) {
       // Search the wire for address
-      DeviceAddress tempDeviceAddress;  // We'll use this variable to store a found device address
+      DeviceAddress tempDeviceAddress;
+      // We'll use this variable to store a found device address
 
       if (sensor.getAddress(tempDeviceAddress, i)) {
         String adr = address2String(tempDeviceAddress);
@@ -80,23 +83,25 @@ void DallasTemperatureNode::onReadyToOperate() {
  *
  */
 void DallasTemperatureNode::loop() {
-  if (millis() - _lastMeasurement >= _measurementInterval * 1000UL || _lastMeasurement == 0) {
+  if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval)) {
     _lastMeasurement = millis();
 
     if (numberOfDevices > 0) {
       Homie.getLogger() << F("〽 Sending Temperature: ") << getId() << endl;
       // call sensors.requestTemperatures() to issue a global temperature
       // request to all devices on the bus
-      sensor.requestTemperatures();  // Send the command to get temperature readings
+      sensor.requestTemperatures();  // Send the command to get temperature
       for (uint8_t i = 0; i < numberOfDevices; i++) {
         uint8_t cnt = 0;
 
         DeviceAddress tempDeviceAddress;
         if (sensor.getAddress(tempDeviceAddress, i)) {
-
           _temperature = sensor.getTempC(tempDeviceAddress);
           if (DEVICE_DISCONNECTED_C == _temperature) {
-            Homie.getLogger() << cIndent << F("✖ Error reading sensor. Request count: ") << cnt << endl;
+            Homie.getLogger() << cIndent
+                              << F("✖ Error reading sensor. Request "
+                                   "count: ")
+                              << cnt << endl;
             if (Homie.isConnected()) {
               setProperty(cHomieNodeState).send(cHomieNodeState_Error);
             }
@@ -104,19 +109,24 @@ void DallasTemperatureNode::loop() {
             Homie.getLogger() << cIndent << F("Temperature=") << _temperature << endl;
 
             if (Homie.isConnected()) {
-              setProperty(cTemperature).send(String(_temperature));
-              setProperty(cHomieNodeState).send(cHomieNodeState_OK);
+              // Optimize memory: avoid String allocation
+              char buffer[16];
+              Utils::floatToString(_temperature, buffer, sizeof(buffer));
+
+              PoolController::MqttInterface::publishSensorState(
+                  *this, cTemperature, getId(), buffer);
+              PoolController::MqttInterface::publishHomieProperty(
+                  *this, cHomieNodeState, cHomieNodeState_OK);
             }
           }
         }
       }
     } else {
-
       Homie.getLogger() << F("No Sensor found!") << endl;
       if (Homie.isConnected()) {
         setProperty(cHomieNodeState).send(cHomieNodeState_Error);
       }
-      //retry to get
+      // retry to get
       numberOfDevices = sensor.getDeviceCount();
     }
   }

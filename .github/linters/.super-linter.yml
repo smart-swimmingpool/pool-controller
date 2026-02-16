@@ -1,0 +1,51 @@
+# Super-Linter Configuration for PlatformIO Project
+# https://github.com/github/super-linter
+
+---
+# Exclude patterns for all linters
+FILTER_REGEX_EXCLUDE: |
+  .*/(\.pio|\.vscode|\.platformio|build|\.git|node_modules)/.*
+  .*/lib/.*
+  .*/data/.*
+  .*\.min\.(js|css)
+  .*/test/.*
+
+# C/C++ Configuration
+# Only validate source code, not library dependencies
+CPP_FILTER_REGEX_INCLUDE: |
+  src/.*\.(cpp|hpp|h)
+
+# Enable only the linters we need for this project
+# All other linters are disabled by default when using selective validation
+VALIDATE_GITLEAKS: true  # Secret scanning
+
+# Markdown linting - more lenient for documentation
+MARKDOWN_CONFIG_FILE: .markdown-lint.yml
+
+# YAML linting
+YAML_CONFIG_FILE: .yaml-lint.yml
+YAML_ERROR_ON_WARNING: false
+
+# C/C++ specific settings
+CPP_FILE_EXTENSIONS: "cpp,hpp,h"
+CLANG_FORMAT_CONFIG_FILE: .clang-format
+
+# Enable specific linters needed for this PlatformIO project
+VALIDATE_EDITORCONFIG: true
+VALIDATE_GITHUB_ACTIONS: true
+VALIDATE_BASH: true
+VALIDATE_SHELL_SHFMT: true
+VALIDATE_JSON: true
+VALIDATE_CLANG_FORMAT: true
+VALIDATE_CPP: true
+VALIDATE_MARKDOWN: true
+VALIDATE_YAML: true
+
+# Treat warnings as errors (set to false for more lenient linting)
+WARNINGS_AS_ERRORS: false
+
+# Only lint changed files in PR mode
+VALIDATE_ALL_CODEBASE: false
+
+# Logging
+LOG_LEVEL: NOTICE
