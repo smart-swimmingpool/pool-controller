@@ -106,13 +106,13 @@ void OperationModeNode::loop() {
     Homie.getLogger() << F("〽 OperatioalMode update rule ") << endl;
     //call loop to evaluate the current rule
     Rule* rule = getRule();
-    if( rule != nullptr) {
+    if (rule != nullptr) {
       rule->loop();
     } else {
       Homie.getLogger() << cIndent << F("✖ no rule defined: ") << _mode << endl;
     }
     if (Homie.isConnected()) {
-/*
+      /*
       Homie.getLogger() << cIndent << F("mode: ") << _mode << endl;
       Homie.getLogger() << cIndent << F("SolarMinTemp: ") << _solarMinTemp << endl;
       Homie.getLogger() << cIndent << F("PoolMaxTemp:  ") << _poolMaxTemp << endl;
@@ -169,14 +169,14 @@ bool OperationModeNode::handleInput(const HomieRange& range, const String& prope
 
   } else if (property.equalsIgnoreCase(cTimerStartHour)) {
     Homie.getLogger() << cIndent << F("✔ Timer start hh: ") << value << endl;
-    TimerSetting timerSetting = getTimerSetting();
+    TimerSetting timerSetting   = getTimerSetting();
     timerSetting.timerStartHour = value.toInt();
     setTimerSetting(timerSetting);
     retval = true;
 
   } else if (property.equalsIgnoreCase(cTimerStartMin)) {
     Homie.getLogger() << cIndent << F("✔  Timer start min.: ") << value << endl;
-    TimerSetting timerSetting = getTimerSetting();
+    TimerSetting timerSetting      = getTimerSetting();
     timerSetting.timerStartMinutes = value.toInt();
     setTimerSetting(timerSetting);
     retval = true;
@@ -190,7 +190,7 @@ bool OperationModeNode::handleInput(const HomieRange& range, const String& prope
 
   } else if (property.equalsIgnoreCase(cTimerEndMin)) {
     Homie.getLogger() << cIndent << F("✔ Timer end min.: ") << value << endl;
-    TimerSetting timerSetting = getTimerSetting();
+    TimerSetting timerSetting    = getTimerSetting();
     timerSetting.timerEndMinutes = value.toInt();
     setTimerSetting(timerSetting);
     retval = true;
