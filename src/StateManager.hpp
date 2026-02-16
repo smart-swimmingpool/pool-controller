@@ -26,16 +26,39 @@ namespace PoolController {
 static const uint32_t EEPROM_MAGIC      = 0x50304F4C;  // "P00L"
 static const int      EEPROM_MAGIC_ADDR = 0;
 static const int      EEPROM_DATA_START = 4;
+static const int      EEPROM_SLOT_COUNT = 16;  // Number of 32-byte slots
+static const int      EEPROM_SLOT_SIZE  = 32;  // Bytes per slot
+static bool           eepromInitialized = false;
 
-// Simple hash function for key to EEPROM address mapping
+// Hash function using prime modulo for better distribution
 static uint16_t hashKey(const char* key) {
-  uint16_t hash = 0;
+  uint32_t hash = 5381;  // DJB2 hash initial value
   while (*key) {
-    hash = hash * 31 + *key;
+    hash = ((hash << 5) + hash) + static_cast<uint8_t>(*key);  // hash * 33 + c
     key++;
   }
-  // Map to EEPROM space (4-511), reserve 32 bytes per key
-  return EEPROM_DATA_START + ((hash % 15) * 32);
+  // Use prime number 17 for better distribution
+  return EEPROM_DATA_START + ((hash % 17) % EEPROM_SLOT_COUNT) * EEPROM_SLOT_SIZE;
+}
+
+// Lazy initialization - ensures EEPROM is ready before first use
+static void ensureInitialized() {
+  if (!eepromInitialized) {
+    EEPROM.begin(512);
+    // Check magic number
+    uint32_t magic = 0;
+    EEPROM.get(EEPROM_MAGIC_ADDR, magic);
+    if (magic != EEPROM_MAGIC) {
+      // First time or corrupted - initialize entire EEPROM
+      EEPROM.put(EEPROM_MAGIC_ADDR, EEPROM_MAGIC);
+      // Clear data region to avoid garbage
+      for (int i = EEPROM_DATA_START; i < 512; i++) {
+        EEPROM.write(i, 0xFF);  // 0xFF indicates unused/invalid
+      }
+      EEPROM.commit();
+    }
+    eepromInitialized = true;
+  }
 }
 #endif
 
@@ -49,15 +72,7 @@ public:
    */
   static void begin() {
 #ifdef ESP8266
-    EEPROM.begin(512);  // Allocate 512 bytes for EEPROM emulation
-    // Check magic number, initialize if needed
-    uint32_t magic = 0;
-    EEPROM.get(EEPROM_MAGIC_ADDR, magic);
-    if (magic != EEPROM_MAGIC) {
-      // First time or corrupted - initialize
-      EEPROM.put(EEPROM_MAGIC_ADDR, EEPROM_MAGIC);
-      EEPROM.commit();
-    }
+    ensureInitialized();  // Use lazy init for safety
 #endif
   }
 
@@ -72,6 +87,7 @@ public:
     prefs.end();
     return result;
 #elif defined(ESP8266)
+    ensureInitialized();  // Lazy init
     uint16_t addr = hashKey(key);
     // Store length (1 byte) + string data (max 30 bytes)
     uint8_t len = min(value.length(), 30U);
@@ -94,9 +110,10 @@ public:
     prefs.end();
     return value;
 #elif defined(ESP8266)
+    ensureInitialized();  // Lazy init
     uint16_t addr = hashKey(key);
     uint8_t  len  = EEPROM.read(addr);
-    if (len == 0 || len > 30) {
+    if (len == 0 || len == 0xFF || len > 30) {
       return defaultValue;
     }
     String value = "";
@@ -119,6 +136,7 @@ public:
     prefs.end();
     return result;
 #elif defined(ESP8266)
+    ensureInitialized();  // Lazy init
     uint16_t addr = hashKey(key);
     EEPROM.put(addr, value);
     return EEPROM.commit();
@@ -136,6 +154,7 @@ public:
     prefs.end();
     return value;
 #elif defined(ESP8266)
+    ensureInitialized();  // Lazy init
     uint16_t addr = hashKey(key);
     float    value;
     EEPROM.get(addr, value);
@@ -158,6 +177,7 @@ public:
     prefs.end();
     return result;
 #elif defined(ESP8266)
+    ensureInitialized();  // Lazy init
     uint16_t addr = hashKey(key);
     EEPROM.put(addr, value);
     return EEPROM.commit();
@@ -175,6 +195,7 @@ public:
     prefs.end();
     return value;
 #elif defined(ESP8266)
+    ensureInitialized();  // Lazy init
     uint16_t addr = hashKey(key);
     int      value;
     EEPROM.get(addr, value);
@@ -197,6 +218,7 @@ public:
     prefs.end();
     return result;
 #elif defined(ESP8266)
+    ensureInitialized();  // Lazy init
     uint16_t addr = hashKey(key);
     EEPROM.write(addr, value ? 1 : 0);
     return EEPROM.commit();
@@ -214,6 +236,7 @@ public:
     prefs.end();
     return value;
 #elif defined(ESP8266)
+    ensureInitialized();  // Lazy init
     uint16_t addr  = hashKey(key);
     uint8_t  value = EEPROM.read(addr);
     if (value > 1) {
@@ -233,6 +256,7 @@ public:
     prefs.clear();
     prefs.end();
 #elif defined(ESP8266)
+    ensureInitialized();  // Lazy init
     // Clear EEPROM
     for (int i = 0; i < 512; i++) {
       EEPROM.write(i, 0);

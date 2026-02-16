@@ -26,6 +26,13 @@ RelayModuleNode::RelayModuleNode(const char* id, const char* name, const uint8_t
  *
  */
 void RelayModuleNode::setSwitch(const boolean state) {
+  // Check if state actually changes to avoid unnecessary EEPROM writes
+  boolean currentState = relay->isOn();
+  if (currentState == state) {
+    // State unchanged, skip persistence to reduce EEPROM wear
+    return;
+  }
+
   if (state) {
     relay->on();
   } else {
@@ -37,6 +44,7 @@ void RelayModuleNode::setSwitch(const boolean state) {
     PoolController::MqttInterface::publishHomieProperty(*this, cHomieNodeState, cHomieNodeState_OK);
   }
   // Persist relay state for both ESP32 and ESP8266
+  // Only written when state actually changes to reduce EEPROM wear
 #ifdef ESP32
   preferences.begin(getId(), false);
   preferences.putBool(cSwitch, state);
