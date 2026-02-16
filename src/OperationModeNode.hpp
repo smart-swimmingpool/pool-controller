@@ -61,6 +61,7 @@ public:
 
   void loadState();
   void saveState();
+  bool handleHomeAssistantCommand(const char* property, const char* value);
 
   enum MODE { AUTO, MANU, BOOST };
   const char* STATUS_AUTO  = "auto";
@@ -123,5 +124,6 @@ private:
   uint32_t _measurementInterval;
   uint32_t _lastMeasurement;
 
+  bool applyProperty(const String& property, const String& value);
   void printCaption();
 };

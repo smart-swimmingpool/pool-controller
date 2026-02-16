@@ -6,6 +6,7 @@
 #include "RuleBoost.hpp"
 #include "Utils.hpp"
 #include "StateManager.hpp"
+#include "MqttInterface.hpp"
 
 /**
  *
@@ -60,14 +61,17 @@ bool OperationModeNode::setMode(String mode) {
   if (mode.equals(STATUS_AUTO) || mode.equals(STATUS_MANU) || mode.equals(STATUS_BOOST) || mode.equals(STATUS_TIMER)) {
     _mode = mode;
     Homie.getLogger() << F("set mode: ") << _mode << endl;
-    setProperty(cMode).send(_mode);
-    setProperty(cHomieNodeState).send(cHomieNodeState_OK);
+    PoolController::MqttInterface::publishSelectState(
+      *this, cMode, cMode, _mode.c_str());
+    PoolController::MqttInterface::publishHomieProperty(
+      *this, cHomieNodeState, cHomieNodeState_OK);
     saveState();  // Persist mode change
     retval = true;
 
   } else {
     Homie.getLogger() << F("✖ UNDEFINED Mode: ") << mode << F(" Current unchanged mode: ") << _mode << endl;
-    setProperty(cHomieNodeState).send(cHomieNodeState_Error);
+    PoolController::MqttInterface::publishHomieProperty(
+      *this, cHomieNodeState, cHomieNodeState_Error);
     retval = false;
   }
 
@@ -130,28 +134,44 @@ void OperationModeNode::loop() {
       // values (-100.00 to 999.99)
       char buffer[20];
 
-      setProperty(cMode).send(_mode);
+      PoolController::MqttInterface::publishSelectState(
+          *this, cMode, cMode, _mode.c_str());
 
       Utils::floatToString(_solarMinTemp, buffer, sizeof(buffer));
-      setProperty(cSolarMinTemp).send(buffer);
+      PoolController::MqttInterface::publishNumberState(
+          *this, cSolarMinTemp, cSolarMinTemp, buffer);
 
       Utils::floatToString(_poolMaxTemp, buffer, sizeof(buffer));
-      setProperty(cPoolMaxTemp).send(buffer);
+      PoolController::MqttInterface::publishNumberState(
+          *this, cPoolMaxTemp, cPoolMaxTemp, buffer);
 
       Utils::floatToString(_hysteresis, buffer, sizeof(buffer));
-      setProperty(cHysteresis).send(buffer);
+      PoolController::MqttInterface::publishNumberState(
+          *this, cHysteresis, cHysteresis, buffer);
 
       Utils::intToString(_timerSetting.timerStartHour, buffer, sizeof(buffer));
-      setProperty(cTimerStartHour).send(buffer);
+      PoolController::MqttInterface::publishNumberState(
+          *this, cTimerStartHour, cTimerStartHour, buffer);
 
       Utils::intToString(_timerSetting.timerStartMinutes, buffer, sizeof(buffer));
-      setProperty(cTimerStartMin).send(buffer);
+      PoolController::MqttInterface::publishNumberState(
+          *this, cTimerStartMin, cTimerStartMin, buffer);
 
       Utils::intToString(_timerSetting.timerEndHour, buffer, sizeof(buffer));
-      setProperty(cTimerEndHour).send(buffer);
+      PoolController::MqttInterface::publishNumberState(
+          *this, cTimerEndHour, cTimerEndHour, buffer);
 
       Utils::intToString(_timerSetting.timerEndMinutes, buffer, sizeof(buffer));
-      setProperty(cTimerEndMin).send(buffer);
+      PoolController::MqttInterface::publishNumberState(
+          *this, cTimerEndMin, cTimerEndMin, buffer);
+
+      Utils::intToString(getTimezoneIndex(), buffer, sizeof(buffer));
+      PoolController::MqttInterface::publishNumberState(
+          *this, cTimezone, cTimezone, buffer);
+
+      String tzInfo = getTimeInfoFor(getTimezoneIndex());
+      PoolController::MqttInterface::publishTextState(
+          *this, cTimezoneInfo, cTimezoneInfo, tzInfo.c_str());
     } else {
       Homie.getLogger() << F("✖ OperationalMode: not connected.") << endl;
     }
@@ -167,6 +187,25 @@ bool OperationModeNode::handleInput(const HomieRange& range, const String& prope
   printCaption();
 
   Homie.getLogger() << cIndent << F("〽 handleInput -> property '") << property << F("' value=") << value << endl;
+  bool retval = applyProperty(property, value);
+
+  // set 0 to force call of loop explicite on changes
+  _lastMeasurement = 0;
+
+  return retval;
+}
+
+bool OperationModeNode::handleHomeAssistantCommand(const char* property, const char* value) {
+  printCaption();
+
+  Homie.getLogger() << cIndent << F("〽 HA command -> property '") << property << F("' value=") << value << endl;
+  bool retval = applyProperty(String(property), String(value));
+
+  _lastMeasurement = 0;
+  return retval;
+}
+
+bool OperationModeNode::applyProperty(const String& property, const String& value) {
   bool retval;
 
   if (property.equalsIgnoreCase(cMode)) {
@@ -235,9 +274,6 @@ bool OperationModeNode::handleInput(const HomieRange& range, const String& prope
   } else {
     retval = false;
   }
-
-  // set 0 to force call of loop explicite on changes
-  _lastMeasurement = 0;
 
   return retval;
 }

@@ -145,6 +145,119 @@ public:
   }
 
   /**
+   * Publish a number discovery message
+   */
+  static bool publishNumber(const char* nodeId, const char* objectId, const char* name,
+                            double minValue, double maxValue, double step,
+                            const char* unitOfMeasurement = nullptr,
+                            const char* icon = nullptr,
+                            const char* mode = nullptr) {
+    if (!Homie.isConnected())
+      return false;
+
+    char topic[128];
+    snprintf(topic, sizeof(topic), "homeassistant/number/%s/%s/config", nodeId, objectId);
+
+    JsonDocument doc;
+
+    char stateTopic[128];
+    char commandTopic[128];
+    snprintf(stateTopic, sizeof(stateTopic), "homeassistant/number/%s/%s/state", nodeId, objectId);
+    snprintf(commandTopic, sizeof(commandTopic), "homeassistant/number/%s/%s/set", nodeId, objectId);
+
+    doc["state_topic"] = stateTopic;
+    doc["command_topic"] = commandTopic;
+
+    doc["name"] = name;
+    char uniqueId[96];
+    snprintf(uniqueId, sizeof(uniqueId), "%s_%s", nodeId, objectId);
+    doc["unique_id"] = uniqueId;
+
+    doc["min"] = minValue;
+    doc["max"] = maxValue;
+    doc["step"] = step;
+
+    if (unitOfMeasurement)
+      doc["unit_of_measurement"] = unitOfMeasurement;
+    if (icon)
+      doc["icon"] = icon;
+    if (mode)
+      doc["mode"] = mode;
+
+    JsonObject device        = doc["device"].to<JsonObject>();
+    device["identifiers"][0] = nodeId;
+    device["name"]           = "Pool Controller";
+    device["manufacturer"]   = "smart-swimmingpool";
+    device["model"]          = "Pool Controller 2.0";
+
+    char   buffer[512];
+    size_t len = serializeJson(doc, buffer, sizeof(buffer));
+
+    if (len >= sizeof(buffer) - 1) {
+      Homie.getLogger() << F("✖ Warning: JSON buffer too small, "
+                             "message truncated")
+                        << endl;
+      return false;
+    }
+
+    return Homie.getMqttClient().publish(topic, 1, true, buffer, len);
+  }
+
+  /**
+   * Publish a select discovery message
+   */
+  static bool publishSelect(const char* nodeId, const char* objectId, const char* name,
+                            const char* const* options, size_t optionCount,
+                            const char* icon = nullptr) {
+    if (!Homie.isConnected())
+      return false;
+
+    char topic[128];
+    snprintf(topic, sizeof(topic), "homeassistant/select/%s/%s/config", nodeId, objectId);
+
+    JsonDocument doc;
+
+    char stateTopic[128];
+    char commandTopic[128];
+    snprintf(stateTopic, sizeof(stateTopic), "homeassistant/select/%s/%s/state", nodeId, objectId);
+    snprintf(commandTopic, sizeof(commandTopic), "homeassistant/select/%s/%s/set", nodeId, objectId);
+
+    doc["state_topic"] = stateTopic;
+    doc["command_topic"] = commandTopic;
+
+    doc["name"] = name;
+    char uniqueId[96];
+    snprintf(uniqueId, sizeof(uniqueId), "%s_%s", nodeId, objectId);
+    doc["unique_id"] = uniqueId;
+
+    JsonArray optionsArray = doc["options"].to<JsonArray>();
+    for (size_t i = 0; i < optionCount; ++i) {
+      optionsArray.add(options[i]);
+    }
+
+    if (icon)
+      doc["icon"] = icon;
+
+    JsonObject device        = doc["device"].to<JsonObject>();
+    device["identifiers"][0] = nodeId;
+    device["name"]           = "Pool Controller";
+    device["manufacturer"]   = "smart-swimmingpool";
+    device["model"]          = "Pool Controller 2.0";
+
+    char   buffer[512];
+    size_t len = serializeJson(doc, buffer, sizeof(buffer));
+
+    if (len >= sizeof(buffer) - 1) {
+      Homie.getLogger() << F("✖ Warning: JSON buffer too small, "
+                             "message truncated")
+                        << endl;
+      return false;
+    }
+
+    return Homie.getMqttClient().publish(topic, 1, true, buffer, len);
+  }
+
+  /**
    * Publish state for a sensor
    */
   static bool publishSensorState(const char* nodeId, const char* objectId, const char* value) {
@@ -171,6 +284,32 @@ public:
   }
 
   /**
+   * Publish state for a number
+   */
+  static bool publishNumberState(const char* nodeId, const char* objectId, const char* value) {
+    if (!Homie.isConnected())
+      return false;
+
+    char topic[128];
+    snprintf(topic, sizeof(topic), "homeassistant/number/%s/%s/state", nodeId, objectId);
+
+    return Homie.getMqttClient().publish(topic, 1, true, value);
+  }
+
+  /**
+   * Publish state for a select
+   */
+  static bool publishSelectState(const char* nodeId, const char* objectId, const char* value) {
+    if (!Homie.isConnected())
+      return false;
+
+    char topic[128];
+    snprintf(topic, sizeof(topic), "homeassistant/select/%s/%s/state", nodeId, objectId);
+
+    return Homie.getMqttClient().publish(topic, 1, true, value);
+  }
+
+  /**
    * Subscribe to switch command topic
    */
   static bool subscribeSwitch(const char* nodeId, const char* objectId) {
@@ -179,6 +318,32 @@ public:
 
     char topic[128];
     snprintf(topic, sizeof(topic), "homeassistant/switch/%s/%s/set", nodeId, objectId);
+
+    return Homie.getMqttClient().subscribe(topic, 1);
+  }
+
+  /**
+   * Subscribe to number command topic
+   */
+  static bool subscribeNumber(const char* nodeId, const char* objectId) {
+    if (!Homie.isConnected())
+      return false;
+
+    char topic[128];
+    snprintf(topic, sizeof(topic), "homeassistant/number/%s/%s/set", nodeId, objectId);
+
+    return Homie.getMqttClient().subscribe(topic, 1);
+  }
+
+  /**
+   * Subscribe to select command topic
+   */
+  static bool subscribeSelect(const char* nodeId, const char* objectId) {
+    if (!Homie.isConnected())
+      return false;
+
+    char topic[128];
+    snprintf(topic, sizeof(topic), "homeassistant/select/%s/%s/set", nodeId, objectId);
 
     return Homie.getMqttClient().subscribe(topic, 1);
   }

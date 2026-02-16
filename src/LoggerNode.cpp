@@ -10,6 +10,7 @@
 #include "LoggerNode.hpp"
 #include <cstdio>
 #include <Homie.hpp>
+#include "MqttInterface.hpp"
 
 HomieSetting<const char*> LoggerNode::default_loglevel(
     "loglevel", "default loglevel");
@@ -67,8 +68,10 @@ void LoggerNode::setup() {
 }
 
 void LoggerNode::onReadyToOperate() {
-  setProperty("Level").send(levelstring[m_loglevel]);
-  setProperty("LogSerial").send(logSerial ? "true" : "false");
+  PoolController::MqttInterface::publishSelectState(
+      *this, "Level", "log-level", levelstring[m_loglevel].c_str());
+  PoolController::MqttInterface::publishSwitchState(
+      *this, "LogSerial", "log-serial", logSerial);
 }
 
 void LoggerNode::log(const String& function, const E_Loglevel level,
@@ -93,7 +96,12 @@ void LoggerNode::log(const String& function, const E_Loglevel level,
       mqtt_path.concat(function);
       message = text;
     }
-    setProperty(mqtt_path).send(message);
+    if (PoolController::MqttInterface::isHomeAssistant()) {
+      PoolController::MqttInterface::publishTextState(
+          *this, "log", "log", message.c_str());
+    } else {
+      setProperty(mqtt_path).send(message);
+    }
   }
   if (logSerial || !Homie.isConnected()) {
     Serial.printf("%ld [%s]: %s: %s\n", millis(),
@@ -121,6 +129,27 @@ bool LoggerNode::handleInput(const HomieRange& range,
                              const String& value) {
   this->logf("LoggerNode::handleInput()", LoggerNode::DEBUG,
              "property %s set to %s", property.c_str(), value.c_str());
+  const bool retval = applyProperty(property, value);
+  if (!retval) {
+    logf("LoggerNode::handleInput()", ERROR,
+         "Received invalid property %s with value %s", property.c_str(),
+         value.c_str());
+  }
+  return retval;
+}
+
+bool LoggerNode::handleHomeAssistantCommand(const char* property, const char* value) {
+  this->logf("LoggerNode::handleHomeAssistantCommand()", LoggerNode::DEBUG,
+             "property %s set to %s", property, value);
+  const bool retval = applyProperty(String(property), String(value));
+  if (!retval) {
+    logf("LoggerNode::handleHomeAssistantCommand()", ERROR,
+         "Received invalid property %s with value %s", property, value);
+  }
+  return retval;
+}
+
+bool LoggerNode::applyProperty(const String& property, const String& value) {
   if (property.equals("Level") /* || property.equals("DefaultLevel") */) {
     E_Loglevel newLevel = convertToLevel(value);
     if (newLevel == INVALID) {
@@ -131,7 +160,8 @@ bool LoggerNode::handleInput(const HomieRange& range,
     m_loglevel = newLevel;
     logf("LoggerNode::handleInput()", INFO, "New loglevel set to %d",
          m_loglevel);
-    setProperty("Level").send(levelstring[m_loglevel]);
+    PoolController::MqttInterface::publishSelectState(
+        *this, "Level", "log-level", levelstring[m_loglevel].c_str());
     return true;
   } else if (property.equals("LogSerial")) {
     bool on = value.equalsIgnoreCase("ON") ||
@@ -140,12 +170,10 @@ bool LoggerNode::handleInput(const HomieRange& range,
     this->logf("LoggerNode::handleInput()", LoggerNode::INFO,
                "Received command to switch 'Log to serial' %s.",
                on ? "On" : "Off");
-    setProperty("LogSerial").send(on ? "true" : "false");
+    PoolController::MqttInterface::publishSwitchState(
+        *this, "LogSerial", "log-serial", on);
     return true;
   }
-  logf("LoggerNode::handleInput()", ERROR,
-       "Received invalid property %s with value %s", property.c_str(),
-       value.c_str());
   return false;
 }
 

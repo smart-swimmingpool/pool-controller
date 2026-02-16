@@ -7,7 +7,7 @@
 
 #include "ESP32TemperatureNode.hpp"
 #include "Utils.hpp"
-#include "HomeAssistantMQTT.hpp"
+#include "MqttInterface.hpp"
 
 /**
  * @param id
@@ -49,15 +49,10 @@ void ESP32TemperatureNode::loop() {
       char buffer[16];
       Utils::floatToString(temp, buffer, sizeof(buffer));
 
-      if (PoolController::HomeAssistant::useHomeAssistant) {
-        // Publish to Home Assistant
-        PoolController::HomeAssistant::DiscoveryPublisher::publishSensorState(
-            "pool-controller", getId(), buffer);
-      } else {
-        // Publish to Homie
-        setProperty(cTemperature).send(buffer);
-        setProperty(cHomieNodeState).send(cHomieNodeState_OK);
-      }
+      PoolController::MqttInterface::publishSensorState(
+          *this, cTemperature, getId(), buffer);
+      PoolController::MqttInterface::publishHomieProperty(
+          *this, cHomieNodeState, cHomieNodeState_OK);
     }
   }
 #endif

@@ -16,6 +16,7 @@ public:
   //virtual void loop() override; // loop() not necessary
   virtual void onReadyToOperate() override;
   virtual bool handleInput(const HomieRange& range, const String& property, const String& value) override;
+  bool         handleHomeAssistantCommand(const char* property, const char* value);
 
   enum E_Loglevel { INVALID = -1, DEBUG = 0, INFO, WARNING, ERROR, CRITICAL };
 
@@ -38,6 +39,7 @@ private:
   static HomieSetting<bool>        logserial;
   static HomieSetting<bool>        flushlog;
 
+  bool applyProperty(const String& property, const String& value);
   static E_Loglevel convertToLevel(const String& level);
   static String&    updateLevelStrings();
 };

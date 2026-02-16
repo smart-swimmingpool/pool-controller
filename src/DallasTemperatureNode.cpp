@@ -20,7 +20,7 @@
  */
 #include "DallasTemperatureNode.hpp"
 #include "Utils.hpp"
-#include "HomeAssistantMQTT.hpp"
+#include "MqttInterface.hpp"
 
 DallasTemperatureNode::DallasTemperatureNode(const char* id, const char* name, const uint8_t pin, const int measurementInterval)
     : HomieNode(id, name, "temperature") {
@@ -113,15 +113,10 @@ void DallasTemperatureNode::loop() {
               char buffer[16];
               Utils::floatToString(_temperature, buffer, sizeof(buffer));
 
-              if (PoolController::HomeAssistant::useHomeAssistant) {
-                // Publish to Home Assistant
-                PoolController::HomeAssistant::DiscoveryPublisher::publishSensorState(
-                    "pool-controller", getId(), buffer);
-              } else {
-                // Publish to Homie
-                setProperty(cTemperature).send(buffer);
-                setProperty(cHomieNodeState).send(cHomieNodeState_OK);
-              }
+              PoolController::MqttInterface::publishSensorState(
+                  *this, cTemperature, getId(), buffer);
+              PoolController::MqttInterface::publishHomieProperty(
+                  *this, cHomieNodeState, cHomieNodeState_OK);
             }
           }
         }
