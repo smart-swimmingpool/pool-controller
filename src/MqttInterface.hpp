@@ -72,9 +72,9 @@ inline void publishSensorState(HomieNode& node, const char* homieProperty,
   }
 }
 
-inline void publishTextState(HomieNode& node, const char* homieProperty,
+inline void publishTextState(const HomieNode& node, const char* homieProperty,
                              const char* objectId, const char* value) {
-  publishSensorState(node, homieProperty, objectId, value);
+  publishSensorState(const_cast<HomieNode&>(node), homieProperty, objectId, value);
 }
 
 inline void publishSwitchState(HomieNode& node, const char* homieProperty,

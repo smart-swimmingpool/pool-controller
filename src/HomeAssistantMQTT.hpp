@@ -44,7 +44,7 @@ public:
     char topic[128];
     snprintf(topic, sizeof(topic), "homeassistant/sensor/%s/%s/config", nodeId, objectId);
 
-    JsonDocument doc;
+    StaticJsonDocument<1024> doc;
 
     // State topic
     char stateTopic[128];
@@ -97,7 +97,7 @@ public:
     char topic[128];
     snprintf(topic, sizeof(topic), "homeassistant/switch/%s/%s/config", nodeId, objectId);
 
-    JsonDocument doc;
+    StaticJsonDocument<1024> doc;
 
     // State and command topics
     char stateTopic[128];
@@ -158,7 +158,7 @@ public:
     char topic[128];
     snprintf(topic, sizeof(topic), "homeassistant/number/%s/%s/config", nodeId, objectId);
 
-    JsonDocument doc;
+    StaticJsonDocument<1024> doc;
 
     char stateTopic[128];
     char commandTopic[128];
@@ -215,7 +215,7 @@ public:
     char topic[128];
     snprintf(topic, sizeof(topic), "homeassistant/select/%s/%s/config", nodeId, objectId);
 
-    JsonDocument doc;
+    StaticJsonDocument<1024> doc;
 
     char stateTopic[128];
     char commandTopic[128];
