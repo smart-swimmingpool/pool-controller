@@ -77,11 +77,19 @@ bool RuleAuto::checkPoolPumpTimer() {
   Homie.getLogger() << cIndent << F("startTime=  ") << asctime(&startTime);
   Homie.getLogger() << cIndent << F("endTime=    ") << asctime(&endTime);
 
-  if (difftime(mktime(&time), mktime(&startTime)) >= 0 && difftime(mktime(&time), mktime(&endTime)) <= 0) {
-    retval = true;
+  // Handle midnight crossing: check if timer spans midnight
+  TimerSetting ts              = getTimerSetting();
+  bool         crossesMidnight = (ts.timerStartHour > ts.timerEndHour) ||
+                         (ts.timerStartHour == ts.timerEndHour && ts.timerStartMinutes > ts.timerEndMinutes);
 
+  if (crossesMidnight) {
+    // Timer crosses midnight (e.g., 22:00 - 02:00)
+    // Active if: time >= start OR time <= end
+    retval = (difftime(mktime(&time), mktime(&startTime)) >= 0) || (difftime(mktime(&time), mktime(&endTime)) <= 0);
   } else {
-    retval = false;
+    // Normal case: timer within same day
+    // Active if: time >= start AND time <= end
+    retval = (difftime(mktime(&time), mktime(&startTime)) >= 0) && (difftime(mktime(&time), mktime(&endTime)) <= 0);
   }
 
   Homie.getLogger() << cIndent << F("checkPoolPumpTimer = ") << retval << endl;
