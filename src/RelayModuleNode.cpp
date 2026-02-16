@@ -77,7 +77,6 @@ bool RelayModuleNode::handleInput(const HomieRange& range, const String& propert
     Homie.getLogger() << F("invalid value for property '") << property << F("' value=") << value << endl;
 
     if (Homie.isConnected()) {
-    if (Homie.isConnected()) {
       setProperty(cHomieNodeState).send(cHomieNodeState_Error);
     }
     retval = false;

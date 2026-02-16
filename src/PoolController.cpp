@@ -26,10 +26,10 @@
 
 namespace PoolController {
 static LoggerNode            LN;
-static DallasTemperatureNode solarTemperatureNode("solar-temp", "Solar Temperature", PIN_DS_SOLAR, TEMP_READ_INTERVALL);
-static DallasTemperatureNode poolTemperatureNode("pool-temp", "Pool Temperature", PIN_DS_POOL, TEMP_READ_INTERVALL);
+static DallasTemperatureNode solarTemperatureNode("solar-temp", "Solar Temperature", PIN_DS_SOLAR, TEMP_READ_INTERVAL);
+static DallasTemperatureNode poolTemperatureNode("pool-temp", "Pool Temperature", PIN_DS_POOL, TEMP_READ_INTERVAL);
 #ifdef ESP32
-static ESP32TemperatureNode ctrlTemperatureNode("controller-temp", "Controller Temperature", TEMP_READ_INTERVALL);
+static ESP32TemperatureNode ctrlTemperatureNode("controller-temp", "Controller Temperature", TEMP_READ_INTERVAL);
 #endif
 static RelayModuleNode poolPumpNode("pool-pump", "Pool Pump", PIN_RELAY_POOL);
 static RelayModuleNode solarPumpNode("solar-pump", "Solar Pump", PIN_RELAY_SOLAR);
@@ -145,24 +145,12 @@ static PoolControllerContext* Self;
 auto                          Detail::setupProxy() -> void {
   Self->setupHandler();
 }
-static PoolControllerContext* Self;
-auto                          Detail::setupProxy() -> void {
-  Self->setupHandler();
-}
 
 PoolControllerContext::PoolControllerContext() {
   assert(!Self);
   Self = this;
 }
-PoolControllerContext::PoolControllerContext() {
-  assert(!Self);
-  Self = this;
-}
 
-PoolControllerContext::~PoolControllerContext() {
-  assert(Self);
-  Self = nullptr;
-}
 PoolControllerContext::~PoolControllerContext() {
   assert(Self);
   Self = nullptr;
@@ -184,17 +172,10 @@ auto PoolControllerContext::initializeController() -> void {
 
   solarTemperatureNode.setMeasurementInterval(_loopInterval);
   poolTemperatureNode.setMeasurementInterval(_loopInterval);
-  solarTemperatureNode.setMeasurementInterval(_loopInterval);
-  poolTemperatureNode.setMeasurementInterval(_loopInterval);
 
   poolPumpNode.setMeasurementInterval(_loopInterval);
   solarPumpNode.setMeasurementInterval(_loopInterval);
-  poolPumpNode.setMeasurementInterval(_loopInterval);
-  solarPumpNode.setMeasurementInterval(_loopInterval);
 
-#ifdef ESP32
-  ctrlTemperatureNode.setMeasurementInterval(_loopInterval);
-#endif
 #ifdef ESP32
   ctrlTemperatureNode.setMeasurementInterval(_loopInterval);
 #endif
@@ -209,41 +190,20 @@ auto PoolControllerContext::initializeController() -> void {
   ts.timerEndHour      = 17;
   ts.timerEndMinutes   = 30;
   operationModeNode.setTimerSetting(ts);
-  operationModeNode.setMode(this->operationModeSetting_.get());
-  operationModeNode.setPoolMaxTemperature(this->temperatureMaxPoolSetting_.get());
-  operationModeNode.setSolarMinTemperature(this->temperatureMinSolarSetting_.get());
-  operationModeNode.setTemperatureHysteresis(this->temperatureHysteresisSetting_.get());
-  TimerSetting ts      = operationModeNode.getTimerSetting();  //TODO: Configurable
-  ts.timerStartHour    = 10;
-  ts.timerStartMinutes = 30;
-  ts.timerEndHour      = 17;
-  ts.timerEndMinutes   = 30;
-  operationModeNode.setTimerSetting(ts);
 
-  operationModeNode.setPoolTemperatureNode(&poolTemperatureNode);
-  operationModeNode.setSolarTemperatureNode(&solarTemperatureNode);
   operationModeNode.setPoolTemperatureNode(&poolTemperatureNode);
   operationModeNode.setSolarTemperatureNode(&solarTemperatureNode);
 
   // add the rules
   RuleAuto* autoRule = new RuleAuto(&solarPumpNode, &poolPumpNode);
   operationModeNode.addRule(autoRule);
-  // add the rules
-  RuleAuto* autoRule = new RuleAuto(&solarPumpNode, &poolPumpNode);
-  operationModeNode.addRule(autoRule);
 
-  RuleManu* manuRule = new RuleManu();
-  operationModeNode.addRule(manuRule);
   RuleManu* manuRule = new RuleManu();
   operationModeNode.addRule(manuRule);
 
   RuleBoost* boostRule = new RuleBoost(&solarPumpNode, &poolPumpNode);
   operationModeNode.addRule(boostRule);
-  RuleBoost* boostRule = new RuleBoost(&solarPumpNode, &poolPumpNode);
-  operationModeNode.addRule(boostRule);
 
-  RuleTimer* timerRule = new RuleTimer(&solarPumpNode, &poolPumpNode);
-  operationModeNode.addRule(timerRule);
   RuleTimer* timerRule = new RuleTimer(&solarPumpNode, &poolPumpNode);
   operationModeNode.addRule(timerRule);
 
@@ -366,7 +326,7 @@ auto PoolControllerContext::setup() -> void {
   Homie_setBrand("smart-swimmingpool");
 
   // default interval of sending Temperature values
-  this->loopIntervalSetting_.setDefaultValue(TEMP_READ_INTERVALL).setValidator([](const int32_t candidate) -> bool {
+  this->loopIntervalSetting_.setDefaultValue(TEMP_READ_INTERVAL).setValidator([](const int32_t candidate) -> bool {
     return candidate >= 0 && candidate <= 300;
   });
 
@@ -396,7 +356,6 @@ auto PoolControllerContext::setup() -> void {
   });
 
   Homie.setSetupFunction(&Detail::setupProxy);
-  Homie.setSetupFunction(&Detail::setupProxy);
 
   LN.log(__PRETTY_FUNCTION__, LoggerNode::DEBUG, "Before Homie setup())");
   Homie.setup();
@@ -404,16 +363,7 @@ auto PoolControllerContext::setup() -> void {
   // Initialize controller regardless of WiFi/MQTT connection status
   // This ensures offline operation works from startup
   initializeController();
-  LN.log(__PRETTY_FUNCTION__, LoggerNode::DEBUG, "Before Homie setup())");
-  Homie.setup();
 
-  // Initialize controller regardless of WiFi/MQTT connection status
-  // This ensures offline operation works from startup
-  initializeController();
-
-  LN.logf(__PRETTY_FUNCTION__, LoggerNode::DEBUG, "Free heap: %d", ESP.getFreeHeap());
-  Homie.getLogger() << F("Free heap: ") << ESP.getFreeHeap() << endl;
-}
   LN.logf(__PRETTY_FUNCTION__, LoggerNode::DEBUG, "Free heap: %d", ESP.getFreeHeap());
   Homie.getLogger() << F("Free heap: ") << ESP.getFreeHeap() << endl;
 }

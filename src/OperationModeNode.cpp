@@ -230,14 +230,12 @@ bool OperationModeNode::applyProperty(const String& property, const String& valu
   } else if (property.equalsIgnoreCase(cTimerStartHour)) {
     Homie.getLogger() << cIndent << F("✔ Timer start hh: ") << value << endl;
     TimerSetting timerSetting   = getTimerSetting();
-    TimerSetting timerSetting   = getTimerSetting();
     timerSetting.timerStartHour = value.toInt();
     setTimerSetting(timerSetting);
     retval = true;
 
   } else if (property.equalsIgnoreCase(cTimerStartMin)) {
     Homie.getLogger() << cIndent << F("✔  Timer start min.: ") << value << endl;
-    TimerSetting timerSetting      = getTimerSetting();
     TimerSetting timerSetting      = getTimerSetting();
     timerSetting.timerStartMinutes = value.toInt();
     setTimerSetting(timerSetting);
@@ -252,7 +250,6 @@ bool OperationModeNode::applyProperty(const String& property, const String& valu
 
   } else if (property.equalsIgnoreCase(cTimerEndMin)) {
     Homie.getLogger() << cIndent << F("✔ Timer end min.: ") << value << endl;
-    TimerSetting timerSetting    = getTimerSetting();
     TimerSetting timerSetting    = getTimerSetting();
     timerSetting.timerEndMinutes = value.toInt();
     setTimerSetting(timerSetting);

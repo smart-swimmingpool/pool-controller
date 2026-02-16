@@ -31,8 +31,6 @@ public:
    */
   virtual const char* getMode() = 0;
   virtual void        loop()    = 0;
-  virtual const char* getMode() = 0;
-  virtual void        loop()    = 0;
 
 protected:
   float _poolTemp;
