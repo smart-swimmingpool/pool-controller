@@ -120,7 +120,6 @@ void OperationModeNode::loop() {
     }
     if (Homie.isConnected()) {
       /*
-      /*
       Homie.getLogger() << cIndent << F("mode: ") << _mode << endl;
       Homie.getLogger() << cIndent << F("SolarMinTemp: ") <<
                            _solarMinTemp << endl;
