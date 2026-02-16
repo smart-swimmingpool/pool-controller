@@ -1,8 +1,7 @@
-name: Alert `website` repository on `master` push
+name: Alert `website` repository on `main` push
 on:
   push:
     branches:
-      - master
       - main
 jobs:
   build:

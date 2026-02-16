@@ -29,5 +29,3 @@ tm getEndTime(TimerSetting timerSetting) {
 
   return endTime;
 }
-
-

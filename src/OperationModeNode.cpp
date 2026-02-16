@@ -16,6 +16,7 @@ OperationModeNode::OperationModeNode(const char* id, const char* name, const int
   _lastMeasurement     = 0;
 
   setRunLoopDisconnected(true);
+  setRunLoopDisconnected(true);
 }
 
 /**
@@ -95,6 +96,9 @@ void OperationModeNode::setup() {
 
   advertise(cTimerEndHour).setName("Timer End").setDatatype("float").setFormat("0:23").setUnit("hh").settable();
   advertise(cTimerEndMin).setName("Timer End").setDatatype("float").setFormat("0:59").setUnit("MM").settable();
+
+  advertise(cTimezone).setName(cTimezoneName).setDatatype("integer").setFormat("0:9").settable();
+  advertise(cTimezoneInfo).setName(cTimezoneInfoName).setDatatype("string");
 }
 
 /**
@@ -111,6 +115,7 @@ void OperationModeNode::loop() {
       Homie.getLogger() << cIndent << F("✖ no rule defined: ") << _mode << endl;
     }
     if (Homie.isConnected()) {
+      /*
       /*
       Homie.getLogger() << cIndent << F("mode: ") << _mode << endl;
       Homie.getLogger() << cIndent << F("SolarMinTemp: ") <<
@@ -186,12 +191,14 @@ bool OperationModeNode::handleInput(const HomieRange& range, const String& prope
   } else if (property.equalsIgnoreCase(cTimerStartHour)) {
     Homie.getLogger() << cIndent << F("✔ Timer start hh: ") << value << endl;
     TimerSetting timerSetting   = getTimerSetting();
+    TimerSetting timerSetting   = getTimerSetting();
     timerSetting.timerStartHour = value.toInt();
     setTimerSetting(timerSetting);
     retval = true;
 
   } else if (property.equalsIgnoreCase(cTimerStartMin)) {
     Homie.getLogger() << cIndent << F("✔  Timer start min.: ") << value << endl;
+    TimerSetting timerSetting      = getTimerSetting();
     TimerSetting timerSetting      = getTimerSetting();
     timerSetting.timerStartMinutes = value.toInt();
     setTimerSetting(timerSetting);
@@ -207,9 +214,23 @@ bool OperationModeNode::handleInput(const HomieRange& range, const String& prope
   } else if (property.equalsIgnoreCase(cTimerEndMin)) {
     Homie.getLogger() << cIndent << F("✔ Timer end min.: ") << value << endl;
     TimerSetting timerSetting    = getTimerSetting();
+    TimerSetting timerSetting    = getTimerSetting();
     timerSetting.timerEndMinutes = value.toInt();
     setTimerSetting(timerSetting);
     retval = true;
+
+  } else if (property.equalsIgnoreCase(cTimezone)) {
+    Homie.getLogger() << cIndent << F("✔ Timezone: ") << value << endl;
+    int tzIndex = value.toInt();
+    if (tzIndex >= 0 && tzIndex < getTzCount()) {
+      setTimezoneIndex(tzIndex);
+      Homie.getLogger() << cIndent << F("  Set to: ") << getTimeInfoFor(tzIndex) << endl;
+      // Note: This only updates the timezone at runtime; persistence is handled via configuration.
+      retval = true;
+    } else {
+      Homie.getLogger() << cIndent << F("✖ Invalid timezone index: ") << tzIndex << endl;
+      retval = false;
+    }
 
   } else {
     retval = false;

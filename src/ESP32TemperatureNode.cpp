@@ -18,6 +18,8 @@ ESP32TemperatureNode::ESP32TemperatureNode(const char* id, const char* name, con
   _lastMeasurement     = millis();
 
   setRunLoopDisconnected(true);
+
+  setRunLoopDisconnected(true);
 }
 
 /**

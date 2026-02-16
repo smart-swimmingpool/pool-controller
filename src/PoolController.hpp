@@ -8,6 +8,9 @@ namespace PoolController {
 namespace Detail {
 extern auto setupProxy() -> void;
 }
+namespace Detail {
+extern auto setupProxy() -> void;
+}
 
 /**
  * Core controller class using RAII principles.
@@ -37,6 +40,8 @@ struct PoolControllerContext final {
    */
   auto loop() -> void;
 
+private:
+  friend auto Detail::setupProxy() -> void;
 private:
   friend auto Detail::setupProxy() -> void;
 

@@ -17,38 +17,37 @@ name: Lint Code Base
 on:
   push:
     branches-ignore:
-      - 'master'
+      - "main"
+  pull_request:
+
+permissions:
+  contents: read
 
 ###############
 # Set the Job #
 ###############
 jobs:
-  build:
-    # Name the Job
-    name: Lint Code Base
-    # Set the agent to run on
+  super-linter:
+    name: Super-Linter
     runs-on: ubuntu-latest
 
-    ##################
-    # Load all steps #
-    ##################
+    permissions:
+      contents: read
+      statuses: write
+
     steps:
-      ##########################
-      # Checkout the code base #
-      ##########################
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      ################################
-      # Run Linter against code base #
-      ################################
-      - name: Lint Code Base
-        uses: github/super-linter@v5
+      - name: Run Super-Linter
+        uses: super-linter/super-linter@v7
         env:
           VALIDATE_ALL_CODEBASE: false
-          DEFAULT_BRANCH: master
+          VALIDATE_ANSIBLE: false
+
+          DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
           # PlatformIO Project Optimizations
@@ -81,4 +80,5 @@ jobs:
           LOG_LEVEL: NOTICE
 
       - name: Arduino Lint
-        uses: arduino/arduino-lint-action@v1
+        uses: arduino/arduino-lint-action@v1.0.0
+

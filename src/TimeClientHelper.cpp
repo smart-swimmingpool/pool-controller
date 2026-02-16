@@ -78,7 +78,7 @@ void timeClientSetup(const char* ntpServer) {
     delete timeClient;
   }
   timeClient = new NTPClient(ntpUDP, ntpServer);
-  
+
   // initialize NTP Client
   timeClient->begin();
 

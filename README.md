@@ -60,7 +60,8 @@ Discussions: <https://github.com/smart-swimmingpool/smart-swimmingpool.github.io
   - No physical access required for updates
   - Password-protected secure updates
   - mDNS discovery support
-- [x] Time sync via NTP (europe.pool.ntp.org)
+- [x] Time sync via NTP (configurable server, default: pool.ntp.org)
+- [x] Configurable timezone with DST support (10 major timezones available)
 - [x] Logging information via MQTT
 - [x] Modern libraries (ArduinoJson 6.21.5, NTPClient 3.2.1)
 - [x] Clean, formatted code following project standards
@@ -129,6 +130,17 @@ See [docs/state-persistence.md](docs/state-persistence.md) for details.
 - [State Persistence & Monitoring](docs/state-persistence.md) (New in v3.1.0)
 - [Over-The-Air Updates](docs/ota-updates.md) (New in v3.1.0)
 - [Optimization Report](docs/optimization-report.md) (New in v3.1.0)
+
+## Contributing
+
+We welcome contributions! Before submitting a pull request, please:
+
+1. **Read the coding guidelines**: [`.github/CODING_GUIDELINES.md`](.github/CODING_GUIDELINES.md)
+2. **Format your code**: Run `clang-format -i src/**/*.cpp src/**/*.hpp`
+3. **Check for issues**: See [`.github/QUICK_REFERENCE.md`](.github/QUICK_REFERENCE.md) for common fixes
+4. **Test your changes**: Build for both `esp32dev` and `nodemcuv2` environments
+
+All code must pass Super-Linter checks (clang-format, EditorConfig, etc.) before merge.
 
 ## Credits
 

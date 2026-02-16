@@ -17,6 +17,8 @@ RelayModuleNode::RelayModuleNode(const char* id, const char* name, const uint8_t
   _lastMeasurement     = 0;
 
   setRunLoopDisconnected(true);
+
+  setRunLoopDisconnected(true);
 }
 
 /**
@@ -79,6 +81,7 @@ bool RelayModuleNode::handleInput(const HomieRange& range, const String& propert
   if (value != cFlagOn && value != cFlagOff) {
     Homie.getLogger() << F("invalid value for property '") << property << F("' value=") << value << endl;
 
+    if (Homie.isConnected()) {
     if (Homie.isConnected()) {
       setProperty(cHomieNodeState).send(cHomieNodeState_Error);
     }
