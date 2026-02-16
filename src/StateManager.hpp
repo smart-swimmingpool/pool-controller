@@ -74,7 +74,7 @@ public:
 #elif defined(ESP8266)
     uint16_t addr = hashKey(key);
     // Store length (1 byte) + string data (max 30 bytes)
-    uint8_t len = min(value.length(), 30);
+    uint8_t len = min(value.length(), 30U);
     EEPROM.write(addr, len);
     for (uint8_t i = 0; i < len; i++) {
       EEPROM.write(addr + 1 + i, value[i]);
