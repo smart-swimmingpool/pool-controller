@@ -33,9 +33,9 @@ Discussions: <https://github.com/smart-swimmingpool/smart-swimmingpool.github.io
 - [ ] two separate circulation cycles
 - [ ] store configuration changes persistent on conroller
 - [ ] temperature based cleaning circulation time (colder == shorter, hotter == longer)
-- [ ] Improved sketch to work completly without WiFi connection
-      - Homie should run without WiFi connection
-      - enhance sketch using display and buttons to setup environment.
+- [ ] Improved sketch to work completly without Wi-Fi connection
+  - Homie should run without Wi-Fi connection
+  - enhance sketch using display and buttons to setup environment.
 - see also the [issue list](https://github.com/smart-swimmingpool/pool-controller/issues)
 
 ## Guides
@@ -43,6 +43,17 @@ Discussions: <https://github.com/smart-swimmingpool/smart-swimmingpool.github.io
 - [Users Guide](docs/users-guide.md)
 - [Hardware Guide](docs/hardware-guide.md)
 - [Software Guide](docs/software-guide.md)
+
+## Contributing
+
+We welcome contributions! Before submitting a pull request, please:
+
+1. **Read the coding guidelines**: [`.github/CODING_GUIDELINES.md`](.github/CODING_GUIDELINES.md)
+2. **Format your code**: Run `clang-format -i src/**/*.cpp src/**/*.hpp`
+3. **Check for issues**: See [`.github/QUICK_REFERENCE.md`](.github/QUICK_REFERENCE.md) for common fixes
+4. **Test your changes**: Build for both `esp32dev` and `nodemcuv2` environments
+
+All code must pass Super-Linter checks (clang-format, EditorConfig, etc.) before merge.
 
 ## Credits
 
@@ -56,4 +67,4 @@ Discussions: <https://github.com/smart-swimmingpool/smart-swimmingpool.github.io
 
 ---
 
-DIY My Smart Home: (https://medium.com/diy-my-smart-home)
+DIY My Smart Home: <https://medium.com/diy-my-smart-home>

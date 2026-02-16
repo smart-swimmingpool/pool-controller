@@ -40,11 +40,10 @@ void ESP32TemperatureNode::loop() {
     const double  temp           = (temp_farenheit - 32) / 1.8;
 
     Homie.getLogger() << cIndent << F("Temperature = ") << temp << cTemperatureUnit << endl;
-    if(Homie.isConnected()) {
+    if (Homie.isConnected()) {
       setProperty(cTemperature).send(String(temp, 2));
       setProperty(cHomieNodeState).send(cHomieNodeState_OK);
     }
-
   }
 #endif
 }
