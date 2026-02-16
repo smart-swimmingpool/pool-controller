@@ -3,6 +3,7 @@
 ## Schnelle Fehlerbehebung
 
 ### 1. Clang-Format Fehler
+
 ```bash
 # Alle C++ Dateien automatisch formatieren
 clang-format -i src/**/*.cpp src/**/*.hpp
@@ -16,14 +17,14 @@ clang-format -i src/MyFile.cpp
 
 ### 2. Häufigste Clang-Format Fehler
 
-| Fehler | Falsch | Richtig |
-|--------|--------|---------|
-| Namespace-Klammer | `namespace Foo\n{` | `namespace Foo {` |
-| Leerzeichen bei if | `if(x){` | `if (x) {` |
-| Pointer-Deklaration | `int *ptr` | `int* ptr` |
-| NULL verwenden | `ptr = NULL` | `ptr = nullptr` |
-| Leere Klammern | `Context{ }` | `Context{}` |
-| Kommentar-Abstand | `int x;// comment` | `int x;  // comment` (2+ Leerzeichen) |
+| Fehler              | Falsch             | Richtig                               |
+| ------------------- | ------------------ | ------------------------------------- |
+| Namespace-Klammer   | `namespace Foo\n{` | `namespace Foo {`                     |
+| Leerzeichen bei if  | `if(x){`           | `if (x) {`                            |
+| Pointer-Deklaration | `int *ptr`         | `int* ptr`                            |
+| NULL verwenden      | `ptr = NULL`       | `ptr = nullptr`                       |
+| Leere Klammern      | `Context{ }`       | `Context{}`                           |
+| Kommentar-Abstand   | `int x;// comment` | `int x;  // comment` (2+ Leerzeichen) |
 
 ### 3. EditorConfig Fehler
 
@@ -39,7 +40,7 @@ find src -type f \( -name "*.cpp" -o -name "*.hpp" \) -exec sed -i 's/[[:space:]
 
 ```yaml
 # Immer doppelte Anführungszeichen
-name: "Build"  # nicht name: 'Build'
+name: "Build" # nicht name: 'Build'
 
 # Lange Zeilen mit > oder | umbrechen
 run: >
@@ -53,12 +54,15 @@ run: >
 
 ```markdown
 <!-- WiFi → Wi-Fi -->
+
 This project uses Wi-Fi connectivity.
 
 <!-- Bare URLs in spitze Klammern -->
+
 See <https://example.com> for details.
 
 <!-- Nicht: -->
+
 See https://example.com for details.
 ```
 
@@ -69,7 +73,7 @@ See https://example.com for details.
 [env:esp32dev]
 lib_deps =
   me-no-dev/Homie@^3.0.0
-  
+
 # Keine URLs mit Leerzeichen im Namen
 # FALSCH: me-no-dev/ESP Async WebServer
 # RICHTIG:
@@ -122,6 +126,7 @@ exit 0
 ```
 
 Dann:
+
 ```bash
 chmod +x .git/hooks/pre-commit
 ```

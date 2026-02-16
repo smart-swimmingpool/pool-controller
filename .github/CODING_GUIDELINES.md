@@ -16,6 +16,7 @@ Dieses Dokument beschreibt die Coding-Richtlinien für das Pool-Controller Proje
 ### 1.2 Wichtige clang-format Anforderungen
 
 #### Leerzeichen zwischen Code und Kommentaren
+
 ```cpp
 // FALSCH
 int x = 5;// Kommentar
@@ -25,6 +26,7 @@ int x = 5;  // Kommentar (mindestens 2 Leerzeichen)
 ```
 
 #### Leerzeichen bei Kontrollstrukturen
+
 ```cpp
 // FALSCH
 if(condition){
@@ -38,6 +40,7 @@ if (condition) {
 ```
 
 #### Namespaces-Formatierung
+
 ```cpp
 // FALSCH
 namespace PoolController
@@ -56,6 +59,7 @@ namespace PoolController {
 ```
 
 #### Initialisierung mit geschweiften Klammern
+
 ```cpp
 // FALSCH
 static Context context { };
@@ -65,6 +69,7 @@ static Context context{};
 ```
 
 #### Pointer und NULL
+
 ```cpp
 // FALSCH
 TimeChangeRule *tcr = NULL;
@@ -74,6 +79,7 @@ TimeChangeRule* tcr = nullptr;
 ```
 
 #### Alignment von Variablen
+
 ```cpp
 // FALSCH
 const char* cTimezone     = "timezone";
@@ -88,6 +94,7 @@ const char* cTimezoneName = "Timezone";
 ### 1.3 Automatische Formatierung
 
 Führe vor jedem Commit aus:
+
 ```bash
 # Alle C++ Dateien formatieren
 clang-format -i src/**/*.cpp src/**/*.hpp
@@ -102,10 +109,12 @@ clang-format --dry-run --Werror src/**/*.cpp
 ## 2. C++ Stil-Richtlinien (cpplint)
 
 ### 2.1 Zeilenlänge
+
 - Maximal 80 Zeichen für cpplint (strenger als clang-format)
 - Lange Kommentare über mehrere Zeilen aufteilen
 
 ### 2.2 Datentypen
+
 ```cpp
 // FALSCH
 unsigned long timestamp;
@@ -117,6 +126,7 @@ int32_t value;
 ```
 
 ### 2.3 Inklude-Guards
+
 ```cpp
 // Verwende #pragma once statt Include-Guards
 #pragma once
@@ -131,6 +141,7 @@ int32_t value;
 ## 3. EditorConfig Konformität
 
 ### 3.1 Grundeinstellungen (.editorconfig)
+
 - **Einrückung**: 2 Leerzeichen für alle Dateien
 - **Keine Tabs**: Immer Leerzeichen verwenden
 - **Trailing Whitespace**: Entfernen
@@ -139,7 +150,8 @@ int32_t value;
 
 ### 3.2 Spezifische Datei-Formate
 
-#### YAML-Dateien (.github/workflows/*.yml)
+#### YAML-Dateien (.github/workflows/\*.yml)
+
 ```yaml
 # Immer doppelte Anführungszeichen
 name: "Workflow Name"
@@ -151,10 +163,12 @@ run: >
 ```
 
 #### Markdown-Dateien
+
 - "Wi-Fi" (not "WiFi" - note the hyphen)
 - URLs in spitze Klammern: `<https://example.com>`
 
 #### INI-Dateien (platformio.ini)
+
 ```ini
 # 2 Leerzeichen für Einrückung
 [env:esp32dev]
@@ -166,6 +180,7 @@ lib_deps =
 ## 4. ESP8266/ESP32 Spezifische Best Practices
 
 ### 4.1 Speicherverwaltung
+
 ```cpp
 // Vermeide große Stack-Allocations
 char buffer[1024];  // Könnte Stack Overflow verursachen
@@ -176,6 +191,7 @@ buffer.reserve(1024);
 ```
 
 ### 4.2 String-Behandlung
+
 ```cpp
 // FALSCH - Fragmentiert Heap
 String result = "";
@@ -192,6 +208,7 @@ for (int i = 0; i < 100; i++) {
 ```
 
 ### 4.3 Async Operations
+
 ```cpp
 // Nutze yield() in langen Schleifen
 for (int i = 0; i < 10000; i++) {
@@ -203,6 +220,7 @@ for (int i = 0; i < 10000; i++) {
 ```
 
 ### 4.4 Wi-Fi und Netzwerk
+
 ```cpp
 // Prüfe Verbindungsstatus
 if (WiFi.status() == WL_CONNECTED) {
@@ -220,6 +238,7 @@ if (WiFi.isConnected()) {
 ### 5.1 Library-Verwaltung
 
 #### ESPAsyncWebServer
+
 ```ini
 # FALSCH - Package-Name mit Leerzeichen
 lib_deps = me-no-dev/ESP Async WebServer @ 1.2.3
@@ -229,6 +248,7 @@ lib_deps = https://github.com/me-no-dev/ESPAsyncWebServer.git
 ```
 
 #### Duplikate vermeiden
+
 ```ini
 # lib_ignore verwenden, um Konflikte zu vermeiden
 [env:esp32dev]
@@ -237,6 +257,7 @@ lib_deps = https://github.com/me-no-dev/ESPAsyncWebServer.git
 ```
 
 #### Plattform-spezifische Dependencies
+
 ```ini
 # AsyncTCP Libraries sind plattform-spezifisch
 # ESP32 verwendet AsyncTCP (ohne "ESP" Präfix)
@@ -245,18 +266,20 @@ lib_deps = https://github.com/me-no-dev/ESPAsyncWebServer.git
 ```
 
 ### 5.2 Build-Flags
+
 ```ini
 # Debug-Informationen
 build_flags =
   -DDEBUG_ESP_PORT=Serial
   -DDEBUG_ESP_CORE
-  
+
 # Release-Optimierung
 build_flags =
   -Os  # Optimiere für Größe
 ```
 
 ### 5.3 Monitor-Einstellungen
+
 ```ini
 monitor_speed = 115200
 monitor_filters = esp32_exception_decoder  # Für ESP32
@@ -265,6 +288,7 @@ monitor_filters = esp32_exception_decoder  # Für ESP32
 ## 6. Git Workflow
 
 ### 6.1 Pre-Commit Checks
+
 ```bash
 # Vor jedem Commit ausführen:
 
@@ -280,6 +304,7 @@ pio run -e nodemcuv2
 ```
 
 ### 6.2 Commit Messages
+
 ```
 # Format: <type>: <subject>
 
@@ -292,15 +317,18 @@ refactor: Improve memory usage in Timer class
 ## 7. Super-Linter Konfiguration
 
 ### 7.1 Aktivierte Linter
+
 - **EditorConfig**: Datei-Formatierung
 - **YAML**: GitHub Actions Workflows
 - **Markdown**: Dokumentation
 - **CPP**: C++ Code (clang-format)
 
 ### 7.2 Deaktivierte Linter
+
 - **CHECKOV**: Zu viele False Positives (manuell validiert)
 
 ### 7.3 Lokale Super-Linter Ausführung
+
 ```bash
 docker run -e RUN_LOCAL=true \
   -e VALIDATE_EDITORCONFIG=true \
@@ -314,18 +342,21 @@ docker run -e RUN_LOCAL=true \
 ## 8. Häufige Fehler und Lösungen
 
 ### 8.1 "Wrong indent style found (tabs instead of spaces)"
+
 ```bash
 # Tabs durch Leerzeichen ersetzen
 find src -name "*.cpp" -o -name "*.hpp" | xargs sed -i 's/\t/  /g'
 ```
 
 ### 8.2 "Trailing whitespace"
+
 ```bash
 # Entferne trailing whitespace
 find . -name "*.cpp" -o -name "*.hpp" | xargs sed -i 's/[[:space:]]*$//'
 ```
 
 ### 8.3 "Line too long"
+
 ```cpp
 // Lange Zeilen umbrechen
 // VORHER
@@ -337,6 +368,7 @@ static const char* veryLongVariableName =
 ```
 
 ### 8.4 "clang-format-violations"
+
 ```bash
 # Automatisch beheben
 clang-format -i <file>
@@ -345,6 +377,7 @@ clang-format -i <file>
 ## 9. IDE-Integration
 
 ### 9.1 Visual Studio Code
+
 ```json
 // .vscode/settings.json
 {
@@ -359,6 +392,7 @@ clang-format -i <file>
 ```
 
 ### 9.2 Extensions
+
 - C/C++ (Microsoft)
 - PlatformIO IDE
 - EditorConfig for Visual Studio Code
