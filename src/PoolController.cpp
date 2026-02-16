@@ -324,7 +324,7 @@ auto PoolControllerContext::setup() -> void {
   Homie_setBrand("smart-swimmingpool");
 
   // default interval of sending Temperature values
-  this->loopIntervalSetting_.setDefaultValue(TEMP_READ_INTERVAL).setValidator([](const int32_t candidate) -> bool {
+  this->loopIntervalSetting_.setDefaultValue(TEMP_READ_INTERVAL).setValidator([](const long candidate) -> bool {
     return candidate >= 0 && candidate <= 300;
   });
 
