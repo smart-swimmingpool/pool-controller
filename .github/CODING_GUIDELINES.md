@@ -151,7 +151,7 @@ run: >
 ```
 
 #### Markdown-Dateien
-- "Wi-Fi" statt "WiFi"
+- "Wi-Fi" (not "WiFi" - note the hyphen)
 - URLs in spitze Klammern: `<https://example.com>`
 
 #### INI-Dateien (platformio.ini)
@@ -202,7 +202,7 @@ for (int i = 0; i < 10000; i++) {
 }
 ```
 
-### 4.4 WiFi und Netzwerk
+### 4.4 Wi-Fi und Netzwerk
 ```cpp
 // Prüfe Verbindungsstatus
 if (WiFi.status() == WL_CONNECTED) {
@@ -292,9 +292,9 @@ refactor: Improve memory usage in Timer class
 ## 7. Super-Linter Konfiguration
 
 ### 7.1 Aktivierte Linter
-- **EDITORCONFIG**: Datei-Formatierung
+- **EditorConfig**: Datei-Formatierung
 - **YAML**: GitHub Actions Workflows
-- **MARKDOWN**: Dokumentation
+- **Markdown**: Dokumentation
 - **CPP**: C++ Code (clang-format)
 
 ### 7.2 Deaktivierte Linter
@@ -344,7 +344,7 @@ clang-format -i <file>
 
 ## 9. IDE-Integration
 
-### 9.1 VS Code
+### 9.1 Visual Studio Code
 ```json
 // .vscode/settings.json
 {
@@ -361,7 +361,7 @@ clang-format -i <file>
 ### 9.2 Extensions
 - C/C++ (Microsoft)
 - PlatformIO IDE
-- EditorConfig for VS Code
+- EditorConfig for Visual Studio Code
 - Prettier (für YAML/Markdown)
 
 ## 10. Checkliste vor PR

@@ -18,14 +18,14 @@ Umfassende Richtlinien für:
 - ✅ Git Workflow und Pre-Commit Checks
 - ✅ Super-Linter Konfiguration
 - ✅ Häufige Fehler und Lösungen
-- ✅ IDE-Integration (VS Code)
+- ✅ IDE-Integration (Visual Studio Code)
 - ✅ Checkliste vor PR
 
 #### `.github/QUICK_REFERENCE.md` (3.9 KB)
 Schnellreferenz mit:
 - ✅ Tabelle häufigster clang-format Fehler
 - ✅ Ein-Zeilen-Befehle für Fixes
-- ✅ VS Code Konfiguration
+- ✅ Visual Studio Code Konfiguration
 - ✅ Pre-Commit Hook Beispiel
 - ✅ Lokale Super-Linter Tests
 - ✅ Commit-Checkliste
@@ -155,7 +155,7 @@ Siehe [QUICK_REFERENCE.md](QUICK_REFERENCE.md) für Details.
 2. **Speicher** - Reserve String capacity vor Loops
 3. **Loops** - `yield()` in langen Schleifen aufrufen
 4. **Stack** - Vermeide große Arrays auf Stack
-5. **WiFi** - Immer Verbindungsstatus prüfen
+5. **Wi-Fi** - Immer Verbindungsstatus prüfen
 6. **Libraries** - ESPAsyncWebServer via GitHub URL
 
 ## 🔗 Referenzen
@@ -168,14 +168,14 @@ Siehe [QUICK_REFERENCE.md](QUICK_REFERENCE.md) für Details.
 ## ✨ Nächste Schritte
 
 1. **CI prüfen** - Warten bis GitHub Actions grün sind
-2. **Review** - Code-Review der Änderungen
+2. **Review** - Code review der Änderungen
 3. **Merge** - Nach erfolgreichen Tests mergen
 4. **Kommunizieren** - Team über neue Guidelines informieren
 
 ## 💡 Tipps für die Zukunft
 
-- **VS Code Extension** installieren: C/C++, EditorConfig
-- **Format on Save** aktivieren in VS Code
+- **Visual Studio Code Extension** installieren: C/C++, EditorConfig
+- **Format on Save** aktivieren in Visual Studio Code
 - **Pre-commit Hook** einrichten (siehe QUICK_REFERENCE.md)
 - **Dokumentation** bei Fragen konsultieren
 - **Automatisierung** nutzen: clang-format macht die Arbeit!

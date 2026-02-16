@@ -76,7 +76,7 @@ lib_deps =
 lib_deps = https://github.com/me-no-dev/ESPAsyncWebServer.git
 ```
 
-## VS Code Settings
+## Visual Studio Code Settings
 
 Speichere in `.vscode/settings.json`:
 
