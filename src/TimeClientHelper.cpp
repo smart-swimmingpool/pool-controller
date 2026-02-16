@@ -9,13 +9,13 @@ WiFiUDP ntpUDP;
 NTPClient* timeClient = nullptr;
 
 // Central European Time (Berlin, Paris, ...)
-TimeChangeRule CEST = {"CEST", Last, Sun, Mar, 2, 120}; // Central European Summer Time
-TimeChangeRule CET = {"CET ", Last, Sun, Oct, 3, 60};   // Central European Standard Time
+TimeChangeRule CEST = {"CEST", Last, Sun, Mar, 2, 120};  // Summer Time
+TimeChangeRule CET = {"CET ", Last, Sun, Oct, 3, 60};  // Standard Time
 Timezone Europe(CEST, CET);
 
 // Eastern European Time (Helsinki, Athens, ...)
-TimeChangeRule EEST = {"EEST", Last, Sun, Mar, 3, 180}; // Eastern European Summer Time
-TimeChangeRule EET = {"EET ", Last, Sun, Oct, 4, 120};   // Eastern European Standard Time
+TimeChangeRule EEST = {"EEST", Last, Sun, Mar, 3, 180};  // Summer Time
+TimeChangeRule EET = {"EET ", Last, Sun, Oct, 4, 120};  // Standard Time
 Timezone EasternEurope(EEST, EET);
 
 // Western European Time (London, Lisbon, ...)
@@ -24,29 +24,29 @@ TimeChangeRule GMT = {"GMT", Last, Sun, Oct, 2, 0};    // Greenwich Mean Time
 Timezone WesternEurope(BST, GMT);
 
 // US Eastern Time (New York, Washington, ...)
-TimeChangeRule EDT = {"EDT", Second, Sun, Mar, 2, -240}; // Eastern Daylight Time (UTC-4)
-TimeChangeRule EST = {"EST", First, Sun, Nov, 2, -300};  // Eastern Standard Time (UTC-5)
+TimeChangeRule EDT = {"EDT", Second, Sun, Mar, 2, -240};  // Daylight (UTC-4)
+TimeChangeRule EST = {"EST", First, Sun, Nov, 2, -300};  // Standard (UTC-5)
 Timezone USEastern(EDT, EST);
 
 // US Central Time (Chicago, Houston, ...)
-TimeChangeRule CDT = {"CDT", Second, Sun, Mar, 2, -300}; // Central Daylight Time (UTC-5)
-TimeChangeRule CST = {"CST", First, Sun, Nov, 2, -360};  // Central Standard Time (UTC-6)
+TimeChangeRule CDT = {"CDT", Second, Sun, Mar, 2, -300};  // Daylight (UTC-5)
+TimeChangeRule CST = {"CST", First, Sun, Nov, 2, -360};  // Standard (UTC-6)
 Timezone USCentral(CDT, CST);
 
 // US Mountain Time (Denver, ...)
 // Note: Most of Arizona does not observe DST
-TimeChangeRule MDT = {"MDT", Second, Sun, Mar, 2, -360}; // Mountain Daylight Time (UTC-6)
-TimeChangeRule MST = {"MST", First, Sun, Nov, 2, -420};  // Mountain Standard Time (UTC-7)
+TimeChangeRule MDT = {"MDT", Second, Sun, Mar, 2, -360};  // Daylight (UTC-6)
+TimeChangeRule MST = {"MST", First, Sun, Nov, 2, -420};  // Standard (UTC-7)
 Timezone USMountain(MDT, MST);
 
 // US Pacific Time (Los Angeles, San Francisco, ...)
-TimeChangeRule PDT = {"PDT", Second, Sun, Mar, 2, -420}; // Pacific Daylight Time (UTC-7)
-TimeChangeRule PST = {"PST", First, Sun, Nov, 2, -480};  // Pacific Standard Time (UTC-8)
+TimeChangeRule PDT = {"PDT", Second, Sun, Mar, 2, -420};  // Daylight (UTC-7)
+TimeChangeRule PST = {"PST", First, Sun, Nov, 2, -480};  // Standard (UTC-8)
 Timezone USPacific(PDT, PST);
 
 // Australian Eastern Time (Sydney, Melbourne, ...)
-TimeChangeRule AEDT = {"AEDT", First, Sun, Oct, 2, 660}; // Australian Eastern Daylight Time (UTC+11)
-TimeChangeRule AEST = {"AEST", First, Sun, Apr, 3, 600}; // Australian Eastern Standard Time (UTC+10)
+TimeChangeRule AEDT = {"AEDT", First, Sun, Oct, 2, 660};  // Daylight (UTC+11)
+TimeChangeRule AEST = {"AEST", First, Sun, Apr, 3, 600};  // Standard (UTC+10)
 Timezone AustralianEastern(AEDT, AEST);
 
 // Japan Time Zone (Tokyo) - No DST
@@ -118,13 +118,13 @@ String getTimeInfoFor(int index) {
 }
 
 String getFormattedTime(time_t rawTime) {
-  unsigned long hours = (rawTime % 86400L) / 3600;
+  uint32_t hours = (rawTime % 86400L) / 3600;
   String hoursStr = hours < 10 ? "0" + String(hours) : String(hours);
 
-  unsigned long minutes = (rawTime % 3600) / 60;
+  uint32_t minutes = (rawTime % 3600) / 60;
   String minuteStr = minutes < 10 ? "0" + String(minutes) : String(minutes);
 
-  unsigned long seconds = rawTime % 60;
+  uint32_t seconds = rawTime % 60;
   String secondStr = seconds < 10 ? "0" + String(seconds) : String(seconds);
 
   return hoursStr + ":" + minuteStr + ":" + secondStr;
