@@ -44,6 +44,17 @@ Discussions: <https://github.com/smart-swimmingpool/smart-swimmingpool.github.io
 - [Hardware Guide](docs/hardware-guide.md)
 - [Software Guide](docs/software-guide.md)
 
+## Contributing
+
+We welcome contributions! Before submitting a pull request, please:
+
+1. **Read the coding guidelines**: [`.github/CODING_GUIDELINES.md`](.github/CODING_GUIDELINES.md)
+2. **Format your code**: Run `clang-format -i src/**/*.cpp src/**/*.hpp`
+3. **Check for issues**: See [`.github/QUICK_REFERENCE.md`](.github/QUICK_REFERENCE.md) for common fixes
+4. **Test your changes**: Build for both `esp32dev` and `nodemcuv2` environments
+
+All code must pass Super-Linter checks (clang-format, EditorConfig, etc.) before merge.
+
 ## Credits
 
 - [Community of Homie-ESP8266](https://gitter.im/homie-iot/ESP8266)
