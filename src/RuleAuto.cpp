@@ -1,5 +1,6 @@
 
 #include "RuleAuto.hpp"
+#include <cmath>  // for isnan()
 
 RuleAuto::RuleAuto(RelayModuleNode* solarRelay, RelayModuleNode* poolRelay) {
   _solarRelay = solarRelay;
@@ -9,13 +10,28 @@ RuleAuto::RuleAuto(RelayModuleNode* solarRelay, RelayModuleNode* poolRelay) {
 void RuleAuto::loop() {
   Homie.getLogger() << cIndent << F("§ RuleAuto: loop") << endl;
 
+  // Validate temperature readings before making decisions
+  float poolTemp  = getPoolTemperature();
+  float solarTemp = getSolarTemperature();
+
+  if (isnan(poolTemp) || isnan(solarTemp)) {
+    Homie.getLogger() << cIndent << F("⚠ RuleAuto: Invalid temperature readings detected") << endl;
+    Homie.getLogger() << cIndent << F("  Pool temp: ") << poolTemp << endl;
+    Homie.getLogger() << cIndent << F("  Solar temp: ") << solarTemp << endl;
+    Homie.getLogger() << cIndent << F("  Turning off solar pump for safety") << endl;
+    // Turn off solar pump for safety, but keep pool pump running on timer
+    _solarRelay->setSwitch(false);
+    _poolRelay->setSwitch(checkPoolPumpTimer());
+    return;  // Skip rest of logic
+  }
+
   _poolRelay->setSwitch(checkPoolPumpTimer());
 
   if (_poolRelay->getSwitch()) {
-    //pool pump is running
+    // pool pump is running
 
     if (_solarRelay->getSwitch()) {
-      //solar is on
+      // solar is on
 
       float hyst = getTemperatureHysteresis();
       if (getSolarTemperature() < (getSolarMinTemperature() - hyst)) {
@@ -39,7 +55,7 @@ void RuleAuto::loop() {
       }
 
     } else {
-      //solar is off: !_solarRelay->getSwitch()
+      // solar is off: !_solarRelay->getSwitch()
       if ((getPoolTemperature() <= getPoolMaxTemperature()) && (getPoolTemperature() <= getSolarTemperature()) &&
           (getSolarMinTemperature() <= getSolarTemperature())) {
         Homie.getLogger() << cIndent << F("§ RuleAuto: below max. Temperature (") << getPoolMaxTemperature()
