@@ -17,7 +17,7 @@ name: Lint Code Base
 on:
   push:
     branches-ignore:
-      - "master"
+      - "main"
   pull_request:
 
 permissions:
@@ -46,7 +46,7 @@ jobs:
         env:
           VALIDATE_ALL_CODEBASE: false
           VALIDATE_ANSIBLE: false
-          VALIDATE_JSCPD: false
-          VALIDATE_CHECKOV: false
-          DEFAULT_BRANCH: master
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Arduino Lint
+        uses: arduino/arduino-lint-action@v1.0.0
+
