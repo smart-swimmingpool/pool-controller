@@ -18,14 +18,14 @@ Der Agent:
 
 ## 3. Projektstruktur und Architektur
 
-Empfohlene Schichten (auch wenn das Repo aktuell anders aussieht, Ziel ist schrittweise Annäherung):
+Empfohlene Schichten (auch wenn das repository aktuell anders aussieht, Ziel ist schrittweise Annäherung):
 
-- `src/app/`          Anwendungslogik (Use-Cases, State Machines)
-- `src/drivers/`      Hardware-Treiber (GPIO, I2C, SPI, ADC), keine Business-Logik
-- `src/services/`     Netzwerk, MQTT/HTTP, Time, Storage, OTA, Telemetry
-- `src/platform/`     Board-spezifische Adapter, `#ifdef` nur hier, nicht in App/Services
-- `include/`          Öffentliche Header, klare Interfaces
-- `test/`             Unit-/Component-Tests (PlatformIO Unity)
+- `src/app/` Anwendungslogik (Use-Cases, State Machines)
+- `src/drivers/` Hardware-Treiber (GPIO, I2C, SPI, ADC), keine Business-Logik
+- `src/services/` Netzwerk, MQTT/HTTP, Time, Storage, OTA, Telemetry
+- `src/platform/` Board-spezifische Adapter, `#ifdef` nur hier, nicht in App/Services
+- `include/` Öffentliche Header, klare Interfaces
+- `test/` Unit-/Component-Tests (PlatformIO Unity)
 
 Architekturregeln:
 
@@ -108,7 +108,7 @@ ESP32 Hardware-Security:
 - **Flash Encryption**: Schutz des Flash-Inhalts (Firmware, Credentials, Zertifikate), Release-Mode vor Produktion. :contentReference[oaicite:1]{index=1}
 - Debug Interfaces (JTAG/UART) im Produktions-Build deaktivieren. :contentReference[oaicite:2]{index=2}
 - TLS für Netzverbindungen (MQTTS/HTTPS) mit CA/Key-Validation.
-- Secrets nicht im Repo.
+- Secrets nicht im repository.
 
 ## 11. OTA & Updates
 
@@ -152,7 +152,7 @@ ESP32 Hardware-Security:
 - Release: Sicherheitsfeatures, Monitoring, Debug ausschalten.
 - CI: Lint, Build, Tests, Heap/Stack Reports, Memory-Analyse.
 
-## 18. Anti-Patterns (verboten)
+## 18. Antipatterns (verboten)
 
 - Unlimitierte `delay()`, Busy-Wait, blockierende Netzwerk-Calls im Loop.
 - Häufige Heap-Allokationen in Hot-Paths.

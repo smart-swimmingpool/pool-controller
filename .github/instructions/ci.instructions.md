@@ -3,6 +3,8 @@ applyTo: ".github/workflows/**"
 description: "CI/CD workflow instructions"
 ---
 
+# CI/CD Workflow Instructions
+
 - CI workflows must run lint, build, tests, and memory analysis steps in sequence.
 - Ensure caching of PlatformIO artifacts to speed up CI.
 - Cancel redundant runs on pull request update events.

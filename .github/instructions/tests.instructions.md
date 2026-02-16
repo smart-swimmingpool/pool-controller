@@ -3,6 +3,8 @@ applyTo: "test/**"
 description: "Testing-specific guidelines for this repo"
 ---
 
+# Testing Guidelines
+
 - Always write tests that cover edge cases.
 - Tests must follow the organization and naming patterns in `AGENTS.md`.
 - Use mock objects or simulations to isolate hardware interactions.
