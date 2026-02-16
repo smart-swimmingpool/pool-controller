@@ -6,6 +6,11 @@
 **Version**: 3.1.0  
 **Analysis Scope**: Complete codebase review for edge cases and failure modes
 
+**Status Update**: This analysis was performed and many issues were addressed
+in version 3.1.0. Issues marked with ✅ **FIXED in v3.1.0** have been
+resolved. Issues without this marker remain as recommendations for future
+improvement.
+
 ---
 
 ## Executive Summary
@@ -21,25 +26,30 @@ issue is rated by severity and includes recommendations for mitigation.
 - 🟠 **Medium**: Could cause temporary malfunction or degraded performance
 - 🔵 **Low**: Minor issues or edge cases with minimal impact
 
+**Fix Status**:
+
+- ✅ **FIXED in v3.1.0**: Issue has been addressed in this release
+- ⚠️ **OPEN**: Issue remains as a recommendation for future work
+
 ---
 
 ## 1. Temperature Sensor Edge Cases
 
-### 1.1 Sensor Disconnection During Operation 🔴 Critical
+### 1.1 Sensor Disconnection During Operation 🔴 Critical ✅ **FIXED in v3.1.0**
 
-**Location**: `src/DallasTemperatureNode.cpp:100`
+**Location**: `src/DallasTemperatureNode.cpp`, `src/RuleAuto.cpp`
 
-**Issue**: When a Dallas temperature sensor returns `DEVICE_DISCONNECTED_C`
-(-127°C), the error is logged but the old `_temperature` value remains in
-memory.
+**Pre-v3.1.0 Issue**: When a Dallas temperature sensor returned
+`DEVICE_DISCONNECTED_C` (-127°C), the error was logged but the old
+`_temperature` value remained in memory.
 
-**Impact**:
+**Pre-v3.1.0 Impact**:
 
-- Rules continue using stale temperature data
+- Rules continued using stale temperature data
 - Auto mode could make incorrect heating decisions based on old readings
-- No automatic recovery mechanism triggers relay safety shutdown
+- No automatic recovery mechanism triggered relay safety shutdown
 
-**Scenario**:
+**Scenario** (pre-v3.1.0):
 
 ```text
 1. Pool temperature sensor reads 25°C
@@ -49,32 +59,27 @@ memory.
 5. Actual pool temperature could be 35°C, causing overheating
 ```
 
-**Recommendations**:
+**v3.1.0 Solution**:
 
-1. Set temperature to a safe default (e.g., 999.0°C) on sensor error
-2. Implement automatic pump shutdown on sustained sensor errors
-3. Add timeout: if no valid reading for N measurements, enter safe mode
-4. Consider temperature rate-of-change validation
+1. ✅ Temperature set to NaN on `DEVICE_DISCONNECTED_C` error
+2. ✅ Auto rule validates temperatures with `isnan()` before decisions
+3. ✅ Solar pump automatically disabled on invalid sensor readings
+4. ✅ Clear warning messages when sensors disconnected
 
-### 1.2 No Sensors Found at Startup 🟡 High
+### 1.2 No Sensors Found at Startup 🟡 High ✅ **FIXED in v3.1.0**
 
-**Location**: `src/DallasTemperatureNode.cpp:74-79`
+**Location**: `src/DallasTemperatureNode.cpp`
 
-**Issue**: If no sensors are detected at startup, the node sets error state
-but continues polling indefinitely with `numberOfDevices = 0`.
+**Pre-v3.1.0 Issue**: If no sensors were detected at startup, the node set
+error state but continued polling indefinitely with `numberOfDevices = 0`.
 
-**Impact**:
+**v3.1.0 Solution**:
 
-- System runs with invalid temperature data (possibly uninitialized)
-- Auto mode makes decisions with undefined temperature values
-- Excessive MQTT error messages every measurement interval
-
-**Recommendations**:
-
-1. Initialize `_temperature` to a sentinel value (e.g., -999.0°C)
-2. Disable auto mode if critical sensors are missing
-3. Implement exponential backoff for sensor re-detection
-4. Add visual/MQTT alert for missing sensors
+1. ✅ `_temperature` initialized to NaN sentinel value
+2. ✅ Enhanced warning messages for missing sensors
+3. ✅ Auto mode validates temperature before use
+4. Implement exponential backoff for sensor re-detection
+5. Add visual/MQTT alert for missing sensors
 
 ### 1.3 Temperature Sensor Array Iteration 🟠 Medium
 
@@ -108,7 +113,7 @@ for (uint8_t i = 0; i < numberOfDevices; i++) {
 
 ## 2. Time and Timer Edge Cases
 
-### 2.1 NTP Time Sync Failure 🔴 Critical
+### 2.1 NTP Time Sync Failure 🔴 Critical ⚠️ **OPEN**
 
 **Location**: `src/TimeClientHelper.cpp:94-99`
 
@@ -133,7 +138,7 @@ Unix epoch (1970-01-01 00:00:00).
 5. Pool pump never activates (timer thinks it's 1970, before start time)
 ```
 
-**Recommendations**:
+**Recommendations** (for future):
 
 1. Cache last valid time and use RTC or millis() to maintain approximate time
 2. Detect time sync failures and disable timer mode automatically
@@ -141,17 +146,17 @@ Unix epoch (1970-01-01 00:00:00).
 4. Alert user via MQTT when time sync fails
 5. Consider ESP32 RTC or external RTC module for backup
 
-### 2.2 Timer Midnight Crossing Edge Case 🟡 High
+### 2.2 Timer Midnight Crossing Edge Case 🟡 High ✅ **FIXED in v3.1.0**
 
-**Location**: `src/Timer.cpp:15-31`, `src/RuleAuto.cpp:67-89`
+**Location**: `src/RuleAuto.cpp`
 
-**Issue**: Timer logic in `checkPoolPumpTimer()` doesn't handle the case
-where the timer crosses midnight (e.g., start 22:00, end 02:00).
+**Pre-v3.1.0 Issue**: Timer logic in `checkPoolPumpTimer()` didn't handle the
+case where the timer crosses midnight (e.g., start 22:00, end 02:00).
 
-**Current logic**:
+**Pre-v3.1.0 logic**:
 
 ```cpp
-if (difftime(mktime(&time), mktime(&startTime)) >= 0 && 
+if (difftime(mktime(&time), mktime(&startTime)) >= 0 &&
     difftime(mktime(&time), mktime(&endTime)) <= 0)
 ```
 
@@ -178,7 +183,7 @@ Expected: TRUE (pump should be running)
 1. Implement midnight-aware timer logic:
 
 ```cpp
-bool isInRange = (startTime <= endTime) 
+bool isInRange = (startTime <= endTime)
     ? (time >= startTime && time <= endTime)  // Normal case
     : (time >= startTime || time <= endTime); // Crosses midnight
 ```
@@ -295,34 +300,26 @@ for (uint8_t i = 0; i < 8; i++) {
 
 ## 4. Rule Execution Edge Cases
 
-### 4.1 Null Rule Pointer 🟡 High
+### 4.1 Null Rule Pointer 🟡 High ✅ **FIXED in v3.1.0**
 
-**Location**: `src/OperationModeNode.cpp:115-118`
+**Location**: `src/OperationModeNode.cpp`
 
-**Issue**: If no rule matches the current mode, `getRule()` returns
-`nullptr`, which is checked before calling `rule->loop()`. However, there's
-no error handling or fallback.
+**Pre-v3.1.0 Issue**: If no rule matched the current mode, `getRule()`
+returned `nullptr`, which was checked before calling `rule->loop()`. However,
+there was no error handling or fallback.
 
-**Impact**:
+**v3.1.0 Solution**:
 
-- If mode is corrupted or invalid, no rule executes
-- Pool pump state undefined
-- System appears to work but does nothing
-- No error message to user after initial log
+1. ✅ System switches to manual mode when no rule matches
+2. ✅ Error state published via MQTT for user notification
+3. ✅ State persisted to prevent repeated failures
 
-**Recommendations**:
+### 4.2 Temperature Comparison with Invalid Values 🔴 Critical ✅ **FIXED in v3.1.0**
 
-1. Set error state in MQTT on null rule
-2. Fall back to safe mode (e.g., manual off)
-3. Add validation: ensure loaded mode matches available rules
-4. Persist last known-good mode for recovery
+**Location**: `src/RuleAuto.cpp`
 
-### 4.2 Temperature Comparison with Invalid Values 🔴 Critical
-
-**Location**: `src/RuleAuto.cpp:21-35`
-
-**Issue**: Auto rule compares temperatures without validating they are valid
-readings.
+**Pre-v3.1.0 Issue**: Auto rule compared temperatures without validating they
+were valid readings.
 
 ```cpp
 if (getSolarTemperature() < (getSolarMinTemperature() - hyst)) {
@@ -384,36 +381,21 @@ if (property.equalsIgnoreCase(cHysteresis)) {
 
 ## 5. Relay Control Edge Cases
 
-### 5.1 ESP8266 State Persistence Not Implemented 🟡 High
+### 5.1 ESP8266 State Persistence 🟡 High ✅ **FIXED in v3.1.0**
 
-**Location**: `src/RelayModuleNode.cpp:42-47`, `src/StateManager.hpp:48-65`
+**Location**: `src/StateManager.hpp`, `src/RelayModuleNode.cpp`
 
-**Issue**: Relay state persistence is only implemented for ESP32. ESP8266
-loses relay state on reboot.
+**Pre-v3.1.0 Issue**: Relay state persistence was only implemented for ESP32.
+ESP8266 lost relay state on reboot.
 
-```cpp
-#ifdef ESP32
-  preferences.begin(getId(), false);
-  preferences.putBool(cSwitch, state);
-  preferences.end();
-#elif defined(ESP8266)
-  // Nothing - state not persisted!
-#endif
-```
+**v3.1.0 Solution**:
 
-**Impact**:
-
-- ESP8266 users lose relay states on power failure
-- Pool pump state undefined after reboot
-- Could leave pumps running or stopped unexpectedly
-- Feature parity issue between platforms
-
-**Recommendations**:
-
-1. Implement EEPROM-based persistence for ESP8266
-2. Or: Document that ESP8266 doesn't support state persistence
-3. Or: Load default safe state (e.g., all off) on ESP8266
-4. Add warning during ESP8266 compilation
+1. ✅ EEPROM-based persistence implemented for ESP8266
+2. ✅ Hash-based key mapping with DJB2 algorithm
+3. ✅ Lazy initialization ensures EEPROM ready before use
+4. ✅ Data region cleared on first boot to prevent garbage reads
+5. ✅ EEPROM wear reduced - only writes on actual state changes
+6. ✅ Relay states persist across reboots on both platforms
 
 ### 5.2 Relay Pointer Initialization 🟠 Medium
 
@@ -710,8 +692,8 @@ state.
 **Issue**: Measurement interval has minimum check but no maximum:
 
 ```cpp
-_measurementInterval = (measurementInterval > MIN_INTERVAL) 
-    ? measurementInterval 
+_measurementInterval = (measurementInterval > MIN_INTERVAL)
+    ? measurementInterval
     : MIN_INTERVAL;
 ```
 
@@ -727,43 +709,39 @@ _measurementInterval = (measurementInterval > MIN_INTERVAL)
 2. Validate during initialization
 3. Document acceptable range
 
-### 12.2 Pin Configuration Conflicts 🟡 High
+### 12.2 Pin Configuration Conflicts 🟡 High ✅ **FIXED in v3.1.0**
 
-**Location**: `src/Config.hpp`, constructor parameters
+**Location**: `src/PoolController.cpp`
 
-**Issue**: No validation that pin numbers don't conflict between nodes.
+**Pre-v3.1.0 Issue**: No validation that pin numbers didn't conflict between
+nodes.
 
-**Impact**:
+**v3.1.0 Solution**:
 
-- User could configure two nodes on same pin
-- Hardware conflict, unpredictable behavior
-- Silent failure - hard to debug
-
-**Recommendations**:
-
-1. Add pin conflict detection at startup
-2. Validate pin configuration
-3. Log error and refuse to start with conflicts
-4. Provide pin usage map at startup
+1. ✅ Pin conflict detection implemented at startup
+2. ✅ System halts with clear error message on conflicts
+3. ✅ Pin usage map displayed on successful validation
 
 ---
 
 ## Summary and Priority Recommendations
 
-### 🔴 Critical Priority (Fix Immediately)
+### ✅ Fixed in v3.1.0
 
-1. **Sensor disconnection handling** (1.1) - Implement safe defaults and
-   automatic pump shutdown
-2. **NTP time sync failure** (2.1) - Cache time and detect sync failures
-3. **Invalid temperature comparisons in rules** (4.2) - Add validity checks
+1. **Sensor disconnection handling** (1.1) - Temperature set to NaN,
+   validation added
+2. **No sensors found** (1.2) - Better initialization and warnings
+3. **Midnight crossing timers** (2.2) - Midnight-aware logic implemented
+4. **Invalid temperature comparisons** (4.2) - Validation with isnan() added
+5. **Null rule pointer** (4.1) - Fallback to manual mode implemented
+6. **ESP8266 state persistence** (5.1) - EEPROM persistence with improved hash
+7. **Pin configuration conflicts** (12.2) - Validation at startup added
 
-### 🟡 High Priority (Fix Soon)
+### 🔴 Critical Priority (Remaining)
 
-1. **No sensors found** (1.2) - Better error handling and recovery
-2. **Midnight crossing timers** (2.2) - Fix timer logic
-3. **ESP8266 state persistence** (5.1) - Implement or document limitation
-4. **Null rule pointer** (4.1) - Add fallback mode
-5. **Pin configuration conflicts** (12.2) - Add validation
+1. **NTP time sync failure** (2.1) - Cache time and detect sync failures
+
+### 🟡 High Priority (Remaining)
 
 ### 🟠 Medium Priority (Plan for Future)
 
@@ -785,22 +763,26 @@ _measurementInterval = (measurementInterval > MIN_INTERVAL)
 To validate fixes for these edge cases, implement tests for:
 
 1. **Sensor failure scenarios**:
+
    - Disconnect sensor during operation
    - No sensors at startup
    - Intermittent sensor connection
 
 2. **Time and timer scenarios**:
+
    - WiFi loss during operation
    - NTP sync failures
    - Midnight crossing timers
    - DST transitions
 
 3. **Memory stress tests**:
+
    - Run for >50 days (millis overflow)
    - Low memory conditions
    - Rapid MQTT message floods
 
 4. **Invalid input tests**:
+
    - Out-of-range values
    - Invalid string formats
    - Malformed MQTT messages
