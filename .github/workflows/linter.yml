@@ -17,7 +17,7 @@ name: Lint Code Base
 on:
   push:
     branches-ignore:
-      - 'master'
+      - 'main'
 
 ###############
 # Set the Job #
@@ -47,7 +47,7 @@ jobs:
         env:
           VALIDATE_ALL_CODEBASE: false
           VALIDATE_ANSIBLE: false
-          
+
       - name: Arduino Lint
         uses: arduino/arduino-lint-action@v1.0.0
-  
+
