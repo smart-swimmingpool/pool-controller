@@ -113,22 +113,21 @@ for (uint8_t i = 0; i < numberOfDevices; i++) {
 
 ## 2. Time and Timer Edge Cases
 
-### 2.1 NTP Time Sync Failure 🔴 Critical ⚠️ **OPEN**
+### 2.1 NTP Time Sync Failure 🔴 Critical ✅ **FIXED in v3.1.0**
 
-**Location**: `src/TimeClientHelper.cpp:94-99`
+**Location**: `src/TimeClientHelper.cpp`, `src/Timer.cpp`, `src/RuleAuto.cpp`
 
-**Issue**: If NTP update fails, `getUtcTime()` returns `0`, which represents
-Unix epoch (1970-01-01 00:00:00).
+**Pre-v3.1.0 Issue**: If NTP update failed, `getUtcTime()` returned `0`,
+which represents Unix epoch (1970-01-01 00:00:00).
 
-**Impact**:
+**Pre-v3.1.0 Impact**:
 
-- Timer mode uses epoch time for scheduling decisions
+- Timer mode used epoch time for scheduling decisions
 - Pool pump might run at wrong times or not at all
-- State persistence timestamps become invalid
-- `mktime()` calculations in `RuleAuto.cpp:80` could overflow or produce
-  incorrect results
+- State persistence timestamps became invalid
+- `mktime()` calculations could overflow or produce incorrect results
 
-**Scenario**:
+**Scenario** (pre-v3.1.0):
 
 ```text
 1. WiFi connection drops during operation
@@ -138,13 +137,27 @@ Unix epoch (1970-01-01 00:00:00).
 5. Pool pump never activates (timer thinks it's 1970, before start time)
 ```
 
-**Recommendations** (for future):
+**v3.1.0 Solution**:
 
-1. Cache last valid time and use RTC or millis() to maintain approximate time
-2. Detect time sync failures and disable timer mode automatically
-3. Add time validity check: reject times before 2020-01-01
-4. Alert user via MQTT when time sync fails
-5. Consider ESP32 RTC or external RTC module for backup
+1. ✅ Last valid NTP time cached with millis() timestamp
+2. ✅ Time maintained using millis() when NTP fails (handles overflow)
+3. ✅ Time validity check: rejects times before 2020-01-01
+4. ✅ Timer mode disabled when time invalid (pump off for safety)
+5. ✅ MQTT alerts published on sync failure/recovery
+6. ✅ Sync marked invalid after 24h without NTP update
+
+```cpp
+// Cached time fallback implementation
+if (_lastValidTime > 0) {
+  uint32_t elapsed = millis() - _lastValidTimeMillis;
+  // Handle millis() overflow
+  if (millis() < _lastValidTimeMillis) {
+    elapsed = (0xFFFFFFFF - _lastValidTimeMillis) + millis();
+  }
+  time_t estimatedTime = _lastValidTime + (elapsed / 1000);
+  return estimatedTime;
+}
+```
 
 ### 2.2 Timer Midnight Crossing Edge Case 🟡 High ✅ **FIXED in v3.1.0**
 
@@ -731,15 +744,12 @@ nodes.
 1. **Sensor disconnection handling** (1.1) - Temperature set to NaN,
    validation added
 2. **No sensors found** (1.2) - Better initialization and warnings
-3. **Midnight crossing timers** (2.2) - Midnight-aware logic implemented
-4. **Invalid temperature comparisons** (4.2) - Validation with isnan() added
-5. **Null rule pointer** (4.1) - Fallback to manual mode implemented
-6. **ESP8266 state persistence** (5.1) - EEPROM persistence with improved hash
-7. **Pin configuration conflicts** (12.2) - Validation at startup added
-
-### 🔴 Critical Priority (Remaining)
-
-1. **NTP time sync failure** (2.1) - Cache time and detect sync failures
+3. **NTP time sync failure** (2.1) - Cached time with millis() fallback
+4. **Midnight crossing timers** (2.2) - Midnight-aware logic implemented
+5. **Invalid temperature comparisons** (4.2) - Validation with isnan() added
+6. **Null rule pointer** (4.1) - Fallback to manual mode implemented
+7. **ESP8266 state persistence** (5.1) - EEPROM persistence with improved hash
+8. **Pin configuration conflicts** (12.2) - Validation at startup added
 
 ### 🟡 High Priority (Remaining)
 

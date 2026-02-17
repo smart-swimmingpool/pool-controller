@@ -37,19 +37,21 @@ das System weiterhin die alten Temperaturwerte.
 - ✅ Solar-Pumpe wird automatisch bei ungültigen Werten deaktiviert
 - ✅ Klare Warnmeldungen bei getrennten Sensoren
 
-### 2. NTP-Zeitsynchronisationsfehler ⚠️ **OFFEN**
+### 2. NTP-Zeitsynchronisationsfehler ✅ **BEHOBEN in v3.1.0**
 
-**Problem**: Bei fehlgeschlagener NTP-Synchronisation gibt die Funktion `0`
-zurück (Unix-Epoche: 1.1.1970), was zu falschen Timer-Berechnungen führt.
+**Problem** (vor v3.1.0): Bei fehlgeschlagener NTP-Synchronisation gab die
+Funktion `0` zurück (Unix-Epoche: 1.1.1970), was zu falschen
+Timer-Berechnungen führte.
 
-**Auswirkung**: Pool-Pumpe läuft zur falschen Zeit oder gar nicht.
+**Lösung v3.1.0**:
 
-**Empfehlung** (zukünftig):
-
-- Letzte gültige Zeit zwischenspeichern
-- RTC oder millis() zur Zeitbeibehaltung nutzen
-- Zeitsynchronisationsfehler erkennen und Timer-Modus deaktivieren
-- Benutzer via MQTT alarmieren
+- ✅ Letzte gültige NTP-Zeit wird zwischengespeichert
+- ✅ Zeit wird mit millis() aufrechterhalten wenn NTP ausfällt
+- ✅ Millis-Überlauf korrekt behandelt (alle ~49 Tage)
+- ✅ Zeitvalidierung: Zeiten vor 2020-01-01 werden abgelehnt
+- ✅ Timer-Modus wird bei ungültiger Zeit deaktiviert (Pumpe aus)
+- ✅ MQTT-Benachrichtigungen bei Sync-Fehler/Wiederherstellung
+- ✅ Sync als ungültig markiert nach 24h ohne NTP-Update
 
 ### 3. Ungültige Temperaturvergleiche in Regeln ✅ **BEHOBEN in v3.1.0**
 
@@ -224,7 +226,7 @@ werden für:
 Der Pool-Controller ist gut konzipiert und verfügt bereits über viele
 Zuverlässigkeitsfunktionen (Speicherüberwachung, Watchdog, Overflow-Schutz).
 
-**Version 3.1.0 behebt 7 kritische/hohe Priorität Issues**, was die
+**Version 3.1.0 behebt 8 kritische/hohe Priorität Issues**, was die
 Systemzuverlässigkeit und Sicherheit erheblich verbessert.
 
 **Stärken** (v3.1.0):
@@ -238,14 +240,15 @@ Systemzuverlässigkeit und Sicherheit erheblich verbessert.
 - ✅ **NEU**: ESP8266-Feature-Parität (State Persistence)
 - ✅ **NEU**: Pin-Konflikt-Erkennung beim Start
 - ✅ **NEU**: Null-Regel-Fallback
+- ✅ **NEU**: NTP-Zeit-Caching mit millis()-Fallback
 
 **Verbleibende Schwächen**:
 
-- ⚠️ Zeitsynchronisationsfehler nicht behandelt (offen)
-- ⚠️ Einige Input-Validierungen fehlen noch (niedrige Priorität)
+- Niedrige Priorität: Einige Input-Validierungen fehlen noch
 
-**Fazit**: Mit Version 3.1.0 sind alle kritischen und hohen Priorität
-Edge-Cases behoben. Das System ist deutlich robuster und sicherer geworden.
+**Fazit**: Mit Version 3.1.0 sind **alle kritischen** Edge-Cases behoben. Das
+System ist deutlich robuster und sicherer geworden. Alle identifizierten
+kritischen und hohen Priorität Probleme wurden gelöst.
 
 ---
 
