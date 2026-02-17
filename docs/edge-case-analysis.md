@@ -2,8 +2,8 @@
 
 ## Pool Controller - Potential Edge Cases & Reliability Issues
 
-**Date**: 2026-02-16  
-**Version**: 3.1.0  
+**Date**: 2026-02-16
+**Version**: 3.1.0
 **Analysis Scope**: Complete codebase review for edge cases and failure modes
 
 **Status Update**: This analysis was performed and many issues were addressed
@@ -195,11 +195,11 @@ Expected: TRUE (pump should be running)
 
 1. Implement midnight-aware timer logic:
 
-```cpp
-bool isInRange = (startTime <= endTime)
-    ? (time >= startTime && time <= endTime)  // Normal case
-    : (time >= startTime || time <= endTime); // Crosses midnight
-```
+    ```cpp
+    bool isInRange = (startTime <= endTime)
+        ? (time >= startTime && time <= endTime)  // Normal case
+        : (time >= startTime || time <= endTime); // Crosses midnight
+    ```
 
 2. Add validation to prevent user from setting invalid timer ranges
 3. Add unit tests for midnight crossing scenarios
@@ -350,11 +350,11 @@ if (getSolarTemperature() < (getSolarMinTemperature() - hyst)) {
 
 1. Add temperature validity check before rule execution:
 
-```cpp
-bool isValidTemp(float temp) {
-  return temp > -50.0 && temp < 150.0;
-}
-```
+    ```cpp
+    bool isValidTemp(float temp) {
+      return temp > -50.0 && temp < 150.0;
+    }
+    ```
 
 2. Disable auto mode if any critical sensor is invalid
 3. Use last known good value with age check
@@ -377,16 +377,16 @@ extremely large values via MQTT.
 
 1. Add validation in `applyProperty()`:
 
-```cpp
-if (property.equalsIgnoreCase(cHysteresis)) {
-  float newHyst = value.toFloat();
-  if (newHyst >= 0.1 && newHyst <= 10.0) {
-    _hysteresis = newHyst;
-  } else {
-    // Reject invalid value
-  }
-}
-```
+    ```cpp
+    if (property.equalsIgnoreCase(cHysteresis)) {
+      float newHyst = value.toFloat();
+      if (newHyst >= 0.1 && newHyst <= 10.0) {
+        _hysteresis = newHyst;
+      } else {
+        // Reject invalid value
+      }
+    }
+    ```
 
 2. Enforce limits: 0.1K to 10K reasonable range
 
@@ -430,14 +430,14 @@ will crash.
 
 1. Add defensive null checks:
 
-```cpp
-void RelayModuleNode::setSwitch(const boolean state) {
-  if (relay == nullptr) {
-    return;  // Or log error
-  }
-  // ... rest of code
-}
-```
+    ```cpp
+    void RelayModuleNode::setSwitch(const boolean state) {
+      if (relay == nullptr) {
+        return;  // Or log error
+      }
+      // ... rest of code
+    }
+    ```
 
 2. Or: Initialize relay in constructor instead of setup()
 
@@ -608,10 +608,10 @@ This is inefficient but safe.
 
 1. Implement batch state save/load:
 
-```cpp
-static void beginSave() { prefs.begin("pool-controller", false); }
-static void endSave() { prefs.end(); }
-```
+    ```cpp
+    static void beginSave() { prefs.begin("pool-controller", false); }
+    static void endSave() { prefs.end(); }
+    ```
 
 2. Call once for multiple saves
 3. Low priority - flash wear is not critical concern
