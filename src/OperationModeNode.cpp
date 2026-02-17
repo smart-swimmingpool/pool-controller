@@ -108,6 +108,28 @@ void OperationModeNode::setup() {
 void OperationModeNode::loop() {
   if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval)) {
     Homie.getLogger() << F("〽 OperatioalMode update rule ") << endl;
+
+    // Check time synchronization status
+    static bool lastTimeSyncState    = true;
+    bool        currentTimeSyncState = isTimeSyncValid();
+
+    if (!currentTimeSyncState && lastTimeSyncState) {
+      // Time sync just failed
+      Homie.getLogger() << F("⚠ WARNING: NTP time sync failed!") << endl;
+      Homie.getLogger() << F("  Using cached time + millis()") << endl;
+      Homie.getLogger() << F("  Timer mode may be inaccurate") << endl;
+      if (Homie.isConnected()) {
+        PoolController::MqttInterface::publishHomieProperty(*this, "time-sync-status", "failed");
+      }
+    } else if (currentTimeSyncState && !lastTimeSyncState) {
+      // Time sync recovered
+      Homie.getLogger() << F("✓ NTP time sync recovered") << endl;
+      if (Homie.isConnected()) {
+        PoolController::MqttInterface::publishHomieProperty(*this, "time-sync-status", "ok");
+      }
+    }
+    lastTimeSyncState = currentTimeSyncState;
+
     // call loop to evaluate the current rule
     Rule* rule = getRule();
     if (rule != nullptr) {

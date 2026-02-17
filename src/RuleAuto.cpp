@@ -83,7 +83,16 @@ void RuleAuto::loop() {
 bool RuleAuto::checkPoolPumpTimer() {
   Homie.getLogger() << F("↕  checkPoolPumpTimer") << endl;
 
-  tm   time = getCurrentDateTime();
+  tm time = getCurrentDateTime();
+
+  // Check if time sync is valid
+  if (time.tm_year == -1) {
+    Homie.getLogger() << cIndent << F("⚠ Time sync invalid - timer disabled") << endl;
+    // Return false (pump off) when time is invalid for safety
+    // User should check MQTT for time sync error notifications
+    return false;
+  }
+
   bool retval;
 
   tm startTime = getStartTime(getTimerSetting());

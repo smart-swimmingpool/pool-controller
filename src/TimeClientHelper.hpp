@@ -14,11 +14,13 @@ struct TimeZoneInfo {
   Timezone* timezone;
 };
 
-void timeClientSetup(const char* ntpServer);
-int getTzCount();
+void   timeClientSetup(const char* ntpServer);
+int    getTzCount();
 time_t getUtcTime();
 time_t getTimeFor(int index, TimeChangeRule** tcr);
 String getTimeInfoFor(int index);
 String getFormattedTime(time_t rawTime);
-void setTimezoneIndex(int index);
-int getTimezoneIndex();
+void   setTimezoneIndex(int index);
+int    getTimezoneIndex();
+bool   isTimeSyncValid();
+time_t getLastValidSyncTime();

@@ -1,13 +1,18 @@
 #include "Timer.hpp"
 
 /**
- *
+ * Get current date/time, with validation
+ * Returns time with tm_year = -1 if time sync is invalid
  */
 tm getCurrentDateTime() {
+  TimeChangeRule* tcr      = NULL;
+  time_t          t        = getTimeFor(getTimezoneIndex(), &tcr);
+  struct tm       timeinfo = *localtime(&t);
 
-  TimeChangeRule *tcr = NULL;
-  time_t     t        = getTimeFor(getTimezoneIndex(), &tcr);
-  struct tm timeinfo =  *localtime(&t);
+  // Mark as invalid if time sync has failed
+  if (!isTimeSyncValid() || t < MIN_VALID_TIME) {
+    timeinfo.tm_year = -1;  // Sentinel value for invalid time
+  }
 
   return timeinfo;
 }
