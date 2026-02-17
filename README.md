@@ -29,12 +29,12 @@ Discussions: <https://github.com/smart-swimmingpool/smart-swimmingpool.github.io
 - [x] **Configurable MQTT protocols** - Choose your preferred protocol
   - [x] [Homie 3.0](https://homieiot.github.io/) - IoT convention
   - [x] [Home Assistant MQTT
-    Discovery](https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery)
+        Discovery](https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery)
     - Native HA integration
 - [x] Independent of specific smart home servers
   - [x] [openHAB](https://www.openhab.org) (v2.4+) via MQTT Homie
   - [x] [Home Assistant](https://www.home-assistant.io/) via Homie or
-    native MQTT Discovery
+        native MQTT Discovery
 
 ### Reliability & 24/7 Operation (v3.1.0)
 
@@ -133,14 +133,50 @@ See [docs/state-persistence.md](docs/state-persistence.md) for details.
 - [Edge Case Analysis](docs/edge-case-analysis.md) - Reliability analysis
   and potential failure modes
 
+## Development
+
+### Local Linting & Formatting
+
+Use the provided `Makefile` tasks to maintain code quality:
+
+```bash
+# Auto-fix formatting issues (C++, Markdown, YAML)
+make lint-fix
+
+# Run all linters (same as CI)
+make lint
+
+# Build for all platforms
+make build
+
+# See all available tasks
+make help
+```
+
+**Before each commit**, run:
+
+```bash
+make lint-fix && make lint
+```
+
+### Optional: Install Pre-Commit Hook
+
+Automatically run linting checks before every commit:
+
+```bash
+ln -s ../../scripts/pre-commit.sh .git/hooks/pre-commit
+```
+
+To bypass the hook when needed: `git commit --no-verify`
+
 ## Contributing
 
 We welcome contributions! Before submitting a pull request, please:
 
 1. **Read the coding guidelines**: [`.github/CODING_GUIDELINES.md`](.github/CODING_GUIDELINES.md)
-2. **Format your code**: Run `clang-format -i src/**/*.cpp src/**/*.hpp`
-3. **Check for issues**: See [`.github/QUICK_REFERENCE.md`](.github/QUICK_REFERENCE.md) for common fixes
-4. **Test your changes**: Build for both `esp32dev` and `nodemcuv2` environments
+2. **Run local linting**: `make lint-fix && make lint`
+3. **Test your changes**: `make build` (builds for both ESP32 and ESP8266)
+4. **Check for issues**: See [`.github/QUICK_REFERENCE.md`](.github/QUICK_REFERENCE.md) for common fixes
 
 All code must pass Super-Linter checks (clang-format, EditorConfig, etc.) before merge.
 
