@@ -6,7 +6,9 @@
 class Rule {
 
 public:
-  Rule() : _poolTemp(0.0), _solarTemp(0.0), _poolMaxTemp(0.0), _solarMinTemp(0.0), _hysteresis(0.0), _poolVolume(0.0), _pumpCapacity(0.0), _useTemperatureBasedDuration(false){};
+  Rule()
+      : _poolTemp(0.0), _solarTemp(0.0), _poolMaxTemp(0.0), _solarMinTemp(0.0), _hysteresis(0.0), _poolVolume(0.0),
+        _pumpCapacity(0.0), _useTemperatureBasedDuration(false){};
 
   void  setPoolTemperature(float temp) { _poolTemp = temp; };
   float getPoolTemperature() { return _poolTemp; };
@@ -35,11 +37,28 @@ public:
   TimerSetting getTimerSetting() { return _timerSetting; };
 
   /**
-   * Calculate required filtration duration in hours based on water temperature.
-   * At 20°C: 1 complete turnover per day
-   * At 28°C or when max pool temperature is reached: 2 complete turnovers per day
-   * Linear interpolation between 20-28°C: turnover = 1.0 + ((temp - 20.0) / 8.0)
-   *   where 8.0 is the temperature range (28°C - 20°C)
+   * Calculate required filtration duration in hours based on water
+   * temperature.
+   *
+   * Implementation: Option A - Enhanced Temperature Formula
+   * This approach aligns with DIN standards and pool industry best
+   * practices, recommending 2-3 turnovers per day minimum, increasing
+   * with temperature.
+   *
+   * Formula: turnoverFactor = baseTurnoverFactor × (temp / 20.0)
+   * - At 20°C: 2.5 turnovers/day (industry minimum)
+   * - At 28°C: 3.5 turnovers/day (warm water standard)
+   * - At max pool temp: 4.0 turnovers/day (maximum protection)
+   *
+   * References:
+   * - DIN 19643: German standard for public pool water treatment
+   * - German rule of thumb: filtration_hours = (temp / 2) + 2
+   * - Industry standard: 2-3 turnovers minimum, 3-4 for warm/busy
+   *   pools
+   *
+   * Alternative approaches considered (see documentation):
+   * - Option B: Direct German formula (temp/2 + 2 hours)
+   * - Option C: Fully configurable turnover min/max parameters
    */
   float calculateFiltrationDuration() {
     if (_pumpCapacity <= 0.0 || _poolVolume <= 0.0) {
@@ -49,23 +68,34 @@ public:
     float temp = getPoolTemperature();
     float turnoverFactor;
 
+    // Base turnover factor: 2.5 turnovers/day aligns with DIN and
+    // industry standards (minimum 2-3 turnovers recommended)
+    const float baseTurnoverFactor = 2.5;
+
     // If max pool temperature is reached, use maximum filtration time
-    // to help prevent water from getting warmer
+    // to help prevent water from getting warmer (4 turnovers/day)
     if (temp >= getPoolMaxTemperature()) {
-      turnoverFactor = 2.0;  // Maximum filtration at max pool temperature
+      turnoverFactor = 4.0;  // Maximum protection at max pool temp
     }
-    // Calculate turnover factor based on temperature
+    // Temperature below 20°C: use base turnover rate
     else if (temp <= 20.0) {
-      turnoverFactor = 1.0;  // 1 complete turnover at 20°C or below
-    } else if (temp >= 28.0) {
-      turnoverFactor = 2.0;  // 2 complete turnovers at 28°C or above
-    } else {
-      // Linear interpolation between 20°C and 28°C
-      // Formula: 1.0 + (temperature increase / temperature range)
-      turnoverFactor = 1.0 + ((temp - 20.0) / 8.0);
+      turnoverFactor = baseTurnoverFactor;  // 2.5 turnovers at 20°C
+    }
+    // Temperature-dependent scaling: increases linearly with temp
+    // At 28°C: 2.5 × (28/20) = 3.5 turnovers
+    // At 24°C: 2.5 × (24/20) = 3.0 turnovers
+    else {
+      float tempAdjustment = temp / 20.0;
+      turnoverFactor       = baseTurnoverFactor * tempAdjustment;
+
+      // Cap at 4.0 turnovers to avoid excessive runtime
+      if (turnoverFactor > 4.0) {
+        turnoverFactor = 4.0;
+      }
     }
 
-    // Filtration time (hours) = (Pool Volume / Pump Capacity) × Turnover factor
+    // Filtration time (hours) = (Pool Volume / Pump Capacity) ×
+    // Turnover factor
     return (_poolVolume / _pumpCapacity) * turnoverFactor;
   }
 

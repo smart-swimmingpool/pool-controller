@@ -77,22 +77,42 @@ bool RuleAuto::checkPoolPumpTimer() {
   if (getUseTemperatureBasedDuration()) {
     // Use dynamic filtration duration based on temperature
     Homie.getLogger() << cIndent << F("Using temperature-based filtration duration") << endl;
-    
+
     float filtrationHours = calculateFiltrationDuration();
-    
+
     // Check for invalid configuration
     if (filtrationHours <= 0.0) {
-      Homie.getLogger() << cIndent << F("✖ Invalid filtration configuration (pool volume or pump capacity not set)") << endl;
+      Homie.getLogger() << cIndent
+                        << F("✖ Invalid filtration configuration (pool volume or pump "
+                             "capacity not set)")
+                        << endl;
       Homie.getLogger() << cIndent << F("  Pool volume: ") << getPoolVolume() << F(" m³") << endl;
       Homie.getLogger() << cIndent << F("  Pump capacity: ") << getPumpCapacity() << F(" m³/h") << endl;
       // Return false to keep pump off when configuration is invalid
       return false;
     }
-    
+
+    // Calculate turnover rate for logging and validation
+    float hoursPerTurnover = getPoolVolume() / getPumpCapacity();
+    float turnoversPerDay  = filtrationHours / hoursPerTurnover;
+
+    // Validate pump capacity is adequate
+    if (hoursPerTurnover > 24.0) {
+      Homie.getLogger() << cIndent
+                        << F("⚠ Warning: Pump capacity too low for pool "
+                             "volume")
+                        << endl;
+      Homie.getLogger() << cIndent << F("  Time for 1 turnover: ") << hoursPerTurnover << F("h (>24h)") << endl;
+      Homie.getLogger() << cIndent
+                        << F("  Consider increasing pump capacity or reducing pool volume "
+                             "setting")
+                        << endl;
+    }
+
     // Calculate end time based on start time + filtration duration
     endTime = startTime;
     // Add hours and minutes separately for better precision
-    int hoursToAdd = (int)filtrationHours;
+    int hoursToAdd   = (int)filtrationHours;
     int minutesToAdd = (int)((filtrationHours - hoursToAdd) * 60.0 + 0.5);  // Round to nearest minute
     endTime.tm_hour += hoursToAdd;
     endTime.tm_min += minutesToAdd;
@@ -100,7 +120,8 @@ bool RuleAuto::checkPoolPumpTimer() {
 
     Homie.getLogger() << cIndent << F("Pool temp: ") << getPoolTemperature() << F("°C") << endl;
     Homie.getLogger() << cIndent << F("Max pool temp: ") << getPoolMaxTemperature() << F("°C") << endl;
-    Homie.getLogger() << cIndent << F("filtration duration (h)= ") << filtrationHours << endl;
+    Homie.getLogger() << cIndent << F("Filtration duration: ") << filtrationHours << F("h") << endl;
+    Homie.getLogger() << cIndent << F("Turnovers per day: ") << turnoversPerDay << F("x") << endl;
   } else {
     // Use fixed timer end time from settings
     Homie.getLogger() << cIndent << F("Using fixed timer duration") << endl;
