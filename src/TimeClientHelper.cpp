@@ -71,10 +71,9 @@ TimeZoneInfo _timezones[10] = {{"Central European", &Europe},
 int _selectedTimezoneIndex = 0;  // Default to Central European Time
 
 // Time sync tracking
-static time_t       _lastValidTime       = 0;           // Last known good time from NTP
-static uint32_t     _lastValidTimeMillis = 0;           // millis() when last valid time was captured
-static bool         _timeSyncValid       = false;       // Whether time sync is currently valid
-static const time_t MIN_VALID_TIME       = 1577836800;  // 2020-01-01 00:00:00 UTC
+static time_t   _lastValidTime       = 0;      // Last known good time from NTP
+static uint32_t _lastValidTimeMillis = 0;      // millis() when last valid time was captured
+static bool     _timeSyncValid       = false;  // Whether time sync is currently valid
 
 void timeClientSetup(const char* ntpServer) {
   // Create NTP client with configured server

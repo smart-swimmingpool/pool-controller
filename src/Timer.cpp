@@ -1,4 +1,5 @@
 #include "Timer.hpp"
+#include "TimeClientHelper.hpp"
 
 /**
  * Get current date/time, with validation

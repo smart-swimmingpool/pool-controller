@@ -14,6 +14,9 @@ struct TimeZoneInfo {
   Timezone* timezone;
 };
 
+// Minimum valid time for time sync validation (2020-01-01 00:00:00 UTC)
+constexpr time_t MIN_VALID_TIME = 1577836800;
+
 void   timeClientSetup(const char* ntpServer);
 int    getTzCount();
 time_t getUtcTime();
