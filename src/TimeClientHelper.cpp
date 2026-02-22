@@ -5,57 +5,57 @@
 #include "TimeClientHelper.hpp"
 
 // NTP Client
-WiFiUDP    ntpUDP;
+WiFiUDP ntpUDP;
 NTPClient* timeClient = nullptr;
 
 // Central European Time (Berlin, Paris, ...)
 TimeChangeRule CEST = {"CEST", Last, Sun, Mar, 2, 120};  // Central European Summer Time
-TimeChangeRule CET  = {"CET ", Last, Sun, Oct, 3, 60};   // Central European Standard Time
-Timezone       Europe(CEST, CET);
+TimeChangeRule CET = {"CET ", Last, Sun, Oct, 3, 60};    // Central European Standard Time
+Timezone Europe(CEST, CET);
 
 // Eastern European Time (Helsinki, Athens, ...)
 TimeChangeRule EEST = {"EEST", Last, Sun, Mar, 3, 180};  // Eastern European Summer Time
-TimeChangeRule EET  = {"EET ", Last, Sun, Oct, 4, 120};  // Eastern European Standard Time
-Timezone       EasternEurope(EEST, EET);
+TimeChangeRule EET = {"EET ", Last, Sun, Oct, 4, 120};   // Eastern European Standard Time
+Timezone EasternEurope(EEST, EET);
 
 // Western European Time (London, Lisbon, ...)
 TimeChangeRule BST = {"BST", Last, Sun, Mar, 1, 60};  // British Summer Time
 TimeChangeRule GMT = {"GMT", Last, Sun, Oct, 2, 0};   // Greenwich Mean Time
-Timezone       WesternEurope(BST, GMT);
+Timezone WesternEurope(BST, GMT);
 
 // US Eastern Time (New York, Washington, ...)
 TimeChangeRule EDT = {"EDT", Second, Sun, Mar, 2, -240};  // Eastern Daylight Time (UTC-4)
 TimeChangeRule EST = {"EST", First, Sun, Nov, 2, -300};   // Eastern Standard Time (UTC-5)
-Timezone       USEastern(EDT, EST);
+Timezone USEastern(EDT, EST);
 
 // US Central Time (Chicago, Houston, ...)
 TimeChangeRule CDT = {"CDT", Second, Sun, Mar, 2, -300};  // Central Daylight Time (UTC-5)
 TimeChangeRule CST = {"CST", First, Sun, Nov, 2, -360};   // Central Standard Time (UTC-6)
-Timezone       USCentral(CDT, CST);
+Timezone USCentral(CDT, CST);
 
 // US Mountain Time (Denver, ...)
 // Note: Most of Arizona does not observe DST
 TimeChangeRule MDT = {"MDT", Second, Sun, Mar, 2, -360};  // Mountain Daylight Time (UTC-6)
 TimeChangeRule MST = {"MST", First, Sun, Nov, 2, -420};   // Mountain Standard Time (UTC-7)
-Timezone       USMountain(MDT, MST);
+Timezone USMountain(MDT, MST);
 
 // US Pacific Time (Los Angeles, San Francisco, ...)
 TimeChangeRule PDT = {"PDT", Second, Sun, Mar, 2, -420};  // Pacific Daylight Time (UTC-7)
 TimeChangeRule PST = {"PST", First, Sun, Nov, 2, -480};   // Pacific Standard Time (UTC-8)
-Timezone       USPacific(PDT, PST);
+Timezone USPacific(PDT, PST);
 
 // Australian Eastern Time (Sydney, Melbourne, ...)
 TimeChangeRule AEDT = {"AEDT", First, Sun, Oct, 2, 660};  // Australian Eastern Daylight Time (UTC+11)
 TimeChangeRule AEST = {"AEST", First, Sun, Apr, 3, 600};  // Australian Eastern Standard Time (UTC+10)
-Timezone       AustralianEastern(AEDT, AEST);
+Timezone AustralianEastern(AEDT, AEST);
 
 // Japan Time Zone (Tokyo) - No DST
 TimeChangeRule JST = {"JST", First, Sun, Mar, 0, 9 * 60};  // UTC + 9 hours
-Timezone       Japan(JST, JST);
+Timezone Japan(JST, JST);
 
 // China Time Zone (Beijing) - No DST
 TimeChangeRule CST_CHINA = {"CST", First, Sun, Mar, 0, 8 * 60};  // UTC + 8 hours
-Timezone       China(CST_CHINA, CST_CHINA);
+Timezone China(CST_CHINA, CST_CHINA);
 
 TimeZoneInfo _timezones[10] = {{"Central European", &Europe},
                                {"Eastern European", &EasternEurope},
@@ -71,9 +71,9 @@ TimeZoneInfo _timezones[10] = {{"Central European", &Europe},
 int _selectedTimezoneIndex = 0;  // Default to Central European Time
 
 // Time sync tracking
-static time_t   _lastValidTime       = 0;      // Last known good time from NTP
-static uint32_t _lastValidTimeMillis = 0;      // millis() when last valid time was captured
-static bool     _timeSyncValid       = false;  // Whether time sync is currently valid
+static time_t _lastValidTime = 0;          // Last known good time from NTP
+static uint32_t _lastValidTimeMillis = 0;  // millis() when last valid time was captured
+static bool _timeSyncValid = false;        // Whether time sync is currently valid
 
 void timeClientSetup(const char* ntpServer) {
   // Create NTP client with configured server
@@ -100,9 +100,9 @@ time_t getUtcTime() {
 
     // Validate time is reasonable (after 2020-01-01)
     if (ntpTime >= MIN_VALID_TIME) {
-      _lastValidTime       = ntpTime;
+      _lastValidTime = ntpTime;
       _lastValidTimeMillis = millis();
-      _timeSyncValid       = true;
+      _timeSyncValid = true;
       return ntpTime;
     }
   }
@@ -163,12 +163,10 @@ String getFormattedTime(time_t rawTime) {
   String hoursStr = hours < 10 ? "0" + String(hours) : String(hours);
 
   unsigned long minutes = (rawTime % 3600) / 60;
-  String minuteStr =
-      minutes < 10 ? "0" + String(minutes) : String(minutes);
+  String minuteStr = minutes < 10 ? "0" + String(minutes) : String(minutes);
 
   unsigned long seconds = rawTime % 60;
-  String secondStr =
-      seconds < 10 ? "0" + String(seconds) : String(seconds);
+  String secondStr = seconds < 10 ? "0" + String(seconds) : String(seconds);
 
   return hoursStr + ":" + minuteStr + ":" + secondStr;
 }

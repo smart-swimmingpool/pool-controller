@@ -12,8 +12,8 @@ AccessModifierOffset: -2
 #IndentPPDirectives: AfterHash
 Cpp11BracedListStyle: true
 
-AlignConsecutiveDeclarations: true
-AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: false
+AlignConsecutiveAssignments: false
 AlignEscapedNewlines: Left
 AlignTrailingComments: true
 IndentWrappedFunctionNames: false
