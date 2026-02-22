@@ -12,7 +12,7 @@ tm getCurrentDateTime() {
 
   // Mark as invalid if time sync has failed
   if (!isTimeSyncValid() || t < MIN_VALID_TIME) {
-    timeinfo.tm_year = -1;  // Sentinel value for invalid time
+    timeinfo.tm_year = -1;
   }
 
   return timeinfo;
