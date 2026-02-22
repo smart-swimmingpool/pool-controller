@@ -61,17 +61,14 @@ bool OperationModeNode::setMode(String mode) {
   if (mode.equals(STATUS_AUTO) || mode.equals(STATUS_MANU) || mode.equals(STATUS_BOOST) || mode.equals(STATUS_TIMER)) {
     _mode = mode;
     Homie.getLogger() << F("set mode: ") << _mode << endl;
-    PoolController::MqttInterface::publishSelectState(
-      *this, cMode, cMode, _mode.c_str());
-    PoolController::MqttInterface::publishHomieProperty(
-      *this, cHomieNodeState, cHomieNodeState_OK);
+    PoolController::MqttInterface::publishSelectState(*this, cMode, cMode, _mode.c_str());
+    PoolController::MqttInterface::publishHomieProperty(*this, cHomieNodeState, cHomieNodeState_OK);
     saveState();  // Persist mode change
     retval = true;
 
   } else {
     Homie.getLogger() << F("✖ UNDEFINED Mode: ") << mode << F(" Current unchanged mode: ") << _mode << endl;
-    PoolController::MqttInterface::publishHomieProperty(
-      *this, cHomieNodeState, cHomieNodeState_Error);
+    PoolController::MqttInterface::publishHomieProperty(*this, cHomieNodeState, cHomieNodeState_Error);
     retval = false;
   }
 
@@ -111,12 +108,41 @@ void OperationModeNode::setup() {
 void OperationModeNode::loop() {
   if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval)) {
     Homie.getLogger() << F("〽 OperatioalMode update rule ") << endl;
+
+    // Check time synchronization status
+    static bool lastTimeSyncState    = true;
+    bool        currentTimeSyncState = isTimeSyncValid();
+
+    if (!currentTimeSyncState && lastTimeSyncState) {
+      // Time sync just failed
+      Homie.getLogger() << F("⚠ WARNING: NTP time sync failed!") << endl;
+      Homie.getLogger() << F("  Using cached time + millis()") << endl;
+      Homie.getLogger() << F("  Timer mode may be inaccurate") << endl;
+      if (Homie.isConnected()) {
+        PoolController::MqttInterface::publishHomieProperty(*this, "time-sync-status", "failed");
+      }
+    } else if (currentTimeSyncState && !lastTimeSyncState) {
+      // Time sync recovered
+      Homie.getLogger() << F("✓ NTP time sync recovered") << endl;
+      if (Homie.isConnected()) {
+        PoolController::MqttInterface::publishHomieProperty(*this, "time-sync-status", "ok");
+      }
+    }
+    lastTimeSyncState = currentTimeSyncState;
+
     // call loop to evaluate the current rule
     Rule* rule = getRule();
     if (rule != nullptr) {
       rule->loop();
     } else {
       Homie.getLogger() << cIndent << F("✖ no rule defined: ") << _mode << endl;
+      // Fallback to safe mode: switch to manual mode
+      Homie.getLogger() << cIndent << F("⚠ No matching rule - switching to manual mode") << endl;
+      _mode = STATUS_MANU;
+      saveState();
+      if (Homie.isConnected()) {
+        PoolController::MqttInterface::publishHomieProperty(*this, cHomieNodeState, cHomieNodeState_Error);
+      }
     }
     if (Homie.isConnected()) {
       /*
@@ -133,44 +159,34 @@ void OperationModeNode::loop() {
       // values (-100.00 to 999.99)
       char buffer[20];
 
-      PoolController::MqttInterface::publishSelectState(
-          *this, cMode, cMode, _mode.c_str());
+      PoolController::MqttInterface::publishSelectState(*this, cMode, cMode, _mode.c_str());
 
       Utils::floatToString(_solarMinTemp, buffer, sizeof(buffer));
-      PoolController::MqttInterface::publishNumberState(
-          *this, cSolarMinTemp, cSolarMinTemp, buffer);
+      PoolController::MqttInterface::publishNumberState(*this, cSolarMinTemp, cSolarMinTemp, buffer);
 
       Utils::floatToString(_poolMaxTemp, buffer, sizeof(buffer));
-      PoolController::MqttInterface::publishNumberState(
-          *this, cPoolMaxTemp, cPoolMaxTemp, buffer);
+      PoolController::MqttInterface::publishNumberState(*this, cPoolMaxTemp, cPoolMaxTemp, buffer);
 
       Utils::floatToString(_hysteresis, buffer, sizeof(buffer));
-      PoolController::MqttInterface::publishNumberState(
-          *this, cHysteresis, cHysteresis, buffer);
+      PoolController::MqttInterface::publishNumberState(*this, cHysteresis, cHysteresis, buffer);
 
       Utils::intToString(_timerSetting.timerStartHour, buffer, sizeof(buffer));
-      PoolController::MqttInterface::publishNumberState(
-          *this, cTimerStartHour, cTimerStartHour, buffer);
+      PoolController::MqttInterface::publishNumberState(*this, cTimerStartHour, cTimerStartHour, buffer);
 
       Utils::intToString(_timerSetting.timerStartMinutes, buffer, sizeof(buffer));
-      PoolController::MqttInterface::publishNumberState(
-          *this, cTimerStartMin, cTimerStartMin, buffer);
+      PoolController::MqttInterface::publishNumberState(*this, cTimerStartMin, cTimerStartMin, buffer);
 
       Utils::intToString(_timerSetting.timerEndHour, buffer, sizeof(buffer));
-      PoolController::MqttInterface::publishNumberState(
-          *this, cTimerEndHour, cTimerEndHour, buffer);
+      PoolController::MqttInterface::publishNumberState(*this, cTimerEndHour, cTimerEndHour, buffer);
 
       Utils::intToString(_timerSetting.timerEndMinutes, buffer, sizeof(buffer));
-      PoolController::MqttInterface::publishNumberState(
-          *this, cTimerEndMin, cTimerEndMin, buffer);
+      PoolController::MqttInterface::publishNumberState(*this, cTimerEndMin, cTimerEndMin, buffer);
 
       Utils::intToString(getTimezoneIndex(), buffer, sizeof(buffer));
-      PoolController::MqttInterface::publishNumberState(
-          *this, cTimezone, cTimezone, buffer);
+      PoolController::MqttInterface::publishNumberState(*this, cTimezone, cTimezone, buffer);
 
       String tzInfo = getTimeInfoFor(getTimezoneIndex());
-      PoolController::MqttInterface::publishTextState(
-          *this, cTimezoneInfo, cTimezoneInfo, tzInfo.c_str());
+      PoolController::MqttInterface::publishTextState(*this, cTimezoneInfo, cTimezoneInfo, tzInfo.c_str());
     } else {
       Homie.getLogger() << F("✖ OperationalMode: not connected.") << endl;
     }
