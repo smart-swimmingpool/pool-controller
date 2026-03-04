@@ -103,9 +103,10 @@ bool RuleAuto::checkPoolPumpTimer() {
   Homie.getLogger() << cIndent << F("endTime=    ") << asctime(&endTime);
 
   // Handle midnight crossing: check if timer spans midnight
-  TimerSetting ts              = getTimerSetting();
-  bool         crossesMidnight = (ts.timerStartHour > ts.timerEndHour) ||
-                         (ts.timerStartHour == ts.timerEndHour && ts.timerStartMinutes > ts.timerEndMinutes);
+  TimerSetting ts = getTimerSetting();
+  bool crossesMidnight = (ts.timerStartHour > ts.timerEndHour) ||
+      (ts.timerStartHour == ts.timerEndHour &&
+       ts.timerStartMinutes > ts.timerEndMinutes);
 
   if (crossesMidnight) {
     // Timer crosses midnight (e.g., 22:00 - 02:00)

@@ -148,11 +148,11 @@ void OperationModeNode::loop() {
       /*
       Homie.getLogger() << cIndent << F("mode: ") << _mode << endl;
       Homie.getLogger() << cIndent << F("SolarMinTemp: ") <<
-                           _solarMinTemp << endl;
+          _solarMinTemp << endl;
       Homie.getLogger() << cIndent << F("PoolMaxTemp:  ") <<
-                           _poolMaxTemp << endl;
+          _poolMaxTemp << endl;
       Homie.getLogger() << cIndent << F("Hysteresis:   ") <<
-                           _hysteresis << endl;
+          _hysteresis << endl;
 */
       // Optimize memory: avoid String allocations by using stack
       // buffers. Buffer size: 20 bytes sufficient for temperature

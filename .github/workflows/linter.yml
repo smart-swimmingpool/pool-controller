@@ -80,4 +80,3 @@ jobs:
 
       - name: Arduino Lint
         uses: arduino/arduino-lint-action@v1.0.0
-
