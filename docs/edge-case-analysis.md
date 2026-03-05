@@ -257,9 +257,9 @@ this correctly, but `SystemMonitor` doesn't use it.
 **Recommendations**:
 
 1. Replace with `Utils::shouldMeasure(lastMemoryCheck, 10)` for overflow
-   safety
+  safety
 2. Or use the same pattern: `(now - lastMemoryCheck) >= interval` which
-   works correctly with unsigned overflow
+  works correctly with unsigned overflow
 
 ### 3.2 NTPClient Memory Leak on Reconfiguration 🟠 Medium
 
@@ -742,7 +742,7 @@ nodes.
 ### ✅ Fixed in v3.1.0
 
 1. **Sensor disconnection handling** (1.1) - Temperature set to NaN,
-   validation added
+  validation added
 2. **No sensors found** (1.2) - Better initialization and warnings
 3. **NTP time sync failure** (2.1) - Cached time with millis() fallback
 4. **Midnight crossing timers** (2.2) - Midnight-aware logic implemented
@@ -774,33 +774,33 @@ To validate fixes for these edge cases, implement tests for:
 
 1. **Sensor failure scenarios**:
 
-   - Disconnect sensor during operation
-   - No sensors at startup
-   - Intermittent sensor connection
+  - Disconnect sensor during operation
+  - No sensors at startup
+  - Intermittent sensor connection
 
 2. **Time and timer scenarios**:
 
-   - WiFi loss during operation
-   - NTP sync failures
-   - Midnight crossing timers
-   - DST transitions
+  - WiFi loss during operation
+  - NTP sync failures
+  - Midnight crossing timers
+  - DST transitions
 
 3. **Memory stress tests**:
 
-   - Run for >50 days (millis overflow)
-   - Low memory conditions
-   - Rapid MQTT message floods
+  - Run for >50 days (millis overflow)
+  - Low memory conditions
+  - Rapid MQTT message floods
 
 4. **Invalid input tests**:
 
-   - Out-of-range values
-   - Invalid string formats
-   - Malformed MQTT messages
+  - Out-of-range values
+  - Invalid string formats
+  - Malformed MQTT messages
 
 5. **Platform-specific tests**:
-   - Test on both ESP32 and ESP8266
-   - Verify state persistence
-   - Power failure recovery
+  - Test on both ESP32 and ESP8266
+  - Verify state persistence
+  - Power failure recovery
 
 ---
 
