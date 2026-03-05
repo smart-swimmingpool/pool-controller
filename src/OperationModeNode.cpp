@@ -14,7 +14,7 @@
 OperationModeNode::OperationModeNode(const char* id, const char* name, const int measurementInterval)
     : HomieNode(id, name, "switch") {
   _measurementInterval = (measurementInterval > MIN_INTERVAL) ? measurementInterval : MIN_INTERVAL;
-  _lastMeasurement     = 0;
+  _lastMeasurement = 0;
 
   setRunLoopDisconnected(true);
   setRunLoopDisconnected(true);
@@ -110,8 +110,8 @@ void OperationModeNode::loop() {
     Homie.getLogger() << F("〽 OperatioalMode update rule ") << endl;
 
     // Check time synchronization status
-    static bool lastTimeSyncState    = true;
-    bool        currentTimeSyncState = isTimeSyncValid();
+    static bool lastTimeSyncState = true;
+    bool currentTimeSyncState = isTimeSyncValid();
 
     if (!currentTimeSyncState && lastTimeSyncState) {
       // Time sync just failed
@@ -230,28 +230,28 @@ bool OperationModeNode::applyProperty(const String& property, const String& valu
   } else if (property.equalsIgnoreCase(cHysteresis)) {
     Homie.getLogger() << cIndent << F("✔ hysteresis: ") << value << endl;
     _hysteresis = value.toFloat();
-    retval      = true;
+    retval = true;
 
   } else if (property.equalsIgnoreCase(cSolarMinTemp)) {
     Homie.getLogger() << cIndent << F("✔ solar min temp: ") << value << endl;
     _solarMinTemp = value.toFloat();
-    retval        = true;
+    retval = true;
 
   } else if (property.equalsIgnoreCase(cPoolMaxTemp)) {
     Homie.getLogger() << cIndent << F("✔ pool max temp: ") << value << endl;
     _poolMaxTemp = value.toFloat();
-    retval       = true;
+    retval = true;
 
   } else if (property.equalsIgnoreCase(cTimerStartHour)) {
     Homie.getLogger() << cIndent << F("✔ Timer start hh: ") << value << endl;
-    TimerSetting timerSetting   = getTimerSetting();
+    TimerSetting timerSetting = getTimerSetting();
     timerSetting.timerStartHour = value.toInt();
     setTimerSetting(timerSetting);
     retval = true;
 
   } else if (property.equalsIgnoreCase(cTimerStartMin)) {
     Homie.getLogger() << cIndent << F("✔  Timer start min.: ") << value << endl;
-    TimerSetting timerSetting      = getTimerSetting();
+    TimerSetting timerSetting = getTimerSetting();
     timerSetting.timerStartMinutes = value.toInt();
     setTimerSetting(timerSetting);
     retval = true;
@@ -265,7 +265,7 @@ bool OperationModeNode::applyProperty(const String& property, const String& valu
 
   } else if (property.equalsIgnoreCase(cTimerEndMin)) {
     Homie.getLogger() << cIndent << F("✔ Timer end min.: ") << value << endl;
-    TimerSetting timerSetting    = getTimerSetting();
+    TimerSetting timerSetting = getTimerSetting();
     timerSetting.timerEndMinutes = value.toInt();
     setTimerSetting(timerSetting);
     retval = true;
@@ -308,15 +308,15 @@ void OperationModeNode::loadState() {
   setMode(savedMode);
 
   // Load temperature settings
-  _poolMaxTemp  = StateManager::loadFloat("poolMaxTemp", 28.5);
+  _poolMaxTemp = StateManager::loadFloat("poolMaxTemp", 28.5);
   _solarMinTemp = StateManager::loadFloat("solarMinTemp", 55.0);
-  _hysteresis   = StateManager::loadFloat("hysteresis", 1.0);
+  _hysteresis = StateManager::loadFloat("hysteresis", 1.0);
 
   // Load timer settings
-  _timerSetting.timerStartHour    = StateManager::loadInt("timerStartH", 10);
+  _timerSetting.timerStartHour = StateManager::loadInt("timerStartH", 10);
   _timerSetting.timerStartMinutes = StateManager::loadInt("timerStartM", 30);
-  _timerSetting.timerEndHour      = StateManager::loadInt("timerEndH", 17);
-  _timerSetting.timerEndMinutes   = StateManager::loadInt("timerEndM", 30);
+  _timerSetting.timerEndHour = StateManager::loadInt("timerEndH", 17);
+  _timerSetting.timerEndMinutes = StateManager::loadInt("timerEndM", 30);
 
   Homie.getLogger() << F("✓ State loaded from persistent storage") << endl;
 }

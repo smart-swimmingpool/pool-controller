@@ -25,12 +25,12 @@
 DallasTemperatureNode::DallasTemperatureNode(const char* id, const char* name, const uint8_t pin, const int measurementInterval)
     : HomieNode(id, name, "temperature") {
 
-  _pin                 = pin;
+  _pin = pin;
   _measurementInterval = (measurementInterval > MIN_INTERVAL) ? measurementInterval : MIN_INTERVAL;
-  _lastMeasurement     = 0;
-  numberOfDevices      = 0;
-  _temperature         = NAN;  // Initialize to invalid/safe value
-  _sensorFound         = false;
+  _lastMeasurement = 0;
+  numberOfDevices = 0;
+  _temperature = NAN;  // Initialize to invalid/safe value
+  _sensorFound = false;
 
   setRunLoopDisconnected(true);
 
@@ -106,7 +106,7 @@ void DallasTemperatureNode::loop() {
           if (DEVICE_DISCONNECTED_C == newTemp) {
             Homie.getLogger() << cIndent
                               << F("✖ Sensor disconnected - setting temp to "
-                                  "NaN for safety")
+                                   "NaN for safety")
                               << endl;
             _temperature = NAN;  // Set to invalid value for safety
             _sensorFound = false;

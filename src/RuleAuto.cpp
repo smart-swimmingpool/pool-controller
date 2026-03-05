@@ -4,14 +4,14 @@
 
 RuleAuto::RuleAuto(RelayModuleNode* solarRelay, RelayModuleNode* poolRelay) {
   _solarRelay = solarRelay;
-  _poolRelay  = poolRelay;
+  _poolRelay = poolRelay;
 }
 
 void RuleAuto::loop() {
   Homie.getLogger() << cIndent << F("§ RuleAuto: loop") << endl;
 
   // Validate temperature readings before making decisions
-  float poolTemp  = getPoolTemperature();
+  float poolTemp = getPoolTemperature();
   float solarTemp = getSolarTemperature();
 
   if (isnan(poolTemp) || isnan(solarTemp)) {
@@ -96,7 +96,7 @@ bool RuleAuto::checkPoolPumpTimer() {
   bool retval;
 
   tm startTime = getStartTime(getTimerSetting());
-  tm endTime   = getEndTime(getTimerSetting());
+  tm endTime = getEndTime(getTimerSetting());
 
   Homie.getLogger() << cIndent << F("currenttime=") << asctime(&time);
   Homie.getLogger() << cIndent << F("startTime=  ") << asctime(&startTime);
@@ -105,8 +105,7 @@ bool RuleAuto::checkPoolPumpTimer() {
   // Handle midnight crossing: check if timer spans midnight
   TimerSetting ts = getTimerSetting();
   bool crossesMidnight = (ts.timerStartHour > ts.timerEndHour) ||
-      (ts.timerStartHour == ts.timerEndHour &&
-       ts.timerStartMinutes > ts.timerEndMinutes);
+                         (ts.timerStartHour == ts.timerEndHour && ts.timerStartMinutes > ts.timerEndMinutes);
 
   if (crossesMidnight) {
     // Timer crosses midnight (e.g., 22:00 - 02:00)
