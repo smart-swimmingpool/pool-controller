@@ -774,33 +774,34 @@ To validate fixes for these edge cases, implement tests for:
 
 1. **Sensor failure scenarios**:
 
-  - Disconnect sensor during operation
-  - No sensors at startup
-  - Intermittent sensor connection
+- Disconnect sensor during operation
+- No sensors at startup
+- Intermittent sensor connection
 
 2. **Time and timer scenarios**:
 
-  - WiFi loss during operation
-  - NTP sync failures
-  - Midnight crossing timers
-  - DST transitions
+- WiFi loss during operation
+- NTP sync failures
+- Midnight crossing timers
+- DST transitions
 
 3. **Memory stress tests**:
 
-  - Run for >50 days (millis overflow)
-  - Low memory conditions
-  - Rapid MQTT message floods
+- Run for >50 days (millis overflow)
+- Low memory conditions
+- Rapid MQTT message floods
 
 4. **Invalid input tests**:
 
-  - Out-of-range values
-  - Invalid string formats
-  - Malformed MQTT messages
+- Out-of-range values
+- Invalid string formats
+- Malformed MQTT messages
 
 5. **Platform-specific tests**:
-  - Test on both ESP32 and ESP8266
-  - Verify state persistence
-  - Power failure recovery
+
+- Test on both ESP32 and ESP8266
+- Verify state persistence
+- Power failure recovery
 
 ---
 

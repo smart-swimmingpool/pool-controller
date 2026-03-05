@@ -106,7 +106,7 @@ void DallasTemperatureNode::loop() {
           if (DEVICE_DISCONNECTED_C == newTemp) {
             Homie.getLogger() << cIndent
                 << F("✖ Sensor disconnected - setting temp to "
-                     "NaN for safety")
+                      "NaN for safety")
                 << endl;
             _temperature = NAN;  // Set to invalid value for safety
             _sensorFound = false;
