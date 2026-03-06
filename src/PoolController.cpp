@@ -25,7 +25,7 @@
 #include "Config.hpp"
 
 namespace PoolController {
-static LoggerNode            LN;
+static LoggerNode LN;
 static DallasTemperatureNode solarTemperatureNode("solar-temp", "Solar Temperature", PIN_DS_SOLAR, TEMP_READ_INTERVAL);
 static DallasTemperatureNode poolTemperatureNode("pool-temp", "Pool Temperature", PIN_DS_POOL, TEMP_READ_INTERVAL);
 #ifdef ESP32
@@ -48,7 +48,7 @@ static bool extractHomeAssistantObjectId(const char* topic, const char* componen
   }
 
   const char* objectIdStart = topic + prefixLen;
-  const char* objectIdEnd   = strstr(objectIdStart, "/set");
+  const char* objectIdEnd = strstr(objectIdStart, "/set");
   if (!objectIdEnd) {
     return false;
   }
@@ -71,7 +71,7 @@ static void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProp
   if (!HomeAssistant::useHomeAssistant)
     return;
 
-  char   payloadStr[32];
+  char payloadStr[32];
   size_t payloadLen = (len < sizeof(payloadStr) - 1) ? len : sizeof(payloadStr) - 1;
   memcpy(payloadStr, payload, payloadLen);
   payloadStr[payloadLen] = '\0';
@@ -142,7 +142,7 @@ static void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProp
 }
 
 static PoolControllerContext* Self;
-auto                          Detail::setupProxy() -> void {
+auto Detail::setupProxy() -> void {
   Self->setupHandler();
 }
 
@@ -162,9 +162,9 @@ PoolControllerContext::~PoolControllerContext() {
  */
 auto PoolControllerContext::initializeController() -> void {
   // Validate pin configuration - check for conflicts
-  const uint8_t pins[]      = {PIN_DS_SOLAR, PIN_DS_POOL, PIN_RELAY_POOL, PIN_RELAY_SOLAR};
-  const char*   pinNames[]  = {"Solar Temp", "Pool Temp", "Pool Relay", "Solar Relay"};
-  bool          pinConflict = false;
+  const uint8_t pins[] = {PIN_DS_SOLAR, PIN_DS_POOL, PIN_RELAY_POOL, PIN_RELAY_SOLAR};
+  const char* pinNames[] = {"Solar Temp", "Pool Temp", "Pool Relay", "Solar Relay"};
+  bool pinConflict = false;
 
   for (size_t i = 0; i < 4; i++) {
     for (size_t j = i + 1; j < 4; j++) {
@@ -216,11 +216,11 @@ auto PoolControllerContext::initializeController() -> void {
   operationModeNode.setPoolMaxTemperature(this->temperatureMaxPoolSetting_.get());
   operationModeNode.setSolarMinTemperature(this->temperatureMinSolarSetting_.get());
   operationModeNode.setTemperatureHysteresis(this->temperatureHysteresisSetting_.get());
-  TimerSetting ts      = operationModeNode.getTimerSetting();  //TODO: Configurable
-  ts.timerStartHour    = 10;
+  TimerSetting ts = operationModeNode.getTimerSetting();  //TODO: Configurable
+  ts.timerStartHour = 10;
   ts.timerStartMinutes = 30;
-  ts.timerEndHour      = 17;
-  ts.timerEndMinutes   = 30;
+  ts.timerEndHour = 17;
+  ts.timerEndMinutes = 30;
   operationModeNode.setTimerSetting(ts);
 
   operationModeNode.setPoolTemperatureNode(&poolTemperatureNode);
@@ -258,7 +258,7 @@ auto PoolControllerContext::setupHandler() -> void {
   operationModeNode.loadState();
 
   // Configure MQTT protocol based on setting
-  const char* protocol            = this->mqttProtocolSetting_.get();
+  const char* protocol = this->mqttProtocolSetting_.get();
   HomeAssistant::useHomeAssistant = (std::strcmp(protocol, "homeassistant") == 0);
 
   if (HomeAssistant::useHomeAssistant) {
@@ -352,20 +352,20 @@ auto PoolControllerContext::setup() -> void {
   });
 
   this->timezoneSetting_.setDefaultValue(0).setValidator(
-      [](const long candidate) -> bool { return candidate >= 0 && candidate < getTzCount(); });
+    [](const long candidate) -> bool { return candidate >= 0 && candidate < getTzCount(); });
 
   this->ntpServerSetting_.setDefaultValue("pool.ntp.org").setValidator([](const char* const candidate) -> bool {
     return candidate != nullptr && strlen(candidate) > 0;
   });
 
   this->temperatureMaxPoolSetting_.setDefaultValue(28.5).setValidator(
-      [](const double candidate) -> bool { return candidate >= 0 && candidate <= 30; });
+    [](const double candidate) -> bool { return candidate >= 0 && candidate <= 30; });
 
   this->temperatureMinSolarSetting_.setDefaultValue(55.0).setValidator(
-      [](const double candidate) noexcept -> bool { return candidate >= 0 && candidate <= 100; });
+    [](const double candidate) noexcept -> bool { return candidate >= 0 && candidate <= 100; });
 
   this->temperatureHysteresisSetting_.setDefaultValue(1.0).setValidator(
-      [](const double candidate) -> bool { return candidate >= 0 && candidate <= 10; });
+    [](const double candidate) -> bool { return candidate >= 0 && candidate <= 10; });
 
   this->operationModeSetting_.setDefaultValue("auto").setValidator([](const char* const candidate) -> bool {
     return std::strcmp(candidate, "auto") == 0 || std::strcmp(candidate, "manu") == 0 || std::strcmp(candidate, "boost") == 0;
