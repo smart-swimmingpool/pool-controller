@@ -7,6 +7,7 @@
  * https://github.com/YuriiSalimov/RelayModule
  */
 #include "RelayModuleNode.hpp"
+#include "StateManager.hpp"
 #include "Utils.hpp"
 #include "MqttInterface.hpp"
 
@@ -25,6 +26,13 @@ RelayModuleNode::RelayModuleNode(const char* id, const char* name, const uint8_t
  *
  */
 void RelayModuleNode::setSwitch(const boolean state) {
+  // Check if state actually changes to avoid unnecessary EEPROM writes
+  boolean currentState = relay->isOn();
+  if (currentState == state) {
+    // State unchanged, skip persistence to reduce EEPROM wear
+    return;
+  }
+
   if (state) {
     relay->on();
   } else {
@@ -32,18 +40,17 @@ void RelayModuleNode::setSwitch(const boolean state) {
   }
 
   if (Homie.isConnected()) {
-    PoolController::MqttInterface::publishSwitchState(
-        *this, cSwitch, getId(), state);
-    PoolController::MqttInterface::publishHomieProperty(
-        *this, cHomieNodeState, cHomieNodeState_OK);
+    PoolController::MqttInterface::publishSwitchState(*this, cSwitch, getId(), state);
+    PoolController::MqttInterface::publishHomieProperty(*this, cHomieNodeState, cHomieNodeState_OK);
   }
-  // persist value
+  // Persist relay state for both ESP32 and ESP8266
+  // Only written when state actually changes to reduce EEPROM wear
 #ifdef ESP32
   preferences.begin(getId(), false);
   preferences.putBool(cSwitch, state);
   preferences.end();
 #elif defined(ESP8266)
-
+  PoolController::StateManager::saveBool(getId(), state);
 #endif
 
   Homie.getLogger() << cIndent << F("Relay is ") << (state ? cFlagOn : cFlagOff) << endl;
@@ -100,8 +107,7 @@ void RelayModuleNode::loop() {
       const boolean isOn = getSwitch();
       Homie.getLogger() << F("〽 Sending Switch status: ") << getId() << F("switch: ") << (isOn ? cFlagOn : cFlagOff) << endl;
 
-      PoolController::MqttInterface::publishSwitchState(
-          *this, cSwitch, getId(), isOn);
+      PoolController::MqttInterface::publishSwitchState(*this, cSwitch, getId(), isOn);
     }
 
     _lastMeasurement = millis();
@@ -119,16 +125,16 @@ void RelayModuleNode::setup() {
 
   relay = new RelayModule(_pin);
 
+  // Load and restore relay state from persistent storage
 #ifdef ESP32
   preferences.begin(getId(), false);
   boolean storedSwitchValue = preferences.getBool(cSwitch, false);
-  // Close the Preferences
   preferences.end();
 #elif defined(ESP8266)
-  boolean storedSwitchValue = false;
+  boolean storedSwitchValue = PoolController::StateManager::loadBool(getId(), false);
 #endif
 
-  // restore from preferences
+  // Restore from persistent storage
   if (storedSwitchValue) {
     relay->on();
   } else {

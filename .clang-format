@@ -12,12 +12,15 @@ AccessModifierOffset: -2
 #IndentPPDirectives: AfterHash
 Cpp11BracedListStyle: true
 
-AlignConsecutiveDeclarations: true
-AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: false
+AlignConsecutiveAssignments: false
 AlignEscapedNewlines: Left
 AlignTrailingComments: true
 IndentWrappedFunctionNames: false
 AllowShortFunctionsOnASingleLine: Inline
+ContinuationIndentWidth: 2
+AlignOperands: DontAlign
+BreakBeforeBinaryOperators: None
 
 SpacesBeforeTrailingComments: 2
 FixNamespaceComments: true

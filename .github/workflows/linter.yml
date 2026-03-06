@@ -45,7 +45,6 @@ jobs:
         uses: super-linter/super-linter@v7
         env:
           VALIDATE_ALL_CODEBASE: false
-          VALIDATE_ANSIBLE: false
 
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -81,4 +80,3 @@ jobs:
 
       - name: Arduino Lint
         uses: arduino/arduino-lint-action@v1.0.0
-

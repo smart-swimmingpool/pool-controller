@@ -25,10 +25,12 @@
 DallasTemperatureNode::DallasTemperatureNode(const char* id, const char* name, const uint8_t pin, const int measurementInterval)
     : HomieNode(id, name, "temperature") {
 
-  _pin                 = pin;
+  _pin = pin;
   _measurementInterval = (measurementInterval > MIN_INTERVAL) ? measurementInterval : MIN_INTERVAL;
-  _lastMeasurement     = 0;
-  numberOfDevices      = 0;
+  _lastMeasurement = 0;
+  numberOfDevices = 0;
+  _temperature = NAN;  // Initialize to invalid/safe value
+  _sensorFound = false;
 
   setRunLoopDisconnected(true);
 
@@ -71,8 +73,12 @@ void DallasTemperatureNode::onReadyToOperate() {
         Homie.getLogger() << cIndent << F("PIN ") << _pin << F(": ") << F("Device ") << i << F(" using address ") << adr << endl;
       }
     }
+    _sensorFound = true;
   } else {
     Homie.getLogger() << F("✖ No sensors found on pin ") << _pin << endl;
+    Homie.getLogger() << F("  ⚠ Temperature readings will be invalid (NaN)") << endl;
+    Homie.getLogger() << F("  ⚠ Auto mode may not function correctly") << endl;
+    _sensorFound = false;
     if (Homie.isConnected()) {
       setProperty(cHomieNodeState).send(cHomieNodeState_Error);
     }
@@ -96,16 +102,17 @@ void DallasTemperatureNode::loop() {
 
         DeviceAddress tempDeviceAddress;
         if (sensor.getAddress(tempDeviceAddress, i)) {
-          _temperature = sensor.getTempC(tempDeviceAddress);
-          if (DEVICE_DISCONNECTED_C == _temperature) {
-            Homie.getLogger() << cIndent
-                              << F("✖ Error reading sensor. Request "
-                                   "count: ")
-                              << cnt << endl;
+          float newTemp = sensor.getTempC(tempDeviceAddress);
+          if (DEVICE_DISCONNECTED_C == newTemp) {
+            Homie.getLogger() << cIndent << F("✖ Sensor disconnected - setting temp to NaN for safety") << endl;
+            _temperature = NAN;  // Set to invalid value for safety
+            _sensorFound = false;
             if (Homie.isConnected()) {
               setProperty(cHomieNodeState).send(cHomieNodeState_Error);
             }
           } else {
+            _temperature = newTemp;  // Update only with valid reading
+            _sensorFound = true;
             Homie.getLogger() << cIndent << F("Temperature=") << _temperature << endl;
 
             if (Homie.isConnected()) {
@@ -113,10 +120,8 @@ void DallasTemperatureNode::loop() {
               char buffer[16];
               Utils::floatToString(_temperature, buffer, sizeof(buffer));
 
-              PoolController::MqttInterface::publishSensorState(
-                  *this, cTemperature, getId(), buffer);
-              PoolController::MqttInterface::publishHomieProperty(
-                  *this, cHomieNodeState, cHomieNodeState_OK);
+              PoolController::MqttInterface::publishSensorState(*this, cTemperature, getId(), buffer);
+              PoolController::MqttInterface::publishHomieProperty(*this, cHomieNodeState, cHomieNodeState_OK);
             }
           }
         }
