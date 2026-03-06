@@ -18,6 +18,9 @@ AlignEscapedNewlines: Left
 AlignTrailingComments: true
 IndentWrappedFunctionNames: false
 AllowShortFunctionsOnASingleLine: Inline
+ContinuationIndentWidth: 2
+AlignOperands: DontAlign
+BreakBeforeBinaryOperators: None
 
 SpacesBeforeTrailingComments: 2
 FixNamespaceComments: true
