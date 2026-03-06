@@ -778,26 +778,26 @@ To validate fixes for these edge cases, implement tests for:
 - No sensors at startup
 - Intermittent sensor connection
 
-2. **Time and timer scenarios**:
+1. **Time and timer scenarios**:
 
 - WiFi loss during operation
 - NTP sync failures
 - Midnight crossing timers
 - DST transitions
 
-3. **Memory stress tests**:
+1. **Memory stress tests**:
 
 - Run for >50 days (millis overflow)
 - Low memory conditions
 - Rapid MQTT message floods
 
-4. **Invalid input tests**:
+1. **Invalid input tests**:
 
 - Out-of-range values
 - Invalid string formats
 - Malformed MQTT messages
 
-5. **Platform-specific tests**:
+1. **Platform-specific tests**:
 
 - Test on both ESP32 and ESP8266
 - Verify state persistence
