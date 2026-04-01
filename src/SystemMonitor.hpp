@@ -24,22 +24,22 @@ namespace PoolController {
  */
 class SystemMonitor {
 private:
-  static constexpr uint32_t LOW_MEMORY_THRESHOLD            = 8192;
-  static constexpr uint32_t CRITICAL_MEMORY_THRESHOLD       = 4096;
-  static constexpr uint32_t ESP32_LOW_MEMORY_THRESHOLD      = 16384;
+  static constexpr uint32_t LOW_MEMORY_THRESHOLD = 8192;
+  static constexpr uint32_t CRITICAL_MEMORY_THRESHOLD = 4096;
+  static constexpr uint32_t ESP32_LOW_MEMORY_THRESHOLD = 16384;
   static constexpr uint32_t ESP32_CRITICAL_MEMORY_THRESHOLD = 8192;
 
   static uint32_t lastMemoryCheck;
   static uint32_t minFreeHeap;
-  static bool     lowMemoryWarning;
+  static bool lowMemoryWarning;
 
 public:
   /**
    * Initialize system monitor and watchdog
    */
   static void begin() {
-    lastMemoryCheck  = 0;
-    minFreeHeap      = ESP.getFreeHeap();
+    lastMemoryCheck = 0;
+    minFreeHeap = ESP.getFreeHeap();
     lowMemoryWarning = false;
 
 #ifdef ESP32
@@ -85,10 +85,10 @@ public:
     }
 
 #ifdef ESP32
-    uint32_t lowThreshold      = ESP32_LOW_MEMORY_THRESHOLD;
+    uint32_t lowThreshold = ESP32_LOW_MEMORY_THRESHOLD;
     uint32_t criticalThreshold = ESP32_CRITICAL_MEMORY_THRESHOLD;
 #else
-    uint32_t lowThreshold      = LOW_MEMORY_THRESHOLD;
+    uint32_t lowThreshold = LOW_MEMORY_THRESHOLD;
     uint32_t criticalThreshold = CRITICAL_MEMORY_THRESHOLD;
 #endif
 

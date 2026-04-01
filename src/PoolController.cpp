@@ -39,7 +39,7 @@ static OperationModeNode operationModeNode("operation-mode", "Operation Mode");
 static uint32_t _measurementInterval = 10;
 static uint32_t _lastMeasurement;
 
-static bool extractHomeAssistantObjectId(const char* topic, const char* component, char* objectId, size_t objectIdSize) {
+static bool extractHomeAssistantObjectId(const char *topic, const char *component, char *objectId, size_t objectIdSize) {
   char prefix[128];
   snprintf(prefix, sizeof(prefix), "homeassistant/%s/pool-controller/", component);
   const size_t prefixLen = strlen(prefix);
@@ -47,8 +47,8 @@ static bool extractHomeAssistantObjectId(const char* topic, const char* componen
     return false;
   }
 
-  const char* objectIdStart = topic + prefixLen;
-  const char* objectIdEnd = strstr(objectIdStart, "/set");
+  const char *objectIdStart = topic + prefixLen;
+  const char *objectIdEnd = strstr(objectIdStart, "/set");
   if (!objectIdEnd) {
     return false;
   }
@@ -66,7 +66,7 @@ static bool extractHomeAssistantObjectId(const char* topic, const char* componen
 /**
  * MQTT message callback for Home Assistant switch commands
  */
-static void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index,
+static void onMqttMessage(char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index,
                           size_t total) {
   if (!HomeAssistant::useHomeAssistant)
     return;
@@ -141,7 +141,7 @@ static void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProp
   }
 }
 
-static PoolControllerContext* Self;
+static PoolControllerContext *Self;
 auto Detail::setupProxy() -> void {
   Self->setupHandler();
 }
@@ -163,7 +163,7 @@ PoolControllerContext::~PoolControllerContext() {
 auto PoolControllerContext::initializeController() -> void {
   // Validate pin configuration - check for conflicts
   const uint8_t pins[] = {PIN_DS_SOLAR, PIN_DS_POOL, PIN_RELAY_POOL, PIN_RELAY_SOLAR};
-  const char* pinNames[] = {"Solar Temp", "Pool Temp", "Pool Relay", "Solar Relay"};
+  const char *pinNames[] = {"Solar Temp", "Pool Temp", "Pool Relay", "Solar Relay"};
   bool pinConflict = false;
 
   for (size_t i = 0; i < 4; i++) {
@@ -227,16 +227,16 @@ auto PoolControllerContext::initializeController() -> void {
   operationModeNode.setSolarTemperatureNode(&solarTemperatureNode);
 
   // add the rules
-  RuleAuto* autoRule = new RuleAuto(&solarPumpNode, &poolPumpNode);
+  RuleAuto *autoRule = new RuleAuto(&solarPumpNode, &poolPumpNode);
   operationModeNode.addRule(autoRule);
 
-  RuleManu* manuRule = new RuleManu();
+  RuleManu *manuRule = new RuleManu();
   operationModeNode.addRule(manuRule);
 
-  RuleBoost* boostRule = new RuleBoost(&solarPumpNode, &poolPumpNode);
+  RuleBoost *boostRule = new RuleBoost(&solarPumpNode, &poolPumpNode);
   operationModeNode.addRule(boostRule);
 
-  RuleTimer* timerRule = new RuleTimer(&solarPumpNode, &poolPumpNode);
+  RuleTimer *timerRule = new RuleTimer(&solarPumpNode, &poolPumpNode);
   operationModeNode.addRule(timerRule);
 
   _lastMeasurement = 0;
@@ -258,7 +258,7 @@ auto PoolControllerContext::setupHandler() -> void {
   operationModeNode.loadState();
 
   // Configure MQTT protocol based on setting
-  const char* protocol = this->mqttProtocolSetting_.get();
+  const char *protocol = this->mqttProtocolSetting_.get();
   HomeAssistant::useHomeAssistant = (std::strcmp(protocol, "homeassistant") == 0);
 
   if (HomeAssistant::useHomeAssistant) {
@@ -286,7 +286,7 @@ auto PoolControllerContext::setupHandler() -> void {
     PoolController::MqttInterface::publishSwitchDiscovery("solar-pump", "Solar Pump", "mdi:solar-panel");
     PoolController::MqttInterface::subscribeSwitch("solar-pump");
 
-    const char* modeOptions[] = {"manu", "auto", "boost", "timer"};
+    const char *modeOptions[] = {"manu", "auto", "boost", "timer"};
     PoolController::MqttInterface::publishSelectDiscovery("mode", "Operation Mode", modeOptions, 4, "mdi:toggle-switch");
     PoolController::MqttInterface::subscribeSelect("mode");
 
@@ -324,7 +324,7 @@ auto PoolControllerContext::setupHandler() -> void {
 
     PoolController::MqttInterface::publishSensorDiscovery("log", "Log Output", nullptr, nullptr, "mdi:message-text");
 
-    const char* logLevelOptions[] = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"};
+    const char *logLevelOptions[] = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"};
     PoolController::MqttInterface::publishSelectDiscovery("log-level", "Loglevel", logLevelOptions, 5,
                                                           "mdi:format-list-bulleted");
     PoolController::MqttInterface::subscribeSelect("log-level");
@@ -354,7 +354,7 @@ auto PoolControllerContext::setup() -> void {
   this->timezoneSetting_.setDefaultValue(0).setValidator(
     [](const long candidate) -> bool { return candidate >= 0 && candidate < getTzCount(); });
 
-  this->ntpServerSetting_.setDefaultValue("pool.ntp.org").setValidator([](const char* const candidate) -> bool {
+  this->ntpServerSetting_.setDefaultValue("pool.ntp.org").setValidator([](const char *const candidate) -> bool {
     return candidate != nullptr && strlen(candidate) > 0;
   });
 
@@ -367,11 +367,11 @@ auto PoolControllerContext::setup() -> void {
   this->temperatureHysteresisSetting_.setDefaultValue(1.0).setValidator(
     [](const double candidate) -> bool { return candidate >= 0 && candidate <= 10; });
 
-  this->operationModeSetting_.setDefaultValue("auto").setValidator([](const char* const candidate) -> bool {
+  this->operationModeSetting_.setDefaultValue("auto").setValidator([](const char *const candidate) -> bool {
     return std::strcmp(candidate, "auto") == 0 || std::strcmp(candidate, "manu") == 0 || std::strcmp(candidate, "boost") == 0;
   });
 
-  this->mqttProtocolSetting_.setDefaultValue("homie").setValidator([](const char* const candidate) -> bool {
+  this->mqttProtocolSetting_.setDefaultValue("homie").setValidator([](const char *const candidate) -> bool {
     return std::strcmp(candidate, "homie") == 0 || std::strcmp(candidate, "homeassistant") == 0;
   });
 

@@ -8,9 +8,9 @@ enum struct ControllerType : std::uint8_t { CT_ESP32 = 0, CT_ESP8266 };
 
 constexpr ControllerType CurrentControllerType{
 #ifdef ESP32
-    ControllerType::CT_ESP32
+  ControllerType::CT_ESP32
 #elif defined(ESP8266)
-    ControllerType::CT_ESP8266
+  ControllerType::CT_ESP8266
 #else
 #error "Unknown platform"
 #endif
@@ -54,6 +54,6 @@ static_assert(sizeof(unsigned long int) == sizeof(std::uint32_t) && alignof(unsi
               "Arch check failed");
 static_assert(sizeof(unsigned long int) == sizeof(std::uint32_t) && alignof(unsigned long int) == alignof(std::uint32_t),
               "Arch check failed");
-static_assert(sizeof(void*) == sizeof(std::uint32_t), "Pointer check failed");
+static_assert(sizeof(void *) == sizeof(std::uint32_t), "Pointer check failed");
 #endif
 }  // namespace PoolController

@@ -4,9 +4,9 @@
 /**
  *
  */
-RuleTimer::RuleTimer(RelayModuleNode* solarRelay, RelayModuleNode* poolRelay) {
+RuleTimer::RuleTimer(RelayModuleNode *solarRelay, RelayModuleNode *poolRelay) {
   _solarRelay = solarRelay;
-  _poolRelay  = poolRelay;
+  _poolRelay = poolRelay;
 }
 
 /**
@@ -28,11 +28,11 @@ void RuleTimer::loop() {
 bool RuleTimer::checkPoolPumpTimer() {
   Homie.getLogger() << F("↕  checkPoolPumpTimer") << endl;
 
-  tm   time = getCurrentDateTime();
+  tm time = getCurrentDateTime();
   bool retval;
 
   tm startTime = getStartTime(getTimerSetting());
-  tm endTime   = getEndTime(getTimerSetting());
+  tm endTime = getEndTime(getTimerSetting());
 
   Homie.getLogger() << cIndent << F("time=      ") << asctime(&time);
   Homie.getLogger() << cIndent << F("startTime= ") << asctime(&startTime);

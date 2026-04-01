@@ -16,13 +16,13 @@ extern auto setupProxy() -> void;
 struct PoolControllerContext final {
   PoolControllerContext();
   // no copy
-  PoolControllerContext(const PoolControllerContext&) = delete;
+  PoolControllerContext(const PoolControllerContext &) = delete;
   // no move
-  PoolControllerContext(PoolControllerContext&&) = delete;
+  PoolControllerContext(PoolControllerContext &&) = delete;
   // no copy
-  auto operator=(const PoolControllerContext&) -> PoolControllerContext& = delete;
+  auto operator=(const PoolControllerContext &) -> PoolControllerContext & = delete;
   // no move
-  auto operator=(PoolControllerContext&&) -> PoolControllerContext& = delete;
+  auto operator=(PoolControllerContext &&) -> PoolControllerContext & = delete;
   ~PoolControllerContext();
 
   /**
@@ -43,13 +43,15 @@ private:
   auto setupHandler() -> void;
   auto initializeController() -> void;
 
-  HomieSetting<long>        loopIntervalSetting_{"loop-interval", "The processing interval in seconds"};
-  HomieSetting<const char*> ntpServerSetting_{"ntp-server", "NTP server address (e.g., pool.ntp.org, europe.pool.ntp.org)"};
-  HomieSetting<long>        timezoneSetting_{"timezone", "Timezone index (0=Central EU, 1=Eastern EU, 2=Western EU, 3=US Eastern, 4=US Central, 5=US Mountain, 6=US Pacific, 7=Australian Eastern, 8=Japan, 9=China)"};
-  HomieSetting<double>      temperatureMaxPoolSetting_{"temperature-max-pool", "Maximum temperature of solar"};
-  HomieSetting<double>      temperatureMinSolarSetting_{"temperature-min-solar", "Minimum temperature of solar"};
-  HomieSetting<double>      temperatureHysteresisSetting_{"temperature-hysteresis", "Temperature hysteresis"};
-  HomieSetting<const char*> operationModeSetting_{"operation-mode", "Operational Mode"};
-  HomieSetting<const char*> mqttProtocolSetting_{"mqtt-protocol", "MQTT Protocol (homie or homeassistant)"};
+  HomieSetting<long> loopIntervalSetting_{"loop-interval", "The processing interval in seconds"};
+  HomieSetting<const char *> ntpServerSetting_{"ntp-server", "NTP server address (e.g., pool.ntp.org, europe.pool.ntp.org)"};
+  HomieSetting<long> timezoneSetting_{"timezone",
+                                      "Timezone index (0=Central EU, 1=Eastern EU, 2=Western EU, 3=US Eastern, 4=US Central, "
+                                      "5=US Mountain, 6=US Pacific, 7=Australian Eastern, 8=Japan, 9=China)"};
+  HomieSetting<double> temperatureMaxPoolSetting_{"temperature-max-pool", "Maximum temperature of solar"};
+  HomieSetting<double> temperatureMinSolarSetting_{"temperature-min-solar", "Minimum temperature of solar"};
+  HomieSetting<double> temperatureHysteresisSetting_{"temperature-hysteresis", "Temperature hysteresis"};
+  HomieSetting<const char *> operationModeSetting_{"operation-mode", "Operational Mode"};
+  HomieSetting<const char *> mqttProtocolSetting_{"mqtt-protocol", "MQTT Protocol (homie or homeassistant)"};
 };
 }  // namespace PoolController

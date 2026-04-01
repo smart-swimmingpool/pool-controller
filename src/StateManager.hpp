@@ -23,15 +23,15 @@ namespace PoolController {
 // Address 0-3: Magic number for validation (0xP00L)
 // Address 4-511: Key-value storage
 #ifdef ESP8266
-static const uint32_t EEPROM_MAGIC      = 0x50304F4C;  // "P00L"
-static const int      EEPROM_MAGIC_ADDR = 0;
-static const int      EEPROM_DATA_START = 4;
-static const int      EEPROM_SLOT_COUNT = 16;  // Number of 32-byte slots
-static const int      EEPROM_SLOT_SIZE  = 32;  // Bytes per slot
-static bool           eepromInitialized = false;
+static const uint32_t EEPROM_MAGIC = 0x50304F4C;  // "P00L"
+static const int EEPROM_MAGIC_ADDR = 0;
+static const int EEPROM_DATA_START = 4;
+static const int EEPROM_SLOT_COUNT = 16;  // Number of 32-byte slots
+static const int EEPROM_SLOT_SIZE = 32;   // Bytes per slot
+static bool eepromInitialized = false;
 
 // Hash function using prime modulo for better distribution
-static uint16_t hashKey(const char* key) {
+static uint16_t hashKey(const char *key) {
   uint32_t hash = 5381;  // DJB2 hash initial value
   while (*key) {
     hash = ((hash << 5) + hash) + static_cast<uint8_t>(*key);  // hash * 33 + c
@@ -79,7 +79,7 @@ public:
   /**
      * Save a string value
      */
-  static bool saveString(const char* key, const String& value) {
+  static bool saveString(const char *key, const String &value) {
 #ifdef ESP32
     Preferences prefs;
     prefs.begin("pool-controller", false);
@@ -102,7 +102,7 @@ public:
   /**
      * Load a string value
      */
-  static String loadString(const char* key, const String& defaultValue) {
+  static String loadString(const char *key, const String &defaultValue) {
 #ifdef ESP32
     Preferences prefs;
     prefs.begin("pool-controller", true);  // read-only
@@ -112,7 +112,7 @@ public:
 #elif defined(ESP8266)
     ensureInitialized();  // Lazy init
     uint16_t addr = hashKey(key);
-    uint8_t  len  = EEPROM.read(addr);
+    uint8_t len = EEPROM.read(addr);
     if (len == 0 || len == 0xFF || len > 30) {
       return defaultValue;
     }
@@ -128,7 +128,7 @@ public:
   /**
      * Save a float value
      */
-  static bool saveFloat(const char* key, float value) {
+  static bool saveFloat(const char *key, float value) {
 #ifdef ESP32
     Preferences prefs;
     prefs.begin("pool-controller", false);
@@ -146,7 +146,7 @@ public:
   /**
      * Load a float value
      */
-  static float loadFloat(const char* key, float defaultValue) {
+  static float loadFloat(const char *key, float defaultValue) {
 #ifdef ESP32
     Preferences prefs;
     prefs.begin("pool-controller", true);  // read-only
@@ -156,7 +156,7 @@ public:
 #elif defined(ESP8266)
     ensureInitialized();  // Lazy init
     uint16_t addr = hashKey(key);
-    float    value;
+    float value;
     EEPROM.get(addr, value);
     // Validate: if NaN or unreasonable, use default
     if (isnan(value) || value < -1000.0 || value > 1000.0) {
@@ -169,7 +169,7 @@ public:
   /**
      * Save an int value
      */
-  static bool saveInt(const char* key, int value) {
+  static bool saveInt(const char *key, int value) {
 #ifdef ESP32
     Preferences prefs;
     prefs.begin("pool-controller", false);
@@ -187,7 +187,7 @@ public:
   /**
      * Load an int value
      */
-  static int loadInt(const char* key, int defaultValue) {
+  static int loadInt(const char *key, int defaultValue) {
 #ifdef ESP32
     Preferences prefs;
     prefs.begin("pool-controller", true);  // read-only
@@ -197,7 +197,7 @@ public:
 #elif defined(ESP8266)
     ensureInitialized();  // Lazy init
     uint16_t addr = hashKey(key);
-    int      value;
+    int value;
     EEPROM.get(addr, value);
     // Validate: if unreasonable, use default
     if (value < -10000 || value > 10000) {
@@ -210,7 +210,7 @@ public:
   /**
      * Save a boolean value
      */
-  static bool saveBool(const char* key, bool value) {
+  static bool saveBool(const char *key, bool value) {
 #ifdef ESP32
     Preferences prefs;
     prefs.begin("pool-controller", false);
@@ -228,7 +228,7 @@ public:
   /**
      * Load a boolean value
      */
-  static bool loadBool(const char* key, bool defaultValue) {
+  static bool loadBool(const char *key, bool defaultValue) {
 #ifdef ESP32
     Preferences prefs;
     prefs.begin("pool-controller", true);  // read-only
@@ -237,8 +237,8 @@ public:
     return value;
 #elif defined(ESP8266)
     ensureInitialized();  // Lazy init
-    uint16_t addr  = hashKey(key);
-    uint8_t  value = EEPROM.read(addr);
+    uint16_t addr = hashKey(key);
+    uint8_t value = EEPROM.read(addr);
     if (value > 1) {
       return defaultValue;  // Uninitialized
     }

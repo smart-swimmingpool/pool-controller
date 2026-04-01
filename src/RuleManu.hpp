@@ -8,7 +8,7 @@ class RuleManu : public Rule {
 public:
   RuleManu();
 
-  const char* getMode() { return "manu"; };
+  const char *getMode() { return "manu"; };
 
   virtual void loop();
 };

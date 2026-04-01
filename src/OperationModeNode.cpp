@@ -11,7 +11,7 @@
 /**
  *
  */
-OperationModeNode::OperationModeNode(const char* id, const char* name, const int measurementInterval)
+OperationModeNode::OperationModeNode(const char *id, const char *name, const int measurementInterval)
     : HomieNode(id, name, "switch") {
   _measurementInterval = (measurementInterval > MIN_INTERVAL) ? measurementInterval : MIN_INTERVAL;
   _lastMeasurement = 0;
@@ -23,14 +23,14 @@ OperationModeNode::OperationModeNode(const char* id, const char* name, const int
 /**
  *
  */
-void OperationModeNode::addRule(Rule* rule) {
+void OperationModeNode::addRule(Rule *rule) {
   _ruleVec.PushBack(rule);
 }
 
 /**
  *
  */
-Rule* OperationModeNode::getRule() {
+Rule *OperationModeNode::getRule() {
   Homie.getLogger() << F("getRule: mode=") << _mode << endl;
 
   for (int i = 0; i < _ruleVec.Size(); i++) {
@@ -131,7 +131,7 @@ void OperationModeNode::loop() {
     lastTimeSyncState = currentTimeSyncState;
 
     // call loop to evaluate the current rule
-    Rule* rule = getRule();
+    Rule *rule = getRule();
     if (rule != nullptr) {
       rule->loop();
     } else {
@@ -198,7 +198,7 @@ void OperationModeNode::loop() {
 /**
  * Handle update by Homie message.
  */
-bool OperationModeNode::handleInput(const HomieRange& range, const String& property, const String& value) {
+bool OperationModeNode::handleInput(const HomieRange &range, const String &property, const String &value) {
   printCaption();
 
   Homie.getLogger() << cIndent << F("〽 handleInput -> property '") << property << F("' value=") << value << endl;
@@ -210,7 +210,7 @@ bool OperationModeNode::handleInput(const HomieRange& range, const String& prope
   return retval;
 }
 
-bool OperationModeNode::handleHomeAssistantCommand(const char* property, const char* value) {
+bool OperationModeNode::handleHomeAssistantCommand(const char *property, const char *value) {
   printCaption();
 
   Homie.getLogger() << cIndent << F("〽 HA command -> property '") << property << F("' value=") << value << endl;
@@ -220,7 +220,7 @@ bool OperationModeNode::handleHomeAssistantCommand(const char* property, const c
   return retval;
 }
 
-bool OperationModeNode::applyProperty(const String& property, const String& value) {
+bool OperationModeNode::applyProperty(const String &property, const String &value) {
   bool retval;
 
   if (property.equalsIgnoreCase(cMode)) {

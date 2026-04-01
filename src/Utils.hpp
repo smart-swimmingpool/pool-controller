@@ -22,7 +22,7 @@ inline bool shouldMeasure(uint32_t lastMeasurement, uint32_t intervalSeconds) {
   if (lastMeasurement == 0) {
     return true;  // First measurement
   }
-  uint32_t currentMillis  = millis();
+  uint32_t currentMillis = millis();
   uint32_t intervalMillis = intervalSeconds * 1000UL;
 
   // This handles overflow correctly
@@ -38,7 +38,7 @@ inline bool shouldMeasure(uint32_t lastMeasurement, uint32_t intervalSeconds) {
  * @param decimals Number of decimal places (default: 2)
  * @note For typical temperature values (-50 to 100), 16 bytes is sufficient
  */
-inline void floatToString(float value, char* buffer, size_t bufferSize, int decimals = 2) {
+inline void floatToString(float value, char *buffer, size_t bufferSize, int decimals = 2) {
   // dtostrf needs minimum buffer size to avoid overflow
   if (bufferSize < 8) {
     buffer[0] = '\0';
@@ -54,7 +54,7 @@ inline void floatToString(float value, char* buffer, size_t bufferSize, int deci
  * @param buffer The buffer to write to
  * @param bufferSize Size of the buffer
  */
-inline void intToString(int value, char* buffer, size_t bufferSize) {
+inline void intToString(int value, char *buffer, size_t bufferSize) {
   snprintf(buffer, bufferSize, "%d", value);
 }
 

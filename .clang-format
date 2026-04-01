@@ -7,7 +7,7 @@ Language: Cpp
 IndentWidth: 2
 ColumnLimit: 130
 BreakBeforeBraces: Attach
-PointerAlignment: Left
+PointerAlignment: Right
 AccessModifierOffset: -2
 #IndentPPDirectives: AfterHash
 Cpp11BracedListStyle: true

@@ -4,9 +4,9 @@
 /**
  *
  */
-RuleBoost::RuleBoost(RelayModuleNode* solarRelay, RelayModuleNode* poolRelay) {
+RuleBoost::RuleBoost(RelayModuleNode *solarRelay, RelayModuleNode *poolRelay) {
   _solarRelay = solarRelay;
-  _poolRelay  = poolRelay;
+  _poolRelay = poolRelay;
 }
 
 /**

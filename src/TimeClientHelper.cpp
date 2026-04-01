@@ -6,7 +6,7 @@
 
 // NTP Client
 WiFiUDP ntpUDP;
-NTPClient* timeClient = nullptr;
+NTPClient *timeClient = nullptr;
 
 // Central European Time (Berlin, Paris, ...)
 TimeChangeRule CEST = {"CEST", Last, Sun, Mar, 2, 120};  // Central European Summer Time
@@ -57,18 +57,16 @@ Timezone Japan(JST, JST);
 TimeChangeRule CST_CHINA = {"CST", First, Sun, Mar, 0, 8 * 60};  // UTC + 8 hours
 Timezone China(CST_CHINA, CST_CHINA);
 
-TimeZoneInfo _timezones[10] = {
-  {"Central European", &Europe},
-  {"Eastern European", &EasternEurope},
-  {"Western European", &WesternEurope},
-  {"US Eastern", &USEastern},
-  {"US Central", &USCentral},
-  {"US Mountain", &USMountain},
-  {"US Pacific", &USPacific},
-  {"Australian Eastern", &AustralianEastern},
-  {"Japan", &Japan},
-  {"China", &China}
-};
+TimeZoneInfo _timezones[10] = {{"Central European", &Europe},
+                               {"Eastern European", &EasternEurope},
+                               {"Western European", &WesternEurope},
+                               {"US Eastern", &USEastern},
+                               {"US Central", &USCentral},
+                               {"US Mountain", &USMountain},
+                               {"US Pacific", &USPacific},
+                               {"Australian Eastern", &AustralianEastern},
+                               {"Japan", &Japan},
+                               {"China", &China}};
 
 int _selectedTimezoneIndex = 0;  // Default to Central European Time
 
@@ -77,7 +75,7 @@ static time_t _lastValidTime = 0;          // Last known good time from NTP
 static uint32_t _lastValidTimeMillis = 0;  // millis() when last valid time was captured
 static bool _timeSyncValid = false;        // Whether time sync is currently valid
 
-void timeClientSetup(const char* ntpServer) {
+void timeClientSetup(const char *ntpServer) {
   // Create NTP client with configured server
   if (timeClient != nullptr) {
     delete timeClient;
@@ -142,7 +140,7 @@ time_t getLastValidSyncTime() {
   return _lastValidTime;
 }
 
-time_t getTimeFor(int index, TimeChangeRule** tcr) {
+time_t getTimeFor(int index, TimeChangeRule **tcr) {
   if (index >= 0 && index < getTzCount()) {
     // Return the time for the selected time zone
     return _timezones[index].timezone->toLocal(getUtcTime(), tcr);

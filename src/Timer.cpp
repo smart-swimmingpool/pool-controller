@@ -6,7 +6,7 @@
  * Returns time with tm_year = -1 if time sync is invalid
  */
 tm getCurrentDateTime() {
-  TimeChangeRule* tcr = NULL;
+  TimeChangeRule *tcr = NULL;
   time_t t = getTimeFor(getTimezoneIndex(), &tcr);
   struct tm timeinfo = *localtime(&t);
 

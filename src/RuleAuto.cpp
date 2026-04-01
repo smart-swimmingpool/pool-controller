@@ -2,7 +2,7 @@
 #include "RuleAuto.hpp"
 #include <cmath>  // for isnan()
 
-RuleAuto::RuleAuto(RelayModuleNode* solarRelay, RelayModuleNode* poolRelay) {
+RuleAuto::RuleAuto(RelayModuleNode *solarRelay, RelayModuleNode *poolRelay) {
   _solarRelay = solarRelay;
   _poolRelay = poolRelay;
 }

@@ -11,11 +11,11 @@
 #include "Utils.hpp"
 #include "MqttInterface.hpp"
 
-RelayModuleNode::RelayModuleNode(const char* id, const char* name, const uint8_t pin, const int measurementInterval)
+RelayModuleNode::RelayModuleNode(const char *id, const char *name, const uint8_t pin, const int measurementInterval)
     : HomieNode(id, name, "switch") {
-  _pin                 = pin;
+  _pin = pin;
   _measurementInterval = (measurementInterval > MIN_INTERVAL) ? measurementInterval : MIN_INTERVAL;
-  _lastMeasurement     = 0;
+  _lastMeasurement = 0;
 
   setRunLoopDisconnected(true);
 
@@ -74,7 +74,7 @@ void RelayModuleNode::printCaption() {
  * Handles the received MQTT messages from Homie.
  *
  */
-bool RelayModuleNode::handleInput(const HomieRange& range, const String& property, const String& value) {
+bool RelayModuleNode::handleInput(const HomieRange &range, const String &property, const String &value) {
   printCaption();
 
   Homie.getLogger() << cIndent << F("〽 handleInput -> property '") << property << F("' value=") << value << endl;

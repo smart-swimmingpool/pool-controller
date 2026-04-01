@@ -22,7 +22,7 @@
 #include "Utils.hpp"
 #include "MqttInterface.hpp"
 
-DallasTemperatureNode::DallasTemperatureNode(const char* id, const char* name, const uint8_t pin, const int measurementInterval)
+DallasTemperatureNode::DallasTemperatureNode(const char *id, const char *name, const uint8_t pin, const int measurementInterval)
     : HomieNode(id, name, "temperature") {
 
   _pin = pin;
