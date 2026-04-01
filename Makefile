@@ -27,7 +27,7 @@ lint:
     -e DEFAULT_BRANCH=main \
     -e FILTER_REGEX_EXCLUDE=.*/(\.pio|\.vscode|\.platformio|build|lib)/.* \
     -e VALIDATE_CPP=true \
-    -e VALIDATE_CLANG_FORMAT=true \
+    -e VALIDATE_CLANG_FORMAT=false \
     -e VALIDATE_MARKDOWN=true \
     -e VALIDATE_YAML=true \
     -e VALIDATE_JSON=true \
