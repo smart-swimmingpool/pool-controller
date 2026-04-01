@@ -178,7 +178,7 @@ We welcome contributions! Before submitting a pull request, please:
 3. **Test your changes**: `make build` (builds for both ESP32 and ESP8266)
 4. **Check for issues**: See [`.github/QUICK_REFERENCE.md`](.github/QUICK_REFERENCE.md) for common fixes
 
-All code must pass Super-Linter checks (clang-format, EditorConfig, etc.) before merge.
+All code must pass the same Super-Linter checks run in CI (cpplint for C/C++, EditorConfig, and Markdown/YAML/JSON validation) before merge.
 
 ## Credits
 
