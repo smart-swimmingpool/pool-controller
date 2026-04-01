@@ -51,9 +51,9 @@ constexpr std::uint8_t PIN_RELAY_SOLAR{CurrentControllerType == ControllerType::
 
 #ifdef MOD_PROBE
 static_assert(sizeof(unsigned long int) == sizeof(std::uint32_t) && alignof(unsigned long int) == alignof(std::uint32_t),
-              "Arch check failed");
+  "Arch check failed");
 static_assert(sizeof(unsigned long int) == sizeof(std::uint32_t) && alignof(unsigned long int) == alignof(std::uint32_t),
-              "Arch check failed");
+  "Arch check failed");
 static_assert(sizeof(void *) == sizeof(std::uint32_t), "Pointer check failed");
 #endif
 }  // namespace PoolController

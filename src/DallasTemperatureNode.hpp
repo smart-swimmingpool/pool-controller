@@ -12,8 +12,8 @@
 class DallasTemperatureNode : public HomieNode {
 
 public:
-  DallasTemperatureNode(const char *id, const char *name, const uint8_t pin,
-                        const int measurementInterval = MEASUREMENT_INTERVAL);
+  DallasTemperatureNode(
+    const char *id, const char *name, const uint8_t pin, const int measurementInterval = MEASUREMENT_INTERVAL);
 
   uint8_t getPin() const { return _pin; }
   void setMeasurementInterval(unsigned long interval) { _measurementInterval = interval; }

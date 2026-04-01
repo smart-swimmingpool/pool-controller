@@ -37,7 +37,7 @@ public:
    * @note Uses ~400 bytes of JSON, buffer is 512 bytes
    */
   static bool publishSensor(const char *nodeId, const char *objectId, const char *name, const char *deviceClass = nullptr,
-                            const char *unitOfMeasurement = nullptr, const char *icon = nullptr) {
+    const char *unitOfMeasurement = nullptr, const char *icon = nullptr) {
     if (!Homie.isConnected())
       return false;
 
@@ -77,9 +77,7 @@ public:
 
     // Check for truncation
     if (len >= sizeof(buffer) - 1) {
-      Homie.getLogger() << F("✖ Warning: JSON buffer too small, "
-                             "message truncated")
-                        << endl;
+      Homie.getLogger() << F("✖ Warning: JSON buffer too small, message truncated") << endl;
       return false;
     }
 
@@ -135,9 +133,7 @@ public:
 
     // Check for truncation
     if (len >= sizeof(buffer) - 1) {
-      Homie.getLogger() << F("✖ Warning: JSON buffer too small, "
-                             "message truncated")
-                        << endl;
+      Homie.getLogger() << F("✖ Warning: JSON buffer too small, message truncated") << endl;
       return false;
     }
 
@@ -148,8 +144,7 @@ public:
    * Publish a number discovery message
    */
   static bool publishNumber(const char *nodeId, const char *objectId, const char *name, double minValue, double maxValue,
-                            double step, const char *unitOfMeasurement = nullptr, const char *icon = nullptr,
-                            const char *mode = nullptr) {
+    double step, const char *unitOfMeasurement = nullptr, const char *icon = nullptr, const char *mode = nullptr) {
     if (!Homie.isConnected())
       return false;
 
@@ -192,9 +187,7 @@ public:
     size_t len = serializeJson(doc, buffer, sizeof(buffer));
 
     if (len >= sizeof(buffer) - 1) {
-      Homie.getLogger() << F("✖ Warning: JSON buffer too small, "
-                             "message truncated")
-                        << endl;
+      Homie.getLogger() << F("✖ Warning: JSON buffer too small, message truncated") << endl;
       return false;
     }
 
@@ -205,7 +198,7 @@ public:
    * Publish a select discovery message
    */
   static bool publishSelect(const char *nodeId, const char *objectId, const char *name, const char *const *options,
-                            size_t optionCount, const char *icon = nullptr) {
+    size_t optionCount, const char *icon = nullptr) {
     if (!Homie.isConnected())
       return false;
 
@@ -245,9 +238,7 @@ public:
     size_t len = serializeJson(doc, buffer, sizeof(buffer));
 
     if (len >= sizeof(buffer) - 1) {
-      Homie.getLogger() << F("✖ Warning: JSON buffer too small, "
-                             "message truncated")
-                        << endl;
+      Homie.getLogger() << F("✖ Warning: JSON buffer too small, message truncated") << endl;
       return false;
     }
 

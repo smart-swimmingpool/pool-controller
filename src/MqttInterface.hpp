@@ -22,7 +22,7 @@ inline void publishHomieProperty(HomieNode &node, const char *property, const ch
 }
 
 inline void publishSensorDiscovery(const char *objectId, const char *name, const char *deviceClass = nullptr,
-                                   const char *unitOfMeasurement = nullptr, const char *icon = nullptr) {
+  const char *unitOfMeasurement = nullptr, const char *icon = nullptr) {
   if (!isHomeAssistant()) {
     return;
   }
@@ -37,17 +37,16 @@ inline void publishSwitchDiscovery(const char *objectId, const char *name, const
 }
 
 inline void publishNumberDiscovery(const char *objectId, const char *name, double minValue, double maxValue, double step,
-                                   const char *unitOfMeasurement = nullptr, const char *icon = nullptr,
-                                   const char *mode = nullptr) {
+  const char *unitOfMeasurement = nullptr, const char *icon = nullptr, const char *mode = nullptr) {
   if (!isHomeAssistant()) {
     return;
   }
-  HomeAssistant::DiscoveryPublisher::publishNumber(kDeviceId, objectId, name, minValue, maxValue, step, unitOfMeasurement, icon,
-                                                   mode);
+  HomeAssistant::DiscoveryPublisher::publishNumber(
+    kDeviceId, objectId, name, minValue, maxValue, step, unitOfMeasurement, icon, mode);
 }
 
-inline void publishSelectDiscovery(const char *objectId, const char *name, const char *const *options, size_t optionCount,
-                                   const char *icon = nullptr) {
+inline void publishSelectDiscovery(
+  const char *objectId, const char *name, const char *const *options, size_t optionCount, const char *icon = nullptr) {
   if (!isHomeAssistant()) {
     return;
   }

@@ -66,8 +66,8 @@ static bool extractHomeAssistantObjectId(const char *topic, const char *componen
 /**
  * MQTT message callback for Home Assistant switch commands
  */
-static void onMqttMessage(char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index,
-                          size_t total) {
+static void onMqttMessage(
+  char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total) {
   if (!HomeAssistant::useHomeAssistant)
     return;
 
@@ -171,7 +171,7 @@ auto PoolControllerContext::initializeController() -> void {
       if (pins[i] == pins[j]) {
         Serial.printf("✖ PIN CONFLICT: %s (pin %d) and %s (pin %d) use same "
                       "pin!\n",
-                      pinNames[i], pins[i], pinNames[j], pins[j]);
+          pinNames[i], pins[i], pinNames[j], pins[j]);
         pinConflict = true;
       }
     }
@@ -269,14 +269,14 @@ auto PoolControllerContext::setupHandler() -> void {
 
     // Publish Home Assistant discovery messages for all sensors and switches
     // Temperature sensors
-    PoolController::MqttInterface::publishSensorDiscovery("solar-temp", "Solar Temperature", "temperature", "°C",
-                                                          "mdi:solar-power");
+    PoolController::MqttInterface::publishSensorDiscovery(
+      "solar-temp", "Solar Temperature", "temperature", "°C", "mdi:solar-power");
 
     PoolController::MqttInterface::publishSensorDiscovery("pool-temp", "Pool Temperature", "temperature", "°C", "mdi:pool");
 
 #ifdef ESP32
-    PoolController::MqttInterface::publishSensorDiscovery("controller-temp", "Controller Temperature", "temperature", "°C",
-                                                          "mdi:thermometer");
+    PoolController::MqttInterface::publishSensorDiscovery(
+      "controller-temp", "Controller Temperature", "temperature", "°C", "mdi:thermometer");
 #endif
 
     // Switches (relays) - publish discovery and subscribe to command topics
@@ -290,31 +290,31 @@ auto PoolControllerContext::setupHandler() -> void {
     PoolController::MqttInterface::publishSelectDiscovery("mode", "Operation Mode", modeOptions, 4, "mdi:toggle-switch");
     PoolController::MqttInterface::subscribeSelect("mode");
 
-    PoolController::MqttInterface::publishNumberDiscovery("pool-max-temp", "Max. Pool Temperature", 0.0, 40.0, 0.1, "°C",
-                                                          "mdi:coolant-temperature", "box");
+    PoolController::MqttInterface::publishNumberDiscovery(
+      "pool-max-temp", "Max. Pool Temperature", 0.0, 40.0, 0.1, "°C", "mdi:coolant-temperature", "box");
     PoolController::MqttInterface::subscribeNumber("pool-max-temp");
 
-    PoolController::MqttInterface::publishNumberDiscovery("solar-min-temp", "Min. Solar Temperature", 0.0, 100.0, 0.1, "°C",
-                                                          "mdi:thermometer", "box");
+    PoolController::MqttInterface::publishNumberDiscovery(
+      "solar-min-temp", "Min. Solar Temperature", 0.0, 100.0, 0.1, "°C", "mdi:thermometer", "box");
     PoolController::MqttInterface::subscribeNumber("solar-min-temp");
 
     PoolController::MqttInterface::publishNumberDiscovery("hysteresis", "Hysterese", 0.0, 10.0, 0.1, "K", "mdi:delta", "box");
     PoolController::MqttInterface::subscribeNumber("hysteresis");
 
-    PoolController::MqttInterface::publishNumberDiscovery("timer-start-h", "Timer Start", 0.0, 23.0, 1.0, "h", "mdi:clock-start",
-                                                          "box");
+    PoolController::MqttInterface::publishNumberDiscovery(
+      "timer-start-h", "Timer Start", 0.0, 23.0, 1.0, "h", "mdi:clock-start", "box");
     PoolController::MqttInterface::subscribeNumber("timer-start-h");
 
-    PoolController::MqttInterface::publishNumberDiscovery("timer-start-min", "Timer Start", 0.0, 59.0, 1.0, "min",
-                                                          "mdi:clock-start", "box");
+    PoolController::MqttInterface::publishNumberDiscovery(
+      "timer-start-min", "Timer Start", 0.0, 59.0, 1.0, "min", "mdi:clock-start", "box");
     PoolController::MqttInterface::subscribeNumber("timer-start-min");
 
-    PoolController::MqttInterface::publishNumberDiscovery("timer-end-h", "Timer End", 0.0, 23.0, 1.0, "h", "mdi:clock-end",
-                                                          "box");
+    PoolController::MqttInterface::publishNumberDiscovery(
+      "timer-end-h", "Timer End", 0.0, 23.0, 1.0, "h", "mdi:clock-end", "box");
     PoolController::MqttInterface::subscribeNumber("timer-end-h");
 
-    PoolController::MqttInterface::publishNumberDiscovery("timer-end-min", "Timer End", 0.0, 59.0, 1.0, "min", "mdi:clock-end",
-                                                          "box");
+    PoolController::MqttInterface::publishNumberDiscovery(
+      "timer-end-min", "Timer End", 0.0, 59.0, 1.0, "min", "mdi:clock-end", "box");
     PoolController::MqttInterface::subscribeNumber("timer-end-min");
 
     PoolController::MqttInterface::publishNumberDiscovery("timezone", "Timezone", 0.0, 9.0, 1.0, nullptr, "mdi:map-clock", "box");
@@ -325,8 +325,8 @@ auto PoolControllerContext::setupHandler() -> void {
     PoolController::MqttInterface::publishSensorDiscovery("log", "Log Output", nullptr, nullptr, "mdi:message-text");
 
     const char *logLevelOptions[] = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"};
-    PoolController::MqttInterface::publishSelectDiscovery("log-level", "Loglevel", logLevelOptions, 5,
-                                                          "mdi:format-list-bulleted");
+    PoolController::MqttInterface::publishSelectDiscovery(
+      "log-level", "Loglevel", logLevelOptions, 5, "mdi:format-list-bulleted");
     PoolController::MqttInterface::subscribeSelect("log-level");
 
     PoolController::MqttInterface::publishSwitchDiscovery("log-serial", "Log to serial interface", "mdi:serial-port");

@@ -104,7 +104,7 @@ public:
     if (freeHeap < lowThreshold && !lowMemoryWarning) {
       Serial.printf("WARNING: Low memory detected. Free heap: %d bytes "
                     "(min: %d)\n",
-                    freeHeap, minFreeHeap);
+        freeHeap, minFreeHeap);
       lowMemoryWarning = true;
     } else if (freeHeap >= lowThreshold && lowMemoryWarning) {
       // Memory recovered

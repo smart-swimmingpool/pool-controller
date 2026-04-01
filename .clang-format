@@ -12,19 +12,41 @@ AccessModifierOffset: -2
 #IndentPPDirectives: AfterHash
 Cpp11BracedListStyle: true
 
+# Disable all alignment to prevent odd-number indentation (EditorConfig violation)
+AlignAfterOpenBracket: DontAlign
 AlignConsecutiveDeclarations: false
 AlignConsecutiveAssignments: false
 AlignEscapedNewlines: Left
 AlignTrailingComments: true
+AlignOperands: DontAlign
+BinPackArguments: true
+BinPackParameters: true
 IndentWrappedFunctionNames: false
 AllowShortFunctionsOnASingleLine: Inline
 ContinuationIndentWidth: 2
-AlignOperands: DontAlign
 BreakBeforeBinaryOperators: None
+BreakStringLiterals: false
 
 SpacesBeforeTrailingComments: 2
 FixNamespaceComments: true
 ReflowComments: false
+
+# Spacing rules for consistency across clang-format versions
+SpaceAfterCStyleCast: false
+SpaceAfterLogicalNot: false
+SpaceAfterTemplateKeyword: true
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCpp11BracedList: false
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
+SpaceBeforeParens: ControlStatements
+SpaceBeforeRangeBasedForLoopColon: true
+SpaceInEmptyParentheses: false
+SpacesInAngles: false
+SpacesInCStyleCastParentheses: false
+SpacesInContainerLiterals: false
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
 
 SortIncludes: false
 SortUsingDeclarations: false

@@ -132,8 +132,8 @@ bool LoggerNode::applyProperty(const String &property, const String &value) {
   } else if (property.equals("LogSerial")) {
     bool on = value.equalsIgnoreCase("ON") || value.equalsIgnoreCase("true");
     logSerial = on;
-    this->logf("LoggerNode::handleInput()", LoggerNode::INFO, "Received command to switch 'Log to serial' %s.",
-               on ? "On" : "Off");
+    this->logf(
+      "LoggerNode::handleInput()", LoggerNode::INFO, "Received command to switch 'Log to serial' %s.", on ? "On" : "Off");
     PoolController::MqttInterface::publishSwitchState(*this, "LogSerial", "log-serial", on);
     return true;
   }
