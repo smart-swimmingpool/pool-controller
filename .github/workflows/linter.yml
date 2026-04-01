@@ -55,9 +55,9 @@ jobs:
 
           # Enable only relevant linters for PlatformIO project
           # When using selective validation, all other linters are disabled automatically
+          # Note: VALIDATE_CLANG_FORMAT not listed - disabled due to version incompatibility
+          # cpplint (via VALIDATE_CPP) provides C++ style checking instead
           VALIDATE_CPP: true
-          # VALIDATE_CLANG_FORMAT disabled due to version incompatibility - using cpplint instead
-          VALIDATE_CLANG_FORMAT: false
           VALIDATE_MARKDOWN: true
           VALIDATE_YAML: true
           VALIDATE_JSON: true
