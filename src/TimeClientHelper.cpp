@@ -103,17 +103,14 @@ time_t getUtcTime() {
   // NTP update failed or returned invalid time
   // Use cached time + elapsed millis as fallback
   if (_lastValidTime > 0) {
-    uint32_t elapsed = millis() - _lastValidTimeMillis;
-    // Handle millis() overflow (occurs every ~49 days)
-    if (millis() < _lastValidTimeMillis) {
-      // Overflow occurred, elapsed calculation is wrong
-      // Add the overflow amount (2^32 ms)
-      elapsed = (0xFFFFFFFF - _lastValidTimeMillis) + millis();
-    }
+    // Capture millis() once to avoid multiple calls and ensure consistency
+    uint32_t nowMillis = millis();
+    // Unsigned arithmetic handles wraparound correctly (every ~49 days)
+    uint32_t elapsed = nowMillis - _lastValidTimeMillis;
     time_t estimatedTime = _lastValidTime + (elapsed / 1000);
 
     // Mark sync as invalid if we've been running on cached time too long
-    if (elapsed > 86400000) {  // More than 24 hours (86400 seconds)
+    if (elapsed > 86400000) {  // More than 24 hours (86,400,000 ms)
       _timeSyncValid = false;
     }
 

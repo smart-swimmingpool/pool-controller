@@ -29,6 +29,12 @@ bool RuleTimer::checkPoolPumpTimer() {
   Homie.getLogger() << F("↕  checkPoolPumpTimer") << endl;
 
   tm time = getCurrentDateTime();
+  // Check if time is valid (tm_year == -1 indicates invalid time from NTP failure)
+  if (time.tm_year == -1) {
+    Homie.getLogger() << cIndent << F("⚠ Invalid time, timer disabled") << endl;
+    return false;  // Disable timer when time is invalid
+  }
+
   bool retval;
 
   tm startTime = getStartTime(getTimerSetting());

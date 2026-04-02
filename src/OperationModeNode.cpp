@@ -110,7 +110,8 @@ void OperationModeNode::loop() {
     Homie.getLogger() << F("〽 OperatioalMode update rule ") << endl;
 
     // Check time synchronization status
-    static bool lastTimeSyncState = true;
+    // Initialize from current state to avoid false "just failed" on first boot
+    static bool lastTimeSyncState = isTimeSyncValid();
     bool currentTimeSyncState = isTimeSyncValid();
 
     if (!currentTimeSyncState && lastTimeSyncState) {

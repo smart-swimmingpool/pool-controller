@@ -12,6 +12,10 @@ indent_style = space
 indent_size = 2
 charset = utf-8
 
+# Makefiles require tabs
+[Makefile]
+indent_style = tab
+
 [*.{md,adoc}]
 indent_style = space
 trim_trailing_whitespace = false
