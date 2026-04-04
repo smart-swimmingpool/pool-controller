@@ -29,8 +29,8 @@ Discussions: <https://github.com/smart-swimmingpool/smart-swimmingpool.github.io
 - [x] **Configurable MQTT protocols** - Choose your preferred protocol
   - [x] [Homie 3.0](https://homieiot.github.io/) - IoT convention
   - [x] [Home Assistant MQTT
-        Discovery](https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery)
-    - Native HA integration
+    Discovery](https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery) -
+    Native HA integration
 - [x] Independent of specific smart home servers
   - [x] [openHAB](https://www.openhab.org) (v2.4+) via MQTT Homie
   - [x] [Home Assistant](https://www.home-assistant.io/) via Homie or

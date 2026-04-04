@@ -95,8 +95,8 @@ bool RuleAuto::checkPoolPumpTimer() {
 
   bool retval;
 
-  tm startTime = getStartTime(getTimerSetting());
-  tm endTime = getEndTime(getTimerSetting());
+  tm startTime = getStartTime(time, getTimerSetting());
+  tm endTime = getEndTime(time, getTimerSetting());
 
   Homie.getLogger() << cIndent << F("currenttime=") << asctime(&time);
   Homie.getLogger() << cIndent << F("startTime=  ") << asctime(&startTime);

@@ -37,18 +37,31 @@ bool RuleTimer::checkPoolPumpTimer() {
 
   bool retval;
 
-  tm startTime = getStartTime(getTimerSetting());
-  tm endTime = getEndTime(getTimerSetting());
+  tm startTime = getStartTime(time, getTimerSetting());
+  tm endTime = getEndTime(time, getTimerSetting());
 
   Homie.getLogger() << cIndent << F("time=      ") << asctime(&time);
   Homie.getLogger() << cIndent << F("startTime= ") << asctime(&startTime);
   Homie.getLogger() << cIndent << F("endTime=   ") << asctime(&endTime);
 
-  if (difftime(mktime(&time), mktime(&startTime)) >= 0 && difftime(mktime(&time), mktime(&endTime)) <= 0) {
-    retval = true;
+  // Convert tm structs to time_t once to avoid multiple mktime calls
+  time_t now = mktime(&time);
+  time_t start = mktime(&startTime);
+  time_t end = mktime(&endTime);
 
+  // Handle midnight crossing: check if timer spans midnight
+  TimerSetting ts = getTimerSetting();
+  bool crossesMidnight =
+    (ts.timerStartHour > ts.timerEndHour) || (ts.timerStartHour == ts.timerEndHour && ts.timerStartMinutes > ts.timerEndMinutes);
+
+  if (crossesMidnight) {
+    // Timer crosses midnight (e.g., 22:00 - 02:00)
+    // Active if: time >= start OR time <= end
+    retval = (difftime(now, start) >= 0) || (difftime(now, end) <= 0);
   } else {
-    retval = false;
+    // Normal case: timer within same day
+    // Active if: time >= start AND time <= end
+    retval = (difftime(now, start) >= 0) && (difftime(now, end) <= 0);
   }
 
   Homie.getLogger() << cIndent << F("checkPoolPumpTimer = ") << retval << endl;

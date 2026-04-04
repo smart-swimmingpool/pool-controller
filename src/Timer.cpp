@@ -18,8 +18,8 @@ tm getCurrentDateTime() {
   return timeinfo;
 }
 
-tm getStartTime(TimerSetting timerSetting) {
-  tm startTime = getCurrentDateTime();
+tm getStartTime(const tm &baseTime, TimerSetting timerSetting) {
+  tm startTime = baseTime;
   startTime.tm_hour = timerSetting.timerStartHour;
   startTime.tm_min = timerSetting.timerStartMinutes;
   startTime.tm_sec = 0;
@@ -27,8 +27,8 @@ tm getStartTime(TimerSetting timerSetting) {
   return startTime;
 }
 
-tm getEndTime(TimerSetting timerSetting) {
-  tm endTime = getCurrentDateTime();
+tm getEndTime(const tm &baseTime, TimerSetting timerSetting) {
+  tm endTime = baseTime;
   endTime.tm_hour = timerSetting.timerEndHour;
   endTime.tm_min = timerSetting.timerEndMinutes;
   endTime.tm_sec = 0;

@@ -227,10 +227,12 @@ void StateManager::clear() {
   prefs.end();
 #elif defined(ESP8266)
   ensureInitialized();  // Lazy init
-  // Clear EEPROM
+  // Clear EEPROM to uninitialized state (0xFF)
   for (int i = 0; i < 512; i++) {
-    EEPROM.write(i, 0);
+    EEPROM.write(i, 0xFF);
   }
+  // Restore magic number so future operations know EEPROM is initialized
+  EEPROM.put(0, EEPROM_MAGIC);
   EEPROM.commit();
 #endif
 }

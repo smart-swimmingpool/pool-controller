@@ -119,13 +119,13 @@ void OperationModeNode::loop() {
       Homie.getLogger() << F("  Using cached time + millis()") << endl;
       Homie.getLogger() << F("  Timer mode may be inaccurate") << endl;
       if (Homie.isConnected()) {
-        PoolController::MqttInterface::publishHomieProperty(*this, "time-sync-status", "failed");
+        PoolController::MqttInterface::publishHomieProperty(*this, cHomieNodeState, "time-sync-failed");
       }
     } else if (currentTimeSyncState && !lastTimeSyncState) {
       // Time sync recovered
       Homie.getLogger() << F("✓ NTP time sync recovered") << endl;
       if (Homie.isConnected()) {
-        PoolController::MqttInterface::publishHomieProperty(*this, "time-sync-status", "ok");
+        PoolController::MqttInterface::publishHomieProperty(*this, cHomieNodeState, cHomieNodeState_OK);
       }
     }
     lastTimeSyncState = currentTimeSyncState;
@@ -229,45 +229,73 @@ bool OperationModeNode::applyProperty(const String &property, const String &valu
 
   } else if (property.equalsIgnoreCase(cHysteresis)) {
     Homie.getLogger() << cIndent << F("✔ hysteresis: ") << value << endl;
-    _hysteresis = value.toFloat();
+    float newValue = value.toFloat();
+    if (newValue != _hysteresis) {
+      _hysteresis = newValue;
+      saveState();  // Persist to survive reboot
+    }
     retval = true;
 
   } else if (property.equalsIgnoreCase(cSolarMinTemp)) {
     Homie.getLogger() << cIndent << F("✔ solar min temp: ") << value << endl;
-    _solarMinTemp = value.toFloat();
+    float newValue = value.toFloat();
+    if (newValue != _solarMinTemp) {
+      _solarMinTemp = newValue;
+      saveState();  // Persist to survive reboot
+    }
     retval = true;
 
   } else if (property.equalsIgnoreCase(cPoolMaxTemp)) {
     Homie.getLogger() << cIndent << F("✔ pool max temp: ") << value << endl;
-    _poolMaxTemp = value.toFloat();
+    float newValue = value.toFloat();
+    if (newValue != _poolMaxTemp) {
+      _poolMaxTemp = newValue;
+      saveState();  // Persist to survive reboot
+    }
     retval = true;
 
   } else if (property.equalsIgnoreCase(cTimerStartHour)) {
     Homie.getLogger() << cIndent << F("✔ Timer start hh: ") << value << endl;
     TimerSetting timerSetting = getTimerSetting();
-    timerSetting.timerStartHour = value.toInt();
-    setTimerSetting(timerSetting);
+    unsigned int newValue = value.toInt();
+    if (newValue != timerSetting.timerStartHour) {
+      timerSetting.timerStartHour = newValue;
+      setTimerSetting(timerSetting);
+      saveState();  // Persist to survive reboot
+    }
     retval = true;
 
   } else if (property.equalsIgnoreCase(cTimerStartMin)) {
     Homie.getLogger() << cIndent << F("✔  Timer start min.: ") << value << endl;
     TimerSetting timerSetting = getTimerSetting();
-    timerSetting.timerStartMinutes = value.toInt();
-    setTimerSetting(timerSetting);
+    unsigned int newValue = value.toInt();
+    if (newValue != timerSetting.timerStartMinutes) {
+      timerSetting.timerStartMinutes = newValue;
+      setTimerSetting(timerSetting);
+      saveState();  // Persist to survive reboot
+    }
     retval = true;
 
   } else if (property.equalsIgnoreCase(cTimerEndHour)) {
     Homie.getLogger() << cIndent << F("✔ Timer end h: ") << value << endl;
     TimerSetting timerSetting = getTimerSetting();
-    timerSetting.timerEndHour = value.toInt();
-    setTimerSetting(timerSetting);
+    unsigned int newValue = value.toInt();
+    if (newValue != timerSetting.timerEndHour) {
+      timerSetting.timerEndHour = newValue;
+      setTimerSetting(timerSetting);
+      saveState();  // Persist to survive reboot
+    }
     retval = true;
 
   } else if (property.equalsIgnoreCase(cTimerEndMin)) {
     Homie.getLogger() << cIndent << F("✔ Timer end min.: ") << value << endl;
     TimerSetting timerSetting = getTimerSetting();
-    timerSetting.timerEndMinutes = value.toInt();
-    setTimerSetting(timerSetting);
+    unsigned int newValue = value.toInt();
+    if (newValue != timerSetting.timerEndMinutes) {
+      timerSetting.timerEndMinutes = newValue;
+      setTimerSetting(timerSetting);
+      saveState();  // Persist to survive reboot
+    }
     retval = true;
 
   } else if (property.equalsIgnoreCase(cTimezone)) {
