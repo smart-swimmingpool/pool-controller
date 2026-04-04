@@ -11,7 +11,7 @@
 // Helper: Validate and parse float value from MQTT string
 static bool parseFloat(const String &value, float &result, float minVal, float maxVal) {
   if (value.length() == 0) return false;
-  
+
   // Check if all characters are valid for a float
   bool hasDigit = false;
   bool hasDot = false;
@@ -28,9 +28,9 @@ static bool parseFloat(const String &value, float &result, float minVal, float m
       return false;  // Invalid character
     }
   }
-  
+
   if (!hasDigit) return false;  // Must have at least one digit
-  
+
   result = value.toFloat();
   return (result >= minVal && result <= maxVal);
 }
@@ -38,7 +38,7 @@ static bool parseFloat(const String &value, float &result, float minVal, float m
 // Helper: Validate and parse int value from MQTT string
 static bool parseInt(const String &value, int &result, int minVal, int maxVal) {
   if (value.length() == 0) return false;
-  
+
   // Check if all characters are valid for an integer
   bool hasDigit = false;
   for (unsigned int i = 0; i < value.length(); i++) {
@@ -51,9 +51,9 @@ static bool parseInt(const String &value, int &result, int minVal, int maxVal) {
       return false;  // Invalid character
     }
   }
-  
+
   if (!hasDigit) return false;  // Must have at least one digit
-  
+
   result = value.toInt();
   return (result >= minVal && result <= maxVal);
 }
