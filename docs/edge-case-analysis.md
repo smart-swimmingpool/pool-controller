@@ -150,10 +150,6 @@ which represents Unix epoch (1970-01-01 00:00:00).
 // Cached time fallback implementation
 if (_lastValidTime > 0) {
   uint32_t elapsed = millis() - _lastValidTimeMillis;
-  // Handle millis() overflow
-  if (millis() < _lastValidTimeMillis) {
-    elapsed = (0xFFFFFFFF - _lastValidTimeMillis) + millis();
-  }
   time_t estimatedTime = _lastValidTime + (elapsed / 1000);
   return estimatedTime;
 }
