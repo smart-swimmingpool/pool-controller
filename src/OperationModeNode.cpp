@@ -17,7 +17,6 @@ OperationModeNode::OperationModeNode(const char *id, const char *name, const int
   _lastMeasurement = 0;
 
   setRunLoopDisconnected(true);
-  setRunLoopDisconnected(true);
 }
 
 /**
