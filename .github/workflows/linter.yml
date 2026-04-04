@@ -78,4 +78,3 @@ jobs:
 
           # Logging
           LOG_LEVEL: NOTICE
-
