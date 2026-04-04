@@ -23,26 +23,26 @@ lint:
 	@echo "Running Super-Linter..."
 	@echo "Note: This uses the same configuration as GitHub Actions CI"
 	@docker run --rm \
-	  -e VALIDATE_ALL_CODEBASE=false \
-	  -e DEFAULT_BRANCH=main \
-	  -e FILTER_REGEX_EXCLUDE=.*/(\.pio|\.vscode|\.platformio|build|lib)/.* \
-	  -e VALIDATE_CPP=true \
-	  -e VALIDATE_CLANG_FORMAT=false \
-	  -e VALIDATE_MARKDOWN=true \
-	  -e VALIDATE_YAML=true \
-	  -e VALIDATE_JSON=true \
-	  -e VALIDATE_GITHUB_ACTIONS=true \
-	  -e VALIDATE_EDITORCONFIG=true \
-	  -e VALIDATE_GITLEAKS=true \
-	  -e VALIDATE_BASH=true \
-	  -e CPP_FILE_EXTENSIONS=cpp,hpp,h \
-	  -e MARKDOWN_CONFIG_FILE=.markdown-lint.yml \
-	  -e YAML_CONFIG_FILE=.yaml-lint.yml \
-	  -e WARNINGS_AS_ERRORS=false \
-	  -e LOG_LEVEL=NOTICE \
-	  -v $(PWD):/tmp/lint \
-	  --workdir /tmp/lint \
-	  ghcr.io/super-linter/super-linter:v7.4.0
+		-e VALIDATE_ALL_CODEBASE=false \
+		-e DEFAULT_BRANCH=main \
+		-e FILTER_REGEX_EXCLUDE=.*/(\.pio|\.vscode|\.platformio|build|lib)/.* \
+		-e VALIDATE_CPP=true \
+		-e VALIDATE_CLANG_FORMAT=false \
+		-e VALIDATE_MARKDOWN=true \
+		-e VALIDATE_YAML=true \
+		-e VALIDATE_JSON=true \
+		-e VALIDATE_GITHUB_ACTIONS=true \
+		-e VALIDATE_EDITORCONFIG=true \
+		-e VALIDATE_GITLEAKS=true \
+		-e VALIDATE_BASH=true \
+		-e CPP_FILE_EXTENSIONS=cpp,hpp,h \
+		-e MARKDOWN_CONFIG_FILE=.markdown-lint.yml \
+		-e YAML_CONFIG_FILE=.yaml-lint.yml \
+		-e WARNINGS_AS_ERRORS=false \
+		-e LOG_LEVEL=NOTICE \
+		-v $(PWD):/tmp/lint \
+		--workdir /tmp/lint \
+		ghcr.io/super-linter/super-linter:v7.4.0
 	@echo ""
 	@echo "✓ Linting complete!"
 
@@ -52,19 +52,19 @@ lint-fix:
 	@echo ""
 	@echo "1. Formatting C++ files with clang-format..."
 	@clang-format -i src/**/*.cpp src/**/*.hpp 2>/dev/null || \
-	  (find src -name "*.cpp" -o -name "*.hpp" | xargs clang-format -i)
+		(find src -name "*.cpp" -o -name "*.hpp" | xargs clang-format -i)
 	@echo "   ✓ C++ files formatted"
 	@echo ""
 	@echo "2. Formatting Markdown files with Prettier..."
 	@npx prettier@3.5.3 --write "**/*.md" \
-	  --ignore-path .gitignore \
-	  --log-level warn
+		--ignore-path .gitignore \
+		--log-level warn
 	@echo "   ✓ Markdown files formatted"
 	@echo ""
 	@echo "3. Formatting YAML files with Prettier..."
 	@npx prettier@3.5.3 --write "**/*.yml" "**/*.yaml" \
-	  --ignore-path .gitignore \
-	  --log-level warn
+		--ignore-path .gitignore \
+		--log-level warn
 	@echo "   ✓ YAML files formatted"
 	@echo ""
 	@echo "✓ Auto-fix complete! Now run 'make lint' to verify."
