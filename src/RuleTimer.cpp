@@ -37,8 +37,10 @@ bool RuleTimer::checkPoolPumpTimer() {
 
   bool retval;
 
-  tm startTime = getStartTime(time, getTimerSetting());
-  tm endTime = getEndTime(time, getTimerSetting());
+  // Capture timer setting once for consistency
+  TimerSetting ts = getTimerSetting();
+  tm startTime = getStartTime(time, ts);
+  tm endTime = getEndTime(time, ts);
 
   Homie.getLogger() << cIndent << F("time=      ") << asctime(&time);
   Homie.getLogger() << cIndent << F("startTime= ") << asctime(&startTime);
@@ -50,7 +52,6 @@ bool RuleTimer::checkPoolPumpTimer() {
   time_t end = mktime(&endTime);
 
   // Handle midnight crossing: check if timer spans midnight
-  TimerSetting ts = getTimerSetting();
   bool crossesMidnight =
     (ts.timerStartHour > ts.timerEndHour) || (ts.timerStartHour == ts.timerEndHour && ts.timerStartMinutes > ts.timerEndMinutes);
 

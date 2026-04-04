@@ -1,5 +1,6 @@
 
 #include "RuleBoost.hpp"
+#include <cmath>  // For isnan()
 
 /**
  *

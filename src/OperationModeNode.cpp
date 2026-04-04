@@ -230,71 +230,92 @@ bool OperationModeNode::applyProperty(const String &property, const String &valu
   } else if (property.equalsIgnoreCase(cHysteresis)) {
     Homie.getLogger() << cIndent << F("✔ hysteresis: ") << value << endl;
     float newValue = value.toFloat();
-    if (newValue != _hysteresis) {
+    // Validate: toFloat() returns 0.0 for invalid input, check for reasonable range
+    if (newValue > 0.0 && newValue <= 10.0 && newValue != _hysteresis) {
       _hysteresis = newValue;
       saveState();  // Persist to survive reboot
+    } else if (newValue <= 0.0 || newValue > 10.0) {
+      Homie.getLogger() << cIndent << F("✖ Invalid hysteresis value (must be 0-10): ") << value << endl;
     }
     retval = true;
 
   } else if (property.equalsIgnoreCase(cSolarMinTemp)) {
     Homie.getLogger() << cIndent << F("✔ solar min temp: ") << value << endl;
     float newValue = value.toFloat();
-    if (newValue != _solarMinTemp) {
+    // Validate: reasonable temperature range 0-60°C
+    if (newValue >= 0.0 && newValue <= 60.0 && newValue != _solarMinTemp) {
       _solarMinTemp = newValue;
       saveState();  // Persist to survive reboot
+    } else if (newValue < 0.0 || newValue > 60.0) {
+      Homie.getLogger() << cIndent << F("✖ Invalid solar min temp (must be 0-60°C): ") << value << endl;
     }
     retval = true;
 
   } else if (property.equalsIgnoreCase(cPoolMaxTemp)) {
     Homie.getLogger() << cIndent << F("✔ pool max temp: ") << value << endl;
     float newValue = value.toFloat();
-    if (newValue != _poolMaxTemp) {
+    // Validate: reasonable temperature range 0-60°C
+    if (newValue >= 0.0 && newValue <= 60.0 && newValue != _poolMaxTemp) {
       _poolMaxTemp = newValue;
       saveState();  // Persist to survive reboot
+    } else if (newValue < 0.0 || newValue > 60.0) {
+      Homie.getLogger() << cIndent << F("✖ Invalid pool max temp (must be 0-60°C): ") << value << endl;
     }
     retval = true;
 
   } else if (property.equalsIgnoreCase(cTimerStartHour)) {
     Homie.getLogger() << cIndent << F("✔ Timer start hh: ") << value << endl;
     TimerSetting timerSetting = getTimerSetting();
-    unsigned int newValue = value.toInt();
-    if (newValue != timerSetting.timerStartHour) {
+    int newValue = value.toInt();
+    // Validate: hour must be 0-23
+    if (newValue >= 0 && newValue <= 23 && (unsigned int)newValue != timerSetting.timerStartHour) {
       timerSetting.timerStartHour = newValue;
       setTimerSetting(timerSetting);
       saveState();  // Persist to survive reboot
+    } else if (newValue < 0 || newValue > 23) {
+      Homie.getLogger() << cIndent << F("✖ Invalid start hour (must be 0-23): ") << value << endl;
     }
     retval = true;
 
   } else if (property.equalsIgnoreCase(cTimerStartMin)) {
     Homie.getLogger() << cIndent << F("✔  Timer start min.: ") << value << endl;
     TimerSetting timerSetting = getTimerSetting();
-    unsigned int newValue = value.toInt();
-    if (newValue != timerSetting.timerStartMinutes) {
+    int newValue = value.toInt();
+    // Validate: minutes must be 0-59
+    if (newValue >= 0 && newValue <= 59 && (unsigned int)newValue != timerSetting.timerStartMinutes) {
       timerSetting.timerStartMinutes = newValue;
       setTimerSetting(timerSetting);
       saveState();  // Persist to survive reboot
+    } else if (newValue < 0 || newValue > 59) {
+      Homie.getLogger() << cIndent << F("✖ Invalid start minutes (must be 0-59): ") << value << endl;
     }
     retval = true;
 
   } else if (property.equalsIgnoreCase(cTimerEndHour)) {
     Homie.getLogger() << cIndent << F("✔ Timer end h: ") << value << endl;
     TimerSetting timerSetting = getTimerSetting();
-    unsigned int newValue = value.toInt();
-    if (newValue != timerSetting.timerEndHour) {
+    int newValue = value.toInt();
+    // Validate: hour must be 0-23
+    if (newValue >= 0 && newValue <= 23 && (unsigned int)newValue != timerSetting.timerEndHour) {
       timerSetting.timerEndHour = newValue;
       setTimerSetting(timerSetting);
       saveState();  // Persist to survive reboot
+    } else if (newValue < 0 || newValue > 23) {
+      Homie.getLogger() << cIndent << F("✖ Invalid end hour (must be 0-23): ") << value << endl;
     }
     retval = true;
 
   } else if (property.equalsIgnoreCase(cTimerEndMin)) {
     Homie.getLogger() << cIndent << F("✔ Timer end min.: ") << value << endl;
     TimerSetting timerSetting = getTimerSetting();
-    unsigned int newValue = value.toInt();
-    if (newValue != timerSetting.timerEndMinutes) {
+    int newValue = value.toInt();
+    // Validate: minutes must be 0-59
+    if (newValue >= 0 && newValue <= 59 && (unsigned int)newValue != timerSetting.timerEndMinutes) {
       timerSetting.timerEndMinutes = newValue;
       setTimerSetting(timerSetting);
       saveState();  // Persist to survive reboot
+    } else if (newValue < 0 || newValue > 59) {
+      Homie.getLogger() << cIndent << F("✖ Invalid end minutes (must be 0-59): ") << value << endl;
     }
     retval = true;
 

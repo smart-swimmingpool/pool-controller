@@ -237,9 +237,9 @@ if (now - lastMemoryCheck < 10000) {
 }
 ```
 
-**Problem**: If `millis()` wraps around at ~49.7 days and `now <
-lastMemoryCheck`, the subtraction underflows, producing a very large number,
-causing memory check to be skipped for potentially hours.
+**Problem**: None - unsigned arithmetic handles wraparound correctly. `now -
+lastMemoryCheck` uses uint32_t subtraction which is wraparound-safe. This is
+the recommended pattern for elapsed time checks.
 
 **Impact**:
 
