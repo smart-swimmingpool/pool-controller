@@ -229,13 +229,19 @@ bool OperationModeNode::applyProperty(const String &property, const String &valu
 
   } else if (property.equalsIgnoreCase(cHysteresis)) {
     Homie.getLogger() << cIndent << F("✔ hysteresis: ") << value << endl;
-    float newValue = value.toFloat();
-    // Validate: toFloat() returns 0.0 for invalid input, check for reasonable range
-    if (newValue > 0.0 && newValue <= 10.0 && newValue != _hysteresis) {
-      _hysteresis = newValue;
-      saveState();  // Persist to survive reboot
-    } else if (newValue <= 0.0 || newValue > 10.0) {
-      Homie.getLogger() << cIndent << F("✖ Invalid hysteresis value (must be 0-10): ") << value << endl;
+    // Validate input is numeric before parsing
+    if (value.length() == 0) {
+      Homie.getLogger() << cIndent << F("✖ Invalid hysteresis value (empty)") << endl;
+    } else {
+      float newValue = value.toFloat();
+      // Check if toFloat succeeded (valid numeric input) and range
+      bool isValidNumber = (newValue != 0.0f) || (value.charAt(0) == '0');
+      if (isValidNumber && newValue >= 0.0 && newValue <= 10.0 && newValue != _hysteresis) {
+        _hysteresis = newValue;
+        saveState();  // Persist to survive reboot
+      } else if (!isValidNumber || newValue < 0.0 || newValue > 10.0) {
+        Homie.getLogger() << cIndent << F("✖ Invalid hysteresis value (must be 0-10): ") << value << endl;
+      }
     }
     retval = true;
 
