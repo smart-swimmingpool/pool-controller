@@ -12,6 +12,7 @@
 #include "RelayModuleNode.hpp"
 #include "OperationModeNode.hpp"
 #include "ButtonControlNode.hpp"
+#include "LocalDisplayNode.hpp"
 #include "Rule.hpp"
 #include "RuleManu.hpp"
 #include "RuleAuto.hpp"
@@ -28,8 +29,19 @@ const uint8_t PIN_DS_POOL  = 16;  // Pin of Temp-Sensor Pool
 const uint8_t PIN_RELAY_POOL  = 18;
 const uint8_t PIN_RELAY_SOLAR = 19;
 
-// Free GPIO for the mode-cycle push-button (connect between pin and GND)
-const uint8_t PIN_BUTTON_MODE = 21;
+// Mode-cycle push-button (connect between pin and GND)
+// GPIO23 is used here so GPIO21/22 remain free for the default I2C bus (SDA/SCL).
+const uint8_t PIN_BUTTON_MODE = 23;
+
+// Settings navigation buttons (connect between pin and GND)
+const uint8_t PIN_BUTTON_UP     = 34;  // input-only GPIO, suitable for buttons
+const uint8_t PIN_BUTTON_DOWN   = 35;  // input-only GPIO, suitable for buttons
+const uint8_t PIN_BUTTON_SELECT = 32;
+
+// Display I2C (default ESP32 I2C bus)
+const uint8_t PIN_DISPLAY_SDA = 21;
+const uint8_t PIN_DISPLAY_SCL = 22;
+
 #elif defined(ESP8266)
 
 // see: https://randomnerdtutorials.com/esp8266-pinout-reference-gpios/
@@ -39,8 +51,19 @@ const uint8_t PIN_DS_POOL  = D6;  // Pin of Temp-Sensor Pool
 const uint8_t PIN_RELAY_POOL  = D1;
 const uint8_t PIN_RELAY_SOLAR = D2;
 
-// Free GPIO for the mode-cycle push-button (connect between pin and GND)
+// Mode-cycle push-button (connect between pin and GND)
 const uint8_t PIN_BUTTON_MODE = D7;
+
+// D1/D2 are occupied by relays so the display must use the alternative
+// software-I2C pins D3 (GPIO0) and D4 (GPIO2).
+// NOTE: D3 and D4 are boot-sensitive; ensure both lines are pulled HIGH at
+// power-on (the 4.7 kΩ I2C pull-up resistors on the display module do this).
+const uint8_t PIN_DISPLAY_SDA = D3;  // GPIO0 – boot-sensitive, needs pull-up
+const uint8_t PIN_DISPLAY_SCL = D4;  // GPIO2 – boot-sensitive, needs pull-up
+
+// ESP8266 has no remaining GPIOs for UP/DOWN/SELECT buttons without a
+// hardware redesign; those features are therefore ESP32-only.
+
 #endif
 const uint8_t TEMP_READ_INTERVALL = 30;  //Sekunden zwischen Updates der Temperaturen.
 
@@ -64,14 +87,36 @@ RelayModuleNode solarPumpNode("solar-pump", "Solar Pump", PIN_RELAY_SOLAR);
 
 OperationModeNode operationModeNode("operation-mode", "Operation Mode");
 
-ButtonControlNode buttonControlNode("button-control", "Button Control", PIN_BUTTON_MODE, &operationModeNode);
+// Local display: shows temperatures, mode, and pump states without internet.
+LocalDisplayNode localDisplayNode("local-display", "Local Display",
+                                  &operationModeNode,
+                                  &poolPumpNode, &solarPumpNode,
+                                  &poolTemperatureNode, &solarTemperatureNode,
+                                  PIN_DISPLAY_SDA, PIN_DISPLAY_SCL);
+
+// Button control: MODE button cycles modes; on ESP32 UP/DOWN/SELECT open a
+// settings menu to adjust temperatures and timer settings offline.
+#ifdef ESP32
+ButtonControlNode buttonControlNode("button-control", "Button Control",
+                                    PIN_BUTTON_MODE,
+                                    &operationModeNode,
+                                    &localDisplayNode,
+                                    PIN_BUTTON_UP,
+                                    PIN_BUTTON_DOWN,
+                                    PIN_BUTTON_SELECT);
+#else
+ButtonControlNode buttonControlNode("button-control", "Button Control",
+                                    PIN_BUTTON_MODE,
+                                    &operationModeNode,
+                                    &localDisplayNode);
+#endif
 
 unsigned long _measurementInterval = 10;
 unsigned long _lastMeasurement;
 
 /**
  * Homie Setup handler.
- * Only called when wifi and mqtt are connected.
+ * Only called when WiFi and MQTT are connected.
  * Applies MQTT-fetched settings (intervals, temperatures, timer) to nodes.
  */
 void setupHandler() {
