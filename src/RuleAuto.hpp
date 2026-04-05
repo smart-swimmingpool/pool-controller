@@ -7,12 +7,12 @@
 
 class RuleAuto : public Rule {
 public:
-  RuleAuto(RelayModuleNode* solarRelay, RelayModuleNode* poolRelay);
+  RuleAuto(RelayModuleNode *solarRelay, RelayModuleNode *poolRelay);
 
-  const char* getMode() { return "auto"; };
+  const char *getMode() { return "auto"; };
 
-  void setSolarRelayNode(RelayModuleNode* relay) { _solarRelay = relay; };
-  void setPoolRelayNode(RelayModuleNode* relay) { _poolRelay = relay; };
+  void setSolarRelayNode(RelayModuleNode *relay) { _solarRelay = relay; };
+  void setPoolRelayNode(RelayModuleNode *relay) { _poolRelay = relay; };
 
   virtual void loop();
 
@@ -20,9 +20,9 @@ protected:
   bool checkPoolPumpTimer();
 
 private:
-  RelayModuleNode* _solarRelay;
-  RelayModuleNode* _poolRelay;
+  RelayModuleNode *_solarRelay;
+  RelayModuleNode *_poolRelay;
 
-  const char* cCaption = "• RuleAuto:";
-  const char* cIndent  = "  ◦ ";
+  const char *cCaption = "• RuleAuto:";
+  const char *cIndent = "  ◦ ";
 };

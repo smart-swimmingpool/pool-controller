@@ -36,8 +36,8 @@ public:
    * Publish a sensor discovery message
    * @note Uses ~400 bytes of JSON, buffer is 512 bytes
    */
-  static bool publishSensor(const char* nodeId, const char* objectId, const char* name, const char* deviceClass = nullptr,
-                            const char* unitOfMeasurement = nullptr, const char* icon = nullptr) {
+  static bool publishSensor(const char *nodeId, const char *objectId, const char *name, const char *deviceClass = nullptr,
+    const char *unitOfMeasurement = nullptr, const char *icon = nullptr) {
     if (!Homie.isConnected())
       return false;
 
@@ -66,20 +66,18 @@ public:
       doc["icon"] = icon;
 
     // Device information
-    JsonObject device        = doc["device"].to<JsonObject>();
+    JsonObject device = doc["device"].to<JsonObject>();
     device["identifiers"][0] = nodeId;
-    device["name"]           = "Pool Controller";
-    device["manufacturer"]   = "smart-swimmingpool";
-    device["model"]          = "Pool Controller 2.0";
+    device["name"] = "Pool Controller";
+    device["manufacturer"] = "smart-swimmingpool";
+    device["model"] = "Pool Controller 2.0";
 
-    char   buffer[512];
+    char buffer[512];
     size_t len = serializeJson(doc, buffer, sizeof(buffer));
 
     // Check for truncation
     if (len >= sizeof(buffer) - 1) {
-      Homie.getLogger() << F("✖ Warning: JSON buffer too small, "
-                             "message truncated")
-                        << endl;
+      Homie.getLogger() << F("✖ Warning: JSON buffer too small, message truncated") << endl;
       return false;
     }
 
@@ -90,7 +88,7 @@ public:
    * Publish a switch discovery message
    * @note Uses ~450 bytes of JSON, buffer is 512 bytes
    */
-  static bool publishSwitch(const char* nodeId, const char* objectId, const char* name, const char* icon = nullptr) {
+  static bool publishSwitch(const char *nodeId, const char *objectId, const char *name, const char *icon = nullptr) {
     if (!Homie.isConnected())
       return false;
 
@@ -105,7 +103,7 @@ public:
     snprintf(stateTopic, sizeof(stateTopic), "homeassistant/switch/%s/%s/state", nodeId, objectId);
     snprintf(commandTopic, sizeof(commandTopic), "homeassistant/switch/%s/%s/set", nodeId, objectId);
 
-    doc["state_topic"]   = stateTopic;
+    doc["state_topic"] = stateTopic;
     doc["command_topic"] = commandTopic;
 
     // Name and unique ID
@@ -115,29 +113,27 @@ public:
     doc["unique_id"] = uniqueId;
 
     // Payloads
-    doc["payload_on"]  = "ON";
+    doc["payload_on"] = "ON";
     doc["payload_off"] = "OFF";
-    doc["state_on"]    = "ON";
-    doc["state_off"]   = "OFF";
+    doc["state_on"] = "ON";
+    doc["state_off"] = "OFF";
 
     if (icon)
       doc["icon"] = icon;
 
     // Device information
-    JsonObject device        = doc["device"].to<JsonObject>();
+    JsonObject device = doc["device"].to<JsonObject>();
     device["identifiers"][0] = nodeId;
-    device["name"]           = "Pool Controller";
-    device["manufacturer"]   = "smart-swimmingpool";
-    device["model"]          = "Pool Controller 2.0";
+    device["name"] = "Pool Controller";
+    device["manufacturer"] = "smart-swimmingpool";
+    device["model"] = "Pool Controller 2.0";
 
-    char   buffer[512];
+    char buffer[512];
     size_t len = serializeJson(doc, buffer, sizeof(buffer));
 
     // Check for truncation
     if (len >= sizeof(buffer) - 1) {
-      Homie.getLogger() << F("✖ Warning: JSON buffer too small, "
-                             "message truncated")
-                        << endl;
+      Homie.getLogger() << F("✖ Warning: JSON buffer too small, message truncated") << endl;
       return false;
     }
 
@@ -147,11 +143,8 @@ public:
   /**
    * Publish a number discovery message
    */
-  static bool publishNumber(const char* nodeId, const char* objectId, const char* name,
-                            double minValue, double maxValue, double step,
-                            const char* unitOfMeasurement = nullptr,
-                            const char* icon = nullptr,
-                            const char* mode = nullptr) {
+  static bool publishNumber(const char *nodeId, const char *objectId, const char *name, double minValue, double maxValue,
+    double step, const char *unitOfMeasurement = nullptr, const char *icon = nullptr, const char *mode = nullptr) {
     if (!Homie.isConnected())
       return false;
 
@@ -184,19 +177,17 @@ public:
     if (mode)
       doc["mode"] = mode;
 
-    JsonObject device        = doc["device"].to<JsonObject>();
+    JsonObject device = doc["device"].to<JsonObject>();
     device["identifiers"][0] = nodeId;
-    device["name"]           = "Pool Controller";
-    device["manufacturer"]   = "smart-swimmingpool";
-    device["model"]          = "Pool Controller 2.0";
+    device["name"] = "Pool Controller";
+    device["manufacturer"] = "smart-swimmingpool";
+    device["model"] = "Pool Controller 2.0";
 
-    char   buffer[512];
+    char buffer[512];
     size_t len = serializeJson(doc, buffer, sizeof(buffer));
 
     if (len >= sizeof(buffer) - 1) {
-      Homie.getLogger() << F("✖ Warning: JSON buffer too small, "
-                             "message truncated")
-                        << endl;
+      Homie.getLogger() << F("✖ Warning: JSON buffer too small, message truncated") << endl;
       return false;
     }
 
@@ -206,9 +197,8 @@ public:
   /**
    * Publish a select discovery message
    */
-  static bool publishSelect(const char* nodeId, const char* objectId, const char* name,
-                            const char* const* options, size_t optionCount,
-                            const char* icon = nullptr) {
+  static bool publishSelect(const char *nodeId, const char *objectId, const char *name, const char *const *options,
+    size_t optionCount, const char *icon = nullptr) {
     if (!Homie.isConnected())
       return false;
 
@@ -238,19 +228,17 @@ public:
     if (icon)
       doc["icon"] = icon;
 
-    JsonObject device        = doc["device"].to<JsonObject>();
+    JsonObject device = doc["device"].to<JsonObject>();
     device["identifiers"][0] = nodeId;
-    device["name"]           = "Pool Controller";
-    device["manufacturer"]   = "smart-swimmingpool";
-    device["model"]          = "Pool Controller 2.0";
+    device["name"] = "Pool Controller";
+    device["manufacturer"] = "smart-swimmingpool";
+    device["model"] = "Pool Controller 2.0";
 
-    char   buffer[512];
+    char buffer[512];
     size_t len = serializeJson(doc, buffer, sizeof(buffer));
 
     if (len >= sizeof(buffer) - 1) {
-      Homie.getLogger() << F("✖ Warning: JSON buffer too small, "
-                             "message truncated")
-                        << endl;
+      Homie.getLogger() << F("✖ Warning: JSON buffer too small, message truncated") << endl;
       return false;
     }
 
@@ -260,7 +248,7 @@ public:
   /**
    * Publish state for a sensor
    */
-  static bool publishSensorState(const char* nodeId, const char* objectId, const char* value) {
+  static bool publishSensorState(const char *nodeId, const char *objectId, const char *value) {
     if (!Homie.isConnected())
       return false;
 
@@ -273,7 +261,7 @@ public:
   /**
    * Publish state for a switch
    */
-  static bool publishSwitchState(const char* nodeId, const char* objectId, bool state) {
+  static bool publishSwitchState(const char *nodeId, const char *objectId, bool state) {
     if (!Homie.isConnected())
       return false;
 
@@ -286,7 +274,7 @@ public:
   /**
    * Publish state for a number
    */
-  static bool publishNumberState(const char* nodeId, const char* objectId, const char* value) {
+  static bool publishNumberState(const char *nodeId, const char *objectId, const char *value) {
     if (!Homie.isConnected())
       return false;
 
@@ -299,7 +287,7 @@ public:
   /**
    * Publish state for a select
    */
-  static bool publishSelectState(const char* nodeId, const char* objectId, const char* value) {
+  static bool publishSelectState(const char *nodeId, const char *objectId, const char *value) {
     if (!Homie.isConnected())
       return false;
 
@@ -312,7 +300,7 @@ public:
   /**
    * Subscribe to switch command topic
    */
-  static bool subscribeSwitch(const char* nodeId, const char* objectId) {
+  static bool subscribeSwitch(const char *nodeId, const char *objectId) {
     if (!Homie.isConnected())
       return false;
 
@@ -325,7 +313,7 @@ public:
   /**
    * Subscribe to number command topic
    */
-  static bool subscribeNumber(const char* nodeId, const char* objectId) {
+  static bool subscribeNumber(const char *nodeId, const char *objectId) {
     if (!Homie.isConnected())
       return false;
 
@@ -338,7 +326,7 @@ public:
   /**
    * Subscribe to select command topic
    */
-  static bool subscribeSelect(const char* nodeId, const char* objectId) {
+  static bool subscribeSelect(const char *nodeId, const char *objectId) {
     if (!Homie.isConnected())
       return false;
 
@@ -351,7 +339,7 @@ public:
   /**
    * Get command topic for switch
    */
-  static void getSwitchCommandTopic(char* buffer, size_t bufferSize, const char* nodeId, const char* objectId) {
+  static void getSwitchCommandTopic(char *buffer, size_t bufferSize, const char *nodeId, const char *objectId) {
     snprintf(buffer, bufferSize, "homeassistant/switch/%s/%s/set", nodeId, objectId);
   }
 };

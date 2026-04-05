@@ -8,29 +8,78 @@
 #include "StateManager.hpp"
 #include "MqttInterface.hpp"
 
+// Helper: Validate and parse float value from MQTT string
+static bool parseFloat(const String &value, float &result, float minVal, float maxVal) {
+  if (value.length() == 0) return false;
+
+  // Check if all characters are valid for a float
+  bool hasDigit = false;
+  bool hasDot = false;
+  for (unsigned int i = 0; i < value.length(); i++) {
+    char c = value.charAt(i);
+    if (c == '-' || c == '+') {
+      if (i != 0) return false;  // Sign only at start
+    } else if (c == '.') {
+      if (hasDot) return false;  // Only one decimal point
+      hasDot = true;
+    } else if (c >= '0' && c <= '9') {
+      hasDigit = true;
+    } else {
+      return false;  // Invalid character
+    }
+  }
+
+  if (!hasDigit) return false;  // Must have at least one digit
+
+  result = value.toFloat();
+  return (result >= minVal && result <= maxVal);
+}
+
+// Helper: Validate and parse int value from MQTT string
+static bool parseInt(const String &value, int &result, int minVal, int maxVal) {
+  if (value.length() == 0) return false;
+
+  // Check if all characters are valid for an integer
+  bool hasDigit = false;
+  for (unsigned int i = 0; i < value.length(); i++) {
+    char c = value.charAt(i);
+    if (c == '-' || c == '+') {
+      if (i != 0) return false;  // Sign only at start
+    } else if (c >= '0' && c <= '9') {
+      hasDigit = true;
+    } else {
+      return false;  // Invalid character
+    }
+  }
+
+  if (!hasDigit) return false;  // Must have at least one digit
+
+  result = value.toInt();
+  return (result >= minVal && result <= maxVal);
+}
+
 /**
  *
  */
-OperationModeNode::OperationModeNode(const char* id, const char* name, const int measurementInterval)
+OperationModeNode::OperationModeNode(const char *id, const char *name, const int measurementInterval)
     : HomieNode(id, name, "switch") {
   _measurementInterval = (measurementInterval > MIN_INTERVAL) ? measurementInterval : MIN_INTERVAL;
-  _lastMeasurement     = 0;
+  _lastMeasurement = 0;
 
-  setRunLoopDisconnected(true);
   setRunLoopDisconnected(true);
 }
 
 /**
  *
  */
-void OperationModeNode::addRule(Rule* rule) {
+void OperationModeNode::addRule(Rule *rule) {
   _ruleVec.PushBack(rule);
 }
 
 /**
  *
  */
-Rule* OperationModeNode::getRule() {
+Rule *OperationModeNode::getRule() {
   Homie.getLogger() << F("getRule: mode=") << _mode << endl;
 
   for (int i = 0; i < _ruleVec.Size(); i++) {
@@ -61,17 +110,14 @@ bool OperationModeNode::setMode(String mode) {
   if (mode.equals(STATUS_AUTO) || mode.equals(STATUS_MANU) || mode.equals(STATUS_BOOST) || mode.equals(STATUS_TIMER)) {
     _mode = mode;
     Homie.getLogger() << F("set mode: ") << _mode << endl;
-    PoolController::MqttInterface::publishSelectState(
-      *this, cMode, cMode, _mode.c_str());
-    PoolController::MqttInterface::publishHomieProperty(
-      *this, cHomieNodeState, cHomieNodeState_OK);
+    PoolController::MqttInterface::publishSelectState(*this, cMode, cMode, _mode.c_str());
+    PoolController::MqttInterface::publishHomieProperty(*this, cHomieNodeState, cHomieNodeState_OK);
     saveState();  // Persist mode change
     retval = true;
 
   } else {
     Homie.getLogger() << F("✖ UNDEFINED Mode: ") << mode << F(" Current unchanged mode: ") << _mode << endl;
-    PoolController::MqttInterface::publishHomieProperty(
-      *this, cHomieNodeState, cHomieNodeState_Error);
+    PoolController::MqttInterface::publishHomieProperty(*this, cHomieNodeState, cHomieNodeState_Error);
     retval = false;
   }
 
@@ -111,66 +157,86 @@ void OperationModeNode::setup() {
 void OperationModeNode::loop() {
   if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval)) {
     Homie.getLogger() << F("〽 OperatioalMode update rule ") << endl;
+
+    // Check time synchronization status
+    // Initialize from current state to avoid false "just failed" on first boot
+    static bool lastTimeSyncState = isTimeSyncValid();
+    bool currentTimeSyncState = isTimeSyncValid();
+
+    if (!currentTimeSyncState && lastTimeSyncState) {
+      // Time sync just failed
+      Homie.getLogger() << F("⚠ WARNING: NTP time sync failed!") << endl;
+      Homie.getLogger() << F("  Using cached time + millis()") << endl;
+      Homie.getLogger() << F("  Timer mode may be inaccurate") << endl;
+      if (Homie.isConnected()) {
+        PoolController::MqttInterface::publishHomieProperty(*this, cHomieNodeState, "time-sync-failed");
+      }
+    } else if (currentTimeSyncState && !lastTimeSyncState) {
+      // Time sync recovered
+      Homie.getLogger() << F("✓ NTP time sync recovered") << endl;
+      if (Homie.isConnected()) {
+        PoolController::MqttInterface::publishHomieProperty(*this, cHomieNodeState, cHomieNodeState_OK);
+      }
+    }
+    lastTimeSyncState = currentTimeSyncState;
+
     // call loop to evaluate the current rule
-    Rule* rule = getRule();
+    Rule *rule = getRule();
     if (rule != nullptr) {
       rule->loop();
     } else {
       Homie.getLogger() << cIndent << F("✖ no rule defined: ") << _mode << endl;
+      // Fallback to safe mode: switch to manual mode
+      Homie.getLogger() << cIndent << F("⚠ No matching rule - switching to manual mode") << endl;
+      _mode = STATUS_MANU;
+      saveState();
+      if (Homie.isConnected()) {
+        PoolController::MqttInterface::publishHomieProperty(*this, cHomieNodeState, cHomieNodeState_Error);
+      }
     }
     if (Homie.isConnected()) {
       /*
       Homie.getLogger() << cIndent << F("mode: ") << _mode << endl;
       Homie.getLogger() << cIndent << F("SolarMinTemp: ") <<
-                           _solarMinTemp << endl;
+          _solarMinTemp << endl;
       Homie.getLogger() << cIndent << F("PoolMaxTemp:  ") <<
-                           _poolMaxTemp << endl;
+          _poolMaxTemp << endl;
       Homie.getLogger() << cIndent << F("Hysteresis:   ") <<
-                           _hysteresis << endl;
+          _hysteresis << endl;
 */
       // Optimize memory: avoid String allocations by using stack
       // buffers. Buffer size: 20 bytes sufficient for temperature
       // values (-100.00 to 999.99)
       char buffer[20];
 
-      PoolController::MqttInterface::publishSelectState(
-          *this, cMode, cMode, _mode.c_str());
+      PoolController::MqttInterface::publishSelectState(*this, cMode, cMode, _mode.c_str());
 
       Utils::floatToString(_solarMinTemp, buffer, sizeof(buffer));
-      PoolController::MqttInterface::publishNumberState(
-          *this, cSolarMinTemp, cSolarMinTemp, buffer);
+      PoolController::MqttInterface::publishNumberState(*this, cSolarMinTemp, cSolarMinTemp, buffer);
 
       Utils::floatToString(_poolMaxTemp, buffer, sizeof(buffer));
-      PoolController::MqttInterface::publishNumberState(
-          *this, cPoolMaxTemp, cPoolMaxTemp, buffer);
+      PoolController::MqttInterface::publishNumberState(*this, cPoolMaxTemp, cPoolMaxTemp, buffer);
 
       Utils::floatToString(_hysteresis, buffer, sizeof(buffer));
-      PoolController::MqttInterface::publishNumberState(
-          *this, cHysteresis, cHysteresis, buffer);
+      PoolController::MqttInterface::publishNumberState(*this, cHysteresis, cHysteresis, buffer);
 
       Utils::intToString(_timerSetting.timerStartHour, buffer, sizeof(buffer));
-      PoolController::MqttInterface::publishNumberState(
-          *this, cTimerStartHour, cTimerStartHour, buffer);
+      PoolController::MqttInterface::publishNumberState(*this, cTimerStartHour, cTimerStartHour, buffer);
 
       Utils::intToString(_timerSetting.timerStartMinutes, buffer, sizeof(buffer));
-      PoolController::MqttInterface::publishNumberState(
-          *this, cTimerStartMin, cTimerStartMin, buffer);
+      PoolController::MqttInterface::publishNumberState(*this, cTimerStartMin, cTimerStartMin, buffer);
 
       Utils::intToString(_timerSetting.timerEndHour, buffer, sizeof(buffer));
-      PoolController::MqttInterface::publishNumberState(
-          *this, cTimerEndHour, cTimerEndHour, buffer);
+      PoolController::MqttInterface::publishNumberState(*this, cTimerEndHour, cTimerEndHour, buffer);
 
       Utils::intToString(_timerSetting.timerEndMinutes, buffer, sizeof(buffer));
-      PoolController::MqttInterface::publishNumberState(
-          *this, cTimerEndMin, cTimerEndMin, buffer);
+      PoolController::MqttInterface::publishNumberState(*this, cTimerEndMin, cTimerEndMin, buffer);
 
       Utils::intToString(getTimezoneIndex(), buffer, sizeof(buffer));
-      PoolController::MqttInterface::publishNumberState(
-          *this, cTimezone, cTimezone, buffer);
+      PoolController::MqttInterface::publishNumberState(*this, cTimezone, cTimezone, buffer);
 
       String tzInfo = getTimeInfoFor(getTimezoneIndex());
-      PoolController::MqttInterface::publishTextState(
-          *this, cTimezoneInfo, cTimezoneInfo, tzInfo.c_str());
+      PoolController::MqttInterface::publishTextState(*this, cTimezoneInfo, cTimezoneInfo, tzInfo.c_str());
     } else {
       Homie.getLogger() << F("✖ OperationalMode: not connected.") << endl;
     }
@@ -182,7 +248,7 @@ void OperationModeNode::loop() {
 /**
  * Handle update by Homie message.
  */
-bool OperationModeNode::handleInput(const HomieRange& range, const String& property, const String& value) {
+bool OperationModeNode::handleInput(const HomieRange &range, const String &property, const String &value) {
   printCaption();
 
   Homie.getLogger() << cIndent << F("〽 handleInput -> property '") << property << F("' value=") << value << endl;
@@ -194,7 +260,7 @@ bool OperationModeNode::handleInput(const HomieRange& range, const String& prope
   return retval;
 }
 
-bool OperationModeNode::handleHomeAssistantCommand(const char* property, const char* value) {
+bool OperationModeNode::handleHomeAssistantCommand(const char *property, const char *value) {
   printCaption();
 
   Homie.getLogger() << cIndent << F("〽 HA command -> property '") << property << F("' value=") << value << endl;
@@ -204,7 +270,7 @@ bool OperationModeNode::handleHomeAssistantCommand(const char* property, const c
   return retval;
 }
 
-bool OperationModeNode::applyProperty(const String& property, const String& value) {
+bool OperationModeNode::applyProperty(const String &property, const String &value) {
   bool retval;
 
   if (property.equalsIgnoreCase(cMode)) {
@@ -213,45 +279,101 @@ bool OperationModeNode::applyProperty(const String& property, const String& valu
 
   } else if (property.equalsIgnoreCase(cHysteresis)) {
     Homie.getLogger() << cIndent << F("✔ hysteresis: ") << value << endl;
-    _hysteresis = value.toFloat();
-    retval      = true;
+    float newValue;
+    if (parseFloat(value, newValue, 0.0, 10.0)) {
+      if (newValue != _hysteresis) {
+        _hysteresis = newValue;
+        saveState();  // Persist to survive reboot
+      }
+    } else {
+      Homie.getLogger() << cIndent << F("✖ Invalid hysteresis value (must be 0-10): ") << value << endl;
+    }
+    retval = true;
 
   } else if (property.equalsIgnoreCase(cSolarMinTemp)) {
     Homie.getLogger() << cIndent << F("✔ solar min temp: ") << value << endl;
-    _solarMinTemp = value.toFloat();
-    retval        = true;
+    float newValue;
+    if (parseFloat(value, newValue, 0.0, 60.0)) {
+      if (newValue != _solarMinTemp) {
+        _solarMinTemp = newValue;
+        saveState();  // Persist to survive reboot
+      }
+    } else {
+      Homie.getLogger() << cIndent << F("✖ Invalid solar min temp (must be 0-60°C): ") << value << endl;
+    }
+    retval = true;
 
   } else if (property.equalsIgnoreCase(cPoolMaxTemp)) {
     Homie.getLogger() << cIndent << F("✔ pool max temp: ") << value << endl;
-    _poolMaxTemp = value.toFloat();
-    retval       = true;
+    float newValue;
+    if (parseFloat(value, newValue, 0.0, 60.0)) {
+      if (newValue != _poolMaxTemp) {
+        _poolMaxTemp = newValue;
+        saveState();  // Persist to survive reboot
+      }
+    } else {
+      Homie.getLogger() << cIndent << F("✖ Invalid pool max temp (must be 0-60°C): ") << value << endl;
+    }
+    retval = true;
 
   } else if (property.equalsIgnoreCase(cTimerStartHour)) {
     Homie.getLogger() << cIndent << F("✔ Timer start hh: ") << value << endl;
-    TimerSetting timerSetting   = getTimerSetting();
-    timerSetting.timerStartHour = value.toInt();
-    setTimerSetting(timerSetting);
+    TimerSetting timerSetting = getTimerSetting();
+    int newValue;
+    if (parseInt(value, newValue, 0, 23)) {
+      if ((unsigned int)newValue != timerSetting.timerStartHour) {
+        timerSetting.timerStartHour = newValue;
+        setTimerSetting(timerSetting);
+        saveState();  // Persist to survive reboot
+      }
+    } else {
+      Homie.getLogger() << cIndent << F("✖ Invalid start hour (must be 0-23): ") << value << endl;
+    }
     retval = true;
 
   } else if (property.equalsIgnoreCase(cTimerStartMin)) {
     Homie.getLogger() << cIndent << F("✔  Timer start min.: ") << value << endl;
-    TimerSetting timerSetting      = getTimerSetting();
-    timerSetting.timerStartMinutes = value.toInt();
-    setTimerSetting(timerSetting);
+    TimerSetting timerSetting = getTimerSetting();
+    int newValue;
+    if (parseInt(value, newValue, 0, 59)) {
+      if ((unsigned int)newValue != timerSetting.timerStartMinutes) {
+        timerSetting.timerStartMinutes = newValue;
+        setTimerSetting(timerSetting);
+        saveState();  // Persist to survive reboot
+      }
+    } else {
+      Homie.getLogger() << cIndent << F("✖ Invalid start minutes (must be 0-59): ") << value << endl;
+    }
     retval = true;
 
   } else if (property.equalsIgnoreCase(cTimerEndHour)) {
     Homie.getLogger() << cIndent << F("✔ Timer end h: ") << value << endl;
     TimerSetting timerSetting = getTimerSetting();
-    timerSetting.timerEndHour = value.toInt();
-    setTimerSetting(timerSetting);
+    int newValue;
+    if (parseInt(value, newValue, 0, 23)) {
+      if ((unsigned int)newValue != timerSetting.timerEndHour) {
+        timerSetting.timerEndHour = newValue;
+        setTimerSetting(timerSetting);
+        saveState();  // Persist to survive reboot
+      }
+    } else {
+      Homie.getLogger() << cIndent << F("✖ Invalid end hour (must be 0-23): ") << value << endl;
+    }
     retval = true;
 
   } else if (property.equalsIgnoreCase(cTimerEndMin)) {
     Homie.getLogger() << cIndent << F("✔ Timer end min.: ") << value << endl;
-    TimerSetting timerSetting    = getTimerSetting();
-    timerSetting.timerEndMinutes = value.toInt();
-    setTimerSetting(timerSetting);
+    TimerSetting timerSetting = getTimerSetting();
+    int newValue;
+    if (parseInt(value, newValue, 0, 59)) {
+      if ((unsigned int)newValue != timerSetting.timerEndMinutes) {
+        timerSetting.timerEndMinutes = newValue;
+        setTimerSetting(timerSetting);
+        saveState();  // Persist to survive reboot
+      }
+    } else {
+      Homie.getLogger() << cIndent << F("✖ Invalid end minutes (must be 0-59): ") << value << endl;
+    }
     retval = true;
 
   } else if (property.equalsIgnoreCase(cTimezone)) {
@@ -292,15 +414,15 @@ void OperationModeNode::loadState() {
   setMode(savedMode);
 
   // Load temperature settings
-  _poolMaxTemp  = StateManager::loadFloat("poolMaxTemp", 28.5);
+  _poolMaxTemp = StateManager::loadFloat("poolMaxTemp", 28.5);
   _solarMinTemp = StateManager::loadFloat("solarMinTemp", 55.0);
-  _hysteresis   = StateManager::loadFloat("hysteresis", 1.0);
+  _hysteresis = StateManager::loadFloat("hysteresis", 1.0);
 
   // Load timer settings
-  _timerSetting.timerStartHour    = StateManager::loadInt("timerStartH", 10);
+  _timerSetting.timerStartHour = StateManager::loadInt("timerStartH", 10);
   _timerSetting.timerStartMinutes = StateManager::loadInt("timerStartM", 30);
-  _timerSetting.timerEndHour      = StateManager::loadInt("timerEndH", 17);
-  _timerSetting.timerEndMinutes   = StateManager::loadInt("timerEndM", 30);
+  _timerSetting.timerEndHour = StateManager::loadInt("timerEndH", 17);
+  _timerSetting.timerEndMinutes = StateManager::loadInt("timerEndM", 30);
 
   Homie.getLogger() << F("✓ State loaded from persistent storage") << endl;
 }

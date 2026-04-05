@@ -4,7 +4,7 @@ namespace PoolController {
 namespace Nodes {
 auto Logger::mergeLevelStrings() -> String {
   String result{};
-  for (auto&& name : Logger::LOG_LEVEL_NAMES) {
+  for (auto &&name : Logger::LOG_LEVEL_NAMES) {
     result.concat(name);
     result.concat(':');
   }

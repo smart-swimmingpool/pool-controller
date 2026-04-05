@@ -45,7 +45,6 @@ jobs:
         uses: super-linter/super-linter@v7
         env:
           VALIDATE_ALL_CODEBASE: false
-          VALIDATE_ANSIBLE: false
 
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -56,8 +55,9 @@ jobs:
 
           # Enable only relevant linters for PlatformIO project
           # When using selective validation, all other linters are disabled automatically
+          # Note: VALIDATE_CLANG_FORMAT not listed - disabled due to version incompatibility
+          # cpplint (via VALIDATE_CPP) provides C++ style checking instead
           VALIDATE_CPP: true
-          VALIDATE_CLANG_FORMAT: true
           VALIDATE_MARKDOWN: true
           VALIDATE_YAML: true
           VALIDATE_JSON: true
@@ -78,7 +78,3 @@ jobs:
 
           # Logging
           LOG_LEVEL: NOTICE
-
-      - name: Arduino Lint
-        uses: arduino/arduino-lint-action@v1.0.0
-

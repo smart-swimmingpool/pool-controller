@@ -10,5 +10,5 @@ struct TimerSetting {
 };
 
 tm getCurrentDateTime();
-tm getStartTime(TimerSetting ts);
-tm getEndTime(TimerSetting ts);
+tm getStartTime(const tm &baseTime, TimerSetting ts);
+tm getEndTime(const tm &baseTime, TimerSetting ts);

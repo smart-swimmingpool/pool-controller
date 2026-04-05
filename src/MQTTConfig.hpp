@@ -9,8 +9,8 @@ namespace PoolController {
      * MQTT Protocol types supported by the controller
      */
 enum class MQTTProtocol : std::uint8_t {
-  HOMIE          = 0,  // Homie convention (default)
-  HOME_ASSISTANT = 1   // Home Assistant MQTT Discovery
+  HOMIE = 0,          // Homie convention (default)
+  HOME_ASSISTANT = 1  // Home Assistant MQTT Discovery
 };
 
 /**
@@ -21,7 +21,7 @@ struct MQTTConfig {
 
   MQTTConfig() : protocol(MQTTProtocol::HOMIE) {}
 
-  const char* getProtocolName() const {
+  const char *getProtocolName() const {
     switch (protocol) {
     case MQTTProtocol::HOME_ASSISTANT:
       return "homeassistant";
