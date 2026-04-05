@@ -10,10 +10,14 @@
 OperationModeNode::OperationModeNode(const char* id, const char* name, const int measurementInterval)
     : HomieNode(id, name, "switch") {
 
-  _measurementInterval = (measurementInterval > MIN_INTERVAL) ? measurementInterval : MIN_INTERVAL;
-  _lastMeasurement     = 0;
+  _measurementInterval    = (measurementInterval > MIN_INTERVAL) ? measurementInterval : MIN_INTERVAL;
+  _lastMeasurement        = 0;
+  _currentPoolTempNode    = nullptr;
+  _currentSolarTempNode   = nullptr;
 
-  //setRunLoopDisconnected(true);
+  // Run rule evaluation even without WiFi / MQTT so that automatic modes
+  // (auto, boost, timer) continue to control the pumps offline.
+  setRunLoopDisconnected(true);
 }
 
 /**
@@ -28,6 +32,13 @@ void OperationModeNode::addRule(Rule* rule) {
  */
 Rule* OperationModeNode::getRule() {
   Homie.getLogger() << F("getRule: mode=") << _mode << endl;
+
+  if (_currentPoolTempNode == nullptr || _currentSolarTempNode == nullptr) {
+    Homie.getLogger() << F("✖ getRule: temperature nodes not initialised")
+                      << F(" (pool=") << (_currentPoolTempNode != nullptr ? "ok" : "null")
+                      << F(", solar=") << (_currentSolarTempNode != nullptr ? "ok" : "null") << F(")") << endl;
+    return nullptr;
+  }
 
   for (int i = 0; i < _ruleVec.Size(); i++) {
     if (_mode.equals(_ruleVec[i]->getMode())) {
@@ -57,13 +68,17 @@ bool OperationModeNode::setMode(String mode) {
   if (mode.equals(STATUS_AUTO) || mode.equals(STATUS_MANU) || mode.equals(STATUS_BOOST) || mode.equals(STATUS_TIMER)) {
     _mode = mode;
     Homie.getLogger() << F("set mode: ") << _mode << endl;
-    setProperty(cMode).send(_mode);
-    setProperty(cHomieNodeState).send(cHomieNodeState_OK);
+    if (Homie.isConnected()) {
+      setProperty(cMode).send(_mode);
+      setProperty(cHomieNodeState).send(cHomieNodeState_OK);
+    }
     retval = true;
 
   } else {
     Homie.getLogger() << F("✖ UNDEFINED Mode: ") << mode << F(" Current unchanged mode: ") << _mode << endl;
-    setProperty(cHomieNodeState).send(cHomieNodeState_Error);
+    if (Homie.isConnected()) {
+      setProperty(cHomieNodeState).send(cHomieNodeState_Error);
+    }
     retval = false;
   }
 

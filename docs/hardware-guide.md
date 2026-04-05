@@ -43,10 +43,43 @@ of `main.cpp` (first column of table) which are associated to the pins.
 | PIN_DS_POOL        | D6             | Pin of temperature sensor (DS18B20) for pool water    |
 | PIN_RELAY_POOL     | D1             | Pin to connect relais for pool pump                   |
 | PIN_RELAY_SOLAR    | D2             | Pin to connect relais for solar pump                  |
+| PIN_BUTTON_MODE    | D7             | Pin for mode-cycle push-button (connect to GND)       |
+
+### ESP32 PIN Usage
+
+| Constant in Source | GPIO of ESP32 | Description                                           |
+|--------------------|:-------------:|-------------------------------------------------------|
+| PIN_DS_SOLAR       | 15            | Pin of temperature sensor (DS18B20) for solar storage |
+| PIN_DS_POOL        | 16            | Pin of temperature sensor (DS18B20) for pool water    |
+| PIN_RELAY_POOL     | 18            | Pin to connect relais for pool pump                   |
+| PIN_RELAY_SOLAR    | 19            | Pin to connect relais for solar pump                  |
+| PIN_BUTTON_MODE    | 21            | Pin for mode-cycle push-button (connect to GND)       |
 
 {{% alert note %}}
 TODO: improve PIN usage (see https://randomnerdtutorials.com/esp8266-pinout-reference-gpios/)
 {{% /alert %}}
+
+## Direct Control (Offline Operation)
+
+A single push-button connected to `PIN_BUTTON_MODE` allows cycling through all operation modes
+**without an internet or MQTT connection**:
+
+```
+auto → boost → timer → manu → auto → …
+```
+
+Wire the button between `PIN_BUTTON_MODE` and **GND**. The internal pull-up resistor is enabled
+automatically – no additional resistor is required.
+
+| Mode  | Behaviour while offline                                         |
+|-------|------------------------------------------------------------------|
+| auto  | Pumps controlled automatically by temperature                   |
+| boost | Both pumps forced on while below max. pool temperature          |
+| timer | Pool pump follows the configured timer window                   |
+| manu  | No automatic rule; pumps stay in their current on/off state     |
+
+Use **manu** mode to freeze the current pump state (e.g. pump on) regardless of temperature or
+timer, or **auto** / **boost** to hand control back to the automatic rules.
 
 ## Power Supply
 

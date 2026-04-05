@@ -11,6 +11,7 @@
 #include "ESP32TemperatureNode.hpp"
 #include "RelayModuleNode.hpp"
 #include "OperationModeNode.hpp"
+#include "ButtonControlNode.hpp"
 #include "Rule.hpp"
 #include "RuleManu.hpp"
 #include "RuleAuto.hpp"
@@ -26,6 +27,9 @@ const uint8_t PIN_DS_POOL  = 16;  // Pin of Temp-Sensor Pool
 
 const uint8_t PIN_RELAY_POOL  = 18;
 const uint8_t PIN_RELAY_SOLAR = 19;
+
+// Free GPIO for the mode-cycle push-button (connect between pin and GND)
+const uint8_t PIN_BUTTON_MODE = 21;
 #elif defined(ESP8266)
 
 // see: https://randomnerdtutorials.com/esp8266-pinout-reference-gpios/
@@ -34,6 +38,9 @@ const uint8_t PIN_DS_POOL  = D6;  // Pin of Temp-Sensor Pool
 
 const uint8_t PIN_RELAY_POOL  = D1;
 const uint8_t PIN_RELAY_SOLAR = D2;
+
+// Free GPIO for the mode-cycle push-button (connect between pin and GND)
+const uint8_t PIN_BUTTON_MODE = D7;
 #endif
 const uint8_t TEMP_READ_INTERVALL = 30;  //Sekunden zwischen Updates der Temperaturen.
 
@@ -57,12 +64,15 @@ RelayModuleNode solarPumpNode("solar-pump", "Solar Pump", PIN_RELAY_SOLAR);
 
 OperationModeNode operationModeNode("operation-mode", "Operation Mode");
 
+ButtonControlNode buttonControlNode("button-control", "Button Control", PIN_BUTTON_MODE, &operationModeNode);
+
 unsigned long _measurementInterval = 10;
 unsigned long _lastMeasurement;
 
 /**
  * Homie Setup handler.
  * Only called when wifi and mqtt are connected.
+ * Applies MQTT-fetched settings (intervals, temperatures, timer) to nodes.
  */
 void setupHandler() {
 
@@ -83,28 +93,6 @@ void setupHandler() {
   operationModeNode.setPoolMaxTemperature(temperatureMaxPoolSetting.get());
   operationModeNode.setSolarMinTemperature(temperatureMinSolarSetting.get());
   operationModeNode.setTemperatureHysteresis(temperatureHysteresisSetting.get());
-  TimerSetting ts      = operationModeNode.getTimerSetting();  //TODO: Configurable
-  ts.timerStartHour    = 10;
-  ts.timerStartMinutes = 30;
-  ts.timerEndHour      = 17;
-  ts.timerEndMinutes   = 30;
-  operationModeNode.setTimerSetting(ts);
-
-  operationModeNode.setPoolTemperatureNode(&poolTemperatureNode);
-  operationModeNode.setSolarTemperatureNode(&solarTemperatureNode);
-
-  // add the rules
-  RuleAuto* autoRule = new RuleAuto(&solarPumpNode, &poolPumpNode);
-  operationModeNode.addRule(autoRule);
-
-  RuleManu* manuRule = new RuleManu();
-  operationModeNode.addRule(manuRule);
-
-  RuleBoost* boostRule = new RuleBoost(&solarPumpNode, &poolPumpNode);
-  operationModeNode.addRule(boostRule);
-
-  RuleTimer* timerRule = new RuleTimer(&solarPumpNode, &poolPumpNode);
-  operationModeNode.addRule(timerRule);
 
   _lastMeasurement = 0;
 }
@@ -142,6 +130,30 @@ void setup() {
   operationModeSetting.setDefaultValue("auto").setValidator([](const char* candidate) {
     return (strcmp(candidate, "auto")) || (strcmp(candidate, "manu")) || (strcmp(candidate, "boost"));
   });
+
+  // Wire temperature sensors and rules before Homie.setup() so that
+  // rule evaluation works offline (without a WiFi / MQTT connection).
+  operationModeNode.setPoolTemperatureNode(&poolTemperatureNode);
+  operationModeNode.setSolarTemperatureNode(&solarTemperatureNode);
+
+  TimerSetting ts      = operationModeNode.getTimerSetting();  //TODO: Configurable
+  ts.timerStartHour    = 10;
+  ts.timerStartMinutes = 30;
+  ts.timerEndHour      = 17;
+  ts.timerEndMinutes   = 30;
+  operationModeNode.setTimerSetting(ts);
+
+  RuleAuto* autoRule = new RuleAuto(&solarPumpNode, &poolPumpNode);
+  operationModeNode.addRule(autoRule);
+
+  RuleManu* manuRule = new RuleManu();
+  operationModeNode.addRule(manuRule);
+
+  RuleBoost* boostRule = new RuleBoost(&solarPumpNode, &poolPumpNode);
+  operationModeNode.addRule(boostRule);
+
+  RuleTimer* timerRule = new RuleTimer(&solarPumpNode, &poolPumpNode);
+  operationModeNode.addRule(timerRule);
 
   //Homie.disableLogging();
   Homie.setSetupFunction(setupHandler);
