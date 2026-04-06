@@ -13,19 +13,23 @@ jobs:
   build:
     name: Lint Code Base
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      statuses: write
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Lint Code Base
-        uses: super-linter/super-linter@v8.6.0
+        uses: super-linter/super-linter@9e863354e3ff62e0727d37183162c4a88873df41 # v8.6.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_ALL_CODEBASE: false
           VALIDATE_JSCPD: false
 
       - name: Arduino Lint
-        uses: arduino/arduino-lint-action@v1.0.0
+        uses: arduino/arduino-lint-action@34273a972ebf4575065aaede94a51632888d7452 # v1.0.0
