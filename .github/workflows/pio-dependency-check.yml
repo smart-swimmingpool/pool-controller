@@ -1,0 +1,35 @@
+name: PlatformIO Dependency Check
+
+on:
+  schedule:
+    - cron: "0 8 * * 1"
+  workflow_dispatch:
+
+jobs:
+  check-dependencies:
+    name: Check PlatformIO Library Dependencies
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install PlatformIO
+        run: |
+          python -m pip install --upgrade pip
+          pip install platformio
+
+      - name: Check outdated packages (nodemcuv2)
+        run: pio pkg outdated --environment nodemcuv2
+        continue-on-error: true
+
+      - name: Check outdated packages (esp32dev)
+        run: pio pkg outdated --environment esp32dev
+        continue-on-error: true
