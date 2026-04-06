@@ -9,6 +9,8 @@ jobs:
   check-dependencies:
     name: Check PlatformIO Library Dependencies
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout
@@ -16,6 +18,8 @@ jobs:
 
       - name: Set up Python
         uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
       - name: Install PlatformIO
         run: |
