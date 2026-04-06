@@ -47,7 +47,6 @@ jobs:
       - name: Lint Code Base
         uses: super-linter/super-linter@v8.6.0
         env:
-          DEFAULT_BRANCH: main
           VALIDATE_ALL_CODEBASE: false
 
       - name: Arduino Lint
