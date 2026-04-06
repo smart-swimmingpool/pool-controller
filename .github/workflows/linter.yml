@@ -34,4 +34,3 @@ jobs:
           VALIDATE_BIOME_FORMAT: false
           VALIDATE_CHECKOV: false
           VALIDATE_JSCPD: false
-
