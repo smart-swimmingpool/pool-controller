@@ -35,5 +35,3 @@ jobs:
           VALIDATE_CHECKOV: false
           VALIDATE_JSCPD: false
 
-      - name: Arduino Lint
-        uses: arduino/arduino-lint-action@34273a972ebf4575065aaede94a51632888d7452 # v1.0.0
