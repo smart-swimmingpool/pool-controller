@@ -1,54 +1,36 @@
 ---
-###########################
-###########################
-## Linter GitHub Actions ##
-###########################
-###########################
 name: Lint Code Base
 
-#
 # Documentation:
 # https://help.github.com/en/articles/workflow-syntax-for-github-actions
-#
 
-#############################
-# Start the job on all push #
-#############################
 on:
   push:
     branches-ignore:
-      - 'main'
+      - "main"
 
-###############
-# Set the Job #
-###############
+permissions: read-all
+
 jobs:
   build:
-    # Name the Job
     name: Lint Code Base
-    # Set the agent to run on
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      statuses: write
 
-    ##################
-    # Load all steps #
-    ##################
     steps:
-      ##########################
-      # Checkout the code base #
-      ##########################
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
 
-      ################################
-      # Run Linter against code base #
-      ################################
       - name: Lint Code Base
-        uses: docker://github/super-linter:v2.1.0
+        uses: super-linter/super-linter@9e863354e3ff62e0727d37183162c4a88873df41 # v8.6.0
         env:
-          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_ALL_CODEBASE: false
-          VALIDATE_ANSIBLE: false
-
-      - name: Arduino Lint
-        uses: arduino/arduino-lint-action@v1.0.0
-
+          VALIDATE_BIOME_FORMAT: false
+          VALIDATE_CHECKOV: false
+          VALIDATE_JSCPD: false
