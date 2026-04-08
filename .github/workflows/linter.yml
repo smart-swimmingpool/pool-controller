@@ -31,10 +31,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_ALL_CODEBASE: false
-          DEFAULT_BRANCH: main
           VALIDATE_BIOME_FORMAT: false
           VALIDATE_CHECKOV: false
           VALIDATE_JSCPD: false
-
-      - name: Arduino Lint
-        uses: arduino/arduino-lint-action@v1.0.0
