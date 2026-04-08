@@ -25,6 +25,8 @@ public:
   void         setTimerSetting(TimerSetting setting) { _timerSetting = setting; };
   TimerSetting getTimerSetting() { return _timerSetting; };
 
+  virtual ~Rule() = default;
+
   /**
    * get the Mode for which the Rule is created.
    */
