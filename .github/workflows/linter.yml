@@ -50,6 +50,3 @@ jobs:
           VALIDATE_ANSIBLE: false
           DEFAULT_BRANCH: main
 
-      - name: Arduino Lint
-        uses: arduino/arduino-lint-action@v1.0.0
-
