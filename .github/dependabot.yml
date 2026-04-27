@@ -3,15 +3,8 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
-    labels:
-      - "dependencies"
-
-  - package-ecosystem: "pip"
+      interval: "daily"
+  - package-ecosystem: "platformio"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
-    labels:
-      - "dependencies"
+      interval: "daily"
