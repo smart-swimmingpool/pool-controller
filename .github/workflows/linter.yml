@@ -16,8 +16,9 @@ name: Lint Code Base
 #############################
 on:
   push:
-    branches-ignore:
+    branches:
       - 'main'
+      - 'check-actions'
 
 ###############
 # Set the Job #
@@ -47,7 +48,5 @@ jobs:
         env:
           VALIDATE_ALL_CODEBASE: false
           VALIDATE_ANSIBLE: false
-
-      - name: Arduino Lint
-        uses: arduino/arduino-lint-action@v1.0.0
+          DEFAULT_BRANCH: main
 
