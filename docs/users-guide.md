@@ -1,6 +1,6 @@
 ---
 title: Users Guide of Pool Controller
-summary: Control your Smart Swimming Pool smart
+summary: Control your Smart Swimming Pool in a smart way
 date: "2020-05-28"
 lastmod: "2020-06-02"
 draft: false
@@ -19,7 +19,7 @@ menu:
 
 ## Booting Controller
 
-Booting the controller, it will give feedback on establishing WiFi connection andconnection to MQTT broker:
+When booting the controller, it will provide feedback on establishing the WiFi connection and connection to the MQTT broker:
 
 * "LED" ![Slowly blinking LED](led_wifi.gif)
     Slowly when connecting to the Wi-Fi
@@ -35,12 +35,12 @@ There are some specific settings for the controller:
   - Unit: `°C`
   - Default value: `29`
 
-- **Solar min temperature:** The minimum temerature of the heat storage tank which should not be fall below.
+- **Solar min temperature:** The minimum temperature of the heat storage tank, which should not fall below.
 
   - Unit: `°C`
   - Default value: `50`
 
-- **Hysteresis:** Hysteresis in Kelvin which is used to verify if heating should be enabled or disabled to prevent fast toggeling.
+- **Hysteresis:** Hysteresis in Kelvin, which is used to verify if heating should be enabled or disabled to prevent fast toggling.
 
   - Unit: `K`
   - Default value: `1`
@@ -64,13 +64,11 @@ The pump for cleaning and solar heating are enabled/disabled completely manual a
 
 ### Rule: Timer
 
-This rule enables the cleaning pump based on timer settings.
-Solar heating is disabled.
+This rule enables the cleaning pump based on timer settings. Solar heating is disabled.
 
 ### Rule: Auto
 
-This rule enables the cleaning pump based on timer settings.
-Solar heating is enabled **smart** if cleaning pump is enabled by timer and the heat storage tank has enough temperature.
+This rule enables the cleaning pump based on timer settings. Solar heating is enabled **smartly** if the cleaning pump is enabled by timer and the heat storage tank has sufficient temperature.
 
 If the maximum temperature of the pool water is reached, the solar heating is disabled.
 
