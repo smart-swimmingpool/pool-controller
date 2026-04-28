@@ -1,4 +1,4 @@
-# Pool Controller 2.0 | 🏊 Smart Swimmingpool
+# Pool Controller 2.0 | 🏊 Smart Swimming Pool
 
 [![Smart Swimmingpool](https://img.shields.io/badge/%F0%9F%8F%8A%20-Smart%20Swimmingpool-blue.svg)](https://github.com/smart-swimmingpool)
 [![PlatformIO CI](https://github.com/smart-swimmingpool/pool-controller/workflows/PlatformIO%20CI/badge.svg)](https://github.com/smart-swimmingpool/pool-controller/actions?query=workflow%3A%22PlatformIO+CI%22)
@@ -9,9 +9,9 @@
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/J3J33A8DT)
 
-**🏊 The Homie 3.0 compatible Smart Swimmingpool Controller 🎛️**
+**🏊 The Homie 3.0 compatible Smart Swimming Pool Controller 🎛️**
 
-Manage your swmming pool on the smart way to enjoy it in confortable and cheap (less than 100€) way.
+Manage your swimming pool in a smart way to enjoy it comfortably and affordably (for less than 100€).
 
 Discussions: <https://github.com/smart-swimmingpool/smart-swimmingpool.github.io/discussions>
 
@@ -31,9 +31,9 @@ Discussions: <https://github.com/smart-swimmingpool/smart-swimmingpool.github.io
 - [ ] Configurable NTP Server (currently hardcoded: europe.pool.ntp.org)
 - [ ] be more smart: self learning for improved pool pump timed circulation for cleaning and heating
 - [ ] two separate circulation cycles
-- [ ] store configuration changes persistent on conroller
+- [ ] store configuration changes persistently on the controller
 - [ ] temperature based cleaning circulation time (colder == shorter, hotter == longer)
-- [ ] Improved sketch to work completly without WiFi connection
+- [ ] Improved sketch to work completely without WiFi connection
       - Homie should run without WiFi connection
       - enhance sketch using display and buttons to setup environment.
 - see also the [issue list](https://github.com/smart-swimmingpool/pool-controller/issues)

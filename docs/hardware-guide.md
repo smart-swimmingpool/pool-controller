@@ -15,22 +15,22 @@ menu:
     weight: 20
 ---
 
-This Hardware Guide will describe how to setup the hardware of the controller.
+This Hardware Guide describes how to set up the hardware of the controller.
 
 ## Parts List (BOM)
 
 - 1 * ESP8266 NodeMCU Controller ([Amazon](https://amzn.to/2Ze9DSh))
 - 2 * DS18B20 Temperature Sensors ([Amazon](https://amzn.to/2ZlfZ2c))
 - 1 * Relais-Module 5V ([Amazon](https://amzn.to/31RBd5s))
-- 1 * Breadboard and wires to connect (alternativly soldering of the circuit)
+- 1 * Breadboard and wires to connect (alternatively soldering of the circuit)
 
 ## Circuit
 
-The circuit of the controller could be found on following image based on a breadboard wireing:
+The circuit of the controller can be found in the following image based on a breadboard wiring:
 
 {{< figure library="true" src="../pool-controller_breadboard.png" title="Breadboard Circuit of Pool Controller" lightbox="true" >}}
 
-The source [Fritzing](https://fritzing.org/) file could be found in GitHub project: [pool-controller.fzz](https://github.com/smart-swimmingpool/pool-controller/raw/main/docs/pool-controller.fzz)
+The source [Fritzing](https://fritzing.org/) file can be found in the GitHub project: [pool-controller.fzz](https://github.com/smart-swimmingpool/pool-controller/raw/main/docs/pool-controller.fzz)
 
 ### ESP8266 PIN Usage
 
@@ -50,5 +50,4 @@ TODO: improve PIN usage (see https://randomnerdtutorials.com/esp8266-pinout-refe
 
 ## Power Supply
 
-In my environment I use the USB to power the ESP8266 via small USB-Power-Adapter andan additional
-230V power plug to be used as source for the power of the pumps which are switched via the relais.
+In my environment, I use USB to power the ESP8266 via a small USB power adapter and an additional 230V power plug as the source for the power of the pumps, which are switched via the relays.
