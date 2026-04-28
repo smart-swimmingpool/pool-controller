@@ -1,4 +1,4 @@
-# Pool Controller 3.1 | 🏊 Smart Swimmingpool
+# Pool Controller 3.1 | 🏊 Smart Swimming Pool
 
 [![Smart Swimmingpool](https://img.shields.io/badge/%F0%9F%8F%8A%20-Smart%20Swimmingpool-blue.svg)](https://github.com/smart-swimmingpool)
 [![PlatformIO CI](https://github.com/smart-swimmingpool/pool-controller/workflows/PlatformIO%20CI/badge.svg)](https://github.com/smart-swimmingpool/pool-controller/actions?query=workflow%3A%22PlatformIO+CI%22)
@@ -9,7 +9,7 @@
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/J3J33A8DT)
 
-## 🏊 The MQTT-enabled Smart Swimmingpool Controller 🎛️
+## 🏊 The MQTT-enabled Smart Swimming Pool Controller 🎛️
 
 Manage your swimming pool the smart way - enjoy it in a comfortable
 and affordable (less than 100€) way with professional-grade reliability.
