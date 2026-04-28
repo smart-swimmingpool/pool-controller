@@ -39,7 +39,7 @@ Manage your swimming pool in a smart way to enjoy it comfortably and affordably 
 - [x] [Homie 3.0](https://homieiot.github.io/) compatible MQTT messaging
 - [x] Independent of specific smarthome servers
   - [x] [openHAB](https://www.openhab.org) since Version 2.4 using MQTT Homie
-  - [x] [Home Assistant](home-assistant.io) using MQTT Homie
+  - [x] [Home Assistant](https://home-assistant.io) using MQTT Homie
 - [x] Timesync via NTP (europe.pool.ntp.org)
 - [x] Logging-Information via Homie-Node
 

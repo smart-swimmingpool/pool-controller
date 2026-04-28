@@ -87,7 +87,7 @@ Using Homie 3.0 it is possible to integrate **Smart Pool Controller** directly i
 
 The **Smart Swimmingpool Controller** could be integrated in [openHAB](https://www.openhab.org) since version 2.4.
 
-It is possible to interact with the controller to enable/disable the pump or to swith the current rule.
+It is possible to interact with the controller to enable/disable the pump or to switch the current rule.
 
 Also it is possible to monitor the current values of temperatures or states.
 
