@@ -22,7 +22,7 @@ This Hardware Guide describes how to set up the hardware of the controller.
 - 1 * ESP8266 NodeMCU Controller ([Amazon](https://amzn.to/2Ze9DSh))
 - 2 * DS18B20 Temperature Sensors ([Amazon](https://amzn.to/2ZlfZ2c))
 - 1 * Relais-Module 5V ([Amazon](https://amzn.to/31RBd5s))
-- 1 * Breadboard and wires to connect (alternativly soldering of the circuit)
+- 1 * Breadboard and wires to connect (alternatively soldering of the circuit)
 
 ## Circuit
 
