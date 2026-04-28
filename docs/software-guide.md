@@ -33,7 +33,7 @@ Many thanks to maintainers of these libraries!
 
 ## Defines
 
-Within the sources at `main.cpp` there are someconstant defined settings. For the PIN assignment
+Within the sources at `main.cpp`, there are some constant settings defined. For the PIN assignment,
 see also at [hardware guide](../hardware-guide/#esp8266-pin-usage).
 
 ```cpp
@@ -81,7 +81,7 @@ How to upload JSON config files see [Homie-esp8266 docu](https://homieiot.github
 
 ### Clearing retained messages
 
-In some cases some retained messages can be wanted and we don’t want to clear all the retained messages.
+In some cases, retained messages may be desired, and we don’t want to clear all retained messages.
 
 The messages will have to be cleared one by one using the topic
 

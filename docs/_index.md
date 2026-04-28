@@ -21,7 +21,7 @@ menu:
     weight: 10
 ---
 
-**🏊 The Homie 3.0 compatible Smart Swimmingpool Controller 🎛️**
+**🏊 The Homie 3.0 compatible Smart Swimming Pool Controller 🎛️**
 
 <span style="text-shadow: none;">
 <a class="github-button" href="https://github.com/smart-swimmingpool/pool-controller/subscription" data-size="large" data-show-count="true" aria-label="Watch smart-swimmingpool/pool-controller on GitHub">Watch</a>
@@ -30,7 +30,7 @@ menu:
 [GitHub Sources](https://github.com/smart-swimmingpool/pool-controller)
 </span>
 
-Manage your swmming pool on the smart way to enjoy it in confortable and cheap (less than 100€) way.
+Manage your swimming pool in a smart way to enjoy it comfortably and affordably (for less than 100€).
 
 ## Main Features
 
@@ -48,9 +48,9 @@ Manage your swmming pool on the smart way to enjoy it in confortable and cheap (
 - [ ] Configurable NTP Server (currently hardcoded: europe.pool.ntp.org)
 - [ ] Be more smart: self learning for improved pool pump timed circulation for cleaning and heating
 - [ ] Two separate circulation cycles
-- [ ] Store configuration changes persistent on conroller
+- [ ] Store configuration changes persistently on the controller
 - [ ] Temperature based cleaning circulation time (colder == shorter, hotter == longer)
-- [ ] Improved sketch to work completly without WiFi connection
+- [ ] Improved sketch to work completely without WiFi connection
 - [ ] Homie should run without WiFi connection
 - [ ] Enhance sketch using display and buttons to setup environment.
 - [ ] Use only one power supply for ESP8266 (5V) and relais (230V)
