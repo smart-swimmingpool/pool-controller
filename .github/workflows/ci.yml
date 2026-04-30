@@ -53,8 +53,9 @@ jobs:
       - name: Generate Semantic Version
         id: version
         run: |
-          # Get latest tag or start from 0.0.0
-          LATEST_TAG=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1 || echo "v0.0.0")
+          # Get latest tag or start from 0.0.0 (fix: ensure fallback works when no tags exist)
+          LATEST_TAG=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
+          LATEST_TAG=${LATEST_TAG:-v0.0.0}
           echo "Latest tag: $LATEST_TAG"
 
           # Parse version components
@@ -62,10 +63,12 @@ jobs:
           MINOR=$(echo $LATEST_TAG | sed 's/v//' | cut -d. -f2)
           PATCH=$(echo $LATEST_TAG | sed 's/v//' | cut -d. -f3)
 
-          # Check commit messages for version bumps (use --pretty=%s to get just subject, without SHA prefix)
-          COMMITS=$(git log ${LATEST_TAG}..HEAD --pretty=%s 2>/dev/null || git log --pretty=%s)
+          # Check commit messages for version bumps
+          # Get full commit messages (subject + body) to detect BREAKING CHANGE in footer
+          COMMITS=$(git log ${LATEST_TAG}..HEAD --format=%B 2>/dev/null || git log --format=%B)
 
-          if echo "$COMMITS" | grep -qE 'BREAKING CHANGE:|^.*!:'; then
+          # Check for BREAKING CHANGE in body (not just subject)
+          if echo "$COMMITS" | grep -qE 'BREAKING CHANGE:'; then
             MAJOR=$((MAJOR + 1))
             MINOR=0
             PATCH=0
