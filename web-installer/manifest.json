@@ -1,0 +1,13 @@
+{
+  "name": "Smart Swimmingpool Controller",
+  "new_install": {
+    "firmware": "firmware.bin",
+    "offset": 0
+  },
+  "updates": [
+    {
+      "firmware": "firmware.bin",
+      "offset": 0
+    }
+  ]
+}
