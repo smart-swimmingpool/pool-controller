@@ -62,8 +62,8 @@ jobs:
           MINOR=$(echo $LATEST_TAG | sed 's/v//' | cut -d. -f2)
           PATCH=$(echo $LATEST_TAG | sed 's/v//' | cut -d. -f3)
 
-          # Check commit messages for version bumps
-          COMMITS=$(git log ${LATEST_TAG}..HEAD --oneline 2>/dev/null || git log --oneline)
+          # Check commit messages for version bumps (use --pretty=%s to get just subject, without SHA prefix)
+          COMMITS=$(git log ${LATEST_TAG}..HEAD --pretty=%s 2>/dev/null || git log --pretty=%s)
 
           if echo "$COMMITS" | grep -qE 'BREAKING CHANGE:|^.*!:'; then
             MAJOR=$((MAJOR + 1))
@@ -154,10 +154,16 @@ jobs:
         run: |
           LATEST_TAG=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1 || echo "")
           if [ -z "$LATEST_TAG" ]; then
-            echo "changelog=$(git log --oneline --pretty=format:"- %s" | head -20)" >> $GITHUB_OUTPUT
+            CHANGELOG=$(git log --oneline --pretty=format:"- %s" | head -20)
           else
-            echo "changelog=$(git log ${LATEST_TAG}..HEAD --oneline --pretty=format:"- %s" 2>/dev/null || echo "Initial release")" >> $GITHUB_OUTPUT
+            CHANGELOG=$(git log ${LATEST_TAG}..HEAD --oneline --pretty=format:"- %s" 2>/dev/null || echo "Initial release")
           fi
+          # Use multiline format for GITHUB_OUTPUT (heredoc style)
+          {
+            echo "changelog<<EOF"
+            echo "$CHANGELOG"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
