@@ -1,0 +1,265 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 8 * * 1'  # Weekly on Monday
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  lint:
+    name: Lint Code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Super-Linter
+        uses: super-linter/super-linter/slim@v7
+        env:
+          VALIDATE_ALL_CODEBASE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALIDATE_ANSIBLE: false
+          VALIDATE_ARDUINO: true
+          VALIDATE_CHECKOV: false
+          VALIDATE_CLANG_FORMAT: false
+          VALIDATE_CPP: false
+          VALIDATE_EDITORCONFIG: false
+          VALIDATE_GITHUB_ACTIONS: false
+          VALIDATE_HTML_PRETTIER: false
+          VALIDATE_JSCPD: false
+          VALIDATE_MARKDOWN: false
+          VALIDATE_MARKDOWN_PRETTIER: false
+          VALIDATE_NATURAL_LANGUAGE: false
+          VALIDATE_YAML_PRETTIER: false
+
+  build:
+    name: Build Firmware
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [nodemcuv2, esp32dev]
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      version_tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate Semantic Version
+        id: version
+        run: |
+          # Get latest tag or start from 0.0.0 (fix: ensure fallback works when no tags exist)
+          LATEST_TAG=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
+          LATEST_TAG=${LATEST_TAG:-v0.0.0}
+          echo "Latest tag: $LATEST_TAG"
+
+          # Parse version components
+          MAJOR=$(echo $LATEST_TAG | sed 's/v//' | cut -d. -f1)
+          MINOR=$(echo $LATEST_TAG | sed 's/v//' | cut -d. -f2)
+          PATCH=$(echo $LATEST_TAG | sed 's/v//' | cut -d. -f3)
+
+          # Check commit messages for version bumps
+          # Get full commit messages (subject + body) to detect BREAKING CHANGE in footer
+          COMMITS=$(git log ${LATEST_TAG}..HEAD --format=%B 2>/dev/null || git log --format=%B)
+
+          # Check for BREAKING CHANGE in body or feat!:/type!: in subject
+          if echo "$COMMITS" | grep -qE 'BREAKING CHANGE:|^[a-z]+(\([^)]*\))?!:'; then
+            MAJOR=$((MAJOR + 1))
+            MINOR=0
+            PATCH=0
+          elif echo "$COMMITS" | grep -qE '^feat(\([^)]*\))?:'; then
+            MINOR=$((MINOR + 1))
+            PATCH=0
+          elif echo "$COMMITS" | grep -qE '^fix(\([^)]*\))?:|^bug(\([^)]*\))?:'; then
+            PATCH=$((PATCH + 1))
+          fi
+
+          NEW_VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+          echo "version=${MAJOR}.${MINOR}.${PATCH}" >> $GITHUB_OUTPUT
+          echo "tag=${NEW_VERSION}" >> $GITHUB_OUTPUT
+          echo "Generated version: $NEW_VERSION"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install PlatformIO
+        run: |
+          python -m pip install --upgrade pip
+          pip install platformio
+
+      - name: Build Firmware (${{ matrix.environment }})
+        run: platformio run -e ${{ matrix.environment }}
+
+      - name: Upload Firmware Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ matrix.environment }}
+          path: |
+            .pio/build/${{ matrix.environment }}/firmware.bin
+            .pio/build/${{ matrix.environment }}/bootloader.bin
+            .pio/build/${{ matrix.environment }}/partitions.bin
+          retention-days: 90
+
+  codeql:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: cpp
+          queries: security-and-quality
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install PlatformIO
+        run: |
+          python -m pip install --upgrade pip
+          pip install platformio
+
+      - name: Build for CodeQL
+        run: platformio run
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+  release:
+    name: Create Release
+    needs: [lint, build]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download All Firmware Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Prepare Release Assets
+        run: |
+          mkdir -p release-assets
+          cp artifacts/firmware-nodemcuv2/firmware.bin release-assets/firmware-nodemcuv2.bin
+          cp artifacts/firmware-esp32dev/firmware.bin release-assets/firmware-esp32dev.bin
+          # ESP32 bootloader and partition table (may not exist for all boards)
+          if [ -f artifacts/firmware-esp32dev/bootloader.bin ]; then
+            cp artifacts/firmware-esp32dev/bootloader.bin release-assets/bootloader-esp32dev.bin
+          else
+            echo "::notice::bootloader.bin not found for esp32dev - skipping"
+          fi
+          if [ -f artifacts/firmware-esp32dev/partitions.bin ]; then
+            cp artifacts/firmware-esp32dev/partitions.bin release-assets/partitions-esp32dev.bin
+          else
+            echo "::notice::partitions.bin not found for esp32dev - skipping"
+          fi
+
+      - name: Generate Changelog
+        id: changelog
+        run: |
+          LATEST_TAG=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1 || echo "")
+          if [ -z "$LATEST_TAG" ]; then
+            CHANGELOG=$(git log --oneline --pretty=format:"- %s" | head -20)
+          else
+            CHANGELOG=$(git log ${LATEST_TAG}..HEAD --oneline --pretty=format:"- %s" 2>/dev/null || echo "Initial release")
+          fi
+          # Use multiline format for GITHUB_OUTPUT (heredoc style)
+          {
+            echo "changelog<<EOF"
+            echo "$CHANGELOG"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.build.outputs.version_tag }}
+          name: Release ${{ needs.build.outputs.version_tag }}
+          body: |
+            ## Changes
+            ${{ steps.changelog.outputs.changelog }}
+
+            ## Firmware
+            - `nodemcuv2` (ESP8266)
+            - `esp32dev` (ESP32)
+
+            ## Installation
+            Use PlatformIO to flash: `platformio run -e <env> -t upload`
+          files: |
+            release-assets/*.bin
+          draft: false
+          prerelease: false
+        env:
+          # Use GH_PAT (Personal Access Token with 'repo' scope, stored as a repository secret)
+          # if available so the created release/tag can trigger other workflow_run events.
+          # Releases created with GITHUB_TOKEN do NOT trigger downstream workflow_run events.
+          GITHUB_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+
+  notify-website:
+    name: Notify Website
+    needs: release
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Dispatch to Website Repository
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.HUGO_DEPLOY_TOKEN }}
+          repository: smart-swimmingpool/website
+          event-type: doc_update
+
+  dependency-check:
+    name: Check Dependencies
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install PlatformIO
+        run: |
+          python -m pip install --upgrade pip
+          pip install platformio
+
+      - name: Check Outdated Packages
+        run: |
+          echo "## PlatformIO Dependency Status" >> $GITHUB_STEP_SUMMARY
+          echo "### nodemcuv2" >> $GITHUB_STEP_SUMMARY
+          pio pkg outdated -e nodemcuv2 >> $GITHUB_STEP_SUMMARY || true
+          echo "### esp32dev" >> $GITHUB_STEP_SUMMARY
+          pio pkg outdated -e esp32dev >> $GITHUB_STEP_SUMMARY || true

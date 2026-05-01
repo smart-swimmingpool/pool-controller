@@ -17,6 +17,12 @@ menu:
 
 ## Setup
 
+## 🏊 Web-Installer
+
+Du kannst die Firmware bequem über den Webbrowser flashen: **[Web-Installer öffnen](https://smart-swimmingpool.github.io/pool-controller/)**
+
+Alternativ kannst du die Firmware auch manuell mit PlatformIO flashen (siehe [Software Guide](software-guide.md)).
+
 ## Booting Controller
 
 When booting the controller, it will provide feedback on establishing the WiFi connection and connection to the MQTT broker:

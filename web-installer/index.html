@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Swimmingpool Controller - Web Installer</title>
+  <style>
+    :root {
+      --primary: #0077be;
+      --primary-dark: #005a8c;
+      --secondary: #00a8e8;
+      --accent: #00d4ff;
+      --bg: #f0f8ff;
+      --text: #1a1a2e;
+      --card-bg: #ffffff;
+      --shadow: 0 4px 20px rgba(0, 119, 190, 0.15);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(135deg, var(--bg) 0%, #e0f0ff 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      color: var(--text);
+    }
+
+    .container {
+      max-width: 600px;
+      width: 100%;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      padding: 40px 30px;
+      text-align: center;
+      color: white;
+    }
+
+    .header h1 {
+      font-size: 1.8rem;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .pool-icon {
+      font-size: 2.2rem;
+    }
+
+    .header p {
+      opacity: 0.9;
+      font-size: 1rem;
+    }
+
+    .content {
+      padding: 30px;
+    }
+
+    .info-box {
+      background: #e8f4f8;
+      border-left: 4px solid var(--secondary);
+      padding: 15px 20px;
+      margin-bottom: 20px;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .info-box h3 {
+      color: var(--primary);
+      margin-bottom: 8px;
+      font-size: 1rem;
+    }
+
+    .info-box p {
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: #4a5568;
+    }
+
+    .steps {
+      margin: 20px 0;
+    }
+
+    .step {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 15px;
+      align-items: flex-start;
+    }
+
+    .step-number {
+      background: var(--secondary);
+      color: white;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    .step-content {
+      flex: 1;
+    }
+
+    .step-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .step-text {
+      font-size: 0.9rem;
+      color: #4a5568;
+    }
+
+    .install-button-wrapper {
+      margin-top: 25px;
+      text-align: center;
+    }
+
+    esp-web-install-button {
+      display: inline-block;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 20px;
+      border-top: 1px solid #e0e0e0;
+      font-size: 0.85rem;
+      color: #666;
+    }
+
+    .footer a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 480px) {
+      .header {
+        padding: 30px 20px;
+      }
+      .header h1 {
+        font-size: 1.4rem;
+      }
+      .content {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="header">
+        <h1>
+          <span class="pool-icon">🏊</span>
+          Smart Swimmingpool Controller
+        </h1>
+        <p>Web-basierte Firmware-Installation</p>
+      </div>
+
+      <div class="content">
+        <div class="info-box">
+          <h3>🔄 Was passiert nach dem Flashen?</h3>
+          <p>
+            Nach dem erfolgreichen Flashen der Firmware startet der Controller einen eigenen
+            WLAN-Access-Point. Verbinden Sie sich mit diesem, um Ihre WLAN-Zugangsdaten und die
+            MQTT-Broker-Adresse einzugeben. Dies ist der Homie 3.0 Standard für die Ersteinrichtung.
+          </p>
+        </div>
+
+        <div class="steps">
+          <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <div class="step-title">Klicken Sie auf "Firmware installieren"</div>
+              <div class="step-text">Der Web-Flasher verbindet sich mit Ihrem ESP8266 Controller.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <div class="step-title">Verbinden Sie Ihren Controller mit Strom</div>
+              <div class="step-text">Stellen Sie sicher, dass der ESP8266 per USB mit Strom versorgt wird.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+              <div class="step-title">Warten Sie auf die Verbindung</div>
+              <div class="step-text">Wählen Sie den richtigen COM-Port aus und folgen Sie den Anweisungen.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">4</div>
+            <div class="step-content">
+              <div class="step-title">WLAN und MQTT einrichten</div>
+              <div class="step-text">Nach dem Flashen öffnet der Controller einen Access-Point für die Konfiguration.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="install-button-wrapper">
+          <esp-web-install-button manifest="manifest.json"></esp-web-install-button>
+        </div>
+      </div>
+
+      <div class="footer">
+        <a href="docs/users-guide.html">← Zurück zum Benutzer-Handbuch</a>
+        <span style="margin: 0 10px;">|</span>
+        <a href="docs/software-guide.html">Software-Doku</a>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="https://unpkg.com/esp-web-tools@9/dist/web/install-button.js?module"></script>
+</body>
+</html>
