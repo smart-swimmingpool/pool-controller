@@ -41,6 +41,9 @@ jobs:
           VALIDATE_GITHUB_ACTIONS: false
           VALIDATE_HTML_PRETTIER: false
           VALIDATE_JSCPD: false
+          VALIDATE_JSON: false
+          VALIDATE_JSONC: true
+          VALIDATE_JSON_PRETTIER: false
           VALIDATE_MARKDOWN: false
           VALIDATE_MARKDOWN_PRETTIER: false
           VALIDATE_NATURAL_LANGUAGE: false
