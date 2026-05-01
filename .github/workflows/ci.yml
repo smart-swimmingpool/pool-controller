@@ -11,9 +11,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
-  packages: read
-  security-events: write
+  contents: read
 
 env:
   PYTHON_VERSION: '3.11'
@@ -110,6 +108,8 @@ jobs:
   codeql:
     name: CodeQL Analysis
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -141,6 +141,8 @@ jobs:
     needs: [lint, build]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
