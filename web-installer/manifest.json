@@ -1,12 +1,30 @@
 {
   "name": "Smart Swimmingpool Controller",
+  "version": "latest",
   "builds": [
     {
       "chipFamily": "ESP8266",
       "parts": [
         {
-          "path": "firmware.bin",
+          "path": "firmware-nodemcuv2.bin",
           "offset": 0
+        }
+      ]
+    },
+    {
+      "chipFamily": "ESP32",
+      "parts": [
+        {
+          "path": "bootloader-esp32dev.bin",
+          "offset": 4096
+        },
+        {
+          "path": "partitions-esp32dev.bin",
+          "offset": 32768
+        },
+        {
+          "path": "firmware-esp32dev.bin",
+          "offset": 65536
         }
       ]
     }

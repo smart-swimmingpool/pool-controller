@@ -67,8 +67,8 @@ jobs:
           # Get full commit messages (subject + body) to detect BREAKING CHANGE in footer
           COMMITS=$(git log ${LATEST_TAG}..HEAD --format=%B 2>/dev/null || git log --format=%B)
 
-          # Check for BREAKING CHANGE in body (not just subject)
-          if echo "$COMMITS" | grep -qE 'BREAKING CHANGE:'; then
+          # Check for BREAKING CHANGE in body or feat!:/type!: in subject
+          if echo "$COMMITS" | grep -qE 'BREAKING CHANGE:|^[a-z]+(\([^)]*\))?!:'; then
             MAJOR=$((MAJOR + 1))
             MINOR=0
             PATCH=0
@@ -152,6 +152,23 @@ jobs:
         with:
           path: artifacts
 
+      - name: Prepare Release Assets
+        run: |
+          mkdir -p release-assets
+          cp artifacts/firmware-nodemcuv2/firmware.bin release-assets/firmware-nodemcuv2.bin
+          cp artifacts/firmware-esp32dev/firmware.bin release-assets/firmware-esp32dev.bin
+          # ESP32 bootloader and partition table (may not exist for all boards)
+          if [ -f artifacts/firmware-esp32dev/bootloader.bin ]; then
+            cp artifacts/firmware-esp32dev/bootloader.bin release-assets/bootloader-esp32dev.bin
+          else
+            echo "::notice::bootloader.bin not found for esp32dev - skipping"
+          fi
+          if [ -f artifacts/firmware-esp32dev/partitions.bin ]; then
+            cp artifacts/firmware-esp32dev/partitions.bin release-assets/partitions-esp32dev.bin
+          else
+            echo "::notice::partitions.bin not found for esp32dev - skipping"
+          fi
+
       - name: Generate Changelog
         id: changelog
         run: |
@@ -184,12 +201,14 @@ jobs:
             ## Installation
             Use PlatformIO to flash: `platformio run -e <env> -t upload`
           files: |
-            artifacts/firmware-nodemcuv2/*.bin
-            artifacts/firmware-esp32dev/*.bin
+            release-assets/*.bin
           draft: false
           prerelease: false
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Use GH_PAT (Personal Access Token with 'repo' scope, stored as a repository secret)
+          # if available so the created release/tag can trigger other workflow_run events.
+          # Releases created with GITHUB_TOKEN do NOT trigger downstream workflow_run events.
+          GITHUB_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
 
   notify-website:
     name: Notify Website
