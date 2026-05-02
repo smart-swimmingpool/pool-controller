@@ -235,7 +235,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Dispatch to Website Repository
-        uses: peter-evans/repository-dispatch@v3
+        uses: peter-evans/repository-dispatch@v4
         with:
           token: ${{ secrets.HUGO_DEPLOY_TOKEN }}
           repository: smart-swimmingpool/website
