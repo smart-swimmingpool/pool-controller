@@ -18,7 +18,8 @@ Dieser Plan beschreibt die schrittweise Verbesserung der Softwarearchitektur des
 - Fehlende Unit Tests
 - Globale Abhängigkeiten (z. B. Homie-Logger)
 - Keine Persistenz für Konfigurationen
-- Plattformabhängiger Code (ESP32 vs. ESP8266)
+
+**Hinweis**: ESP8266 Support wurde entfernt - Fokus auf ESP32
 
 ---
 
@@ -31,7 +32,7 @@ Dieser Plan beschreibt die schrittweise Verbesserung der Softwarearchitektur des
 | Reduzierung von Code-Duplikation | ⭐⭐⭐⭐ | Keine duplizierte Logik in `git grep` |
 | Verbesserung der Testbarkeit | ⭐⭐⭐⭐ | Mocking von Hardware-Abhängigkeiten möglich |
 | Persistenz für Konfiguration | ⭐⭐⭐ | Einstellungen überleben Reset |
-| Plattformunabhängigkeit | ⭐⭐ | Ein Code für ESP32 und ESP8266 |
+| ESP32 Optimierung | ⭐⭐⭐ | Volle ESP32-Funktionalität ohne ESP8266-Kompromisse |
 
 ---
 

@@ -54,7 +54,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        environment: [nodemcuv2, esp32dev]
+        environment: [esp32dev]
     outputs:
       version: ${{ steps.version.outputs.version }}
       version_tag: ${{ steps.version.outputs.tag }}
@@ -173,9 +173,8 @@ jobs:
       - name: Prepare Release Assets
         run: |
           mkdir -p release-assets
-          cp artifacts/firmware-nodemcuv2/firmware.bin release-assets/firmware-nodemcuv2.bin
           cp artifacts/firmware-esp32dev/firmware.bin release-assets/firmware-esp32dev.bin
-          # ESP32 bootloader and partition table (may not exist for all boards)
+          # ESP32 bootloader and partition table
           if [ -f artifacts/firmware-esp32dev/bootloader.bin ]; then
             cp artifacts/firmware-esp32dev/bootloader.bin release-assets/bootloader-esp32dev.bin
           else
@@ -262,8 +261,6 @@ jobs:
       - name: Check Outdated Packages
         run: |
           echo "## PlatformIO Dependency Status" >> $GITHUB_STEP_SUMMARY
-          echo "### nodemcuv2" >> $GITHUB_STEP_SUMMARY
-          pio pkg outdated -e nodemcuv2 >> $GITHUB_STEP_SUMMARY || true
           echo "### esp32dev" >> $GITHUB_STEP_SUMMARY
           pio pkg outdated -e esp32dev >> $GITHUB_STEP_SUMMARY || true
 

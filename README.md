@@ -11,9 +11,10 @@
 
 **🏊 The Homie 3.0 compatible Smart Swimming Pool Controller 🎛️**
 
-Manage your swimming pool in a smart way to enjoy it comfortably and affordably (for less than 100€).
+Manage your swimming pool in a smart way to enjoy it comfortably and affordably.
 
-Discussions: <https://github.com/smart-swimmingpool/smart-swimmingpool.github.io/discussions>
+**Platform**: ESP32 only  
+**Discussions**: <https://github.com/smart-swimmingpool/smart-swimmingpool.github.io/discussions>
 
 ## Main Features
 
@@ -46,7 +47,7 @@ Discussions: <https://github.com/smart-swimmingpool/smart-swimmingpool.github.io
 
 ## Credits
 
-- [Community of Homie-ESP8266](https://gitter.im/homie-iot/ESP8266)
+- [Community of Homie for ESP32](https://homieiot.github.io/)
 - [Lübbe Onken](http://github.com/luebbe) for `TimeClientHelper`
 - [Ian Hubbertz](https://github.com/euphi) for [HomieLoggerNode](https://github.com/euphi/HomieLoggerNode)
 

@@ -33,9 +33,7 @@ LoggerNode LN;
 
 DallasTemperatureNode solarTemperatureNode("solar-temp", "Solar Temperature", PlatformPins::DS_SOLAR, TEMP_READ_INTERVAL);
 DallasTemperatureNode poolTemperatureNode("pool-temp", "Pool Temperature", PlatformPins::DS_POOL, TEMP_READ_INTERVAL);
-#ifdef ESP32
 ESP32TemperatureNode ctrlTemperatureNode("controller-temp", "Controller Temperature", TEMP_READ_INTERVAL);
-#endif
 RelayModuleNode poolPumpNode("pool-pump", "Pool Pump", PlatformPins::RELAY_POOL);
 RelayModuleNode solarPumpNode("solar-pump", "Solar Pump", PlatformPins::RELAY_SOLAR);
 
