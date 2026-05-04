@@ -19,8 +19,8 @@ OperationModeNode::OperationModeNode(const char* id, const char* name, const int
 /**
  *
  */
-void OperationModeNode::addRule(Rule* rule) {
-  _ruleVec.PushBack(rule);
+void OperationModeNode::addRule(std::unique_ptr<Rule> rule) {
+  _ruleVec.PushBack(std::move(rule));
 }
 
 /**
@@ -29,7 +29,7 @@ void OperationModeNode::addRule(Rule* rule) {
 Rule* OperationModeNode::getRule() {
   Homie.getLogger() << F("getRule: mode=") << _mode << endl;
 
-  for (int i = 0; i < _ruleVec.Size(); i++) {
+  for (size_t i = 0; i < _ruleVec.Size(); i++) {
     if (_mode.equals(_ruleVec[i]->getMode())) {
       Homie.getLogger() << F("getRule: Active Rule: ") << _ruleVec[i]->getMode() << endl;
       //update the properties
@@ -41,7 +41,7 @@ Rule* OperationModeNode::getRule() {
       _ruleVec[i]->setPoolTemperature(_currentPoolTempNode->getTemperature());
       _ruleVec[i]->setSolarTemperature(_currentSolarTempNode->getTemperature());
 
-      return _ruleVec[i];
+      return _ruleVec[i].get();
     }
   }
 

@@ -7,6 +7,7 @@
 
 #include <Homie.hpp>
 #include <Vector.h>
+#include <memory>
 
 #include "DallasTemperatureNode.hpp"
 #include "Rule.hpp"
@@ -17,17 +18,13 @@ class OperationModeNode : public HomieNode {
 
 public:
   OperationModeNode(const char* id, const char* name, const int measurementInterval = MEASUREMENT_INTERVAL);
-  ~OperationModeNode() {
-    // This could cause use after free - to bad it is designed that way
-    for (int i = 0; i < _ruleVec.Size(); i++)  // Delete ruleset on deletion of this object
-      delete _ruleVec[i];
-  }
+  ~OperationModeNode() = default;
 
   void          setMeasurementInterval(unsigned long interval) { _measurementInterval = interval; }
   unsigned long getMeasurementInterval() const { return _measurementInterval; }
   bool          setMode(String mode);
   String        getMode();
-  void          addRule(Rule* rule);
+  void          addRule(std::unique_ptr<Rule> rule);
   Rule*         getRule();
 
   void setPoolTemperatureNode(DallasTemperatureNode* node) { _currentPoolTempNode = node; };
@@ -91,7 +88,7 @@ private:
   float         _poolMaxTemp;
   float         _solarMinTemp;
   float         _hysteresis;
-  Vector<Rule*> _ruleVec;
+  Vector<std::unique_ptr<Rule>> _ruleVec;
 
   DallasTemperatureNode* _currentPoolTempNode;
   DallasTemperatureNode* _currentSolarTempNode;

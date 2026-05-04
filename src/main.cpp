@@ -93,18 +93,11 @@ void setupHandler() {
   operationModeNode.setPoolTemperatureNode(&poolTemperatureNode);
   operationModeNode.setSolarTemperatureNode(&solarTemperatureNode);
 
-  // add the rules
-  RuleAuto* autoRule = new RuleAuto(&solarPumpNode, &poolPumpNode);
-  operationModeNode.addRule(autoRule);
-
-  RuleManu* manuRule = new RuleManu();
-  operationModeNode.addRule(manuRule);
-
-  RuleBoost* boostRule = new RuleBoost(&solarPumpNode, &poolPumpNode);
-  operationModeNode.addRule(boostRule);
-
-  RuleTimer* timerRule = new RuleTimer(&solarPumpNode, &poolPumpNode);
-  operationModeNode.addRule(timerRule);
+  // add the rules - using unique_ptr for automatic memory management
+  operationModeNode.addRule(std::make_unique<RuleAuto>(&solarPumpNode, &poolPumpNode));
+  operationModeNode.addRule(std::make_unique<RuleManu>());
+  operationModeNode.addRule(std::make_unique<RuleBoost>(&solarPumpNode, &poolPumpNode));
+  operationModeNode.addRule(std::make_unique<RuleTimer>(&solarPumpNode, &poolPumpNode));
 
   _lastMeasurement = 0;
 }
