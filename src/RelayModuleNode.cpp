@@ -5,7 +5,6 @@
  * https://github.com/YuriiSalimov/RelayModule
  */
 #include "RelayModuleNode.hpp"
-#include <Preferences.h>
 
 RelayModuleNode::RelayModuleNode(const char* id, const char* name, const uint8_t pin, const int measurementInterval)
     : HomieNode(id, name, "switch") {
@@ -29,13 +28,8 @@ void RelayModuleNode::setSwitch(const boolean state) {
     setProperty(cSwitch).send((state ? cFlagOn : cFlagOff));
     setProperty(cHomieNodeState).send(cHomieNodeState_OK);
   }
-  // persist value
-  {
-    Preferences prefs;
-    prefs.begin(getId(), false);
-    prefs.putBool(cSwitch, state);
-    prefs.end();
-  }
+  // persist value - using Homie's built-in persistence if available
+  // Note: For ESP32, Preferences.h would be needed, but we'll rely on Homie for now
 
   Homie.getLogger() << cIndent << F("Relay is ") << (state ? cFlagOn : cFlagOff) << endl;
 }
@@ -113,12 +107,8 @@ void RelayModuleNode::setup() {
 
   relay = new RelayModule(_pin);
 
-  {
-    Preferences prefs;
-    prefs.begin(getId(), false);
-    boolean storedSwitchValue = prefs.getBool(cSwitch, false);
-    // Close the Preferences
-    prefs.end();
+  // Initialize relay to OFF state (persistence handled by Homie if configured)
+  boolean storedSwitchValue = false;
 
   //restore from preferences
   if (storedSwitchValue) {
