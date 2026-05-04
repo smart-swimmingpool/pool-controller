@@ -101,7 +101,7 @@ void setup() {
   //WiFi.setSleepMode(WIFI_NONE_SLEEP); //see: https://github.com/esp8266/Arduino/issues/5083
 
   //default intervall of sending Temperature values
-  loopIntervalSetting.setDefaultValue(TEMP_READ_INTERVALL).setValidator([](long candidate) {
+  loopIntervalSetting.setDefaultValue(TEMP_READ_INTERVAL).setValidator([](long candidate) {
     return (candidate >= 0) && (candidate <= 300);
   });
 
