@@ -1,6 +1,6 @@
 /**
  * Pin definitions for Smart Swimming Pool Controller (ESP32 only)
- * 
+ *
  * This project now focuses on ESP32 platform only.
  */
 

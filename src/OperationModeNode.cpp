@@ -39,7 +39,7 @@ Rule* OperationModeNode::getRule() {
       Homie.getLogger() << F("✖ getRule: Rule at index ") << i << F(" is null!") << endl;
       continue;
     }
-    
+
     if (_mode.equals(_ruleVec[i]->getMode())) {
       Homie.getLogger() << F("getRule: Active Rule: ") << _ruleVec[i]->getMode() << endl;
       //update the properties
