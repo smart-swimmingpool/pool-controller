@@ -29,7 +29,17 @@ void OperationModeNode::addRule(std::unique_ptr<Rule> rule) {
 Rule* OperationModeNode::getRule() {
   Homie.getLogger() << F("getRule: mode=") << _mode << endl;
 
+  if (_ruleVec.Size() == 0) {
+    Homie.getLogger() << F("✖ getRule: No rules configured!") << endl;
+    return nullptr;
+  }
+
   for (size_t i = 0; i < _ruleVec.Size(); i++) {
+    if (_ruleVec[i] == nullptr) {
+      Homie.getLogger() << F("✖ getRule: Rule at index ") << i << F(" is null!") << endl;
+      continue;
+    }
+    
     if (_mode.equals(_ruleVec[i]->getMode())) {
       Homie.getLogger() << F("getRule: Active Rule: ") << _ruleVec[i]->getMode() << endl;
       //update the properties
@@ -45,6 +55,7 @@ Rule* OperationModeNode::getRule() {
     }
   }
 
+  Homie.getLogger() << F("✖ getRule: No rule found for mode '") << _mode << F("'") << endl;
   return nullptr;
 }
 
@@ -103,10 +114,10 @@ void OperationModeNode::loop() {
     Homie.getLogger() << F("〽 OperatioalMode update rule ") << endl;
     //call loop to evaluate the current rule
     Rule* rule = getRule();
-    if( rule != nullptr) {
+    if (rule != nullptr) {
       rule->loop();
     } else {
-      Homie.getLogger() << cIndent << F("✖ no rule defined: ") << _mode << endl;
+      Homie.getLogger() << cIndent << F("✖ no rule defined for mode: ") << _mode << endl;
     }
     if (Homie.isConnected()) {
 /*
