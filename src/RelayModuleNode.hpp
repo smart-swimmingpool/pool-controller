@@ -7,7 +7,6 @@
 
 #include <Homie.hpp>
 #include <RelayModule.h>
-#include <Preferences.h>
 
 class RelayModuleNode : public HomieNode {
 
@@ -52,8 +51,6 @@ private:
   unsigned long _measurementInterval;
   unsigned long _lastMeasurement;
   RelayModule*  relay = NULL;
-
-  Preferences preferences;
 
   void printCaption();
 };
