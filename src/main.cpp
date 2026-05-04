@@ -7,6 +7,7 @@
 #include <Arduino.h>
 #include <Homie.h>
 #include <SPI.h>
+#include "platform/PinDefinitions.hpp"
 #include "DallasTemperatureNode.hpp"
 #include "ESP32TemperatureNode.hpp"
 #include "RelayModuleNode.hpp"
@@ -20,23 +21,6 @@
 #include "LoggerNode.hpp"
 #include "TimeClientHelper.hpp"
 
-#ifdef ESP32
-const uint8_t PIN_DS_SOLAR = 15;  // Pin of Temp-Sensor Solar
-const uint8_t PIN_DS_POOL  = 16;  // Pin of Temp-Sensor Pool
-
-const uint8_t PIN_RELAY_POOL  = 18;
-const uint8_t PIN_RELAY_SOLAR = 19;
-#elif defined(ESP8266)
-
-// see: https://randomnerdtutorials.com/esp8266-pinout-reference-gpios/
-const uint8_t PIN_DS_SOLAR = D5;  // Pin of Temp-Sensor Solar
-const uint8_t PIN_DS_POOL  = D6;  // Pin of Temp-Sensor Pool
-
-const uint8_t PIN_RELAY_POOL  = D1;
-const uint8_t PIN_RELAY_SOLAR = D2;
-#endif
-const uint8_t TEMP_READ_INTERVALL = 30;  //Sekunden zwischen Updates der Temperaturen.
-
 HomieSetting<long> loopIntervalSetting("loop-interval", "The processing interval in seconds");
 
 HomieSetting<double> temperatureMaxPoolSetting("temperature-max-pool", "Maximum temperature of solar");
@@ -47,13 +31,13 @@ HomieSetting<const char*> operationModeSetting("operation-mode", "Operational Mo
 
 LoggerNode LN;
 
-DallasTemperatureNode solarTemperatureNode("solar-temp", "Solar Temperature", PIN_DS_SOLAR, TEMP_READ_INTERVALL);
-DallasTemperatureNode poolTemperatureNode("pool-temp", "Pool Temperature", PIN_DS_POOL, TEMP_READ_INTERVALL);
+DallasTemperatureNode solarTemperatureNode("solar-temp", "Solar Temperature", PlatformPins::DS_SOLAR, TEMP_READ_INTERVAL);
+DallasTemperatureNode poolTemperatureNode("pool-temp", "Pool Temperature", PlatformPins::DS_POOL, TEMP_READ_INTERVAL);
 #ifdef ESP32
-ESP32TemperatureNode ctrlTemperatureNode("controller-temp", "Controller Temperature", TEMP_READ_INTERVALL);
+ESP32TemperatureNode ctrlTemperatureNode("controller-temp", "Controller Temperature", TEMP_READ_INTERVAL);
 #endif
-RelayModuleNode poolPumpNode("pool-pump", "Pool Pump", PIN_RELAY_POOL);
-RelayModuleNode solarPumpNode("solar-pump", "Solar Pump", PIN_RELAY_SOLAR);
+RelayModuleNode poolPumpNode("pool-pump", "Pool Pump", PlatformPins::RELAY_POOL);
+RelayModuleNode solarPumpNode("solar-pump", "Solar Pump", PlatformPins::RELAY_SOLAR);
 
 OperationModeNode operationModeNode("operation-mode", "Operation Mode");
 
