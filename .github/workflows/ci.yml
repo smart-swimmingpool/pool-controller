@@ -112,7 +112,7 @@ jobs:
         run: platformio run -e ${{ matrix.environment }}
 
       - name: Upload Firmware Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: firmware-${{ matrix.environment }}
           path: |
