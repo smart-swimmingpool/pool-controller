@@ -105,8 +105,8 @@ See [CHANGELOG.md](CHANGELOG.md) for complete details.
 
 Configure your preferred MQTT protocol in the device settings:
 
-- `mqtt-protocol = "homie"` - Homie 3.0 convention (default)
-- `mqtt-protocol = "homeassistant"` - Home Assistant native discovery
+- `mqtt-protocol = "homeassistant"` - Home Assistant native discovery **(default)**
+- `mqtt-protocol = "homie"` - Homie 3.0 convention
 
 See [docs/mqtt-configuration.md](docs/mqtt-configuration.md) for setup details.
 

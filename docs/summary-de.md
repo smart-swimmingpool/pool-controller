@@ -107,9 +107,9 @@ if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval))
 
 ```json
 {
-  "mqtt-protocol": "homie"           // Standard (Homie 3.0)
+  "mqtt-protocol": "homeassistant"   // Standard (Home Assistant Discovery)
   // ODER
-  "mqtt-protocol": "homeassistant"   // Home Assistant Discovery
+  "mqtt-protocol": "homie"           // Homie 3.0 (Legacy)
 }
 ```
 
@@ -240,7 +240,7 @@ if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval))
 
 1. Mit WiFi-AP des Geräts verbinden (beim ersten Start)
 2. Zur Konfigurationsseite navigieren
-3. "mqtt-protocol" auf "homie" oder "homeassistant" setzen
+3. "mqtt-protocol" auf "homeassistant" (Standard) oder "homie" setzen
 4. Speichern und neu starten
 
 #### Via config.json

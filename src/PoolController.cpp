@@ -371,7 +371,7 @@ auto PoolControllerContext::setup() -> void {
     return std::strcmp(candidate, "auto") == 0 || std::strcmp(candidate, "manu") == 0 || std::strcmp(candidate, "boost") == 0;
   });
 
-  this->mqttProtocolSetting_.setDefaultValue("homie").setValidator([](const char *const candidate) -> bool {
+  this->mqttProtocolSetting_.setDefaultValue("homeassistant").setValidator([](const char *const candidate) -> bool {
     return std::strcmp(candidate, "homie") == 0 || std::strcmp(candidate, "homeassistant") == 0;
   });
 

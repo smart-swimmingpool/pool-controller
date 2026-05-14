@@ -2,29 +2,29 @@
 
 The Pool Controller now supports two MQTT protocols:
 
-## 1. Homie Convention (Default)
-
-The [Homie Convention](https://homieiot.github.io/) provides a standardized
-MQTT device discovery convention.
-
-To use Homie (default):
-
-```json
-{
-  "mqtt-protocol": "homie"
-}
-```
-
-## 2. Home Assistant MQTT Discovery
+## 1. Home Assistant MQTT Discovery **(Default)**
 
 [Home Assistant MQTT Discovery](https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery)
 allows automatic device discovery in Home Assistant.
 
-To use Home Assistant:
+To use Home Assistant (default):
 
 ```json
 {
   "mqtt-protocol": "homeassistant"
+}
+```
+
+## 2. Homie Convention (Legacy)
+
+The [Homie Convention](https://homieiot.github.io/) provides a standardized
+MQTT device discovery convention.
+
+To use Homie:
+
+```json
+{
+  "mqtt-protocol": "homie"
 }
 ```
 
@@ -37,7 +37,7 @@ You can set the MQTT protocol in the Homie configuration UI or in the
 
 1. Connect to the device's WiFi AP during initial setup
 2. Navigate to the configuration page
-3. Set "mqtt-protocol" to either "homie" or "homeassistant"
+3. Set "mqtt-protocol" to either "homeassistant" (default) or "homie"
 4. Save and reboot
 
 ### Via config.json
@@ -108,7 +108,7 @@ Both protocols support:
 
 If you're migrating from Homie to Home Assistant or vice versa:
 
-1. Update the `mqtt-protocol` setting
+1. Update the `mqtt-protocol` setting (default: "homeassistant")
 2. Reboot the device
 3. The device will automatically start publishing in the new format
 4. Update your home automation system to use the new topics

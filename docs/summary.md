@@ -112,7 +112,7 @@ setProperty(cTemperature).send(buffer);
 
 1. Connect to device WiFi AP during setup
 2. Navigate to configuration page
-3. Set "mqtt-protocol" to "homie" or "homeassistant"
+3. Set "mqtt-protocol" to "homeassistant" (default) or "homie"
 4. Save and reboot
 
 **Via config.json**:

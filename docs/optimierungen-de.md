@@ -171,7 +171,7 @@ Controller für einen zuverlässigen 24/7-Betrieb.
 
 1. Mit dem WiFi-AP des Geräts verbinden
 2. Zur Konfigurationsseite navigieren
-3. "mqtt-protocol" auf "homie" oder "homeassistant" setzen
+3. "mqtt-protocol" auf "homeassistant" (Standard) oder "homie" setzen
 4. Speichern und neu starten
 
 #### Via config.json
