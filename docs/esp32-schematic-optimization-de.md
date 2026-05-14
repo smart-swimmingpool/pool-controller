@@ -37,19 +37,19 @@ Verwendete Hardware laut Doku:
 
 1. **DS18B20 war auf GPIO15 (Strapping-Pin)**
 
-   GPIO15 ist beim ESP32 ein Boot-Strapping-Pin.
-   Ein OneWire-Bus mit Pull-up auf diesem Pin kann das Boot-Verhalten negativ
-   beeinflussen.
+    GPIO15 ist beim ESP32 ein Boot-Strapping-Pin.
+    Ein OneWire-Bus mit Pull-up auf diesem Pin kann das Boot-Verhalten negativ
+    beeinflussen.
 
 1. **Relais-/Versorgungskopplung**
 
-   5V-Relaismodule können Schaltstörungen verursachen (Spikes/Noise).
-   Ohne saubere Trennung von Logik- und Lastversorgung steigt das Risiko von
-   Resets und Messrauschen.
+    5V-Relaismodule können Schaltstörungen verursachen (Spikes/Noise).
+    Ohne saubere Trennung von Logik- und Lastversorgung steigt das Risiko von
+    Resets und Messrauschen.
 
 1. **Fehlende explizite Fail-Safe-Definition im Schaltplan**
 
-   Beim Start oder Reset darf keine Pumpe unbeabsichtigt einschalten.
+    Beim Start oder Reset darf keine Pumpe unbeabsichtigt einschalten.
 
 ## 3) Optimierter ESP32-Vorschlag
 
