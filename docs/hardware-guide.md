@@ -19,7 +19,7 @@ This Hardware Guide describes how to set up the hardware of the controller.
 
 {{% alert note %}}
 For an ESP32-focused wiring analysis and optimization (sensors and relays), see
-`docs/esp32-schematic-optimization-de.md`.
+`docs/esp32-schematic-optimization-de.md` (German / DE).
 {{% /alert %}}
 
 ## Parts List (BOM)
@@ -65,7 +65,7 @@ For ESP32 defaults, constants are defined in `src/Config.hpp`.
 | PIN_RELAY_SOLAR    |    GPIO26    | Pin to connect relais for solar pump                  |
 
 For decision background and wiring visualization, see
-`docs/esp32-schematic-optimization-de.md`.
+`docs/esp32-schematic-optimization-de.md` (German / DE).
 
 ### ESP32 Variant Compatibility
 
