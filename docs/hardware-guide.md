@@ -17,12 +17,17 @@ menu:
 
 This Hardware Guide describes how to set up the hardware of the controller.
 
+{{% alert note %}}
+For an ESP32-focused wiring analysis and optimization (sensors and relays), see
+`docs/esp32-schematic-optimization-de.md`.
+{{% /alert %}}
+
 ## Parts List (BOM)
 
-- 1 * ESP8266 NodeMCU Controller ([Amazon](https://amzn.to/2Ze9DSh))
-- 2 * DS18B20 Temperature Sensors ([Amazon](https://amzn.to/2ZlfZ2c))
-- 1 * Relais-Module 5V ([Amazon](https://amzn.to/31RBd5s))
-- 1 * Breadboard and wires to connect (alternatively soldering of the circuit)
+- 1 \* ESP8266 NodeMCU Controller ([Amazon](https://amzn.to/2Ze9DSh))
+- 2 \* DS18B20 Temperature Sensors ([Amazon](https://amzn.to/2ZlfZ2c))
+- 1 \* Relais-Module 5V ([Amazon](https://amzn.to/31RBd5s))
+- 1 \* Breadboard and wires to connect (alternatively soldering of the circuit)
 
 ## Circuit
 
@@ -38,11 +43,11 @@ The ESP8266 is connected using following PINs. You can find the constant values 
 of `main.cpp` (first column of table) which are associated to the pins.
 
 | Constant in Source | PIN of ESP8266 | Description                                           |
-|--------------------|:--------------:|-------------------------------------------------------|
-| PIN_DS_SOLAR       | D5             | Pin of temperature sensor (DS18B20) for solar storage |
-| PIN_DS_POOL        | D6             | Pin of temperature sensor (DS18B20) for pool water    |
-| PIN_RELAY_POOL     | D1             | Pin to connect relais for pool pump                   |
-| PIN_RELAY_SOLAR    | D2             | Pin to connect relais for solar pump                  |
+| ------------------ | :------------: | ----------------------------------------------------- |
+| PIN_DS_SOLAR       |       D5       | Pin of temperature sensor (DS18B20) for solar storage |
+| PIN_DS_POOL        |       D6       | Pin of temperature sensor (DS18B20) for pool water    |
+| PIN_RELAY_POOL     |       D1       | Pin to connect relais for pool pump                   |
+| PIN_RELAY_SOLAR    |       D2       | Pin to connect relais for solar pump                  |
 
 {{% alert note %}}
 TODO: improve PIN usage (see https://randomnerdtutorials.com/esp8266-pinout-reference-gpios/)
