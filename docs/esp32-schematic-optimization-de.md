@@ -15,8 +15,6 @@ menu:
     weight: 25
 ---
 
-# ESP32 Schaltplananalyse und Optimierung (Sensoren & Relais)
-
 Dieses Dokument analysiert den vorhandenen Aufbau (Fritzing-Quelle + bestehende
 Hardware-Dokumentation) und beschreibt einen optimierten ESP32-Vorschlag für
 Sensoren und Relais.
@@ -39,18 +37,19 @@ Verwendete Hardware laut Doku:
 
 1. **DS18B20 war auf GPIO15 (Strapping-Pin)**
 
-   - GPIO15 ist beim ESP32 ein Boot-Strapping-Pin.
-   - Ein OneWire-Bus mit Pull-up auf diesem Pin kann das Boot-Verhalten negativ
-     beeinflussen.
+   GPIO15 ist beim ESP32 ein Boot-Strapping-Pin.
+   Ein OneWire-Bus mit Pull-up auf diesem Pin kann das Boot-Verhalten negativ
+   beeinflussen.
 
-2. **Relais-/Versorgungskopplung**
+1. **Relais-/Versorgungskopplung**
 
-   - 5V-Relaismodule können Schaltstörungen verursachen (Spikes/Noise).
-   - Ohne saubere Trennung von Logik- und Lastversorgung steigt das Risiko von
-     Resets und Messrauschen.
+   5V-Relaismodule können Schaltstörungen verursachen (Spikes/Noise).
+   Ohne saubere Trennung von Logik- und Lastversorgung steigt das Risiko von
+   Resets und Messrauschen.
 
-3. **Fehlende explizite Fail-Safe-Definition im Schaltplan**
-   - Beim Start oder Reset darf keine Pumpe unbeabsichtigt einschalten.
+1. **Fehlende explizite Fail-Safe-Definition im Schaltplan**
+
+   Beim Start oder Reset darf keine Pumpe unbeabsichtigt einschalten.
 
 ## 3) Optimierter ESP32-Vorschlag
 
@@ -74,13 +73,13 @@ der Firmware-Pins und ggf. Umverdrahtung erforderlich.
 **Warum genau diese Zuordnung:**
 
 1. **Boot-Robustheit:** Sensoren liegen nicht mehr auf Strapping-Pins
-   (insbesondere kein OneWire auf GPIO15).
+    (insbesondere kein OneWire auf GPIO15).
 2. **Störarmut:** Sensor-GPIOs sind von Relais-GPIOs logisch getrennt; dadurch
-   weniger gegenseitige Beeinflussung bei Schaltvorgängen.
+    weniger gegenseitige Beeinflussung bei Schaltvorgängen.
 3. **Betriebssicherheit:** Relais auf gut nutzbaren Output-Pins mit klarer
-   Fail-Safe-Auslegung beim Start/Reset.
+    Fail-Safe-Auslegung beim Start/Reset.
 4. **Wartbarkeit:** Einheitliche, dokumentierte Standardbelegung in Firmware und
-   Hardware-Doku reduziert Fehlverdrahtung und Support-Aufwand.
+    Hardware-Doku reduziert Fehlverdrahtung und Support-Aufwand.
 
 **Nicht gewählt wurde:** Die frühere ESP32-Belegung (`15/16/18/19`), da sie
 höheres Boot-/Störrisiko mitbringt.
@@ -117,9 +116,9 @@ Relay IN2 (Solar)   <---->| GPIO26              |
 3V3 --------------------->| 3V3                 |
 GND --------------------->| GND                 |
                           +----------+----------+
-                                     |
-                                     | gemeinsame Masse
-                                     v
+                                    |
+                                    | gemeinsame Masse
+                                    v
                     +----------------+----------------+
                     | 2-Kanal Relaismodul (5V, opto) |
                     | VCC (Logik)  <- 3V3/5V*        |

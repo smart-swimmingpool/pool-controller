@@ -31,11 +31,14 @@ For an ESP32-focused wiring analysis and optimization (sensors and relays), see
 
 ## Circuit
 
-The circuit of the controller can be found in the following image based on a breadboard wiring:
+The circuit of the controller can be found in the following image based on a
+breadboard wiring:
 
-{{< figure library="true" src="../pool-controller_breadboard.png" title="Breadboard Circuit of Pool Controller" lightbox="true" >}}
+{{< figure library="true" src="../pool-controller_breadboard.png" title="Pool Controller Circuit" lightbox="true" >}}
 
-The source [Fritzing](https://fritzing.org/) file can be found in the GitHub project: [pool-controller.fzz](https://github.com/smart-swimmingpool/pool-controller/raw/main/docs/pool-controller.fzz)
+The source [Fritzing](https://fritzing.org/) file can be found in the GitHub
+project:
+[pool-controller.fzz](https://github.com/smart-swimmingpool/pool-controller/raw/main/docs/pool-controller.fzz)
 
 ### ESP8266 PIN Usage
 
@@ -50,7 +53,8 @@ of `src/Config.hpp` (first column of table) which are associated to the pins.
 | PIN_RELAY_SOLAR    |       D2       | Pin to connect relais for solar pump                  |
 
 {{% alert note %}}
-TODO: improve PIN usage (see https://randomnerdtutorials.com/esp8266-pinout-reference-gpios/)
+TODO: improve PIN usage (see
+[ESP8266 GPIO Reference](https://randomnerdtutorials.com/esp8266-pinout-reference-gpios/))
 {{% /alert %}}
 
 ### ESP32 PIN Usage (current default)
@@ -80,4 +84,6 @@ Some variants (for example ESP32-C3) do not provide these pins. In this case:
 
 ## Power Supply
 
-In my environment, I use USB to power the ESP8266 via a small USB power adapter and an additional 230V power plug as the source for the power of the pumps, which are switched via the relays.
+In my environment, I use USB to power the ESP8266 via a small USB power
+adapter and an additional 230V power plug as the source for the power of the
+pumps, which are switched via the relays.
