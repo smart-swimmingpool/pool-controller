@@ -336,7 +336,7 @@ docker run -e RUN_LOCAL=true \
   -e VALIDATE_MARKDOWN=true \
   -e VALIDATE_YAML=true \
   -v $(pwd):/tmp/lint \
-  github/super-linter:v7
+  ghcr.io/super-linter/super-linter:v8.3.1
 ```
 
 ## 8. Häufige Fehler und Lösungen
