@@ -25,10 +25,10 @@ Sensoren und Relais.
 
 Aktuelle Firmware-Pinbelegung für ESP32 (`src/Config.hpp`):
 
-- `PIN_DS_SOLAR` = GPIO15
-- `PIN_DS_POOL` = GPIO16
-- `PIN_RELAY_POOL` = GPIO18
-- `PIN_RELAY_SOLAR` = GPIO19
+- `PIN_DS_SOLAR` = GPIO32
+- `PIN_DS_POOL` = GPIO33
+- `PIN_RELAY_POOL` = GPIO25
+- `PIN_RELAY_SOLAR` = GPIO26
 
 Verwendete Hardware laut Doku:
 
@@ -56,15 +56,15 @@ Verwendete Hardware laut Doku:
 
 ### 3.1 Empfohlene Pinbelegung
 
-| Funktion      | Alt (ESP32) | Empfehlung | Grund                              |
-| ------------- | ----------- | ---------- | ---------------------------------- |
-| DS18B20 Solar | GPIO15      | GPIO32     | Vermeidet Strapping-Pins           |
-| DS18B20 Pool  | GPIO16      | GPIO33     | Klare Trennung der Sensorleitungen |
-| Relais Pool   | GPIO18      | GPIO25     | Robuster Output, konfliktarm       |
-| Relais Solar  | GPIO19      | GPIO26     | Robuster Output, konfliktarm       |
+| Funktion      | Vorher (ESP32) | Jetzt (ESP32) | Grund                              |
+| ------------- | -------------- | ------------- | ---------------------------------- |
+| DS18B20 Solar | GPIO15         | GPIO32        | Vermeidet Strapping-Pins           |
+| DS18B20 Pool  | GPIO16         | GPIO33        | Klare Trennung der Sensorleitungen |
+| Relais Pool   | GPIO18         | GPIO25        | Robuster Output, konfliktarm       |
+| Relais Solar  | GPIO19         | GPIO26        | Robuster Output, konfliktarm       |
 
-Hinweis: Bei bereits aufgebauter Hardware kann die alte Belegung bleiben. Die
-Empfehlung zielt auf neue/überarbeitete ESP32-Installationen.
+Hinweis: Für bestehende Installationen mit alter Verdrahtung ist eine Anpassung
+der Firmware-Pins und ggf. Umverdrahtung erforderlich.
 
 ### 3.2 Sensor-Optimierung (DS18B20)
 
@@ -86,8 +86,7 @@ Empfehlung zielt auf neue/überarbeitete ESP32-Installationen.
 
 ## 4) Firmware-Bezug bei Umverdrahtung
 
-Bei Übernahme der empfohlenen Pins müssen in `src/Config.hpp` die
-ESP32-Konstanten angepasst werden:
+Die empfohlenen Pins sind in `src/Config.hpp` umgesetzt. Relevant sind:
 
 - `PIN_DS_SOLAR`
 - `PIN_DS_POOL`

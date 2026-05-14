@@ -38,16 +38,16 @@ constexpr std::uint8_t TEMP_READ_INTERVAL{30};
 /**
      * Pin of Temp-Sensor Solar
     */
-constexpr std::uint8_t PIN_DS_SOLAR{CurrentControllerType == ControllerType::CT_ESP32 ? 15 : D5};
+constexpr std::uint8_t PIN_DS_SOLAR{CurrentControllerType == ControllerType::CT_ESP32 ? 32 : D5};
 
 /**
      * Pin of Temp-Sensor Pool
     */
-constexpr std::uint8_t PIN_DS_POOL{CurrentControllerType == ControllerType::CT_ESP32 ? 16 : D6};
+constexpr std::uint8_t PIN_DS_POOL{CurrentControllerType == ControllerType::CT_ESP32 ? 33 : D6};
 
-constexpr std::uint8_t PIN_RELAY_POOL{CurrentControllerType == ControllerType::CT_ESP32 ? 18 : D1};
+constexpr std::uint8_t PIN_RELAY_POOL{CurrentControllerType == ControllerType::CT_ESP32 ? 25 : D1};
 
-constexpr std::uint8_t PIN_RELAY_SOLAR{CurrentControllerType == ControllerType::CT_ESP32 ? 19 : D2};
+constexpr std::uint8_t PIN_RELAY_SOLAR{CurrentControllerType == ControllerType::CT_ESP32 ? 26 : D2};
 
 #ifdef MOD_PROBE
 static_assert(sizeof(unsigned long int) == sizeof(std::uint32_t) && alignof(unsigned long int) == alignof(std::uint32_t),
