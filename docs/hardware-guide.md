@@ -67,6 +67,17 @@ For ESP32 defaults, constants are defined in `src/Config.hpp`.
 For decision background and wiring visualization, see
 `docs/esp32-schematic-optimization-de.md`.
 
+### ESP32 Variant Compatibility
+
+The defaults above are valid for ESP32 variants that provide GPIO32, GPIO33,
+GPIO25 and GPIO26 (for example classic ESP32 modules).
+
+Some variants (for example ESP32-C3) do not provide these pins. In this case:
+
+- update the pin constants in `src/Config.hpp`
+- avoid boot/strapping-sensitive pins for OneWire and relays
+- verify relay behavior during boot/reset after rewiring
+
 ## Power Supply
 
 In my environment, I use USB to power the ESP8266 via a small USB power adapter and an additional 230V power plug as the source for the power of the pumps, which are switched via the relays.
