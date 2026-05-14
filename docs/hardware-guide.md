@@ -40,7 +40,7 @@ The source [Fritzing](https://fritzing.org/) file can be found in the GitHub pro
 ### ESP8266 PIN Usage
 
 The ESP8266 is connected using following PINs. You can find the constant values within the sources
-of `main.cpp` (first column of table) which are associated to the pins.
+of `src/Config.hpp` (first column of table) which are associated to the pins.
 
 | Constant in Source | PIN of ESP8266 | Description                                           |
 | ------------------ | :------------: | ----------------------------------------------------- |
@@ -52,6 +52,20 @@ of `main.cpp` (first column of table) which are associated to the pins.
 {{% alert note %}}
 TODO: improve PIN usage (see https://randomnerdtutorials.com/esp8266-pinout-reference-gpios/)
 {{% /alert %}}
+
+### ESP32 PIN Usage (current default)
+
+For ESP32 defaults, constants are defined in `src/Config.hpp`.
+
+| Constant in Source | PIN of ESP32 | Description                                           |
+| ------------------ | :----------: | ----------------------------------------------------- |
+| PIN_DS_SOLAR       |    GPIO32    | Pin of temperature sensor (DS18B20) for solar storage |
+| PIN_DS_POOL        |    GPIO33    | Pin of temperature sensor (DS18B20) for pool water    |
+| PIN_RELAY_POOL     |    GPIO25    | Pin to connect relais for pool pump                   |
+| PIN_RELAY_SOLAR    |    GPIO26    | Pin to connect relais for solar pump                  |
+
+For decision background and wiring visualization, see
+`docs/esp32-schematic-optimization-de.md`.
 
 ## Power Supply
 
