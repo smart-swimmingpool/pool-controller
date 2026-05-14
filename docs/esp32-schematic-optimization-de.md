@@ -35,9 +35,9 @@ Verwendete Hardware laut Doku:
 - 2x DS18B20 Temperaturfühler
 - 2-Kanal Relaismodul (5V)
 
-## 2) Hauptthemen im aktuellen Aufbau
+## 2) Hauptthemen im bisherigen Aufbau (vor Optimierung)
 
-1. **DS18B20 auf GPIO15 (Strapping-Pin)**
+1. **DS18B20 war auf GPIO15 (Strapping-Pin)**
 
    - GPIO15 ist beim ESP32 ein Boot-Strapping-Pin.
    - Ein OneWire-Bus mit Pull-up auf diesem Pin kann das Boot-Verhalten negativ
@@ -66,6 +66,25 @@ Verwendete Hardware laut Doku:
 Hinweis: Für bestehende Installationen mit alter Verdrahtung ist eine Anpassung
 der Firmware-Pins und ggf. Umverdrahtung erforderlich.
 
+### 3.1.1 Entscheidungsdokumentation (klarer Entscheid)
+
+**Entscheidung:** Für ESP32 werden die Signale dauerhaft auf
+`GPIO32/33` (DS18B20) sowie `GPIO25/26` (Relais) geführt.
+
+**Warum genau diese Zuordnung:**
+
+1. **Boot-Robustheit:** Sensoren liegen nicht mehr auf Strapping-Pins
+   (insbesondere kein OneWire auf GPIO15).
+2. **Störarmut:** Sensor-GPIOs sind von Relais-GPIOs logisch getrennt; dadurch
+   weniger gegenseitige Beeinflussung bei Schaltvorgängen.
+3. **Betriebssicherheit:** Relais auf gut nutzbaren Output-Pins mit klarer
+   Fail-Safe-Auslegung beim Start/Reset.
+4. **Wartbarkeit:** Einheitliche, dokumentierte Standardbelegung in Firmware und
+   Hardware-Doku reduziert Fehlverdrahtung und Support-Aufwand.
+
+**Nicht gewählt wurde:** Die frühere ESP32-Belegung (`15/16/18/19`), da sie
+höheres Boot-/Störrisiko mitbringt.
+
 ### 3.2 Sensor-Optimierung (DS18B20)
 
 - Pro Sensorleitung einen sauberen **4.7k Pull-up nach 3.3V** vorsehen.
@@ -83,6 +102,38 @@ der Firmware-Pins und ggf. Umverdrahtung erforderlich.
   Absicherung/Schutzbeschaltung entsprechend Installation).
 - Relais-Eingänge zusätzlich mit Pull-up/Pull-down fail-safe auslegen, damit
   beim Booten kein ungewolltes Schalten erfolgt.
+
+### 3.4 Verdrahtung (Visualisierung)
+
+```text
+                          +---------------------+
+                          |        ESP32        |
+                          |                     |
+DS18B20 Solar DATA  <---->| GPIO32              |
+DS18B20 Pool  DATA  <---->| GPIO33              |
+Relay IN1 (Pool)    <---->| GPIO25              |
+Relay IN2 (Solar)   <---->| GPIO26              |
+                          |                     |
+3V3 --------------------->| 3V3                 |
+GND --------------------->| GND                 |
+                          +----------+----------+
+                                     |
+                                     | gemeinsame Masse
+                                     v
+                    +----------------+----------------+
+                    | 2-Kanal Relaismodul (5V, opto) |
+                    | VCC (Logik)  <- 3V3/5V*        |
+                    | JD-VCC (Spule)<- 5V            |
+                    | GND           <- GND           |
+                    | IN1           <- GPIO25        |
+                    | IN2           <- GPIO26        |
+                    +----------------+----------------+
+
+DS18B20 Solar: VDD -> 3V3, GND -> GND, DATA -> GPIO32, Pull-up 4.7k nach 3V3
+DS18B20 Pool : VDD -> 3V3, GND -> GND, DATA -> GPIO33, Pull-up 4.7k nach 3V3
+
+* abhängig vom eingesetzten Relaismodul (Logikpegel beachten)
+```
 
 ## 4) Firmware-Bezug bei Umverdrahtung
 
