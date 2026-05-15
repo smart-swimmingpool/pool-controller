@@ -47,8 +47,9 @@ static OperationModeNode operationModeNode("operation-mode", "Operation Mode");
 
 static uint32_t _measurementInterval = 10;
 static uint32_t _lastMeasurement;
-// 320 bytes cover expected HA command payloads with safe headroom for future textual commands.
-static constexpr size_t kMqttPayloadBufferSize = 320;
+// HA command payloads are short ("ON"/"OFF", mode names, numeric values, "PRESS");
+// 128 bytes provide ample headroom while keeping stack usage bounded.
+static constexpr size_t kMqttPayloadBufferSize = 128;
 static std::atomic<bool> otaUpdateRequested{false};
 #ifdef ESP32
 static std::atomic<bool> otaTaskRunning{false};
@@ -60,7 +61,16 @@ static char otaTaskUrl[256] = {};
 #endif
 
 static bool isHttpUrl(const char *value) {
-  return value != nullptr && (strncmp(value, "http://", 7) == 0 || strncmp(value, "https://", 8) == 0);
+  if (value == nullptr) {
+    return false;
+  }
+  if (strncmp(value, "http://", 7) == 0) {
+    return value[7] != '\0';
+  }
+  if (strncmp(value, "https://", 8) == 0) {
+    return value[8] != '\0';
+  }
+  return false;
 }
 
 static void publishOtaStatus(const char *status) {
@@ -139,6 +149,14 @@ static void processPendingOtaUpdate(const char *configuredOtaUrl) {
 
   if (!isHttpUrl(configuredOtaUrl)) {
     LN.log(__PRETTY_FUNCTION__, LoggerNode::ERROR, "Configured ota-url is missing or invalid");
+    publishOtaStatus("url-invalid");
+    otaTaskRunning.store(false);
+    return;
+  }
+
+  const size_t urlLen = strlen(configuredOtaUrl);
+  if (urlLen >= sizeof(otaTaskUrl)) {
+    LN.log(__PRETTY_FUNCTION__, LoggerNode::ERROR, "Configured ota-url too long");
     publishOtaStatus("url-invalid");
     otaTaskRunning.store(false);
     return;
