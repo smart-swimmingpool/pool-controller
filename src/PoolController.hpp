@@ -53,5 +53,6 @@ private:
   HomieSetting<double> temperatureHysteresisSetting_{"temperature-hysteresis", "Temperature hysteresis"};
   HomieSetting<const char *> operationModeSetting_{"operation-mode", "Operational Mode"};
   HomieSetting<const char *> mqttProtocolSetting_{"mqtt-protocol", "MQTT Protocol (homie or homeassistant)"};
+  HomieSetting<const char *> otaUrlSetting_{"ota-url", "OTA firmware URL for Home Assistant trigger"};
 };
 }  // namespace PoolController

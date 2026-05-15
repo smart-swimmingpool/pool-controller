@@ -93,6 +93,8 @@ The table maps Homie properties to Home Assistant discovery objects.
 | Log output | `homie/pool-controller/Log/log` | `sensor/log` | `homeassistant/sensor/pool-controller/log/state` | - |
 | Log level | `homie/pool-controller/Log/Level` | `select/log-level` | `homeassistant/select/pool-controller/log-level/state` | `homeassistant/select/pool-controller/log-level/set` |
 | Log to serial | `homie/pool-controller/Log/LogSerial` | `switch/log-serial` | `homeassistant/switch/pool-controller/log-serial/state` | `homeassistant/switch/pool-controller/log-serial/set` |
+| OTA update trigger | - | `button/ota-update` | - | `homeassistant/button/pool-controller/ota-update/set` |
+| OTA status | - | `sensor/ota-status` | `homeassistant/sensor/pool-controller/ota-status/state` | - |
 
 ## Features
 

@@ -43,7 +43,7 @@ This feature is provided by the Homie library and is enabled by default.
 
 - ✅ Trigger from ESP32 web interface: supported (manual firmware upload)
 - ✅ Trigger from PlatformIO/Arduino OTA upload: supported
-- ⚠️ Direct trigger from Home Assistant to start an OTA upload on device: currently not implemented
+- ✅ Direct trigger from Home Assistant via MQTT button: implemented
 
 ### Version Hint / New Release Awareness
 
@@ -112,6 +112,48 @@ device will automatically reboot with the new firmware.
 5. Wait for update completion and automatic reboot
 
 ## OTA Configuration
+
+### Home Assistant OTA Trigger
+
+When `mqtt-protocol` is set to `homeassistant`, the device publishes:
+
+- Button entity: `button.pool_controller_ota_update`
+- Status sensor: `sensor.pool_controller_ota_status`
+
+Command topic:
+
+```text
+homeassistant/button/pool-controller/ota-update/set
+```
+
+Payload options:
+
+- `PRESS`: Trigger OTA using configured `ota-url` setting
+- `http://...` or `https://...`: Trigger OTA using URL from payload
+
+OTA status sensor values:
+
+- `idle`
+- `requested`
+- `updating`
+- `success`
+- `failed`
+- `no-update`
+- `url-invalid`
+- `wifi-disconnected`
+
+### Setting OTA URL
+
+Set the `ota-url` Homie setting to the firmware binary URL (`.bin`), for
+example:
+
+```json
+{
+  "settings": {
+    "ota-url": "https://updates.example.local/pool-controller/firmware.bin"
+  }
+}
+```
 
 ### Setting OTA Password
 
@@ -422,7 +464,6 @@ If OTA update fails and device becomes unresponsive:
 
 ## Future Enhancements
 
-- [ ] Direct Home Assistant-triggered OTA workflow
 - [ ] Automatic update checking from GitHub releases
 - [ ] Rollback capability to previous firmware
 - [ ] A/B partition updates for safer updates
