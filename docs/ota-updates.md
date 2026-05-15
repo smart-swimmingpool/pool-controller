@@ -129,7 +129,6 @@ homeassistant/button/pool-controller/ota-update/set
 Payload options:
 
 - `PRESS`: Trigger OTA using configured `ota-url` setting
-- `http://...` or `https://...`: Trigger OTA using URL from payload
 
 OTA status sensor values:
 
@@ -141,6 +140,7 @@ OTA status sensor values:
 - `no-update`
 - `url-invalid`
 - `wifi-disconnected`
+- `busy`
 
 ### Setting OTA URL
 

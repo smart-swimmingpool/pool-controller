@@ -276,10 +276,11 @@ public:
     device["manufacturer"] = "smart-swimmingpool";
     device["model"] = "Pool Controller 2.0";
 
-    char buffer[512];
+    constexpr size_t kDiscoveryJsonBufferSize = 512;
+    char buffer[kDiscoveryJsonBufferSize];
     size_t len = serializeJson(doc, buffer, sizeof(buffer));
 
-    if (len >= sizeof(buffer) - 1) {
+    if (len >= kDiscoveryJsonBufferSize - 1) {
       Homie.getLogger() << F("✖ Warning: JSON buffer too small, message truncated") << endl;
       return false;
     }

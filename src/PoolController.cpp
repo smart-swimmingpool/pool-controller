@@ -5,6 +5,9 @@
 #include <Arduino.h>
 #include <Homie.h>
 #include <SPI.h>
+#include <atomic>
+#include <cstdlib>
+#include <cstring>
 #ifdef ESP32
 #include <WiFi.h>
 #include <HTTPUpdate.h>
@@ -45,8 +48,11 @@ static OperationModeNode operationModeNode("operation-mode", "Operation Mode");
 
 static uint32_t _measurementInterval = 10;
 static uint32_t _lastMeasurement;
-static bool otaUpdateRequested = false;
-static char otaUpdateUrlOverride[256] = {};
+static constexpr size_t kMqttPayloadBufferSize = 320;
+static std::atomic<bool> otaUpdateRequested{false};
+#ifdef ESP32
+static std::atomic<bool> otaTaskRunning{false};
+#endif
 
 static bool isHttpUrl(const char *value) {
   return value != nullptr && (strncmp(value, "http://", 7) == 0 || strncmp(value, "https://", 8) == 0);
@@ -104,16 +110,55 @@ static bool triggerOtaUpdate(const char *url) {
   return true;
 }
 
+#ifdef ESP32
+static void otaUpdateTask(void *parameter) {
+  const char *url = reinterpret_cast<const char *>(parameter);
+  triggerOtaUpdate(url);
+  free(const_cast<char *>(url));
+  otaTaskRunning.store(false);
+  vTaskDelete(nullptr);
+}
+#endif
+
 static void processPendingOtaUpdate(const char *configuredOtaUrl) {
-  if (!otaUpdateRequested) {
+  if (!otaUpdateRequested.exchange(false)) {
     return;
   }
 
-  otaUpdateRequested = false;
+#ifdef ESP32
+  bool expected = false;
+  if (!otaTaskRunning.compare_exchange_strong(expected, true)) {
+    LN.log(__PRETTY_FUNCTION__, LoggerNode::WARNING, "OTA already running");
+    publishOtaStatus("busy");
+    return;
+  }
 
-  const char *url = isHttpUrl(otaUpdateUrlOverride) ? otaUpdateUrlOverride : configuredOtaUrl;
-  triggerOtaUpdate(url);
-  otaUpdateUrlOverride[0] = '\0';
+  if (!isHttpUrl(configuredOtaUrl)) {
+    triggerOtaUpdate(configuredOtaUrl);
+    otaTaskRunning.store(false);
+    return;
+  }
+
+  const size_t urlLen = strlen(configuredOtaUrl);
+  char *taskUrl = static_cast<char *>(malloc(urlLen + 1));
+  if (taskUrl == nullptr) {
+    LN.log(__PRETTY_FUNCTION__, LoggerNode::ERROR, "Failed to allocate OTA URL buffer");
+    publishOtaStatus("failed");
+    otaTaskRunning.store(false);
+    return;
+  }
+  memcpy(taskUrl, configuredOtaUrl, urlLen + 1);
+
+  if (xTaskCreate(otaUpdateTask, "ota-update", 8192, taskUrl, 1, nullptr) != pdPASS) {
+    LN.log(__PRETTY_FUNCTION__, LoggerNode::ERROR, "Failed to create OTA task");
+    publishOtaStatus("failed");
+    free(taskUrl);
+    otaTaskRunning.store(false);
+    return;
+  }
+#else
+  triggerOtaUpdate(configuredOtaUrl);
+#endif
 }
 
 static bool extractHomeAssistantObjectId(const char *topic, const char *component, char *objectId, size_t objectIdSize) {
@@ -148,7 +193,7 @@ static void onMqttMessage(
   if (!HomeAssistant::useHomeAssistant)
     return;
 
-  char payloadStr[320];
+  char payloadStr[kMqttPayloadBufferSize];
   size_t payloadLen = (len < sizeof(payloadStr) - 1) ? len : sizeof(payloadStr) - 1;
   memcpy(payloadStr, payload, payloadLen);
   payloadStr[payloadLen] = '\0';
@@ -219,13 +264,7 @@ static void onMqttMessage(
 
   if (extractHomeAssistantObjectId(topic, "button", objectId, sizeof(objectId))) {
     if (strcmp(objectId, "ota-update") == 0) {
-      if (isHttpUrl(payloadStr)) {
-        strncpy(otaUpdateUrlOverride, payloadStr, sizeof(otaUpdateUrlOverride) - 1);
-        otaUpdateUrlOverride[sizeof(otaUpdateUrlOverride) - 1] = '\0';
-      } else {
-        otaUpdateUrlOverride[0] = '\0';
-      }
-      otaUpdateRequested = true;
+      otaUpdateRequested.store(true);
       publishOtaStatus("requested");
       return;
     }
@@ -472,7 +511,8 @@ auto PoolControllerContext::setup() -> void {
     return std::strcmp(candidate, "homie") == 0 || std::strcmp(candidate, "homeassistant") == 0;
   });
 
-  this->otaUrlSetting_.setDefaultValue("").setValidator([](const char *const candidate) -> bool { return candidate != nullptr; });
+  this->otaUrlSetting_.setDefaultValue("").setValidator(
+    [](const char *const candidate) -> bool { return candidate != nullptr && (candidate[0] == '\0' || isHttpUrl(candidate)); });
 
   Homie.setSetupFunction(&Detail::setupProxy);
 
