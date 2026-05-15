@@ -6,7 +6,6 @@
 #include <Homie.h>
 #include <SPI.h>
 #include <atomic>
-#include <cstdlib>
 #include <cstring>
 #ifdef ESP32
 #include <WiFi.h>
@@ -48,10 +47,16 @@ static OperationModeNode operationModeNode("operation-mode", "Operation Mode");
 
 static uint32_t _measurementInterval = 10;
 static uint32_t _lastMeasurement;
+// 320 bytes cover expected HA command payloads with safe headroom for future textual commands.
 static constexpr size_t kMqttPayloadBufferSize = 320;
 static std::atomic<bool> otaUpdateRequested{false};
 #ifdef ESP32
 static std::atomic<bool> otaTaskRunning{false};
+// OTA HTTP update uses network stack + updater internals; 8192 bytes avoids stack overflow in update task.
+static constexpr uint32_t kOtaTaskStackSize = 8192;
+// Low priority keeps control logic responsive while OTA runs in background.
+static constexpr UBaseType_t kOtaTaskPriority = 1;
+static char otaTaskUrl[256] = {};
 #endif
 
 static bool isHttpUrl(const char *value) {
@@ -112,9 +117,8 @@ static bool triggerOtaUpdate(const char *url) {
 
 #ifdef ESP32
 static void otaUpdateTask(void *parameter) {
-  const char *url = reinterpret_cast<const char *>(parameter);
+  const char *url = reinterpret_cast<char *>(parameter);
   triggerOtaUpdate(url);
-  free(const_cast<char *>(url));
   otaTaskRunning.store(false);
   vTaskDelete(nullptr);
 }
@@ -134,25 +138,18 @@ static void processPendingOtaUpdate(const char *configuredOtaUrl) {
   }
 
   if (!isHttpUrl(configuredOtaUrl)) {
-    triggerOtaUpdate(configuredOtaUrl);
+    LN.log(__PRETTY_FUNCTION__, LoggerNode::ERROR, "Configured ota-url is missing or invalid");
+    publishOtaStatus("url-invalid");
     otaTaskRunning.store(false);
     return;
   }
 
-  const size_t urlLen = strlen(configuredOtaUrl);
-  char *taskUrl = static_cast<char *>(malloc(urlLen + 1));
-  if (taskUrl == nullptr) {
-    LN.log(__PRETTY_FUNCTION__, LoggerNode::ERROR, "Failed to allocate OTA URL buffer");
-    publishOtaStatus("failed");
-    otaTaskRunning.store(false);
-    return;
-  }
-  memcpy(taskUrl, configuredOtaUrl, urlLen + 1);
+  strncpy(otaTaskUrl, configuredOtaUrl, sizeof(otaTaskUrl) - 1);
+  otaTaskUrl[sizeof(otaTaskUrl) - 1] = '\0';
 
-  if (xTaskCreate(otaUpdateTask, "ota-update", 8192, taskUrl, 1, nullptr) != pdPASS) {
+  if (xTaskCreate(otaUpdateTask, "ota-update", kOtaTaskStackSize, otaTaskUrl, kOtaTaskPriority, nullptr) != pdPASS) {
     LN.log(__PRETTY_FUNCTION__, LoggerNode::ERROR, "Failed to create OTA task");
     publishOtaStatus("failed");
-    free(taskUrl);
     otaTaskRunning.store(false);
     return;
   }
