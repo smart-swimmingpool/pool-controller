@@ -43,6 +43,11 @@ Steuer deinen Swimming-Pool auf smarte Art und Weise, um diesen bequem und güns
 - [x] Automatische Zeitsynchroisierung mit NTP (europe.pool.ntp.org)
 - [x] Logging-Informationen via Homie-Node
 
+## OTA & Firmware-Updates
+
+- [OTA-Update-Anleitung](./ota-updates/) für Web-Update-Ablauf und Erstkonfiguration
+- GitHub-Releases: <https://github.com/smart-swimmingpool/pool-controller/releases>
+
 ## Geplante Funktionen
 
 - [ ] Konfigurierbarer NTP-Server (aktuell hardcoded: europe.pool.ntp.org)
