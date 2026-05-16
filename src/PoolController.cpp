@@ -98,7 +98,7 @@ static bool triggerOtaUpdate(const char *url) {
 
 #ifdef ESP32
   WiFiClient otaClient;
-  t_httpUpdate_return result = httpUpdate.update(otaClient, String(url));
+  t_httpUpdate_return result = httpUpdate.update(otaClient, url);
   if (result == HTTP_UPDATE_FAILED) {
     LN.logf(__PRETTY_FUNCTION__, LoggerNode::ERROR, "OTA failed: %d %s", httpUpdate.getLastError(),
       httpUpdate.getLastErrorString().c_str());
@@ -163,8 +163,7 @@ static void processPendingOtaUpdate(const char *configuredOtaUrl) {
     return;
   }
 
-  strncpy(otaTaskUrl, configuredOtaUrl, sizeof(otaTaskUrl) - 1);
-  otaTaskUrl[sizeof(otaTaskUrl) - 1] = '\0';
+  strcpy(otaTaskUrl, configuredOtaUrl);
 
   if (xTaskCreate(otaUpdateTask, "ota-update", kOtaTaskStackSize, otaTaskUrl, kOtaTaskPriority, nullptr) != pdPASS) {
     LN.log(__PRETTY_FUNCTION__, LoggerNode::ERROR, "Failed to create OTA task");
