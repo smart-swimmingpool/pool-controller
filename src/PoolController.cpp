@@ -106,7 +106,8 @@ static bool triggerOtaUpdate(const char *url) {
     return false;
   }
 #else
-  t_httpUpdate_return result = ESPhttpUpdate.update(url);
+  WiFiClient otaClient;
+  t_httpUpdate_return result = ESPhttpUpdate.update(otaClient, url);
   if (result == HTTP_UPDATE_FAILED) {
     LN.logf(__PRETTY_FUNCTION__, LoggerNode::ERROR, "OTA failed: %d %s", ESPhttpUpdate.getLastError(),
       ESPhttpUpdate.getLastErrorString().c_str());
