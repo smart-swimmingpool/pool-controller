@@ -128,7 +128,7 @@ static bool triggerOtaUpdate(const char *url) {
 
 #ifdef ESP32
 static void otaUpdateTask(void *parameter) {
-  const char *url = reinterpret_cast<char *>(parameter);
+  const char *url = static_cast<const char *>(parameter);
   triggerOtaUpdate(url);
   otaTaskRunning.store(false);
   vTaskDelete(nullptr);
@@ -163,7 +163,8 @@ static void processPendingOtaUpdate(const char *configuredOtaUrl) {
     return;
   }
 
-  strcpy(otaTaskUrl, configuredOtaUrl);
+  strncpy(otaTaskUrl, configuredOtaUrl, sizeof(otaTaskUrl) - 1);
+  otaTaskUrl[sizeof(otaTaskUrl) - 1] = '\0';
 
   if (xTaskCreate(otaUpdateTask, "ota-update", kOtaTaskStackSize, otaTaskUrl, kOtaTaskPriority, nullptr) != pdPASS) {
     LN.log(__PRETTY_FUNCTION__, LoggerNode::ERROR, "Failed to create OTA task");
