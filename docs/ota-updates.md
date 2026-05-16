@@ -15,8 +15,6 @@ menu:
     weight: 50
 ---
 
-# Over-The-Air (OTA) Updates
-
 ## Overview
 
 The Pool Controller supports Over-The-Air (OTA) firmware updates, allowing
@@ -98,14 +96,14 @@ device will automatically reboot with the new firmware.
 1. Open Arduino IDE
 2. Go to **Tools → Port**
 3. Select your device from the network ports list
-   (e.g., `pool-controller at 192.168.1.100`)
+    (e.g., `pool-controller at 192.168.1.100`)
 4. Click Upload button
 5. Enter OTA password when prompted
 
 ### Method 3: Web Interface (Homie UI)
 
 1. Access Homie web interface at `http://pool-controller.local/`
-   or `http://[DEVICE_IP]/`
+    or `http://[DEVICE_IP]/`
 2. Navigate to **Firmware Update** section
 3. Select compiled `.bin` file
 4. Click **Upload**
@@ -450,13 +448,13 @@ If OTA update fails and device becomes unresponsive:
 - Connect via USB serial
 - Upload firmware via serial: `pio run -e nodemcuv2 --target upload`
 
-2. **Bootloader Recovery**:
+1. **Bootloader Recovery**:
 
 - ESP8266/ESP32 bootloader allows serial recovery
 - Hold BOOT button during power-on
 - Upload firmware via esptool
 
-3. **Factory Reset**:
+1. **Factory Reset**:
 
 - Clear EEPROM/NVS
 - Reset Homie configuration

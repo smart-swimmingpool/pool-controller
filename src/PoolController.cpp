@@ -97,7 +97,8 @@ static bool triggerOtaUpdate(const char *url) {
   publishOtaStatus("updating");
 
 #ifdef ESP32
-  t_httpUpdate_return result = httpUpdate.update(url);
+  WiFiClient otaClient;
+  t_httpUpdate_return result = httpUpdate.update(otaClient, String(url));
   if (result == HTTP_UPDATE_FAILED) {
     LN.logf(__PRETTY_FUNCTION__, LoggerNode::ERROR, "OTA failed: %d %s", httpUpdate.getLastError(),
       httpUpdate.getLastErrorString().c_str());

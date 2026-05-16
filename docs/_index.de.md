@@ -21,14 +21,11 @@ menu:
     weight: 10
 ---
 
-**🏊 Der Homie 3.0 kompaible Smart Swimmingpool Controller 🎛️**
+## 🏊 Der Homie 3.0 kompatible Smart Swimmingpool Controller 🎛️
 
-<span style="text-shadow: none;">
-<a class="github-button" href="https://github.com/smart-swimmingpool/pool-controller/subscription" data-size="large" data-show-count="true" aria-label="Watch smart-swimmingpool/pool-controller on GitHub">Watch</a>
-<a class="github-button" href="https://github.com/smart-swimmingpool/pool-controller" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star this on GitHub">Star</a><script async defer src="https://buttons.github.io/buttons.js"></script>
-
-[GitHub Quellcode](https://github.com/smart-swimmingpool/pool-controller)
-</span>
+- [GitHub Quellcode](https://github.com/smart-swimmingpool/pool-controller)
+- [Auf GitHub beobachten](https://github.com/smart-swimmingpool/pool-controller/subscription)
+- [Auf GitHub mit Stern markieren](https://github.com/smart-swimmingpool/pool-controller)
 
 Steuer deinen Swimming-Pool auf smarte Art und Weise, um diesen bequem und günstig (weniger als 100€) zu genießen.
 
@@ -61,6 +58,6 @@ Steuer deinen Swimming-Pool auf smarte Art und Weise, um diesen bequem und güns
 - [ ] Eine Stromversorgung für die ganze Schaltung (ESP8266 und Relais)
 - siehe auch: [Issue-Liste](https://github.com/smart-swimmingpool/pool-controller/issues)
 
-[![works with MQTT Homie](https://homieiot.github.io/img/works-with-homie.svg "works with MQTT Homie")](https://homieiot.github.io/)
+[![works with MQTT Homie](https://homieiot.github.io/img/works-with-homie.svg)](https://homieiot.github.io/)
 
-{{< figure library="true" src="pool-controller_breadboard.png" title="Breadboard Circuid of Pool Controller" lightbox="true" >}}
+{{< figure library="true" src="pool-controller_breadboard.png" title="Breadboard Schaltbild" lightbox="true" >}}
