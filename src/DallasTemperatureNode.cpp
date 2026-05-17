@@ -19,6 +19,7 @@
  *
  */
 #include "DallasTemperatureNode.hpp"
+#include "SystemMonitor.hpp"
 #include "Utils.hpp"
 #include "MqttInterface.hpp"
 
@@ -94,9 +95,18 @@ void DallasTemperatureNode::loop() {
 
     if (numberOfDevices > 0) {
       Homie.getLogger() << F("〽 Sending Temperature: ") << getId() << endl;
+
+      // Feed watchdog before potentially blocking 1-Wire operations
+      // requestTemperatures() can block up to 750ms (DS18B20 at 12-bit)
+      // which could trigger a 30s ESP32 WDT if called in a tight loop
+      PoolController::SystemMonitor::feedWatchdog();
+
       // call sensors.requestTemperatures() to issue a global temperature
       // request to all devices on the bus
       sensor.requestTemperatures();  // Send the command to get temperature
+
+      // Feed watchdog after blocking call completes
+      PoolController::SystemMonitor::feedWatchdog();
       for (uint8_t i = 0; i < numberOfDevices; i++) {
         uint8_t cnt = 0;
 

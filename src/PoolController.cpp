@@ -245,18 +245,10 @@ auto PoolControllerContext::initializeController() -> void {
 /**
  * Homie Setup handler.
  * Only called when wifi and mqtt are connected.
- * Non-network-dependent initialization is now in initializeController().
+ * StateManager, SystemMonitor, and loadState are initialized in setup()
+ * to ensure they run regardless of network connectivity.
  */
 auto PoolControllerContext::setupHandler() -> void {
-  // Initialize state management
-  StateManager::begin();
-
-  // Initialize system monitor and watchdog
-  SystemMonitor::begin();
-
-  // Load persisted state
-  operationModeNode.loadState();
-
   // Configure MQTT protocol based on setting
   const char *protocol = this->mqttProtocolSetting_.get();
   HomeAssistant::useHomeAssistant = (std::strcmp(protocol, "homeassistant") == 0);
@@ -377,12 +369,23 @@ auto PoolControllerContext::setup() -> void {
 
   Homie.setSetupFunction(&Detail::setupProxy);
 
+  // Initialize state management and system monitor regardless of WiFi/MQTT.
+  // These must run before Homie.setup() so nodes can access persisted state
+  // even when no MQTT connection is ever established (e.g. WiFi outage at boot).
+  StateManager::begin();
+  SystemMonitor::begin();
+
   LN.log(__PRETTY_FUNCTION__, LoggerNode::DEBUG, "Before Homie setup())");
   Homie.setup();
 
   // Initialize controller regardless of WiFi/MQTT connection status
   // This ensures offline operation works from startup
   initializeController();
+
+  // Load persisted state after controller and rules are initialized.
+  // Previously this only ran inside setupHandler() (MQTT-connected), meaning
+  // all settings were lost on combined power+WiFi failure.
+  operationModeNode.loadState();
 
   LN.logf(__PRETTY_FUNCTION__, LoggerNode::DEBUG, "Free heap: %d", ESP.getFreeHeap());
   Homie.getLogger() << F("Free heap: ") << ESP.getFreeHeap() << endl;
