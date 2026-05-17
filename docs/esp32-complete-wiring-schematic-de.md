@@ -86,17 +86,17 @@ v
 
 ## 3) Verdrahtungstabelle
 
-| Bauteil              | Signal       | ESP32 Pin | Zusatzbauteil                  |
-| -------------------- | ------------ | --------- | ------------------------------ |
-| DS18B20 Solar        | DATA         | GPIO32    | 4.7kΩ Pull-up nach 3V3         |
-| DS18B20 Pool         | DATA         | GPIO33    | 4.7kΩ Pull-up nach 3V3         |
-| Relais Kanal 1       | IN1          | GPIO25    | optional Pull-down (Fail-Safe) |
-| Relais Kanal 2       | IN2          | GPIO26    | optional Pull-down (Fail-Safe) |
-| RTC DS3231 (optional) | SDA          | GPIO21    | I2C-Bus                        |
-| RTC DS3231 (optional) | SCL          | GPIO22    | I2C-Bus                        |
-| Alle Bauteile        | GND          | GND       | gemeinsame Masseführung        |
-| DS18B20 / RTC        | Versorgung   | 3V3       | sauber entkoppeln              |
-| Relaismodul          | Versorgung   | 5V        | getrennte Last/Logik empfohlen |
+| Bauteil               | Signal     | ESP32 Pin | Zusatzbauteil                  |
+| --------------------- | ---------- | --------- | ------------------------------ |
+| DS18B20 Solar         | DATA       | GPIO32    | 4.7kΩ Pull-up nach 3V3         |
+| DS18B20 Pool          | DATA       | GPIO33    | 4.7kΩ Pull-up nach 3V3         |
+| Relais Kanal 1        | IN1        | GPIO25    | optional Pull-down (Fail-Safe) |
+| Relais Kanal 2        | IN2        | GPIO26    | optional Pull-down (Fail-Safe) |
+| RTC DS3231 (optional) | SDA        | GPIO21    | I2C-Bus                        |
+| RTC DS3231 (optional) | SCL        | GPIO22    | I2C-Bus                        |
+| Alle Bauteile         | GND        | GND       | gemeinsame Masseführung        |
+| DS18B20 / RTC         | Versorgung | 3V3       | sauber entkoppeln              |
+| Relaismodul           | Versorgung | 5V        | getrennte Last/Logik empfohlen |
 
 ## 4) Wichtige Hinweise
 

@@ -1,4 +1,19 @@
-# Over-The-Air (OTA) Updates
+---
+title: OTA Updates
+summary: ESP32/ESP8266 OTA-Updates via Homie Web-Interface und PlatformIO
+date: "2026-05-15"
+lastmod: "2026-05-15"
+draft: false
+toc: true
+type: docs
+featured: true
+tags: ["docs", "ota", "esp32", "firmware"]
+menu:
+  docs:
+    parent: Pool Controller
+    name: OTA Updates
+    weight: 50
+---
 
 ## Overview
 
@@ -13,6 +28,27 @@ This feature is provided by the Homie library and is enabled by default.
 - **Low memory footprint**: Optimized for ESP8266/ESP32
 - **Automatic discovery**: mDNS support for easy device location
 - **Status feedback**: Progress indication via MQTT
+
+## Current Capability Status
+
+### ESP32 Web Interface + Initial Configuration
+
+- ✅ Implemented through Homie (`Homie.setup()`) for ESP32 and ESP8266
+- ✅ Initial setup is done in the Homie captive portal (`http://192.168.123.1` in AP mode)
+- ✅ OTA upload via the device web interface is available after initial setup
+
+### Update Triggering
+
+- ✅ Trigger from ESP32 web interface: supported (manual firmware upload)
+- ✅ Trigger from PlatformIO/Arduino OTA upload: supported
+- ✅ Direct trigger from Home Assistant via MQTT button: implemented
+
+### Version Hint / New Release Awareness
+
+- ✅ Installed firmware version is published via Homie (`$fw/version`)
+- ⚠️ Automatic on-device check against latest GitHub release is currently not implemented
+- ✅ Recommended workaround: subscribe to GitHub releases
+  (<https://github.com/smart-swimmingpool/pool-controller/releases>)
 
 ## Prerequisites
 
@@ -60,20 +96,62 @@ device will automatically reboot with the new firmware.
 1. Open Arduino IDE
 2. Go to **Tools → Port**
 3. Select your device from the network ports list
-  (e.g., `pool-controller at 192.168.1.100`)
+    (e.g., `pool-controller at 192.168.1.100`)
 4. Click Upload button
 5. Enter OTA password when prompted
 
 ### Method 3: Web Interface (Homie UI)
 
 1. Access Homie web interface at `http://pool-controller.local/`
-  or `http://[DEVICE_IP]/`
+    or `http://[DEVICE_IP]/`
 2. Navigate to **Firmware Update** section
 3. Select compiled `.bin` file
 4. Click **Upload**
 5. Wait for update completion and automatic reboot
 
 ## OTA Configuration
+
+### Home Assistant OTA Trigger
+
+When `mqtt-protocol` is set to `homeassistant`, the device publishes:
+
+- Button entity: `button.pool_controller_ota_update`
+- Status sensor: `sensor.pool_controller_ota_status`
+
+Command topic:
+
+```text
+homeassistant/button/pool-controller/ota-update/set
+```
+
+Payload options:
+
+- `PRESS`: Trigger OTA using configured `ota-url` setting
+
+OTA status sensor values:
+
+- `idle`
+- `requested`
+- `updating`
+- `success`
+- `failed`
+- `no-update`
+- `url-invalid`
+- `wifi-disconnected`
+- `busy`
+
+### Setting OTA URL
+
+Set the `ota-url` Homie setting to the firmware binary URL (`.bin`), for
+example:
+
+```json
+{
+  "settings": {
+    "ota-url": "https://updates.example.local/pool-controller/firmware.bin"
+  }
+}
+```
 
 ### Setting OTA Password
 
@@ -282,7 +360,7 @@ name: Build and Deploy OTA
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
   build-and-deploy:
@@ -291,14 +369,14 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
-      
+          python-version: "3.11"
+
       - name: Install PlatformIO
         run: pip install platformio
-      
+
       - name: Build Firmware
         run: pio run -e nodemcuv2
-      
+
       - name: Upload via OTA
         env:
           DEVICE_IP: ${{ secrets.DEVICE_IP }}
@@ -366,22 +444,24 @@ cp .pio/build/nodemcuv2/firmware.bin \
 If OTA update fails and device becomes unresponsive:
 
 1. **Physical Access Recovery**:
+
 - Connect via USB serial
 - Upload firmware via serial: `pio run -e nodemcuv2 --target upload`
 
-2. **Bootloader Recovery**:
+1. **Bootloader Recovery**:
+
 - ESP8266/ESP32 bootloader allows serial recovery
 - Hold BOOT button during power-on
 - Upload firmware via esptool
 
-3. **Factory Reset**:
+1. **Factory Reset**:
+
 - Clear EEPROM/NVS
 - Reset Homie configuration
 - Reconfigure via Homie AP
 
 ## Future Enhancements
 
-- [ ] Web-based OTA update interface
 - [ ] Automatic update checking from GitHub releases
 - [ ] Rollback capability to previous firmware
 - [ ] A/B partition updates for safer updates

@@ -5,6 +5,15 @@
 #include <Arduino.h>
 #include <Homie.h>
 #include <SPI.h>
+#include <atomic>
+#include <cstring>
+#ifdef ESP32
+#include <WiFi.h>
+#include <HTTPUpdate.h>
+#else
+#include <ESP8266WiFi.h>
+#include <ESP8266httpUpdate.h>
+#endif
 #include "DallasTemperatureNode.hpp"
 #include "ESP32TemperatureNode.hpp"
 #include "RelayModuleNode.hpp"
@@ -38,6 +47,136 @@ static OperationModeNode operationModeNode("operation-mode", "Operation Mode");
 
 static uint32_t _measurementInterval = 10;
 static uint32_t _lastMeasurement;
+// HA command payloads are short ("ON"/"OFF", mode names, numeric values, "PRESS");
+// 128 bytes provide ample headroom while keeping stack usage bounded.
+static constexpr size_t kMqttPayloadBufferSize = 128;
+static std::atomic<bool> otaUpdateRequested{false};
+#ifdef ESP32
+static std::atomic<bool> otaTaskRunning{false};
+// OTA HTTP update uses network stack + updater internals; 8192 bytes avoids stack overflow in update task.
+static constexpr uint32_t kOtaTaskStackSize = 8192;
+// Low priority keeps control logic responsive while OTA runs in background.
+static constexpr UBaseType_t kOtaTaskPriority = 1;
+static char otaTaskUrl[256] = {};
+#endif
+
+static bool isHttpUrl(const char *value) {
+  if (value == nullptr) {
+    return false;
+  }
+  if (strncmp(value, "http://", 7) == 0) {
+    return value[7] != '\0';
+  }
+  if (strncmp(value, "https://", 8) == 0) {
+    return value[8] != '\0';
+  }
+  return false;
+}
+
+static void publishOtaStatus(const char *status) {
+  if (!HomeAssistant::useHomeAssistant || !Homie.isConnected() || status == nullptr) {
+    return;
+  }
+  HomeAssistant::DiscoveryPublisher::publishSensorState(PoolController::MqttInterface::kDeviceId, "ota-status", status);
+}
+
+static bool triggerOtaUpdate(const char *url) {
+  if (!isHttpUrl(url)) {
+    LN.log(__PRETTY_FUNCTION__, LoggerNode::ERROR, "OTA URL missing or invalid (expected http/https)");
+    publishOtaStatus("url-invalid");
+    return false;
+  }
+
+  if (WiFi.status() != WL_CONNECTED) {
+    LN.log(__PRETTY_FUNCTION__, LoggerNode::ERROR, "WiFi not connected, OTA aborted");
+    publishOtaStatus("wifi-disconnected");
+    return false;
+  }
+
+  LN.logf(__PRETTY_FUNCTION__, LoggerNode::INFO, "Starting OTA update from URL: %s", url);
+  publishOtaStatus("updating");
+
+#ifdef ESP32
+  WiFiClient otaClient;
+  t_httpUpdate_return result = httpUpdate.update(otaClient, url);
+  if (result == HTTP_UPDATE_FAILED) {
+    LN.logf(__PRETTY_FUNCTION__, LoggerNode::ERROR, "OTA failed: %d %s", httpUpdate.getLastError(),
+      httpUpdate.getLastErrorString().c_str());
+    publishOtaStatus("failed");
+    return false;
+  }
+#else
+  WiFiClient otaClient;
+  t_httpUpdate_return result = ESPhttpUpdate.update(otaClient, url);
+  if (result == HTTP_UPDATE_FAILED) {
+    LN.logf(__PRETTY_FUNCTION__, LoggerNode::ERROR, "OTA failed: %d %s", ESPhttpUpdate.getLastError(),
+      ESPhttpUpdate.getLastErrorString().c_str());
+    publishOtaStatus("failed");
+    return false;
+  }
+#endif
+
+  if (result == HTTP_UPDATE_NO_UPDATES) {
+    LN.log(__PRETTY_FUNCTION__, LoggerNode::INFO, "OTA: no updates available");
+    publishOtaStatus("no-update");
+    return false;
+  }
+
+  LN.log(__PRETTY_FUNCTION__, LoggerNode::INFO, "OTA update completed");
+  publishOtaStatus("success");
+  return true;
+}
+
+#ifdef ESP32
+static void otaUpdateTask(void *parameter) {
+  const char *url = static_cast<const char *>(parameter);
+  triggerOtaUpdate(url);
+  otaTaskRunning.store(false);
+  vTaskDelete(nullptr);
+}
+#endif
+
+static void processPendingOtaUpdate(const char *configuredOtaUrl) {
+  if (!otaUpdateRequested.exchange(false)) {
+    return;
+  }
+
+#ifdef ESP32
+  bool expected = false;
+  if (!otaTaskRunning.compare_exchange_strong(expected, true)) {
+    LN.log(__PRETTY_FUNCTION__, LoggerNode::WARNING, "OTA already running");
+    publishOtaStatus("busy");
+    return;
+  }
+
+  if (!isHttpUrl(configuredOtaUrl)) {
+    LN.log(__PRETTY_FUNCTION__, LoggerNode::ERROR, "Configured ota-url is missing or invalid");
+    publishOtaStatus("url-invalid");
+    otaTaskRunning.store(false);
+    return;
+  }
+
+  const size_t urlLen = strlen(configuredOtaUrl);
+  if (urlLen >= sizeof(otaTaskUrl)) {
+    LN.log(__PRETTY_FUNCTION__, LoggerNode::ERROR, "Configured ota-url too long");
+    publishOtaStatus("url-invalid");
+    otaTaskRunning.store(false);
+    return;
+  }
+
+  strncpy(otaTaskUrl, configuredOtaUrl, sizeof(otaTaskUrl) - 1);
+  otaTaskUrl[sizeof(otaTaskUrl) - 1] = '\0';
+
+  if (xTaskCreate(otaUpdateTask, "ota-update", kOtaTaskStackSize, otaTaskUrl, kOtaTaskPriority, nullptr) != pdPASS) {
+    LN.log(__PRETTY_FUNCTION__, LoggerNode::ERROR, "Failed to create OTA task");
+    publishOtaStatus("failed");
+    otaTaskRunning.store(false);
+    return;
+  }
+#else
+  triggerOtaUpdate(configuredOtaUrl);
+#endif
+}
 
 static bool extractHomeAssistantObjectId(const char *topic, const char *component, char *objectId, size_t objectIdSize) {
   char prefix[128];
@@ -71,7 +210,7 @@ static void onMqttMessage(
   if (!HomeAssistant::useHomeAssistant)
     return;
 
-  char payloadStr[32];
+  char payloadStr[kMqttPayloadBufferSize];
   size_t payloadLen = (len < sizeof(payloadStr) - 1) ? len : sizeof(payloadStr) - 1;
   memcpy(payloadStr, payload, payloadLen);
   payloadStr[payloadLen] = '\0';
@@ -136,6 +275,14 @@ static void onMqttMessage(
     }
     if (strcmp(objectId, "timezone") == 0) {
       operationModeNode.handleHomeAssistantCommand("timezone", payloadStr);
+      return;
+    }
+  }
+
+  if (extractHomeAssistantObjectId(topic, "button", objectId, sizeof(objectId))) {
+    if (strcmp(objectId, "ota-update") == 0) {
+      otaUpdateRequested.store(true);
+      publishOtaStatus("requested");
       return;
     }
   }
@@ -332,6 +479,12 @@ auto PoolControllerContext::setupHandler() -> void {
     PoolController::MqttInterface::publishSwitchDiscovery("log-serial", "Log to serial interface", "mdi:serial-port");
     PoolController::MqttInterface::subscribeSwitch("log-serial");
 
+    PoolController::MqttInterface::publishButtonDiscovery("ota-update", "OTA Update", "mdi:update");
+    PoolController::MqttInterface::subscribeButton("ota-update");
+
+    PoolController::MqttInterface::publishSensorDiscovery("ota-status", "OTA Status", nullptr, nullptr, "mdi:update");
+    publishOtaStatus("idle");
+
     LN.log(__PRETTY_FUNCTION__, LoggerNode::INFO, "Home Assistant discovery messages published");
   } else {
     LN.log(__PRETTY_FUNCTION__, LoggerNode::INFO, "Using Homie MQTT Convention");
@@ -375,6 +528,9 @@ auto PoolControllerContext::setup() -> void {
     return std::strcmp(candidate, "homie") == 0 || std::strcmp(candidate, "homeassistant") == 0;
   });
 
+  this->otaUrlSetting_.setDefaultValue("").setValidator(
+    [](const char *const candidate) -> bool { return candidate != nullptr && (candidate[0] == '\0' || isHttpUrl(candidate)); });
+
   Homie.setSetupFunction(&Detail::setupProxy);
 
   LN.log(__PRETTY_FUNCTION__, LoggerNode::DEBUG, "Before Homie setup())");
@@ -389,6 +545,8 @@ auto PoolControllerContext::setup() -> void {
 }
 
 auto PoolControllerContext::loop() -> void {
+  processPendingOtaUpdate(this->otaUrlSetting_.get());
+
   // Feed watchdog and check memory
   SystemMonitor::feedWatchdog();
   SystemMonitor::checkMemory();

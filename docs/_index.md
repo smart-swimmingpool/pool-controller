@@ -21,14 +21,11 @@ menu:
     weight: 10
 ---
 
-**🏊 The Homie 3.0 compatible Smart Swimmingpool Controller 🎛️**
+## 🏊 The Homie 3.0 compatible Smart Swimmingpool Controller 🎛️
 
-<span style="text-shadow: none;">
-<a class="github-button" href="https://github.com/smart-swimmingpool/pool-controller/subscription" data-size="large" data-show-count="true" aria-label="Watch smart-swimmingpool/pool-controller on GitHub">Watch</a>
-<a class="github-button" href="https://github.com/smart-swimmingpool/pool-controller" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star this on GitHub">Star</a><script async defer src="https://buttons.github.io/buttons.js"></script>
-
-[GitHub Sources](https://github.com/smart-swimmingpool/pool-controller)
-</span>
+- [GitHub Sources](https://github.com/smart-swimmingpool/pool-controller)
+- [Watch on GitHub](https://github.com/smart-swimmingpool/pool-controller/subscription)
+- [Star on GitHub](https://github.com/smart-swimmingpool/pool-controller)
 
 Manage your swimming pool in a smart way to enjoy it comfortably and affordably (for less than 100€).
 
@@ -40,8 +37,13 @@ Manage your swimming pool in a smart way to enjoy it comfortably and affordably 
 - [x] Independent of specific smarthome servers
   - [x] [openHAB](https://www.openhab.org) since Version 2.4 using MQTT Homie
   - [x] [Home Assistant](https://home-assistant.io) using MQTT Homie
-- [x] Timesync via NTP (europe.pool.ntp.org)
+- [x] Time sync via NTP (europe.pool.ntp.org)
 - [x] Logging-Information via Homie-Node
+
+## OTA & Firmware Updates
+
+- [OTA Updates Guide](./ota-updates/) for web-based update flow and initial setup
+- GitHub releases: <https://github.com/smart-swimmingpool/pool-controller/releases>
 
 ## Planned Features
 
@@ -56,6 +58,6 @@ Manage your swimming pool in a smart way to enjoy it comfortably and affordably 
 - [ ] Use only one power supply for ESP8266 (5V) and relais (230V)
 - see also the [issue list](https://github.com/smart-swimmingpool/pool-controller/issues)
 
-[![works with MQTT Homie](https://homieiot.github.io/img/works-with-homie.svg "works with MQTT Homie")](https://homieiot.github.io/)
+[![works with MQTT Homie](https://homieiot.github.io/img/works-with-homie.svg)](https://homieiot.github.io/)
 
-{{< figure library="true" src="pool-controller_breadboard.png" title="Breadboard Circuit of Pool Controller" lightbox="true" >}}
+{{< figure library="true" src="pool-controller_breadboard.png" title="Breadboard Circuit" lightbox="true" >}}
