@@ -256,8 +256,6 @@ auto PoolControllerContext::initializeController() -> void {
  * after a temporary MQTT outage.
  */
 static void publishAllStates() {
-  using PoolController::MqttInterface;
-
   // Operation mode + settings
   String mode = operationModeNode.getMode();
   MqttInterface::publishSelectState(operationModeNode, "mode", "mode", mode.c_str());
