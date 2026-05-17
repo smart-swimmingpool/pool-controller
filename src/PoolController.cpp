@@ -5,6 +5,7 @@
 #include <Arduino.h>
 #include <Homie.h>
 #include <SPI.h>
+#include <Preferences.h>
 #include "DallasTemperatureNode.hpp"
 #include "ESP32TemperatureNode.hpp"
 #include "RelayModuleNode.hpp"
@@ -200,6 +201,10 @@ auto PoolControllerContext::initializeController() -> void {
 
   // Initialize NTP client with configured server
   timeClientSetup(this->ntpServerSetting_.get());
+
+  // P9: Propagate configurable time-loss thresholds to TimeClientHelper
+  setTimeDegradationGreenHours(static_cast<uint8_t>(this->timeLossGreenHoursSetting_.get()));
+  setTimeDegradationRedHours(static_cast<uint8_t>(this->timeLossRedHoursSetting_.get()));
 
   // Set the timezone from configuration
   setTimezoneIndex(this->timezoneSetting_.get());
@@ -399,7 +404,23 @@ auto PoolControllerContext::setupHandler() -> void {
 auto PoolControllerContext::setup() -> void {
   Homie.setLoggingPrinter(&Serial);
 
-  Homie_setFirmware("pool-controller", "3.1.0");
+  // --- P8: Boot-loop detection (run before any potentially crash-prone init) ---
+  bootLoopDetected_ = SystemMonitor::detectBootLoop();
+  if (bootLoopDetected_) {
+    Serial.println("✖ SAFE MODE ACTIVE — all relays forced OFF");
+    DegradationManager::forceSafeMode();
+
+    // Clear stored relay states so they default to OFF after reboot
+    Preferences prefs;
+    prefs.begin("pool-pump", false);
+    prefs.clear();
+    prefs.end();
+    prefs.begin("solar-pump", false);
+    prefs.clear();
+    prefs.end();
+  }
+
+  Homie_setFirmware("pool-controller", "3.2.0");
   Homie_setBrand("smart-swimmingpool");
 
   // default interval of sending Temperature values
@@ -429,6 +450,14 @@ auto PoolControllerContext::setup() -> void {
 
   this->mqttProtocolSetting_.setDefaultValue("homeassistant").setValidator([](const char *const candidate) -> bool {
     return std::strcmp(candidate, "homie") == 0 || std::strcmp(candidate, "homeassistant") == 0;
+  });
+
+  // P9: Configurable time-loss thresholds
+  this->timeLossGreenHoursSetting_.setDefaultValue(1).setValidator([](const long candidate) -> bool {
+    return candidate >= 1 && candidate <= 6;
+  });
+  this->timeLossRedHoursSetting_.setDefaultValue(24).setValidator([](const long candidate) -> bool {
+    return candidate >= 1 && candidate <= 72;
   });
 
   Homie.setSetupFunction(&Detail::setupProxy);

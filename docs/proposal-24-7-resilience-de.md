@@ -1,9 +1,9 @@
 # 24/7 Betrieb: Resilienz-Konzept für den Pool Controller
 
-> **Status**: Phase 1+2 implementiert (P1–P6)  
-> **Letztes Update**: 2026-05-15  
+> **Status**: Phase 1+2 implementiert, Phase 3 in Arbeit, ESP8266-Removal abgeschlossen  
+> **Letztes Update**: 2026-05-17  
 > **Branch**: `proposal/24-7-resilience`  
-> **Basis**: Version 3.1.0  
+> **Basis**: Version 3.1.0 → 3.2.0  
 
 ---
 
@@ -22,22 +22,23 @@ selbst bei:
 Was bereits existiert (v3.1.0):
 
 | Mechanismus | Status |
-|---|---|---|
-| State Persistence (ESP32 Preferences, ESP8266 EEPROM) | ✅ |
+| |---|---|---|
+| State Persistence (ESP32 Preferences, ~~ESP8266 EEPROM~~) | ✅ |
 | Relay-State-Wiederherstellung nach Reboot | ✅ |
 | `setRunLoopDisconnected(true)` für Offline-Betrieb | ✅ |
-| SystemMonitor mit Watchdog (ESP32 HW, ESP8266 SW) | ✅ |
+| SystemMonitor mit Watchdog (ESP32 HW) | ✅ |
 | Speicher-Monitoring mit Auto-Reboot bei Kritisch | ✅ |
 | NTP-Zeit-Caching mit millis()-Fallback | ✅ |
 | NaN-Validierung für Sensorwerte in Rules | ✅ |
 | Pin-Konflikt-Prüfung beim Start | ✅ |
 | Timer-Midnight-Crossing-Logik | ✅ |
 | **State-Load unabhängig von MQTT (P1)** | **✅ Seit 840f3a8** |
-| **ESP8266 EEPROM-Kollisionsfrei (P3)** | **✅ Seit 840f3a8** |
+| **~~ESP8266 EEPROM-Kollisionsfrei (P3)~~** | **✅ Seit 840f3a8 (obsolet)** |
 | **Watchdog-Fütterung in Langläufern (P6)** | **✅ Seit 840f3a8** |
 | **DegradationManager (P5)** | **✅ Seit 50be817** |
 | **NTP Dreistufen-Degradation (P2)** | **✅ Seit c969663** |
 | **MQTT State-Refresh bei Reconnect (P4)** | **✅ Seit 6eedebf** |
+| **ESP8266-Unterstützung entfernt** | **✅ 3.2.0** |
 
 Dieses Proposal adressiert die **verbleibenden Lücken** für einen wirklich
 ausfallsicheren 24/7 Betrieb.
@@ -489,10 +490,10 @@ HomieSetting<long> timeLossMaxHoursSetting_{"time-loss-max-hours",
 | 🟠 P4 | MQTT-Publish-Retry & Reconnect-Refresh | 2–3 Tage | ✅ |
 | 🟠 P5 | Explizite Degradations-Strategie | 2–3 Tage | ✅ |
 
-### Phase 3: Proaktive Resilienz (Folgewochen)
+### Phase 3: Proaktive Resilienz 🔄 In Arbeit
 
 | Priority | Proposal | Aufwand |
-|---|---|---|
+| |---|---|---|
 | 🟠 P7 | Beschleunigtes Sensor-Recovery | 1 Tag |
 | 🟠 P8 | Boot-Loop Erkennung + Safe Mode | 1 Tag |
 | 🟠 P9 | Konfigurierbare Notlauf-Zeiten | 1 Tag |

@@ -5,9 +5,10 @@
  *
  * Used lib:
  * https://github.com/YuriiSalimov/RelayModule
+ *
+ * ESP8266 support was removed in v3.2.0.
  */
 #include "RelayModuleNode.hpp"
-#include "StateManager.hpp"
 #include "Utils.hpp"
 #include "MqttInterface.hpp"
 
@@ -18,18 +19,15 @@ RelayModuleNode::RelayModuleNode(const char *id, const char *name, const uint8_t
   _lastMeasurement = 0;
 
   setRunLoopDisconnected(true);
-
-  setRunLoopDisconnected(true);
 }
 
 /**
  *
  */
 void RelayModuleNode::setSwitch(const boolean state) {
-  // Check if state actually changes to avoid unnecessary EEPROM writes
+  // Check if state actually changes to avoid unnecessary NVS writes
   boolean currentState = relay->isOn();
   if (currentState == state) {
-    // State unchanged, skip persistence to reduce EEPROM wear
     return;
   }
 
@@ -43,15 +41,11 @@ void RelayModuleNode::setSwitch(const boolean state) {
     PoolController::MqttInterface::publishSwitchState(*this, cSwitch, getId(), state);
     PoolController::MqttInterface::publishHomieProperty(*this, cHomieNodeState, cHomieNodeState_OK);
   }
-  // Persist relay state for both ESP32 and ESP8266
-  // Only written when state actually changes to reduce EEPROM wear
-#ifdef ESP32
+
+  // Persist relay state via Preferences (NVS)
   preferences.begin(getId(), false);
   preferences.putBool(cSwitch, state);
   preferences.end();
-#elif defined(ESP8266)
-  PoolController::StateManager::saveBool(getId(), state);
-#endif
 
   Homie.getLogger() << cIndent << F("Relay is ") << (state ? cFlagOn : cFlagOff) << endl;
 }
@@ -125,16 +119,11 @@ void RelayModuleNode::setup() {
 
   relay = new RelayModule(_pin);
 
-  // Load and restore relay state from persistent storage
-#ifdef ESP32
+  // Load and restore relay state from persistent storage (NVS)
   preferences.begin(getId(), false);
   boolean storedSwitchValue = preferences.getBool(cSwitch, false);
   preferences.end();
-#elif defined(ESP8266)
-  boolean storedSwitchValue = PoolController::StateManager::loadBool(getId(), false);
-#endif
 
-  // Restore from persistent storage
   if (storedSwitchValue) {
     relay->on();
   } else {

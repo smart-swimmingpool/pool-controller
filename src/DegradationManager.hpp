@@ -73,6 +73,12 @@ public:
   static bool isSafe();
 
   /**
+   * Immediately force CRITICAL / safe mode.
+   * Used by boot-loop detection (P8) and other pre-initialization checks.
+   */
+  static void forceSafeMode();
+
+  /**
    * Human-readable level name (for logging / MQTT).
    */
   static const char *levelToString(DegradationLevel level);

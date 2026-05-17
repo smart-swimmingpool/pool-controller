@@ -90,7 +90,13 @@ void DallasTemperatureNode::onReadyToOperate() {
  *
  */
 void DallasTemperatureNode::loop() {
-  if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval)) {
+  // P7: When temperature is NaN (sensor error), use a shorter recovery
+  // interval so the system detects reconnection faster.
+  unsigned long effectiveInterval = isnan(_temperature)
+    ? RECOVERY_INTERVAL
+    : _measurementInterval;
+
+  if (Utils::shouldMeasure(_lastMeasurement, effectiveInterval)) {
     _lastMeasurement = millis();
 
     if (numberOfDevices > 0) {

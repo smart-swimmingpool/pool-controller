@@ -3,14 +3,14 @@
 ## Overview
 
 The Pool Controller now includes comprehensive state persistence and system
-health monitoring to ensure reliable 24/7 operation.
+health monitoring to ensure reliable 24/7 operation. ESP32-only since v3.2.0.
 
 ## State Persistence
 
 ### What Gets Persisted
 
-All controller states are automatically saved to non-volatile storage and
-restored after reboots or power failures:
+All controller states are automatically saved to non-volatile storage (NVS)
+and restored after reboots or power failures:
 
 #### Operation Settings
 
@@ -28,26 +28,10 @@ restored after reboots or power failures:
 ### How It Works
 
 **ESP32**: Uses the Preferences library for persistent storage in NVS
-(Non-Volatile Storage).
+(Non-Volatile Storage). Each value is stored with a type-specific key.
 
-**ESP8266 EEPROM**: Structured layout with 8 fixed slots + CRC16-CCITT checksum.
-Support added in v3.2.0 (P3).
-
-| Slot | Address | Type | Description |
-|------|---------|------|-------------|
-| hysteresis | 6 | float | Temperature hysteresis |
-| opmode | 10 | string | Mode (auto/manu/boost/timer) |
-| poolMaxTemp | 18 | float | Pool max temperature |
-| solarMinTemp | 22 | float | Solar min temperature |
-| timerEndH | 26 | int | Timer end hour |
-| timerEndM | 30 | int | Timer end minute |
-| timerStartH | 34 | int | Timer start hour |
-| timerStartM | 38 | int | Timer start minute |
-
-Magic number `"P00N"` (0x4E303050) at address 0 detects old-format EEPROM
-and auto-migrates on first boot. CRC16 at address 4 covers all data bytes.
-
-Total footprint: 42 bytes (410 bytes free for future expansion).
+Relay states are persisted individually per relay via their own Preferences
+namespace (`getPersistentData()`).
 
 ### Automatic Restoration
 
@@ -243,20 +227,9 @@ Example messages:
 
 ### States Not Persisting
 
-**ESP32**:
-
 1. Check serial output for "State loaded from persistent storage"
 2. Verify NVS partition is available
 3. Check for Preferences errors in logs
-
-**ESP8266**:
-
-1. Check serial output for "State loaded from persistent storage"
-2. If EEPROM was written by an older firmware version (v3.1.0 or earlier with
-   `"P00L"` magic), the new structured layout (`"P00N"` magic) will detect
-   the old format and reinitialize with factory defaults on first boot.
-3. After reinitialization, all 8 configuration slots are persisted with
-   CRC16 protection. Verify by changing a setting and rebooting.
 
 ### Frequent Reboots
 
@@ -291,11 +264,6 @@ If watchdog triggers (ESP32):
 - Integer values (4): 16 bytes
 - Total: ~40 bytes
 
-**ESP8266 EEPROM**:
-
-- Reserved: 512 bytes (for future expansion)
-- Currently minimal usage
-
 ### Performance Impact
 
 - **State save**: < 10ms (occurs only on changes)
@@ -325,4 +293,4 @@ Planned:
 
 **Version**: 3.2.0
 **Status**: Production Ready
-**Platforms**: ESP32 (full support), ESP8266 (full support since v3.2.0)
+**Platform**: ESP32

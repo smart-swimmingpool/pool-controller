@@ -19,6 +19,11 @@ unsigned long DegradationManager::lastEvaluationMs_ = 0;
 // ===========================================================================
 
 void DegradationManager::begin() {
+  // Don't reset if already forced into safe mode by boot-loop detection
+  if (currentLevel_ == DegradationLevel::CRITICAL) {
+    previousLevel_ = DegradationLevel::CRITICAL;
+    return;
+  }
   currentLevel_ = DegradationLevel::NORMAL;
   previousLevel_ = DegradationLevel::NORMAL;
   sensorValid_ = true;
@@ -51,6 +56,14 @@ DegradationLevel DegradationManager::getLevel() {
 
 bool DegradationManager::isSafe() {
   return currentLevel_ >= DegradationLevel::CRITICAL;
+}
+
+void DegradationManager::forceSafeMode() {
+  if (currentLevel_ != DegradationLevel::CRITICAL) {
+    previousLevel_ = currentLevel_;
+    currentLevel_ = DegradationLevel::CRITICAL;
+    onTransition();
+  }
 }
 
 const char *DegradationManager::levelToString(DegradationLevel level) {

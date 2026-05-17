@@ -1,17 +1,14 @@
 /**
  * Homie Node for Relays.
  *
+ * ESP8266 support was removed in v3.2.0.
  */
 
 #pragma once
 
 #include <Homie.hpp>
 #include <RelayModule.h>
-#ifdef ESP32
 #include <Preferences.h>
-#elif defined(ESP8266)
-
-#endif
 
 class RelayModuleNode : public HomieNode {
 
@@ -57,11 +54,7 @@ private:
   unsigned long _lastMeasurement;
   RelayModule *relay = NULL;
 
-#ifdef ESP32
   Preferences preferences;
-#elif defined(ESP8266)
-
-#endif
 
   void printCaption();
 };

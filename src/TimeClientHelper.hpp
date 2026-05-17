@@ -18,10 +18,15 @@ struct TimeZoneInfo {
 constexpr time_t MIN_VALID_TIME = 1577836800;
 
 /**
- * Time degradation levels for the three-stage model:
- *   GREEN  — last NTP sync < 1h ago, time is accurate
- *   YELLOW — last sync 1–24h ago, millis()-estimate is usable
- *   RED    — last sync > 24h ago OR never synced, time is effectively lost
+ * Time degradation levels for the configurable three-stage model:
+ *   GREEN  — last NTP sync < greenMaxHours, time is accurate
+ *   YELLOW — last sync between greenMaxHours and redAfterHours,
+ *            millis()-estimate is usable
+ *   RED    — last sync > redAfterHours OR never synced, time is effectively lost
+ *
+ * Thresholds configured via HomieSettings (P9):
+ *   time-loss-green-hours (default 1h)
+ *   time-loss-red-hours   (default 24h)
  */
 enum class TimeDegradation : uint8_t {
   GREEN = 0,
@@ -40,3 +45,9 @@ int getTimezoneIndex();
 bool isTimeSyncValid();
 TimeDegradation getTimeDegradation();
 time_t getLastValidSyncTime();
+
+/** Configure GREEN→YELLOW threshold (hours). Default 1. */
+void setTimeDegradationGreenHours(uint8_t hours);
+
+/** Configure YELLOW→RED threshold (hours). Default 24. */
+void setTimeDegradationRedHours(uint8_t hours);
