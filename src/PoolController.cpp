@@ -494,6 +494,14 @@ auto PoolControllerContext::loop() -> void {
   // Evaluate system health and trigger degradation transitions
   DegradationManager::evaluate();
 
+  // P8: Clear boot-loop counter after 5 minutes of stable uptime.
+  // This tells detectBootLoop() on the next boot that this boot was healthy.
+  static uint32_t lastBootClear = 0;
+  if (!bootLoopDetected_ && (millis() - lastBootClear) > 300000) {
+    SystemMonitor::clearBootLoopCounter();
+    lastBootClear = millis();
+  }
+
   Homie.loop();
 }
 }  // namespace PoolController

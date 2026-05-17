@@ -113,54 +113,53 @@ public:
 
   // --- Boot-loop detection (P8) ---
 
-  /** Minimum uptime (seconds) for a boot to count as "healthy" */
-  static constexpr uint32_t BOOT_LOOP_MIN_UPTIME = 300;       // 5 min
-
-  /** Number of consecutive short boots before safe mode activates */
+  /** Number of consecutive boots before safe mode activates */
   static constexpr uint8_t BOOT_LOOP_MAX_COUNT = 3;
+
+  /** Minimum uptime (seconds) before clearing the boot-loop counter */
+  static constexpr uint32_t BOOT_LOOP_CLEAR_AFTER_SEC = 300;  // 5 min
 
   /**
    * Detect boot-loop pattern.
    * Call this as early as possible in setup(), before Homie initializes.
    *
-   * Uses Preferences (NVS) to persist boot count and last uptime.
-   * Returns true if a boot-loop pattern is detected.
+   * Increments a persistent boot counter in NVS on every boot.
+   * Returns true when BOOT_LOOP_MAX_COUNT consecutive boots have occurred
+   * without a reset (which happens after stable uptime in loop()).
+   *
+   * The counter is reset to 0 by clearBootLoopCounter(), called from
+   * PoolController::loop() after BOOT_LOOP_CLEAR_AFTER_SEC of stable operation.
    */
   static bool detectBootLoop() {
     Preferences prefs;
     prefs.begin("sysmon", false);
 
-    int bootCount = prefs.getInt("bootCount", 0);
-    uint32_t lastUptime = prefs.getUInt("lastUptime", 0);
+    int bootCount = prefs.getInt("bootCount", 0) + 1;
 
-    // Current uptime is 0 at boot
-    uint32_t curUptime = millis() / 1000;
+    Serial.printf("  Boot counter: %d\n", bootCount);
 
-    Serial.printf("  Boot counter: %d, last uptime: %us\n",
-                  bootCount + 1, lastUptime);
-
-    bool isBootLoop = false;
-
-    if (lastUptime > 0 && lastUptime < BOOT_LOOP_MIN_UPTIME) {
-      // Short boot — potential boot-loop
-      if (bootCount >= BOOT_LOOP_MAX_COUNT) {
-        // Boot-loop pattern detected: multiple consecutive short boots
-        isBootLoop = true;
-        Serial.printf("✖ BOOT-LOOP DETECTED (%d boots < %us)\n",
-                      bootCount + 1, BOOT_LOOP_MIN_UPTIME);
-        Serial.println("  Entering safe mode — all relays OFF");
-      }
-    } else {
-      // Previous boot was long enough → reset boot counter
-      bootCount = 0;
+    bool isBootLoop = (bootCount > BOOT_LOOP_MAX_COUNT);
+    if (isBootLoop) {
+      Serial.printf("✖ BOOT-LOOP DETECTED (%d consecutive boots)\n", bootCount);
+      Serial.println("  Entering safe mode — all relays OFF");
     }
 
-    // Persist for next boot
-    prefs.putInt("bootCount", bootCount + 1);
-    prefs.putUInt("lastUptime", curUptime);
+    prefs.putInt("bootCount", bootCount);
     prefs.end();
 
     return isBootLoop;
+  }
+
+  /**
+   * Clear the boot-loop counter.
+   * Called from PoolController::loop() after BOOT_LOOP_CLEAR_AFTER_SEC seconds
+   * of stable operation to indicate a healthy boot.
+   */
+  static void clearBootLoopCounter() {
+    Preferences prefs;
+    prefs.begin("sysmon", false);
+    prefs.putInt("bootCount", 0);
+    prefs.end();
   }
 };
 
