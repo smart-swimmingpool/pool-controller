@@ -322,7 +322,7 @@ git checkout v3.0.0
 
 ### Kurzfristig
 
-1. Build-Tests auf ESP32 und ESP8266
+1. Build-Tests auf ESP32
 2. Speicher-Tests über 24-48h
 3. MQTT-Funktionstest (beide Protokolle)
 

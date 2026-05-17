@@ -1,4 +1,4 @@
-# Pool Controller 3.1 | 🏊 Smart Swimming Pool
+# Pool Controller 3.2 | 🏊 Smart Swimming Pool
 
 [![Smart Swimmingpool](https://img.shields.io/badge/%F0%9F%8F%8A%20-Smart%20Swimmingpool-blue.svg)](https://github.com/smart-swimmingpool)
 [![PlatformIO CI](https://github.com/smart-swimmingpool/pool-controller/workflows/PlatformIO%20CI/badge.svg)](https://github.com/smart-swimmingpool/pool-controller/actions?query=workflow%3A%22PlatformIO+CI%22)
@@ -36,15 +36,15 @@ Discussions: <https://github.com/smart-swimmingpool/smart-swimmingpool.github.io
   - [x] [Home Assistant](https://www.home-assistant.io/) via Homie or native
     MQTT Discovery
 
-### Reliability & 24/7 Operation (v3.1.0)
+### Reliability & 24/7 Operation (v3.2.0)
 
 - [x] **State Persistence** - All settings survive reboots and power failures
   - Operation mode, temperatures, timer settings automatically restored
-  - ESP32 NVS / ESP8266 EEPROM storage
+  - ESP32 NVS storage
 - [x] **System Health Monitoring** - Continuous health checks
   - Memory monitoring every 10 seconds
-  - Auto-reboot at critical memory threshold (4KB ESP8266, 8KB ESP32)
-  - Hardware watchdog timer (ESP32, 30s timeout)
+  - Auto-reboot at critical memory threshold (8KB)
+  - Hardware watchdog timer (30s timeout)
 - [x] **Memory Optimization** - Efficient resource usage
   - 90% reduction in heap fragmentation
   - 2,880-28,800 fewer allocations per day
@@ -52,6 +52,9 @@ Discussions: <https://github.com/smart-swimmingpool/smart-swimmingpool.github.io
 - [x] **Automatic Recovery** - Self-healing capabilities
   - Auto-recovery from memory exhaustion
   - Watchdog timer prevents system hangs
+  - Sensor auto-recovery with fast re-polling
+  - Boot-loop detection with Safe Mode
+  - NTP graceful degradation (3-stage)
   - Zero manual intervention required
 
 ### Developer Features
@@ -66,7 +69,20 @@ Discussions: <https://github.com/smart-swimmingpool/smart-swimmingpool.github.io
 - [x] Modern libraries (ArduinoJson 6.21.5, NTPClient 3.2.1)
 - [x] Clean, formatted code following project standards
 
-## Recent Updates (v3.1.0)
+## Recent Updates (v3.2.0)
+
+### ESP8266 Support Removed
+- Codebase is now ESP32-only — cleaner, faster, more reliable
+- Removed all `#ifdef ESP8266` conditional compilation
+- Platform: esp32dev (ESP32 DevKit V1)
+
+### Phase 3 — Proactive Resilience
+
+- **P7: Fast Sensor Recovery** — DallasTemperatureNode polls every 5s (instead of 300s) when sensor reads NaN
+- **P8: Boot-Loop Detection** — NVS-based boot counter, Safe Mode after 4 consecutive short boots (<5 min), all relays forced OFF
+- **P9: Configurable Fallback Times** — HomieSettings `time-loss-green-hours` and `time-loss-red-hours` replace hardcoded NTP thresholds
+
+### v3.1.0 (Previous Release)
 
 ### Critical Bug Fixes
 
@@ -117,7 +133,7 @@ All controller states are automatically saved and restored:
 - Operation modes and settings
 - Temperature thresholds
 - Timer configurations
-- Relay states (ESP32)
+- Relay states
 
 See [docs/state-persistence.md](docs/state-persistence.md) for details.
 
@@ -175,7 +191,7 @@ We welcome contributions! Before submitting a pull request, please:
 
 1. **Read the coding guidelines**: [`.github/CODING_GUIDELINES.md`](.github/CODING_GUIDELINES.md)
 2. **Run local linting**: `make lint-fix && make lint`
-3. **Test your changes**: `make build` (builds for both ESP32 and ESP8266)
+3. **Test your changes**: `make build` (builds for ESP32)
 4. **Check for issues**: See [`.github/QUICK_REFERENCE.md`](.github/QUICK_REFERENCE.md) for common fixes
 
 All code must pass the same Super-Linter checks run in CI (cpplint for C/C++, EditorConfig, and

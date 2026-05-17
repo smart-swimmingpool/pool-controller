@@ -74,7 +74,7 @@ Controller für einen zuverlässigen 24/7-Betrieb.
 - Alle Zustände werden automatisch im persistenten Speicher gesichert
 - Automatische Wiederherstellung nach Neustart/Stromausfall
 - ESP32: Nutzt Preferences API (NVS Storage)
-- ESP8266: Basis-Unterstützung (wird erweitert)
+- ~~ESP8266: Basis-Unterstützung (wird erweitert)~~ (obsolet, v3.2.0 ESP32-only)
 
 **Persistierte Daten**:
 
@@ -99,20 +99,17 @@ Controller für einen zuverlässigen 24/7-Betrieb.
 
 - Kontinuierliche Speicherüberwachung (alle 10 Sekunden)
 - Automatischer Neustart bei kritischem Speichermangel
-- Hardware Watchdog Timer (ESP32)
-- Software Watchdog (ESP8266)
+- Hardware Watchdog Timer (30s, ESP32)
 
 **Schwellwerte**:
 
-- **ESP8266**: Warnung bei < 8KB, Neustart bei < 4KB
 - **ESP32**: Warnung bei < 16KB, Neustart bei < 8KB
 
 **Funktionen**:
 
 - Speicherüberwachung
 - Minimaler Heap-Tracking
-- Heap-Fragmentierung (ESP8266)
-- Watchdog-Timer (ESP32: 30s Hardware, ESP8266: Software)
+- Watchdog-Timer (30s Hardware)
 - Automatischer Neustart bei kritischem Speicher
 
 **Neue Dateien**:

@@ -1,9 +1,9 @@
 # 24/7 Operation: Resilience Concept for the Pool Controller
 
-> **Status**: Proposal / Draft  
-> **Date**: 2026-05-14  
+> **Status**: Phase 1+2 implemented, Phase 3 in progress, ESP8266 removal complete  
+> **Date**: 2026-05-17  
 > **Branch**: `proposal/24-7-resilience`  
-> **Base**: Version 3.1.0  
+> **Base**: Version 3.1.0 → 3.2.0  
 
 ---
 
@@ -22,16 +22,23 @@ even under:
 Already implemented in v3.1.0:
 
 | Mechanism | Status |
-|---|---|
-| State Persistence (ESP32 Preferences, ESP8266 EEPROM) | ✅ |
+| |---|---|
+| State Persistence (ESP32 Preferences, ~~ESP8266 EEPROM~~) | ✅ |
 | Relay state restoration after reboot | ✅ |
 | `setRunLoopDisconnected(true)` for offline operation | ✅ |
-| SystemMonitor with watchdog (ESP32 HW, ESP8266 SW) | ✅ |
+| SystemMonitor with watchdog (ESP32 HW) | ✅ |
 | Memory monitoring with auto-reboot on critical | ✅ |
 | NTP time caching with millis() fallback | ✅ |
 | NaN validation for sensor values in Rules | ✅ |
 | Pin conflict detection at startup | ✅ |
 | Timer midnight-crossing logic | ✅ |
+| **State-Load independent of MQTT (P1)** | **✅ Since 840f3a8** |
+| **~~ESP8266 EEPROM collision fix (P3)~~** | **✅ Since 840f3a8 (obsolete)** |
+| **Watchdog feeding in long ops (P6)** | **✅ Since 840f3a8** |
+| **DegradationManager (P5)** | **✅ Since 50be817** |
+| **NTP three-stage degradation (P2)** | **✅ Since c969663** |
+| **MQTT state refresh on reconnect (P4)** | **✅ Since 6eedebf** |
+| **ESP8266 support removed** | **✅ 3.2.0** |
 
 This proposal addresses the **remaining gaps** for truly resilient 24/7 operation.
 
@@ -410,10 +417,10 @@ HomieSetting<long> timeLossMaxHoursSetting_{"time-loss-max-hours",
 | 🟠 P4 | MQTT publish retry & reconnect refresh | 2–3 days |
 | 🟠 P5 | Explicit degradation strategy | 2–3 days |
 
-### Phase 3: Proactive Resilience (Following weeks)
+### Phase 3: Proactive Resilience 🔄 In Progress
 
 | Priority | Proposal | Effort |
-|---|---|---|
+| |---|---|---|
 | 🟠 P7 | Accelerated sensor recovery | 1 day |
 | 🟠 P8 | Boot-loop detection + Safe Mode | 1 day |
 | 🟠 P9 | Configurable fallback behavior | 1 day |

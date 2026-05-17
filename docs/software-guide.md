@@ -33,17 +33,17 @@ Many thanks to maintainers of these libraries!
 
 ## Defines
 
-Within the sources at `main.cpp`, there are some constant settings defined. For the PIN assignment,
-see also at [hardware guide](../hardware-guide/#esp8266-pin-usage).
+Within the sources at `Config.hpp`, there are some constant settings defined. For the PIN assignment,
+see also at [hardware guide](../hardware-guide/#pin-usage).
 
 ```cpp
-const uint8_t PIN_DS_SOLAR = D5;  // Pin of Temp-Sensor Solar
-const uint8_t PIN_DS_POOL  = D6;  // Pin of Temp-Sensor Pool
+constexpr uint8_t PIN_DS_SOLAR   = 15;  // Pin of Temp-Sensor Solar (GPIO15)
+constexpr uint8_t PIN_DS_POOL    = 16;  // Pin of Temp-Sensor Pool (GPIO16)
 
-const uint8_t PIN_RELAY_POOL  = D1;
-const uint8_t PIN_RELAY_SOLAR = D2;
+constexpr uint8_t PIN_RELAY_POOL  = 18;  // Pin to control pool pump relay
+constexpr uint8_t PIN_RELAY_SOLAR = 19;  // Pin to control solar pump relay
 
-const uint8_t TEMP_READ_INTERVALL = 30;
+constexpr uint8_t TEMP_READ_INTERVAL = 30;
 ```
 
 ## Configuration
