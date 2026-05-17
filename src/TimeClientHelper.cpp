@@ -126,6 +126,21 @@ bool isTimeSyncValid() {
   return _timeSyncValid;
 }
 
+TimeDegradation getTimeDegradation() {
+  if (_timeSyncValid && _lastValidTime > 0) {
+    // Sync was valid within the last 24 hours — check how recent
+    uint32_t elapsed = millis() - _lastValidTimeMillis;
+    // Unsigned arithmetic handles millis() wraparound (~49 days)
+    if (elapsed < 3600000) {  // < 1 hour
+      return TimeDegradation::GREEN;
+    } else {
+      return TimeDegradation::YELLOW;  // 1–24 hours, estimate still usable
+    }
+  }
+  // > 24 hours since last sync, or never synced
+  return TimeDegradation::RED;
+}
+
 time_t getLastValidSyncTime() {
   return _lastValidTime;
 }

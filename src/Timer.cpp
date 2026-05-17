@@ -3,15 +3,20 @@
 
 /**
  * Get current date/time, with validation
- * Returns time with tm_year = -1 if time sync is invalid
+ * Returns time with tm_year = -1 only when time degradation is RED
+ * ( > 24h since last NTP sync or never synced).
+ *
+ * YELLOW degradation (1–24h) returns the millis()-estimated time so that
+ * timer scheduling continues to work — the estimate is accurate to within
+ * seconds over that window.
  */
 tm getCurrentDateTime() {
   TimeChangeRule *tcr = NULL;
   time_t t = getTimeFor(getTimezoneIndex(), &tcr);
   struct tm timeinfo = *localtime(&t);
 
-  // Mark as invalid if time sync has failed
-  if (!isTimeSyncValid() || t < MIN_VALID_TIME) {
+  // Only mark as invalid when time is effectively lost (RED)
+  if (getTimeDegradation() == TimeDegradation::RED) {
     timeinfo.tm_year = -1;
   }
 

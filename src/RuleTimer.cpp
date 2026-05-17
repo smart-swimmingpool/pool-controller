@@ -29,10 +29,13 @@ bool RuleTimer::checkPoolPumpTimer() {
   Homie.getLogger() << F("↕  checkPoolPumpTimer") << endl;
 
   tm time = getCurrentDateTime();
-  // Check if time is valid (tm_year == -1 indicates invalid time from NTP failure)
+  // Check if time is valid (tm_year == -1 indicates RED degradation)
   if (time.tm_year == -1) {
-    Homie.getLogger() << cIndent << F("⚠ Invalid time, timer disabled") << endl;
-    return false;  // Disable timer when time is invalid
+    Homie.getLogger() << cIndent << F("⚠ Time sync RED - timer disabled") << endl;
+    Homie.getLogger() << cIndent << F("  Pool pump stays ON for safety") << endl;
+    // Pool pump stays ON for pool hygiene when time is unavailable.
+    // Solar pump remains OFF in timer mode (handled by loop()).
+    return true;
   }
 
   bool retval;

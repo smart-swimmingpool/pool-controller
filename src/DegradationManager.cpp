@@ -2,7 +2,7 @@
 
 #include "DegradationManager.hpp"
 #include "SystemMonitor.hpp"
-#include "TimeClientHelper.hpp"
+#include "TimeClientHelper.hpp"  // TimeDegradation, getTimeDegradation
 
 #include <Homie.h>
 
@@ -124,7 +124,8 @@ void DegradationManager::onTransition() {
 DegradationLevel DegradationManager::evaluateLevel() {
   // Gather system health signals
   bool wifiOk = Homie.isConnected();
-  bool timeOk = isTimeSyncValid();
+  // Time is OK for GREEN + YELLOW (millis() estimate is usable up to 24h)
+  bool timeOk = (getTimeDegradation() != TimeDegradation::RED);
   bool memoryOk = SystemMonitor::isHealthy();
   bool sensorOk = sensorValid_;
 
