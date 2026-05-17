@@ -79,8 +79,11 @@ Discussions: <https://github.com/smart-swimmingpool/smart-swimmingpool.github.io
 ### Phase 3 — Proactive Resilience
 
 - **P7: Fast Sensor Recovery** — DallasTemperatureNode polls every 5s (instead of 300s) when sensor reads NaN
-- **P8: Boot-Loop Detection** — NVS-based boot counter, Safe Mode after 4 consecutive short boots (<5 min), all relays forced OFF
-- **P9: Configurable Fallback Times** — HomieSettings `time-loss-green-hours` and `time-loss-red-hours` replace hardcoded NTP thresholds
+- **P8: Boot-Loop Detection** — NVS-based boot counter, Safe Mode after 4
+  consecutive short boots (<5 min), all relays forced OFF
+- **P9: Configurable Fallback Times** — HomieSettings
+  `time-loss-green-hours` and `time-loss-red-hours` replace hardcoded NTP
+  thresholds
 
 ### v3.1.0 (Previous Release)
 

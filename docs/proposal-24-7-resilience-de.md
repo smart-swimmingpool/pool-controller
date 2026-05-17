@@ -22,7 +22,7 @@ selbst bei:
 Was bereits existiert (v3.1.0):
 
 | Mechanismus | Status |
-| |---|---|---|
+|---|---|
 | State Persistence (ESP32 Preferences, ~~ESP8266 EEPROM~~) | ✅ |
 | Relay-State-Wiederherstellung nach Reboot | ✅ |
 | `setRunLoopDisconnected(true)` für Offline-Betrieb | ✅ |
@@ -493,7 +493,7 @@ HomieSetting<long> timeLossMaxHoursSetting_{"time-loss-max-hours",
 ### Phase 3: Proaktive Resilienz 🔄 In Arbeit
 
 | Priority | Proposal | Aufwand |
-| |---|---|---|
+|---|---|---|
 | 🟠 P7 | Beschleunigtes Sensor-Recovery | 1 Tag |
 | 🟠 P8 | Boot-Loop Erkennung + Safe Mode | 1 Tag |
 | 🟠 P9 | Konfigurierbare Notlauf-Zeiten | 1 Tag |

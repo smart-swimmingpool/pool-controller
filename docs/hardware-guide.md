@@ -45,4 +45,6 @@ The ESP32 is connected using the following pins. The constant values are defined
 
 ## Power Supply
 
-In my environment, I use USB to power the ESP32 via a small USB power adapter and an additional 230V power plug as the source for the power of the pumps, which are switched via the relays.
+In my environment, I use USB to power the ESP32 via a small USB power adapter
+and an additional 230V power plug as the source for the power of the pumps,
+which are switched via the relays.

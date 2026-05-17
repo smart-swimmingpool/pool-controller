@@ -26,10 +26,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install platformio
 
-      - name: Check outdated packages (nodemcuv2)
-        run: pio pkg outdated --environment nodemcuv2
-        continue-on-error: true
-
       - name: Check outdated packages (esp32dev)
         run: pio pkg outdated --environment esp32dev
         continue-on-error: true
