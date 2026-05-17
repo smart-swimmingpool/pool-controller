@@ -1,8 +1,8 @@
-# Coding Guidelines für ESP8266/ESP32 PlatformIO Projekte
+# Coding Guidelines für ESP32 PlatformIO Projekte
 
 ## Übersicht
 
-Dieses Dokument beschreibt die Coding-Richtlinien für das Pool-Controller Projekt, um Super-Linter Fehler zu vermeiden und Best Practices für ESP8266/ESP32 Entwicklung mit PlatformIO zu befolgen.
+Dieses Dokument beschreibt die Coding-Richtlinien für das Pool-Controller Projekt, um Super-Linter Fehler zu vermeiden und Best Practices für ESP32 Entwicklung mit PlatformIO zu befolgen.
 
 ## 1. C++ Code-Formatierung (clang-format)
 
@@ -177,7 +177,7 @@ lib_deps =
   https://github.com/me-no-dev/ESPAsyncWebServer.git
 ```
 
-## 4. ESP8266/ESP32 Spezifische Best Practices
+## 4. ESP32 Spezifische Best Practices
 
 ### 4.1 Speicherverwaltung
 
@@ -259,9 +259,7 @@ lib_deps = https://github.com/me-no-dev/ESPAsyncWebServer.git
 #### Plattform-spezifische Dependencies
 
 ```ini
-# AsyncTCP Libraries sind plattform-spezifisch
 # ESP32 verwendet AsyncTCP (ohne "ESP" Präfix)
-# ESP8266 verwendet ESPAsyncTCP (mit "ESP" Präfix)
 # ESPAsyncWebServer bringt diese automatisch mit!
 ```
 
@@ -300,7 +298,6 @@ clang-format -i src/**/*.cpp src/**/*.hpp
 
 # 3. Teste lokale Compilation
 pio run -e esp32dev
-pio run -e nodemcuv2
 ```
 
 ### 6.2 Commit Messages

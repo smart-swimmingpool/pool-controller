@@ -1,7 +1,7 @@
 # GitHub Copilot Instructions
 
 ## Project Overview
-This repository contains PlatformIO-based IoT firmware for ESP8266 and ESP32 targets. It uses C++17, follows strict standards for architecture, memory management, maintainability, security, and 24/7 reliability.
+This repository contains PlatformIO-based IoT firmware for the ESP32 platform. It uses C++17, follows strict standards for architecture, memory management, maintainability, security, and 24/7 reliability.
 
 ## General Coding Standards
 - Follow the coding conventions defined in `AGENTS.md`.
