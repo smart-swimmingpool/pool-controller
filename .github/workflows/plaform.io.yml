@@ -13,7 +13,20 @@ name: PlatformIO CI
 
 on:
   push:
+    paths-ignore:
+      - "docs/**"
+      - "**.md"
+      - "**.txt"
   pull_request:
+    paths-ignore:
+      - "docs/**"
+      - "**.md"
+      - "**.txt"
+
+# Cancel in-progress runs for the same workflow+ref when new commits are pushed
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
