@@ -19,6 +19,7 @@
 #include "TimeClientHelper.hpp"
 #include "StateManager.hpp"
 #include "SystemMonitor.hpp"
+#include "DegradationManager.hpp"
 #include "HomeAssistantMQTT.hpp"
 #include "MqttInterface.hpp"
 
@@ -369,11 +370,13 @@ auto PoolControllerContext::setup() -> void {
 
   Homie.setSetupFunction(&Detail::setupProxy);
 
-  // Initialize state management and system monitor regardless of WiFi/MQTT.
-  // These must run before Homie.setup() so nodes can access persisted state
-  // even when no MQTT connection is ever established (e.g. WiFi outage at boot).
+  // Initialize state management, system monitor, and degradation tracking
+  // regardless of WiFi/MQTT connectivity. These must run before Homie.setup()
+  // so nodes can access persisted state even when no MQTT connection is ever
+  // established (e.g. WiFi outage at boot).
   StateManager::begin();
   SystemMonitor::begin();
+  DegradationManager::begin();
 
   LN.log(__PRETTY_FUNCTION__, LoggerNode::DEBUG, "Before Homie setup())");
   Homie.setup();
@@ -395,6 +398,9 @@ auto PoolControllerContext::loop() -> void {
   // Feed watchdog and check memory
   SystemMonitor::feedWatchdog();
   SystemMonitor::checkMemory();
+
+  // Evaluate system health and trigger degradation transitions
+  DegradationManager::evaluate();
 
   Homie.loop();
 }
