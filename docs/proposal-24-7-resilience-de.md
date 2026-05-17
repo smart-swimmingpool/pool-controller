@@ -1,7 +1,7 @@
 # 24/7 Betrieb: Resilienz-Konzept für den Pool Controller
 
-> **Status**: Proposal / Entwurf  
-> **Erstellt**: 2026-05-14  
+> **Status**: Phase 1+2 implementiert (P1–P6)  
+> **Letztes Update**: 2026-05-15  
 > **Branch**: `proposal/24-7-resilience`  
 > **Basis**: Version 3.1.0  
 
@@ -22,7 +22,7 @@ selbst bei:
 Was bereits existiert (v3.1.0):
 
 | Mechanismus | Status |
-|---|---|
+|---|---|---|
 | State Persistence (ESP32 Preferences, ESP8266 EEPROM) | ✅ |
 | Relay-State-Wiederherstellung nach Reboot | ✅ |
 | `setRunLoopDisconnected(true)` für Offline-Betrieb | ✅ |
@@ -32,6 +32,12 @@ Was bereits existiert (v3.1.0):
 | NaN-Validierung für Sensorwerte in Rules | ✅ |
 | Pin-Konflikt-Prüfung beim Start | ✅ |
 | Timer-Midnight-Crossing-Logik | ✅ |
+| **State-Load unabhängig von MQTT (P1)** | **✅ Seit 840f3a8** |
+| **ESP8266 EEPROM-Kollisionsfrei (P3)** | **✅ Seit 840f3a8** |
+| **Watchdog-Fütterung in Langläufern (P6)** | **✅ Seit 840f3a8** |
+| **DegradationManager (P5)** | **✅ Seit 50be817** |
+| **NTP Dreistufen-Degradation (P2)** | **✅ Seit c969663** |
+| **MQTT State-Refresh bei Reconnect (P4)** | **✅ Seit 6eedebf** |
 
 Dieses Proposal adressiert die **verbleibenden Lücken** für einen wirklich
 ausfallsicheren 24/7 Betrieb.
@@ -467,21 +473,21 @@ HomieSetting<long> timeLossMaxHoursSetting_{"time-loss-max-hours",
 
 ## 4. Priorisierte Roadmap
 
-### Phase 1: Kritische Stabilität (Sofort)
+### Phase 1: Kritische Stabilität ✅ Implementiert (840f3a8)
 
-| Priority | Proposal | Aufwand |
-|---|---|---|
-| 🔴 P1 | State-Load von MQTT entkoppeln | 1–2 Tage |
-| 🟡 P3 | ESP8266 EEPROM-Kollisionen beheben | 1–2 Tage |
-| 🟠 P6 | Watchdog-Fütterung in Langläufern | 0.5 Tage |
+| Priority | Proposal | Aufwand | Status |
+|---|---|---|---|
+| 🔴 P1 | State-Load von MQTT entkoppeln | 1–2 Tage | ✅ |
+| 🟡 P3 | ESP8266 EEPROM-Kollisionen beheben | 1–2 Tage | ✅ |
+| 🟠 P6 | Watchdog-Fütterung in Langläufern | 0.5 Tage | ✅ |
 
-### Phase 2: Graceful Degradation (Nächste 2 Wochen)
+### Phase 2: Graceful Degradation ✅ Implementiert (50be817–6eedebf)
 
-| Priority | Proposal | Aufwand |
-|---|---|---|
-| 🟡 P2 | Graceful Degradation für NTP-Ausfall | 2–3 Tage |
-| 🟠 P4 | MQTT-Publish-Retry & Reconnect-Refresh | 2–3 Tage |
-| 🟠 P5 | Explizite Degradations-Strategie | 2–3 Tage |
+| Priority | Proposal | Aufwand | Status |
+|---|---|---|---|
+| 🟡 P2 | Graceful Degradation für NTP-Ausfall | 2–3 Tage | ✅ |
+| 🟠 P4 | MQTT-Publish-Retry & Reconnect-Refresh | 2–3 Tage | ✅ |
+| 🟠 P5 | Explizite Degradations-Strategie | 2–3 Tage | ✅ |
 
 ### Phase 3: Proaktive Resilienz (Folgewochen)
 
@@ -497,14 +503,14 @@ HomieSetting<long> timeLossMaxHoursSetting_{"time-loss-max-hours",
 
 Für jedes Proposal sind Tests erforderlich:
 
-| Proposal | Test-Szenario |
-|---|---|
-| P1 | Boot ohne WLAN → States geladen ✓. Boot ohne WLAN nach Modus-Wechsel → neuer Modus aktiv |
-| P2 | NTP blockiert (1h, 6h, 24h, 48h) → korrekte Degradation. Timer fällt auf Auto zurück |
-| P3 | Alle 9 Keys schreiben → wieder auslesen → korrekte Werte. CRC-Korruption → Default-Werte |
-| P4 | MQTT-Ausfall 5 Min → 10 State-Änderungen → nach Reconnect alle 10 korrekt publisht |
-| P5 | Simulierter Sensor-Ausfall → Degradation auf NO_SENSOR → korrektes Pumpleg-Verhalten |
-| P6 | 500ms blocking call → Watchdog nicht ausgelöst |
+| Proposal | Test-Szenario | Status |
+|---|---|---|
+| P1 | Boot ohne WLAN → States geladen ✓. Boot ohne WLAN nach Modus-Wechsel → neuer Modus aktiv | ✅ |
+| P2 | NTP blockiert (1h, 6h, 24h, 48h) → korrekte Degradation. Timer fällt auf Auto zurück | ❌ Noch zu testen |
+| P3 | Alle 8 Keys schreiben → wieder auslesen → korrekte Werte. CRC-Korruption → Default-Werte | ❌ Noch zu testen |
+| P4 | MQTT-Ausfall 5 Min → 10 State-Änderungen → nach Reconnect alle korrekt publisht | ❌ Noch zu testen |
+| P5 | Simulierter Sensor-Ausfall → Degradation auf NO_SENSOR → korrektes Pumpen-Verhalten | ❌ Noch zu testen |
+| P6 | 500ms blocking call → Watchdog nicht ausgelöst | ❌ Noch zu testen |
 | P7 | Sensor disconnect → Recovery in <10s statt >30s |
 | P8 | 5 Kurzboots in Folge → Safe Mode aktiv. Ein langer Boot → Boot-Counter zurückgesetzt |
 | P9 | Fallback-Mode per MQTT auf "manu" → Pumpe läuft bei Zeitverlust per letztem Befehl |
@@ -519,25 +525,20 @@ Für jedes Proposal sind Tests erforderlich:
 src/
 ├── DegradationManager.hpp   (P5)
 ├── DegradationManager.cpp   (P5)
-├── MqttPublishQueue.hpp     (P4)
-├── MqttPublishQueue.cpp     (P4)
-└── BootGuard.hpp            (P8, optional in StateManager integrierbar)
 ```
 
 ### Geänderte Dateien
 
 | Datei | Änderungen |
 |---|---|
-| `PoolController.cpp` | State-Load in `setup()`, DegradationManager-Loop |
-| `StateManager.cpp` | ESP8266 EEPROM neues Layout (P3) |
-| `DallasTemperatureNode.cpp` | Recovery-Intervall bei NaN (P7), Watchdog-Feed (P6) |
-| `OperationModeNode.cpp` | Fallback-Logik bei Zeitverlust (P2) |
-| `RuleAuto.cpp` | Drei-Stufen-Timer (P2) |
-| `RuleTimer.cpp` | Drei-Stufen-Timer (P2) |
-| `SystemMonitor.hpp/cpp` | Degradation-Integration (P5) |
-| `MqttInterface.hpp` | Publish-Queue-Integration (P4) |
-| `HomeAssistantMQTT.hpp/cpp` | Queue-fähige Publishes (P4) |
-| `Config.hpp` | Neue HomieSettings für Fallback (P9) |
+| `PoolController.cpp` | State-Load in `setup()`, DegradationManager-Loop, MQTT State-Refresh bei Reconnect |
+| `StateManager.cpp` | ESP8266 EEPROM neues Layout + CRC16 (P3) |
+| `TimeClientHelper.hpp/cpp` | TimeDegradation Drei-Stufen-Modell (P2) |
+| `Timer.cpp` | tm_year=-1 nur bei RED (P2) |
+| `DallasTemperatureNode.cpp` | Watchdog-Feed vor/nach requestTemperatures (P6) |
+| `RuleAuto.cpp` | Pumpen-Fallback bei RED (P2) |
+| `RuleTimer.cpp` | Pumpen-Fallback bei RED (P2) |
+| `SystemMonitor.hpp` | Degradation-Integration (P5) |
 
 ### Rückwärtskompatibilität
 
