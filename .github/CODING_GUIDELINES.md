@@ -2,7 +2,9 @@
 
 ## Übersicht
 
-Dieses Dokument beschreibt die Coding-Richtlinien für das Pool-Controller Projekt, um Super-Linter Fehler zu vermeiden und Best Practices für ESP32 Entwicklung mit PlatformIO zu befolgen.
+Dieses Dokument beschreibt die Coding-Richtlinien für das Pool-Controller Projekt, um
+Super-Linter Fehler zu vermeiden und Best Practices für ESP32 Entwicklung mit PlatformIO
+zu befolgen.
 
 ## 1. C++ Code-Formatierung (clang-format)
 
