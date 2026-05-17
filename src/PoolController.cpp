@@ -22,6 +22,7 @@
 #include "DegradationManager.hpp"
 #include "HomeAssistantMQTT.hpp"
 #include "MqttInterface.hpp"
+#include "Utils.hpp"
 
 #include "Config.hpp"
 
@@ -244,6 +245,64 @@ auto PoolControllerContext::initializeController() -> void {
 }
 
 /**
+ * Publish all current states to MQTT.
+ * Called at the end of setupHandler() to refresh all states on every
+ * (re-)connect, ensuring Home Assistant / Homie never shows stale data
+ * after a temporary MQTT outage.
+ */
+static void publishAllStates() {
+  using PoolController::MqttInterface;
+
+  // Operation mode + settings
+  String mode = operationModeNode.getMode();
+  MqttInterface::publishSelectState(operationModeNode, "mode", "mode", mode.c_str());
+
+  char buffer[20];
+
+  Utils::floatToString(operationModeNode.getPoolMaxTemperature(), buffer, sizeof(buffer));
+  MqttInterface::publishNumberState(operationModeNode, "pool-max-temp", "pool-max-temp", buffer);
+
+  Utils::floatToString(operationModeNode.getSolarMinTemperature(), buffer, sizeof(buffer));
+  MqttInterface::publishNumberState(operationModeNode, "solar-min-temp", "solar-min-temp", buffer);
+
+  Utils::floatToString(operationModeNode.getTemperatureHysteresis(), buffer, sizeof(buffer));
+  MqttInterface::publishNumberState(operationModeNode, "hysteresis", "hysteresis", buffer);
+
+  TimerSetting ts = operationModeNode.getTimerSetting();
+  Utils::intToString(ts.timerStartHour, buffer, sizeof(buffer));
+  MqttInterface::publishNumberState(operationModeNode, "timer-start-h", "timer-start-h", buffer);
+
+  Utils::intToString(ts.timerStartMinutes, buffer, sizeof(buffer));
+  MqttInterface::publishNumberState(operationModeNode, "timer-start-min", "timer-start-min", buffer);
+
+  Utils::intToString(ts.timerEndHour, buffer, sizeof(buffer));
+  MqttInterface::publishNumberState(operationModeNode, "timer-end-h", "timer-end-h", buffer);
+
+  Utils::intToString(ts.timerEndMinutes, buffer, sizeof(buffer));
+  MqttInterface::publishNumberState(operationModeNode, "timer-end-min", "timer-end-min", buffer);
+
+  int tzIndex = getTimezoneIndex();
+  Utils::intToString(tzIndex, buffer, sizeof(buffer));
+  MqttInterface::publishNumberState(operationModeNode, "timezone", "timezone", buffer);
+
+  String tzInfo = getTimeInfoFor(tzIndex);
+  MqttInterface::publishTextState(operationModeNode, "timezone-info", "timezone-info", tzInfo.c_str());
+
+  // Relay states
+  MqttInterface::publishSwitchState(poolPumpNode, "pool-pump", "pool-pump", poolPumpNode.getSwitch());
+  MqttInterface::publishSwitchState(solarPumpNode, "solar-pump", "solar-pump", solarPumpNode.getSwitch());
+
+  // Temperature values
+  Utils::floatToString(poolTemperatureNode.getTemperature(), buffer, sizeof(buffer));
+  MqttInterface::publishSensorState(poolTemperatureNode, "temperature", "pool-temp", buffer);
+
+  Utils::floatToString(solarTemperatureNode.getTemperature(), buffer, sizeof(buffer));
+  MqttInterface::publishSensorState(solarTemperatureNode, "temperature", "solar-temp", buffer);
+
+  LN.log(__PRETTY_FUNCTION__, LoggerNode::INFO, "All states published to MQTT");
+}
+
+/**
  * Homie Setup handler.
  * Only called when wifi and mqtt are connected.
  * StateManager, SystemMonitor, and loadState are initialized in setup()
@@ -329,6 +388,10 @@ auto PoolControllerContext::setupHandler() -> void {
   } else {
     LN.log(__PRETTY_FUNCTION__, LoggerNode::INFO, "Using Homie MQTT Convention");
   }
+
+  // Refresh all states on (re-)connect so that Home Assistant / Homie never
+  // shows stale data after a temporary MQTT outage (P4).
+  publishAllStates();
 
   LN.log(__PRETTY_FUNCTION__, LoggerNode::INFO, "State persistence and system monitoring initialized");
 }
