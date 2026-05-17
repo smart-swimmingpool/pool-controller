@@ -155,11 +155,11 @@ Comment out the auto-reboot section in `src/SystemMonitor.hpp`:
 ```cpp
 // Critical memory - reboot immediately
 if (freeHeap < criticalThreshold) {
-    Serial.printf("CRITICAL: Free heap %d bytes < %d bytes. Rebooting...\n",
-                 freeHeap, criticalThreshold);
-    // Serial.flush();
-    // delay(1000);
-    // ESP.restart();  // Comment this to disable auto-reboot
+     Serial.printf("CRITICAL: Free heap %d bytes < %d bytes. Rebooting...\n",
+                  freeHeap, criticalThreshold);
+     // Serial.flush();
+     // delay(1000);
+     // ESP.restart();  // Comment this to disable auto-reboot
 }
 ```
 
@@ -238,11 +238,11 @@ If the controller reboots frequently:
 1. **Check memory usage**: Review logs for low memory warnings
 2. **Identify memory leak**: Look for pattern in when reboots occur
 3. **Reduce memory usage**:
-   - Increase measurement intervals
-   - Reduce MQTT message frequency
-   - Disable features if possible
+    - Increase measurement intervals
+    - Reduce MQTT message frequency
+    - Disable features if possible
 4. **Lower threshold**: Temporarily lower critical threshold to prevent reboots
-   while debugging
+    while debugging
 
 ### Watchdog Timeouts
 
@@ -251,7 +251,7 @@ If watchdog triggers (ESP32):
 1. **Long-blocking operations**: Check for delays or long operations in code
 2. **Increase timeout**: Modify timeout in `SystemMonitor::begin()`
 3. **Feed more frequently**: Add `SystemMonitor::feedWatchdog()` in long
-   operations
+    operations
 
 ## Technical Details
 
@@ -284,10 +284,10 @@ Completed in v3.2.0:
 
 Planned:
 
-5. 🔜 **Configurable thresholds**: MQTT-based threshold configuration
-6. 🔜 **Memory stats**: Historical memory usage tracking
-7. 🔜 **Remote reboot**: MQTT command to trigger reboot
-8. 🔜 **Health dashboard**: Web UI for health monitoring
+1. 🔜 **Configurable thresholds**: MQTT-based threshold configuration
+2. 🔜 **Memory stats**: Historical memory usage tracking
+3. 🔜 **Remote reboot**: MQTT command to trigger reboot
+4. 🔜 **Health dashboard**: Web UI for health monitoring
 
 ---
 

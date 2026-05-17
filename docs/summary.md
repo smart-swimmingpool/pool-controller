@@ -97,14 +97,14 @@ setProperty(cTemperature).send(buffer);
 #### Configuration Options
 
 1. **Homie Convention** (Default)
-   - Topic format: `homie/<device>/<node>/<property>`
-   - Compatible with: openHAB, Home Assistant (via Homie integration)
-   - Proven and stable
+    - Topic format: `homie/<device>/<node>/<property>`
+    - Compatible with: openHAB, Home Assistant (via Homie integration)
+    - Proven and stable
 
 2. **Home Assistant MQTT Discovery** (New)
-   - Topic format: `homeassistant/<component>/<device>/<object>/config`
-   - Native Home Assistant auto-discovery
-   - Optimized for Home Assistant
+    - Topic format: `homeassistant/<component>/<device>/<object>/config`
+    - Native Home Assistant auto-discovery
+    - Optimized for Home Assistant
 
 #### Setup
 
@@ -121,7 +121,7 @@ setProperty(cTemperature).send(buffer);
 {
   "name": "Pool Controller",
   "settings": {
-    "mqtt-protocol": "homeassistant"
+     "mqtt-protocol": "homeassistant"
   }
 }
 ```

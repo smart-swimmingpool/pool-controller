@@ -28,7 +28,11 @@ This Hardware Guide describes how to set up the hardware of the controller.
 
 The circuit of the controller can be found in the following image based on a breadboard wiring:
 
-{{< figure library="true" src="../pool-controller_breadboard.png" title="Breadboard Circuit of Pool Controller" lightbox="true" >}}
+{{< figure
+  library="true"
+  src="../pool-controller_breadboard.png"
+  title="Breadboard Circuit of Pool Controller"
+  lightbox="true" >}}
 
 The source [Fritzing](https://fritzing.org/) file can be found in the GitHub project: [pool-controller.fzz](https://github.com/smart-swimmingpool/pool-controller/raw/main/docs/pool-controller.fzz)
 

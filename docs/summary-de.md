@@ -76,7 +76,7 @@ Bei typischem Messzyklus von 30-300 Sekunden:
 
 ```cpp
 if (millis() - _lastMeasurement >= _measurementInterval * 1000UL ||
-    _lastMeasurement == 0)
+     _lastMeasurement == 0)
 ```
 
 **Lösung**: Neue overflow-sichere Funktion:
@@ -116,14 +116,14 @@ if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval))
 #### Unterstützte Protokolle
 
 1. **Homie Convention** (Standard)
-   - Topic-Format: `homie/<device>/<node>/<property>`
-   - Kompatibel mit: openHAB, Home Assistant (via Homie Integration)
-   - Bewährt und stabil
+    - Topic-Format: `homie/<device>/<node>/<property>`
+    - Kompatibel mit: openHAB, Home Assistant (via Homie Integration)
+    - Bewährt und stabil
 
 2. **Home Assistant MQTT Discovery** (NEU)
-   - Topic-Format: `homeassistant/<component>/<device>/<object>/config`
-   - Native Home Assistant Auto-Discovery
-   - Optimiert für Home Assistant
+    - Topic-Format: `homeassistant/<component>/<device>/<object>/config`
+    - Native Home Assistant Auto-Discovery
+    - Optimiert für Home Assistant
 
 #### Implementierung
 
@@ -249,7 +249,7 @@ if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval))
 {
   "name": "Pool Controller",
   "settings": {
-    "mqtt-protocol": "homeassistant"
+     "mqtt-protocol": "homeassistant"
   }
 }
 ```

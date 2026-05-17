@@ -52,6 +52,7 @@ This proposal addresses the **remaining gaps** for truly resilient 24/7 operatio
 which only fires when Homie establishes an MQTT connection.
 
 Affected code:
+
 ```cpp
 // PoolController.cpp:250
 auto PoolControllerContext::setupHandler() -> void {
@@ -114,6 +115,7 @@ setup) runs inside `Homie.setup()`. But `initializeController()` also reads
 HomieSettings and configures nodes.
 
 The order is:
+
 1. Global constructors: all static nodes
 2. `PoolControllerContext::setup()` → `Homie.setup()` (node setups execute)
 3. `initializeController()` → creates Rules via `new`, sets intervals
@@ -132,11 +134,11 @@ the failure is silent.
 // MqttInterface.hpp:68
 inline void publishSwitchState(...) {
   if (isHomeAssistant()) {
-    HomeAssistant::DiscoveryPublisher::publishSwitchState(...);
-    // Return value ignored!
+     HomeAssistant::DiscoveryPublisher::publishSwitchState(...);
+     // Return value ignored!
   } else {
-    node.setProperty(homieProperty).send(state ? "true" : "false");
-    // Result ignored!
+     node.setProperty(homieProperty).send(state ? "true" : "false");
+     // Result ignored!
   }
 }
 ```
@@ -227,14 +229,14 @@ bool RuleAuto::checkPoolPumpTimer() {
   tm time = getCurrentDateTime();
 
   if (time.tm_year == -1) {
-    auto degradation = getTimeDegradationLevel();
+     auto degradation = getTimeDegradationLevel();
 
-    if (degradation == TimeDegradation::YELLOW) {
-      return checkPumpTimerWithEstimate();
-    }
+     if (degradation == TimeDegradation::YELLOW) {
+       return checkPumpTimerWithEstimate();
+     }
 
-    // RED: fallback to temperature control or last known on/off time
-    return getFallbackPumpState();
+     // RED: fallback to temperature control or last known on/off time
+     return getFallbackPumpState();
   }
   return checkPumpTimerExact(time);
 }
@@ -266,6 +268,7 @@ enum EEPROMSlot : uint16_t {
 ```
 
 **Benefits**:
+
 - No collisions
 - CRC protects against corruption
 - Easily extensible
@@ -330,9 +333,9 @@ void DallasTemperatureNode::loop() {
   SystemMonitor::feedWatchdog();
 
   if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval)) {
-    sensor.requestTemperatures();
-    SystemMonitor::feedWatchdog();
-    _temperature = sensor.getTempCByIndex(0);
+     sensor.requestTemperatures();
+     SystemMonitor::feedWatchdog();
+     _temperature = sensor.getTempCByIndex(0);
   }
 }
 ```
@@ -345,14 +348,14 @@ void DallasTemperatureNode::loop() {
 ```cpp
 void DallasTemperatureNode::loop() {
   uint32_t effectiveInterval = isnan(_temperature)
-    ? RECOVERY_INTERVAL  // e.g. 5 seconds instead of 60
-    : _measurementInterval;
+     ? RECOVERY_INTERVAL  // e.g. 5 seconds instead of 60
+     : _measurementInterval;
 
   if (Utils::shouldMeasure(_lastMeasurement, effectiveInterval)) {
-    // ... read sensor
-    if (isnan(_temperature)) {
-      _lastMeasurement = millis();  // Next try in RECOVERY_INTERVAL
-    }
+     // ... read sensor
+     if (isnan(_temperature)) {
+       _lastMeasurement = millis();  // Next try in RECOVERY_INTERVAL
+     }
   }
 }
 ```
@@ -370,7 +373,7 @@ void detectBootLoop() {
   uint32_t lastUptime = StateManager::loadInt("lastBootUptime", 0);
 
   if (lastUptime < 300 && bootCount > 2) {
-    enterSafeMode();  // All relays OFF, base functions only
+     enterSafeMode();  // All relays OFF, base functions only
   }
 
   StateManager::saveInt("bootCount", bootCount + 1);
@@ -447,7 +450,7 @@ HomieSetting<long> timeLossMaxHoursSetting_{"time-loss-max-hours",
 
 ### New Files
 
-```
+```text
 src/
 ├── DegradationManager.hpp   (P5)
 ├── DegradationManager.cpp   (P5)
@@ -485,11 +488,11 @@ The system is **fundamentally well-positioned** for 24/7 operation (see
 existing features), but has several critical gaps:
 
 1. **🔴 P1** is the most urgent: without it, combined power+WiFi failure
-   loses all settings.
+    loses all settings.
 2. **🟡 P2 + P3** address the two most common extended-failure scenarios
-   (WiFi outage >24h, ESP8266 storage corruption).
+    (WiFi outage >24h, ESP8266 storage corruption).
 3. **🟠 P4–P9** move the system from "mostly works" to "runs reliably
-   under all conditions".
+    under all conditions".
 
 > **Recommendation**: Implement P1, P3, and P6 in a first sprint, then
 > P2+P5 as a second step, remaining proposals as needed.
@@ -498,27 +501,27 @@ existing features), but has several critical gaps:
 
 ## 8. Appendix: Current Architecture (Reference)
 
-```
+```text
 ESP boot
   → setup()
-    → Homie.setup()
-      → (internal) Node setups: RelayModuleNode, OperationModeNode
-      → [if MQTT connects] setupHandler()
-        → StateManager::begin()
-        → SystemMonitor::begin()
-        → operationModeNode.loadState()     ← CRITICAL: only here!
-    → initializeController()
-      → Create Rules
-      → Set intervals
+     → Homie.setup()
+       → (internal) Node setups: RelayModuleNode, OperationModeNode
+       → [if MQTT connects] setupHandler()
+         → StateManager::begin()
+         → SystemMonitor::begin()
+         → operationModeNode.loadState()     ← CRITICAL: only here!
+     → initializeController()
+       → Create Rules
+       → Set intervals
   → loop()
-    → SystemMonitor::feedWatchdog()
-    → SystemMonitor::checkMemory()
-    → Homie.loop()
-      → OperationModeNode::loop()
-        → Rule::loop() (temperature-based pump control)
+     → SystemMonitor::feedWatchdog()
+     → SystemMonitor::checkMemory()
+     → Homie.loop()
+       → OperationModeNode::loop()
+         → Rule::loop() (temperature-based pump control)
 ```
 
-```
+```text
 Data flow during WiFi outage:
 
 Sensor reads → Temperature updated → Rule evaluates →

@@ -53,6 +53,7 @@ ausfallsicheren 24/7 Betrieb.
 der wiederum nur feuert, wenn Homie eine MQTT-Verbindung herstellt.
 
 Betroffener Code:
+
 ```cpp
 // PoolController.cpp:250
 auto PoolControllerContext::setupHandler() -> void {
@@ -119,8 +120,9 @@ gefolgt von `initializeController()`. Die `RelayModuleNode.setup()` und
 `PoolControllerContext` als globale Konstruktoren initialisiert.
 
 Die Reihenfolge ist:
+
 1. Globale Konstruktoren: `LN`, `solarTemperatureNode`, `poolTemperatureNode`,
-   `ctrlTemperatureNode`, `poolPumpNode`, `solarPumpNode`, `operationModeNode`
+    `ctrlTemperatureNode`, `poolPumpNode`, `solarPumpNode`, `operationModeNode`
 2. `PoolControllerContext::setup()` → `Homie.setup()` (Node-Setups laufen)
 3. `initializeController()` → erzeugt Rules, setzt Intervalle
 
@@ -139,9 +141,9 @@ Operation still.
 // MqttInterface.hpp:68
 inline void publishSwitchState(...) {
   if (isHomeAssistant()) {
-    HomeAssistant::DiscoveryPublisher::publishSwitchState(...);  // kein Return-Check
+     HomeAssistant::DiscoveryPublisher::publishSwitchState(...);  // kein Return-Check
   } else {
-    node.setProperty(homieProperty).send(state ? "true" : "false");  // Ergebnis ignoriert
+     node.setProperty(homieProperty).send(state ? "true" : "false");  // Ergebnis ignoriert
   }
 }
 ```
@@ -177,8 +179,8 @@ einen Lesevorgang, aber es gibt kein beschleunigtes Recovery.
 // DallasTemperatureNode
 void loop() {
   if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval)) {
-    sensor.requestTemperatures();
-    // Wenn fehlgeschlagen: bleibt NaN bis zum nächsten Intervall (30s+)
+     sensor.requestTemperatures();
+     // Wenn fehlgeschlagen: bleibt NaN bis zum nächsten Intervall (30s+)
   }
 }
 ```
@@ -246,16 +248,16 @@ bool RuleAuto::checkPoolPumpTimer() {
   tm time = getCurrentDateTime();
 
   if (time.tm_year == -1) {
-    auto degradation = getTimeDegradationLevel();
+     auto degradation = getTimeDegradationLevel();
 
-    if (degradation == TimeDegradation::YELLOW) {
-      // millis()-Schätzung verwenden, trotzdem weiterlaufen
-      return checkPumpTimerWithEstimate();
-    }
+     if (degradation == TimeDegradation::YELLOW) {
+       // millis()-Schätzung verwenden, trotzdem weiterlaufen
+       return checkPumpTimerWithEstimate();
+     }
 
-    // Rot: Fallback auf Temperatursteuerung oder letzte bekannte Ein/Aus-Zeit
-    Homie.getLogger() << "⚠ Time degraded RED - using fallback schedule" << endl;
-    return getFallbackPumpState();
+     // Rot: Fallback auf Temperatursteuerung oder letzte bekannte Ein/Aus-Zeit
+     Homie.getLogger() << "⚠ Time degraded RED - using fallback schedule" << endl;
+     return getFallbackPumpState();
   }
   // Normal: präzise Timer-Logik
   return checkPumpTimerExact(time);
@@ -290,6 +292,7 @@ enum EEPROMSlot : uint16_t {
 ```
 
 **Vorteile**:
+
 - Keine Kollisionen
 - CRC-Schutz gegen korrupte Daten
 - Einfach erweiterbar (genug Platz)
@@ -310,10 +313,10 @@ Platz, keine Kollisionen, aber geringere Redundanz).
 ```cpp
 class MqttPublishQueue {
   struct PendingPublish {
-    char topic[64];
-    char payload[32];
-    bool retained;
-    uint32_t retryCount;
+     char topic[64];
+     char payload[32];
+     bool retained;
+     uint32_t retryCount;
   };
 
   static constexpr uint8_t MAX_QUEUE = 10;
@@ -385,10 +388,10 @@ void DallasTemperatureNode::loop() {
   SystemMonitor::feedWatchdog();  // ← vor blockierendem Call
 
   if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval)) {
-    sensor.requestTemperatures();  // max 750ms
-    SystemMonitor::feedWatchdog(); // ← nach blockierendem Call
+     sensor.requestTemperatures();  // max 750ms
+     SystemMonitor::feedWatchdog(); // ← nach blockierendem Call
 
-    _temperature = sensor.getTempCByIndex(0);
+     _temperature = sensor.getTempCByIndex(0);
   }
 }
 ```
@@ -402,14 +405,14 @@ void DallasTemperatureNode::loop() {
 void DallasTemperatureNode::loop() {
   // Wenn Sensor im Fehler: verkürztes Intervall für schnelleres Recovery
   uint32_t effectiveInterval = isnan(_temperature)
-    ? RECOVERY_INTERVAL  // z.B. 5 Sekunden statt 60
-    : _measurementInterval;
+     ? RECOVERY_INTERVAL  // z.B. 5 Sekunden statt 60
+     : _measurementInterval;
 
   if (Utils::shouldMeasure(_lastMeasurement, effectiveInterval)) {
-    // ... Lesevorgang
-    if (isnan(_temperature)) {
-      _lastMeasurement = millis();  // Nächster Versuch in RECOVERY_INTERVAL
-    }
+     // ... Lesevorgang
+     if (isnan(_temperature)) {
+       _lastMeasurement = millis();  // Nächster Versuch in RECOVERY_INTERVAL
+     }
   }
 }
 ```
@@ -427,17 +430,17 @@ void detectBootLoop() {
   uint32_t uptime = SystemMonitor::getUptimeSeconds();
 
   if (bootCount == 0) {
-    // Erster Boot seit Reset
-    StateManager::saveInt("bootCount", 1);
-    StateManager::saveInt("lastBootUptime", uptime);  // wird 0 sein
-    return;
+     // Erster Boot seit Reset
+     StateManager::saveInt("bootCount", 1);
+     StateManager::saveInt("lastBootUptime", uptime);  // wird 0 sein
+     return;
   }
 
   uint32_t lastUptime = StateManager::loadInt("lastBootUptime", 0);
 
   if (lastUptime < 300 && bootCount > 2) {
-    // 3+ kurze Boots → Boot-Loop!
-    enterSafeMode();
+     // 3+ kurze Boots → Boot-Loop!
+     enterSafeMode();
   }
 
   StateManager::saveInt("bootCount", bootCount + 1);
@@ -512,9 +515,9 @@ Für jedes Proposal sind Tests erforderlich:
 | P4 | MQTT-Ausfall 5 Min → 10 State-Änderungen → nach Reconnect alle korrekt publisht | ❌ Noch zu testen |
 | P5 | Simulierter Sensor-Ausfall → Degradation auf NO_SENSOR → korrektes Pumpen-Verhalten | ❌ Noch zu testen |
 | P6 | 500ms blocking call → Watchdog nicht ausgelöst | ❌ Noch zu testen |
-| P7 | Sensor disconnect → Recovery in <10s statt >30s |
-| P8 | 5 Kurzboots in Folge → Safe Mode aktiv. Ein langer Boot → Boot-Counter zurückgesetzt |
-| P9 | Fallback-Mode per MQTT auf "manu" → Pumpe läuft bei Zeitverlust per letztem Befehl |
+| P7 | Sensor disconnect → Recovery in <10s statt >30s | ❌ Noch zu testen |
+| P8 | 5 Kurzboots in Folge → Safe Mode aktiv. Ein langer Boot → Boot-Counter zurückgesetzt | ❌ Noch zu testen |
+| P9 | Fallback-Mode per MQTT auf "manu" → Pumpe läuft bei Zeitverlust per letztem Befehl | ❌ Noch zu testen |
 
 ---
 
@@ -522,7 +525,7 @@ Für jedes Proposal sind Tests erforderlich:
 
 ### Neue Dateien
 
-```
+```text
 src/
 ├── DegradationManager.hpp   (P5)
 ├── DegradationManager.cpp   (P5)
@@ -556,11 +559,11 @@ Das System ist für den 24/7 Betrieb **grundsätzlich gut aufgestellt** (s.
 die bereits implementierten Features), hat aber einige kritische Lücken:
 
 1. **🔴 P1** ist der dringendste Fix: Ohne ihn gehen bei kombiniertem
-   Strom+WLAN-Ausfall alle Einstellungen verloren.
+    Strom+WLAN-Ausfall alle Einstellungen verloren.
 2. **🟡 P2 + P3** adressieren die beiden häufigsten Dauerausfall-Szenarien
-   (WLAN-Totalausfall >24h, ESP8266-Speicher-Korruption).
+    (WLAN-Totalausfall >24h, ESP8266-Speicher-Korruption).
 3. **🟠 P4–P9** machen das System von "läuft meistens" zu "läuft
-   zuverlässig unter allen Bedingungen".
+    zuverlässig unter allen Bedingungen".
 
 > **Empfehlung**: P1, P3 und P6 in einem ersten Schritt umsetzen, dann
 > P2+P5 als zweiten Schritt, den Rest nach Bedarf.
@@ -572,27 +575,27 @@ die bereits implementierten Features), hat aber einige kritische Lücken:
 Für das Verständnis der Proposals hier die relevante Startreihenfolge
 und Datenflüsse im aktuellen Code:
 
-```
+```text
 ESP boot
   → setup()
-    → Homie.setup()
-      → Homie-intern: Node-Setups (RelayModuleNode, OperationModeNode)
-      → [wenn MQTT connected] setupHandler()
-        → StateManager::begin()
-        → SystemMonitor::begin()
-        → operationModeNode.loadState()     ← KRITISCH: nur hier!
-    → initializeController()
-      → Rules erzeugen
-      → Intervalle setzen
+     → Homie.setup()
+       → Homie-intern: Node-Setups (RelayModuleNode, OperationModeNode)
+       → [wenn MQTT connected] setupHandler()
+         → StateManager::begin()
+         → SystemMonitor::begin()
+         → operationModeNode.loadState()     ← KRITISCH: nur hier!
+     → initializeController()
+       → Rules erzeugen
+       → Intervalle setzen
   → loop()
-    → SystemMonitor::feedWatchdog()
-    → SystemMonitor::checkMemory()
-    → Homie.loop()
-      → OperationModeNode::loop()
-        → Rule::loop() (temperaturabhängige Pumpensteuerung)
+     → SystemMonitor::feedWatchdog()
+     → SystemMonitor::checkMemory()
+     → Homie.loop()
+       → OperationModeNode::loop()
+         → Rule::loop() (temperaturabhängige Pumpensteuerung)
 ```
 
-```
+```text
 Datenfluss bei WiFi-Ausfall:
 
 Sensor liest → Temperaturwert aktualisiert → Rule evaluiert →

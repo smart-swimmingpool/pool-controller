@@ -72,6 +72,7 @@ Discussions: <https://github.com/smart-swimmingpool/smart-swimmingpool.github.io
 ## Recent Updates (v3.2.0)
 
 ### ESP8266 Support Removed
+
 - Codebase is now ESP32-only — cleaner, faster, more reliable
 - Removed all `#ifdef ESP8266` conditional compilation
 - Platform: esp32dev (ESP32 DevKit V1)
