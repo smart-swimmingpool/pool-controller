@@ -156,7 +156,7 @@ Comment out the auto-reboot section in `src/SystemMonitor.hpp`:
 // Critical memory - reboot immediately
 if (freeHeap < criticalThreshold) {
     Serial.printf("CRITICAL: Free heap %d bytes < %d bytes. Rebooting...\n",
-                 freeHeap, criticalThreshold);
+                freeHeap, criticalThreshold);
     // Serial.flush();
     // delay(1000);
     // ESP.restart();  // Comment this to disable auto-reboot
