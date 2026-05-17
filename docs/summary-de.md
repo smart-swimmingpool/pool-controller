@@ -76,7 +76,7 @@ Bei typischem Messzyklus von 30-300 Sekunden:
 
 ```cpp
 if (millis() - _lastMeasurement >= _measurementInterval * 1000UL ||
-     _lastMeasurement == 0)
+    _lastMeasurement == 0)
 ```
 
 **Lösung**: Neue overflow-sichere Funktion:
@@ -249,7 +249,7 @@ if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval))
 {
   "name": "Pool Controller",
   "settings": {
-     "mqtt-protocol": "homeassistant"
+    "mqtt-protocol": "homeassistant"
   }
 }
 ```

@@ -134,11 +134,11 @@ the failure is silent.
 // MqttInterface.hpp:68
 inline void publishSwitchState(...) {
   if (isHomeAssistant()) {
-     HomeAssistant::DiscoveryPublisher::publishSwitchState(...);
-     // Return value ignored!
+    HomeAssistant::DiscoveryPublisher::publishSwitchState(...);
+    // Return value ignored!
   } else {
-     node.setProperty(homieProperty).send(state ? "true" : "false");
-     // Result ignored!
+    node.setProperty(homieProperty).send(state ? "true" : "false");
+    // Result ignored!
   }
 }
 ```
@@ -229,14 +229,14 @@ bool RuleAuto::checkPoolPumpTimer() {
   tm time = getCurrentDateTime();
 
   if (time.tm_year == -1) {
-     auto degradation = getTimeDegradationLevel();
+    auto degradation = getTimeDegradationLevel();
 
-     if (degradation == TimeDegradation::YELLOW) {
-       return checkPumpTimerWithEstimate();
-     }
+    if (degradation == TimeDegradation::YELLOW) {
+      return checkPumpTimerWithEstimate();
+    }
 
-     // RED: fallback to temperature control or last known on/off time
-     return getFallbackPumpState();
+    // RED: fallback to temperature control or last known on/off time
+    return getFallbackPumpState();
   }
   return checkPumpTimerExact(time);
 }
@@ -333,9 +333,9 @@ void DallasTemperatureNode::loop() {
   SystemMonitor::feedWatchdog();
 
   if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval)) {
-     sensor.requestTemperatures();
-     SystemMonitor::feedWatchdog();
-     _temperature = sensor.getTempCByIndex(0);
+    sensor.requestTemperatures();
+    SystemMonitor::feedWatchdog();
+    _temperature = sensor.getTempCByIndex(0);
   }
 }
 ```
@@ -348,14 +348,14 @@ void DallasTemperatureNode::loop() {
 ```cpp
 void DallasTemperatureNode::loop() {
   uint32_t effectiveInterval = isnan(_temperature)
-     ? RECOVERY_INTERVAL  // e.g. 5 seconds instead of 60
-     : _measurementInterval;
+    ? RECOVERY_INTERVAL  // e.g. 5 seconds instead of 60
+    : _measurementInterval;
 
   if (Utils::shouldMeasure(_lastMeasurement, effectiveInterval)) {
-     // ... read sensor
-     if (isnan(_temperature)) {
-       _lastMeasurement = millis();  // Next try in RECOVERY_INTERVAL
-     }
+    // ... read sensor
+    if (isnan(_temperature)) {
+      _lastMeasurement = millis();  // Next try in RECOVERY_INTERVAL
+    }
   }
 }
 ```
@@ -373,7 +373,7 @@ void detectBootLoop() {
   uint32_t lastUptime = StateManager::loadInt("lastBootUptime", 0);
 
   if (lastUptime < 300 && bootCount > 2) {
-     enterSafeMode();  // All relays OFF, base functions only
+    enterSafeMode();  // All relays OFF, base functions only
   }
 
   StateManager::saveInt("bootCount", bootCount + 1);
@@ -504,21 +504,21 @@ existing features), but has several critical gaps:
 ```text
 ESP boot
   → setup()
-     → Homie.setup()
-       → (internal) Node setups: RelayModuleNode, OperationModeNode
-       → [if MQTT connects] setupHandler()
-         → StateManager::begin()
-         → SystemMonitor::begin()
-         → operationModeNode.loadState()     ← CRITICAL: only here!
-     → initializeController()
-       → Create Rules
-       → Set intervals
+    → Homie.setup()
+      → (internal) Node setups: RelayModuleNode, OperationModeNode
+      → [if MQTT connects] setupHandler()
+        → StateManager::begin()
+        → SystemMonitor::begin()
+        → operationModeNode.loadState()     ← CRITICAL: only here!
+    → initializeController()
+      → Create Rules
+      → Set intervals
   → loop()
-     → SystemMonitor::feedWatchdog()
-     → SystemMonitor::checkMemory()
-     → Homie.loop()
-       → OperationModeNode::loop()
-         → Rule::loop() (temperature-based pump control)
+    → SystemMonitor::feedWatchdog()
+    → SystemMonitor::checkMemory()
+    → Homie.loop()
+      → OperationModeNode::loop()
+        → Rule::loop() (temperature-based pump control)
 ```
 
 ```text

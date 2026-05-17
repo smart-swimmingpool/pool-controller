@@ -177,7 +177,7 @@ Controller für einen zuverlässigen 24/7-Betrieb.
 {
   "name": "Pool Controller",
   "settings": {
-     "mqtt-protocol": "homeassistant"
+    "mqtt-protocol": "homeassistant"
   }
 }
 ```

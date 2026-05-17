@@ -121,7 +121,7 @@ setProperty(cTemperature).send(buffer);
 {
   "name": "Pool Controller",
   "settings": {
-     "mqtt-protocol": "homeassistant"
+    "mqtt-protocol": "homeassistant"
   }
 }
 ```

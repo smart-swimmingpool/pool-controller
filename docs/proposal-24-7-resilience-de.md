@@ -141,9 +141,9 @@ Operation still.
 // MqttInterface.hpp:68
 inline void publishSwitchState(...) {
   if (isHomeAssistant()) {
-     HomeAssistant::DiscoveryPublisher::publishSwitchState(...);  // kein Return-Check
+    HomeAssistant::DiscoveryPublisher::publishSwitchState(...);  // kein Return-Check
   } else {
-     node.setProperty(homieProperty).send(state ? "true" : "false");  // Ergebnis ignoriert
+    node.setProperty(homieProperty).send(state ? "true" : "false");  // Ergebnis ignoriert
   }
 }
 ```
@@ -179,8 +179,8 @@ einen Lesevorgang, aber es gibt kein beschleunigtes Recovery.
 // DallasTemperatureNode
 void loop() {
   if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval)) {
-     sensor.requestTemperatures();
-     // Wenn fehlgeschlagen: bleibt NaN bis zum nächsten Intervall (30s+)
+    sensor.requestTemperatures();
+    // Wenn fehlgeschlagen: bleibt NaN bis zum nächsten Intervall (30s+)
   }
 }
 ```
@@ -248,16 +248,16 @@ bool RuleAuto::checkPoolPumpTimer() {
   tm time = getCurrentDateTime();
 
   if (time.tm_year == -1) {
-     auto degradation = getTimeDegradationLevel();
+    auto degradation = getTimeDegradationLevel();
 
-     if (degradation == TimeDegradation::YELLOW) {
-       // millis()-Schätzung verwenden, trotzdem weiterlaufen
-       return checkPumpTimerWithEstimate();
-     }
+    if (degradation == TimeDegradation::YELLOW) {
+      // millis()-Schätzung verwenden, trotzdem weiterlaufen
+      return checkPumpTimerWithEstimate();
+    }
 
-     // Rot: Fallback auf Temperatursteuerung oder letzte bekannte Ein/Aus-Zeit
-     Homie.getLogger() << "⚠ Time degraded RED - using fallback schedule" << endl;
-     return getFallbackPumpState();
+    // Rot: Fallback auf Temperatursteuerung oder letzte bekannte Ein/Aus-Zeit
+    Homie.getLogger() << "⚠ Time degraded RED - using fallback schedule" << endl;
+    return getFallbackPumpState();
   }
   // Normal: präzise Timer-Logik
   return checkPumpTimerExact(time);
@@ -313,10 +313,10 @@ Platz, keine Kollisionen, aber geringere Redundanz).
 ```cpp
 class MqttPublishQueue {
   struct PendingPublish {
-     char topic[64];
-     char payload[32];
-     bool retained;
-     uint32_t retryCount;
+    char topic[64];
+    char payload[32];
+    bool retained;
+    uint32_t retryCount;
   };
 
   static constexpr uint8_t MAX_QUEUE = 10;
@@ -388,10 +388,10 @@ void DallasTemperatureNode::loop() {
   SystemMonitor::feedWatchdog();  // ← vor blockierendem Call
 
   if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval)) {
-     sensor.requestTemperatures();  // max 750ms
-     SystemMonitor::feedWatchdog(); // ← nach blockierendem Call
+    sensor.requestTemperatures();  // max 750ms
+    SystemMonitor::feedWatchdog(); // ← nach blockierendem Call
 
-     _temperature = sensor.getTempCByIndex(0);
+    _temperature = sensor.getTempCByIndex(0);
   }
 }
 ```
@@ -405,14 +405,14 @@ void DallasTemperatureNode::loop() {
 void DallasTemperatureNode::loop() {
   // Wenn Sensor im Fehler: verkürztes Intervall für schnelleres Recovery
   uint32_t effectiveInterval = isnan(_temperature)
-     ? RECOVERY_INTERVAL  // z.B. 5 Sekunden statt 60
-     : _measurementInterval;
+    ? RECOVERY_INTERVAL  // z.B. 5 Sekunden statt 60
+    : _measurementInterval;
 
   if (Utils::shouldMeasure(_lastMeasurement, effectiveInterval)) {
-     // ... Lesevorgang
-     if (isnan(_temperature)) {
-       _lastMeasurement = millis();  // Nächster Versuch in RECOVERY_INTERVAL
-     }
+    // ... Lesevorgang
+    if (isnan(_temperature)) {
+      _lastMeasurement = millis();  // Nächster Versuch in RECOVERY_INTERVAL
+    }
   }
 }
 ```
@@ -430,17 +430,17 @@ void detectBootLoop() {
   uint32_t uptime = SystemMonitor::getUptimeSeconds();
 
   if (bootCount == 0) {
-     // Erster Boot seit Reset
-     StateManager::saveInt("bootCount", 1);
-     StateManager::saveInt("lastBootUptime", uptime);  // wird 0 sein
-     return;
+    // Erster Boot seit Reset
+    StateManager::saveInt("bootCount", 1);
+    StateManager::saveInt("lastBootUptime", uptime);  // wird 0 sein
+    return;
   }
 
   uint32_t lastUptime = StateManager::loadInt("lastBootUptime", 0);
 
   if (lastUptime < 300 && bootCount > 2) {
-     // 3+ kurze Boots → Boot-Loop!
-     enterSafeMode();
+    // 3+ kurze Boots → Boot-Loop!
+    enterSafeMode();
   }
 
   StateManager::saveInt("bootCount", bootCount + 1);
@@ -578,21 +578,21 @@ und Datenflüsse im aktuellen Code:
 ```text
 ESP boot
   → setup()
-     → Homie.setup()
-       → Homie-intern: Node-Setups (RelayModuleNode, OperationModeNode)
-       → [wenn MQTT connected] setupHandler()
-         → StateManager::begin()
-         → SystemMonitor::begin()
-         → operationModeNode.loadState()     ← KRITISCH: nur hier!
-     → initializeController()
-       → Rules erzeugen
-       → Intervalle setzen
+    → Homie.setup()
+      → Homie-intern: Node-Setups (RelayModuleNode, OperationModeNode)
+      → [wenn MQTT connected] setupHandler()
+        → StateManager::begin()
+        → SystemMonitor::begin()
+        → operationModeNode.loadState()     ← KRITISCH: nur hier!
+    → initializeController()
+      → Rules erzeugen
+      → Intervalle setzen
   → loop()
-     → SystemMonitor::feedWatchdog()
-     → SystemMonitor::checkMemory()
-     → Homie.loop()
-       → OperationModeNode::loop()
-         → Rule::loop() (temperaturabhängige Pumpensteuerung)
+    → SystemMonitor::feedWatchdog()
+    → SystemMonitor::checkMemory()
+    → Homie.loop()
+      → OperationModeNode::loop()
+        → Rule::loop() (temperaturabhängige Pumpensteuerung)
 ```
 
 ```text
