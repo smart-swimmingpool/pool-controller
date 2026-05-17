@@ -274,7 +274,7 @@ git checkout v3.0.0
 
 ### Short-term
 
-1. ✅ Build tests on ESP32 and ESP8266
+1. ✅ Build tests on ESP32
 2. ✅ Memory tests over 24-48h
 3. ✅ MQTT functional test (both protocols)
 4. ✅ Verify logging after bugfix
