@@ -92,7 +92,7 @@ public:
 private:
   static DegradationLevel currentLevel_;
   static DegradationLevel previousLevel_;
-  static bool sensorValid_;
+  static uint8_t _sensorHealthCounter_;  // 0–2, both Dallas probes must be healthy
   static bool forcedSafeMode_;
   static unsigned long lastEvaluationMs_;
 

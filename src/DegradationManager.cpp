@@ -11,7 +11,7 @@ namespace PoolController {
 // Static member definitions
 DegradationLevel DegradationManager::currentLevel_ = DegradationLevel::NORMAL;
 DegradationLevel DegradationManager::previousLevel_ = DegradationLevel::NORMAL;
-bool DegradationManager::sensorValid_ = true;
+uint8_t DegradationManager::_sensorHealthCounter_ = 0;
 bool DegradationManager::forcedSafeMode_ = false;
 unsigned long DegradationManager::lastEvaluationMs_ = 0;
 
@@ -28,7 +28,7 @@ void DegradationManager::begin() {
   }
   currentLevel_ = DegradationLevel::NORMAL;
   previousLevel_ = DegradationLevel::NORMAL;
-  sensorValid_ = true;
+  _sensorHealthCounter_ = 0;  // Pessimistic start — both probes must report healthy
   forcedSafeMode_ = false;
   lastEvaluationMs_ = 0;
 
@@ -99,7 +99,11 @@ const char *DegradationManager::levelToString(DegradationLevel level) {
 }
 
 void DegradationManager::reportSensorStatus(bool valid) {
-  sensorValid_ = valid;
+  // Each of the two DallasTemperatureNode instances calls this on every
+  // loop pass.  We clamp the counter to [0, 2] so that both probes must
+  // report healthy before the sensor subsystem is considered OK.
+  if (valid && _sensorHealthCounter_ < 2) _sensorHealthCounter_++;
+  else if (!valid && _sensorHealthCounter_ > 0) _sensorHealthCounter_--;
 }
 
 // ===========================================================================
@@ -163,12 +167,14 @@ DegradationLevel DegradationManager::evaluateLevel() {
   // Time is OK for GREEN + YELLOW (millis() estimate is usable up to 24h)
   bool timeOk = (getTimeDegradation() != TimeDegradation::RED);
   bool memoryOk = SystemMonitor::isHealthy();
-  bool sensorOk = sensorValid_;
+  bool sensorOk = (_sensorHealthCounter_ >= 2);  // Both Dallas probes must be healthy
 
-  // Count active failures (memory failure = CRITICAL immediately)
+  // Count active failures (memory failure = CRITICAL immediately).
+  // Time loss without WiFi is a consequence, not an independent failure —
+  // counting both would escalate a plain WiFi outage to CRITICAL.
   uint8_t failureCount = 0;
   if (!wifiOk) failureCount++;
-  if (!timeOk) failureCount++;
+  if (!timeOk && wifiOk) failureCount++;
   if (!sensorOk) failureCount++;
 
   // --- Decision logic ---
