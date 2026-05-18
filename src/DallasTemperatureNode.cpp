@@ -22,6 +22,7 @@
 #include "SystemMonitor.hpp"
 #include "Utils.hpp"
 #include "MqttInterface.hpp"
+#include "DegradationManager.hpp"
 
 DallasTemperatureNode::DallasTemperatureNode(const char *id, const char *name, const uint8_t pin, const int measurementInterval)
     : HomieNode(id, name, "temperature") {
@@ -80,6 +81,7 @@ void DallasTemperatureNode::onReadyToOperate() {
     Homie.getLogger() << F("  ⚠ Temperature readings will be invalid (NaN)") << endl;
     Homie.getLogger() << F("  ⚠ Auto mode may not function correctly") << endl;
     _sensorFound = false;
+    PoolController::DegradationManager::reportSensorStatus(false);
     if (Homie.isConnected()) {
       setProperty(cHomieNodeState).send(cHomieNodeState_Error);
     }
@@ -123,12 +125,14 @@ void DallasTemperatureNode::loop() {
             Homie.getLogger() << cIndent << F("✖ Sensor disconnected - setting temp to NaN for safety") << endl;
             _temperature = NAN;  // Set to invalid value for safety
             _sensorFound = false;
+            PoolController::DegradationManager::reportSensorStatus(false);
             if (Homie.isConnected()) {
               setProperty(cHomieNodeState).send(cHomieNodeState_Error);
             }
           } else {
             _temperature = newTemp;  // Update only with valid reading
             _sensorFound = true;
+            PoolController::DegradationManager::reportSensorStatus(true);
             Homie.getLogger() << cIndent << F("Temperature=") << _temperature << endl;
 
             if (Homie.isConnected()) {
@@ -144,6 +148,7 @@ void DallasTemperatureNode::loop() {
       }
     } else {
       Homie.getLogger() << F("No Sensor found!") << endl;
+      PoolController::DegradationManager::reportSensorStatus(false);
       if (Homie.isConnected()) {
         setProperty(cHomieNodeState).send(cHomieNodeState_Error);
       }

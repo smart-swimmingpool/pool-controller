@@ -11,6 +11,7 @@
 #include "RelayModuleNode.hpp"
 #include "Utils.hpp"
 #include "MqttInterface.hpp"
+#include "DegradationManager.hpp"
 
 RelayModuleNode::RelayModuleNode(const char *id, const char *name, const uint8_t pin, const int measurementInterval)
     : HomieNode(id, name, "switch") {
@@ -28,6 +29,14 @@ void RelayModuleNode::setSwitch(const boolean state) {
   // Check if state actually changes to avoid unnecessary NVS writes
   boolean currentState = relay->isOn();
   if (currentState == state) {
+    return;
+  }
+
+  // P8: In safe mode (boot-loop detected / CRITICAL degradation), never allow
+  // a relay to switch ON. Only OFF transitions are permitted so relays default
+  // to the safe OFF state.
+  if (state && PoolController::DegradationManager::isSafe()) {
+    Homie.getLogger() << cIndent << F("SAFE MODE — ignoring relay ON request") << endl;
     return;
   }
 

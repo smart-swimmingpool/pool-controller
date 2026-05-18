@@ -93,6 +93,7 @@ private:
   static DegradationLevel currentLevel_;
   static DegradationLevel previousLevel_;
   static bool sensorValid_;
+  static bool forcedSafeMode_;
   static unsigned long lastEvaluationMs_;
 
   static constexpr unsigned long EVALUATION_INTERVAL_MS = 5000;

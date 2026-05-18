@@ -152,12 +152,29 @@ time_t getLastValidSyncTime() {
   return _lastValidTime;
 }
 
+bool forceNtpUpdate() {
+  // getUtcTime() calls timeClient->update() internally, which sends an NTP
+  // request and returns the validated epoch time on success.
+  time_t t = getUtcTime();
+  return (t >= MIN_VALID_TIME);
+}
+
 void setTimeDegradationGreenHours(uint8_t hours) {
   _greenMaxHours = (hours > 0) ? hours : 1;
 }
 
+uint8_t getTimeDegradationGreenHours() {
+  return _greenMaxHours;
+}
+
 void setTimeDegradationRedHours(uint8_t hours) {
-  _redAfterHours = (hours > 0 && hours <= 72) ? hours : 24;
+  // Red must be strictly greater than green, otherwise there is no YELLOW range.
+  uint8_t minRed = _greenMaxHours + 1;
+  _redAfterHours = (hours >= minRed && hours <= 72) ? hours : (minRed < 72 ? minRed : 72);
+}
+
+uint8_t getTimeDegradationRedHours() {
+  return _redAfterHours;
 }
 
 time_t getTimeFor(int index, TimeChangeRule **tcr) {

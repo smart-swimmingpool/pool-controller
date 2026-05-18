@@ -46,8 +46,18 @@ bool isTimeSyncValid();
 TimeDegradation getTimeDegradation();
 time_t getLastValidSyncTime();
 
+/** Force an NTP sync attempt.  Returns true if a valid time was obtained. */
+bool forceNtpUpdate();
+
 /** Configure GREEN→YELLOW threshold (hours). Default 1. */
 void setTimeDegradationGreenHours(uint8_t hours);
 
-/** Configure YELLOW→RED threshold (hours). Default 24. */
+/** Return current GREEN→YELLOW threshold. */
+uint8_t getTimeDegradationGreenHours();
+
+/** Configure YELLOW→RED threshold (hours). Default 24.
+ *  Enforces red > green to guarantee a non-zero YELLOW window. */
 void setTimeDegradationRedHours(uint8_t hours);
+
+/** Return current YELLOW→RED threshold. */
+uint8_t getTimeDegradationRedHours();

@@ -12,6 +12,7 @@ namespace PoolController {
 DegradationLevel DegradationManager::currentLevel_ = DegradationLevel::NORMAL;
 DegradationLevel DegradationManager::previousLevel_ = DegradationLevel::NORMAL;
 bool DegradationManager::sensorValid_ = true;
+bool DegradationManager::forcedSafeMode_ = false;
 unsigned long DegradationManager::lastEvaluationMs_ = 0;
 
 // ===========================================================================
@@ -22,11 +23,13 @@ void DegradationManager::begin() {
   // Don't reset if already forced into safe mode by boot-loop detection
   if (currentLevel_ == DegradationLevel::CRITICAL) {
     previousLevel_ = DegradationLevel::CRITICAL;
+    // forcedSafeMode_ is preserved; evaluate() will not downgrade below CRITICAL
     return;
   }
   currentLevel_ = DegradationLevel::NORMAL;
   previousLevel_ = DegradationLevel::NORMAL;
   sensorValid_ = true;
+  forcedSafeMode_ = false;
   lastEvaluationMs_ = 0;
 
   Homie.getLogger() << F("✓ DegradationManager initialized") << endl;
@@ -40,6 +43,17 @@ void DegradationManager::evaluate() {
     return;
   }
   lastEvaluationMs_ = now;
+
+  // If force-safe-mode is active, never auto-downgrade below CRITICAL.
+  // Only an explicit disable or reboot can clear forced safe mode.
+  if (forcedSafeMode_) {
+    if (currentLevel_ != DegradationLevel::CRITICAL) {
+      previousLevel_ = currentLevel_;
+      currentLevel_ = DegradationLevel::CRITICAL;
+      onTransition();
+    }
+    return;
+  }
 
   DegradationLevel newLevel = evaluateLevel();
 
@@ -59,6 +73,7 @@ bool DegradationManager::isSafe() {
 }
 
 void DegradationManager::forceSafeMode() {
+  forcedSafeMode_ = true;
   if (currentLevel_ != DegradationLevel::CRITICAL) {
     previousLevel_ = currentLevel_;
     currentLevel_ = DegradationLevel::CRITICAL;
@@ -137,6 +152,14 @@ void DegradationManager::onTransition() {
 DegradationLevel DegradationManager::evaluateLevel() {
   // Gather system health signals
   bool wifiOk = Homie.isConnected();
+
+  // If time is RED (lost) but WiFi is up, try an NTP sync immediately.
+  // The Time library only syncs every SYNC_INTERVAL (3600s), so without
+  // this the system could stay in NO_TIME for an hour after NTP recovers.
+  if (wifiOk && (getTimeDegradation() == TimeDegradation::RED)) {
+    forceNtpUpdate();
+  }
+
   // Time is OK for GREEN + YELLOW (millis() estimate is usable up to 24h)
   bool timeOk = (getTimeDegradation() != TimeDegradation::RED);
   bool memoryOk = SystemMonitor::isHealthy();

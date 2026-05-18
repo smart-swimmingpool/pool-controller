@@ -202,9 +202,14 @@ auto PoolControllerContext::initializeController() -> void {
   // Initialize NTP client with configured server
   timeClientSetup(this->ntpServerSetting_.get());
 
-  // P9: Propagate configurable time-loss thresholds to TimeClientHelper
+  // P9: Propagate configurable time-loss thresholds to TimeClientHelper.
+  // The red-hours setter enforces red > green internally.
   setTimeDegradationGreenHours(static_cast<uint8_t>(this->timeLossGreenHoursSetting_.get()));
   setTimeDegradationRedHours(static_cast<uint8_t>(this->timeLossRedHoursSetting_.get()));
+  LN.logf(__PRETTY_FUNCTION__, LoggerNode::INFO,
+    "Degradation thresholds: GREEN=%d h, RED=%d h",
+    getTimeDegradationGreenHours(),
+    getTimeDegradationRedHours());
 
   // Set the timezone from configuration
   setTimezoneIndex(this->timezoneSetting_.get());
@@ -291,9 +296,11 @@ static void publishAllStates() {
   String tzInfo = getTimeInfoFor(tzIndex);
   MqttInterface::publishTextState(operationModeNode, "timezone-info", "timezone-info", tzInfo.c_str());
 
-  // Relay states
-  MqttInterface::publishSwitchState(poolPumpNode, "pool-pump", "pool-pump", poolPumpNode.getSwitch());
-  MqttInterface::publishSwitchState(solarPumpNode, "solar-pump", "solar-pump", solarPumpNode.getSwitch());
+  // Relay states — homie property MUST match the RelayModuleNode advertise()
+  // (cSwitch = "switch"), not the node-id.  In HomeAssistant mode the
+  // objectId is the node-id so discovery topics stay consistent.
+  MqttInterface::publishSwitchState(poolPumpNode, "switch", "pool-pump", poolPumpNode.getSwitch());
+  MqttInterface::publishSwitchState(solarPumpNode, "switch", "solar-pump", solarPumpNode.getSwitch());
 
   // Temperature values
   Utils::floatToString(poolTemperatureNode.getTemperature(), buffer, sizeof(buffer));
@@ -454,8 +461,8 @@ auto PoolControllerContext::setup() -> void {
   this->timeLossGreenHoursSetting_.setDefaultValue(1).setValidator([](const long candidate) -> bool {
     return candidate >= 1 && candidate <= 6;
   });
-  this->timeLossRedHoursSetting_.setDefaultValue(24).setValidator([](const long candidate) -> bool {
-    return candidate >= 1 && candidate <= 72;
+  this->timeLossRedHoursSetting_.setDefaultValue(24).setValidator([this](const long candidate) -> bool {
+    return candidate >= 1 && candidate <= 72 && candidate > this->timeLossGreenHoursSetting_.get();
   });
 
   Homie.setSetupFunction(&Detail::setupProxy);
@@ -468,16 +475,34 @@ auto PoolControllerContext::setup() -> void {
   SystemMonitor::begin();
   DegradationManager::begin();
 
+  // P12: Republish all states on every MQTT (re-)connect so Home Assistant
+  // never shows stale data after a temporary outage.
+  Homie.onEvent([](const HomieEvent &event) {
+    if (event.type == HomieEventType::MQTT_READY) {
+      publishAllStates();
+    }
+  });
+
   LN.log(__PRETTY_FUNCTION__, LoggerNode::DEBUG, "Before Homie setup())");
   Homie.setup();
+
+  // Suppress persistence during initialization so Homie compile-time defaults
+  // set below do NOT overwrite the user values already in NVS.  loadState()
+  // restores those user values into memory right after.
+  OperationModeNode::suppressPersist(true);
 
   // Initialize controller regardless of WiFi/MQTT connection status
   // This ensures offline operation works from startup
   initializeController();
 
-  // Load persisted state after controller and rules are initialized.
-  // Previously this only ran inside setupHandler() (MQTT-connected), meaning
-  // all settings were lost on combined power+WiFi failure.
+  // End the suppression window: user values are now in NVS and will be
+  // overwritten only on explicit user changes.
+  OperationModeNode::suppressPersist(false);
+
+  // Load persisted state — runs after initializeController so the rule-engine
+  // and MQTT infra are fully set up, and suppressPersist ensures the Homie
+  // defaults set by initializeController did not clobber the NVS state we are
+  // about to read.
   operationModeNode.loadState();
 
   LN.logf(__PRETTY_FUNCTION__, LoggerNode::DEBUG, "Free heap: %d", ESP.getFreeHeap());
@@ -494,9 +519,15 @@ auto PoolControllerContext::loop() -> void {
 
   // P8: Clear boot-loop counter after 5 minutes of stable uptime.
   // This tells detectBootLoop() on the next boot that this boot was healthy.
+  // Even during safe mode we clear it: if the device runs 5+ minutes without
+  // crashing, the next intentional restart should not be treated as a loop.
   static uint32_t lastBootClear = 0;
-  if (!bootLoopDetected_ && (millis() - lastBootClear) > 300000) {
+  if ((millis() - lastBootClear) > 300000) {
     SystemMonitor::clearBootLoopCounter();
+    if (bootLoopDetected_) {
+      Serial.println(F("→ Safe-mode: 5 min stable — boot-loop counter cleared"));
+      bootLoopDetected_ = false;
+    }
     lastBootClear = millis();
   }
 
