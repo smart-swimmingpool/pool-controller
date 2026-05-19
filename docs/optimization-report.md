@@ -242,16 +242,16 @@ void LoggerNode::logf(const String& function, const E_Loglevel level,
 ## Testing Recommendations
 
 1. **Long-term Stability Test**: Run for 60+ days to verify millis() overflow
-   handling
+    handling
 2. **Memory Monitoring**: Track free heap over 24-48 hours
 3. **MQTT Protocol Switching**: Test both Homie and Home Assistant modes
 4. **Temperature Extremes**: Test with disconnected sensors and rapid
-   temperature changes
+    temperature changes
 
 ## Future Optimization Opportunities
 
 1. **Watchdog Timer**: Consider implementing ESP watchdog for automatic
-   recovery
+    recovery
 2. **NTP Configuration**: Make NTP server configurable (currently hardcoded)
 3. **Persistent Settings**: Store runtime configuration changes to flash
 4. **Over-the-Air Updates**: Ensure OTA updates work reliably
