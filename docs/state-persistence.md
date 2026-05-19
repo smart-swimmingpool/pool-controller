@@ -31,7 +31,8 @@ and restored after reboots or power failures:
 (Non-Volatile Storage). Each value is stored with a type-specific key.
 
 Relay states are persisted individually per relay via their own Preferences
-namespace (`getPersistentData()`).
+namespace named after the relay node-id (e.g., `pool-pump`, `solar-pump`),
+storing key `"switch"`.
 
 ### Automatic Restoration
 
@@ -277,10 +278,9 @@ If watchdog triggers (ESP32):
 
 Completed in v3.2.0:
 
-1. ✅ **ESP8266 full persistence**: Structured EEPROM with 8 fixed slots + CRC16
-2. ✅ **Degradation Manager**: Central health state (NORMAL → CRITICAL)
-3. ✅ **MQTT Reconnect-Refresh**: Full state republish on reconnection
-4. ✅ **NTP Graceful Degradation**: Three-stage time degradation (GREEN/YELLOW/RED)
+1. ✅ **Degradation Manager**: Central health state (NORMAL → CRITICAL)
+2. ✅ **MQTT Reconnect-Refresh**: Full state republish on reconnection
+3. ✅ **NTP Graceful Degradation**: Three-stage time degradation (GREEN/YELLOW/RED)
 
 Planned:
 

@@ -34,7 +34,7 @@ Many thanks to maintainers of these libraries!
 ## Defines
 
 Within the sources at `Config.hpp`, there are some constant settings defined. For the PIN assignment,
-see also at [hardware guide](../hardware-guide/#pin-usage).
+see also at [hardware guide](../hardware-guide/#esp32-pin-usage).
 
 ```cpp
 constexpr uint8_t PIN_DS_SOLAR   = 15;  // Pin of Temp-Sensor Solar (GPIO15)

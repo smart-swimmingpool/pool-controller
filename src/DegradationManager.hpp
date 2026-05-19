@@ -84,15 +84,21 @@ public:
   static const char *levelToString(DegradationLevel level);
 
   /**
-   * Report sensor health status from temperature nodes.
+   * Report sensor health status from a temperature node.
    * Call with false when a sensor read fails, true on successful read.
+   * The @p nodeId distinguishes the two DallasTemperatureNode instances
+   * ("pool-temp", "solar-temp") so both must be healthy for sensorOk.
    */
-  static void reportSensorStatus(bool valid);
+  static void reportSensorStatus(const char *nodeId, bool valid);
+
+  /** Exit forced safe mode — called when the boot-loop is cleared. */
+  static void unforceSafeMode();
 
 private:
   static DegradationLevel currentLevel_;
   static DegradationLevel previousLevel_;
-  static uint8_t _sensorHealthCounter_;  // 0–2, both Dallas probes must be healthy
+  static bool poolSensorOk_;
+  static bool solarSensorOk_;
   static bool forcedSafeMode_;
   static unsigned long lastEvaluationMs_;
 

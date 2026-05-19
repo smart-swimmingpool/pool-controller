@@ -11,7 +11,8 @@ namespace PoolController {
 // Static member definitions
 DegradationLevel DegradationManager::currentLevel_ = DegradationLevel::NORMAL;
 DegradationLevel DegradationManager::previousLevel_ = DegradationLevel::NORMAL;
-uint8_t DegradationManager::_sensorHealthCounter_ = 0;
+bool DegradationManager::poolSensorOk_ = false;
+bool DegradationManager::solarSensorOk_ = false;
 bool DegradationManager::forcedSafeMode_ = false;
 unsigned long DegradationManager::lastEvaluationMs_ = 0;
 
@@ -28,7 +29,8 @@ void DegradationManager::begin() {
   }
   currentLevel_ = DegradationLevel::NORMAL;
   previousLevel_ = DegradationLevel::NORMAL;
-  _sensorHealthCounter_ = 0;  // Pessimistic start — both probes must report healthy
+  poolSensorOk_ = false;   // Pessimistic — both probes must report healthy
+  solarSensorOk_ = false;
   forcedSafeMode_ = false;
   lastEvaluationMs_ = 0;
 
@@ -98,12 +100,21 @@ const char *DegradationManager::levelToString(DegradationLevel level) {
   }
 }
 
-void DegradationManager::reportSensorStatus(bool valid) {
-  // Each of the two DallasTemperatureNode instances calls this on every
-  // loop pass.  We clamp the counter to [0, 2] so that both probes must
-  // report healthy before the sensor subsystem is considered OK.
-  if (valid && _sensorHealthCounter_ < 2) _sensorHealthCounter_++;
-  else if (!valid && _sensorHealthCounter_ > 0) _sensorHealthCounter_--;
+void DegradationManager::reportSensorStatus(const char *nodeId, bool valid) {
+  if (strcmp(nodeId, "pool-temp") == 0) {
+    poolSensorOk_ = valid;
+  } else if (strcmp(nodeId, "solar-temp") == 0) {
+    solarSensorOk_ = valid;
+  }
+}
+
+void DegradationManager::unforceSafeMode() {
+  forcedSafeMode_ = false;
+  if (currentLevel_ == DegradationLevel::CRITICAL) {
+    previousLevel_ = currentLevel_;
+    currentLevel_ = DegradationLevel::NORMAL;
+    onTransition();
+  }
 }
 
 // ===========================================================================
@@ -167,7 +178,7 @@ DegradationLevel DegradationManager::evaluateLevel() {
   // Time is OK for GREEN + YELLOW (millis() estimate is usable up to 24h)
   bool timeOk = (getTimeDegradation() != TimeDegradation::RED);
   bool memoryOk = SystemMonitor::isHealthy();
-  bool sensorOk = (_sensorHealthCounter_ >= 2);  // Both Dallas probes must be healthy
+  bool sensorOk = poolSensorOk_ && solarSensorOk_;  // Both probes must be healthy
 
   // Count active failures (memory failure = CRITICAL immediately).
   // Time loss without WiFi is a consequence, not an independent failure —

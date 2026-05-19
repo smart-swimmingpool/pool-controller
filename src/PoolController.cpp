@@ -475,7 +475,7 @@ auto PoolControllerContext::setup() -> void {
   SystemMonitor::begin();
   DegradationManager::begin();
 
-  // P12: Republish all states on every MQTT (re-)connect so Home Assistant
+  // P4: Republish all states on every MQTT (re-)connect so Home Assistant
   // never shows stale data after a temporary outage.
   Homie.onEvent([](const HomieEvent &event) {
     if (event.type == HomieEventType::MQTT_READY) {
@@ -521,11 +521,16 @@ auto PoolControllerContext::loop() -> void {
   // This tells detectBootLoop() on the next boot that this boot was healthy.
   // Even during safe mode we clear it: if the device runs 5+ minutes without
   // crashing, the next intentional restart should not be treated as a loop.
+  // The guard ensures we only write NVS once per boot (avoids flash wear).
   static uint32_t lastBootClear = 0;
-  if ((millis() - lastBootClear) > 300000) {
+  static bool bootCounterCleared = false;
+  if (!bootCounterCleared && (millis() - lastBootClear) >
+      static_cast<uint32_t>(SystemMonitor::BOOT_LOOP_CLEAR_AFTER_SEC) * 1000UL) {
+    bootCounterCleared = true;
     SystemMonitor::clearBootLoopCounter();
     if (bootLoopDetected_) {
       Serial.println(F("→ Safe-mode: 5 min stable — boot-loop counter cleared"));
+      DegradationManager::unforceSafeMode();
       bootLoopDetected_ = false;
     }
     lastBootClear = millis();
