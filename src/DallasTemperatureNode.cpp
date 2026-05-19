@@ -152,8 +152,16 @@ void DallasTemperatureNode::loop() {
       if (Homie.isConnected()) {
         setProperty(cHomieNodeState).send(cHomieNodeState_Error);
       }
-      // retry to get
+      // Retry: getDeviceCount() returns a cached count from begin().
+      // Call begin() to rescans the bus and detect newly connected probes
+      // (e.g. plugged in after boot).
+      sensor.begin();
       numberOfDevices = sensor.getDeviceCount();
+      if (numberOfDevices > 0) {
+        Homie.getLogger() << cIndent << numberOfDevices
+                          << F(" device(s) found after bus rescan") << endl;
+        _sensorFound = true;
+      }
     }
   }
 }
