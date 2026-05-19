@@ -250,9 +250,9 @@ pool-controller/
 
 1. **Issue-Tracker vorbereiten**: Issues für alle Tasks in diesem Plan erstellen
 2. **Branch-Strategie festlegen**:
-   - `main`: Stabiler Code
-   - `develop`: Integrationsbranch
-   - `feature/*`: Feature-Branches
+    - `main`: Stabiler Code
+    - `develop`: Integrationsbranch
+    - `feature/*`: Feature-Branches
 3. **CI/CD anpassen**: Tests in GitHub Actions/PlatformIO CI integrieren
 4. **Code Review**: Alle Änderungen müssen über Pull Requests mit Review
 
