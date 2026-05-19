@@ -21,11 +21,13 @@ menu:
     weight: 10
 ---
 
-**🏊 Der Homie 3.0 kompaible Smart Swimmingpool Controller 🎛️**
+## 🏊 Der Homie 3.0 kompatible Smart Swimmingpool Controller 🎛️
 
 <span style="text-shadow: none;">
+<!-- markdownlint-disable MD013 -->
 <a class="github-button" href="https://github.com/smart-swimmingpool/pool-controller/subscription" data-size="large" data-show-count="true" aria-label="Watch smart-swimmingpool/pool-controller on GitHub">Watch</a>
 <a class="github-button" href="https://github.com/smart-swimmingpool/pool-controller" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star this on GitHub">Star</a><script async defer src="https://buttons.github.io/buttons.js"></script>
+<!-- markdownlint-enable MD013 -->
 
 [GitHub Quellcode](https://github.com/smart-swimmingpool/pool-controller)
 </span>
@@ -53,9 +55,10 @@ Steuer deinen Swimming-Pool auf smarte Art und Weise, um diesen bequem und güns
 - [ ] Temperaturabhängige Zirkulationszeiten (kühleres Wetter == kürzere Pumpenzeit, wäremer == längere Zeit)
 - [ ] Verbesserte Schaltung die komplett ohne WiFi-Verbindung funktioniert
 - [ ] Verbesserung der Schaltung mit Anzeige und Tasten zur Einrichtung der Konfiguration.
-- [ ] Eine Stromversorgung für die ganze Schaltung (ESP8266 und Relais)
+- [ ] Eine Stromversorgung für die ganze Schaltung (ESP32 und Relais)
 - siehe auch: [Issue-Liste](https://github.com/smart-swimmingpool/pool-controller/issues)
 
 [![works with MQTT Homie](https://homieiot.github.io/img/works-with-homie.svg "works with MQTT Homie")](https://homieiot.github.io/)
 
+<!-- markdownlint-disable-next-line MD013 -->
 {{< figure library="true" src="pool-controller_breadboard.png" title="Breadboard Circuid of Pool Controller" lightbox="true" >}}

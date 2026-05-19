@@ -12,7 +12,7 @@ codebase to ensure reliable 24/7 operation and reduce memory leaks.
 **Issue**: The code was creating temporary String objects in every measurement
 loop, causing heap fragmentation over time in 24/7 operation.
 
-**Impact**: On ESP8266/ESP32 with limited RAM, repeated String allocations and
+**Impact**: On ESP32 with limited RAM, repeated String allocations and
 deallocations can fragment the heap, eventually leading to allocation failures
 even when enough total memory is available.
 

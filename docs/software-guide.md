@@ -19,7 +19,7 @@ menu:
 
 ## Required Libraries
 
-- [Homie-ESP8266](https://github.com/homieiot/homie-esp8266)
+- [Homie for ESP32](https://github.com/homieiot/homie-esp8266)
 - [RelayModule](https://github.com/YuriiSalimov/RelayModule)
 - [Vector](https://github.com/tomstewart89/Vector)
 - DallasTemperature
@@ -48,8 +48,8 @@ constexpr uint8_t TEMP_READ_INTERVAL = 30;
 
 ## Configuration
 
-Homie-ESP8266 supports configuration (e.g. WiFi credentials) using JSON-files.
-How to upload JSON config files see [Homie-esp8266 docu](https://homieiot.github.io/homie-esp8266/docs/develop/configuration/json-configuration-file/).
+Homie supports configuration (e.g. WiFi credentials) using JSON-files.
+How to upload JSON config files see [Homie documentation](https://homieiot.github.io/homie-esp8266/docs/develop/configuration/json-configuration-file/).
 
 ### Example `config.json`
 

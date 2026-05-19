@@ -15,7 +15,7 @@ Umfassende Richtlinien für:
 - ✅ C++ Code-Formatierung (clang-format)
 - ✅ C++ Stil-Richtlinien (cpplint)
 - ✅ EditorConfig Konformität
-- ✅ ESP8266/ESP32 spezifische Best Practices
+- ✅ ESP32 spezifische Best Practices
 - ✅ PlatformIO Best Practices
 - ✅ Git Workflow und Pre-Commit Checks
 - ✅ Super-Linter Konfiguration
@@ -160,7 +160,7 @@ Siehe [QUICK_REFERENCE.md](QUICK_REFERENCE.md) für Details.
 5. **Leere Klammern** - Kein Leerzeichen: `{}` nicht `{ }`
 6. **Kommentare** - Mindestens 2 Leerzeichen vor `//`
 
-### Best Practices für ESP8266/ESP32
+### Best Practices für ESP32
 
 1. **Datentypen** - `uint32_t` statt `unsigned long`
 2. **Speicher** - Reserve String capacity vor Loops

@@ -20,14 +20,14 @@ and restored after reboots or power failures:
 - **Temperature hysteresis**: Temperature difference for control
 - **Timer settings**: Start and end times for timer mode
 
-#### Relay States (ESP32)
+#### Relay States
 
 - **Pool pump**: On/Off state
 - **Solar pump**: On/Off state
 
 ### How It Works
 
-**ESP32**: Uses the Preferences library for persistent storage in NVS
+Uses the Preferences library for persistent storage in NVS
 (Non-Volatile Storage). Each value is stored with a type-specific key.
 
 Relay states are persisted individually per relay via their own Preferences
@@ -74,11 +74,6 @@ memory exhaustion.
 
 #### Thresholds
 
-**ESP8266**:
-
-- **Low Memory Warning**: < 8 KB (8,192 bytes)
-- **Critical Memory**: < 4 KB (4,096 bytes) → Auto-reboot
-
 **ESP32**:
 
 - **Low Memory Warning**: < 16 KB (16,384 bytes)
@@ -101,11 +96,6 @@ Prevents system hangs and ensures recovery from software failures.
 - **Automatic panic**: Reboots if watchdog not fed
 - **Fed in main loop**: Every cycle
 
-#### ESP8266
-
-- **Software watchdog**: Built-in
-- **yield() called**: Regular feeding in main loop
-
 ### Health Status API
 
 The SystemMonitor provides methods to check system health:
@@ -123,7 +113,6 @@ bool healthy = SystemMonitor::isHealthy();
 // Get uptime in seconds
 uint32_t uptime = SystemMonitor::getUptimeSeconds();
 
-// ESP8266 only: Get heap fragmentation percentage
 uint8_t fragmentation = SystemMonitor::getHeapFragmentation();
 ```
 
@@ -140,10 +129,10 @@ To customize memory thresholds, modify `src/SystemMonitor.hpp`:
 
 ```cpp
 // Low memory threshold (warning only)
-static constexpr uint32_t LOW_MEMORY_THRESHOLD = 8192;  // ESP8266
+static constexpr uint32_t LOW_MEMORY_THRESHOLD = 8192;  // 8 KB
 
 // Critical memory threshold (auto-reboot)
-static constexpr uint32_t CRITICAL_MEMORY_THRESHOLD = 4096;  // ESP8266
+static constexpr uint32_t CRITICAL_MEMORY_THRESHOLD = 4096;  // 4 KB
 ```
 
 ### Disabling Auto-Reboot

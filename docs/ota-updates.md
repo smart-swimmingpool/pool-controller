@@ -10,7 +10,7 @@ This feature is provided by the Homie library and is enabled by default.
 
 - **Network-based updates**: Upload firmware via Wi-Fi
 - **Password-protected**: Secure updates with authentication
-- **Low memory footprint**: Optimized for ESP8266/ESP32
+- **Low memory footprint**: Optimized for ESP32
 - **Automatic discovery**: mDNS support for easy device location
 - **Status feedback**: Progress indication via MQTT
 
@@ -181,7 +181,7 @@ pio run -e esp32dev
 **Solutions**:
 
 - Check serial console for boot errors
-- Verify firmware was built for correct platform (ESP8266/ESP32)
+- Verify firmware was built for correct platform (ESP32)
 - Ensure firmware size fits in flash memory
 - Check for memory issues in serial log
 - Perform manual reboot
@@ -193,7 +193,7 @@ pio run -e esp32dev
 **Solutions**:
 
 - Free memory is critical for OTA
-- System monitor will prevent OTA if memory < 8KB (ESP32) or 4KB (ESP8266)
+- System monitor will prevent OTA if memory < 8KB
 - Reboot device before OTA attempt
 - Reduce logging during update
 
@@ -201,7 +201,7 @@ pio run -e esp32dev
 
 ### How It Works
 
-1. **Homie OTA Server**: Runs on port 8266 (ESP8266) or 3232 (ESP32)
+1. **Homie OTA Server**: Runs on port 3232 (ESP32)
 2. **mDNS Advertisement**: Device broadcasts `_arduino._tcp` service
 3. **Authentication**: Password challenge before accepting firmware
 4. **Flash Writing**: New firmware written to OTA partition
@@ -210,15 +210,13 @@ pio run -e esp32dev
 
 ### Memory Requirements
 
-- **ESP8266**: Minimum 50KB free heap for OTA
 - **ESP32**: Minimum 100KB free heap for OTA
 - **Flash**: Sufficient space for dual boot partitions
 
 ### LWIP Configuration
 
 The project uses `PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY` flag to optimize
-network stack memory usage, ensuring reliable OTA updates even on ESP8266
-with limited RAM.
+network stack memory usage, ensuring reliable OTA updates.
 
 ## Monitoring OTA Status
 
@@ -366,18 +364,18 @@ cp .pio/build/nodemcuv2/firmware.bin \
 If OTA update fails and device becomes unresponsive:
 
 1. **Physical Access Recovery**:
-- Connect via USB serial
-- Upload firmware via serial: `pio run -e nodemcuv2 --target upload`
+   - Connect via USB serial
+   - Upload firmware via serial: `pio run -e esp32dev --target upload`
 
-2. **Bootloader Recovery**:
-- ESP8266/ESP32 bootloader allows serial recovery
-- Hold BOOT button during power-on
-- Upload firmware via esptool
+1. **Bootloader Recovery**:
+   - ESP32 bootloader allows serial recovery
+   - Hold BOOT button during power-on
+   - Upload firmware via esptool
 
-3. **Factory Reset**:
-- Clear EEPROM/NVS
-- Reset Homie configuration
-- Reconfigure via Homie AP
+1. **Factory Reset**:
+   - Clear EEPROM/NVS
+   - Reset Homie configuration
+   - Reconfigure via Homie AP
 
 ## Future Enhancements
 
@@ -392,7 +390,7 @@ If OTA update fails and device becomes unresponsive:
 - [Homie OTA Documentation](https://homieiot.github.io/homie-esp8266/docs/develop/others/ota-configuration-updates/)
 - [PlatformIO OTA Guide](https://docs.platformio.org/en/latest/platforms/espressif8266.html#over-the-air-ota-update)
 - [Arduino OTA Documentation](https://arduino-esp8266.readthedocs.io/en/latest/ota_updates/readme.html)
-- [ESP8266 OTA Updates](https://github.com/esp8266/Arduino/tree/master/libraries/ArduinoOTA)
+- [ESP32 Arduino OTA](https://docs.espressif.com/projects/arduino-esp32/en/latest/api/ota.html)
 
 ## Support
 

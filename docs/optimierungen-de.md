@@ -13,7 +13,7 @@ Controller für einen zuverlässigen 24/7-Betrieb.
 
 - Der Code hat bei jeder Messung temporäre String-Objekte erstellt
 - Dies führte zur Heap-Fragmentierung bei Langzeitbetrieb (24/7)
-- Auf ESP8266/ESP32 mit begrenztem RAM kritisch
+- Auf dem ESP32 mit begrenztem RAM kritisch
 
 **Lösung**:
 

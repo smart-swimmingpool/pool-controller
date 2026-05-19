@@ -9,9 +9,13 @@
 
 ## 📋 Zusammenfassung
 
-Dieser Plan beschreibt die schrittweise Verbesserung der Softwarearchitektur des **Smart Swimming Pool Controllers**. Ziel ist es, die Wartbarkeit, Testbarkeit und Erweiterbarkeit des Systems zu erhöhen, während die bestehende Funktionalität erhalten bleibt.
+Dieser Plan beschreibt die schrittweise Verbesserung der Softwarearchitektur des
+**Smart Swimming Pool Controllers**. Ziel ist es, die Wartbarkeit, Testbarkeit
+und Erweiterbarkeit des Systems zu erhöhen, während die bestehende
+Funktionalität erhalten bleibt.
 
 **Aktuelle Probleme:**
+
 - Speicherlecks durch manuelles Speichermanagement
 - Enge Kopplung zwischen Komponenten (Tight Coupling)
 - Duplizierter Code (z. B. Timer-Logik)
@@ -38,6 +42,7 @@ Dieser Plan beschreibt die schrittweise Verbesserung der Softwarearchitektur des
 ## 📅 Meilensteine
 
 ### **🟢 Phase 1: Kritische Fehler beheben (1-2 Wochen)**
+>
 > **Fokus**: Speicherlecks, Fehlerbehandlung, Grundlegende Tests
 
 | **Task** | **Aufwand** | **Verantwortlich** | **Status** | **Abhängigkeiten** |
@@ -52,6 +57,7 @@ Dieser Plan beschreibt die schrittweise Verbesserung der Softwarearchitektur des
 ---
 
 ### **🟡 Phase 2: Architektur verbessern (2-3 Wochen)**
+>
 > **Fokus**: Dependency Injection, Code-Duplikation entfernen, Interfaces
 
 | **Task** | **Aufwand** | **Verantwortlich** | **Status** | **Abhängigkeiten** |
@@ -67,6 +73,7 @@ Dieser Plan beschreibt die schrittweise Verbesserung der Softwarearchitektur des
 ---
 
 ### **🟠 Phase 3: Persistenz & Konfiguration (1 Woche)**
+>
 > **Fokus**: Speichern von Einstellungen, Konfigurierbarkeit
 
 | **Task** | **Aufwand** | **Verantwortlich** | **Status** | **Abhängigkeiten** |
@@ -80,6 +87,7 @@ Dieser Plan beschreibt die schrittweise Verbesserung der Softwarearchitektur des
 ---
 
 ### **🔵 Phase 4: Tests & Qualitätssicherung (2-3 Wochen)**
+>
 > **Fokus**: Testabdeckung erhöhen, CI/CD verbessern
 
 | **Task** | **Aufwand** | **Verantwortlich** | **Status** | **Abhängigkeiten** |
@@ -95,6 +103,7 @@ Dieser Plan beschreibt die schrittweise Verbesserung der Softwarearchitektur des
 ---
 
 ### **⚪ Phase 5: Fortgeschrittene Verbesserungen (Optional, 2-4 Wochen)**
+>
 > **Fokus**: Architektur-Patterns, Event-Driven Design
 
 | **Task** | **Aufwand** | **Verantwortlich** | **Status** | **Abhängigkeiten** |
@@ -110,7 +119,7 @@ Dieser Plan beschreibt die schrittweise Verbesserung der Softwarearchitektur des
 
 ## 📂 Dateistruktur (Ziel)
 
-```
+```text
 pool-controller/
 ├── src/
 │   ├── core/                  # Kernlogik (plattformunabhängig)
@@ -161,15 +170,18 @@ pool-controller/
 ## 🔧 Technische Richtlinien
 
 ### **1. Coding Standards**
+
 - **Namen**: `camelCase` für Variablen/Funktionen, `PascalCase` für Klassen
 - **Header**: Jede Datei beginnt mit Copyright-Hinweis und kurzer Beschreibung
 - **Kommentare**: Doxygen-Style für öffentliche Methoden
 - **Logging**: Verwende `LN.log()` statt `Homie.getLogger()`
 
 ### **2. Dependency Injection**
+
 - **Regel**: Keine globalen Instanzen in Klassen
 - **Ausnahme**: Singletons wie `Homie` (aber über Interfaces zugreifen)
 - **Beispiel**:
+
   ```cpp
   // ❌ Schlechter Stil
   class RuleAuto {
@@ -186,9 +198,11 @@ pool-controller/
   ```
 
 ### **3. Speichermanagement**
+
 - **Regel**: Immer `std::unique_ptr` oder `std::shared_ptr` für dynamische Objekte
 - **Ausnahme**: Keine (Raw Pointer nur für nicht-ownende Referenzen)
 - **Beispiel**:
+
   ```cpp
   // ❌ Schlechter Stil
   Rule* rule = new RuleAuto(...);
@@ -198,9 +212,11 @@ pool-controller/
   ```
 
 ### **4. Fehlerbehandlung**
+
 - **Regel**: Immer `nullptr`-Checks bei Zeigern
 - **Regel**: Verwende `assert()` für interne Konsistenzprüfungen
 - **Beispiel**:
+
   ```cpp
   Rule* rule = getRule();
   if (!rule) {
@@ -210,6 +226,7 @@ pool-controller/
   ```
 
 ### **5. Testing**
+
 - **Framework**: PlatformIO Unit Testing Framework
 - **Mocking**: Handgeschriebene Mocks oder [FakeIt](https://github.com/eranpe/FakeIt)
 - **Abdeckung**: Mindestens 80% für Kernlogik (Rules, Timer, etc.)
@@ -260,4 +277,7 @@ pool-controller/
 
 ## 💬 Feedback
 
-Fragen oder Anregungen zu diesem Plan? Eröffne ein [Issue](https://github.com/smart-swimmingpool/pool-controller/issues) oder starte eine [Diskussion](https://github.com/smart-swimmingpool/pool-controller/discussions).
+Fragen oder Anregungen zu diesem Plan? Eröffne ein
+[Issue](https://github.com/smart-swimmingpool/pool-controller/issues) oder
+starte eine
+[Diskussion](https://github.com/smart-swimmingpool/pool-controller/discussions).
