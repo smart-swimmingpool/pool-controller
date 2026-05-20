@@ -43,7 +43,7 @@ jobs:
 
       # Build the project using PlatformIO
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
       - name: Cache PlatformIO
