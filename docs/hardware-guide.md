@@ -17,6 +17,14 @@ menu:
 
 This Hardware Guide describes how to set up the hardware of the controller.
 
+{{% alert note %}}
+For an ESP32-focused wiring analysis and optimization (sensors and relays), see
+`docs/esp32-schematic-optimization-de.md` (German / DE).
+
+For a complete ESP32 wiring schematic including resistors and optional RTC clock
+module, see `docs/esp32-complete-wiring-schematic-de.md` (German / DE).
+{{% /alert %}}
+
 ## Parts List (BOM)
 
 - 1 * ESP32 Development Board (e.g. ESP32 DevKit V1) ([Amazon](https://amzn.to/2Ze9DSh))

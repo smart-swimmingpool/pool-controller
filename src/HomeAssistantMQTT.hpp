@@ -246,6 +246,49 @@ public:
   }
 
   /**
+   * Publish a button discovery message
+   */
+  static bool publishButton(const char *nodeId, const char *objectId, const char *name, const char *icon = nullptr) {
+    if (!Homie.isConnected())
+      return false;
+
+    char topic[128];
+    snprintf(topic, sizeof(topic), "homeassistant/button/%s/%s/config", nodeId, objectId);
+
+    StaticJsonDocument<1024> doc;
+
+    char commandTopic[128];
+    snprintf(commandTopic, sizeof(commandTopic), "homeassistant/button/%s/%s/set", nodeId, objectId);
+    doc["command_topic"] = commandTopic;
+    doc["payload_press"] = "PRESS";
+
+    doc["name"] = name;
+    char uniqueId[96];
+    snprintf(uniqueId, sizeof(uniqueId), "%s_%s", nodeId, objectId);
+    doc["unique_id"] = uniqueId;
+
+    if (icon)
+      doc["icon"] = icon;
+
+    JsonObject device = doc["device"].to<JsonObject>();
+    device["identifiers"][0] = nodeId;
+    device["name"] = "Pool Controller";
+    device["manufacturer"] = "smart-swimmingpool";
+    device["model"] = "Pool Controller 2.0";
+
+    constexpr size_t kDiscoveryJsonBufferSize = 512;
+    char buffer[kDiscoveryJsonBufferSize];
+    size_t len = serializeJson(doc, buffer, sizeof(buffer));
+
+    if (len >= kDiscoveryJsonBufferSize - 1) {
+      Homie.getLogger() << F("✖ Warning: JSON buffer too small, message truncated") << endl;
+      return false;
+    }
+
+    return Homie.getMqttClient().publish(topic, 1, true, buffer, len);
+  }
+
+  /**
    * Publish state for a sensor
    */
   static bool publishSensorState(const char *nodeId, const char *objectId, const char *value) {
@@ -332,6 +375,19 @@ public:
 
     char topic[128];
     snprintf(topic, sizeof(topic), "homeassistant/select/%s/%s/set", nodeId, objectId);
+
+    return Homie.getMqttClient().subscribe(topic, 1);
+  }
+
+  /**
+   * Subscribe to button command topic
+   */
+  static bool subscribeButton(const char *nodeId, const char *objectId) {
+    if (!Homie.isConnected())
+      return false;
+
+    char topic[128];
+    snprintf(topic, sizeof(topic), "homeassistant/button/%s/%s/set", nodeId, objectId);
 
     return Homie.getMqttClient().subscribe(topic, 1);
   }

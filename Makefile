@@ -41,7 +41,7 @@ lint:
 		-e LOG_LEVEL=NOTICE \
 		-v $(PWD):/tmp/lint \
 		--workdir /tmp/lint \
-		ghcr.io/super-linter/super-linter:v7.4.0
+		ghcr.io/super-linter/super-linter:v8.3.1
 	@echo ""
 	@echo "✓ Linting complete!"
 

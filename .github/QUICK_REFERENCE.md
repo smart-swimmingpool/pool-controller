@@ -140,7 +140,7 @@ docker run --rm \
   -e VALIDATE_CPP=true \
   -e FILTER_REGEX_INCLUDE=".*src/.*" \
   -v $(pwd):/tmp/lint \
-  github/super-linter:v7
+  ghcr.io/super-linter/super-linter:v8.3.1
 
 # Alle Linter (vollständig)
 docker run --rm \
@@ -151,7 +151,7 @@ docker run --rm \
   -e VALIDATE_YAML=true \
   -e VALIDATE_CHECKOV=false \
   -v $(pwd):/tmp/lint \
-  github/super-linter:v7
+  ghcr.io/super-linter/super-linter:v8.3.1
 ```
 
 ## Checkliste

@@ -53,6 +53,13 @@ inline void publishSelectDiscovery(
   HomeAssistant::DiscoveryPublisher::publishSelect(kDeviceId, objectId, name, options, optionCount, icon);
 }
 
+inline void publishButtonDiscovery(const char *objectId, const char *name, const char *icon = nullptr) {
+  if (!isHomeAssistant()) {
+    return;
+  }
+  HomeAssistant::DiscoveryPublisher::publishButton(kDeviceId, objectId, name, icon);
+}
+
 inline void publishSensorState(HomieNode &node, const char *homieProperty, const char *objectId, const char *value) {
   if (isHomeAssistant()) {
     HomeAssistant::DiscoveryPublisher::publishSensorState(kDeviceId, objectId, value);
@@ -108,6 +115,13 @@ inline void subscribeSelect(const char *objectId) {
     return;
   }
   HomeAssistant::DiscoveryPublisher::subscribeSelect(kDeviceId, objectId);
+}
+
+inline void subscribeButton(const char *objectId) {
+  if (!isHomeAssistant()) {
+    return;
+  }
+  HomeAssistant::DiscoveryPublisher::subscribeButton(kDeviceId, objectId);
 }
 
 }  // namespace MqttInterface
