@@ -505,6 +505,13 @@ auto PoolControllerContext::setup() -> void {
   // about to read.
   operationModeNode.loadState();
 
+  // P1: Refresh MQTT state now that persisted values are in memory.
+  // publishAllStates() also runs during the Homie.setup() callback (setupProxy)
+  // and the MQTT_READY event, but both fire before loadState() completes, so
+  // clients may have received compile-time defaults.  This call ensures MQTT
+  // reflects the actual persisted state.
+  publishAllStates();
+
   LN.logf(__PRETTY_FUNCTION__, LoggerNode::DEBUG, "Free heap: %d", ESP.getFreeHeap());
   Homie.getLogger() << F("Free heap: ") << ESP.getFreeHeap() << endl;
 }

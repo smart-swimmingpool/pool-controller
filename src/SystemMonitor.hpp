@@ -138,7 +138,7 @@ public:
 
     Serial.printf("  Boot counter: %d\n", bootCount);
 
-    bool isBootLoop = (bootCount > BOOT_LOOP_MAX_COUNT);
+    bool isBootLoop = (bootCount >= BOOT_LOOP_MAX_COUNT);
     if (isBootLoop) {
       Serial.printf("✖ BOOT-LOOP DETECTED (%d consecutive boots)\n", bootCount);
       Serial.println("  Entering safe mode — all relays OFF");
