@@ -12,7 +12,7 @@ codebase to ensure reliable 24/7 operation and reduce memory leaks.
 **Issue**: The code was creating temporary String objects in every measurement
 loop, causing heap fragmentation over time in 24/7 operation.
 
-**Impact**: On ESP8266/ESP32 with limited RAM, repeated String allocations and
+**Impact**: On ESP32 with limited RAM, repeated String allocations and
 deallocations can fragment the heap, eventually leading to allocation failures
 even when enough total memory is available.
 
@@ -22,45 +22,45 @@ character buffers.
 #### Changes Made
 
 1. **DallasTemperatureNode.cpp**
-   - Before: `setProperty(cTemperature).send(String(_temperature));`
-   - After:
+    - Before: `setProperty(cTemperature).send(String(_temperature));`
+    - After:
 
-     ```cpp
-     char buffer[16];
-     Utils::floatToString(_temperature, buffer, sizeof(buffer));
-     setProperty(cTemperature).send(buffer);
-     ```
+      ```cpp
+      char buffer[16];
+      Utils::floatToString(_temperature, buffer, sizeof(buffer));
+      setProperty(cTemperature).send(buffer);
+      ```
 
-   - **Impact**: Eliminates 1 String allocation per temperature sensor per
-     measurement cycle
+    - **Impact**: Eliminates 1 String allocation per temperature sensor per
+      measurement cycle
 
 2. **OperationModeNode.cpp**
-   - Before: 7 String allocations per loop cycle
+    - Before: 7 String allocations per loop cycle
 
-     ```cpp
-     setProperty(cSolarMinTemp).send(String(_solarMinTemp));
-     setProperty(cPoolMaxTemp).send(String(_poolMaxTemp));
-     setProperty(cHysteresis).send(String(_hysteresis));
-     setProperty(cTimerStartHour).send(String(_timerSetting.timerStartHour));
-     // ... 3 more similar calls
-     ```
+      ```cpp
+      setProperty(cSolarMinTemp).send(String(_solarMinTemp));
+      setProperty(cPoolMaxTemp).send(String(_poolMaxTemp));
+      setProperty(cHysteresis).send(String(_hysteresis));
+      setProperty(cTimerStartHour).send(String(_timerSetting.timerStartHour));
+      // ... 3 more similar calls
+      ```
 
-   - After: Single reusable stack buffer
+    - After: Single reusable stack buffer
 
-     ```cpp
-     char buffer[16];
-     Utils::floatToString(_solarMinTemp, buffer, sizeof(buffer));
-     setProperty(cSolarMinTemp).send(buffer);
-     // ... reuse same buffer for other values
-     ```
+      ```cpp
+      char buffer[16];
+      Utils::floatToString(_solarMinTemp, buffer, sizeof(buffer));
+      setProperty(cSolarMinTemp).send(buffer);
+      // ... reuse same buffer for other values
+      ```
 
-   - **Impact**: Eliminates 7 String allocations per measurement cycle
+    - **Impact**: Eliminates 7 String allocations per measurement cycle
 
 3. **ESP32TemperatureNode.cpp**
-   - Before: `setProperty(cTemperature).send(String(temp, 2));`
-   - After: Uses stack buffer
-   - **Impact**: Eliminates 1 String allocation per ESP32 temperature
-     measurement
+    - Before: `setProperty(cTemperature).send(String(temp, 2));`
+    - After: Uses stack buffer
+    - **Impact**: Eliminates 1 String allocation per ESP32 temperature
+      measurement
 
 **Total Memory Savings**: 10+ String allocations eliminated per measurement
 cycle
@@ -242,16 +242,16 @@ void LoggerNode::logf(const String& function, const E_Loglevel level,
 ## Testing Recommendations
 
 1. **Long-term Stability Test**: Run for 60+ days to verify millis() overflow
-   handling
+    handling
 2. **Memory Monitoring**: Track free heap over 24-48 hours
 3. **MQTT Protocol Switching**: Test both Homie and Home Assistant modes
 4. **Temperature Extremes**: Test with disconnected sensors and rapid
-   temperature changes
+    temperature changes
 
 ## Future Optimization Opportunities
 
 1. **Watchdog Timer**: Consider implementing ESP watchdog for automatic
-   recovery
+    recovery
 2. **NTP Configuration**: Make NTP server configurable (currently hardcoded)
 3. **Persistent Settings**: Store runtime configuration changes to flash
 4. **Over-the-Air Updates**: Ensure OTA updates work reliably

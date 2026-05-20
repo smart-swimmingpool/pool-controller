@@ -6,16 +6,13 @@
  * State Manager for persisting controller state
  *
  * Handles saving and restoring controller state across reboots and power failures.
- * Uses ESP32 Preferences on ESP32 and EEPROM emulation on ESP8266.
+ * Uses ESP32 Preferences for persistent storage.
+ *
+ * ESP8266 support was removed in v3.2.0.
  */
 
 #include <Arduino.h>
-
-#ifdef ESP32
 #include <Preferences.h>
-#elif defined(ESP8266)
-#include <EEPROM.h>
-#endif
 
 namespace PoolController {
 
@@ -24,54 +21,34 @@ namespace PoolController {
  */
 class StateManager {
 public:
-  /**
-   * Initialize state manager
-   */
+  /** Initialize state manager */
   static void begin();
 
-  /**
-   * Save a string value
-   */
+  /** Save a string value */
   static bool saveString(const char *key, const String &value);
 
-  /**
-   * Load a string value
-   */
+  /** Load a string value */
   static String loadString(const char *key, const String &defaultValue);
 
-  /**
-   * Save a float value
-   */
+  /** Save a float value */
   static bool saveFloat(const char *key, float value);
 
-  /**
-   * Load a float value
-   */
+  /** Load a float value */
   static float loadFloat(const char *key, float defaultValue);
 
-  /**
-   * Save an int value
-   */
+  /** Save an int value */
   static bool saveInt(const char *key, int value);
 
-  /**
-   * Load an int value
-   */
+  /** Load an int value */
   static int loadInt(const char *key, int defaultValue);
 
-  /**
-   * Save a boolean value
-   */
+  /** Save a boolean value */
   static bool saveBool(const char *key, bool value);
 
-  /**
-   * Load a boolean value
-   */
+  /** Load a boolean value */
   static bool loadBool(const char *key, bool defaultValue);
 
-  /**
-   * Clear all stored values
-   */
+  /** Clear all stored values */
   static void clear();
 };
 

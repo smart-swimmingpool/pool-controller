@@ -21,11 +21,13 @@ menu:
     weight: 10
 ---
 
-**🏊 The Homie 3.0 compatible Smart Swimmingpool Controller 🎛️**
+## 🏊 The Homie 3.0 compatible Smart Swimmingpool Controller 🎛️
 
 <span style="text-shadow: none;">
+<!-- markdownlint-disable MD013 -->
 <a class="github-button" href="https://github.com/smart-swimmingpool/pool-controller/subscription" data-size="large" data-show-count="true" aria-label="Watch smart-swimmingpool/pool-controller on GitHub">Watch</a>
 <a class="github-button" href="https://github.com/smart-swimmingpool/pool-controller" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star this on GitHub">Star</a><script async defer src="https://buttons.github.io/buttons.js"></script>
+<!-- markdownlint-enable MD013 -->
 
 [GitHub Sources](https://github.com/smart-swimmingpool/pool-controller)
 </span>
@@ -53,9 +55,10 @@ Manage your swimming pool in a smart way to enjoy it comfortably and affordably 
 - [ ] Improved sketch to work completely without WiFi connection
 - [ ] Homie should run without WiFi connection
 - [ ] Enhance sketch using display and buttons to setup environment.
-- [ ] Use only one power supply for ESP8266 (5V) and relais (230V)
+- [ ] Use only one power supply for ESP32 (5V) and relays (230V)
 - see also the [issue list](https://github.com/smart-swimmingpool/pool-controller/issues)
 
 [![works with MQTT Homie](https://homieiot.github.io/img/works-with-homie.svg "works with MQTT Homie")](https://homieiot.github.io/)
 
+<!-- markdownlint-disable-next-line MD013 -->
 {{< figure library="true" src="pool-controller_breadboard.png" title="Breadboard Circuit of Pool Controller" lightbox="true" >}}

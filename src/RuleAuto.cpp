@@ -87,10 +87,13 @@ bool RuleAuto::checkPoolPumpTimer() {
 
   // Check if time sync is valid
   if (time.tm_year == -1) {
-    Homie.getLogger() << cIndent << F("⚠ Time sync invalid - timer disabled") << endl;
-    // Return false (pump off) when time is invalid for safety
-    // User should check MQTT for time sync error notifications
-    return false;
+    Homie.getLogger() << cIndent << F("⚠ Time sync RED - timer disabled") << endl;
+    Homie.getLogger() << cIndent << F("  Pool pump stays ON (temperature logic still active)") << endl;
+    // Return true (pump on) when time is degraded RED:
+    // - Pool hygiene requires circulation
+    // - Temperature-based solar control in loop() still works
+    // - User can switch to manual mode for explicit control
+    return true;
   }
 
   bool retval;

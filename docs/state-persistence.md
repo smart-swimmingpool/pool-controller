@@ -3,14 +3,14 @@
 ## Overview
 
 The Pool Controller now includes comprehensive state persistence and system
-health monitoring to ensure reliable 24/7 operation.
+health monitoring to ensure reliable 24/7 operation. ESP32-only since v3.2.0.
 
 ## State Persistence
 
 ### What Gets Persisted
 
-All controller states are automatically saved to non-volatile storage and
-restored after reboots or power failures:
+All controller states are automatically saved to non-volatile storage (NVS)
+and restored after reboots or power failures:
 
 #### Operation Settings
 
@@ -20,17 +20,19 @@ restored after reboots or power failures:
 - **Temperature hysteresis**: Temperature difference for control
 - **Timer settings**: Start and end times for timer mode
 
-#### Relay States (ESP32)
+#### Relay States
 
 - **Pool pump**: On/Off state
 - **Solar pump**: On/Off state
 
 ### How It Works
 
-**ESP32**: Uses the Preferences library for persistent storage in NVS
-(Non-Volatile Storage).
+Uses the Preferences library for persistent storage in NVS
+(Non-Volatile Storage). Each value is stored with a type-specific key.
 
-**ESP8266**: Currently basic support (to be enhanced in future updates).
+Relay states are persisted individually per relay via their own Preferences
+namespace named after the relay node-id (e.g., `pool-pump`, `solar-pump`),
+storing key `"switch"`.
 
 ### Automatic Restoration
 
@@ -72,11 +74,6 @@ memory exhaustion.
 
 #### Thresholds
 
-**ESP8266**:
-
-- **Low Memory Warning**: < 8 KB (8,192 bytes)
-- **Critical Memory**: < 4 KB (4,096 bytes) → Auto-reboot
-
 **ESP32**:
 
 - **Low Memory Warning**: < 16 KB (16,384 bytes)
@@ -99,11 +96,6 @@ Prevents system hangs and ensures recovery from software failures.
 - **Automatic panic**: Reboots if watchdog not fed
 - **Fed in main loop**: Every cycle
 
-#### ESP8266
-
-- **Software watchdog**: Built-in
-- **yield() called**: Regular feeding in main loop
-
 ### Health Status API
 
 The SystemMonitor provides methods to check system health:
@@ -121,7 +113,6 @@ bool healthy = SystemMonitor::isHealthy();
 // Get uptime in seconds
 uint32_t uptime = SystemMonitor::getUptimeSeconds();
 
-// ESP8266 only: Get heap fragmentation percentage
 uint8_t fragmentation = SystemMonitor::getHeapFragmentation();
 ```
 
@@ -138,10 +129,10 @@ To customize memory thresholds, modify `src/SystemMonitor.hpp`:
 
 ```cpp
 // Low memory threshold (warning only)
-static constexpr uint32_t LOW_MEMORY_THRESHOLD = 8192;  // ESP8266
+static constexpr uint32_t LOW_MEMORY_THRESHOLD = 8192;  // 8 KB
 
 // Critical memory threshold (auto-reboot)
-static constexpr uint32_t CRITICAL_MEMORY_THRESHOLD = 4096;  // ESP8266
+static constexpr uint32_t CRITICAL_MEMORY_THRESHOLD = 4096;  // 4 KB
 ```
 
 ### Disabling Auto-Reboot
@@ -155,7 +146,7 @@ Comment out the auto-reboot section in `src/SystemMonitor.hpp`:
 // Critical memory - reboot immediately
 if (freeHeap < criticalThreshold) {
     Serial.printf("CRITICAL: Free heap %d bytes < %d bytes. Rebooting...\n",
-                 freeHeap, criticalThreshold);
+                freeHeap, criticalThreshold);
     // Serial.flush();
     // delay(1000);
     // ESP.restart();  // Comment this to disable auto-reboot
@@ -226,17 +217,9 @@ Example messages:
 
 ### States Not Persisting
 
-**ESP32**:
-
 1. Check serial output for "State loaded from persistent storage"
 2. Verify NVS partition is available
 3. Check for Preferences errors in logs
-
-**ESP8266**:
-
-1. Currently limited support
-2. Will be enhanced in future updates
-3. Relay states not persisted on ESP8266
 
 ### Frequent Reboots
 
@@ -245,11 +228,11 @@ If the controller reboots frequently:
 1. **Check memory usage**: Review logs for low memory warnings
 2. **Identify memory leak**: Look for pattern in when reboots occur
 3. **Reduce memory usage**:
-   - Increase measurement intervals
-   - Reduce MQTT message frequency
-   - Disable features if possible
+    - Increase measurement intervals
+    - Reduce MQTT message frequency
+    - Disable features if possible
 4. **Lower threshold**: Temporarily lower critical threshold to prevent reboots
-   while debugging
+    while debugging
 
 ### Watchdog Timeouts
 
@@ -258,7 +241,7 @@ If watchdog triggers (ESP32):
 1. **Long-blocking operations**: Check for delays or long operations in code
 2. **Increase timeout**: Modify timeout in `SystemMonitor::begin()`
 3. **Feed more frequently**: Add `SystemMonitor::feedWatchdog()` in long
-   operations
+    operations
 
 ## Technical Details
 
@@ -271,11 +254,6 @@ If watchdog triggers (ESP32):
 - Integer values (4): 16 bytes
 - Total: ~40 bytes
 
-**ESP8266 EEPROM**:
-
-- Reserved: 512 bytes (for future expansion)
-- Currently minimal usage
-
 ### Performance Impact
 
 - **State save**: < 10ms (occurs only on changes)
@@ -287,17 +265,21 @@ If watchdog triggers (ESP32):
 
 ## Future Enhancements
 
-Planned improvements:
+Completed in v3.2.0:
 
-1. **ESP8266 full persistence**: Complete EEPROM implementation
-2. **Configurable thresholds**: MQTT-based threshold configuration
-3. **Memory stats**: Historical memory usage tracking
-4. **Remote reboot**: MQTT command to trigger reboot
-5. **Health dashboard**: Web UI for health monitoring
-6. **Smart recovery**: Different strategies based on failure type
+1. ✅ **Degradation Manager**: Central health state (NORMAL → CRITICAL)
+2. ✅ **MQTT Reconnect-Refresh**: Full state republish on reconnection
+3. ✅ **NTP Graceful Degradation**: Three-stage time degradation (GREEN/YELLOW/RED)
+
+Planned:
+
+1. 🔜 **Configurable thresholds**: MQTT-based threshold configuration
+2. 🔜 **Memory stats**: Historical memory usage tracking
+3. 🔜 **Remote reboot**: MQTT command to trigger reboot
+4. 🔜 **Health dashboard**: Web UI for health monitoring
 
 ---
 
-**Version**: 3.1.0+
+**Version**: 3.2.0
 **Status**: Production Ready
-**Platforms**: ESP32 (full support), ESP8266 (partial support)
+**Platform**: ESP32

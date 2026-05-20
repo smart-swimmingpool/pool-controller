@@ -20,6 +20,11 @@ on:
       - "main"
   pull_request:
 
+# Cancel in-progress runs for the same workflow+ref when new commits are pushed
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -68,10 +73,6 @@ jobs:
 
           # C/C++ specific settings
           CPP_FILE_EXTENSIONS: "cpp,hpp,h"
-
-          # Linter configurations
-          MARKDOWN_CONFIG_FILE: .markdown-lint.yml
-          YAML_CONFIG_FILE: .yaml-lint.yml
 
           # Don't treat warnings as errors
           WARNINGS_AS_ERRORS: false

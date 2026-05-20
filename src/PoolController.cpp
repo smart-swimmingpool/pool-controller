@@ -5,6 +5,7 @@
 #include <Arduino.h>
 #include <Homie.h>
 #include <SPI.h>
+#include <Preferences.h>
 #include "DallasTemperatureNode.hpp"
 #include "ESP32TemperatureNode.hpp"
 #include "RelayModuleNode.hpp"
@@ -19,8 +20,10 @@
 #include "TimeClientHelper.hpp"
 #include "StateManager.hpp"
 #include "SystemMonitor.hpp"
+#include "DegradationManager.hpp"
 #include "HomeAssistantMQTT.hpp"
 #include "MqttInterface.hpp"
+#include "Utils.hpp"
 
 #include "Config.hpp"
 
@@ -199,6 +202,15 @@ auto PoolControllerContext::initializeController() -> void {
   // Initialize NTP client with configured server
   timeClientSetup(this->ntpServerSetting_.get());
 
+  // P9: Propagate configurable time-loss thresholds to TimeClientHelper.
+  // The red-hours setter enforces red > green internally.
+  setTimeDegradationGreenHours(static_cast<uint8_t>(this->timeLossGreenHoursSetting_.get()));
+  setTimeDegradationRedHours(static_cast<uint8_t>(this->timeLossRedHoursSetting_.get()));
+  LN.logf(__PRETTY_FUNCTION__, LoggerNode::INFO,
+    "Degradation thresholds: GREEN=%d h, RED=%d h",
+    getTimeDegradationGreenHours(),
+    getTimeDegradationRedHours());
+
   // Set the timezone from configuration
   setTimezoneIndex(this->timezoneSetting_.get());
 
@@ -243,20 +255,70 @@ auto PoolControllerContext::initializeController() -> void {
 }
 
 /**
+ * Publish all current states to MQTT.
+ * Called at the end of setupHandler() to refresh all states on every
+ * (re-)connect, ensuring Home Assistant / Homie never shows stale data
+ * after a temporary MQTT outage.
+ */
+static void publishAllStates() {
+  // Operation mode + settings
+  String mode = operationModeNode.getMode();
+  MqttInterface::publishSelectState(operationModeNode, "mode", "mode", mode.c_str());
+
+  char buffer[20];
+
+  Utils::floatToString(operationModeNode.getPoolMaxTemperature(), buffer, sizeof(buffer));
+  MqttInterface::publishNumberState(operationModeNode, "pool-max-temp", "pool-max-temp", buffer);
+
+  Utils::floatToString(operationModeNode.getSolarMinTemperature(), buffer, sizeof(buffer));
+  MqttInterface::publishNumberState(operationModeNode, "solar-min-temp", "solar-min-temp", buffer);
+
+  Utils::floatToString(operationModeNode.getTemperatureHysteresis(), buffer, sizeof(buffer));
+  MqttInterface::publishNumberState(operationModeNode, "hysteresis", "hysteresis", buffer);
+
+  TimerSetting ts = operationModeNode.getTimerSetting();
+  Utils::intToString(ts.timerStartHour, buffer, sizeof(buffer));
+  MqttInterface::publishNumberState(operationModeNode, "timer-start-h", "timer-start-h", buffer);
+
+  Utils::intToString(ts.timerStartMinutes, buffer, sizeof(buffer));
+  MqttInterface::publishNumberState(operationModeNode, "timer-start-min", "timer-start-min", buffer);
+
+  Utils::intToString(ts.timerEndHour, buffer, sizeof(buffer));
+  MqttInterface::publishNumberState(operationModeNode, "timer-end-h", "timer-end-h", buffer);
+
+  Utils::intToString(ts.timerEndMinutes, buffer, sizeof(buffer));
+  MqttInterface::publishNumberState(operationModeNode, "timer-end-min", "timer-end-min", buffer);
+
+  int tzIndex = getTimezoneIndex();
+  Utils::intToString(tzIndex, buffer, sizeof(buffer));
+  MqttInterface::publishNumberState(operationModeNode, "timezone", "timezone", buffer);
+
+  String tzInfo = getTimeInfoFor(tzIndex);
+  MqttInterface::publishTextState(operationModeNode, "timezone-info", "timezone-info", tzInfo.c_str());
+
+  // Relay states — homie property MUST match the RelayModuleNode advertise()
+  // (cSwitch = "switch"), not the node-id.  In HomeAssistant mode the
+  // objectId is the node-id so discovery topics stay consistent.
+  MqttInterface::publishSwitchState(poolPumpNode, "switch", "pool-pump", poolPumpNode.getSwitch());
+  MqttInterface::publishSwitchState(solarPumpNode, "switch", "solar-pump", solarPumpNode.getSwitch());
+
+  // Temperature values
+  Utils::floatToString(poolTemperatureNode.getTemperature(), buffer, sizeof(buffer));
+  MqttInterface::publishSensorState(poolTemperatureNode, "temperature", "pool-temp", buffer);
+
+  Utils::floatToString(solarTemperatureNode.getTemperature(), buffer, sizeof(buffer));
+  MqttInterface::publishSensorState(solarTemperatureNode, "temperature", "solar-temp", buffer);
+
+  LN.log(__PRETTY_FUNCTION__, LoggerNode::INFO, "All states published to MQTT");
+}
+
+/**
  * Homie Setup handler.
  * Only called when wifi and mqtt are connected.
- * Non-network-dependent initialization is now in initializeController().
+ * StateManager, SystemMonitor, and loadState are initialized in setup()
+ * to ensure they run regardless of network connectivity.
  */
 auto PoolControllerContext::setupHandler() -> void {
-  // Initialize state management
-  StateManager::begin();
-
-  // Initialize system monitor and watchdog
-  SystemMonitor::begin();
-
-  // Load persisted state
-  operationModeNode.loadState();
-
   // Configure MQTT protocol based on setting
   const char *protocol = this->mqttProtocolSetting_.get();
   HomeAssistant::useHomeAssistant = (std::strcmp(protocol, "homeassistant") == 0);
@@ -337,13 +399,33 @@ auto PoolControllerContext::setupHandler() -> void {
     LN.log(__PRETTY_FUNCTION__, LoggerNode::INFO, "Using Homie MQTT Convention");
   }
 
+  // Refresh all states on (re-)connect so that Home Assistant / Homie never
+  // shows stale data after a temporary MQTT outage (P4).
+  publishAllStates();
+
   LN.log(__PRETTY_FUNCTION__, LoggerNode::INFO, "State persistence and system monitoring initialized");
 }
 
 auto PoolControllerContext::setup() -> void {
   Homie.setLoggingPrinter(&Serial);
 
-  Homie_setFirmware("pool-controller", "3.1.0");
+  // --- P8: Boot-loop detection (run before any potentially crash-prone init) ---
+  bootLoopDetected_ = SystemMonitor::detectBootLoop();
+  if (bootLoopDetected_) {
+    Serial.println("✖ SAFE MODE ACTIVE — all relays forced OFF");
+    DegradationManager::forceSafeMode();
+
+    // Clear stored relay states so they default to OFF after reboot
+    Preferences prefs;
+    prefs.begin("pool-pump", false);
+    prefs.clear();
+    prefs.end();
+    prefs.begin("solar-pump", false);
+    prefs.clear();
+    prefs.end();
+  }
+
+  Homie_setFirmware("pool-controller", "3.2.0");
   Homie_setBrand("smart-swimmingpool");
 
   // default interval of sending Temperature values
@@ -375,14 +457,60 @@ auto PoolControllerContext::setup() -> void {
     return std::strcmp(candidate, "homie") == 0 || std::strcmp(candidate, "homeassistant") == 0;
   });
 
+  // P9: Configurable time-loss thresholds
+  this->timeLossGreenHoursSetting_.setDefaultValue(1).setValidator([](const long candidate) -> bool {
+    return candidate >= 1 && candidate <= 6;
+  });
+  this->timeLossRedHoursSetting_.setDefaultValue(24).setValidator([this](const long candidate) -> bool {
+    return candidate >= 1 && candidate <= 72 && candidate > this->timeLossGreenHoursSetting_.get();
+  });
+
   Homie.setSetupFunction(&Detail::setupProxy);
+
+  // Initialize state management, system monitor, and degradation tracking
+  // regardless of WiFi/MQTT connectivity. These must run before Homie.setup()
+  // so nodes can access persisted state even when no MQTT connection is ever
+  // established (e.g. WiFi outage at boot).
+  StateManager::begin();
+  SystemMonitor::begin();
+  DegradationManager::begin();
+
+  // P4: Republish all states on every MQTT (re-)connect so Home Assistant
+  // never shows stale data after a temporary outage.
+  Homie.onEvent([](const HomieEvent &event) {
+    if (event.type == HomieEventType::MQTT_READY) {
+      publishAllStates();
+    }
+  });
 
   LN.log(__PRETTY_FUNCTION__, LoggerNode::DEBUG, "Before Homie setup())");
   Homie.setup();
 
+  // Suppress persistence during initialization so Homie compile-time defaults
+  // set below do NOT overwrite the user values already in NVS.  loadState()
+  // restores those user values into memory right after.
+  OperationModeNode::suppressPersist(true);
+
   // Initialize controller regardless of WiFi/MQTT connection status
   // This ensures offline operation works from startup
   initializeController();
+
+  // End the suppression window: user values are now in NVS and will be
+  // overwritten only on explicit user changes.
+  OperationModeNode::suppressPersist(false);
+
+  // Load persisted state — runs after initializeController so the rule-engine
+  // and MQTT infra are fully set up, and suppressPersist ensures the Homie
+  // defaults set by initializeController did not clobber the NVS state we are
+  // about to read.
+  operationModeNode.loadState();
+
+  // P1: Refresh MQTT state now that persisted values are in memory.
+  // publishAllStates() also runs during the Homie.setup() callback (setupProxy)
+  // and the MQTT_READY event, but both fire before loadState() completes, so
+  // clients may have received compile-time defaults.  This call ensures MQTT
+  // reflects the actual persisted state.
+  publishAllStates();
 
   LN.logf(__PRETTY_FUNCTION__, LoggerNode::DEBUG, "Free heap: %d", ESP.getFreeHeap());
   Homie.getLogger() << F("Free heap: ") << ESP.getFreeHeap() << endl;
@@ -392,6 +520,28 @@ auto PoolControllerContext::loop() -> void {
   // Feed watchdog and check memory
   SystemMonitor::feedWatchdog();
   SystemMonitor::checkMemory();
+
+  // Evaluate system health and trigger degradation transitions
+  DegradationManager::evaluate();
+
+  // P8: Clear boot-loop counter after 5 minutes of stable uptime.
+  // This tells detectBootLoop() on the next boot that this boot was healthy.
+  // Even during safe mode we clear it: if the device runs 5+ minutes without
+  // crashing, the next intentional restart should not be treated as a loop.
+  // The guard ensures we only write NVS once per boot (avoids flash wear).
+  static uint32_t lastBootClear = 0;
+  static bool bootCounterCleared = false;
+  if (!bootCounterCleared && (millis() - lastBootClear) >
+      static_cast<uint32_t>(SystemMonitor::BOOT_LOOP_CLEAR_AFTER_SEC) * 1000UL) {
+    bootCounterCleared = true;
+    SystemMonitor::clearBootLoopCounter();
+    if (bootLoopDetected_) {
+      Serial.println(F("→ Safe-mode: 5 min stable — boot-loop counter cleared"));
+      DegradationManager::unforceSafeMode();
+      bootLoopDetected_ = false;
+    }
+    lastBootClear = millis();
+  }
 
   Homie.loop();
 }

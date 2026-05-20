@@ -19,8 +19,10 @@
  *
  */
 #include "DallasTemperatureNode.hpp"
+#include "SystemMonitor.hpp"
 #include "Utils.hpp"
 #include "MqttInterface.hpp"
+#include "DegradationManager.hpp"
 
 DallasTemperatureNode::DallasTemperatureNode(const char *id, const char *name, const uint8_t pin, const int measurementInterval)
     : HomieNode(id, name, "temperature") {
@@ -79,6 +81,7 @@ void DallasTemperatureNode::onReadyToOperate() {
     Homie.getLogger() << F("  ⚠ Temperature readings will be invalid (NaN)") << endl;
     Homie.getLogger() << F("  ⚠ Auto mode may not function correctly") << endl;
     _sensorFound = false;
+    PoolController::DegradationManager::reportSensorStatus(getId(), false);
     if (Homie.isConnected()) {
       setProperty(cHomieNodeState).send(cHomieNodeState_Error);
     }
@@ -89,14 +92,29 @@ void DallasTemperatureNode::onReadyToOperate() {
  *
  */
 void DallasTemperatureNode::loop() {
-  if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval)) {
+  // P7: When temperature is NaN (sensor error), use a shorter recovery
+  // interval so the system detects reconnection faster.
+  unsigned long effectiveInterval = isnan(_temperature)
+    ? RECOVERY_INTERVAL
+    : _measurementInterval;
+
+  if (Utils::shouldMeasure(_lastMeasurement, effectiveInterval)) {
     _lastMeasurement = millis();
 
     if (numberOfDevices > 0) {
       Homie.getLogger() << F("〽 Sending Temperature: ") << getId() << endl;
+
+      // Feed watchdog before potentially blocking 1-Wire operations
+      // requestTemperatures() can block up to 750ms (DS18B20 at 12-bit)
+      // which could trigger a 30s ESP32 WDT if called in a tight loop
+      PoolController::SystemMonitor::feedWatchdog();
+
       // call sensors.requestTemperatures() to issue a global temperature
       // request to all devices on the bus
       sensor.requestTemperatures();  // Send the command to get temperature
+
+      // Feed watchdog after blocking call completes
+      PoolController::SystemMonitor::feedWatchdog();
       for (uint8_t i = 0; i < numberOfDevices; i++) {
         uint8_t cnt = 0;
 
@@ -107,12 +125,14 @@ void DallasTemperatureNode::loop() {
             Homie.getLogger() << cIndent << F("✖ Sensor disconnected - setting temp to NaN for safety") << endl;
             _temperature = NAN;  // Set to invalid value for safety
             _sensorFound = false;
+            PoolController::DegradationManager::reportSensorStatus(getId(), false);
             if (Homie.isConnected()) {
               setProperty(cHomieNodeState).send(cHomieNodeState_Error);
             }
           } else {
             _temperature = newTemp;  // Update only with valid reading
             _sensorFound = true;
+            PoolController::DegradationManager::reportSensorStatus(getId(), true);
             Homie.getLogger() << cIndent << F("Temperature=") << _temperature << endl;
 
             if (Homie.isConnected()) {
@@ -128,11 +148,20 @@ void DallasTemperatureNode::loop() {
       }
     } else {
       Homie.getLogger() << F("No Sensor found!") << endl;
+      PoolController::DegradationManager::reportSensorStatus(getId(), false);
       if (Homie.isConnected()) {
         setProperty(cHomieNodeState).send(cHomieNodeState_Error);
       }
-      // retry to get
+      // Retry: getDeviceCount() returns a cached count from begin().
+      // Call begin() to rescans the bus and detect newly connected probes
+      // (e.g. plugged in after boot).
+      sensor.begin();
       numberOfDevices = sensor.getDeviceCount();
+      if (numberOfDevices > 0) {
+        Homie.getLogger() << cIndent << numberOfDevices
+                          << F(" device(s) found after bus rescan") << endl;
+        _sensorFound = true;
+      }
     }
   }
 }

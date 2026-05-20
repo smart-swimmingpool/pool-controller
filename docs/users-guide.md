@@ -21,9 +21,9 @@ menu:
 
 When booting the controller, it will provide feedback on establishing the WiFi connection and connection to the MQTT broker:
 
-* "LED" ![Slowly blinking LED](led_wifi.gif)
+- "LED" ![Slowly blinking LED](led_wifi.gif)
     Slowly when connecting to the Wi-Fi
-* "LED" ![Fast blinking LED](led_mqtt.gif)
+- "LED" ![Fast blinking LED](led_mqtt.gif)
     Faster when connecting to the MQTT broker
 
 ## Settings
@@ -40,7 +40,8 @@ There are some specific settings for the controller:
   - Unit: `°C`
   - Default value: `50`
 
-- **Hysteresis:** Hysteresis in Kelvin, which is used to verify if heating should be enabled or disabled to prevent fast toggling.
+- **Hysteresis:** Hysteresis in Kelvin, which is used to verify if heating
+  should be enabled or disabled to prevent fast toggling.
 
   - Unit: `K`
   - Default value: `1`
@@ -69,7 +70,9 @@ There are some specific settings for the controller:
     - `9` - China Time (Beijing) - No DST
   - Default value: `0` (Central European Time)
   - This setting can be configured during initial setup or changed at runtime via MQTT
-  - **Note:** Runtime changes via MQTT (operation-mode/timezone) are temporary. To persist the timezone setting across reboots, update the `timezone` configuration in the Homie settings.
+  - **Note:** Runtime changes via MQTT (operation-mode/timezone) are temporary.
+    To persist the timezone setting across reboots, update the `timezone`
+    configuration in the Homie settings.
 
 ## Rules
 
@@ -85,7 +88,9 @@ This rule enables the cleaning pump based on timer settings. Solar heating is di
 
 ### Rule: Auto
 
-This rule enables the cleaning pump based on timer settings. Solar heating is enabled **smartly** if the cleaning pump is enabled by timer and the heat storage tank has sufficient temperature.
+This rule enables the cleaning pump based on timer settings. Solar heating is
+enabled **smartly** if the cleaning pump is enabled by timer and the heat
+storage tank has sufficient temperature.
 
 If the maximum temperature of the pool water is reached, the solar heating is disabled.
 
@@ -95,10 +100,13 @@ Heating of pool water with all power.
 
 ## MQTT Interface
 
-The **Smart Swimmingpool Controller** uses [MQTT](http://mqtt.org/) to communicate with your smart home. For the transmission of data the IoT standard [Homie 3.0](https://homieiot.github.io) is used.
+The **Smart Swimmingpool Controller** uses [MQTT](http://mqtt.org/) to
+communicate with your smart home. For the transmission of data the IoT standard
+[Homie 3.0](https://homieiot.github.io) is used.
 
-Using Homie 3.0 it is possible to integrate **Smart Pool Controller** directly in open source smarthome server [openHAB](https://www.openhab.org/) or [Home Assistant](https://www.home-assistant.io/).
-
+Using Homie 3.0 it is possible to integrate **Smart Pool Controller** directly
+in open source smarthome server [openHAB](https://www.openhab.org/) or
+[Home Assistant](https://www.home-assistant.io/).
 
 ## OpenHAB Integration
 
