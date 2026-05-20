@@ -116,14 +116,14 @@ if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval))
 #### Unterstützte Protokolle
 
 1. **Homie Convention** (Standard)
-   - Topic-Format: `homie/<device>/<node>/<property>`
-   - Kompatibel mit: openHAB, Home Assistant (via Homie Integration)
-   - Bewährt und stabil
+    - Topic-Format: `homie/<device>/<node>/<property>`
+    - Kompatibel mit: openHAB, Home Assistant (via Homie Integration)
+    - Bewährt und stabil
 
 2. **Home Assistant MQTT Discovery** (NEU)
-   - Topic-Format: `homeassistant/<component>/<device>/<object>/config`
-   - Native Home Assistant Auto-Discovery
-   - Optimiert für Home Assistant
+    - Topic-Format: `homeassistant/<component>/<device>/<object>/config`
+    - Native Home Assistant Auto-Discovery
+    - Optimiert für Home Assistant
 
 #### Implementierung
 
@@ -322,7 +322,7 @@ git checkout v3.0.0
 
 ### Kurzfristig
 
-1. Build-Tests auf ESP32 und ESP8266
+1. Build-Tests auf ESP32
 2. Speicher-Tests über 24-48h
 3. MQTT-Funktionstest (beide Protokolle)
 

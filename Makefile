@@ -12,7 +12,7 @@ help:
 	@echo "  make lint          - Run Super-Linter to check code quality"
 	@echo "  make lint-fix      - Auto-fix linting issues (clang-format, prettier)"
 	@echo "  make format        - Format C++ and markdown files"
-	@echo "  make build         - Build project for all platforms"
+	@echo "  make build         - Build project (ESP32)"
 	@echo "  make clean         - Clean build artifacts"
 	@echo ""
 	@echo "Before committing, always run: make lint-fix && make lint"
@@ -35,8 +35,8 @@ lint:
 		-e VALIDATE_GITLEAKS=true \
 		-e VALIDATE_BASH=true \
 		-e CPP_FILE_EXTENSIONS=cpp,hpp,h \
-		-e MARKDOWN_CONFIG_FILE=.markdown-lint.yml \
-		-e YAML_CONFIG_FILE=.yaml-lint.yml \
+		-e MARKDOWN_CONFIG_FILE=.github/linters/.markdown-lint.yml \
+		-e YAML_CONFIG_FILE=.github/linters/.yaml-lint.yml \
 		-e WARNINGS_AS_ERRORS=false \
 		-e LOG_LEVEL=NOTICE \
 		-v $(PWD):/tmp/lint \
@@ -71,15 +71,12 @@ lint-fix:
 # Format C++ and Markdown files (alias for lint-fix)
 format: lint-fix
 
-# Build for ESP32 and ESP8266
+# Build for ESP32
 build:
 	@echo "Building for ESP32..."
 	@pio run -e esp32dev
 	@echo ""
-	@echo "Building for ESP8266..."
-	@pio run -e nodemcuv2
-	@echo ""
-	@echo "✓ Build complete for all platforms!"
+	@echo "✓ Build complete!"
 
 # Clean build artifacts
 clean:

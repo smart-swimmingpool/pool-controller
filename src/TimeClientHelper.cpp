@@ -68,6 +68,10 @@ static time_t _lastValidTime = 0;          // Last known good time from NTP
 static uint32_t _lastValidTimeMillis = 0;  // millis() when last valid time was captured
 static bool _timeSyncValid = false;        // Whether time sync is currently valid
 
+// Configurable thresholds (P9)
+static uint8_t _greenMaxHours = 1;   // GREEN→YELLOW after this many hours
+static uint8_t _redAfterHours = 24;  // YELLOW→RED after this many hours
+
 void timeClientSetup(const char *ntpServer) {
   // Create NTP client with configured server
   if (timeClient != nullptr) {
@@ -110,7 +114,8 @@ time_t getUtcTime() {
     time_t estimatedTime = _lastValidTime + (elapsed / 1000);
 
     // Mark sync as invalid if we've been running on cached time too long
-    if (elapsed > 86400000) {  // More than 24 hours (86,400,000 ms)
+    uint32_t redMs = static_cast<uint32_t>(_redAfterHours) * 3600000UL;
+    if (elapsed > redMs) {
       _timeSyncValid = false;
     }
 
@@ -126,8 +131,50 @@ bool isTimeSyncValid() {
   return _timeSyncValid;
 }
 
+TimeDegradation getTimeDegradation() {
+  if (_timeSyncValid && _lastValidTime > 0) {
+    // Sync was valid within the last RED_AFTER_HOURS — check how recent
+    uint32_t elapsed = millis() - _lastValidTimeMillis;
+    uint32_t greenMs = static_cast<uint32_t>(_greenMaxHours) * 3600000UL;
+    // Unsigned arithmetic handles millis() wraparound (~49 days)
+    if (elapsed < greenMs) {  // < greenMaxHours
+      return TimeDegradation::GREEN;
+    } else if (elapsed < static_cast<uint32_t>(_redAfterHours) * 3600000UL) {
+      return TimeDegradation::YELLOW;  // between green and red thresholds
+    }
+    // Falls through to RED below
+  }
+  // > redAfterHours since last sync, or never synced
+  return TimeDegradation::RED;
+}
+
 time_t getLastValidSyncTime() {
   return _lastValidTime;
+}
+
+bool forceNtpUpdate() {
+  // getUtcTime() calls timeClient->update() internally, which sends an NTP
+  // request and returns the validated epoch time on success.
+  time_t t = getUtcTime();
+  return (t >= MIN_VALID_TIME);
+}
+
+void setTimeDegradationGreenHours(uint8_t hours) {
+  _greenMaxHours = (hours > 0) ? hours : 1;
+}
+
+uint8_t getTimeDegradationGreenHours() {
+  return _greenMaxHours;
+}
+
+void setTimeDegradationRedHours(uint8_t hours) {
+  // Red must be strictly greater than green, otherwise there is no YELLOW range.
+  uint8_t minRed = _greenMaxHours + 1;
+  _redAfterHours = (hours >= minRed && hours <= 72) ? hours : (minRed < 72 ? minRed : 72);
+}
+
+uint8_t getTimeDegradationRedHours() {
+  return _redAfterHours;
 }
 
 time_t getTimeFor(int index, TimeChangeRule **tcr) {

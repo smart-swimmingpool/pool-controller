@@ -37,31 +37,35 @@ public:
 
   void setPoolMaxTemperature(float temp) {
     _poolMaxTemp = temp;
-    saveState();
+    if (!_suppressPersist) saveState();
   }
   float getPoolMaxTemperature() { return _poolMaxTemp; }
 
   void setSolarMinTemperature(float temp) {
     _solarMinTemp = temp;
-    saveState();
+    if (!_suppressPersist) saveState();
   }
   float getSolarMinTemperature() { return _solarMinTemp; }
 
   void setTemperatureHysteresis(float temp) {
     _hysteresis = temp;
-    saveState();
+    if (!_suppressPersist) saveState();
   }
   float getTemperatureHysteresis() { return _hysteresis; }
 
   void setTimerSetting(TimerSetting setting) {
     _timerSetting = setting;
-    saveState();
+    if (!_suppressPersist) saveState();
   }
   TimerSetting getTimerSetting() { return _timerSetting; }
 
   void loadState();
   void saveState();
   bool handleHomeAssistantCommand(const char *property, const char *value);
+
+  /** While suppressPersist() is true, setters skip saveState() — used
+   *  during boot to prevent Homie defaults from overwriting user NVS. */
+  static void suppressPersist(bool suppress) { _suppressPersist = suppress; }
 
   enum MODE { AUTO, MANU, BOOST };
   const char *STATUS_AUTO = "auto";
@@ -75,6 +79,10 @@ protected:
   bool handleInput(const HomieRange &range, const String &property, const String &value) override;
 
 private:
+  // When true, setters skip saveState() — used during boot so the persisted
+  // user values loaded by loadState() aren't overwritten by Homie defaults.
+  static bool _suppressPersist;
+
   // suggested rate is 1/60Hz (1m)
   static const int MIN_INTERVAL = 60;  // in seconds
   static const int MEASUREMENT_INTERVAL = 300;

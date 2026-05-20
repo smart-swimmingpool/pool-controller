@@ -1,6 +1,9 @@
 # AGENTS.md
 
-Zweck: Regeln und Standards für einen Coding-Agent, der PlatformIO-basierten IoT-Firmware für ESP8266/ESP32 entwickelt, refaktoriert, analysiert und stabilisiert. Fokus: Architektur, Linting, Speicher- und Ressourcenmanagement, Sicherheit, 24/7-Betrieb, Wartbarkeit, Tests, Releases und OTA.
+Zweck: Regeln und Standards für einen Coding-Agent, der PlatformIO-basierten
+IoT-Firmware für ESP32 entwickelt, refaktoriert, analysiert und stabilisiert.
+Fokus: Architektur, Linting, Speicher- und Ressourcenmanagement, Sicherheit,
+24/7-Betrieb, Wartbarkeit, Tests, Releases und OTA.
 
 ## 1. Arbeitsweise
 
@@ -13,7 +16,7 @@ Der Agent:
 
 ## 2. Zielplattformen & Framework
 
-- Plattform: ESP8266, ESP32 (inkl. Varianten wie S3, C3); Frameworks: Arduino oder ESP-IDF.
+- Plattform: ESP32 (inkl. Varianten wie S3, C3); Frameworks: Arduino oder ESP-IDF.
 - PlatformIO: Single-Source für Build-Konfiguration (`platformio.ini`), Projekt-Environments, Lib-Pins.
 
 ## 3. Projektstruktur und Architektur
@@ -53,7 +56,8 @@ Architekturregeln:
 
 ## 6. Commit-Konventionen (Conventional Commits)
 
-Commit Messages müssen dem Conventional Commits-Standard folgen: `<type>[optional scope]: <description>`
+Commit Messages müssen dem Conventional Commits-Standard folgen:
+`<type>[optional scope]: <description>`
 Commit Types umfassen mindestens:
 
 - `feat` für neue Funktionen
@@ -65,7 +69,8 @@ Commit Types umfassen mindestens:
 - `test` für Test-Änderungen
 - `chore` für Wartung/Tooling/Build-Änderungen
 
-Commit Message Body kann Motivation und Kontext enthalten. Breaking Changes müssen mit `BREAKING CHANGE:` im Footer markiert werden.
+Commit Message Body kann Motivation und Kontext enthalten. Breaking Changes
+müssen mit `BREAKING CHANGE:` im Footer markiert werden.
 Commit Messages müssen dem Format entsprechen, damit automatische Changelog-Generierung, Versionierung und CI-Checks funktionieren.:contentReference[oaicite:1]{index=1}
 
 ## 7. Build-Konfiguration
@@ -87,11 +92,6 @@ Commit Messages müssen dem Format entsprechen, damit automatische Changelog-Gen
 - Memory-Pools statt häufige Allokationen.
 
 ## 9. RTOS & Nebenläufigkeit
-
-ESP8266:
-
-- Single-Core, kooperatives Scheduling.
-- Nicht blockierende Calls, Loop kurz halten.
 
 ESP32:
 

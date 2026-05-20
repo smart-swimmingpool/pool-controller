@@ -5,15 +5,7 @@
 #include <Arduino.h>
 #include <Homie.h>
 #include <SPI.h>
-#include <atomic>
-#include <cstring>
-#ifdef ESP32
-#include <WiFi.h>
-#include <HTTPUpdate.h>
-#else
-#include <ESP8266WiFi.h>
-#include <ESP8266httpUpdate.h>
-#endif
+#include <Preferences.h>
 #include "DallasTemperatureNode.hpp"
 #include "ESP32TemperatureNode.hpp"
 #include "RelayModuleNode.hpp"
@@ -28,8 +20,10 @@
 #include "TimeClientHelper.hpp"
 #include "StateManager.hpp"
 #include "SystemMonitor.hpp"
+#include "DegradationManager.hpp"
 #include "HomeAssistantMQTT.hpp"
 #include "MqttInterface.hpp"
+#include "Utils.hpp"
 
 #include "Config.hpp"
 
@@ -47,136 +41,6 @@ static OperationModeNode operationModeNode("operation-mode", "Operation Mode");
 
 static uint32_t _measurementInterval = 10;
 static uint32_t _lastMeasurement;
-// HA command payloads are short ("ON"/"OFF", mode names, numeric values, "PRESS");
-// 128 bytes provide ample headroom while keeping stack usage bounded.
-static constexpr size_t kMqttPayloadBufferSize = 128;
-static std::atomic<bool> otaUpdateRequested{false};
-#ifdef ESP32
-static std::atomic<bool> otaTaskRunning{false};
-// OTA HTTP update uses network stack + updater internals; 8192 bytes avoids stack overflow in update task.
-static constexpr uint32_t kOtaTaskStackSize = 8192;
-// Low priority keeps control logic responsive while OTA runs in background.
-static constexpr UBaseType_t kOtaTaskPriority = 1;
-static char otaTaskUrl[256] = {};
-#endif
-
-static bool isHttpUrl(const char *value) {
-  if (value == nullptr) {
-    return false;
-  }
-  if (strncmp(value, "http://", 7) == 0) {
-    return value[7] != '\0';
-  }
-  if (strncmp(value, "https://", 8) == 0) {
-    return value[8] != '\0';
-  }
-  return false;
-}
-
-static void publishOtaStatus(const char *status) {
-  if (!HomeAssistant::useHomeAssistant || !Homie.isConnected() || status == nullptr) {
-    return;
-  }
-  HomeAssistant::DiscoveryPublisher::publishSensorState(PoolController::MqttInterface::kDeviceId, "ota-status", status);
-}
-
-static bool triggerOtaUpdate(const char *url) {
-  if (!isHttpUrl(url)) {
-    LN.log(__PRETTY_FUNCTION__, LoggerNode::ERROR, "OTA URL missing or invalid (expected http/https)");
-    publishOtaStatus("url-invalid");
-    return false;
-  }
-
-  if (WiFi.status() != WL_CONNECTED) {
-    LN.log(__PRETTY_FUNCTION__, LoggerNode::ERROR, "WiFi not connected, OTA aborted");
-    publishOtaStatus("wifi-disconnected");
-    return false;
-  }
-
-  LN.logf(__PRETTY_FUNCTION__, LoggerNode::INFO, "Starting OTA update from URL: %s", url);
-  publishOtaStatus("updating");
-
-#ifdef ESP32
-  WiFiClient otaClient;
-  t_httpUpdate_return result = httpUpdate.update(otaClient, url);
-  if (result == HTTP_UPDATE_FAILED) {
-    LN.logf(__PRETTY_FUNCTION__, LoggerNode::ERROR, "OTA failed: %d %s", httpUpdate.getLastError(),
-      httpUpdate.getLastErrorString().c_str());
-    publishOtaStatus("failed");
-    return false;
-  }
-#else
-  WiFiClient otaClient;
-  t_httpUpdate_return result = ESPhttpUpdate.update(otaClient, url);
-  if (result == HTTP_UPDATE_FAILED) {
-    LN.logf(__PRETTY_FUNCTION__, LoggerNode::ERROR, "OTA failed: %d %s", ESPhttpUpdate.getLastError(),
-      ESPhttpUpdate.getLastErrorString().c_str());
-    publishOtaStatus("failed");
-    return false;
-  }
-#endif
-
-  if (result == HTTP_UPDATE_NO_UPDATES) {
-    LN.log(__PRETTY_FUNCTION__, LoggerNode::INFO, "OTA: no updates available");
-    publishOtaStatus("no-update");
-    return false;
-  }
-
-  LN.log(__PRETTY_FUNCTION__, LoggerNode::INFO, "OTA update completed");
-  publishOtaStatus("success");
-  return true;
-}
-
-#ifdef ESP32
-static void otaUpdateTask(void *parameter) {
-  const char *url = static_cast<const char *>(parameter);
-  triggerOtaUpdate(url);
-  otaTaskRunning.store(false);
-  vTaskDelete(nullptr);
-}
-#endif
-
-static void processPendingOtaUpdate(const char *configuredOtaUrl) {
-  if (!otaUpdateRequested.exchange(false)) {
-    return;
-  }
-
-#ifdef ESP32
-  bool expected = false;
-  if (!otaTaskRunning.compare_exchange_strong(expected, true)) {
-    LN.log(__PRETTY_FUNCTION__, LoggerNode::WARNING, "OTA already running");
-    publishOtaStatus("busy");
-    return;
-  }
-
-  if (!isHttpUrl(configuredOtaUrl)) {
-    LN.log(__PRETTY_FUNCTION__, LoggerNode::ERROR, "Configured ota-url is missing or invalid");
-    publishOtaStatus("url-invalid");
-    otaTaskRunning.store(false);
-    return;
-  }
-
-  const size_t urlLen = strlen(configuredOtaUrl);
-  if (urlLen >= sizeof(otaTaskUrl)) {
-    LN.log(__PRETTY_FUNCTION__, LoggerNode::ERROR, "Configured ota-url too long");
-    publishOtaStatus("url-invalid");
-    otaTaskRunning.store(false);
-    return;
-  }
-
-  strncpy(otaTaskUrl, configuredOtaUrl, sizeof(otaTaskUrl) - 1);
-  otaTaskUrl[sizeof(otaTaskUrl) - 1] = '\0';
-
-  if (xTaskCreate(otaUpdateTask, "ota-update", kOtaTaskStackSize, otaTaskUrl, kOtaTaskPriority, nullptr) != pdPASS) {
-    LN.log(__PRETTY_FUNCTION__, LoggerNode::ERROR, "Failed to create OTA task");
-    publishOtaStatus("failed");
-    otaTaskRunning.store(false);
-    return;
-  }
-#else
-  triggerOtaUpdate(configuredOtaUrl);
-#endif
-}
 
 static bool extractHomeAssistantObjectId(const char *topic, const char *component, char *objectId, size_t objectIdSize) {
   char prefix[128];
@@ -210,7 +74,7 @@ static void onMqttMessage(
   if (!HomeAssistant::useHomeAssistant)
     return;
 
-  char payloadStr[kMqttPayloadBufferSize];
+  char payloadStr[32];
   size_t payloadLen = (len < sizeof(payloadStr) - 1) ? len : sizeof(payloadStr) - 1;
   memcpy(payloadStr, payload, payloadLen);
   payloadStr[payloadLen] = '\0';
@@ -278,14 +142,6 @@ static void onMqttMessage(
       return;
     }
   }
-
-  if (extractHomeAssistantObjectId(topic, "button", objectId, sizeof(objectId))) {
-    if (strcmp(objectId, "ota-update") == 0) {
-      otaUpdateRequested.store(true);
-      publishOtaStatus("requested");
-      return;
-    }
-  }
 }
 
 static PoolControllerContext *Self;
@@ -346,6 +202,15 @@ auto PoolControllerContext::initializeController() -> void {
   // Initialize NTP client with configured server
   timeClientSetup(this->ntpServerSetting_.get());
 
+  // P9: Propagate configurable time-loss thresholds to TimeClientHelper.
+  // The red-hours setter enforces red > green internally.
+  setTimeDegradationGreenHours(static_cast<uint8_t>(this->timeLossGreenHoursSetting_.get()));
+  setTimeDegradationRedHours(static_cast<uint8_t>(this->timeLossRedHoursSetting_.get()));
+  LN.logf(__PRETTY_FUNCTION__, LoggerNode::INFO,
+    "Degradation thresholds: GREEN=%d h, RED=%d h",
+    getTimeDegradationGreenHours(),
+    getTimeDegradationRedHours());
+
   // Set the timezone from configuration
   setTimezoneIndex(this->timezoneSetting_.get());
 
@@ -390,20 +255,70 @@ auto PoolControllerContext::initializeController() -> void {
 }
 
 /**
+ * Publish all current states to MQTT.
+ * Called at the end of setupHandler() to refresh all states on every
+ * (re-)connect, ensuring Home Assistant / Homie never shows stale data
+ * after a temporary MQTT outage.
+ */
+static void publishAllStates() {
+  // Operation mode + settings
+  String mode = operationModeNode.getMode();
+  MqttInterface::publishSelectState(operationModeNode, "mode", "mode", mode.c_str());
+
+  char buffer[20];
+
+  Utils::floatToString(operationModeNode.getPoolMaxTemperature(), buffer, sizeof(buffer));
+  MqttInterface::publishNumberState(operationModeNode, "pool-max-temp", "pool-max-temp", buffer);
+
+  Utils::floatToString(operationModeNode.getSolarMinTemperature(), buffer, sizeof(buffer));
+  MqttInterface::publishNumberState(operationModeNode, "solar-min-temp", "solar-min-temp", buffer);
+
+  Utils::floatToString(operationModeNode.getTemperatureHysteresis(), buffer, sizeof(buffer));
+  MqttInterface::publishNumberState(operationModeNode, "hysteresis", "hysteresis", buffer);
+
+  TimerSetting ts = operationModeNode.getTimerSetting();
+  Utils::intToString(ts.timerStartHour, buffer, sizeof(buffer));
+  MqttInterface::publishNumberState(operationModeNode, "timer-start-h", "timer-start-h", buffer);
+
+  Utils::intToString(ts.timerStartMinutes, buffer, sizeof(buffer));
+  MqttInterface::publishNumberState(operationModeNode, "timer-start-min", "timer-start-min", buffer);
+
+  Utils::intToString(ts.timerEndHour, buffer, sizeof(buffer));
+  MqttInterface::publishNumberState(operationModeNode, "timer-end-h", "timer-end-h", buffer);
+
+  Utils::intToString(ts.timerEndMinutes, buffer, sizeof(buffer));
+  MqttInterface::publishNumberState(operationModeNode, "timer-end-min", "timer-end-min", buffer);
+
+  int tzIndex = getTimezoneIndex();
+  Utils::intToString(tzIndex, buffer, sizeof(buffer));
+  MqttInterface::publishNumberState(operationModeNode, "timezone", "timezone", buffer);
+
+  String tzInfo = getTimeInfoFor(tzIndex);
+  MqttInterface::publishTextState(operationModeNode, "timezone-info", "timezone-info", tzInfo.c_str());
+
+  // Relay states — homie property MUST match the RelayModuleNode advertise()
+  // (cSwitch = "switch"), not the node-id.  In HomeAssistant mode the
+  // objectId is the node-id so discovery topics stay consistent.
+  MqttInterface::publishSwitchState(poolPumpNode, "switch", "pool-pump", poolPumpNode.getSwitch());
+  MqttInterface::publishSwitchState(solarPumpNode, "switch", "solar-pump", solarPumpNode.getSwitch());
+
+  // Temperature values
+  Utils::floatToString(poolTemperatureNode.getTemperature(), buffer, sizeof(buffer));
+  MqttInterface::publishSensorState(poolTemperatureNode, "temperature", "pool-temp", buffer);
+
+  Utils::floatToString(solarTemperatureNode.getTemperature(), buffer, sizeof(buffer));
+  MqttInterface::publishSensorState(solarTemperatureNode, "temperature", "solar-temp", buffer);
+
+  LN.log(__PRETTY_FUNCTION__, LoggerNode::INFO, "All states published to MQTT");
+}
+
+/**
  * Homie Setup handler.
  * Only called when wifi and mqtt are connected.
- * Non-network-dependent initialization is now in initializeController().
+ * StateManager, SystemMonitor, and loadState are initialized in setup()
+ * to ensure they run regardless of network connectivity.
  */
 auto PoolControllerContext::setupHandler() -> void {
-  // Initialize state management
-  StateManager::begin();
-
-  // Initialize system monitor and watchdog
-  SystemMonitor::begin();
-
-  // Load persisted state
-  operationModeNode.loadState();
-
   // Configure MQTT protocol based on setting
   const char *protocol = this->mqttProtocolSetting_.get();
   HomeAssistant::useHomeAssistant = (std::strcmp(protocol, "homeassistant") == 0);
@@ -479,16 +394,14 @@ auto PoolControllerContext::setupHandler() -> void {
     PoolController::MqttInterface::publishSwitchDiscovery("log-serial", "Log to serial interface", "mdi:serial-port");
     PoolController::MqttInterface::subscribeSwitch("log-serial");
 
-    PoolController::MqttInterface::publishButtonDiscovery("ota-update", "OTA Update", "mdi:update");
-    PoolController::MqttInterface::subscribeButton("ota-update");
-
-    PoolController::MqttInterface::publishSensorDiscovery("ota-status", "OTA Status", nullptr, nullptr, "mdi:update");
-    publishOtaStatus("idle");
-
     LN.log(__PRETTY_FUNCTION__, LoggerNode::INFO, "Home Assistant discovery messages published");
   } else {
     LN.log(__PRETTY_FUNCTION__, LoggerNode::INFO, "Using Homie MQTT Convention");
   }
+
+  // Refresh all states on (re-)connect so that Home Assistant / Homie never
+  // shows stale data after a temporary MQTT outage (P4).
+  publishAllStates();
 
   LN.log(__PRETTY_FUNCTION__, LoggerNode::INFO, "State persistence and system monitoring initialized");
 }
@@ -496,7 +409,23 @@ auto PoolControllerContext::setupHandler() -> void {
 auto PoolControllerContext::setup() -> void {
   Homie.setLoggingPrinter(&Serial);
 
-  Homie_setFirmware("pool-controller", "3.1.0");
+  // --- P8: Boot-loop detection (run before any potentially crash-prone init) ---
+  bootLoopDetected_ = SystemMonitor::detectBootLoop();
+  if (bootLoopDetected_) {
+    Serial.println("✖ SAFE MODE ACTIVE — all relays forced OFF");
+    DegradationManager::forceSafeMode();
+
+    // Clear stored relay states so they default to OFF after reboot
+    Preferences prefs;
+    prefs.begin("pool-pump", false);
+    prefs.clear();
+    prefs.end();
+    prefs.begin("solar-pump", false);
+    prefs.clear();
+    prefs.end();
+  }
+
+  Homie_setFirmware("pool-controller", "3.2.0");
   Homie_setBrand("smart-swimmingpool");
 
   // default interval of sending Temperature values
@@ -528,28 +457,91 @@ auto PoolControllerContext::setup() -> void {
     return std::strcmp(candidate, "homie") == 0 || std::strcmp(candidate, "homeassistant") == 0;
   });
 
-  this->otaUrlSetting_.setDefaultValue("").setValidator(
-    [](const char *const candidate) -> bool { return candidate != nullptr && (candidate[0] == '\0' || isHttpUrl(candidate)); });
+  // P9: Configurable time-loss thresholds
+  this->timeLossGreenHoursSetting_.setDefaultValue(1).setValidator([](const long candidate) -> bool {
+    return candidate >= 1 && candidate <= 6;
+  });
+  this->timeLossRedHoursSetting_.setDefaultValue(24).setValidator([this](const long candidate) -> bool {
+    return candidate >= 1 && candidate <= 72 && candidate > this->timeLossGreenHoursSetting_.get();
+  });
 
   Homie.setSetupFunction(&Detail::setupProxy);
+
+  // Initialize state management, system monitor, and degradation tracking
+  // regardless of WiFi/MQTT connectivity. These must run before Homie.setup()
+  // so nodes can access persisted state even when no MQTT connection is ever
+  // established (e.g. WiFi outage at boot).
+  StateManager::begin();
+  SystemMonitor::begin();
+  DegradationManager::begin();
+
+  // P4: Republish all states on every MQTT (re-)connect so Home Assistant
+  // never shows stale data after a temporary outage.
+  Homie.onEvent([](const HomieEvent &event) {
+    if (event.type == HomieEventType::MQTT_READY) {
+      publishAllStates();
+    }
+  });
 
   LN.log(__PRETTY_FUNCTION__, LoggerNode::DEBUG, "Before Homie setup())");
   Homie.setup();
 
+  // Suppress persistence during initialization so Homie compile-time defaults
+  // set below do NOT overwrite the user values already in NVS.  loadState()
+  // restores those user values into memory right after.
+  OperationModeNode::suppressPersist(true);
+
   // Initialize controller regardless of WiFi/MQTT connection status
   // This ensures offline operation works from startup
   initializeController();
+
+  // End the suppression window: user values are now in NVS and will be
+  // overwritten only on explicit user changes.
+  OperationModeNode::suppressPersist(false);
+
+  // Load persisted state — runs after initializeController so the rule-engine
+  // and MQTT infra are fully set up, and suppressPersist ensures the Homie
+  // defaults set by initializeController did not clobber the NVS state we are
+  // about to read.
+  operationModeNode.loadState();
+
+  // P1: Refresh MQTT state now that persisted values are in memory.
+  // publishAllStates() also runs during the Homie.setup() callback (setupProxy)
+  // and the MQTT_READY event, but both fire before loadState() completes, so
+  // clients may have received compile-time defaults.  This call ensures MQTT
+  // reflects the actual persisted state.
+  publishAllStates();
 
   LN.logf(__PRETTY_FUNCTION__, LoggerNode::DEBUG, "Free heap: %d", ESP.getFreeHeap());
   Homie.getLogger() << F("Free heap: ") << ESP.getFreeHeap() << endl;
 }
 
 auto PoolControllerContext::loop() -> void {
-  processPendingOtaUpdate(this->otaUrlSetting_.get());
-
   // Feed watchdog and check memory
   SystemMonitor::feedWatchdog();
   SystemMonitor::checkMemory();
+
+  // Evaluate system health and trigger degradation transitions
+  DegradationManager::evaluate();
+
+  // P8: Clear boot-loop counter after 5 minutes of stable uptime.
+  // This tells detectBootLoop() on the next boot that this boot was healthy.
+  // Even during safe mode we clear it: if the device runs 5+ minutes without
+  // crashing, the next intentional restart should not be treated as a loop.
+  // The guard ensures we only write NVS once per boot (avoids flash wear).
+  static uint32_t lastBootClear = 0;
+  static bool bootCounterCleared = false;
+  if (!bootCounterCleared && (millis() - lastBootClear) >
+      static_cast<uint32_t>(SystemMonitor::BOOT_LOOP_CLEAR_AFTER_SEC) * 1000UL) {
+    bootCounterCleared = true;
+    SystemMonitor::clearBootLoopCounter();
+    if (bootLoopDetected_) {
+      Serial.println(F("→ Safe-mode: 5 min stable — boot-loop counter cleared"));
+      DegradationManager::unforceSafeMode();
+      bootLoopDetected_ = false;
+    }
+    lastBootClear = millis();
+  }
 
   Homie.loop();
 }

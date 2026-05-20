@@ -97,14 +97,14 @@ setProperty(cTemperature).send(buffer);
 #### Configuration Options
 
 1. **Homie Convention** (Default)
-   - Topic format: `homie/<device>/<node>/<property>`
-   - Compatible with: openHAB, Home Assistant (via Homie integration)
-   - Proven and stable
+    - Topic format: `homie/<device>/<node>/<property>`
+    - Compatible with: openHAB, Home Assistant (via Homie integration)
+    - Proven and stable
 
 2. **Home Assistant MQTT Discovery** (New)
-   - Topic format: `homeassistant/<component>/<device>/<object>/config`
-   - Native Home Assistant auto-discovery
-   - Optimized for Home Assistant
+    - Topic format: `homeassistant/<component>/<device>/<object>/config`
+    - Native Home Assistant auto-discovery
+    - Optimized for Home Assistant
 
 #### Setup
 
@@ -274,7 +274,7 @@ git checkout v3.0.0
 
 ### Short-term
 
-1. ✅ Build tests on ESP32 and ESP8266
+1. ✅ Build tests on ESP32
 2. ✅ Memory tests over 24-48h
 3. ✅ MQTT functional test (both protocols)
 4. ✅ Verify logging after bugfix

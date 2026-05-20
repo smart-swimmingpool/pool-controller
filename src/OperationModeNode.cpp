@@ -8,6 +8,9 @@
 #include "StateManager.hpp"
 #include "MqttInterface.hpp"
 
+// Static member definition
+bool OperationModeNode::_suppressPersist = false;
+
 // Helper: Validate and parse float value from MQTT string
 static bool parseFloat(const String &value, float &result, float minVal, float maxVal) {
   if (value.length() == 0) return false;
@@ -112,7 +115,7 @@ bool OperationModeNode::setMode(String mode) {
     Homie.getLogger() << F("set mode: ") << _mode << endl;
     PoolController::MqttInterface::publishSelectState(*this, cMode, cMode, _mode.c_str());
     PoolController::MqttInterface::publishHomieProperty(*this, cHomieNodeState, cHomieNodeState_OK);
-    saveState();  // Persist mode change
+    if (!_suppressPersist) saveState();  // Persist mode change
     retval = true;
 
   } else {
@@ -409,9 +412,14 @@ void OperationModeNode::printCaption() {
 void OperationModeNode::loadState() {
   using PoolController::StateManager;
 
-  // Load operation mode
+  // Load operation mode — assign directly so we don't re-persist what the
+  // user already saved.  The Homie property publish will happen on the next
+  // periodic update or on MQTT reconnect.
   String savedMode = StateManager::loadString("opmode", STATUS_AUTO);
-  setMode(savedMode);
+  if (savedMode == STATUS_AUTO || savedMode == STATUS_MANU ||
+      savedMode == STATUS_BOOST || savedMode == STATUS_TIMER) {
+    _mode = savedMode;
+  }
 
   // Load temperature settings
   _poolMaxTemp = StateManager::loadFloat("poolMaxTemp", 28.5);

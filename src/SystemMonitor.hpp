@@ -7,15 +7,13 @@
  *
  * Monitors memory usage and automatically reboots if memory gets critically low.
  * Provides watchdog functionality to detect system hangs.
+ *
+ * ESP8266 support was removed in v3.2.0.
  */
 
 #include <Arduino.h>
-
-#ifdef ESP32
+#include <Preferences.h>
 #include <esp_task_wdt.h>
-#elif defined(ESP8266)
-#include <Esp.h>
-#endif
 
 namespace PoolController {
 
@@ -24,10 +22,8 @@ namespace PoolController {
  */
 class SystemMonitor {
 private:
-  static constexpr uint32_t LOW_MEMORY_THRESHOLD = 8192;
-  static constexpr uint32_t CRITICAL_MEMORY_THRESHOLD = 4096;
-  static constexpr uint32_t ESP32_LOW_MEMORY_THRESHOLD = 16384;
-  static constexpr uint32_t ESP32_CRITICAL_MEMORY_THRESHOLD = 8192;
+  static constexpr uint32_t LOW_MEMORY_THRESHOLD = 16384;
+  static constexpr uint32_t CRITICAL_MEMORY_THRESHOLD = 8192;
 
   static uint32_t lastMemoryCheck;
   static uint32_t minFreeHeap;
@@ -35,38 +31,28 @@ private:
 
 public:
   /**
-   * Initialize system monitor and watchdog
+   * Initialize system monitor and watchdog.
+   * ESP32 TWDT: 30-second timeout, panic on timeout.
    */
   static void begin() {
     lastMemoryCheck = 0;
     minFreeHeap = ESP.getFreeHeap();
     lowMemoryWarning = false;
 
-#ifdef ESP32
-    // Enable ESP32 Task Watchdog Timer (TWDT)
-    // Default timeout is 5 seconds
-    esp_task_wdt_init(30, true);  // 30 second timeout, panic on timeout
-    esp_task_wdt_add(NULL);       // Add current thread to WDT watch
-#elif defined(ESP8266)
-    // ESP8266 has software watchdog, just need to call yield() regularly
-    // No explicit initialization needed
-#endif
+    esp_task_wdt_init(30, true);
+    esp_task_wdt_add(NULL);
   }
 
   /**
-   * Feed the watchdog - call this regularly in main loop
+   * Feed the watchdog — call this regularly in main loop
    */
   static void feedWatchdog() {
-#ifdef ESP32
     esp_task_wdt_reset();
-#elif defined(ESP8266)
-    yield();  // ESP8266 software watchdog
-#endif
   }
 
   /**
-   * Check memory status and reboot if critically low
-   * Call this periodically (e.g., every 10 seconds)
+   * Check memory status and reboot if critically low.
+   * Call this periodically (e.g., every 10 seconds).
    */
   static void checkMemory() {
     uint32_t now = millis();
@@ -84,58 +70,32 @@ public:
       minFreeHeap = freeHeap;
     }
 
-#ifdef ESP32
-    uint32_t lowThreshold = ESP32_LOW_MEMORY_THRESHOLD;
-    uint32_t criticalThreshold = ESP32_CRITICAL_MEMORY_THRESHOLD;
-#else
-    uint32_t lowThreshold = LOW_MEMORY_THRESHOLD;
-    uint32_t criticalThreshold = CRITICAL_MEMORY_THRESHOLD;
-#endif
-
-    // Critical memory - reboot immediately
-    if (freeHeap < criticalThreshold) {
-      Serial.printf("CRITICAL: Free heap %d bytes < %d bytes. Rebooting...\n", freeHeap, criticalThreshold);
+    // Critical memory — reboot immediately
+    if (freeHeap < CRITICAL_MEMORY_THRESHOLD) {
+      Serial.printf("CRITICAL: Free heap %d bytes < %d bytes. Rebooting...\n", freeHeap, CRITICAL_MEMORY_THRESHOLD);
       Serial.flush();
       delay(1000);
       ESP.restart();
     }
 
-    // Low memory - log warning
-    if (freeHeap < lowThreshold && !lowMemoryWarning) {
+    // Low memory — log warning
+    if (freeHeap < LOW_MEMORY_THRESHOLD && !lowMemoryWarning) {
       Serial.printf("WARNING: Low memory detected. Free heap: %d bytes "
                     "(min: %d)\n",
         freeHeap, minFreeHeap);
       lowMemoryWarning = true;
-    } else if (freeHeap >= lowThreshold && lowMemoryWarning) {
-      // Memory recovered
+    } else if (freeHeap >= LOW_MEMORY_THRESHOLD && lowMemoryWarning) {
       lowMemoryWarning = false;
     }
   }
 
-  /**
-   * Get current free heap
-   */
+  /** Get current free heap */
   static uint32_t getFreeHeap() { return ESP.getFreeHeap(); }
 
-  /**
-   * Get minimum free heap since boot
-   */
+  /** Get minimum free heap since boot */
   static uint32_t getMinFreeHeap() { return minFreeHeap; }
 
-  /**
-   * Get heap fragmentation (ESP8266 only)
-   */
-  static uint8_t getHeapFragmentation() {
-#ifdef ESP8266
-    return ESP.getHeapFragmentation();
-#else
-    return 0;  // Not available on ESP32
-#endif
-  }
-
-  /**
-   * Force a reboot
-   */
+  /** Force a reboot */
   static void reboot() {
     Serial.println("System reboot requested");
     Serial.flush();
@@ -143,21 +103,63 @@ public:
     ESP.restart();
   }
 
-  /**
-   * Get uptime in seconds
-   */
+  /** Get uptime in seconds */
   static uint32_t getUptimeSeconds() { return millis() / 1000; }
 
-  /**
-   * Check if system is healthy
-   */
+  /** Check if system is healthy */
   static bool isHealthy() {
-    uint32_t freeHeap = ESP.getFreeHeap();
-#ifdef ESP32
-    return freeHeap >= ESP32_LOW_MEMORY_THRESHOLD;
-#else
-    return freeHeap >= LOW_MEMORY_THRESHOLD;
-#endif
+    return ESP.getFreeHeap() >= LOW_MEMORY_THRESHOLD;
+  }
+
+  // --- Boot-loop detection (P8) ---
+
+  /** Number of consecutive boots before safe mode activates */
+  static constexpr uint8_t BOOT_LOOP_MAX_COUNT = 3;
+
+  /** Minimum uptime (seconds) before clearing the boot-loop counter */
+  static constexpr uint32_t BOOT_LOOP_CLEAR_AFTER_SEC = 300;  // 5 min
+
+  /**
+   * Detect boot-loop pattern.
+   * Call this as early as possible in setup(), before Homie initializes.
+   *
+   * Increments a persistent boot counter in NVS on every boot.
+   * Returns true when BOOT_LOOP_MAX_COUNT consecutive boots have occurred
+   * without a reset (which happens after stable uptime in loop()).
+   *
+   * The counter is reset to 0 by clearBootLoopCounter(), called from
+   * PoolController::loop() after BOOT_LOOP_CLEAR_AFTER_SEC of stable operation.
+   */
+  static bool detectBootLoop() {
+    Preferences prefs;
+    prefs.begin("sysmon", false);
+
+    int bootCount = prefs.getInt("bootCount", 0) + 1;
+
+    Serial.printf("  Boot counter: %d\n", bootCount);
+
+    bool isBootLoop = (bootCount >= BOOT_LOOP_MAX_COUNT);
+    if (isBootLoop) {
+      Serial.printf("✖ BOOT-LOOP DETECTED (%d consecutive boots)\n", bootCount);
+      Serial.println("  Entering safe mode — all relays OFF");
+    }
+
+    prefs.putInt("bootCount", bootCount);
+    prefs.end();
+
+    return isBootLoop;
+  }
+
+  /**
+   * Clear the boot-loop counter.
+   * Called from PoolController::loop() after BOOT_LOOP_CLEAR_AFTER_SEC seconds
+   * of stable operation to indicate a healthy boot.
+   */
+  static void clearBootLoopCounter() {
+    Preferences prefs;
+    prefs.begin("sysmon", false);
+    prefs.putInt("bootCount", 0);
+    prefs.end();
   }
 };
 

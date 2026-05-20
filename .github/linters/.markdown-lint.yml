@@ -28,16 +28,23 @@ MD024:
 # MD033/no-inline-html - Inline HTML
 MD033:
   allowed_elements:
+    - a
     - br
     - details
-    - summary
     - img
     - kbd
+    - script
+    - span
     - sub
     - sup
+    - summary
 
 # MD041/first-line-heading - First line in file should be a top level heading
 MD041: false
+
+# MD060/table-column-style - Table column style
+MD060:
+  style: around
 
 # MD046/code-block-style - Code block style
 MD046:

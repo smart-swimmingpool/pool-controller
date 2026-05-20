@@ -29,6 +29,7 @@ private:
   // suggested rate is 1/60Hz (1m)
   static const int MIN_INTERVAL = 60;  // in seconds
   static const int MEASUREMENT_INTERVAL = 300;
+  static const int RECOVERY_INTERVAL = 5;  // seconds: fast poll when sensor is lost (P7)
 
   const char *cCaption = "• DallasTemperature sensor:";
   const char *cIndent = "  ◦ ";
