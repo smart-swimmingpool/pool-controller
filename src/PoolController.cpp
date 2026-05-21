@@ -8,6 +8,7 @@
 #include <SPI.h>
 #include <SPIFFS.h>
 #include <WiFi.h>
+#include <atomic>
 #include <Preferences.h>
 #ifdef ESP32
 #include <esp_wifi.h>
@@ -60,12 +61,15 @@ constexpr const char *HOMIE_CONFIG_PATH{"/homie/config.json"};
 constexpr wps_type_t WPS_MODE{WPS_TYPE_PBC};
 
 struct WpsProvisionState final {
-  bool success{false};
-  bool failed{false};
-  bool timedOut{false};
+  std::atomic<bool> success{false};
+  std::atomic<bool> failed{false};
+  std::atomic<bool> timedOut{false};
 };
 
 static WpsProvisionState wpsProvisionState{};
+static bool spiffsMountedForWps{false};
+static char wpsConfigBuffer[HOMIE_CONFIG_BUFFER_SIZE];
+static StaticJsonDocument<HOMIE_CONFIG_BUFFER_SIZE> wpsConfigJson;
 
 static auto stopWps() -> void {
   const esp_err_t disableErr = esp_wifi_wps_disable();
@@ -81,8 +85,6 @@ static auto startWps() -> bool {
   snprintf(config.factory_info.model_number, sizeof(config.factory_info.model_number), "pool-controller");
   snprintf(config.factory_info.model_name, sizeof(config.factory_info.model_name), "ESP32 Pool Controller");
   snprintf(config.factory_info.device_name, sizeof(config.factory_info.device_name), "Pool Controller");
-  snprintf(config.pin, sizeof(config.pin), "00000000");
-
   const esp_err_t enableErr = esp_wifi_wps_enable(&config);
   if (enableErr != ESP_OK) {
     Serial.printf("WPS enable failed: 0x%x (%s)\n", static_cast<unsigned>(enableErr), esp_err_to_name(enableErr));
@@ -103,10 +105,11 @@ static auto startWps() -> bool {
 }
 
 static auto persistWpsWifiCredentials() -> bool {
-  if (!SPIFFS.begin(true)) {
+  if (!spiffsMountedForWps && !SPIFFS.begin(true)) {
     Serial.println("WPS: cannot mount SPIFFS");
     return false;
   }
+  spiffsMountedForWps = true;
 
   if (!SPIFFS.exists(HOMIE_CONFIG_PATH)) {
     Serial.println("WPS: Homie config missing, skip credential persistence");
@@ -126,27 +129,26 @@ static auto persistWpsWifiCredentials() -> bool {
     return false;
   }
 
-  char configBuffer[HOMIE_CONFIG_BUFFER_SIZE];
-  configFile.readBytes(configBuffer, configSize);
+  configFile.readBytes(wpsConfigBuffer, configSize);
   configFile.close();
-  configBuffer[configSize] = '\0';
+  wpsConfigBuffer[configSize] = '\0';
 
-  StaticJsonDocument<HOMIE_CONFIG_BUFFER_SIZE> jsonDoc;
-  const DeserializationError parseErr = deserializeJson(jsonDoc, configBuffer);
-  if (parseErr != DeserializationError::Ok || !jsonDoc.is<JsonObject>()) {
+  wpsConfigJson.clear();
+  const DeserializationError parseErr = deserializeJson(wpsConfigJson, wpsConfigBuffer);
+  if (parseErr != DeserializationError::Ok || !wpsConfigJson.is<JsonObject>()) {
     Serial.println("WPS: Homie config JSON parse failed");
     return false;
   }
 
-  const String ssid = WiFi.SSID();
-  if (ssid.isEmpty()) {
+  const String connectedSsid = WiFi.SSID();
+  if (connectedSsid.isEmpty()) {
     Serial.println("WPS: no SSID after successful pairing");
     return false;
   }
 
-  JsonObject root = jsonDoc.as<JsonObject>();
+  JsonObject root = wpsConfigJson.as<JsonObject>();
   JsonObject wifi = root["wifi"].is<JsonObject>() ? root["wifi"].as<JsonObject>() : root.createNestedObject("wifi");
-  wifi["ssid"] = ssid;
+  wifi["ssid"] = connectedSsid;
   wifi["password"] = WiFi.psk();
 
   File outFile = SPIFFS.open(HOMIE_CONFIG_PATH, "w");
@@ -155,7 +157,7 @@ static auto persistWpsWifiCredentials() -> bool {
     return false;
   }
 
-  const size_t written = serializeJson(jsonDoc, outFile);
+  const size_t written = serializeJson(wpsConfigJson, outFile);
   outFile.close();
 
   if (written == 0) {
@@ -163,7 +165,7 @@ static auto persistWpsWifiCredentials() -> bool {
     return false;
   }
 
-  Serial.printf("WPS: persisted WiFi credentials for SSID '%s'\n", ssid.c_str());
+  Serial.printf("WPS: persisted WiFi credentials for SSID '%s'\n", connectedSsid.c_str());
   return true;
 }
 
@@ -173,7 +175,7 @@ static auto waitForWifiConnected(const uint32_t timeoutMs) -> bool {
     if (WiFi.status() == WL_CONNECTED) {
       return true;
     }
-    delay(50);
+    vTaskDelay(pdMS_TO_TICKS(50));
   }
   return false;
 }
@@ -194,7 +196,7 @@ static auto handleWpsEvent(WiFiEvent_t event, arduino_event_info_t info) -> void
     stopWps();
     break;
   case ARDUINO_EVENT_WPS_ER_PIN:
-    Serial.printf("WPS pin: %.8s\n", info.wps_er_pin.pin_code);
+    (void)info;
     break;
   default:
     break;
@@ -208,7 +210,7 @@ static auto shouldStartWpsProvisioning() -> bool {
     if (digitalRead(static_cast<uint8_t>(WPS_TRIGGER_PIN)) != LOW) {
       return false;
     }
-    delay(10);
+    vTaskDelay(pdMS_TO_TICKS(10));
   }
   return true;
 }
@@ -220,7 +222,9 @@ static auto runWpsProvisioningIfRequested() -> void {
 
   Serial.println("WPS: trigger button held, starting WPS provisioning");
 
-  wpsProvisionState = {};
+  wpsProvisionState.success.store(false);
+  wpsProvisionState.failed.store(false);
+  wpsProvisionState.timedOut.store(false);
   WiFi.disconnect(true, true);
   WiFi.mode(WIFI_MODE_STA);
   WiFiEventId_t handlerId = WiFi.onEvent(handleWpsEvent);
@@ -232,13 +236,13 @@ static auto runWpsProvisioningIfRequested() -> void {
 
   const uint32_t startedAt = millis();
   while ((millis() - startedAt) < WPS_SESSION_TIMEOUT_MS) {
-    if (wpsProvisionState.success || wpsProvisionState.failed || wpsProvisionState.timedOut) {
+    if (wpsProvisionState.success.load() || wpsProvisionState.failed.load() || wpsProvisionState.timedOut.load()) {
       break;
     }
-    delay(50);
+    vTaskDelay(pdMS_TO_TICKS(50));
   }
 
-  if (wpsProvisionState.success && waitForWifiConnected(WPS_CONNECT_TIMEOUT_MS)) {
+  if (wpsProvisionState.success.load() && waitForWifiConnected(WPS_CONNECT_TIMEOUT_MS)) {
     const bool persisted = persistWpsWifiCredentials();
     if (!persisted) {
       Serial.println("WPS: connected, but credentials were not persisted");
