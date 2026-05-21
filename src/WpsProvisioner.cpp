@@ -17,6 +17,9 @@ constexpr uint32_t WPS_SESSION_TIMEOUT_MS{120000UL};
 constexpr uint32_t WPS_CONNECT_TIMEOUT_MS{30000UL};
 constexpr uint32_t WPS_TRIGGER_POLL_INTERVAL_MS{10UL};
 constexpr uint32_t WIFI_STATUS_POLL_INTERVAL_MS{50UL};
+constexpr size_t WIFI_SSID_MAX_LEN{32};
+constexpr bool WIFI_DISCONNECT_TURN_OFF_RADIO{false};
+constexpr bool WIFI_DISCONNECT_ERASE_CREDENTIALS{false};
 constexpr size_t HOMIE_CONFIG_BUFFER_SIZE{4096};
 constexpr const char *HOMIE_CONFIG_PATH{"/homie/config.json"};
 constexpr const char *HOMIE_CONFIG_TMP_PATH{"/homie/config.wps.tmp"};
@@ -98,7 +101,7 @@ auto persistWpsWifiCredentials() -> bool {
     return false;
   }
 
-  char connectedSsid[33];
+  char connectedSsid[WIFI_SSID_MAX_LEN + 1];
   connectedSsid[0] = '\0';
   WiFi.SSID().toCharArray(connectedSsid, sizeof(connectedSsid));
   if (connectedSsid[0] == '\0') {
@@ -201,7 +204,7 @@ auto WpsProvisioner::runIfRequested() -> void {
   wpsProvisionState.success.store(false);
   wpsProvisionState.failed.store(false);
   wpsProvisionState.timedOut.store(false);
-  WiFi.disconnect(false, false);
+  WiFi.disconnect(WIFI_DISCONNECT_TURN_OFF_RADIO, WIFI_DISCONNECT_ERASE_CREDENTIALS);
   WiFi.mode(WIFI_MODE_STA);
   WiFiEventId_t handlerId = WiFi.onEvent(handleWpsEvent);
 
