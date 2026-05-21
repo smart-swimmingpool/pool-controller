@@ -58,6 +58,7 @@ constexpr uint32_t WPS_SESSION_TIMEOUT_MS{120000UL};
 constexpr uint32_t WPS_CONNECT_TIMEOUT_MS{30000UL};
 constexpr size_t HOMIE_CONFIG_BUFFER_SIZE{4096};
 constexpr const char *HOMIE_CONFIG_PATH{"/homie/config.json"};
+constexpr const char *HOMIE_CONFIG_TMP_PATH{"/homie/config.wps.tmp"};
 constexpr wps_type_t WPS_MODE{WPS_TYPE_PBC};
 
 struct WpsProvisionState final {
@@ -68,8 +69,6 @@ struct WpsProvisionState final {
 
 static WpsProvisionState wpsProvisionState{};
 static bool spiffsMountedForWps{false};
-static char wpsConfigBuffer[HOMIE_CONFIG_BUFFER_SIZE];
-static StaticJsonDocument<HOMIE_CONFIG_BUFFER_SIZE> wpsConfigJson;
 
 static auto stopWps() -> void {
   const esp_err_t disableErr = esp_wifi_wps_disable();
@@ -105,7 +104,7 @@ static auto startWps() -> bool {
 }
 
 static auto persistWpsWifiCredentials() -> bool {
-  if (!spiffsMountedForWps && !SPIFFS.begin(true)) {
+  if (!spiffsMountedForWps && !SPIFFS.begin(false)) {
     Serial.println("WPS: cannot mount SPIFFS");
     return false;
   }
@@ -129,43 +128,64 @@ static auto persistWpsWifiCredentials() -> bool {
     return false;
   }
 
-  configFile.readBytes(wpsConfigBuffer, configSize);
+  char configBuffer[HOMIE_CONFIG_BUFFER_SIZE];
+  const size_t readBytes = configFile.readBytes(configBuffer, configSize);
   configFile.close();
-  wpsConfigBuffer[configSize] = '\0';
+  if (readBytes != configSize) {
+    Serial.println("WPS: failed reading Homie config");
+    return false;
+  }
+  configBuffer[configSize] = '\0';
 
-  wpsConfigJson.clear();
-  const DeserializationError parseErr = deserializeJson(wpsConfigJson, wpsConfigBuffer);
-  if (parseErr != DeserializationError::Ok || !wpsConfigJson.is<JsonObject>()) {
+  StaticJsonDocument<HOMIE_CONFIG_BUFFER_SIZE> configJson;
+  const DeserializationError parseErr = deserializeJson(configJson, configBuffer);
+  if (parseErr != DeserializationError::Ok || !configJson.is<JsonObject>()) {
     Serial.println("WPS: Homie config JSON parse failed");
     return false;
   }
 
-  const String connectedSsid = WiFi.SSID();
-  if (connectedSsid.isEmpty()) {
+  char connectedSsid[33];
+  connectedSsid[0] = '\0';
+  WiFi.SSID().toCharArray(connectedSsid, sizeof(connectedSsid));
+  if (connectedSsid[0] == '\0') {
     Serial.println("WPS: no SSID after successful pairing");
     return false;
   }
 
-  JsonObject root = wpsConfigJson.as<JsonObject>();
+  JsonObject root = configJson.as<JsonObject>();
   JsonObject wifi = root["wifi"].is<JsonObject>() ? root["wifi"].as<JsonObject>() : root.createNestedObject("wifi");
   wifi["ssid"] = connectedSsid;
   wifi["password"] = WiFi.psk();
 
-  File outFile = SPIFFS.open(HOMIE_CONFIG_PATH, "w");
+  SPIFFS.remove(HOMIE_CONFIG_TMP_PATH);
+  File outFile = SPIFFS.open(HOMIE_CONFIG_TMP_PATH, "w");
   if (!outFile) {
     Serial.println("WPS: cannot open Homie config for write");
     return false;
   }
 
-  const size_t written = serializeJson(wpsConfigJson, outFile);
+  const size_t written = serializeJson(configJson, outFile);
   outFile.close();
 
   if (written == 0) {
-    Serial.println("WPS: failed writing Homie config");
+    SPIFFS.remove(HOMIE_CONFIG_TMP_PATH);
+    Serial.println("WPS: failed serializing Homie config");
     return false;
   }
 
-  Serial.printf("WPS: persisted WiFi credentials for SSID '%s'\n", connectedSsid.c_str());
+  if (SPIFFS.exists(HOMIE_CONFIG_PATH) && !SPIFFS.remove(HOMIE_CONFIG_PATH)) {
+    SPIFFS.remove(HOMIE_CONFIG_TMP_PATH);
+    Serial.println("WPS: cannot replace old Homie config");
+    return false;
+  }
+
+  if (!SPIFFS.rename(HOMIE_CONFIG_TMP_PATH, HOMIE_CONFIG_PATH)) {
+    SPIFFS.remove(HOMIE_CONFIG_TMP_PATH);
+    Serial.println("WPS: cannot activate updated Homie config");
+    return false;
+  }
+
+  Serial.printf("WPS: persisted WiFi credentials for SSID '%s'\n", connectedSsid);
   return true;
 }
 
