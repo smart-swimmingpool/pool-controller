@@ -7,14 +7,15 @@ jobs:
   build:
     name: Dispatch to `website` repository for regeneration of documents
     runs-on: ubuntu-latest
+    env:
+      HUGO_DEPLOY_TOKEN: ${{ secrets.HUGO_DEPLOY_TOKEN }}
     steps:
       - name: Emit repository_dispatch
         id: website_dispatch
-        if: ${{ secrets.HUGO_DEPLOY_TOKEN != '' }}
+        if: ${{ env.HUGO_DEPLOY_TOKEN != '' }}
         continue-on-error: true
-        env:
-          HUGO_DEPLOY_TOKEN: ${{ secrets.HUGO_DEPLOY_TOKEN }}
         run: |
+          echo "::add-mask::${HUGO_DEPLOY_TOKEN}"
           http_status=$(curl -sS \
             -o /tmp/dispatch_response.txt \
             -w "%{http_code}" \
@@ -31,7 +32,7 @@ jobs:
           fi
 
       - name: Warn when dispatch token is missing
-        if: ${{ secrets.HUGO_DEPLOY_TOKEN == '' }}
+        if: ${{ env.HUGO_DEPLOY_TOKEN == '' }}
         run: echo "::warning::Skipping website dispatch because HUGO_DEPLOY_TOKEN is not configured."
 
       - name: Warn when dispatch fails
