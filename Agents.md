@@ -158,9 +158,59 @@ ESP32 Hardware-Security:
 - Häufige Heap-Allokationen in Hot-Paths.
 - String-Objekte in Zyklus-Code.
 - Globale state ohne Synchronisation.
+- Große Puffer (`> 512 B`) als file-scope `static`, wenn sie nur einmalig
+  (z. B. Setup-Pfad) benötigt werden — stattdessen als function-local Variable
+  deklarieren, damit der Speicher nur während der Ausführung belegt ist.
+- Pointer-Member ohne In-Class-Initialisierung (`= nullptr`); uninitialisierte
+  Pointer sind UB und führen zu schwer reproduzierbaren Crashes.
+- Statische `String`-Puffer mit `.concat()` ohne vorheriges Reset — führt bei
+  mehrfachem Aufruf zu verdoppelten Inhalten.
 
-## 19. Änderungen aus der Praxis
+## 19. ESP-IDF-Versionskompatibilität
 
-- Sicherheit: Secure Boot + Flash Encryption aktivieren, Debug-Schnittstellen deaktivieren. :contentReference[oaicite:4]{index=4}
-- OTA: Partition-basierte Updates mit Anti-Rollback/Checksum. :contentReference[oaicite:5]{index=5}
-- Speicher: Heap/Stack Überwachung & Static Buffer. :contentReference[oaicite:6]{index=6}
+Beim Einsatz von ESP-IDF-APIs immer mit `ESP_IDF_VERSION_VAL` absichern:
+
+```cpp
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
+  // Neue API (ESP-IDF 5.x)
+#else
+  // Legacy-API (ESP-IDF 4.x)
+#endif
+```
+
+Bekannte API-Brüche zwischen ESP-IDF 4 und 5:
+
+| API | ESP-IDF 4.x | ESP-IDF 5.x |
+|-----|-------------|-------------|
+| Task Watchdog Init | `esp_task_wdt_init(uint32_t s, bool panic)` | `esp_task_wdt_init(const esp_task_wdt_config_t *)` |
+| Task Watchdog (wenn bereits initialisiert) | — | `esp_task_wdt_reconfigure(const esp_task_wdt_config_t *)` |
+| WPS Start | `esp_wifi_wps_start(int)` | `esp_wifi_wps_start()` |
+
+Das Arduino-Framework für ESP32 (espressif32 ≥ 6.x) verwendet ESP-IDF 5.x und
+initialisiert den TWDT bereits vor `setup()`. Daher muss beim Anpassen des
+WDT-Timeouts `esp_task_wdt_reconfigure()` statt `esp_task_wdt_init()` verwendet
+werden.
+
+## 20. JSON-Puffer-Dimensionierung
+
+`ArduinoJson`-Regeln für ESP32-Projekte:
+
+- `StaticJsonDocument<N>` für N anhand des tatsächlichen JSON-Inhalts
+  bemessen (ArduinoJson Assistant: <https://arduinojson.org/v6/assistant/>).
+- Den Serialisierungspuffer (`char buffer[]`) **mindestens 25 % größer** als
+  der erwartete maximale JSON-Output bemessen; bei optionalen Feldern mehr
+  Reserve einplanen.
+- Niemals `StaticJsonDocument<1024>` in einen `char buffer[512]` serialisieren
+  ohne korrekte Truncation-Prüfung (`len >= sizeof(buffer) - 1 → return false`).
+- Einmalig genutzte große Dokumente (> 1 KB) als function-local statt
+  file-scope `static` deklarieren.
+
+## 21. Änderungen aus der Praxis
+
+- Sicherheit: Secure Boot + Flash Encryption aktivieren, Debug-Schnittstellen deaktivieren.
+- OTA: Partition-basierte Updates mit Anti-Rollback/Checksum.
+- Speicher: Heap/Stack Überwachung & Static Buffer.
+- ESP-IDF v5: WDT-API gebrochen — `esp_task_wdt_reconfigure` statt
+  `esp_task_wdt_init` verwenden wenn Arduino-Framework WDT vorinitialisiert hat.
+- JSON Discovery-Puffer: Serialisierungspuffer muss ausreichend Margin zum
+  tatsächlichen JSON-Output haben, sonst schlägt HA-Discovery lautlos fehl.
