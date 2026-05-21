@@ -95,7 +95,7 @@ void LoggerNode::logf(const String &function, const E_Loglevel level, const char
     return;
   va_list arg;
   va_start(arg, format);
-  char temp[100];
+  char temp[256];
   vsnprintf(temp, sizeof(temp), format, arg);
   va_end(arg);
   log(function, level, temp);
