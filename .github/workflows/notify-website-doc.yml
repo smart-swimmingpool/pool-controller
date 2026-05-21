@@ -15,10 +15,8 @@ jobs:
         if: env.HUGO_DEPLOY_TOKEN != ''
         run: |
           echo "::add-mask::${HUGO_DEPLOY_TOKEN}"
-          dispatch_response="$(mktemp)"
-          trap 'rm -f "${dispatch_response}"' EXIT
           http_status=$(curl -sS \
-            -o "${dispatch_response}" \
+            -o /dev/null \
             -w "%{http_code}" \
             -X POST \
             -H "Accept: application/vnd.github+json" \
