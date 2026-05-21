@@ -94,8 +94,12 @@ Rule *OperationModeNode::getRule() {
       _ruleVec[i]->setTemperatureHysteresis(getTemperatureHysteresis());
       _ruleVec[i]->setTimerSetting(getTimerSetting());
 
-      _ruleVec[i]->setPoolTemperature(_currentPoolTempNode->getTemperature());
-      _ruleVec[i]->setSolarTemperature(_currentSolarTempNode->getTemperature());
+      if (_currentPoolTempNode != nullptr) {
+        _ruleVec[i]->setPoolTemperature(_currentPoolTempNode->getTemperature());
+      }
+      if (_currentSolarTempNode != nullptr) {
+        _ruleVec[i]->setSolarTemperature(_currentSolarTempNode->getTemperature());
+      }
 
       return _ruleVec[i];
     }

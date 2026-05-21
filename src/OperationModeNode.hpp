@@ -124,8 +124,8 @@ private:
   float _hysteresis;
   Vector<Rule *> _ruleVec;
 
-  DallasTemperatureNode *_currentPoolTempNode;
-  DallasTemperatureNode *_currentSolarTempNode;
+  DallasTemperatureNode *_currentPoolTempNode = nullptr;
+  DallasTemperatureNode *_currentSolarTempNode = nullptr;
 
   TimerSetting _timerSetting;
 
