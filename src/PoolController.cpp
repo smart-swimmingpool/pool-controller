@@ -32,9 +32,7 @@ namespace PoolController {
 static LoggerNode LN;
 static DallasTemperatureNode solarTemperatureNode("solar-temp", "Solar Temperature", PIN_DS_SOLAR, TEMP_READ_INTERVAL);
 static DallasTemperatureNode poolTemperatureNode("pool-temp", "Pool Temperature", PIN_DS_POOL, TEMP_READ_INTERVAL);
-#ifdef ESP32
 static ESP32TemperatureNode ctrlTemperatureNode("controller-temp", "Controller Temperature", TEMP_READ_INTERVAL);
-#endif
 static RelayModuleNode poolPumpNode("pool-pump", "Pool Pump", PIN_RELAY_POOL);
 static RelayModuleNode solarPumpNode("solar-pump", "Solar Pump", PIN_RELAY_SOLAR);
 
@@ -221,9 +219,7 @@ auto PoolControllerContext::initializeController() -> void {
   poolPumpNode.setMeasurementInterval(_loopInterval);
   solarPumpNode.setMeasurementInterval(_loopInterval);
 
-#ifdef ESP32
   ctrlTemperatureNode.setMeasurementInterval(_loopInterval);
-#endif
 
   operationModeNode.setMode(this->operationModeSetting_.get());
   operationModeNode.setPoolMaxTemperature(this->temperatureMaxPoolSetting_.get());
@@ -337,10 +333,8 @@ auto PoolControllerContext::setupHandler() -> void {
 
     PoolController::MqttInterface::publishSensorDiscovery("pool-temp", "Pool Temperature", "temperature", "°C", "mdi:pool");
 
-#ifdef ESP32
     PoolController::MqttInterface::publishSensorDiscovery(
       "controller-temp", "Controller Temperature", "temperature", "°C", "mdi:thermometer");
-#endif
 
     // Switches (relays) - publish discovery and subscribe to command topics
     PoolController::MqttInterface::publishSwitchDiscovery("pool-pump", "Pool Pump", "mdi:pump");
@@ -429,9 +423,7 @@ auto PoolControllerContext::setup() -> void {
   Homie_setFirmware("pool-controller", "3.2.0");
   Homie_setBrand("smart-swimmingpool");
 
-#ifdef ESP32
   WpsProvisioner::runIfRequested();
-#endif
 
   // default interval of sending Temperature values
   this->loopIntervalSetting_.setDefaultValue(TEMP_READ_INTERVAL).setValidator([](const long candidate) -> bool {

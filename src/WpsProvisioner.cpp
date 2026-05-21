@@ -2,7 +2,6 @@
 
 #include "WpsProvisioner.hpp"
 
-#ifdef ESP32
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <SPIFFS.h>
@@ -195,11 +194,9 @@ auto shouldStartWpsProvisioning() -> bool {
   return true;
 }
 }  // namespace
-#endif
 
 namespace PoolController {
 auto WpsProvisioner::runIfRequested() -> void {
-#ifdef ESP32
   if (!shouldStartWpsProvisioning()) {
     return;
   }
@@ -237,6 +234,5 @@ auto WpsProvisioner::runIfRequested() -> void {
   }
 
   WiFi.removeEvent(handlerId);
-#endif
 }
 }  // namespace PoolController
