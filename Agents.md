@@ -183,7 +183,7 @@ Bekannte API-Brüche zwischen ESP-IDF 4 und 5:
 | API | ESP-IDF 4.x | ESP-IDF 5.x |
 |-----|-------------|-------------|
 | Task Watchdog Init | `esp_task_wdt_init(uint32_t s, bool panic)` | `esp_task_wdt_init(const esp_task_wdt_config_t *)` |
-| Task Watchdog (wenn bereits initialisiert) | — | `esp_task_wdt_reconfigure(const esp_task_wdt_config_t *)` |
+| Task Watchdog (already initialised) | — | `esp_task_wdt_reconfigure(const esp_task_wdt_config_t *)` |
 | WPS Start | `esp_wifi_wps_start(int)` | `esp_wifi_wps_start()` |
 
 Das Arduino-Framework für ESP32 (espressif32 ≥ 6.x) verwendet ESP-IDF 5.x und
