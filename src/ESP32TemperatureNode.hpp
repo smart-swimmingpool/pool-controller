@@ -7,12 +7,10 @@
 
 #include <Homie.hpp>
 
-#ifdef ESP32
 extern "C" {
 
 uint8_t temprature_sens_read();
 }
-#endif
 
 class ESP32TemperatureNode : public HomieNode {
 

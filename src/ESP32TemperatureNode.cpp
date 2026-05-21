@@ -33,7 +33,6 @@ void ESP32TemperatureNode::printCaption() {
  *
  */
 void ESP32TemperatureNode::loop() {
-#ifdef ESP32
   if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval)) {
     _lastMeasurement = millis();
 
@@ -53,7 +52,6 @@ void ESP32TemperatureNode::loop() {
       PoolController::MqttInterface::publishHomieProperty(*this, cHomieNodeState, cHomieNodeState_OK);
     }
   }
-#endif
 }
 
 /**

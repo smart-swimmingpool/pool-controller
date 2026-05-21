@@ -17,6 +17,19 @@ menu:
 
 ## Setup
 
+### Initial WiFi setup via WPS
+
+You can trigger WPS onboarding during boot to pair the controller with your router
+without typing WiFi credentials manually:
+
+1. Power on (or reset) the controller normally and wait until firmware startup begins.
+2. Then press and hold the **BOOT** button for at least 2 seconds.
+3. Start **WPS Push Button Connect (PBC)** on your router.
+4. Wait until pairing completes.
+
+When WPS succeeds, the controller updates the WiFi credentials in
+`/homie/config.json` automatically (if the file already exists).
+
 ## Booting Controller
 
 When booting the controller, it will provide feedback on establishing the WiFi connection and connection to the MQTT broker:
