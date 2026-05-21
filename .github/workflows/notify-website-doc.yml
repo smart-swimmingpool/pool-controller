@@ -13,7 +13,6 @@ jobs:
       - name: Emit repository_dispatch
         id: website_dispatch
         if: env.HUGO_DEPLOY_TOKEN != ''
-        continue-on-error: true
         run: |
           echo "::add-mask::${HUGO_DEPLOY_TOKEN}"
           dispatch_response="$(mktemp)"
@@ -28,8 +27,10 @@ jobs:
             https://api.github.com/repos/smart-swimmingpool/website/dispatches \
             -d '{"event_type":"doc_update"}')
           if [ "${http_status}" -lt 200 ] || [ "${http_status}" -ge 300 ]; then
+            echo "dispatch_failed=true" >> "${GITHUB_OUTPUT}"
             echo "::warning::repository_dispatch failed with HTTP ${http_status}"
-            exit 1
+          else
+            echo "dispatch_failed=false" >> "${GITHUB_OUTPUT}"
           fi
 
       - name: Warn when dispatch token is missing
@@ -37,5 +38,5 @@ jobs:
         run: echo "::warning::Skipping website dispatch because HUGO_DEPLOY_TOKEN is not configured."
 
       - name: Warn when dispatch fails
-        if: steps.website_dispatch.outcome == 'failure'
+        if: steps.website_dispatch.outputs.dispatch_failed == 'true'
         run: echo "::warning::Website dispatch failed (token missing permissions or invalid)."
