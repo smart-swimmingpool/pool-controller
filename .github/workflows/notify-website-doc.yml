@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: Emit repository_dispatch
         id: website_dispatch
-        if: ${{ env.HUGO_DEPLOY_TOKEN != '' }}
+        if: env.HUGO_DEPLOY_TOKEN != ''
         continue-on-error: true
         run: |
           echo "::add-mask::${HUGO_DEPLOY_TOKEN}"
@@ -33,9 +33,9 @@ jobs:
           fi
 
       - name: Warn when dispatch token is missing
-        if: ${{ env.HUGO_DEPLOY_TOKEN == '' }}
+        if: env.HUGO_DEPLOY_TOKEN == ''
         run: echo "::warning::Skipping website dispatch because HUGO_DEPLOY_TOKEN is not configured."
 
       - name: Warn when dispatch fails
-        if: ${{ steps.website_dispatch.outcome == 'failure' }}
+        if: steps.website_dispatch.outcome == 'failure'
         run: echo "::warning::Website dispatch failed (token missing permissions or invalid)."
