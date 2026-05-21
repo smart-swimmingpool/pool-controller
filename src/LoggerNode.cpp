@@ -31,6 +31,7 @@ LoggerNode::LoggerNode() : HomieNode("Log", "Logger", "Logger"), m_loglevel(DEBU
 const String LoggerNode::levelstring[CRITICAL + 1] = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"};
 
 String &LoggerNode::updateLevelStrings() {
+  loggerString = "";  // Reset before rebuilding to prevent duplicate entries on re-initialisation
   for (int_fast8_t iLevel = DEBUG; iLevel <= CRITICAL; iLevel++) {
     loggerString.concat(levelstring[iLevel]);
     if (iLevel < CRITICAL)
