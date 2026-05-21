@@ -9,8 +9,30 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Emit repository_dispatch
-        uses: peter-evans/repository-dispatch@v1.1.1
-        with:
-          token: ${{ secrets.HUGO_DEPLOY_TOKEN }}
-          repository: smart-swimmingpool/website
-          event-type: doc_update
+        id: website_dispatch
+        if: ${{ secrets.HUGO_DEPLOY_TOKEN != '' }}
+        continue-on-error: true
+        env:
+          HUGO_DEPLOY_TOKEN: ${{ secrets.HUGO_DEPLOY_TOKEN }}
+        run: |
+          http_status=$(curl -sS \
+            -o /tmp/dispatch_response.txt \
+            -w "%{http_code}" \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${HUGO_DEPLOY_TOKEN}" \
+            https://api.github.com/repos/smart-swimmingpool/website/dispatches \
+            -d '{"event_type":"doc_update"}')
+          if [ "${http_status}" -lt 200 ] || [ "${http_status}" -ge 300 ]; then
+            echo "::warning::repository_dispatch failed with HTTP ${http_status}"
+            cat /tmp/dispatch_response.txt
+            exit 1
+          fi
+
+      - name: Warn when dispatch token is missing
+        if: ${{ secrets.HUGO_DEPLOY_TOKEN == '' }}
+        run: echo "::warning::Skipping website dispatch because HUGO_DEPLOY_TOKEN is not configured."
+
+      - name: Warn when dispatch fails
+        if: ${{ steps.website_dispatch.outcome == 'failure' }}
+        run: echo "::warning::Website dispatch failed (token missing permissions or invalid)."
