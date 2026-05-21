@@ -23,7 +23,7 @@ You can trigger WPS onboarding during boot to pair the controller with your rout
 without typing WiFi credentials manually:
 
 1. Power on (or reset) the controller normally and wait until firmware startup begins.
-2. Then press and hold the **BOOT** button for at least 1.5 seconds.
+2. Then press and hold the **BOOT** button for at least 2 seconds.
 3. Start **WPS Push Button Connect (PBC)** on your router.
 4. Wait until pairing completes.
 

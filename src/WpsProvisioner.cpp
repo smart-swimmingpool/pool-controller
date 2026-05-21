@@ -195,6 +195,7 @@ auto shouldStartWpsProvisioning() -> bool {
 
 namespace PoolController {
 auto WpsProvisioner::runIfRequested() -> void {
+  // This runs only during setup and uses bounded waits to detect trigger/WPS completion.
   if (!shouldStartWpsProvisioning()) {
     return;
   }
@@ -229,6 +230,7 @@ auto WpsProvisioner::runIfRequested() -> void {
   } else {
     Serial.println("WPS: provisioning failed or timed out");
     stopWps();
+    WiFi.begin();
   }
 
   WiFi.removeEvent(handlerId);
