@@ -3,9 +3,16 @@
 #include "PoolController.hpp"
 
 #include <Arduino.h>
+#include <ArduinoJson.h>
 #include <Homie.h>
 #include <SPI.h>
+#include <SPIFFS.h>
+#include <WiFi.h>
 #include <Preferences.h>
+#ifdef ESP32
+#include <esp_wifi.h>
+#include <esp_wps.h>
+#endif
 #include "DallasTemperatureNode.hpp"
 #include "ESP32TemperatureNode.hpp"
 #include "RelayModuleNode.hpp"
@@ -41,6 +48,210 @@ static OperationModeNode operationModeNode("operation-mode", "Operation Mode");
 
 static uint32_t _measurementInterval = 10;
 static uint32_t _lastMeasurement;
+
+#ifdef ESP32
+namespace {
+constexpr gpio_num_t WPS_TRIGGER_PIN{GPIO_NUM_0};
+constexpr uint32_t WPS_TRIGGER_HOLD_MS{1500UL};
+constexpr uint32_t WPS_SESSION_TIMEOUT_MS{120000UL};
+constexpr uint32_t WPS_CONNECT_TIMEOUT_MS{30000UL};
+constexpr size_t HOMIE_CONFIG_BUFFER_SIZE{4096};
+constexpr const char *HOMIE_CONFIG_PATH{"/homie/config.json"};
+constexpr wps_type_t WPS_MODE{WPS_TYPE_PBC};
+
+struct WpsProvisionState final {
+  bool success{false};
+  bool failed{false};
+  bool timedOut{false};
+};
+
+static WpsProvisionState wpsProvisionState{};
+
+static auto stopWps() -> void {
+  const esp_err_t disableErr = esp_wifi_wps_disable();
+  if (disableErr != ESP_OK && disableErr != ESP_ERR_WIFI_WPS_SM) {
+    Serial.printf("WPS disable failed: 0x%x (%s)\n", static_cast<unsigned>(disableErr), esp_err_to_name(disableErr));
+  }
+}
+
+static auto startWps() -> bool {
+  esp_wps_config_t config{};
+  config.wps_type = WPS_MODE;
+  snprintf(config.factory_info.manufacturer, sizeof(config.factory_info.manufacturer), "smart-swimmingpool");
+  snprintf(config.factory_info.model_number, sizeof(config.factory_info.model_number), "pool-controller");
+  snprintf(config.factory_info.model_name, sizeof(config.factory_info.model_name), "ESP32 Pool Controller");
+  snprintf(config.factory_info.device_name, sizeof(config.factory_info.device_name), "Pool Controller");
+  snprintf(config.pin, sizeof(config.pin), "00000000");
+
+  const esp_err_t enableErr = esp_wifi_wps_enable(&config);
+  if (enableErr != ESP_OK) {
+    Serial.printf("WPS enable failed: 0x%x (%s)\n", static_cast<unsigned>(enableErr), esp_err_to_name(enableErr));
+    return false;
+  }
+
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(6, 0, 0)
+  const esp_err_t startErr = esp_wifi_wps_start();
+#else
+  const esp_err_t startErr = esp_wifi_wps_start(0);
+#endif
+  if (startErr != ESP_OK) {
+    Serial.printf("WPS start failed: 0x%x (%s)\n", static_cast<unsigned>(startErr), esp_err_to_name(startErr));
+    stopWps();
+    return false;
+  }
+  return true;
+}
+
+static auto persistWpsWifiCredentials() -> bool {
+  if (!SPIFFS.begin(true)) {
+    Serial.println("WPS: cannot mount SPIFFS");
+    return false;
+  }
+
+  if (!SPIFFS.exists(HOMIE_CONFIG_PATH)) {
+    Serial.println("WPS: Homie config missing, skip credential persistence");
+    return false;
+  }
+
+  File configFile = SPIFFS.open(HOMIE_CONFIG_PATH, "r");
+  if (!configFile) {
+    Serial.println("WPS: cannot open Homie config for read");
+    return false;
+  }
+
+  const size_t configSize = configFile.size();
+  if (configSize == 0 || configSize >= HOMIE_CONFIG_BUFFER_SIZE) {
+    Serial.println("WPS: Homie config size invalid");
+    configFile.close();
+    return false;
+  }
+
+  char configBuffer[HOMIE_CONFIG_BUFFER_SIZE];
+  configFile.readBytes(configBuffer, configSize);
+  configFile.close();
+  configBuffer[configSize] = '\0';
+
+  StaticJsonDocument<HOMIE_CONFIG_BUFFER_SIZE> jsonDoc;
+  const DeserializationError parseErr = deserializeJson(jsonDoc, configBuffer);
+  if (parseErr != DeserializationError::Ok || !jsonDoc.is<JsonObject>()) {
+    Serial.println("WPS: Homie config JSON parse failed");
+    return false;
+  }
+
+  const String ssid = WiFi.SSID();
+  if (ssid.isEmpty()) {
+    Serial.println("WPS: no SSID after successful pairing");
+    return false;
+  }
+
+  JsonObject root = jsonDoc.as<JsonObject>();
+  JsonObject wifi = root["wifi"].is<JsonObject>() ? root["wifi"].as<JsonObject>() : root.createNestedObject("wifi");
+  wifi["ssid"] = ssid;
+  wifi["password"] = WiFi.psk();
+
+  File outFile = SPIFFS.open(HOMIE_CONFIG_PATH, "w");
+  if (!outFile) {
+    Serial.println("WPS: cannot open Homie config for write");
+    return false;
+  }
+
+  const size_t written = serializeJson(jsonDoc, outFile);
+  outFile.close();
+
+  if (written == 0) {
+    Serial.println("WPS: failed writing Homie config");
+    return false;
+  }
+
+  Serial.printf("WPS: persisted WiFi credentials for SSID '%s'\n", ssid.c_str());
+  return true;
+}
+
+static auto waitForWifiConnected(const uint32_t timeoutMs) -> bool {
+  const uint32_t startedAt = millis();
+  while ((millis() - startedAt) < timeoutMs) {
+    if (WiFi.status() == WL_CONNECTED) {
+      return true;
+    }
+    delay(50);
+  }
+  return false;
+}
+
+static auto handleWpsEvent(WiFiEvent_t event, arduino_event_info_t info) -> void {
+  switch (event) {
+  case ARDUINO_EVENT_WPS_ER_SUCCESS:
+    wpsProvisionState.success = true;
+    stopWps();
+    WiFi.begin();
+    break;
+  case ARDUINO_EVENT_WPS_ER_FAILED:
+    wpsProvisionState.failed = true;
+    stopWps();
+    break;
+  case ARDUINO_EVENT_WPS_ER_TIMEOUT:
+    wpsProvisionState.timedOut = true;
+    stopWps();
+    break;
+  case ARDUINO_EVENT_WPS_ER_PIN:
+    Serial.printf("WPS pin: %.8s\n", info.wps_er_pin.pin_code);
+    break;
+  default:
+    break;
+  }
+}
+
+static auto shouldStartWpsProvisioning() -> bool {
+  pinMode(static_cast<uint8_t>(WPS_TRIGGER_PIN), INPUT_PULLUP);
+  const uint32_t startedAt = millis();
+  while ((millis() - startedAt) < WPS_TRIGGER_HOLD_MS) {
+    if (digitalRead(static_cast<uint8_t>(WPS_TRIGGER_PIN)) != LOW) {
+      return false;
+    }
+    delay(10);
+  }
+  return true;
+}
+
+static auto runWpsProvisioningIfRequested() -> void {
+  if (!shouldStartWpsProvisioning()) {
+    return;
+  }
+
+  Serial.println("WPS: trigger button held, starting WPS provisioning");
+
+  wpsProvisionState = {};
+  WiFi.disconnect(true, true);
+  WiFi.mode(WIFI_MODE_STA);
+  WiFiEventId_t handlerId = WiFi.onEvent(handleWpsEvent);
+
+  if (!startWps()) {
+    WiFi.removeEvent(handlerId);
+    return;
+  }
+
+  const uint32_t startedAt = millis();
+  while ((millis() - startedAt) < WPS_SESSION_TIMEOUT_MS) {
+    if (wpsProvisionState.success || wpsProvisionState.failed || wpsProvisionState.timedOut) {
+      break;
+    }
+    delay(50);
+  }
+
+  if (wpsProvisionState.success && waitForWifiConnected(WPS_CONNECT_TIMEOUT_MS)) {
+    const bool persisted = persistWpsWifiCredentials();
+    if (!persisted) {
+      Serial.println("WPS: connected, but credentials were not persisted");
+    }
+  } else {
+    Serial.println("WPS: provisioning failed or timed out");
+    stopWps();
+  }
+
+  WiFi.removeEvent(handlerId);
+}
+}  // namespace
+#endif
 
 static bool extractHomeAssistantObjectId(const char *topic, const char *component, char *objectId, size_t objectIdSize) {
   char prefix[128];
@@ -427,6 +638,10 @@ auto PoolControllerContext::setup() -> void {
 
   Homie_setFirmware("pool-controller", "3.2.0");
   Homie_setBrand("smart-swimmingpool");
+
+#ifdef ESP32
+  runWpsProvisioningIfRequested();
+#endif
 
   // default interval of sending Temperature values
   this->loopIntervalSetting_.setDefaultValue(TEMP_READ_INTERVAL).setValidator([](const long candidate) -> bool {
