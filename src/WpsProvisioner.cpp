@@ -12,14 +12,14 @@
 
 namespace {
 constexpr gpio_num_t WPS_TRIGGER_PIN{GPIO_NUM_0};
-constexpr uint32_t WPS_TRIGGER_HOLD_MS{1500UL};
+constexpr uint32_t WPS_TRIGGER_HOLD_MS{2000UL};
 constexpr uint32_t WPS_SESSION_TIMEOUT_MS{120000UL};
 constexpr uint32_t WPS_CONNECT_TIMEOUT_MS{30000UL};
 constexpr uint32_t WPS_TRIGGER_POLL_INTERVAL_MS{10UL};
 constexpr uint32_t WIFI_STATUS_POLL_INTERVAL_MS{50UL};
 constexpr size_t WIFI_SSID_MAX_LEN{32};
-constexpr bool WIFI_DISCONNECT_TURN_OFF_RADIO{false};
-constexpr bool WIFI_DISCONNECT_ERASE_CREDENTIALS{false};
+constexpr bool WIFI_KEEP_RADIO_ON{true};
+constexpr bool WIFI_PRESERVE_CREDENTIALS{true};
 constexpr size_t HOMIE_CONFIG_BUFFER_SIZE{4096};
 constexpr const char *HOMIE_CONFIG_PATH{"/homie/config.json"};
 constexpr const char *HOMIE_CONFIG_TMP_PATH{"/homie/config.wps.tmp"};
@@ -45,10 +45,21 @@ auto stopWps() -> void {
 auto startWps() -> bool {
   esp_wps_config_t config{};
   config.wps_type = WPS_MODE;
-  snprintf(config.factory_info.manufacturer, sizeof(config.factory_info.manufacturer), "smart-swimmingpool");
-  snprintf(config.factory_info.model_number, sizeof(config.factory_info.model_number), "pool-controller");
-  snprintf(config.factory_info.model_name, sizeof(config.factory_info.model_name), "ESP32 Pool Controller");
-  snprintf(config.factory_info.device_name, sizeof(config.factory_info.device_name), "Pool Controller");
+  const int manufacturerLen =
+    snprintf(config.factory_info.manufacturer, sizeof(config.factory_info.manufacturer), "smart-swimmingpool");
+  const int modelNumberLen =
+    snprintf(config.factory_info.model_number, sizeof(config.factory_info.model_number), "pool-controller");
+  const int modelNameLen =
+    snprintf(config.factory_info.model_name, sizeof(config.factory_info.model_name), "ESP32 Pool Controller");
+  const int deviceNameLen =
+    snprintf(config.factory_info.device_name, sizeof(config.factory_info.device_name), "Pool Controller");
+  if (manufacturerLen < 0 || static_cast<size_t>(manufacturerLen) >= sizeof(config.factory_info.manufacturer) ||
+      modelNumberLen < 0 || static_cast<size_t>(modelNumberLen) >= sizeof(config.factory_info.model_number) ||
+      modelNameLen < 0 || static_cast<size_t>(modelNameLen) >= sizeof(config.factory_info.model_name) ||
+      deviceNameLen < 0 || static_cast<size_t>(deviceNameLen) >= sizeof(config.factory_info.device_name)) {
+    Serial.println("WPS: factory-info string truncated");
+    return false;
+  }
   const esp_err_t enableErr = esp_wifi_wps_enable(&config);
   if (enableErr != ESP_OK) {
     Serial.printf("WPS enable failed: 0x%x (%s)\n", static_cast<unsigned>(enableErr), esp_err_to_name(enableErr));
@@ -205,7 +216,7 @@ auto WpsProvisioner::runIfRequested() -> void {
   wpsProvisionState.success.store(false);
   wpsProvisionState.failed.store(false);
   wpsProvisionState.timedOut.store(false);
-  WiFi.disconnect(WIFI_DISCONNECT_TURN_OFF_RADIO, WIFI_DISCONNECT_ERASE_CREDENTIALS);
+  WiFi.disconnect(!WIFI_KEEP_RADIO_ON, !WIFI_PRESERVE_CREDENTIALS);
   WiFi.mode(WIFI_MODE_STA);
   WiFiEventId_t handlerId = WiFi.onEvent(handleWpsEvent);
 
@@ -230,6 +241,7 @@ auto WpsProvisioner::runIfRequested() -> void {
   } else {
     Serial.println("WPS: provisioning failed or timed out");
     stopWps();
+    // Retry with previously stored WiFi credentials.
     WiFi.begin();
   }
 
