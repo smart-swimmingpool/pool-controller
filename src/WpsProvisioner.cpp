@@ -33,7 +33,6 @@ struct WpsProvisionState final {
 
 static WpsProvisionState wpsProvisionState{};
 static bool spiffsMountedForWps{false};
-static StaticJsonDocument<HOMIE_CONFIG_BUFFER_SIZE> homieConfigJson{};
 
 auto stopWps() -> void {
   const esp_err_t disableErr = esp_wifi_wps_disable();
@@ -104,7 +103,9 @@ auto persistWpsWifiCredentials() -> bool {
     return false;
   }
 
-  homieConfigJson.clear();
+  // Declared function-local so the 4 KB buffer only occupies RAM while WPS
+  // provisioning is active (once, during setup) — not for the entire runtime.
+  StaticJsonDocument<HOMIE_CONFIG_BUFFER_SIZE> homieConfigJson{};
   const DeserializationError parseErr = deserializeJson(homieConfigJson, configFile);
   configFile.close();
   if (parseErr != DeserializationError::Ok || !homieConfigJson.is<JsonObject>()) {

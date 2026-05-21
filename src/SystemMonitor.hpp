@@ -13,6 +13,7 @@
 
 #include <Arduino.h>
 #include <Preferences.h>
+#include <esp_idf_version.h>
 #include <esp_task_wdt.h>
 
 namespace PoolController {
@@ -33,13 +34,27 @@ public:
   /**
    * Initialize system monitor and watchdog.
    * ESP32 TWDT: 30-second timeout, panic on timeout.
+   *
+   * ESP-IDF 5.x changed the WDT API to use a config struct, and the Arduino
+   * framework pre-initialises the TWDT before setup() runs.  Use
+   * esp_task_wdt_reconfigure() on ESP-IDF ≥ 5 so we can adjust the timeout
+   * without failing with ESP_ERR_INVALID_STATE.
    */
   static void begin() {
     lastMemoryCheck = 0;
     minFreeHeap = ESP.getFreeHeap();
     lowMemoryWarning = false;
 
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
+    const esp_task_wdt_config_t wdt_config = {
+      .timeout_ms = 30000,
+      .idle_core_mask = 0,
+      .trigger_panic = true,
+    };
+    esp_task_wdt_reconfigure(&wdt_config);
+#else
     esp_task_wdt_init(30, true);
+#endif
     esp_task_wdt_add(NULL);
   }
 
