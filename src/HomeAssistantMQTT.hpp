@@ -34,7 +34,7 @@ class DiscoveryPublisher {
 public:
   /**
    * Publish a sensor discovery message
-   * @note Uses ~400 bytes of JSON, buffer is 512 bytes
+   * @note Uses ~400–500 bytes of JSON, buffer is 768 bytes
    */
   static bool publishSensor(const char *nodeId, const char *objectId, const char *name, const char *deviceClass = nullptr,
     const char *unitOfMeasurement = nullptr, const char *icon = nullptr) {
@@ -72,7 +72,7 @@ public:
     device["manufacturer"] = "smart-swimmingpool";
     device["model"] = "Pool Controller 2.0";
 
-    char buffer[512];
+    char buffer[768];
     size_t len = serializeJson(doc, buffer, sizeof(buffer));
 
     // Check for truncation
@@ -86,7 +86,7 @@ public:
 
   /**
    * Publish a switch discovery message
-   * @note Uses ~450 bytes of JSON, buffer is 512 bytes
+   * @note Uses ~450–550 bytes of JSON, buffer is 768 bytes
    */
   static bool publishSwitch(const char *nodeId, const char *objectId, const char *name, const char *icon = nullptr) {
     if (!Homie.isConnected())
@@ -128,7 +128,7 @@ public:
     device["manufacturer"] = "smart-swimmingpool";
     device["model"] = "Pool Controller 2.0";
 
-    char buffer[512];
+    char buffer[768];
     size_t len = serializeJson(doc, buffer, sizeof(buffer));
 
     // Check for truncation
@@ -183,7 +183,7 @@ public:
     device["manufacturer"] = "smart-swimmingpool";
     device["model"] = "Pool Controller 2.0";
 
-    char buffer[512];
+    char buffer[768];
     size_t len = serializeJson(doc, buffer, sizeof(buffer));
 
     if (len >= sizeof(buffer) - 1) {
@@ -234,7 +234,7 @@ public:
     device["manufacturer"] = "smart-swimmingpool";
     device["model"] = "Pool Controller 2.0";
 
-    char buffer[512];
+    char buffer[768];
     size_t len = serializeJson(doc, buffer, sizeof(buffer));
 
     if (len >= sizeof(buffer) - 1) {
@@ -276,7 +276,7 @@ public:
     device["manufacturer"] = "smart-swimmingpool";
     device["model"] = "Pool Controller 2.0";
 
-    constexpr size_t kDiscoveryJsonBufferSize = 512;
+    constexpr size_t kDiscoveryJsonBufferSize = 768;
     char buffer[kDiscoveryJsonBufferSize];
     size_t len = serializeJson(doc, buffer, sizeof(buffer));
 
