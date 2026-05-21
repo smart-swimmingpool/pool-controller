@@ -7,9 +7,9 @@
 #include <ArduinoJson.h>
 #include <SPIFFS.h>
 #include <WiFi.h>
-#include <atomic>
 #include <esp_wifi.h>
 #include <esp_wps.h>
+#include <atomic>
 
 namespace {
 constexpr gpio_num_t WPS_TRIGGER_PIN{GPIO_NUM_0};
