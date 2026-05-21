@@ -17,13 +17,13 @@ menu:
 
 ## Setup
 
-### Initial WiFi setup via WPS (ESP32)
+### Initial WiFi setup via WPS
 
 You can trigger WPS onboarding during boot to pair the controller with your router
 without typing WiFi credentials manually:
 
-1. Press and hold the **BOOT** button on the ESP32.
-2. Keep it pressed while powering on (or resetting) the controller for at least 1.5 seconds.
+1. Power on (or reset) the controller normally and wait until firmware startup begins.
+2. Then press and hold the **BOOT** button for at least 1.5 seconds.
 3. Start **WPS Push Button Connect (PBC)** on your router.
 4. Wait until pairing completes.
 

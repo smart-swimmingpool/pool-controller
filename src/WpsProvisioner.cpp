@@ -15,6 +15,8 @@ constexpr gpio_num_t WPS_TRIGGER_PIN{GPIO_NUM_0};
 constexpr uint32_t WPS_TRIGGER_HOLD_MS{1500UL};
 constexpr uint32_t WPS_SESSION_TIMEOUT_MS{120000UL};
 constexpr uint32_t WPS_CONNECT_TIMEOUT_MS{30000UL};
+constexpr uint32_t WPS_TRIGGER_POLL_INTERVAL_MS{10UL};
+constexpr uint32_t WIFI_STATUS_POLL_INTERVAL_MS{50UL};
 constexpr size_t HOMIE_CONFIG_BUFFER_SIZE{4096};
 constexpr const char *HOMIE_CONFIG_PATH{"/homie/config.json"};
 constexpr const char *HOMIE_CONFIG_TMP_PATH{"/homie/config.wps.tmp"};
@@ -28,6 +30,7 @@ struct WpsProvisionState final {
 
 static WpsProvisionState wpsProvisionState{};
 static bool spiffsMountedForWps{false};
+static StaticJsonDocument<HOMIE_CONFIG_BUFFER_SIZE> homieConfigJson{};
 
 auto stopWps() -> void {
   const esp_err_t disableErr = esp_wifi_wps_disable();
@@ -87,18 +90,10 @@ auto persistWpsWifiCredentials() -> bool {
     return false;
   }
 
-  char configBuffer[HOMIE_CONFIG_BUFFER_SIZE];
-  const size_t readBytes = configFile.readBytes(configBuffer, configSize);
+  homieConfigJson.clear();
+  const DeserializationError parseErr = deserializeJson(homieConfigJson, configFile);
   configFile.close();
-  if (readBytes != configSize) {
-    Serial.println("WPS: failed reading Homie config");
-    return false;
-  }
-  configBuffer[configSize] = '\0';
-
-  StaticJsonDocument<HOMIE_CONFIG_BUFFER_SIZE> configJson;
-  const DeserializationError parseErr = deserializeJson(configJson, configBuffer);
-  if (parseErr != DeserializationError::Ok || !configJson.is<JsonObject>()) {
+  if (parseErr != DeserializationError::Ok || !homieConfigJson.is<JsonObject>()) {
     Serial.println("WPS: Homie config JSON parse failed");
     return false;
   }
@@ -111,7 +106,7 @@ auto persistWpsWifiCredentials() -> bool {
     return false;
   }
 
-  JsonObject root = configJson.as<JsonObject>();
+  JsonObject root = homieConfigJson.as<JsonObject>();
   JsonObject wifi = root["wifi"].is<JsonObject>() ? root["wifi"].as<JsonObject>() : root.createNestedObject("wifi");
   wifi["ssid"] = connectedSsid;
   wifi["password"] = WiFi.psk();
@@ -123,7 +118,7 @@ auto persistWpsWifiCredentials() -> bool {
     return false;
   }
 
-  const size_t written = serializeJson(configJson, outFile);
+  const size_t written = serializeJson(homieConfigJson, outFile);
   outFile.close();
 
   if (written == 0) {
@@ -154,7 +149,7 @@ auto waitForWifiConnected(const uint32_t timeoutMs) -> bool {
     if (WiFi.status() == WL_CONNECTED) {
       return true;
     }
-    vTaskDelay(pdMS_TO_TICKS(50));
+    vTaskDelay(pdMS_TO_TICKS(WIFI_STATUS_POLL_INTERVAL_MS));
   }
   return false;
 }
@@ -189,7 +184,7 @@ auto shouldStartWpsProvisioning() -> bool {
     if (digitalRead(static_cast<uint8_t>(WPS_TRIGGER_PIN)) != LOW) {
       return false;
     }
-    vTaskDelay(pdMS_TO_TICKS(10));
+    vTaskDelay(pdMS_TO_TICKS(WPS_TRIGGER_POLL_INTERVAL_MS));
   }
   return true;
 }
@@ -206,7 +201,7 @@ auto WpsProvisioner::runIfRequested() -> void {
   wpsProvisionState.success.store(false);
   wpsProvisionState.failed.store(false);
   wpsProvisionState.timedOut.store(false);
-  WiFi.disconnect(true, true);
+  WiFi.disconnect(false, false);
   WiFi.mode(WIFI_MODE_STA);
   WiFiEventId_t handlerId = WiFi.onEvent(handleWpsEvent);
 
@@ -220,7 +215,7 @@ auto WpsProvisioner::runIfRequested() -> void {
     if (wpsProvisionState.success.load() || wpsProvisionState.failed.load() || wpsProvisionState.timedOut.load()) {
       break;
     }
-    vTaskDelay(pdMS_TO_TICKS(50));
+    vTaskDelay(pdMS_TO_TICKS(WIFI_STATUS_POLL_INTERVAL_MS));
   }
 
   if (wpsProvisionState.success.load() && waitForWifiConnected(WPS_CONNECT_TIMEOUT_MS)) {
