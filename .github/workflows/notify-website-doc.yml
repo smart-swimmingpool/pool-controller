@@ -16,7 +16,7 @@ jobs:
         continue-on-error: true
         run: |
           echo "::add-mask::${HUGO_DEPLOY_TOKEN}"
-          dispatch_response="$(mktemp /tmp/dispatch_response.XXXXXX)"
+          dispatch_response="$(mktemp)"
           trap 'rm -f "${dispatch_response}"' EXIT
           http_status=$(curl -sS \
             -o "${dispatch_response}" \
@@ -29,7 +29,6 @@ jobs:
             -d '{"event_type":"doc_update"}')
           if [ "${http_status}" -lt 200 ] || [ "${http_status}" -ge 300 ]; then
             echo "::warning::repository_dispatch failed with HTTP ${http_status}"
-            cat "${dispatch_response}"
             exit 1
           fi
 
