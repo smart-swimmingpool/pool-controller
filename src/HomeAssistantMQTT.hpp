@@ -72,7 +72,7 @@ public:
     device["manufacturer"] = "smart-swimmingpool";
     device["model"] = "Pool Controller 2.0";
 
-    char buffer[768];
+    char buffer[1024];
     size_t len = serializeJson(doc, buffer, sizeof(buffer));
 
     // Check for truncation
@@ -128,7 +128,7 @@ public:
     device["manufacturer"] = "smart-swimmingpool";
     device["model"] = "Pool Controller 2.0";
 
-    char buffer[768];
+    char buffer[1024];
     size_t len = serializeJson(doc, buffer, sizeof(buffer));
 
     // Check for truncation
@@ -183,7 +183,7 @@ public:
     device["manufacturer"] = "smart-swimmingpool";
     device["model"] = "Pool Controller 2.0";
 
-    char buffer[768];
+    char buffer[1024];
     size_t len = serializeJson(doc, buffer, sizeof(buffer));
 
     if (len >= sizeof(buffer) - 1) {
@@ -234,7 +234,7 @@ public:
     device["manufacturer"] = "smart-swimmingpool";
     device["model"] = "Pool Controller 2.0";
 
-    char buffer[768];
+    char buffer[1024];
     size_t len = serializeJson(doc, buffer, sizeof(buffer));
 
     if (len >= sizeof(buffer) - 1) {
@@ -276,7 +276,7 @@ public:
     device["manufacturer"] = "smart-swimmingpool";
     device["model"] = "Pool Controller 2.0";
 
-    constexpr size_t kDiscoveryJsonBufferSize = 768;
+    constexpr size_t kDiscoveryJsonBufferSize = 1024;
     char buffer[kDiscoveryJsonBufferSize];
     size_t len = serializeJson(doc, buffer, sizeof(buffer));
 
