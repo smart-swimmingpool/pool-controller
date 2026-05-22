@@ -73,7 +73,34 @@ Commit Message Body kann Motivation und Kontext enthalten. Breaking Changes
 müssen mit `BREAKING CHANGE:` im Footer markiert werden.
 Commit Messages müssen dem Format entsprechen, damit automatische Changelog-Generierung, Versionierung und CI-Checks funktionieren.:contentReference[oaicite:1]{index=1}
 
-## 7. Build-Konfiguration
+## 7. Code Search
+
+Use `semble search` to find code by describing what it does or naming a symbol/identifier, instead of grep:
+
+​```bash
+semble search "authentication flow" ./my-project
+semble search "save_pretrained" ./my-project
+semble search "save model to disk" ./my-project --top-k 10
+​```
+
+Use `semble find-related` to discover code similar to a known location (pass `file_path` and `line` from a prior search result):
+
+​```bash
+semble find-related src/auth.py 42 ./my-project
+​```
+
+`path` defaults to the current directory when omitted; git URLs are accepted.
+
+If `semble` is not on `$PATH`, use `uvx --from "semble[mcp]" semble` in its place.
+
+### Workflow
+
+1. Start with `semble search` to find relevant chunks.
+2. Inspect full files only when the returned chunk is not enough context.
+3. Optionally use `semble find-related` with a promising result's `file_path` and `line` to discover related implementations.
+4. Use grep only when you need exhaustive literal matches or quick confirmation of an exact string.
+
+## 8. Build-Konfiguration
 
 - `platformio.ini`: zentrale Flags, Versions-Defines (`FW_NAME`, `FW_VERSION`).
 - Build-Artefakte: Debug vs Release:
@@ -81,7 +108,7 @@ Commit Messages müssen dem Format entsprechen, damit automatische Changelog-Gen
   - Release: optimiert, gedämpftes Logging, Sicherheits-Features aktiv.
 - Build-Flags: `-D LOG_LEVEL`, `-D NDEBUG` steuerbar über Environments.
 
-## 8. Speicher & Ressourcen
+## 9. Speicher & Ressourcen
 
 - Kein unbounded dynamic Heap/Fragmentierung:
   - Statische Puffer wo möglich, wiederverwendbare Ring-Buffers.
@@ -91,7 +118,7 @@ Commit Messages müssen dem Format entsprechen, damit automatische Changelog-Gen
 - PSRAM gezielt nutzen, nicht blind, mit Metriken.
 - Memory-Pools statt häufige Allokationen.
 
-## 9. RTOS & Nebenläufigkeit
+## 10. RTOS & Nebenläufigkeit
 
 ESP32:
 
@@ -100,7 +127,7 @@ ESP32:
 - Prioritäten bewusst setzen, Priority Inheritance bei Mutex.
 - Task-Stack dimensionieren und überwachen.
 
-## 10. Sicherheit
+## 11. Sicherheit
 
 ESP32 Hardware-Security:
 
@@ -110,13 +137,13 @@ ESP32 Hardware-Security:
 - TLS für Netzverbindungen (MQTTS/HTTPS) mit CA/Key-Validation.
 - Secrets nicht im repository.
 
-## 11. OTA & Updates
+## 12. OTA & Updates
 
 - OTA mit mindestens zwei Partitions-Slots, Anti-Rollback/Checksum/Validity. :contentReference[oaicite:3]{index=3}
 - Sicherer OTA: HTTPS, Signaturen, Rollback-Mechanismus.
 - Update-Failure Detection (Task Init + Health-Checks vor Markieren aktiv).
 
-## 12. 24/7-Robustheit
+## 13. 24/7-Robustheit
 
 - Watchdogs aktiv (Loop/Tasks).
 - Netzwerk-Resilienz: Reconnect-Backoff + Jitter, Offline-Betrieb möglich.
@@ -124,35 +151,35 @@ ESP32 Hardware-Security:
 - Persistenz: Flash-Writes minimieren, Bundling, Debounce.
 - Health-Metrics sammeln: Uptime, Heap/Stack, Reset-Reason, Wifi/MQTT Status.
 
-## 13. Logging & Telemetrie
+## 14. Logging & Telemetrie
 
 - Strukturierte Logs (KV-Form).
 - Rate Limits für wiederkehrende Events.
 - Health Endpoints oder Telemetrie-Reports.
 
-## 14. Konfiguration & Secrets
+## 15. Konfiguration & Secrets
 
 - Defaults in `config_defaults.h`.
 - Runtime-Konfiguration über Filesystem (LittleFS/NVS) validieren.
 - Keine hartkodierten Secrets.
 
-## 15. Tests
+## 16. Tests
 
 - Unit-Tests für Parser, Protocol/State, Backoff, Scheduler.
 - Native Tests (`platform = native`) bevorzugt für CI.
 - Komponententests mit Mocks/Simulations.
 
-## 16. Dependencies
+## 17. Dependencies
 
 - Minimiert, begründet, Version-Pinned.
 - Lizenz-Checks; Updates mit CI-Absicherung.
 
-## 17. Release & CI
+## 18. Release & CI
 
 - Release: Sicherheitsfeatures, Monitoring, Debug ausschalten.
 - CI: Lint, Build, Tests, Heap/Stack Reports, Memory-Analyse.
 
-## 18. Antipatterns (verboten)
+## 19. Antipatterns (verboten)
 
 - Unlimitierte `delay()`, Busy-Wait, blockierende Netzwerk-Calls im Loop.
 - Häufige Heap-Allokationen in Hot-Paths.
@@ -166,7 +193,7 @@ ESP32 Hardware-Security:
 - Statische `String`-Puffer mit `.concat()` ohne vorheriges Reset — führt bei
   mehrfachem Aufruf zu verdoppelten Inhalten.
 
-## 19. ESP-IDF-Versionskompatibilität
+## 20. ESP-IDF-Versionskompatibilität
 
 Beim Einsatz von ESP-IDF-APIs immer mit `ESP_IDF_VERSION_VAL` absichern:
 
@@ -191,7 +218,7 @@ initialisiert den TWDT bereits vor `setup()`. Daher muss beim Anpassen des
 WDT-Timeouts `esp_task_wdt_reconfigure()` statt `esp_task_wdt_init()` verwendet
 werden.
 
-## 20. JSON-Puffer-Dimensionierung
+## 21. JSON-Puffer-Dimensionierung
 
 `ArduinoJson`-Regeln für ESP32-Projekte:
 
@@ -205,7 +232,7 @@ werden.
 - Einmalig genutzte große Dokumente (> 1 KB) als function-local statt
   file-scope `static` deklarieren.
 
-## 21. Änderungen aus der Praxis
+## 22. Änderungen aus der Praxis
 
 - Sicherheit: Secure Boot + Flash Encryption aktivieren, Debug-Schnittstellen deaktivieren.
 - OTA: Partition-basierte Updates mit Anti-Rollback/Checksum.
