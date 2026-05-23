@@ -14,7 +14,7 @@
  * Memory requirements:
  * - Sensor discovery: ~400-450 bytes JSON payload
  * - Switch discovery: ~450-500 bytes JSON payload
- * - Buffer size: 512 bytes (with safety margin)
+ * - Buffer size: 1024 bytes (with safety margin)
  */
 
 #include <Homie.h>
@@ -34,7 +34,7 @@ class DiscoveryPublisher {
 public:
   /**
    * Publish a sensor discovery message
-   * @note Uses ~400–500 bytes of JSON, buffer is 768 bytes
+   * @note Uses ~400–500 bytes of JSON, buffer is 1024 bytes
    */
   static bool publishSensor(const char *nodeId, const char *objectId, const char *name, const char *deviceClass = nullptr,
     const char *unitOfMeasurement = nullptr, const char *icon = nullptr) {
@@ -86,7 +86,7 @@ public:
 
   /**
    * Publish a switch discovery message
-   * @note Uses ~450–550 bytes of JSON, buffer is 768 bytes
+   * @note Uses ~450–550 bytes of JSON, buffer is 1024 bytes
    */
   static bool publishSwitch(const char *nodeId, const char *objectId, const char *name, const char *icon = nullptr) {
     if (!Homie.isConnected())
