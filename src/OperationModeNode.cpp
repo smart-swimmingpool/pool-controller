@@ -50,19 +50,22 @@ static bool parseTimeHHMM(const String &value, unsigned int &hour, unsigned int 
   if (value.charAt(2) != ':')
     return false;
 
+  // Position of the minute digits within the HH:MM string (after "HH:")
+  constexpr int kMinuteStartPos = 3;
   for (int i = 0; i < 2; i++) {
     if (!isdigit(value.charAt(i)))
       return false;
-    if (!isdigit(value.charAt(3 + i)))
+    if (!isdigit(value.charAt(kMinuteStartPos + i)))
       return false;
   }
 
+  // h and m are guaranteed non-negative because all chars are ASCII digits
   int h = (value.charAt(0) - '0') * 10 + (value.charAt(1) - '0');
-  int m = (value.charAt(3) - '0') * 10 + (value.charAt(4) - '0');
+  int m = (value.charAt(kMinuteStartPos) - '0') * 10 + (value.charAt(kMinuteStartPos + 1) - '0');
 
-  if (h < 0 || h > 23)
+  if (h > 23)
     return false;
-  if (m < 0 || m > 59)
+  if (m > 59)
     return false;
 
   hour = static_cast<unsigned int>(h);

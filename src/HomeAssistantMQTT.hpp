@@ -430,7 +430,7 @@ public:
     device["manufacturer"] = "smart-swimmingpool";
     device["model"] = "Pool Controller 2.0";
 
-    constexpr size_t kDiscoveryJsonBufferSize = 768;
+    constexpr size_t kDiscoveryJsonBufferSize = 1280;
     char buffer[kDiscoveryJsonBufferSize];
     size_t len = serializeJson(doc, buffer, sizeof(buffer));
 
