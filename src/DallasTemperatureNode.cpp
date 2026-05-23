@@ -94,9 +94,7 @@ void DallasTemperatureNode::onReadyToOperate() {
 void DallasTemperatureNode::loop() {
   // P7: When temperature is NaN (sensor error), use a shorter recovery
   // interval so the system detects reconnection faster.
-  unsigned long effectiveInterval = isnan(_temperature)
-    ? RECOVERY_INTERVAL
-    : _measurementInterval;
+  unsigned long effectiveInterval = isnan(_temperature) ? RECOVERY_INTERVAL : _measurementInterval;
 
   if (Utils::shouldMeasure(_lastMeasurement, effectiveInterval)) {
     _lastMeasurement = millis();
@@ -158,8 +156,7 @@ void DallasTemperatureNode::loop() {
       sensor.begin();
       numberOfDevices = sensor.getDeviceCount();
       if (numberOfDevices > 0) {
-        Homie.getLogger() << cIndent << numberOfDevices
-                          << F(" device(s) found after bus rescan") << endl;
+        Homie.getLogger() << cIndent << numberOfDevices << F(" device(s) found after bus rescan") << endl;
         _sensorFound = true;
       }
     }

@@ -29,7 +29,7 @@ void DegradationManager::begin() {
   }
   currentLevel_ = DegradationLevel::NORMAL;
   previousLevel_ = DegradationLevel::NORMAL;
-  poolSensorOk_ = false;   // Pessimistic — both probes must report healthy
+  poolSensorOk_ = false;  // Pessimistic — both probes must report healthy
   solarSensorOk_ = false;
   forcedSafeMode_ = false;
   lastEvaluationMs_ = 0;
@@ -85,18 +85,18 @@ void DegradationManager::forceSafeMode() {
 
 const char *DegradationManager::levelToString(DegradationLevel level) {
   switch (level) {
-    case DegradationLevel::NORMAL:
-      return "normal";
-    case DegradationLevel::NO_WIFI:
-      return "no-wifi";
-    case DegradationLevel::NO_TIME:
-      return "no-time";
-    case DegradationLevel::NO_SENSOR:
-      return "no-sensor";
-    case DegradationLevel::CRITICAL:
-      return "critical";
-    default:
-      return "unknown";
+  case DegradationLevel::NORMAL:
+    return "normal";
+  case DegradationLevel::NO_WIFI:
+    return "no-wifi";
+  case DegradationLevel::NO_TIME:
+    return "no-time";
+  case DegradationLevel::NO_SENSOR:
+    return "no-sensor";
+  case DegradationLevel::CRITICAL:
+    return "critical";
+  default:
+    return "unknown";
   }
 }
 
@@ -123,37 +123,33 @@ void DegradationManager::unforceSafeMode() {
 
 void DegradationManager::onTransition() {
   // Log the transition
-  Homie.getLogger() << F("⚙ Degradation: ")
-                    << levelToString(previousLevel_)
-                    << F(" → ")
-                    << levelToString(currentLevel_)
-                    << endl;
+  Homie.getLogger() << F("⚙ Degradation: ") << levelToString(previousLevel_) << F(" → ") << levelToString(currentLevel_) << endl;
 
   // Additional per-level actions
   switch (currentLevel_) {
-    case DegradationLevel::NORMAL:
-      Homie.getLogger() << F("✓ All systems nominal") << endl;
-      break;
+  case DegradationLevel::NORMAL:
+    Homie.getLogger() << F("✓ All systems nominal") << endl;
+    break;
 
-    case DegradationLevel::NO_WIFI:
-      Homie.getLogger() << F("⚠ WiFi/MQTT disconnected — operating offline") << endl;
-      Homie.getLogger() << F("  All control rules still active") << endl;
-      break;
+  case DegradationLevel::NO_WIFI:
+    Homie.getLogger() << F("⚠ WiFi/MQTT disconnected — operating offline") << endl;
+    Homie.getLogger() << F("  All control rules still active") << endl;
+    break;
 
-    case DegradationLevel::NO_TIME:
-      Homie.getLogger() << F("⚠ NTP time sync lost — timer scheduling degraded") << endl;
-      Homie.getLogger() << F("  Timer mode falls back to auto mode") << endl;
-      break;
+  case DegradationLevel::NO_TIME:
+    Homie.getLogger() << F("⚠ NTP time sync lost — timer scheduling degraded") << endl;
+    Homie.getLogger() << F("  Timer mode falls back to auto mode") << endl;
+    break;
 
-    case DegradationLevel::NO_SENSOR:
-      Homie.getLogger() << F("⚠ Temperature sensor fault — using cautious defaults") << endl;
-      Homie.getLogger() << F("  Auto mode may not function correctly") << endl;
-      break;
+  case DegradationLevel::NO_SENSOR:
+    Homie.getLogger() << F("⚠ Temperature sensor fault — using cautious defaults") << endl;
+    Homie.getLogger() << F("  Auto mode may not function correctly") << endl;
+    break;
 
-    case DegradationLevel::CRITICAL:
-      Homie.getLogger() << F("✖ CRITICAL: Multiple system failures detected!") << endl;
-      Homie.getLogger() << F("  Entering safe mode — all relays off") << endl;
-      break;
+  case DegradationLevel::CRITICAL:
+    Homie.getLogger() << F("✖ CRITICAL: Multiple system failures detected!") << endl;
+    Homie.getLogger() << F("  Entering safe mode — all relays off") << endl;
+    break;
   }
 
   // MQTT notification — best-effort, no retry
@@ -184,9 +180,12 @@ DegradationLevel DegradationManager::evaluateLevel() {
   // Time loss without WiFi is a consequence, not an independent failure —
   // counting both would escalate a plain WiFi outage to CRITICAL.
   uint8_t failureCount = 0;
-  if (!wifiOk) failureCount++;
-  if (!timeOk && wifiOk) failureCount++;
-  if (!sensorOk) failureCount++;
+  if (!wifiOk)
+    failureCount++;
+  if (!timeOk && wifiOk)
+    failureCount++;
+  if (!sensorOk)
+    failureCount++;
 
   // --- Decision logic ---
 
@@ -201,9 +200,12 @@ DegradationLevel DegradationManager::evaluateLevel() {
   }
 
   // Single failures — return the most specific level
-  if (!sensorOk) return DegradationLevel::NO_SENSOR;
-  if (!timeOk) return DegradationLevel::NO_TIME;
-  if (!wifiOk) return DegradationLevel::NO_WIFI;
+  if (!sensorOk)
+    return DegradationLevel::NO_SENSOR;
+  if (!timeOk)
+    return DegradationLevel::NO_TIME;
+  if (!wifiOk)
+    return DegradationLevel::NO_WIFI;
 
   return DegradationLevel::NORMAL;
 }

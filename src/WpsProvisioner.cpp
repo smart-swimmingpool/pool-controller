@@ -50,12 +50,11 @@ auto startWps() -> bool {
     snprintf(config.factory_info.model_number, sizeof(config.factory_info.model_number), "pool-controller");
   const int modelNameLen =
     snprintf(config.factory_info.model_name, sizeof(config.factory_info.model_name), "ESP32 Pool Controller");
-  const int deviceNameLen =
-    snprintf(config.factory_info.device_name, sizeof(config.factory_info.device_name), "Pool Controller");
+  const int deviceNameLen = snprintf(config.factory_info.device_name, sizeof(config.factory_info.device_name), "Pool Controller");
   if (manufacturerLen < 0 || static_cast<size_t>(manufacturerLen) >= sizeof(config.factory_info.manufacturer) ||
-      modelNumberLen < 0 || static_cast<size_t>(modelNumberLen) >= sizeof(config.factory_info.model_number) ||
-      modelNameLen < 0 || static_cast<size_t>(modelNameLen) >= sizeof(config.factory_info.model_name) ||
-      deviceNameLen < 0 || static_cast<size_t>(deviceNameLen) >= sizeof(config.factory_info.device_name)) {
+    modelNumberLen < 0 || static_cast<size_t>(modelNumberLen) >= sizeof(config.factory_info.model_number) || modelNameLen < 0 ||
+    static_cast<size_t>(modelNameLen) >= sizeof(config.factory_info.model_name) || deviceNameLen < 0 ||
+    static_cast<size_t>(deviceNameLen) >= sizeof(config.factory_info.device_name)) {
     Serial.println("WPS: factory-info string truncated");
     return false;
   }

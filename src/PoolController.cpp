@@ -120,24 +120,19 @@ static void onMqttMessage(
       operationModeNode.handleHomeAssistantCommand("hysteresis", payloadStr);
       return;
     }
-    if (strcmp(objectId, "timer-start-h") == 0) {
-      operationModeNode.handleHomeAssistantCommand("timer-start-h", payloadStr);
-      return;
-    }
-    if (strcmp(objectId, "timer-start-min") == 0) {
-      operationModeNode.handleHomeAssistantCommand("timer-start-min", payloadStr);
-      return;
-    }
-    if (strcmp(objectId, "timer-end-h") == 0) {
-      operationModeNode.handleHomeAssistantCommand("timer-end-h", payloadStr);
-      return;
-    }
-    if (strcmp(objectId, "timer-end-min") == 0) {
-      operationModeNode.handleHomeAssistantCommand("timer-end-min", payloadStr);
-      return;
-    }
     if (strcmp(objectId, "timezone") == 0) {
       operationModeNode.handleHomeAssistantCommand("timezone", payloadStr);
+      return;
+    }
+  }
+
+  if (extractHomeAssistantObjectId(topic, "text", objectId, sizeof(objectId))) {
+    if (strcmp(objectId, "timer-start") == 0) {
+      operationModeNode.handleHomeAssistantCommand("timer-start", payloadStr);
+      return;
+    }
+    if (strcmp(objectId, "timer-end") == 0) {
+      operationModeNode.handleHomeAssistantCommand("timer-end", payloadStr);
       return;
     }
   }
@@ -205,9 +200,7 @@ auto PoolControllerContext::initializeController() -> void {
   // The red-hours setter enforces red > green internally.
   setTimeDegradationGreenHours(static_cast<uint8_t>(this->timeLossGreenHoursSetting_.get()));
   setTimeDegradationRedHours(static_cast<uint8_t>(this->timeLossRedHoursSetting_.get()));
-  LN.logf(__PRETTY_FUNCTION__, LoggerNode::INFO,
-    "Degradation thresholds: GREEN=%d h, RED=%d h",
-    getTimeDegradationGreenHours(),
+  LN.logf(__PRETTY_FUNCTION__, LoggerNode::INFO, "Degradation thresholds: GREEN=%d h, RED=%d h", getTimeDegradationGreenHours(),
     getTimeDegradationRedHours());
 
   // Set the timezone from configuration
@@ -274,17 +267,25 @@ static void publishAllStates() {
   MqttInterface::publishNumberState(operationModeNode, "hysteresis", "hysteresis", buffer);
 
   TimerSetting ts = operationModeNode.getTimerSetting();
-  Utils::intToString(ts.timerStartHour, buffer, sizeof(buffer));
-  MqttInterface::publishNumberState(operationModeNode, "timer-start-h", "timer-start-h", buffer);
+  if (MqttInterface::isHomeAssistant()) {
+    char timeStr[6];
+    snprintf(timeStr, sizeof(timeStr), "%02u:%02u", ts.timerStartHour, ts.timerStartMinutes);
+    MqttInterface::publishTextEntityState(operationModeNode, "timer-start", "timer-start", timeStr);
+    snprintf(timeStr, sizeof(timeStr), "%02u:%02u", ts.timerEndHour, ts.timerEndMinutes);
+    MqttInterface::publishTextEntityState(operationModeNode, "timer-end", "timer-end", timeStr);
+  } else {
+    Utils::intToString(ts.timerStartHour, buffer, sizeof(buffer));
+    MqttInterface::publishNumberState(operationModeNode, "timer-start-h", "timer-start-h", buffer);
 
-  Utils::intToString(ts.timerStartMinutes, buffer, sizeof(buffer));
-  MqttInterface::publishNumberState(operationModeNode, "timer-start-min", "timer-start-min", buffer);
+    Utils::intToString(ts.timerStartMinutes, buffer, sizeof(buffer));
+    MqttInterface::publishNumberState(operationModeNode, "timer-start-min", "timer-start-min", buffer);
 
-  Utils::intToString(ts.timerEndHour, buffer, sizeof(buffer));
-  MqttInterface::publishNumberState(operationModeNode, "timer-end-h", "timer-end-h", buffer);
+    Utils::intToString(ts.timerEndHour, buffer, sizeof(buffer));
+    MqttInterface::publishNumberState(operationModeNode, "timer-end-h", "timer-end-h", buffer);
 
-  Utils::intToString(ts.timerEndMinutes, buffer, sizeof(buffer));
-  MqttInterface::publishNumberState(operationModeNode, "timer-end-min", "timer-end-min", buffer);
+    Utils::intToString(ts.timerEndMinutes, buffer, sizeof(buffer));
+    MqttInterface::publishNumberState(operationModeNode, "timer-end-min", "timer-end-min", buffer);
+  }
 
   int tzIndex = getTimezoneIndex();
   Utils::intToString(tzIndex, buffer, sizeof(buffer));
@@ -358,21 +359,13 @@ auto PoolControllerContext::setupHandler() -> void {
     PoolController::MqttInterface::publishNumberDiscovery("hysteresis", "Hysterese", 0.0, 10.0, 0.1, "K", "mdi:delta", "box");
     PoolController::MqttInterface::subscribeNumber("hysteresis");
 
-    PoolController::MqttInterface::publishNumberDiscovery(
-      "timer-start-h", "Timer Start", 0.0, 23.0, 1.0, "h", "mdi:clock-start", "box");
-    PoolController::MqttInterface::subscribeNumber("timer-start-h");
+    PoolController::MqttInterface::publishTextEntityDiscovery(
+      "timer-start", "Timer Start", "^([0-1][0-9]|2[0-3]):[0-5][0-9]$", "mdi:clock-start");
+    PoolController::MqttInterface::subscribeTextEntity("timer-start");
 
-    PoolController::MqttInterface::publishNumberDiscovery(
-      "timer-start-min", "Timer Start", 0.0, 59.0, 1.0, "min", "mdi:clock-start", "box");
-    PoolController::MqttInterface::subscribeNumber("timer-start-min");
-
-    PoolController::MqttInterface::publishNumberDiscovery(
-      "timer-end-h", "Timer End", 0.0, 23.0, 1.0, "h", "mdi:clock-end", "box");
-    PoolController::MqttInterface::subscribeNumber("timer-end-h");
-
-    PoolController::MqttInterface::publishNumberDiscovery(
-      "timer-end-min", "Timer End", 0.0, 59.0, 1.0, "min", "mdi:clock-end", "box");
-    PoolController::MqttInterface::subscribeNumber("timer-end-min");
+    PoolController::MqttInterface::publishTextEntityDiscovery(
+      "timer-end", "Timer End", "^([0-1][0-9]|2[0-3]):[0-5][0-9]$", "mdi:clock-end");
+    PoolController::MqttInterface::subscribeTextEntity("timer-end");
 
     PoolController::MqttInterface::publishNumberDiscovery("timezone", "Timezone", 0.0, 9.0, 1.0, nullptr, "mdi:map-clock", "box");
     PoolController::MqttInterface::subscribeNumber("timezone");
@@ -455,9 +448,8 @@ auto PoolControllerContext::setup() -> void {
   });
 
   // P9: Configurable time-loss thresholds
-  this->timeLossGreenHoursSetting_.setDefaultValue(1).setValidator([](const long candidate) -> bool {
-    return candidate >= 1 && candidate <= 6;
-  });
+  this->timeLossGreenHoursSetting_.setDefaultValue(1).setValidator(
+    [](const long candidate) -> bool { return candidate >= 1 && candidate <= 6; });
   this->timeLossRedHoursSetting_.setDefaultValue(24).setValidator([this](const long candidate) -> bool {
     return candidate >= 1 && candidate <= 72 && candidate > this->timeLossGreenHoursSetting_.get();
   });
@@ -528,8 +520,8 @@ auto PoolControllerContext::loop() -> void {
   // The guard ensures we only write NVS once per boot (avoids flash wear).
   static uint32_t lastBootClear = 0;
   static bool bootCounterCleared = false;
-  if (!bootCounterCleared && (millis() - lastBootClear) >
-      static_cast<uint32_t>(SystemMonitor::BOOT_LOOP_CLEAR_AFTER_SEC) * 1000UL) {
+  if (!bootCounterCleared &&
+    (millis() - lastBootClear) > static_cast<uint32_t>(SystemMonitor::BOOT_LOOP_CLEAR_AFTER_SEC) * 1000UL) {
     bootCounterCleared = true;
     SystemMonitor::clearBootLoopCounter();
     if (bootLoopDetected_) {

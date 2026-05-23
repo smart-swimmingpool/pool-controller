@@ -393,6 +393,82 @@ public:
   }
 
   /**
+   * Publish a text entity discovery message (writable text input, e.g. HH:MM)
+   * @param pattern optional regex pattern for validation (e.g. "^([0-1][0-9]|2[0-3]):[0-5][0-9]$")
+   */
+  static bool publishTextEntity(
+    const char *nodeId, const char *objectId, const char *name, const char *pattern = nullptr, const char *icon = nullptr) {
+    if (!Homie.isConnected())
+      return false;
+
+    char topic[128];
+    snprintf(topic, sizeof(topic), "homeassistant/text/%s/%s/config", nodeId, objectId);
+
+    StaticJsonDocument<1024> doc;
+
+    char stateTopic[128];
+    char commandTopic[128];
+    snprintf(stateTopic, sizeof(stateTopic), "homeassistant/text/%s/%s/state", nodeId, objectId);
+    snprintf(commandTopic, sizeof(commandTopic), "homeassistant/text/%s/%s/set", nodeId, objectId);
+
+    doc["state_topic"] = stateTopic;
+    doc["command_topic"] = commandTopic;
+
+    doc["name"] = name;
+    char uniqueId[96];
+    snprintf(uniqueId, sizeof(uniqueId), "%s_%s", nodeId, objectId);
+    doc["unique_id"] = uniqueId;
+
+    if (pattern)
+      doc["pattern"] = pattern;
+    if (icon)
+      doc["icon"] = icon;
+
+    JsonObject device = doc["device"].to<JsonObject>();
+    device["identifiers"][0] = nodeId;
+    device["name"] = "Pool Controller";
+    device["manufacturer"] = "smart-swimmingpool";
+    device["model"] = "Pool Controller 2.0";
+
+    constexpr size_t kDiscoveryJsonBufferSize = 768;
+    char buffer[kDiscoveryJsonBufferSize];
+    size_t len = serializeJson(doc, buffer, sizeof(buffer));
+
+    if (len >= kDiscoveryJsonBufferSize - 1) {
+      Homie.getLogger() << F("✖ Warning: JSON buffer too small, message truncated") << endl;
+      return false;
+    }
+
+    return Homie.getMqttClient().publish(topic, 1, true, buffer, len);
+  }
+
+  /**
+   * Publish state for a text entity
+   */
+  static bool publishTextEntityState(const char *nodeId, const char *objectId, const char *value) {
+    if (!Homie.isConnected())
+      return false;
+
+    char topic[128];
+    snprintf(topic, sizeof(topic), "homeassistant/text/%s/%s/state", nodeId, objectId);
+
+    return Homie.getMqttClient().publish(topic, 1, true, value);
+  }
+
+  /**
+   * Subscribe to text entity command topic
+   */
+  static bool subscribeTextEntity(const char *nodeId, const char *objectId) {
+    if (!Homie.isConnected())
+      return false;
+
+    char topic[128];
+    snprintf(topic, sizeof(topic), "homeassistant/text/%s/%s/set", nodeId, objectId);
+
+    return Homie.getMqttClient().subscribe(topic, 1);
+  }
+
+  /**
    * Get command topic for switch
    */
   static void getSwitchCommandTopic(char *buffer, size_t bufferSize, const char *nodeId, const char *objectId) {

@@ -1,0 +1,192 @@
+---
+spec: ha-timer-time-input
+version: 1.0.0
+status: implemented
+created: 2026-05-23
+author: "Copilot Task Agent"
+source: "https://github.com/smart-swimmingpool/pool-controller"
+tags: [homeassistant, mqtt, timer, time-input, hh-mm]
+---
+
+# Home Assistant HH:MM Timer Time Input
+
+Ersetzt die vier separaten `number`-Entitäten für Stunden und Minuten des Timers
+durch zwei `text`-Entitäten im Format `HH:MM` im Home Assistant MQTT Discovery.
+
+## 1. Problem Statement
+
+### Aktuelle Situation
+
+Die Timer-Start- und Endzeit werden über vier separate Werte konfiguriert:
+
+| Property | Typ | Bereich | Beschreibung |
+|---|---|---|---|
+| `timer-start-h` | number | 0–23 | Startstunde |
+| `timer-start-min` | number | 0–59 | Startminute |
+| `timer-end-h` | number | 0–23 | Endstunde |
+| `timer-end-min` | number | 0–59 | Endminute |
+
+Der Grund: Das Homie-Protokoll unterstützt keinen nativen Zeitdatentyp (`HH:MM`),
+daher wurde die Aufteilung in Stunden und Minuten als Workaround gewählt.
+
+### Gewünschter Zustand
+
+Home Assistant unterstützt über MQTT Discovery eine `text`-Entität mit Regex-Pattern.
+Damit lässt sich eine `HH:MM`-Zeitangabe als einzelner konfigurierbarer Wert
+darstellen und validieren.
+
+Neue Properties (nur Home Assistant Modus):
+
+| Property | Typ | Format | Beschreibung |
+|---|---|---|---|
+| `timer-start` | text | `HH:MM` (00:00–23:59) | Startuhrzeit |
+| `timer-end` | text | `HH:MM` (00:00–23:59) | Enduhrzeit |
+
+### Rückwärtskompatibilität
+
+- Im **Homie-Modus** bleiben die vier `number`-Properties (`timer-start-h`,
+  `timer-start-min`, `timer-end-h`, `timer-end-min`) **unverändert**.
+- Im **Home Assistant-Modus** werden die vier Number-Entitäten durch zwei
+  `text`-Entitäten (`timer-start`, `timer-end`) ersetzt.
+- Persistenz (NVS) bleibt intern auf Stunden/Minuten basiert.
+
+---
+
+## 2. Scope
+
+### In Scope
+
+- ✅ Neue HA MQTT `text`-Discovery für `timer-start` und `timer-end`
+- ✅ Regex-Validierung `^([0-1][0-9]|2[0-3]):[0-5][0-9]$` clientseitig in HA
+- ✅ Server-seitige Validierung beim Empfang des MQTT-Kommandos
+- ✅ Zustandspublizierung im Format `HH:MM` im HA-Modus
+- ✅ Homie-Kompatibilität (bestehende 4 Properties bleiben für Homie-Modus)
+- ✅ Persistenz unverändert (intern Stunden + Minuten in NVS)
+
+### Out of Scope
+
+- ❌ Migration bestehender NVS-Werte
+- ❌ Unterstützung von Sekunden (`HH:MM:SS`)
+- ❌ Homie-Erweiterung um einen Zeitdatentyp
+- ❌ UI-Änderungen an der Homie-Konfigurationsoberfläche
+
+---
+
+## 3. Requirements
+
+| ID | Beschreibung | Priorität |
+|---|---|---|
+| F-01 | HA `text`-Discovery für `timer-start` mit Pattern `^([0-1][0-9]|2[0-3]):[0-5][0-9]$` | Must |
+| F-02 | HA `text`-Discovery für `timer-end` mit Pattern `^([0-1][0-9]|2[0-3]):[0-5][0-9]$` | Must |
+| F-03 | MQTT-Kommando empfangen und `HH:MM` korrekt in Stunden + Minuten zerlegen | Must |
+| F-04 | Zustand `HH:MM` im HA-Modus publizieren | Must |
+| F-05 | Validierung: Ungültige Formate werden mit Log-Fehlermeldung abgewiesen | Must |
+| F-06 | Homie-Modus unverändert (vier `number`-Properties) | Must |
+| F-07 | Subscribe auf `/set`-Topic der `text`-Entitäten | Must |
+
+---
+
+## 4. Technical Design
+
+### 4.1 Home Assistant MQTT `text`-Entität
+
+Das HA MQTT Integration unterstützt seit HA 2022.6 eine `text`-Plattform:
+
+**Discovery-Topic:** `homeassistant/text/pool-controller/timer-start/config`
+
+**Discovery-Payload (Beispiel `timer-start`):**
+
+```json
+{
+  "state_topic": "homeassistant/text/pool-controller/timer-start/state",
+  "command_topic": "homeassistant/text/pool-controller/timer-start/set",
+  "name": "Timer Start",
+  "unique_id": "pool-controller_timer-start",
+  "pattern": "^([0-1][0-9]|2[0-3]):[0-5][0-9]$",
+  "icon": "mdi:clock-start",
+  "device": {
+    "identifiers": ["pool-controller"],
+    "name": "Pool Controller",
+    "manufacturer": "smart-swimmingpool",
+    "model": "Pool Controller 2.0"
+  }
+}
+```
+
+**State-Topic:** `homeassistant/text/pool-controller/timer-start/state`
+
+**State-Payload:** `10:30`
+
+**Command-Topic:** `homeassistant/text/pool-controller/timer-start/set`
+
+**Command-Payload:** `10:30`
+
+### 4.2 Betroffene Komponenten
+
+| Datei | Änderung |
+|---|---|
+| `src/HomeAssistantMQTT.hpp` | Neue Methoden: `publishTextEntity`, `publishTextEntityState`, `subscribeTextEntity` |
+| `src/MqttInterface.hpp` | Neue Wrapper: `publishTextEntityDiscovery`, `publishTextEntityState`, `subscribeTextEntity` |
+| `src/OperationModeNode.hpp` | Neue Konstanten `cTimerStart`, `cTimerEnd` |
+| `src/OperationModeNode.cpp` | `parseTimeHHMM` helper; `applyProperty` für `timer-start`/`timer-end`; HH:MM-Publizierung im HA-Modus |
+| `src/PoolController.cpp` | Discovery-Registrierung auf 2 Text-Entitäten; `onMqttMessage` um `text`-Komponente erweitert; `publishAllStates` HH:MM |
+
+### 4.3 Parse-Logik
+
+```
+parseTimeHHMM("10:30") → hour=10, minute=30 ✓
+parseTimeHHMM("23:59") → hour=23, minute=59 ✓
+parseTimeHHMM("24:00") → ✗ (hour > 23)
+parseTimeHHMM("10:60") → ✗ (minute > 59)
+parseTimeHHMM("10:3")  → ✗ (falsche Länge)
+parseTimeHHMM("abcd")  → ✗ (keine Ziffern)
+```
+
+---
+
+## 5. API / MQTT Topics
+
+### 5.1 Neue Topics (Home Assistant Modus)
+
+| Topic | Richtung | Payload | Beschreibung |
+|---|---|---|---|
+| `homeassistant/text/pool-controller/timer-start/config` | OUT | JSON | HA Discovery |
+| `homeassistant/text/pool-controller/timer-start/state` | OUT | `HH:MM` | Aktueller Wert |
+| `homeassistant/text/pool-controller/timer-start/set` | IN | `HH:MM` | Neuer Wert |
+| `homeassistant/text/pool-controller/timer-end/config` | OUT | JSON | HA Discovery |
+| `homeassistant/text/pool-controller/timer-end/state` | OUT | `HH:MM` | Aktueller Wert |
+| `homeassistant/text/pool-controller/timer-end/set` | IN | `HH:MM` | Neuer Wert |
+
+### 5.2 Entfernte Topics (Home Assistant Modus)
+
+| Topic | Ersetzt durch |
+|---|---|
+| `homeassistant/number/pool-controller/timer-start-h/...` | `homeassistant/text/pool-controller/timer-start/...` |
+| `homeassistant/number/pool-controller/timer-start-min/...` | (zusammengeführt) |
+| `homeassistant/number/pool-controller/timer-end-h/...` | `homeassistant/text/pool-controller/timer-end/...` |
+| `homeassistant/number/pool-controller/timer-end-min/...` | (zusammengeführt) |
+
+### 5.3 Unverändert (Homie Modus)
+
+| Property | Homie-Topic |
+|---|---|
+| `timer-start-h` | `{device}/operation-mode/timer-start-h` |
+| `timer-start-min` | `{device}/operation-mode/timer-start-min` |
+| `timer-end-h` | `{device}/operation-mode/timer-end-h` |
+| `timer-end-min` | `{device}/operation-mode/timer-end-min` |
+
+---
+
+## 6. Migration
+
+Bestehende Installationen im Homie-Modus sind **nicht betroffen**.
+
+Für Home Assistant Installationen:
+
+1. Beim Update werden automatisch die neuen `text`-Discovery-Nachrichten
+   publiziert und die alten `number`-Entitäten durch HA-Retained-Delete
+   (leerer Payload) entfernt — oder werden von HA nach einigen Tagen als
+   `unavailable` markiert und können manuell gelöscht werden.
+2. Timer-Konfiguration bleibt in NVS erhalten (Stunden + Minuten separat).
+3. Erststart nach Update: `timer-start` wird als `10:30`, `timer-end` als
+   `17:30` (Default-Werte) angezeigt.
