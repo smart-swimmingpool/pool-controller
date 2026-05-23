@@ -127,7 +127,7 @@ private:
   DallasTemperatureNode *_currentPoolTempNode = nullptr;
   DallasTemperatureNode *_currentSolarTempNode = nullptr;
 
-  TimerSetting _timerSetting;
+  TimerSetting _timerSetting{};
 
   uint32_t _measurementInterval;
   uint32_t _lastMeasurement;
