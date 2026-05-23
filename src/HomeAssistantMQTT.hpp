@@ -404,6 +404,8 @@ public:
     char topic[128];
     snprintf(topic, sizeof(topic), "homeassistant/text/%s/%s/config", nodeId, objectId);
 
+    // StaticJsonDocument<768>: sufficient for text-entity JSON (~400 bytes).
+    // Serialization buffer is 1024 bytes (>25% larger per AGENTS.md §20).
     StaticJsonDocument<768> doc;
 
     char stateTopic[128];

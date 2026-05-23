@@ -135,6 +135,7 @@ static void onMqttMessage(
       operationModeNode.handleHomeAssistantCommand("timer-end", payloadStr);
       return;
     }
+    Homie.getLogger() << F("⚠ Unhandled HA text entity: ") << objectId << endl;
   }
 }
 

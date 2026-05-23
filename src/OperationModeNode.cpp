@@ -45,31 +45,21 @@ static bool parseFloat(const String &value, float &result, float minVal, float m
 // Helper: Parse HH:MM time string into hours and minutes.
 // Returns true on success; false if format is invalid or values out of range.
 static bool parseTimeHHMM(const String &value, unsigned int &hour, unsigned int &minute) {
-  if (value.length() != 5)
-    return false;
-  if (value.charAt(2) != ':')
+  if (value.length() != 5 || value.charAt(2) != ':')
     return false;
 
-  // Position of the minute digits within the HH:MM string (after "HH:")
-  constexpr int cMinuteStartPos = 3;
-  for (int i = 0; i < 2; i++) {
-    if (!isdigit(value.charAt(i)))
-      return false;
-    if (!isdigit(value.charAt(cMinuteStartPos + i)))
-      return false;
-  }
-
-  // h and m are guaranteed non-negative because all chars are ASCII digits
-  int h = (value.charAt(0) - '0') * 10 + (value.charAt(1) - '0');
-  int m = (value.charAt(cMinuteStartPos) - '0') * 10 + (value.charAt(cMinuteStartPos + 1) - '0');
-
-  if (h > 23)
-    return false;
-  if (m > 59)
+  // Validate all digit positions to ensure non-negative, non-overflow results
+  if (!isdigit(value.charAt(0)) || !isdigit(value.charAt(1)) || !isdigit(value.charAt(3)) || !isdigit(value.charAt(4)))
     return false;
 
-  hour = static_cast<unsigned int>(h);
-  minute = static_cast<unsigned int>(m);
+  unsigned int h = static_cast<unsigned int>((value.charAt(0) - '0') * 10 + (value.charAt(1) - '0'));
+  unsigned int m = static_cast<unsigned int>((value.charAt(3) - '0') * 10 + (value.charAt(4) - '0'));
+
+  if (h > 23 || m > 59)
+    return false;
+
+  hour = h;
+  minute = m;
   return true;
 }
 
