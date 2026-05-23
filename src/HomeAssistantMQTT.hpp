@@ -471,6 +471,22 @@ public:
   }
 
   /**
+   * Remove a discovery entity from Home Assistant by publishing an empty
+   * retained message to its config topic. HA removes the entity on receipt.
+   * @param component  HA component type, e.g. "number", "sensor", "switch"
+   */
+  static bool deleteDiscovery(const char *nodeId, const char *component, const char *objectId) {
+    if (!Homie.isConnected())
+      return false;
+
+    char topic[128];
+    snprintf(topic, sizeof(topic), "homeassistant/%s/%s/%s/config", component, nodeId, objectId);
+
+    // Empty retained payload removes the entity from Home Assistant
+    return Homie.getMqttClient().publish(topic, 1, true, "", 0);
+  }
+
+  /**
    * Get command topic for switch
    */
   static void getSwitchCommandTopic(char *buffer, size_t bufferSize, const char *nodeId, const char *objectId) {

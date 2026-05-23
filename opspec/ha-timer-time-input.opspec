@@ -184,9 +184,10 @@ Bestehende Installationen im Homie-Modus sind **nicht betroffen**.
 Für Home Assistant Installationen:
 
 1. Beim Update werden automatisch die neuen `text`-Discovery-Nachrichten
-   publiziert und die alten `number`-Entitäten durch HA-Retained-Delete
-   (leerer Payload) entfernt — oder werden von HA nach einigen Tagen als
-   `unavailable` markiert und können manuell gelöscht werden.
+   publiziert. Die vier alten `number`-Entitäten (`timer-start-h`,
+   `timer-start-min`, `timer-end-h`, `timer-end-min`) werden durch eine
+   leere, retained MQTT-Nachricht auf ihrem jeweiligen Config-Topic explizit
+   entfernt — Home Assistant löscht die Entitäten beim Empfang automatisch.
 2. Timer-Konfiguration bleibt in NVS erhalten (Stunden + Minuten separat).
 3. Erststart nach Update: `timer-start` wird als `10:30`, `timer-end` als
    `17:30` (Default-Werte) angezeigt.

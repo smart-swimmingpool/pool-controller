@@ -48,8 +48,9 @@ static bool parseTimeHHMM(const String &value, unsigned int &hour, unsigned int 
   if (value.length() != 5 || value.charAt(2) != ':')
     return false;
 
-  // Validate all digit positions to ensure non-negative, non-overflow results
-  if (!isdigit(value.charAt(0)) || !isdigit(value.charAt(1)) || !isdigit(value.charAt(3)) || !isdigit(value.charAt(4)))
+  // Validate all digit positions; cast to unsigned char to avoid UB in isdigit()
+  if (!isdigit(static_cast<unsigned char>(value.charAt(0))) || !isdigit(static_cast<unsigned char>(value.charAt(1))) ||
+    !isdigit(static_cast<unsigned char>(value.charAt(3))) || !isdigit(static_cast<unsigned char>(value.charAt(4))))
     return false;
 
   unsigned int h = static_cast<unsigned int>((value.charAt(0) - '0') * 10 + (value.charAt(1) - '0'));

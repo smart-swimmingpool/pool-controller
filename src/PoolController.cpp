@@ -368,6 +368,12 @@ auto PoolControllerContext::setupHandler() -> void {
       "timer-end", "Timer End", "^([0-1][0-9]|2[0-3]):[0-5][0-9]$", "mdi:clock-end");
     PoolController::MqttInterface::subscribeTextEntity("timer-end");
 
+    // Remove the deprecated four separate hour/minute number entities from HA
+    PoolController::MqttInterface::deleteDiscovery("number", "timer-start-h");
+    PoolController::MqttInterface::deleteDiscovery("number", "timer-start-min");
+    PoolController::MqttInterface::deleteDiscovery("number", "timer-end-h");
+    PoolController::MqttInterface::deleteDiscovery("number", "timer-end-min");
+
     PoolController::MqttInterface::publishNumberDiscovery("timezone", "Timezone", 0.0, 9.0, 1.0, nullptr, "mdi:map-clock", "box");
     PoolController::MqttInterface::subscribeNumber("timezone");
 

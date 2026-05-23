@@ -147,5 +147,17 @@ inline void subscribeTextEntity(const char *objectId) {
   HomeAssistant::DiscoveryPublisher::subscribeTextEntity(kDeviceId, objectId);
 }
 
+/**
+ * Remove a deprecated discovery entity from Home Assistant.
+ * Publishes an empty retained message to the config topic, which causes
+ * Home Assistant to remove the entity.
+ */
+inline void deleteDiscovery(const char *component, const char *objectId) {
+  if (!isHomeAssistant()) {
+    return;
+  }
+  HomeAssistant::DiscoveryPublisher::deleteDiscovery(kDeviceId, component, objectId);
+}
+
 }  // namespace MqttInterface
 }  // namespace PoolController
