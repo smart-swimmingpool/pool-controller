@@ -225,13 +225,6 @@ auto PoolControllerContext::initializeController() -> void {
   operationModeNode.setPoolMaxTemperature(this->temperatureMaxPoolSetting_.get());
   operationModeNode.setSolarMinTemperature(this->temperatureMinSolarSetting_.get());
   operationModeNode.setTemperatureHysteresis(this->temperatureHysteresisSetting_.get());
-  TimerSetting ts = operationModeNode.getTimerSetting();  //TODO: Configurable
-  ts.timerStartHour = 10;
-  ts.timerStartMinutes = 30;
-  ts.timerEndHour = 17;
-  ts.timerEndMinutes = 30;
-  operationModeNode.setTimerSetting(ts);
-
   operationModeNode.setPoolTemperatureNode(&poolTemperatureNode);
   operationModeNode.setSolarTemperatureNode(&solarTemperatureNode);
 
