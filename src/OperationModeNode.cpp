@@ -51,17 +51,17 @@ static bool parseTimeHHMM(const String &value, unsigned int &hour, unsigned int 
     return false;
 
   // Position of the minute digits within the HH:MM string (after "HH:")
-  constexpr int kMinuteStartPos = 3;
+  constexpr int cMinuteStartPos = 3;
   for (int i = 0; i < 2; i++) {
     if (!isdigit(value.charAt(i)))
       return false;
-    if (!isdigit(value.charAt(kMinuteStartPos + i)))
+    if (!isdigit(value.charAt(cMinuteStartPos + i)))
       return false;
   }
 
   // h and m are guaranteed non-negative because all chars are ASCII digits
   int h = (value.charAt(0) - '0') * 10 + (value.charAt(1) - '0');
-  int m = (value.charAt(kMinuteStartPos) - '0') * 10 + (value.charAt(kMinuteStartPos + 1) - '0');
+  int m = (value.charAt(cMinuteStartPos) - '0') * 10 + (value.charAt(cMinuteStartPos + 1) - '0');
 
   if (h > 23)
     return false;
@@ -379,7 +379,6 @@ bool OperationModeNode::applyProperty(const String &property, const String &valu
         timerSetting.timerStartHour = newHour;
         timerSetting.timerStartMinutes = newMinute;
         setTimerSetting(timerSetting);
-        saveState();  // Persist to survive reboot
       }
     } else {
       Homie.getLogger() << cIndent << F("✖ Invalid timer start time (must be HH:MM, 00:00-23:59): ") << value << endl;
@@ -395,7 +394,6 @@ bool OperationModeNode::applyProperty(const String &property, const String &valu
         timerSetting.timerEndHour = newHour;
         timerSetting.timerEndMinutes = newMinute;
         setTimerSetting(timerSetting);
-        saveState();  // Persist to survive reboot
       }
     } else {
       Homie.getLogger() << cIndent << F("✖ Invalid timer end time (must be HH:MM, 00:00-23:59): ") << value << endl;

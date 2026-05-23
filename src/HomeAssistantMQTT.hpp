@@ -404,7 +404,7 @@ public:
     char topic[128];
     snprintf(topic, sizeof(topic), "homeassistant/text/%s/%s/config", nodeId, objectId);
 
-    StaticJsonDocument<1024> doc;
+    StaticJsonDocument<768> doc;
 
     char stateTopic[128];
     char commandTopic[128];
@@ -430,7 +430,7 @@ public:
     device["manufacturer"] = "smart-swimmingpool";
     device["model"] = "Pool Controller 2.0";
 
-    constexpr size_t kDiscoveryJsonBufferSize = 1280;
+    constexpr size_t kDiscoveryJsonBufferSize = 1024;
     char buffer[kDiscoveryJsonBufferSize];
     size_t len = serializeJson(doc, buffer, sizeof(buffer));
 
