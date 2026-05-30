@@ -124,5 +124,40 @@ inline void subscribeButton(const char *objectId) {
   HomeAssistant::DiscoveryPublisher::subscribeButton(kDeviceId, objectId);
 }
 
+inline void publishTextEntityDiscovery(
+  const char *objectId, const char *name, const char *pattern = nullptr, const char *icon = nullptr) {
+  if (!isHomeAssistant()) {
+    return;
+  }
+  HomeAssistant::DiscoveryPublisher::publishTextEntity(kDeviceId, objectId, name, pattern, icon);
+}
+
+inline void publishTextEntityState(HomieNode &node, const char *homieProperty, const char *objectId, const char *value) {
+  if (isHomeAssistant()) {
+    HomeAssistant::DiscoveryPublisher::publishTextEntityState(kDeviceId, objectId, value);
+  } else {
+    node.setProperty(homieProperty).send(value);
+  }
+}
+
+inline void subscribeTextEntity(const char *objectId) {
+  if (!isHomeAssistant()) {
+    return;
+  }
+  HomeAssistant::DiscoveryPublisher::subscribeTextEntity(kDeviceId, objectId);
+}
+
+/**
+ * Remove a deprecated discovery entity from Home Assistant.
+ * Publishes an empty retained message to the config topic, which causes
+ * Home Assistant to remove the entity.
+ */
+inline void deleteDiscovery(const char *component, const char *objectId) {
+  if (!isHomeAssistant()) {
+    return;
+  }
+  HomeAssistant::DiscoveryPublisher::deleteDiscovery(kDeviceId, component, objectId);
+}
+
 }  // namespace MqttInterface
 }  // namespace PoolController

@@ -13,7 +13,8 @@ bool OperationModeNode::_suppressPersist = false;
 
 // Helper: Validate and parse float value from MQTT string
 static bool parseFloat(const String &value, float &result, float minVal, float maxVal) {
-  if (value.length() == 0) return false;
+  if (value.length() == 0)
+    return false;
 
   // Check if all characters are valid for a float
   bool hasDigit = false;
@@ -21,9 +22,11 @@ static bool parseFloat(const String &value, float &result, float minVal, float m
   for (unsigned int i = 0; i < value.length(); i++) {
     char c = value.charAt(i);
     if (c == '-' || c == '+') {
-      if (i != 0) return false;  // Sign only at start
+      if (i != 0)
+        return false;  // Sign only at start
     } else if (c == '.') {
-      if (hasDot) return false;  // Only one decimal point
+      if (hasDot)
+        return false;  // Only one decimal point
       hasDot = true;
     } else if (c >= '0' && c <= '9') {
       hasDigit = true;
@@ -32,22 +35,47 @@ static bool parseFloat(const String &value, float &result, float minVal, float m
     }
   }
 
-  if (!hasDigit) return false;  // Must have at least one digit
+  if (!hasDigit)
+    return false;  // Must have at least one digit
 
   result = value.toFloat();
   return (result >= minVal && result <= maxVal);
 }
 
+// Helper: Parse HH:MM time string into hours and minutes.
+// Returns true on success; false if format is invalid or values out of range.
+static bool parseTimeHHMM(const String &value, unsigned int &hour, unsigned int &minute) {
+  if (value.length() != 5 || value.charAt(2) != ':')
+    return false;
+
+  // Validate all digit positions; cast to unsigned char to avoid UB in isdigit()
+  if (!isdigit(static_cast<unsigned char>(value.charAt(0))) || !isdigit(static_cast<unsigned char>(value.charAt(1))) ||
+    !isdigit(static_cast<unsigned char>(value.charAt(3))) || !isdigit(static_cast<unsigned char>(value.charAt(4))))
+    return false;
+
+  unsigned int h = static_cast<unsigned int>((value.charAt(0) - '0') * 10 + (value.charAt(1) - '0'));
+  unsigned int m = static_cast<unsigned int>((value.charAt(3) - '0') * 10 + (value.charAt(4) - '0'));
+
+  if (h > 23 || m > 59)
+    return false;
+
+  hour = h;
+  minute = m;
+  return true;
+}
+
 // Helper: Validate and parse int value from MQTT string
 static bool parseInt(const String &value, int &result, int minVal, int maxVal) {
-  if (value.length() == 0) return false;
+  if (value.length() == 0)
+    return false;
 
   // Check if all characters are valid for an integer
   bool hasDigit = false;
   for (unsigned int i = 0; i < value.length(); i++) {
     char c = value.charAt(i);
     if (c == '-' || c == '+') {
-      if (i != 0) return false;  // Sign only at start
+      if (i != 0)
+        return false;  // Sign only at start
     } else if (c >= '0' && c <= '9') {
       hasDigit = true;
     } else {
@@ -55,7 +83,8 @@ static bool parseInt(const String &value, int &result, int minVal, int maxVal) {
     }
   }
 
-  if (!hasDigit) return false;  // Must have at least one digit
+  if (!hasDigit)
+    return false;  // Must have at least one digit
 
   result = value.toInt();
   return (result >= minVal && result <= maxVal);
@@ -119,7 +148,8 @@ bool OperationModeNode::setMode(String mode) {
     Homie.getLogger() << F("set mode: ") << _mode << endl;
     PoolController::MqttInterface::publishSelectState(*this, cMode, cMode, _mode.c_str());
     PoolController::MqttInterface::publishHomieProperty(*this, cHomieNodeState, cHomieNodeState_OK);
-    if (!_suppressPersist) saveState();  // Persist mode change
+    if (!_suppressPersist)
+      saveState();  // Persist mode change
     retval = true;
 
   } else {
@@ -227,17 +257,25 @@ void OperationModeNode::loop() {
       Utils::floatToString(_hysteresis, buffer, sizeof(buffer));
       PoolController::MqttInterface::publishNumberState(*this, cHysteresis, cHysteresis, buffer);
 
-      Utils::intToString(_timerSetting.timerStartHour, buffer, sizeof(buffer));
-      PoolController::MqttInterface::publishNumberState(*this, cTimerStartHour, cTimerStartHour, buffer);
+      if (PoolController::MqttInterface::isHomeAssistant()) {
+        char timeStr[6];
+        snprintf(timeStr, sizeof(timeStr), "%02u:%02u", _timerSetting.timerStartHour, _timerSetting.timerStartMinutes);
+        PoolController::MqttInterface::publishTextEntityState(*this, cTimerStart, cTimerStart, timeStr);
+        snprintf(timeStr, sizeof(timeStr), "%02u:%02u", _timerSetting.timerEndHour, _timerSetting.timerEndMinutes);
+        PoolController::MqttInterface::publishTextEntityState(*this, cTimerEnd, cTimerEnd, timeStr);
+      } else {
+        Utils::intToString(_timerSetting.timerStartHour, buffer, sizeof(buffer));
+        PoolController::MqttInterface::publishNumberState(*this, cTimerStartHour, cTimerStartHour, buffer);
 
-      Utils::intToString(_timerSetting.timerStartMinutes, buffer, sizeof(buffer));
-      PoolController::MqttInterface::publishNumberState(*this, cTimerStartMin, cTimerStartMin, buffer);
+        Utils::intToString(_timerSetting.timerStartMinutes, buffer, sizeof(buffer));
+        PoolController::MqttInterface::publishNumberState(*this, cTimerStartMin, cTimerStartMin, buffer);
 
-      Utils::intToString(_timerSetting.timerEndHour, buffer, sizeof(buffer));
-      PoolController::MqttInterface::publishNumberState(*this, cTimerEndHour, cTimerEndHour, buffer);
+        Utils::intToString(_timerSetting.timerEndHour, buffer, sizeof(buffer));
+        PoolController::MqttInterface::publishNumberState(*this, cTimerEndHour, cTimerEndHour, buffer);
 
-      Utils::intToString(_timerSetting.timerEndMinutes, buffer, sizeof(buffer));
-      PoolController::MqttInterface::publishNumberState(*this, cTimerEndMin, cTimerEndMin, buffer);
+        Utils::intToString(_timerSetting.timerEndMinutes, buffer, sizeof(buffer));
+        PoolController::MqttInterface::publishNumberState(*this, cTimerEndMin, cTimerEndMin, buffer);
+      }
 
       Utils::intToString(getTimezoneIndex(), buffer, sizeof(buffer));
       PoolController::MqttInterface::publishNumberState(*this, cTimezone, cTimezone, buffer);
@@ -320,6 +358,36 @@ bool OperationModeNode::applyProperty(const String &property, const String &valu
       }
     } else {
       Homie.getLogger() << cIndent << F("✖ Invalid pool max temp (must be 0-60°C): ") << value << endl;
+    }
+    retval = true;
+
+  } else if (property.equalsIgnoreCase(cTimerStart)) {
+    Homie.getLogger() << cIndent << F("✔ Timer start HH:MM: ") << value << endl;
+    TimerSetting timerSetting = getTimerSetting();
+    unsigned int newHour, newMinute;
+    if (parseTimeHHMM(value, newHour, newMinute)) {
+      if (newHour != timerSetting.timerStartHour || newMinute != timerSetting.timerStartMinutes) {
+        timerSetting.timerStartHour = newHour;
+        timerSetting.timerStartMinutes = newMinute;
+        setTimerSetting(timerSetting);
+      }
+    } else {
+      Homie.getLogger() << cIndent << F("✖ Invalid timer start time (must be HH:MM, 00:00-23:59): ") << value << endl;
+    }
+    retval = true;
+
+  } else if (property.equalsIgnoreCase(cTimerEnd)) {
+    Homie.getLogger() << cIndent << F("✔ Timer end HH:MM: ") << value << endl;
+    TimerSetting timerSetting = getTimerSetting();
+    unsigned int newHour, newMinute;
+    if (parseTimeHHMM(value, newHour, newMinute)) {
+      if (newHour != timerSetting.timerEndHour || newMinute != timerSetting.timerEndMinutes) {
+        timerSetting.timerEndHour = newHour;
+        timerSetting.timerEndMinutes = newMinute;
+        setTimerSetting(timerSetting);
+      }
+    } else {
+      Homie.getLogger() << cIndent << F("✖ Invalid timer end time (must be HH:MM, 00:00-23:59): ") << value << endl;
     }
     retval = true;
 
@@ -420,8 +488,7 @@ void OperationModeNode::loadState() {
   // user already saved.  The Homie property publish will happen on the next
   // periodic update or on MQTT reconnect.
   String savedMode = StateManager::loadString("opmode", STATUS_AUTO);
-  if (savedMode == STATUS_AUTO || savedMode == STATUS_MANU ||
-      savedMode == STATUS_BOOST || savedMode == STATUS_TIMER) {
+  if (savedMode == STATUS_AUTO || savedMode == STATUS_MANU || savedMode == STATUS_BOOST || savedMode == STATUS_TIMER) {
     _mode = savedMode;
   }
 

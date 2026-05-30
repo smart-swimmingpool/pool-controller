@@ -61,9 +61,7 @@ public:
   /**
    * Feed the watchdog — call this regularly in main loop
    */
-  static void feedWatchdog() {
-    esp_task_wdt_reset();
-  }
+  static void feedWatchdog() { esp_task_wdt_reset(); }
 
   /**
    * Check memory status and reboot if critically low.
@@ -122,9 +120,7 @@ public:
   static uint32_t getUptimeSeconds() { return millis() / 1000; }
 
   /** Check if system is healthy */
-  static bool isHealthy() {
-    return ESP.getFreeHeap() >= LOW_MEMORY_THRESHOLD;
-  }
+  static bool isHealthy() { return ESP.getFreeHeap() >= LOW_MEMORY_THRESHOLD; }
 
   // --- Boot-loop detection (P8) ---
 

@@ -37,25 +37,29 @@ public:
 
   void setPoolMaxTemperature(float temp) {
     _poolMaxTemp = temp;
-    if (!_suppressPersist) saveState();
+    if (!_suppressPersist)
+      saveState();
   }
   float getPoolMaxTemperature() { return _poolMaxTemp; }
 
   void setSolarMinTemperature(float temp) {
     _solarMinTemp = temp;
-    if (!_suppressPersist) saveState();
+    if (!_suppressPersist)
+      saveState();
   }
   float getSolarMinTemperature() { return _solarMinTemp; }
 
   void setTemperatureHysteresis(float temp) {
     _hysteresis = temp;
-    if (!_suppressPersist) saveState();
+    if (!_suppressPersist)
+      saveState();
   }
   float getTemperatureHysteresis() { return _hysteresis; }
 
   void setTimerSetting(TimerSetting setting) {
     _timerSetting = setting;
-    if (!_suppressPersist) saveState();
+    if (!_suppressPersist)
+      saveState();
   }
   TimerSetting getTimerSetting() { return _timerSetting; }
 
@@ -106,6 +110,10 @@ private:
 
   const char *cTimerEndHour = "timer-end-h";
   const char *cTimerEndMin = "timer-end-min";
+
+  // HH:MM combined time properties (Home Assistant mode)
+  const char *cTimerStart = "timer-start";
+  const char *cTimerEnd = "timer-end";
 
   const char *cTimezone = "timezone";
   const char *cTimezoneName = "Timezone";

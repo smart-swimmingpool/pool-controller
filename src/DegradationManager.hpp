@@ -29,11 +29,11 @@ namespace PoolController {
  * Order matters: higher numeric value = worse state.
  */
 enum class DegradationLevel : uint8_t {
-  NORMAL = 0,    // Everything nominal
-  NO_WIFI = 1,   // WiFi/MQTT disconnected — local operation still works
-  NO_TIME = 2,   // NTP sync lost — timer-based scheduling degraded
-  NO_SENSOR = 3, // One or more temperature sensors failed — cautious defaults
-  CRITICAL = 4,  // Multiple failures or critically low memory — safe mode
+  NORMAL = 0,     // Everything nominal
+  NO_WIFI = 1,    // WiFi/MQTT disconnected — local operation still works
+  NO_TIME = 2,    // NTP sync lost — timer-based scheduling degraded
+  NO_SENSOR = 3,  // One or more temperature sensors failed — cautious defaults
+  CRITICAL = 4,   // Multiple failures or critically low memory — safe mode
 };
 
 /**

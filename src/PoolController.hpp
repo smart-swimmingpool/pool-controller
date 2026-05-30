@@ -55,10 +55,10 @@ private:
   HomieSetting<const char *> mqttProtocolSetting_{"mqtt-protocol", "MQTT Protocol (homie or homeassistant)"};
 
   // P9: Configurable time-loss thresholds
-  HomieSetting<long> timeLossGreenHoursSetting_{"time-loss-green-hours",
-    "Hours of accurate time before GREEN→YELLOW transition (1–6)"};
-  HomieSetting<long> timeLossRedHoursSetting_{"time-loss-red-hours",
-    "Hours before YELLOW→RED transition — safe fallback activates (1–72)"};
+  HomieSetting<long> timeLossGreenHoursSetting_{
+    "time-loss-green-hours", "Hours of accurate time before GREEN→YELLOW transition (1–6)"};
+  HomieSetting<long> timeLossRedHoursSetting_{
+    "time-loss-red-hours", "Hours before YELLOW→RED transition — safe fallback activates (1–72)"};
 
   /** true when boot-loop detection triggered safe mode (P8) */
   bool bootLoopDetected_ = false;
