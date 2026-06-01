@@ -50,6 +50,14 @@ From `.github/workflows/linter.yml` — these linters are **enabled**:
 
 **Note**: `VALIDATE_CLANG_FORMAT` is explicitly disabled (version incompatibility). Use `clang-format -i` locally.
 
+### CPPLINT.cfg Configuration
+
+The project has a custom `CPPLINT.cfg` at the repository root that sets:
+- `linelength=130` (matching `.clang-format`, overriding cpplint's default 80)
+- Disabled filters for embedded/Arduino patterns: `-legal/copyright`, `-build/include_subdir`, `-runtime/int`, `-whitespace/indent`, `-readability/casting`, and more
+
+Check `CPPLINT.cfg` before adding/removing filters — it reflects deliberate project decisions to accommodate Arduino/ESP32 idioms while enforcing Google C++ Style where it matters.
+
 ## Common CI Failures & Fixes
 
 ### 1. Clang-Format Violations
@@ -121,7 +129,7 @@ uint32_t timestamp;
 int32_t value;
 ```
 
-Checked files: `src/*.cpp`, `src/*.hpp`, `src/Nodes/*.cpp`, `src/Nodes/*.hpp`.
+Checked files: `src/*.cpp`, `src/*.hpp`, `src/Nodes/*.cpp`, `src/Nodes/*.hpp`, `lib/Vector/*`.
 
 ## YAML Formatting (GitHub Actions)
 

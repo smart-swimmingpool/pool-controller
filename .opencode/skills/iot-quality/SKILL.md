@@ -232,10 +232,13 @@ static void Manager::loop();
 - **PlatformIO Build**: compilation for esp32dev
 
 ### Missing CI (future work):
-- `platformio test` — unit tests (none exist yet)
+- `platformio test` — unit tests (none exist yet; no `test/` directory)
 - Memory analysis (heap/stack usage report)
 - Code coverage
 - Compiler warnings as errors
+
+### Notable: Stale Dependencies
+- `DHT sensor library` listed in `platformio.ini` lib_deps but **not used** in any source file — candidate for cleanup
 
 ### Local Make Targets:
 ```bash

@@ -132,7 +132,7 @@ class PoolControllerContext {
 
 ## Refactoring Workflow
 
-Each refactoring step should follow the OpenSpec change workflow:
+Each refactoring step should follow the OpenSpec change workflow (skills in `.github/skills/`):
 1. **Propose** — describe what to change and why
 2. **Design** — specify exact API signatures
 3. **Implement** — one task per file/interface

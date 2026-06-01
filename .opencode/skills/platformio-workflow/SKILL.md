@@ -111,7 +111,6 @@ pool-controller/
 │   └── Vector/          # Custom Vector implementation
 ├── data/                # SPIFFS filesystem data
 │   └── homie/           # Homie config files
-├── test/                # Unit tests (PlatformIO Unity)
 └── .pio/                # Build artifacts (gitignored)
 ```
 
@@ -152,3 +151,4 @@ To update a dependency:
 | OTA fails | Verify `upload_port` resolves (mDNS or IP) |
 | Missing libraries | `pio update` to refresh library index |
 | ESP32 not detected | Install USB-to-UART drivers (CP210x/CH340) |
+| DHT sensor library (in deps but not used in src/) | Potential stale dependency — verify before removing |
