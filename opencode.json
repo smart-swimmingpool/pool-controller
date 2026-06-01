@@ -15,6 +15,7 @@
     ".opencode/skills/esp32-reliability/SKILL.md",
     ".opencode/skills/architecture-refactor/SKILL.md",
     ".opencode/skills/iot-security/SKILL.md",
-    ".opencode/skills/iot-quality/SKILL.md"
+    ".opencode/skills/iot-quality/SKILL.md",
+    ".opencode/skills/platformio-env/SKILL.md"
   ]
 }
