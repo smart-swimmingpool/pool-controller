@@ -53,8 +53,6 @@ jobs:
 
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MARKDOWN_CONFIG_FILE: .github/linters/.markdown-lint.yml
-          YAML_CONFIG_FILE: .github/linters/.yaml-lint.yml
 
           # PlatformIO Project Optimizations
           # Exclude build artifacts and dependencies
