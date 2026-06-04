@@ -57,13 +57,13 @@ firmware binary in the GitHub release
 
 ### Affected files
 
-| File | Change |
-|------|--------|
-| `src/OtaUpdater.cpp` | Add hash computation and verification in `downloadAndApply()` |
-| `src/OtaUpdater.hpp` | Add hash digest buffer; expose `expectedHash` |
-| `scripts/sign-release.sh` | New: Ed25519 signing script for GitHub Actions |
-| `.github/workflows/release.yml` | Add signing step to release pipeline |
-| `src/OtaUpdater.hpp` | Add public key constant |
+| File                            | Change                                                        |
+| ------------------------------- | ------------------------------------------------------------- |
+| `src/OtaUpdater.cpp`            | Add hash computation and verification in `downloadAndApply()` |
+| `src/OtaUpdater.hpp`            | Add hash digest buffer; expose `expectedHash`                 |
+| `scripts/sign-release.sh`       | New: Ed25519 signing script for GitHub Actions                |
+| `.github/workflows/release.yml` | Add signing step to release pipeline                          |
+| `src/OtaUpdater.hpp`            | Add public key constant                                       |
 
 ### API changes
 

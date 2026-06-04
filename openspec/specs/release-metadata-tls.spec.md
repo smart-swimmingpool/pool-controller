@@ -63,12 +63,12 @@ previous check
 
 ### Affected files
 
-| File | Change |
-|------|--------|
+| File                 | Change                                                           |
+| -------------------- | ---------------------------------------------------------------- |
 | `src/OtaUpdater.cpp` | Replace `setInsecure()` with CA bundle in `fetchLatestRelease()` |
-| `src/OtaUpdater.cpp` | Add URL hostname validation after parsing |
-| `src/OtaUpdater.cpp` | Add semver validation for `tag_name` |
-| `src/OtaUpdater.hpp` | Add validation constants and helper declarations |
+| `src/OtaUpdater.cpp` | Add URL hostname validation after parsing                        |
+| `src/OtaUpdater.cpp` | Add semver validation for `tag_name`                             |
+| `src/OtaUpdater.hpp` | Add validation constants and helper declarations                 |
 
 ### API changes
 

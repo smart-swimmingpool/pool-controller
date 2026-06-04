@@ -103,14 +103,10 @@ public:
   }
 
   /** Get current free heap */
-  static uint32_t getFreeHeap() {
-    return ESP.getFreeHeap();
-  }
+  static uint32_t getFreeHeap() { return ESP.getFreeHeap(); }
 
   /** Get minimum free heap since boot */
-  static uint32_t getMinFreeHeap() {
-    return minFreeHeap;
-  }
+  static uint32_t getMinFreeHeap() { return minFreeHeap; }
 
   /** Force a reboot */
   static void reboot() {
@@ -121,9 +117,7 @@ public:
   }
 
   /** Get uptime in seconds */
-  static uint32_t getUptimeSeconds() {
-    return millis() / 1000;
-  }
+  static uint32_t getUptimeSeconds() { return millis() / 1000; }
 
   /** Check if system is healthy */
   static bool isHealthy() { return ESP.getFreeHeap() >= LOW_MEMORY_THRESHOLD; }

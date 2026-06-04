@@ -56,13 +56,13 @@ clear log warning
 
 ### Affected files
 
-| File | Change |
-|------|--------|
-| `src/OtaUpdater.cpp` | Replace `setCACert(kGitHubRootCA)` with `setCACertBundle()` |
-| `src/OtaUpdater.cpp` | Replace `setInsecure()` in `fetchLatestRelease()` |
-| `src/OtaUpdater.hpp` | Add compile-time flag `OTA_USE_CA_BUNDLE` |
-| `platformio.ini` | Add `-DCORE_SSL_CERT_BUNDLE` build flag for ESP32 |
-| `src/CACertBundle.hpp` | New: fallback bundle with curated root CAs |
+| File                   | Change                                                      |
+| ---------------------- | ----------------------------------------------------------- |
+| `src/OtaUpdater.cpp`   | Replace `setCACert(kGitHubRootCA)` with `setCACertBundle()` |
+| `src/OtaUpdater.cpp`   | Replace `setInsecure()` in `fetchLatestRelease()`           |
+| `src/OtaUpdater.hpp`   | Add compile-time flag `OTA_USE_CA_BUNDLE`                   |
+| `platformio.ini`       | Add `-DCORE_SSL_CERT_BUNDLE` build flag for ESP32           |
+| `src/CACertBundle.hpp` | New: fallback bundle with curated root CAs                  |
 
 ### API changes
 

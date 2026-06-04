@@ -206,9 +206,7 @@ void MqttPublisher::publishUpdateState() {
 
   // Latest version topic: the newest available version (or current if up to date)
   String latestTopic = getBaseTopic("update", "firmware-update") + "/latest";
-  String latestVer = OtaUpdater::isUpdateAvailable()
-    ? OtaUpdater::getLatestVersion()
-    : OtaUpdater::getCurrentVersion();
+  String latestVer = OtaUpdater::isUpdateAvailable() ? OtaUpdater::getLatestVersion() : OtaUpdater::getCurrentVersion();
   NetworkManager::publish(latestTopic.c_str(), latestVer.c_str(), true);
 
   // Attributes topic: extra metadata

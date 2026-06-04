@@ -487,8 +487,7 @@ void WebPortal::apiTogglePump() {
 
   // Only allow pump toggling in manual mode
   if (operationModeNode.getMode() != "manu") {
-    server_.send(400, "application/json",
-      "{\"status\":\"error\",\"message\":\"Pump control only available in manual mode\"}");
+    server_.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Pump control only available in manual mode\"}");
     return;
   }
 
