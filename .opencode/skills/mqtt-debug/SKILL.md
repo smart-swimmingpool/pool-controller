@@ -61,19 +61,52 @@ Key methods:
 
 ### Discovery Topics
 
+Base topic format: `homeassistant/<component>/pool-controller/<object-id>/config`
+
 The controller publishes these discovery configs:
 
-| Component | Object ID | Device Class | Unit |
-|-----------|-----------|-------------|------|
-| `sensor` | `pool-temp` | `temperature` | `°C` |
-| `sensor` | `solar-temp` | `temperature` | `°C` |
-| `sensor` | `controller-temp` | `temperature` | `°C` |
-| `switch` | `pool-pump` | — | — |
-| `switch` | `solar-pump` | — | — |
-| `select` | `operation-mode` | — | — |
-| `number` | `pool-max-temp` | — | `°C` |
-| `number` | `solar-min-temp` | — | `°C` |
-| `number` | `temp-hysteresis` | — | `°C` |
+**Sensors (temperature):**
+
+| Object ID | Name | Device Class | Unit | Icon |
+|-----------|------|-------------|------|------|
+| `pool-temp` | Pool Temperature | `temperature` | `°C` | `mdi:pool` |
+| `solar-temp` | Solar Temperature | `temperature` | `°C` | `mdi:solar-power` |
+| `controller-temp` | Controller Temperature | `temperature` | `°C` | `mdi:thermometer` |
+
+**Sensors (diagnostics):**
+
+| Object ID | Name | Device Class | Unit | Icon |
+|-----------|------|-------------|------|------|
+| `heap` | Free Heap Space | — | `B` | `mdi:memory` |
+| `max-alloc` | Max Alloc Block | — | `B` | `mdi:memory` |
+| `rssi` | WiFi Signal Strength | — | `dBm` | `mdi:wifi` |
+| `uptime` | System Uptime | — | `s` | `mdi:clock-outline` |
+
+**Switches:**
+
+| Object ID | Name | Icon |
+|-----------|------|------|
+| `pool-pump` | Pool Pump | `mdi:pump` |
+| `solar-pump` | Solar Pump | `mdi:solar-panel` |
+
+**Select:**
+
+| Object ID | Name | Options | Icon |
+|-----------|------|---------|------|
+| `mode` | Operation Mode | `auto`, `manu`, `boost`, `timer` | `mdi:sync` |
+
+**Numbers (parameters):**
+
+| Object ID | Name | Min | Max | Step | Unit | Icon |
+|-----------|------|-----|-----|------|------|------|
+| `pool-max-temp` | Max. Pool Temp | 0 | 40 | 0.1 | `°C` | `mdi:thermometer-chevron-up` |
+| `solar-min-temp` | Min. Solar Temp | 0 | 100 | 0.1 | `°C` | `mdi:thermometer-chevron-down` |
+| `hysteresis` | Temperature Hysteresis | 0 | 10 | 0.1 | `K` | `mdi:delta` |
+| `timer-start-h` | Timer Start Hour | 0 | 23 | 1 | `h` | `mdi:clock-start` |
+| `timer-start-min` | Timer Start Minute | 0 | 59 | 1 | `min` | `mdi:clock-start` |
+| `timer-end-h` | Timer End Hour | 0 | 23 | 1 | `h` | `mdi:clock-end` |
+| `timer-end-min` | Timer End Minute | 0 | 59 | 1 | `min` | `mdi:clock-end` |
+| `timezone` | Timezone Index | 0 | 9 | 1 | — | `mdi:map-clock` |
 
 ### Debugging HA Discovery
 
@@ -81,17 +114,19 @@ The controller publishes these discovery configs:
 1. **Truncated JSON payload** — The serialization buffer must be **≥25% larger** than the actual JSON output. If HA doesn't show entities, check buffer sizes in `MqttPublisher.cpp`. See `Agents.md` §21 and the `cpp-memory-opt` skill.
 2. **Device ID mismatch** — `deviceId_` is generated once. Verify it's consistent across reboots.
 3. **Discovery retained flag** — HA Discovery messages should be published with `retained=true`.
+4. **`device_class: 'measurement'` / `expected SensorDeviceClass` errors** — These come from **stale retained MQTT messages of the old Homie framework** (Vorgänger-Firmware). The old Homie auto-discovery published sensor entities with `device_class: "measurement"`, which is not a valid `SensorDeviceClass` in newer Home Assistant versions. The current firmware uses correct component types (`number` for parameters, `sensor` only for actual sensors) and valid device classes (`temperature` or none). Fix: delete retained messages or delete the old device entry in HA (→ device registry).
+5. **Device disappears after cleanup / no new entities appear** — Discovery messages are only published **on boot / MQTT connect**. After deleting the old MQTT device in HA, a reboot of the ESP32 is required to re-publish discovery. Use `pio run --target upload` or power-cycle the device.
 
 **Manual verification**:
 ```bash
 # Subscribe to all HA discovery topics
-mosquitto_sub -h <broker> -t "homeassistant/+/pool-controller-*/config"
+mosquitto_sub -h <broker> -t "homeassistant/+/pool-controller/+/config"
 
 # Subscribe to state updates
-mosquitto_sub -h <broker> -t "homeassistant/+/pool-controller-+/state"
+mosquitto_sub -h <broker> -t "homeassistant/+/pool-controller/+/state"
 
 # Publish a command (e.g., set operation mode to "boost")
-mosquitto_pub -h <broker> -t "homeassistant/select/pool-controller-operation-mode/set" -m "boost"
+mosquitto_pub -h <broker> -t "homeassistant/select/pool-controller/mode/set" -m "boost"
 ```
 
 ## Homie 3.0 Convention
@@ -111,6 +146,41 @@ homie/<device-id>/
 └── ...
 ```
 
+## Homie → HA Discovery Migration
+
+The old Homie-based firmware auto-generated Home Assistant discovery from Homie properties. This created topics in the format:
+```
+homeassistant/sensor/<mac>_<node>_<property>/config
+```
+with `device_class: "measurement"` — which is **invalid** in newer HA versions (expected `SensorDeviceClass` enum).
+
+The current firmware (`MqttPublisher.cpp`) uses native HA MQTT Discovery with correct component types:
+- Temperatures → `sensor` with `device_class: "temperature"`
+- Diagnostics → `sensor` without `device_class`
+- Pump relays → `switch`
+- Operation mode → `select`
+- Parameters (hysteresis, timer, etc.) → `number` (not `sensor`)
+- Device block: `manufacturer: "smart-swimmingpool"`, `name: "Pool Controller"`
+
+### Cleaning Up Stale Homie Retained Messages
+
+After migrating to the new firmware, old Homie discovery messages may remain on the MQTT broker as retained messages, causing errors like:
+```
+Error 'expected SensorDeviceClass or one of 'date', 'enum', 'timestamp', ...' 
+when processing MQTT discovery message topic: 'homeassistant/sensor/<mac>_.../config'
+```
+
+**Fix options:**
+
+1. **Delete old device entry in HA** → Einstellungen → Geräte & Dienste → MQTT → Gerät löschen, dann ESP32 **neu starten** (Discovery wird nur beim Boot/MQTT-Connect gepublisht)
+
+2. **Manually clear retained topics** via mosquitto_pub:
+   ```bash
+   mosquitto_pub -h <broker> -t "homeassistant/sensor/<mac>_#" -n -r
+   ```
+
+3. **HA MQTT-Konfiguration aktualisieren** → Schaltfläche "Konfiguration aktualisieren" in der MQTT-Integration
+
 ## MQTT Connection Flow
 
 From `NetworkManager.hpp`:
@@ -126,14 +196,24 @@ From `NetworkManager.hpp`:
 mosquitto_sub -v -h <broker> -t "#" | grep "pool-controller"
 
 # Watch HA discovery specifically
-mosquitto_sub -v -h <broker> -t 'homeassistant/+/pool-controller-+/#' 
+mosquitto_sub -v -h <broker> -t 'homeassistant/+/pool-controller/+/config'
 
-# Check Homie base topic
-mosquitto_sub -v -h <broker> -t 'homie/pool-controller/#'
+# Watch HA state updates
+mosquitto_sub -v -h <broker> -t 'homeassistant/+/pool-controller/+/state'
 
-# Publish test commands
-mosquitto_pub -t "homeassistant/switch/pool-controller-pool-pump/set" -m "ON"
-mosquitto_pub -t "homeassistant/select/pool-controller-operation-mode/set" -m "auto"
+# Check Homie base topic (old firmware, still useful for legacy)
+mosquitto_sub -v -h <broker> -t 'homie/5ccf7fb97572/#'
+
+# List all retained Homie discovery (stale cleanup)
+mosquitto_sub -v -h <broker> -t 'homeassistant/sensor/5ccf7fb97572_#' --retained-only
+
+# Delete stale retained Homie discovery
+mosquitto_pub -h <broker> -t "homeassistant/sensor/5ccf7fb97572_#" -n -r
+
+# Publish test commands (current firmware)
+mosquitto_pub -t "homeassistant/switch/pool-controller/pool-pump/set" -m "ON"
+mosquitto_pub -t "homeassistant/select/pool-controller/mode/set" -m "auto"
+mosquitto_pub -t "homeassistant/number/pool-controller/hysteresis/set" -m "2.0"
 ```
 
 ## Serial Debug Output for MQTT

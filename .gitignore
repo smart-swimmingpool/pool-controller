@@ -111,6 +111,7 @@ dkms.conf
 .history
 
 # End of https://www.gitignore.io/api/c,git,c++,platformio,visualstudiocode
-data/homie/config.json
+# Ignore credential/config files in the data directory (WiFi/MQTT passwords)
+data/**/config.json
 .vscode/settings.json
 _codeql_detected_source_root

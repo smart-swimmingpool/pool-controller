@@ -1,3 +1,4 @@
+// Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
 
 #pragma once
 
@@ -9,15 +10,12 @@ class RuleTimer : public Rule {
 public:
   RuleTimer(RelayModuleNode *solarRelay, RelayModuleNode *poolRelay);
 
-  const char *getMode() { return "timer"; };
+  const char *getMode() override { return "timer"; }
 
-  void setSolarRelayNode(RelayModuleNode *relay) { _solarRelay = relay; };
-  void setPoolRelayNode(RelayModuleNode *relay) { _poolRelay = relay; };
+  void setSolarRelayNode(RelayModuleNode *relay) { _solarRelay = relay; }
+  void setPoolRelayNode(RelayModuleNode *relay) { _poolRelay = relay; }
 
-  virtual void loop();
-
-protected:
-  bool checkPoolPumpTimer();
+  void loop() override;
 
 private:
   RelayModuleNode *_solarRelay;

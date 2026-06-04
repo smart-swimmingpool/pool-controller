@@ -1,14 +1,9 @@
-/*
- * Author: Lübbe Onken (http://github.com/luebbe)
- */
-
 #include "TimeClientHelper.hpp"
+#include "NetworkManager.hpp"
 
 // NTP Client
 WiFiUDP ntpUDP;
 NTPClient *timeClient = nullptr;
-
-// Central European Time (Berlin, Paris, ...)
 TimeChangeRule CEST = {"CEST", Last, Sun, Mar, 2, 120};  // Central European Summer Time
 TimeChangeRule CET = {"CET ", Last, Sun, Oct, 3, 60};    // Central European Standard Time
 Timezone Europe(CEST, CET);
@@ -92,7 +87,7 @@ int getTzCount() {
 }
 
 time_t getUtcTime() {
-  if (timeClient && timeClient->update()) {
+  if (timeClient && PoolController::NetworkManager::isWiFiConnected() && timeClient->update()) {
     time_t ntpTime = timeClient->getEpochTime();
 
     // Validate time is reasonable (after 2020-01-01)

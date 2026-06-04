@@ -44,7 +44,7 @@ enum class DegradationLevel : uint8_t {
  * SystemMonitor::feedWatchdog();
  * SystemMonitor::checkMemory();
  * DegradationManager::evaluate();
- * Homie.loop();
+ * NetworkManager::loop();
  * @endcode
  */
 class DegradationManager {

@@ -3,19 +3,20 @@
   "mcp": {
     "agentmemory": {
       "type": "local",
-      "command": ["npx", "-y", "@agentmemory/mcp"],
+      "command": [
+        "npx",
+        "-y",
+        "@agentmemory/mcp"
+      ],
       "enabled": true
     }
   },
-  "skills": [
-    ".opencode/skills/cpp-memory-opt/SKILL.md",
-    ".opencode/skills/cpp-code-quality/SKILL.md",
-    ".opencode/skills/platformio-workflow/SKILL.md",
-    ".opencode/skills/mqtt-debug/SKILL.md",
-    ".opencode/skills/esp32-reliability/SKILL.md",
-    ".opencode/skills/architecture-refactor/SKILL.md",
-    ".opencode/skills/iot-security/SKILL.md",
-    ".opencode/skills/iot-quality/SKILL.md",
-    ".opencode/skills/platformio-env/SKILL.md"
+  "skills": {
+    "paths": [
+      ".opencode/skills"
+    ]
+  },
+  "plugin": [
+    ".opencode/plugins/agentmemory-capture.ts"
   ]
 }

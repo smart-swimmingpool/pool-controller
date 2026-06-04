@@ -54,6 +54,16 @@ Discussions: <https://github.com/smart-swimmingpool/smart-swimmingpool.github.io
   - NTP graceful degradation (3-stage)
   - Zero manual intervention required
 
+### Built-in Web Interface
+
+- [x] **Full Web Dashboard** - Direct device management without Home Assistant
+  - AP Mode: Connects as `Pool-Controller-Setup` WiFi hotspot at `192.168.4.1`
+  - STA Mode: Web server on port 80 at the device's local IP
+  - REST API for programmatic access (`/api/status`, `/api/config`, etc.)
+  - Password-protected with session management (cookie-based, SHA-256)
+  - Tabs: Dashboard, WiFi Setup, MQTT Settings, Configuration, Security & Update
+  - OTA firmware update via web interface
+
 ### Developer Features
 
 - [x] **Over-The-Air (OTA) Updates** - Remote firmware updates via WiFi
@@ -63,7 +73,7 @@ Discussions: <https://github.com/smart-swimmingpool/smart-swimmingpool.github.io
 - [x] Time sync via NTP (configurable server, default: pool.ntp.org)
 - [x] Configurable timezone with DST support (10 major timezones available)
 - [x] Logging information via MQTT
-- [x] Modern libraries (ArduinoJson 6.21.5, NTPClient 3.2.1)
+- [x] Modern libraries (ArduinoJson 7.3.0, NTPClient 3.2.1)
 - [x] Clean, formatted code following project standards
 
 ## Recent Updates (v3.2.0)

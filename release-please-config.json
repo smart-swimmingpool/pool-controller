@@ -9,6 +9,11 @@
           "type": "generic",
           "path": "platformio.ini",
           "search-regex": "FW_VERSION=\"[^\"]*\""
+        },
+        {
+          "type": "generic",
+          "path": "src/Version.h",
+          "search-regex": "FW_VERSION \"[^\"]*\""
         }
       ]
     }
