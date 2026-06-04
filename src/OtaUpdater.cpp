@@ -165,7 +165,7 @@ bool OtaUpdater::startUpdate() {
   ConfigManager::backupConfig();
 
   updateInProgress_ = true;
-  updateAvailable_ = false;
+  // Don't clear updateAvailable_ yet — preserved so UI can retry on failure (P2 review fix)
   progress_ = 0;
   statusMessage_ = "Downloading... 0%";
 
@@ -176,6 +176,10 @@ bool OtaUpdater::startUpdate() {
     updateInProgress_ = false;
     statusMessage_ = "Update failed!";
     Serial.println("OTA: Update failed!");
+    // updateAvailable_ stays true so the user can retry
+  } else {
+    // On success, clear the flag before reboot
+    updateAvailable_ = false;
   }
   // If success, ESP will reboot — we never reach here
   return ok;

@@ -4,6 +4,11 @@
 #include "NetworkManager.hpp"
 #include "SystemMonitor.hpp"
 #include "TimeClientHelper.hpp"  // TimeDegradation, getTimeDegradation
+#include "RelayModuleNode.hpp"
+
+// Nodes declared in PoolController.cpp
+extern RelayModuleNode poolPumpNode;
+extern RelayModuleNode solarPumpNode;
 
 namespace PoolController {
 
@@ -151,6 +156,9 @@ void DegradationManager::onTransition() {
   case DegradationLevel::CRITICAL:
     Serial.println(F("✖ CRITICAL: Multiple system failures detected!"));
     Serial.println(F("  Entering safe mode — all relays off"));
+    // De-energize both relays immediately (P1 review fix)
+    poolPumpNode.setSwitch(false);
+    solarPumpNode.setSwitch(false);
     break;
   }
 

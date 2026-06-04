@@ -385,30 +385,28 @@ void MqttPublisher::handleMqttMessage(char *topic, uint8_t *payload, unsigned in
     int val = value.toInt();
     TimerSetting ts = operationModeNode.getTimerSetting();
     ts.timerStartHour = val;
-    operationModeNode.setTimerSetting(ts);
-    ConfigManager::save();
+    operationModeNode.setTimerSetting(ts);  // Persisted via NVS, no ConfigManager save needed
   } else if (top.endsWith("/timer-start-min/set")) {
     int val = value.toInt();
     TimerSetting ts = operationModeNode.getTimerSetting();
     ts.timerStartMinutes = val;
     operationModeNode.setTimerSetting(ts);
-    ConfigManager::save();
   } else if (top.endsWith("/timer-end-h/set")) {
     int val = value.toInt();
     TimerSetting ts = operationModeNode.getTimerSetting();
     ts.timerEndHour = val;
     operationModeNode.setTimerSetting(ts);
-    ConfigManager::save();
   } else if (top.endsWith("/timer-end-min/set")) {
     int val = value.toInt();
     TimerSetting ts = operationModeNode.getTimerSetting();
     ts.timerEndMinutes = val;
     operationModeNode.setTimerSetting(ts);
-    ConfigManager::save();
   } else if (top.endsWith("/timezone/set")) {
     int val = value.toInt();
     ConfigManager::getSettings().timezoneIndex = val;
     ConfigManager::save();
+    // Apply timezone change to running clock immediately (P2 review fix)
+    setTimezoneIndex(val);
   }
 
   // Refresh states to confirm changes to Home Assistant

@@ -427,6 +427,10 @@ void WebPortal::apiSaveConfig() {
     // Apply timezone change to running clock immediately (P2)
     setTimezoneIndex(ConfigManager::getSettings().timezoneIndex);
 
+    // Apply time-loss degradation thresholds immediately (P2 review fix)
+    setTimeDegradationGreenHours(static_cast<uint8_t>(ConfigManager::getSettings().timeLossGreenHours));
+    setTimeDegradationRedHours(static_cast<uint8_t>(ConfigManager::getSettings().timeLossRedHours));
+
     // Propagate changes directly into runtime parameters
     operationModeNode.setMode(ConfigManager::getSettings().opMode.c_str());
     operationModeNode.setPoolMaxTemperature(ConfigManager::getSettings().tempMaxPool);
