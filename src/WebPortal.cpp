@@ -133,6 +133,11 @@ void WebPortal::setupRoutes() {
       return;
     apiSetMode();
   });
+  server_.on("/api/pump", HTTP_POST, []() {
+    if (!handleAuthentication())
+      return;
+    apiTogglePump();
+  });
 
   server_.on("/api/login", HTTP_POST, apiLogin);
   server_.on("/api/logout", HTTP_GET, apiLogout);
@@ -468,6 +473,37 @@ void WebPortal::apiSetMode() {
   } else {
     server_.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Invalid mode\"}");
   }
+}
+
+void WebPortal::apiTogglePump() {
+  if (!server_.hasArg("pump")) {
+    server_.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Missing pump parameter\"}");
+    return;
+  }
+
+  // Only allow pump toggling in manual mode
+  if (operationModeNode.getMode() != "manu") {
+    server_.send(400, "application/json",
+      "{\"status\":\"error\",\"message\":\"Pump control only available in manual mode\"}");
+    return;
+  }
+
+  String pump = server_.arg("pump");
+  bool newState;
+
+  if (pump == "pool") {
+    newState = !poolPumpNode.getSwitch();
+    poolPumpNode.setSwitch(newState);
+  } else if (pump == "solar") {
+    newState = !solarPumpNode.getSwitch();
+    solarPumpNode.setSwitch(newState);
+  } else {
+    server_.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Invalid pump. Use 'pool' or 'solar'\"}");
+    return;
+  }
+
+  String json = "{\"status\":\"ok\",\"state\":" + String(newState ? "true" : "false") + "}";
+  server_.send(200, "application/json", json);
 }
 
 void WebPortal::apiLogin() {

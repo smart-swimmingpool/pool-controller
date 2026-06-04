@@ -16,13 +16,9 @@ async function loadTelemetry() {
     document.getElementById('poolTemp').textContent = isFinite(data.pool_temp) ? data.pool_temp.toFixed(1) + ' °C' : '-- °C';
     document.getElementById('solarTemp').textContent = isFinite(data.solar_temp) ? data.solar_temp.toFixed(1) + ' °C' : '-- °C';
 
-    const pb = document.getElementById('poolPump');
-    pb.textContent = data.pool_pump ? 'RUNNING' : 'OFF';
-    pb.style.color = data.pool_pump ? 'var(--accent-blue)' : 'var(--text-muted)';
-
-    const sb = document.getElementById('solarPump');
-    sb.textContent = data.solar_pump ? 'RUNNING' : 'OFF';
-    sb.style.color = data.solar_pump ? 'var(--accent-solar)' : 'var(--text-muted)';
+    const isManual = data.op_mode === 'manu';
+    renderPump('poolPump', data.pool_pump, isManual, 'var(--accent-blue)');
+    renderPump('solarPump', data.solar_pump, isManual, 'var(--accent-solar)');
 
     document.getElementById('heapVal').textContent = (data.free_heap / 1024).toFixed(1) + ' KB';
     document.getElementById('rssiVal').textContent = data.rssi + ' dBm';
@@ -86,6 +82,41 @@ async function saveMqtt() {
     body: 'type=mqtt&host=' + encodeURIComponent(host) + '&port=' + portVal + '&username=' + encodeURIComponent(user) + '&password=' + encodeURIComponent(pass) + '&tls=' + tls
   });
   if(res.status===200) alert("MQTT config saved!");
+}
+
+function renderPump(elemId, isOn, isManual, colorOn) {
+  const el = document.getElementById(elemId);
+  const state = isOn ? 'ON' : 'OFF';
+  const toggleClass = isOn ? 'pump-on' : 'pump-off';
+  const clickableClass = isManual ? 'pump-manual' : 'pump-auto';
+  el.className = 'tel-val ' + toggleClass + ' ' + clickableClass;
+  el.style.color = isOn ? colorOn : 'var(--text-muted)';
+  el.innerHTML = isOn
+    ? '<span class="pump-indicator on"></span> ' + state
+    : '<span class="pump-indicator off"></span> ' + state;
+  // Update parent card hint visibility
+  const card = el.closest('.pump-card');
+  if (card) {
+    const hint = card.querySelector('.pump-toggle-hint');
+    if (hint) hint.style.display = isManual ? 'inline' : 'none';
+    card.style.opacity = '1';
+    if (!isManual) card.style.cursor = 'not-allowed';
+    else card.style.cursor = 'pointer';
+  }
+}
+
+async function togglePump(pump) {
+  const res = await fetch('/api/pump', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: 'pump=' + encodeURIComponent(pump)
+  });
+  const data = await res.json();
+  if (data.status === 'ok') {
+    // Telemetry will pick up the new state on next poll
+  } else {
+    alert('✖ ' + (data.message || 'Cannot toggle pump'));
+  }
 }
 
 async function setMode(mode) {

@@ -32,12 +32,12 @@
         <div class="tel-val solar-active" id="solarTemp">--.- °C</div>
         <div class="tel-threshold" id="solarThreshold">min --.-°C</div>
       </div>
-      <div class="tel-card">
-        <label>Pool Pump Status</label>
+      <div class="tel-card pump-card" onclick="togglePump('pool')">
+        <label>Pool Pump <span class="pump-toggle-hint">↻ toggle</span></label>
         <div class="tel-val" id="poolPump" style="color: var(--text-muted);">OFF</div>
       </div>
-      <div class="tel-card">
-        <label>Solar Pump Status</label>
+      <div class="tel-card pump-card" onclick="togglePump('solar')">
+        <label>Solar Pump <span class="pump-toggle-hint">↻ toggle</span></label>
         <div class="tel-val" id="solarPump" style="color: var(--text-muted);">OFF</div>
       </div>
     </div>

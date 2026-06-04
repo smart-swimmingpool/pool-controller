@@ -197,6 +197,44 @@ input:focus, select:focus {
   transform: translateY(-2px);
 }
 
+/* ── Pump Toggle Cards ── */
+.pump-card {
+  transition: all 0.3s ease;
+  user-select: none;
+}
+.pump-card:hover {
+  background: rgba(0, 180, 216, 0.1);
+  transform: translateY(-2px);
+}
+.pump-card:active {
+  transform: translateY(0);
+}
+.pump-toggle-hint {
+  font-size: 0.6rem;
+  opacity: 0.5;
+  font-weight: 400;
+}
+.pump-indicator {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  vertical-align: middle;
+  margin-right: 4px;
+  transition: all 0.3s ease;
+}
+.pump-indicator.on {
+  background: var(--accent-blue);
+  box-shadow: 0 0 8px var(--accent-blue);
+}
+.pump-indicator.off {
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: none;
+}
+.pump-card .tel-val.pump-auto {
+  opacity: 0.7;
+}
+
 /* ── Mode Selector ── */
 .mode-selector {
   display: grid;

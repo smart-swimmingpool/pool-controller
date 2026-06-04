@@ -38,6 +38,7 @@ private:
   static void apiGetConfig();
   static void apiSaveConfig();
   static void apiSetMode();
+  static void apiTogglePump();
   static void apiLogin();
   static void apiLogout();
   static void apiRestart();
