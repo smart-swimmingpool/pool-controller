@@ -105,14 +105,10 @@ views:
         title: Timer
         show_header_toggle: false
         entities:
-          - entity: number.pool_controller_timer_start_h
-            name: Start Hour
-          - entity: number.pool_controller_timer_start_min
-            name: Start Minute
-          - entity: number.pool_controller_timer_end_h
-            name: End Hour
-          - entity: number.pool_controller_timer_end_min
-            name: End Minute
+          - entity: text.pool_controller_timer_start
+            name: Start Time (HH:MM)
+          - entity: text.pool_controller_timer_end
+            name: End Time (HH:MM)
 
       - type: history-graph
         title: Switching Times & Temperatures (24h)
