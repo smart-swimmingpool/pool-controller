@@ -11,11 +11,11 @@
   <p style="color: var(--text-muted); font-size: 0.75rem; margin-bottom: 2rem;">v<span id="fwVersionDisplay">--</span></p>
 
   <div class="nav-tabs">
-    <div class="tab active" onclick="switchTab('dashboard')">Dashboard</div>
-    <div class="tab" onclick="switchTab('wifi')">WiFi Setup</div>
-    <div class="tab" onclick="switchTab('mqtt')">MQTT Settings</div>
-    <div class="tab" onclick="switchTab('settings')">Configuration</div>
-    <div class="tab" onclick="switchTab('system')">Security & Update</div>
+    <div class="tab active" data-tab="dashboard" onclick="switchTab('dashboard')">Dashboard</div>
+    <div class="tab" data-tab="wifi" onclick="switchTab('wifi')">WiFi Setup</div>
+    <div class="tab" data-tab="mqtt" onclick="switchTab('mqtt')">MQTT Settings</div>
+    <div class="tab" data-tab="settings" onclick="switchTab('settings')">Configuration</div>
+    <div class="tab" data-tab="system" onclick="switchTab('system')">Security & Update</div>
   </div>
 
   <!-- Dashboard Tab -->

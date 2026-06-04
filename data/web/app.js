@@ -2,7 +2,9 @@ function switchTab(tabId) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
 
-  event.target.classList.add('active');
+  // Support both onclick event and programmatic calls via data-tab attribute
+  const tab = document.querySelector(`.tab[data-tab="${tabId}"]`);
+  if (tab) tab.classList.add('active');
   document.getElementById('tab-' + tabId).style.display = 'block';
 }
 
@@ -63,7 +65,10 @@ async function saveWiFi() {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: 'type=wifi&ssid=' + encodeURIComponent(ssid) + '&password=' + encodeURIComponent(pass)
   });
-  if(res.status===200) alert("WiFi config saved! Device will restart soon to connect.");
+  if(res.status===200) {
+    alert("WiFi config saved! Device is rebooting to connect...");
+    setTimeout(() => window.location.reload(), 3000);
+  }
 }
 
 async function saveMqtt() {
@@ -414,6 +419,10 @@ window.onload = () => {
       .then(data => {
         if (data.fw_version) {
           document.getElementById('fwCurrentVersion').textContent = data.fw_version;
+        }
+        // In AP mode, show WiFi configuration tab directly
+        if (data.ap_mode) {
+          switchTab('wifi');
         }
       })
       .catch(() => {});

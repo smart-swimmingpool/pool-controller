@@ -317,6 +317,7 @@ void WebPortal::apiGetStatus() {
   doc["uptime"] = millis() / 1000;
   doc["free_heap"] = ESP.getFreeHeap();
   doc["max_alloc"] = ESP.getMaxAllocHeap();
+  doc["ap_mode"] = NetworkManager::isApMode();
   doc["rssi"] = NetworkManager::getWiFiRSSI();
   doc["wifi_connected"] = NetworkManager::isWiFiConnected();
   doc["mqtt_connected"] = NetworkManager::isMqttConnected();
