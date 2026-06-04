@@ -11,6 +11,7 @@
 #include "OtaUpdater.hpp"
 #include "TimeClientHelper.hpp"
 #include <LittleFS.h>
+#include <Preferences.h>
 #include <Update.h>
 #include "DallasTemperatureNode.hpp"
 #include "ESP32TemperatureNode.hpp"
@@ -79,7 +80,12 @@ void WebPortal::generateSessionToken() {
 
 bool WebPortal::isClientAuthenticated() {
   if (NetworkManager::isApMode()) {
-    return true;  // No password protection in initial AP setup mode
+    // In AP fallback mode with saved credentials, require admin password.
+    // Only allow unauthenticated AP access for truly unconfigured devices.
+    if (!ConfigManager::isConfigured()) {
+      return true;  // Initial setup — no password set yet
+    }
+    // Fall through to session-cookie check below
   }
 
   // Only check cookie if a session token was actually generated
@@ -404,7 +410,10 @@ void WebPortal::apiSaveConfig() {
     ConfigManager::getMqtt().host = server_.arg("host");
     ConfigManager::getMqtt().port = server_.arg("port").toInt();
     ConfigManager::getMqtt().username = server_.arg("username");
-    ConfigManager::getMqtt().password = server_.arg("password");
+    // Preserve existing password if field is left blank (P2 review fix)
+    if (server_.arg("password").length() > 0) {
+      ConfigManager::getMqtt().password = server_.arg("password");
+    }
     ConfigManager::getMqtt().useTls = server_.arg("tls") == "true";
     ConfigManager::save();
 
@@ -430,6 +439,14 @@ void WebPortal::apiSaveConfig() {
     // Apply time-loss degradation thresholds immediately (P2 review fix)
     setTimeDegradationGreenHours(static_cast<uint8_t>(ConfigManager::getSettings().timeLossGreenHours));
     setTimeDegradationRedHours(static_cast<uint8_t>(ConfigManager::getSettings().timeLossRedHours));
+
+    // Propagate loop interval to all running nodes (P2 review fix)
+    solarTemperatureNode.setMeasurementInterval(ConfigManager::getSettings().loopInterval);
+    poolTemperatureNode.setMeasurementInterval(ConfigManager::getSettings().loopInterval);
+    ctrlTemperatureNode.setMeasurementInterval(ConfigManager::getSettings().loopInterval);
+    poolPumpNode.setMeasurementInterval(ConfigManager::getSettings().loopInterval);
+    solarPumpNode.setMeasurementInterval(ConfigManager::getSettings().loopInterval);
+    operationModeNode.setMeasurementInterval(ConfigManager::getSettings().loopInterval);
 
     // Propagate changes directly into runtime parameters
     operationModeNode.setMode(ConfigManager::getSettings().opMode.c_str());
@@ -539,6 +556,20 @@ void WebPortal::apiRestart() {
 
 void WebPortal::apiFactoryReset() {
   server_.send(200, "text/plain", "OK");
+
+  // Clear NVS Preferences (relay states, operation mode, timer settings)
+  // that survive a config.json wipe (P2 review fix)
+  Preferences prefs;
+  prefs.begin("pool-pump", false);
+  prefs.clear();
+  prefs.end();
+  prefs.begin("solar-pump", false);
+  prefs.clear();
+  prefs.end();
+  prefs.begin("pool-controller", false);
+  prefs.clear();
+  prefs.end();
+
   ConfigManager::reset();
   ConfigManager::save();
   delay(1000);

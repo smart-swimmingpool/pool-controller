@@ -381,24 +381,32 @@ void MqttPublisher::handleMqttMessage(char *topic, uint8_t *payload, unsigned in
     ConfigManager::save();
   } else if (top.endsWith("/timer-start-h/set")) {
     int val = value.toInt();
-    TimerSetting ts = operationModeNode.getTimerSetting();
-    ts.timerStartHour = val;
-    operationModeNode.setTimerSetting(ts);  // Persisted via NVS, no ConfigManager save needed
+    if (val >= 0 && val <= 23) {
+      TimerSetting ts = operationModeNode.getTimerSetting();
+      ts.timerStartHour = val;
+      operationModeNode.setTimerSetting(ts);  // Persisted via NVS, no ConfigManager save needed
+    }
   } else if (top.endsWith("/timer-start-min/set")) {
     int val = value.toInt();
-    TimerSetting ts = operationModeNode.getTimerSetting();
-    ts.timerStartMinutes = val;
-    operationModeNode.setTimerSetting(ts);
+    if (val >= 0 && val <= 59) {
+      TimerSetting ts = operationModeNode.getTimerSetting();
+      ts.timerStartMinutes = val;
+      operationModeNode.setTimerSetting(ts);
+    }
   } else if (top.endsWith("/timer-end-h/set")) {
     int val = value.toInt();
-    TimerSetting ts = operationModeNode.getTimerSetting();
-    ts.timerEndHour = val;
-    operationModeNode.setTimerSetting(ts);
+    if (val >= 0 && val <= 23) {
+      TimerSetting ts = operationModeNode.getTimerSetting();
+      ts.timerEndHour = val;
+      operationModeNode.setTimerSetting(ts);
+    }
   } else if (top.endsWith("/timer-end-min/set")) {
     int val = value.toInt();
-    TimerSetting ts = operationModeNode.getTimerSetting();
-    ts.timerEndMinutes = val;
-    operationModeNode.setTimerSetting(ts);
+    if (val >= 0 && val <= 59) {
+      TimerSetting ts = operationModeNode.getTimerSetting();
+      ts.timerEndMinutes = val;
+      operationModeNode.setTimerSetting(ts);
+    }
   } else if (top.endsWith("/timezone/set")) {
     int val = value.toInt();
     ConfigManager::getSettings().timezoneIndex = val;
