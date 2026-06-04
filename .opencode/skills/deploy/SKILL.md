@@ -61,12 +61,12 @@ If `pio` is not in PATH, use the project's virtual environment:
 
 Before deploying, verify the firmware version across all sources:
 
-| Source | File | Check |
-|--------|------|-------|
-| Build flag | `platformio.ini:18` | `-D FW_VERSION="x.y.z"` |
-| Central fallback | `src/Version.h:11` | `#define FW_VERSION "0.0.0"` (fallback only) |
-| Release manifest | `.release-please-manifest.json` | `"x.y.z"` |
-| Git tag | `git tag -l \| sort -V` | `vx.y.z` exists |
+| Source           | File                            | Check                                        |
+| ---------------- | ------------------------------- | -------------------------------------------- |
+| Build flag       | `platformio.ini:18`             | `-D FW_VERSION="x.y.z"`                      |
+| Central fallback | `src/Version.h:11`              | `#define FW_VERSION "0.0.0"` (fallback only) |
+| Release manifest | `.release-please-manifest.json` | `"x.y.z"`                                    |
+| Git tag          | `git tag -l \| sort -V`         | `vx.y.z` exists                              |
 
 > **Source of truth:** `platformio.ini` build flag `FW_VERSION`. Release-please auto-updates it on release.
 > `src/Version.h` is a fallback and also auto-updated by release-please.
@@ -109,6 +109,7 @@ find src/ -name '*.cpp' -o -name '*.hpp' -o -name '*.h' | xargs clang-format --d
 ```
 
 Expected output:
+
 ```
 RAM:   [==        ]  15.1% (used 49596 bytes from 327680 bytes)
 Flash: [========  ]  83.7% (used 1096433 bytes from 1310720 bytes)
@@ -131,6 +132,7 @@ ls /dev/cu.usbserial-* /dev/cu.wchusbserial-* 2>/dev/null
 ```
 
 Common ESP32 USB-to-UART chips:
+
 - **CP2102** (Silicon Labs) → `/dev/ttyUSB0`
 - **CH340** → `/dev/ttyUSB0` or `/dev/ttyCH341USB0`
 
@@ -145,6 +147,7 @@ Common ESP32 USB-to-UART chips:
 ```
 
 > **Important:** Both steps are required for a complete deployment.
+>
 > - Step A flashes the compiled firmware (`firmware.bin`)
 > - Step B uploads web assets (`data/web/` → LittleFS partition)
 
@@ -157,13 +160,13 @@ Common ESP32 USB-to-UART chips:
 
 ### Serial upload troubleshooting
 
-| Symptom | Fix |
-|---------|-----|
+| Symptom                      | Fix                                                                           |
+| ---------------------------- | ----------------------------------------------------------------------------- |
 | `Connecting..._____` (stuck) | Hold **BOOT** button on ESP32 during connection, release when flashing starts |
-| `Failed to connect` | Check cable (data, not charge-only), try different USB port |
-| `Access denied` | `sudo chmod 666 /dev/ttyUSB0` or add user to `dialout` group |
-| `No such file or directory` | USB-to-UART driver missing — install CP210x/CH340 driver |
-| Upload fails mid-way | Lower `upload_speed` in `platformio.ini` (e.g. 115200) |
+| `Failed to connect`          | Check cable (data, not charge-only), try different USB port                   |
+| `Access denied`              | `sudo chmod 666 /dev/ttyUSB0` or add user to `dialout` group                  |
+| `No such file or directory`  | USB-to-UART driver missing — install CP210x/CH340 driver                      |
+| Upload fails mid-way         | Lower `upload_speed` in `platformio.ini` (e.g. 115200)                        |
 
 ## Deploy — OTA Update
 
@@ -222,12 +225,12 @@ Commit (Conventional Commits) → [release-please] → Release PR
 
 ### Conventional Commits
 
-| Prefix | Version bump | Example |
-|--------|-------------|---------|
-| `fix:` | Patch (x.y.**Z**) | `fix: correct temperature offset` |
-| `feat:` | Minor (x.**Y**.0) | `feat: add heater control` |
-| `feat!:` or `fix!:` | Major (**X**.0.0) | `feat!: drop ESP8266 support` |
-| `chore:` | No release | `chore: update dependencies` |
+| Prefix              | Version bump      | Example                           |
+| ------------------- | ----------------- | --------------------------------- |
+| `fix:`              | Patch (x.y.**Z**) | `fix: correct temperature offset` |
+| `feat:`             | Minor (x.**Y**.0) | `feat: add heater control`        |
+| `feat!:` or `fix!:` | Major (**X**.0.0) | `feat!: drop ESP8266 support`     |
+| `chore:`            | No release        | `chore: update dependencies`      |
 
 ### Release-please configuration
 
@@ -302,6 +305,7 @@ Check device info in Home Assistant → `sw_version` field matches the firmware 
 ### 5. Full system diagnostics endpoint
 
 The `/api/status` endpoint returns:
+
 ```json
 {
   "fw_version": "3.2.0",
@@ -338,11 +342,11 @@ git checkout main  # return to main branch
 
 This skill works alongside:
 
-| Skill | Purpose |
-|-------|---------|
-| `platformio-workflow` | General build/monitor/debug commands |
-| `platformio-env` | Deep platformio.ini configuration |
-| `web-ui` | Web interface changes (before deploying) |
-| `cpp-code-quality` | Linting before deployment |
-| `esp32-reliability` | 24/7 stability checks |
-| `cpp-memory-opt` | Flash/RAM optimization if space is tight |
+| Skill                 | Purpose                                  |
+| --------------------- | ---------------------------------------- |
+| `platformio-workflow` | General build/monitor/debug commands     |
+| `platformio-env`      | Deep platformio.ini configuration        |
+| `web-ui`              | Web interface changes (before deploying) |
+| `cpp-code-quality`    | Linting before deployment                |
+| `esp32-reliability`   | 24/7 stability checks                    |
+| `cpp-memory-opt`      | Flash/RAM optimization if space is tight |

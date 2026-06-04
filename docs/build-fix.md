@@ -220,6 +220,7 @@ int MyClass::value = 0;
    ```
 
 2. **Monitor GitHub Actions**: Check all workflows pass
+
    - PlatformIO CI
    - CodeQL Analysis
    - Linter

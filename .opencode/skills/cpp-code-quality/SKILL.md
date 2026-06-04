@@ -33,6 +33,7 @@ Linting and formatting standards for the pool-controller project. CI uses Super-
 **Jeder PR muss alle folgenden Gates grün durchlaufen, bevor er gemerged wird.**
 
 ### Gate 1 — C++ Formatting (clang-format)
+
 ```bash
 # Native (Linux x86_64):
 clang-format -i src/**/*.cpp src/**/*.hpp
@@ -45,6 +46,7 @@ docker run --rm --platform linux/arm64 \
 ```
 
 ### Gate 2 — C++ Linting (cpplint)
+
 ```bash
 # Setup (einmalig):
 python3 -m venv /tmp/lint-venv && /tmp/lint-venv/bin/pip install cpplint
@@ -59,6 +61,7 @@ python3 -m venv /tmp/lint-venv && /tmp/lint-venv/bin/pip install cpplint
 ```
 
 ### Gate 3 — EditorConfig Compliance
+
 ```bash
 # Check auf Tabs, Trailing Whitespace, fehlende Final Newline
 # Keine Tabs:
@@ -77,6 +80,7 @@ done | grep "✗" || echo "✓ Alle Dateien haben Final Newline"
 ```
 
 ### Gate 4 — Static Analysis (platformio check)
+
 ```bash
 # Wie CI (platformio check mit skip-packages):
 pio check --environment esp32dev --skip-packages
@@ -85,6 +89,7 @@ pio check --environment esp32dev --skip-packages
 ```
 
 ### Gate 5 — Build
+
 ```bash
 # Build für alle Targets:
 pio run --environment esp32dev
@@ -93,7 +98,9 @@ pio run --environment esp32dev
 ```
 
 ### Gate 6 — Nicht-lokal prüfbar (CI)
+
 Diese Gates laufen nur in GitHub Actions und müssen auf dem PR grün sein:
+
 - **Super-Linter**: cpplint, Markdown, YAML, JSON, GitHub Actions, EditorConfig, Gitleaks, Bash
 - **CodeQL**: Security Analysis
 - **pio-dependency-check**: Veraltete Pakete
@@ -135,6 +142,7 @@ find src -type f \( -name "*.cpp" -o -name "*.hpp" \) -exec sed -i 's/[[:space:]
 ## CI Linter Configuration
 
 From `.github/workflows/linter.yml` — diese Linters sind **enabled**:
+
 - `VALIDATE_CPP=true` — cpplint für C++ Style
 - `VALIDATE_MARKDOWN=true` — markdown-lint
 - `VALIDATE_YAML=true` — yaml-lint
@@ -151,6 +159,7 @@ From `.github/workflows/linter.yml` — diese Linters sind **enabled**:
 CI führt `platformio check --environment esp32dev --skip-packages` aus. Lokal identisch.
 
 Das entspricht den **enabled checks** aus `platformio.ini`. Typische Checks:
+
 - `def-unsafe` (unsichere Definitionen)
 - `nullptr-dereference` (Nullpointer)
 - `uninitialized` (uninitialisierte Variablen)
@@ -160,6 +169,7 @@ Das entspricht den **enabled checks** aus `platformio.ini`. Typische Checks:
 ### CPPLINT.cfg Configuration
 
 The project has a custom `CPPLINT.cfg` at the repository root that sets:
+
 - `linelength=130` (matching `.clang-format`, overriding cpplint's default 80)
 - Disabled filters for embedded/Arduino patterns: `-legal/copyright`, `-build/include_subdir`, `-runtime/int`, `-whitespace/indent`, `-readability/casting`, and more
 
@@ -172,12 +182,14 @@ Check `CPPLINT.cfg` before adding/removing filters — it reflects deliberate pr
 ### 1. Clang-Format Violations
 
 `.clang-format` enforces (from `CODING_GUIDELINES.md`):
+
 - Max line length: **130 characters**
 - Indentation: **2 spaces** (no tabs)
 - Brace style: **K&R** (opening brace on same line)
 - Pointer alignment: **left** (`int* ptr`)
 
 **Auto-fix**:
+
 ```bash
 # Native:
 clang-format -i src/**/*.cpp src/**/*.hpp
@@ -190,23 +202,25 @@ docker run --rm --platform linux/arm64 -v $(pwd):/work -w /work ubuntu:22.04 \
 
 **Common pattern fixes**:
 
-| Issue | Wrong | Right |
-|-------|-------|-------|
-| Namespace brace | `namespace Foo\n{` | `namespace Foo {` |
-| Control flow space | `if(x){` | `if (x) {` |
-| Pointer style | `int *ptr` | `int* ptr` |
-| NULL → nullptr | `ptr = NULL` | `ptr = nullptr` |
-| Empty braces | `Context{ }` | `Context{}` |
-| Inline comment spacing | `code;//comment` | `code;  // comment` |
+| Issue                  | Wrong              | Right               |
+| ---------------------- | ------------------ | ------------------- |
+| Namespace brace        | `namespace Foo\n{` | `namespace Foo {`   |
+| Control flow space     | `if(x){`           | `if (x) {`          |
+| Pointer style          | `int *ptr`         | `int* ptr`          |
+| NULL → nullptr         | `ptr = NULL`       | `ptr = nullptr`     |
+| Empty braces           | `Context{ }`       | `Context{}`         |
+| Inline comment spacing | `code;//comment`   | `code;  // comment` |
 
 ### 2. EditorConfig Issues
 
 `.editorconfig` requires:
+
 - **2 space indentation** everywhere (no tabs)
 - **No trailing whitespace**
 - **Final newline** at end of every file
 
 **Auto-fix**:
+
 ```bash
 # Remove tabs (C++)
 find src -type f \( -name "*.cpp" -o -name "*.hpp" \) -exec sed -i 's/\t/  /g' {} \;
@@ -265,6 +279,7 @@ Checked files: `src/*.cpp`, `src/*.hpp`, `src/Nodes/*.cpp`, `src/Nodes/*.hpp`, `
 ## YAML Formatting (GitHub Actions)
 
 From `.github/linters/.yaml-lint.yml`:
+
 - Double quotes for strings: `name: "Build"` not `name: 'Build'`
 - Long lines use `>` or `|` wrapping
 - No trailing whitespace
@@ -272,6 +287,7 @@ From `.github/linters/.yaml-lint.yml`:
 ## Markdown Formatting
 
 From `.github/linters/.markdown-lint.yml`:
+
 - "Wi-Fi" (not "WiFi" in prose — but code identifiers keep their original spelling)
 - URLs in angle brackets: `<https://example.com>`
 - No bare URLs outside code blocks
@@ -281,11 +297,13 @@ From `.github/linters/.markdown-lint.yml`:
 ## PlatformIO Check (Static Analysis)
 
 CI führt diesen Schritt aus. Lokale Ausführung:
+
 ```bash
 pio check --environment esp32dev --skip-packages
 ```
 
 **Typische Fehler und Fixes**:
+
 - `[violation] variable 'x' is uninitialized` → Initialisierung hinzufügen
 - `[violation] unused variable 'y'` → Variable entfernen oder `(void)y;` markieren
 - `[violation] virtual destructor` → `virtual ~ClassName() = default;` in Basis-Klassen ergänzen

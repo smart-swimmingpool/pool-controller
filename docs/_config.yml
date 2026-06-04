@@ -4,4 +4,4 @@ description: Make your Swimming Pool smarter
 show_downloads: false
 
 plugins:
-- jekyll-menus
+  - jekyll-menus

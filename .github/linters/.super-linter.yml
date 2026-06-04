@@ -17,7 +17,7 @@ CPP_FILTER_REGEX_INCLUDE: |
 
 # Enable only the linters we need for this project
 # All other linters are disabled by default when using selective validation
-VALIDATE_GITLEAKS: true  # Secret scanning
+VALIDATE_GITLEAKS: true # Secret scanning
 
 # Markdown linting - more lenient for documentation
 MARKDOWN_CONFIG_FILE: .markdown-lint.yml

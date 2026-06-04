@@ -57,10 +57,10 @@ keywords:
 
 **Location**: `SystemMonitor.hpp:72-105`
 
-| Threshold | Value | Action |
-|-----------|-------|--------|
-| Warning | <16384 bytes (16KB) | Log warning once |
-| Critical | <8192 bytes (8KB) | Immediate `ESP.restart()` |
+| Threshold | Value               | Action                    |
+| --------- | ------------------- | ------------------------- |
+| Warning   | <16384 bytes (16KB) | Log warning once          |
+| Critical  | <8192 bytes (8KB)   | Immediate `ESP.restart()` |
 
 **Check interval**: Every 10 seconds in `loop()`.
 
@@ -71,6 +71,7 @@ keywords:
 **Location**: `SystemMonitor.hpp:129-178`, `PoolController.cpp:138-200`
 
 **Mechanism**:
+
 1. `SystemMonitor::detectBootLoop()` called at start of `setup()` (before anything initializes)
 2. Increments NVS-stored `bootCount` on each boot
 3. If `bootCount >= 3` → returns true (boot-loop detected)
@@ -80,13 +81,16 @@ keywords:
 **NVS namespace**: `sysmon`, key: `bootCount`
 
 **Testing**: To simulate a boot-loop, set the counter:
+
 ```cpp
 Preferences prefs;
 prefs.begin("sysmon", false);
 prefs.putInt("bootCount", 3);
 prefs.end();
 ```
+
 Then reboot — serial should show:
+
 ```
 ✖ BOOT-LOOP DETECTED (3 consecutive boots)
 ✖ SAFE MODE ACTIVE — all relays forced OFF
@@ -98,22 +102,24 @@ Then reboot — serial should show:
 
 **Degradation Levels** (enum class `DegradationLevel`):
 
-| Level | Value | Meaning |
-|-------|-------|---------|
-| `NORMAL` | 0 | Everything nominal |
-| `NO_WIFI` | 1 | WiFi/MQTT lost, local operation still works |
-| `NO_TIME` | 2 | NTP sync lost, timer scheduling degraded |
-| `NO_SENSOR` | 3 | Temperature sensor failure, cautious defaults |
-| `CRITICAL` | 4 | Multiple failures or critically low memory → safe mode |
+| Level       | Value | Meaning                                                |
+| ----------- | ----- | ------------------------------------------------------ |
+| `NORMAL`    | 0     | Everything nominal                                     |
+| `NO_WIFI`   | 1     | WiFi/MQTT lost, local operation still works            |
+| `NO_TIME`   | 2     | NTP sync lost, timer scheduling degraded               |
+| `NO_SENSOR` | 3     | Temperature sensor failure, cautious defaults          |
+| `CRITICAL`  | 4     | Multiple failures or critically low memory → safe mode |
 
 **Evaluation**: `DegradationManager::evaluate()` runs every 5 seconds (`EVALUATION_INTERVAL_MS`).
 
 **Integration points**:
+
 - `DallasTemperatureNode` → `reportSensorStatus(nodeId, valid)` on each read
 - `RuleAuto` / `RuleTimer` → `getLevel()` for time degradation decisions
 - `PoolController::loop()` → `DegradationManager::evaluate()` every loop
 
 **Safe mode**: `DegradationManager::isSafe()` returns true when level ≥ CRITICAL.
+
 - Can be forced via `forceSafeMode()` (used by boot-loop detection)
 - Released via `unforceSafeMode()` (when boot-loop is cleared)
 
@@ -122,6 +128,7 @@ Then reboot — serial should show:
 **Location**: `DallasTemperatureNode.cpp`
 
 When sensor reads `NaN` (Not a Number):
+
 - Re-poll interval drops from 300s to **5s** for faster recovery
 - Once sensor returns valid reading → back to normal interval
 
@@ -130,6 +137,7 @@ When sensor reads `NaN` (Not a Number):
 **Location**: `TimeClientHelper.hpp/cpp`
 
 From `PoolController.cpp:92-94` — configurable via `ConfigManager`:
+
 - **Green hours** (`time-loss-green-hours`): Time considered reliable after NTP loss
 - **Red hours** (`time-loss-red-hours`): After this, time is considered unreliable
 
@@ -140,6 +148,7 @@ Timer rules check degradation state — when `NO_TIME`, pool timer defaults to O
 **Location**: `StateManager.hpp/cpp`
 
 Uses ESP32 NVS (Preferences). Persists:
+
 - Operation mode and settings
 - Temperature thresholds (pool max, solar min, hysteresis)
 - Timer configurations
@@ -150,6 +159,7 @@ Auto-restored after power failure or reboot.
 ## Reliability Checklist
 
 When modifying reliability code, verify:
+
 - [ ] `SystemMonitor::feedWatchdog()` is called every loop iteration
 - [ ] New blocking code doesn't exceed 30s (watchdog timeout)
 - [ ] NVS `prefs.end()` is called after every open

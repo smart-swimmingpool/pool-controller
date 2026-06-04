@@ -77,17 +77,17 @@ Commit Messages müssen dem Format entsprechen, damit automatische Changelog-Gen
 
 Use `semble search` to find code by describing what it does or naming a symbol/identifier, instead of grep:
 
-​```bash
+​`bash
 semble search "authentication flow" ./my-project
 semble search "save_pretrained" ./my-project
 semble search "save model to disk" ./my-project --top-k 10
-​```
+​`
 
 Use `semble find-related` to discover code similar to a known location (pass `file_path` and `line` from a prior search result):
 
-​```bash
+​`bash
 semble find-related src/auth.py 42 ./my-project
-​```
+​`
 
 `path` defaults to the current directory when omitted; git URLs are accepted.
 
@@ -207,11 +207,11 @@ Beim Einsatz von ESP-IDF-APIs immer mit `ESP_IDF_VERSION_VAL` absichern:
 
 Bekannte API-Brüche zwischen ESP-IDF 4 und 5:
 
-| API | ESP-IDF 4.x | ESP-IDF 5.x |
-|-----|-------------|-------------|
-| Task Watchdog Init | `esp_task_wdt_init(uint32_t s, bool panic)` | `esp_task_wdt_init(const esp_task_wdt_config_t *)` |
-| Task Watchdog (already initialised) | — | `esp_task_wdt_reconfigure(const esp_task_wdt_config_t *)` |
-| WPS Start | `esp_wifi_wps_start(int)` | `esp_wifi_wps_start()` |
+| API                                 | ESP-IDF 4.x                                 | ESP-IDF 5.x                                               |
+| ----------------------------------- | ------------------------------------------- | --------------------------------------------------------- |
+| Task Watchdog Init                  | `esp_task_wdt_init(uint32_t s, bool panic)` | `esp_task_wdt_init(const esp_task_wdt_config_t *)`        |
+| Task Watchdog (already initialised) | —                                           | `esp_task_wdt_reconfigure(const esp_task_wdt_config_t *)` |
+| WPS Start                           | `esp_wifi_wps_start(int)`                   | `esp_wifi_wps_start()`                                    |
 
 Das Arduino-Framework für ESP32 (espressif32 ≥ 6.x) verwendet ESP-IDF 5.x und
 initialisiert den TWDT bereits vor `setup()`. Daher muss beim Anpassen des

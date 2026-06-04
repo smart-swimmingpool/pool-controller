@@ -69,10 +69,10 @@ Browser ──── GET / ────► WebPortal::handleRoot()
 
 ### Two-Layer Design
 
-| Layer | Storage | Editable at Runtime? | Used When |
-|-------|---------|---------------------|-----------|
-| **LittleFS** | Flash (data/web/) | ✅ Yes — `uploadfs` | First choice |
-| **PROGMEM** | Firmware binary | ❌ Needs recompile | Fallback if LittleFS files missing |
+| Layer        | Storage           | Editable at Runtime? | Used When                          |
+| ------------ | ----------------- | -------------------- | ---------------------------------- |
+| **LittleFS** | Flash (data/web/) | ✅ Yes — `uploadfs`  | First choice                       |
+| **PROGMEM**  | Firmware binary   | ❌ Needs recompile   | Fallback if LittleFS files missing |
 
 **Fallback principle**: If `/web/index.html` doesn't exist on LittleFS, the firmware serves the embedded PROGMEM version which contains everything inline (HTML + CSS + JS). This means the device works out of the box with just a firmware flash — no `uploadfs` step required.
 
@@ -92,10 +92,10 @@ data/
 
 ### Source in C++ (PROGMEM Fallbacks in `WebPortal.cpp`)
 
-| PROGMEM Symbol | Content | Line |
-|---------------|---------|------|
-| `kPremiumStyles[]` | Complete CSS (~140 lines) | ~L28 |
-| `kLoginPageHtml[]` | Login page template (uses `%STYLES%`) | ~L171 |
+| PROGMEM Symbol      | Content                                   | Line  |
+| ------------------- | ----------------------------------------- | ----- |
+| `kPremiumStyles[]`  | Complete CSS (~140 lines)                 | ~L28  |
+| `kLoginPageHtml[]`  | Login page template (uses `%STYLES%`)     | ~L171 |
 | `kPortalPageHtml[]` | Main dashboard template (uses `%STYLES%`) | ~L219 |
 
 The `%STYLES%` placeholder in PROGMEM templates is replaced at runtime with `kPremiumStyles` — this ensures the fallback is always self-contained.
@@ -104,11 +104,11 @@ The `%STYLES%` placeholder in PROGMEM templates is replaced at runtime with `kPr
 
 The LittleFS `index.html` is functionally identical to `kPortalPageHtml` except:
 
-| Aspect | PROGMEM Fallback | LittleFS Version |
-|--------|-----------------|------------------|
-| CSS | `<style>%STYLES%</style>` (replaced server-side) | `<link rel="stylesheet" href="/style.css">` |
-| JS | `<script>…</script>` (inline) | `<script src="/app.js"></script>` |
-| Editability | ❌ Firmware recompile | ✅ Direct file edit + `uploadfs` |
+| Aspect      | PROGMEM Fallback                                 | LittleFS Version                            |
+| ----------- | ------------------------------------------------ | ------------------------------------------- |
+| CSS         | `<style>%STYLES%</style>` (replaced server-side) | `<link rel="stylesheet" href="/style.css">` |
+| JS          | `<script>…</script>` (inline)                    | `<script src="/app.js"></script>`           |
+| Editability | ❌ Firmware recompile                            | ✅ Direct file edit + `uploadfs`            |
 
 ---
 
@@ -166,28 +166,28 @@ pio run --target upload && pio run --target uploadfs
 
 The web frontend communicates with the ESP32 backend exclusively through these REST endpoints:
 
-| Method | Endpoint | Auth | Purpose | Frontend Call |
-|--------|----------|------|---------|---------------|
-| `GET` | `/api/status` | ❌ No | Live telemetry | `loadTelemetry()` — every 2s |
-| `GET` | `/api/scan` | ✅ Yes | WiFi scan | `scanNetworks()` |
-| `GET` | `/api/config` | ✅ Yes | Read all config | `loadConfig()` — on page load |
-| `POST` | `/api/config` | ✅ Yes | Save config | `saveWiFi()`, `saveMqtt()`, `saveControllerSettings()`, `savePassword()` |
-| `POST` | `/api/login` | - | Get session | Login form submit |
-| `GET` | `/api/logout` | - | Clear session | (not used in UI) |
-| `GET` | `/api/restart` | ✅ Yes | Reboot device | `restartDevice()` |
-| `GET` | `/api/factory_reset` | ✅ Yes | Wipe + reboot | `factoryReset()` |
-| `POST` | `/api/update` | ✅ Yes | OTA firmware | OTA form submit |
+| Method | Endpoint             | Auth   | Purpose         | Frontend Call                                                            |
+| ------ | -------------------- | ------ | --------------- | ------------------------------------------------------------------------ |
+| `GET`  | `/api/status`        | ❌ No  | Live telemetry  | `loadTelemetry()` — every 2s                                             |
+| `GET`  | `/api/scan`          | ✅ Yes | WiFi scan       | `scanNetworks()`                                                         |
+| `GET`  | `/api/config`        | ✅ Yes | Read all config | `loadConfig()` — on page load                                            |
+| `POST` | `/api/config`        | ✅ Yes | Save config     | `saveWiFi()`, `saveMqtt()`, `saveControllerSettings()`, `savePassword()` |
+| `POST` | `/api/login`         | -      | Get session     | Login form submit                                                        |
+| `GET`  | `/api/logout`        | -      | Clear session   | (not used in UI)                                                         |
+| `GET`  | `/api/restart`       | ✅ Yes | Reboot device   | `restartDevice()`                                                        |
+| `GET`  | `/api/factory_reset` | ✅ Yes | Wipe + reboot   | `factoryReset()`                                                         |
+| `POST` | `/api/update`        | ✅ Yes | OTA firmware    | OTA form submit                                                          |
 
 ### Config POST Types
 
 The `/api/config` endpoint uses a `type` parameter:
 
-| Type | Parameters | Persisted |
-|------|-----------|-----------|
-| `wifi` | `ssid`, `password` | LittleFS `/config.json` |
-| `mqtt` | `host`, `port`, `username`, `password`, `tls` | LittleFS `/config.json` |
-| `settings` | `mode`, `interval`, `max_pool`, `min_solar`, `hysteresis`, `timezone`, `green`, `red` | LittleFS + NVS |
-| `password` | `password` | LittleFS `/config.json` |
+| Type       | Parameters                                                                            | Persisted               |
+| ---------- | ------------------------------------------------------------------------------------- | ----------------------- |
+| `wifi`     | `ssid`, `password`                                                                    | LittleFS `/config.json` |
+| `mqtt`     | `host`, `port`, `username`, `password`, `tls`                                         | LittleFS `/config.json` |
+| `settings` | `mode`, `interval`, `max_pool`, `min_solar`, `hysteresis`, `timezone`, `green`, `red` | LittleFS + NVS          |
+| `password` | `password`                                                                            | LittleFS `/config.json` |
 
 ### `/api/status` Response
 
@@ -236,11 +236,10 @@ In `data/web/app.js`:
 
 ```javascript
 async function loadSystemInfo() {
-  const res = await fetch('/api/status');
+  const res = await fetch("/api/status");
   const data = await res.json();
-  document.getElementById('sysInfoContent').innerHTML =
-    'Uptime: ' + data.uptime + 's<br>' +
-    'Free heap: ' + data.free_heap + ' B';
+  document.getElementById("sysInfoContent").innerHTML =
+    "Uptime: " + data.uptime + "s<br>" + "Free heap: " + data.free_heap + " B";
 }
 ```
 
@@ -347,6 +346,7 @@ LittleFS.remove("/web/index.html");
 **Cause**: The LittleFS `index.html` links to `/style.css` but the file doesn't exist on LittleFS.
 
 **Fix**: Ensure all three files are uploaded:
+
 ```bash
 pio run --target uploadfs
 # Verifies: data/web/index.html, data/web/style.css, data/web/app.js
@@ -361,6 +361,7 @@ pio run --target uploadfs
 ### Symptom: Changes not showing after uploadfs
 
 **Cause**: Browser caching. Do a hard refresh:
+
 - **Chrome/Edge**: `Ctrl+Shift+R`
 - **Firefox**: `Ctrl+Shift+R`
 - **Safari**: `Cmd+Option+R`
@@ -375,13 +376,13 @@ pio run --target uploadfs
 
 ## File Reference
 
-| Path | Purpose | Edit Frequency |
-|------|---------|---------------|
-| `data/web/index.html` | Dashboard HTML structure | Low |
-| `data/web/style.css` | Glassmorphism theme (CSS variables) | Medium |
-| `data/web/app.js` | All dashboard JavaScript logic | High |
-| `src/WebPortal.hpp` | C++ handler declarations | Low |
-| `src/WebPortal.cpp` | C++ handler implementations, PROGMEM fallbacks, route setup | Medium |
-| `src/ConfigManager.hpp` | Config data structures (`WiFiConfig`, `MqttConfig`, `ControllerSettings`) | Low |
-| `src/ConfigManager.cpp` | Config persistence to LittleFS `/config.json` | Low |
-| `src/MqttPublisher.cpp` | MQTT state publishing (notifies HA of changes) | Low |
+| Path                    | Purpose                                                                   | Edit Frequency |
+| ----------------------- | ------------------------------------------------------------------------- | -------------- |
+| `data/web/index.html`   | Dashboard HTML structure                                                  | Low            |
+| `data/web/style.css`    | Glassmorphism theme (CSS variables)                                       | Medium         |
+| `data/web/app.js`       | All dashboard JavaScript logic                                            | High           |
+| `src/WebPortal.hpp`     | C++ handler declarations                                                  | Low            |
+| `src/WebPortal.cpp`     | C++ handler implementations, PROGMEM fallbacks, route setup               | Medium         |
+| `src/ConfigManager.hpp` | Config data structures (`WiFiConfig`, `MqttConfig`, `ControllerSettings`) | Low            |
+| `src/ConfigManager.cpp` | Config persistence to LittleFS `/config.json`                             | Low            |
+| `src/MqttPublisher.cpp` | MQTT state publishing (notifies HA of changes)                            | Low            |

@@ -45,6 +45,7 @@ Pool Controller ──WiFi──┐
 ## Protocol Selection
 
 Configured via `ConfigManager::getMqtt().protocol` in `MQTTConfig.hpp`:
+
 - `MQTTProtocol::HOME_ASSISTANT` (default) — Home Assistant MQTT Discovery
 - `MQTTProtocol::HOMIE` — Homie 3.0 convention
 
@@ -55,6 +56,7 @@ Runtime setting: `mqtt-protocol` in device web portal or config.
 **Publisher**: `MqttPublisher.hpp/cpp`
 
 Key methods:
+
 - `MqttPublisher::publishDiscovery()` — publishes all discovery configs
 - `MqttPublisher::publishStates()` — updates sensor/switch states
 - `MqttPublisher::handleMqttMessage()` — processes incoming HA commands
@@ -67,50 +69,51 @@ The controller publishes these discovery configs:
 
 **Sensors (temperature):**
 
-| Object ID | Name | Device Class | Unit | Icon |
-|-----------|------|-------------|------|------|
-| `pool-temp` | Pool Temperature | `temperature` | `°C` | `mdi:pool` |
-| `solar-temp` | Solar Temperature | `temperature` | `°C` | `mdi:solar-power` |
+| Object ID         | Name                   | Device Class  | Unit | Icon              |
+| ----------------- | ---------------------- | ------------- | ---- | ----------------- |
+| `pool-temp`       | Pool Temperature       | `temperature` | `°C` | `mdi:pool`        |
+| `solar-temp`      | Solar Temperature      | `temperature` | `°C` | `mdi:solar-power` |
 | `controller-temp` | Controller Temperature | `temperature` | `°C` | `mdi:thermometer` |
 
 **Sensors (diagnostics):**
 
-| Object ID | Name | Device Class | Unit | Icon |
-|-----------|------|-------------|------|------|
-| `heap` | Free Heap Space | — | `B` | `mdi:memory` |
-| `max-alloc` | Max Alloc Block | — | `B` | `mdi:memory` |
-| `rssi` | WiFi Signal Strength | — | `dBm` | `mdi:wifi` |
-| `uptime` | System Uptime | — | `s` | `mdi:clock-outline` |
+| Object ID   | Name                 | Device Class | Unit  | Icon                |
+| ----------- | -------------------- | ------------ | ----- | ------------------- |
+| `heap`      | Free Heap Space      | —            | `B`   | `mdi:memory`        |
+| `max-alloc` | Max Alloc Block      | —            | `B`   | `mdi:memory`        |
+| `rssi`      | WiFi Signal Strength | —            | `dBm` | `mdi:wifi`          |
+| `uptime`    | System Uptime        | —            | `s`   | `mdi:clock-outline` |
 
 **Switches:**
 
-| Object ID | Name | Icon |
-|-----------|------|------|
-| `pool-pump` | Pool Pump | `mdi:pump` |
+| Object ID    | Name       | Icon              |
+| ------------ | ---------- | ----------------- |
+| `pool-pump`  | Pool Pump  | `mdi:pump`        |
 | `solar-pump` | Solar Pump | `mdi:solar-panel` |
 
 **Select:**
 
-| Object ID | Name | Options | Icon |
-|-----------|------|---------|------|
-| `mode` | Operation Mode | `auto`, `manu`, `boost`, `timer` | `mdi:sync` |
+| Object ID | Name           | Options                          | Icon       |
+| --------- | -------------- | -------------------------------- | ---------- |
+| `mode`    | Operation Mode | `auto`, `manu`, `boost`, `timer` | `mdi:sync` |
 
 **Numbers (parameters):**
 
-| Object ID | Name | Min | Max | Step | Unit | Icon |
-|-----------|------|-----|-----|------|------|------|
-| `pool-max-temp` | Max. Pool Temp | 0 | 40 | 0.1 | `°C` | `mdi:thermometer-chevron-up` |
-| `solar-min-temp` | Min. Solar Temp | 0 | 100 | 0.1 | `°C` | `mdi:thermometer-chevron-down` |
-| `hysteresis` | Temperature Hysteresis | 0 | 10 | 0.1 | `K` | `mdi:delta` |
-| `timer-start-h` | Timer Start Hour | 0 | 23 | 1 | `h` | `mdi:clock-start` |
-| `timer-start-min` | Timer Start Minute | 0 | 59 | 1 | `min` | `mdi:clock-start` |
-| `timer-end-h` | Timer End Hour | 0 | 23 | 1 | `h` | `mdi:clock-end` |
-| `timer-end-min` | Timer End Minute | 0 | 59 | 1 | `min` | `mdi:clock-end` |
-| `timezone` | Timezone Index | 0 | 9 | 1 | — | `mdi:map-clock` |
+| Object ID         | Name                   | Min | Max | Step | Unit  | Icon                           |
+| ----------------- | ---------------------- | --- | --- | ---- | ----- | ------------------------------ |
+| `pool-max-temp`   | Max. Pool Temp         | 0   | 40  | 0.1  | `°C`  | `mdi:thermometer-chevron-up`   |
+| `solar-min-temp`  | Min. Solar Temp        | 0   | 100 | 0.1  | `°C`  | `mdi:thermometer-chevron-down` |
+| `hysteresis`      | Temperature Hysteresis | 0   | 10  | 0.1  | `K`   | `mdi:delta`                    |
+| `timer-start-h`   | Timer Start Hour       | 0   | 23  | 1    | `h`   | `mdi:clock-start`              |
+| `timer-start-min` | Timer Start Minute     | 0   | 59  | 1    | `min` | `mdi:clock-start`              |
+| `timer-end-h`     | Timer End Hour         | 0   | 23  | 1    | `h`   | `mdi:clock-end`                |
+| `timer-end-min`   | Timer End Minute       | 0   | 59  | 1    | `min` | `mdi:clock-end`                |
+| `timezone`        | Timezone Index         | 0   | 9   | 1    | —     | `mdi:map-clock`                |
 
 ### Debugging HA Discovery
 
 **Common issues**:
+
 1. **Truncated JSON payload** — The serialization buffer must be **≥25% larger** than the actual JSON output. If HA doesn't show entities, check buffer sizes in `MqttPublisher.cpp`. See `Agents.md` §21 and the `cpp-memory-opt` skill.
 2. **Device ID mismatch** — `deviceId_` is generated once. Verify it's consistent across reboots.
 3. **Discovery retained flag** — HA Discovery messages should be published with `retained=true`.
@@ -118,6 +121,7 @@ The controller publishes these discovery configs:
 5. **Device disappears after cleanup / no new entities appear** — Discovery messages are only published **on boot / MQTT connect**. After deleting the old MQTT device in HA, a reboot of the ESP32 is required to re-publish discovery. Use `pio run --target upload` or power-cycle the device.
 
 **Manual verification**:
+
 ```bash
 # Subscribe to all HA discovery topics
 mosquitto_sub -h <broker> -t "homeassistant/+/pool-controller/+/config"
@@ -132,6 +136,7 @@ mosquitto_pub -h <broker> -t "homeassistant/select/pool-controller/mode/set" -m 
 ## Homie 3.0 Convention
 
 The Homie convention uses device-topic structure:
+
 ```
 homie/<device-id>/
 ├── $homie         → "3.0"
@@ -149,12 +154,15 @@ homie/<device-id>/
 ## Homie → HA Discovery Migration
 
 The old Homie-based firmware auto-generated Home Assistant discovery from Homie properties. This created topics in the format:
+
 ```
 homeassistant/sensor/<mac>_<node>_<property>/config
 ```
+
 with `device_class: "measurement"` — which is **invalid** in newer HA versions (expected `SensorDeviceClass` enum).
 
 The current firmware (`MqttPublisher.cpp`) uses native HA MQTT Discovery with correct component types:
+
 - Temperatures → `sensor` with `device_class: "temperature"`
 - Diagnostics → `sensor` without `device_class`
 - Pump relays → `switch`
@@ -165,8 +173,9 @@ The current firmware (`MqttPublisher.cpp`) uses native HA MQTT Discovery with co
 ### Cleaning Up Stale Homie Retained Messages
 
 After migrating to the new firmware, old Homie discovery messages may remain on the MQTT broker as retained messages, causing errors like:
+
 ```
-Error 'expected SensorDeviceClass or one of 'date', 'enum', 'timestamp', ...' 
+Error 'expected SensorDeviceClass or one of 'date', 'enum', 'timestamp', ...'
 when processing MQTT discovery message topic: 'homeassistant/sensor/<mac>_.../config'
 ```
 
@@ -175,6 +184,7 @@ when processing MQTT discovery message topic: 'homeassistant/sensor/<mac>_.../co
 1. **Delete old device entry in HA** → Einstellungen → Geräte & Dienste → MQTT → Gerät löschen, dann ESP32 **neu starten** (Discovery wird nur beim Boot/MQTT-Connect gepublisht)
 
 2. **Manually clear retained topics** via mosquitto_pub:
+
    ```bash
    mosquitto_pub -h <broker> -t "homeassistant/sensor/<mac>_#" -n -r
    ```
@@ -184,6 +194,7 @@ when processing MQTT discovery message topic: 'homeassistant/sensor/<mac>_.../co
 ## MQTT Connection Flow
 
 From `NetworkManager.hpp`:
+
 1. WiFi connects (retry every `kWiFiRetryIntervalMs` = 5000ms)
 2. MQTT connects (retry every `kMqttRetryIntervalMs` = 5000ms)
 3. On MQTT connect → publish Discovery + States
@@ -219,6 +230,7 @@ mosquitto_pub -t "homeassistant/number/pool-controller/hysteresis/set" -m "2.0"
 ## Serial Debug Output for MQTT
 
 When monitoring the ESP32 serial output:
+
 ```
 ✓ Network initialized
 ✓ MQTT connected
@@ -227,6 +239,7 @@ When monitoring the ESP32 serial output:
 ```
 
 If MQTT connection fails, check:
+
 1. WiFi credentials are correct (WiFi config in web portal)
 2. Broker address and port are reachable
 3. Credentials (if broker requires auth)

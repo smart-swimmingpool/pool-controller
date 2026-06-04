@@ -77,6 +77,7 @@ public:
 ```
 
 **Files affected**:
+
 - `DallasTemperatureNode` → implements `ITemperatureSensor`
 - `ESP32TemperatureNode` → implements `ITemperatureSensor`
 - `OperationModeNode` → uses `ITemperatureSensor*` instead of `DallasTemperatureNode*`
@@ -115,12 +116,14 @@ public:
 ### 6. Move Global Singletons to Managed Lifecycle
 
 **Current pattern** (in multiple files):
+
 ```cpp
 static SomeManager::begin();
 static SomeManager::loop();
 ```
 
 **Target pattern**: Instance managed by `PoolControllerContext`:
+
 ```cpp
 class PoolControllerContext {
     NetworkManager networkManager_;
@@ -133,6 +136,7 @@ class PoolControllerContext {
 ## Refactoring Workflow
 
 Each refactoring step should follow the OpenSpec change workflow (skills in `.github/skills/`):
+
 1. **Propose** — describe what to change and why
 2. **Design** — specify exact API signatures
 3. **Implement** — one task per file/interface
@@ -147,18 +151,19 @@ Each refactoring step should follow the OpenSpec change workflow (skills in `.gi
 
 ## Order of Refactoring (Recommended)
 
-| Phase | Refactoring | Risk | Testability Gain |
-|-------|-------------|------|-----------------|
-| 1 | Extract `ITemperatureSensor` | Low | High |
-| 2 | Extract `IRelayController` | Low | High |
-| 3 | Move `checkPoolPumpTimer` to shared utility | Low | Medium |
-| 4 | Dependency injection for Config | Medium | High |
-| 5 | Instance-based managers (remove static singletons) | High | High |
-| 6 | Layered directory structure | Medium | Medium |
+| Phase | Refactoring                                        | Risk   | Testability Gain |
+| ----- | -------------------------------------------------- | ------ | ---------------- |
+| 1     | Extract `ITemperatureSensor`                       | Low    | High             |
+| 2     | Extract `IRelayController`                         | Low    | High             |
+| 3     | Move `checkPoolPumpTimer` to shared utility        | Low    | Medium           |
+| 4     | Dependency injection for Config                    | Medium | High             |
+| 5     | Instance-based managers (remove static singletons) | High   | High             |
+| 6     | Layered directory structure                        | Medium | Medium           |
 
 ## Verification
 
 After each refactoring:
+
 ```bash
 # Build must pass
 make build

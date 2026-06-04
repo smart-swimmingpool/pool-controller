@@ -191,11 +191,11 @@ Expected: TRUE (pump should be running)
 
 1. Implement midnight-aware timer logic:
 
-    ```cpp
-    bool isInRange = (startTime <= endTime)
-        ? (time >= startTime && time <= endTime)  // Normal case
-        : (time >= startTime || time <= endTime); // Crosses midnight
-    ```
+   ```cpp
+   bool isInRange = (startTime <= endTime)
+       ? (time >= startTime && time <= endTime)  // Normal case
+       : (time >= startTime || time <= endTime); // Crosses midnight
+   ```
 
 2. Add validation to prevent user from setting invalid timer ranges
 3. Add unit tests for midnight crossing scenarios
@@ -253,9 +253,9 @@ this correctly, but `SystemMonitor` doesn't use it.
 **Recommendations**:
 
 1. Replace with `Utils::shouldMeasure(lastMemoryCheck, 10)` for overflow
-  safety
+   safety
 2. Or use the same pattern: `(now - lastMemoryCheck) >= interval` which
-  works correctly with unsigned overflow
+   works correctly with unsigned overflow
 
 ### 3.2 NTPClient Memory Leak on Reconfiguration 🟠 Medium
 
@@ -346,11 +346,11 @@ if (getSolarTemperature() < (getSolarMinTemperature() - hyst)) {
 
 1. Add temperature validity check before rule execution:
 
-    ```cpp
-    bool isValidTemp(float temp) {
-      return temp > -50.0 && temp < 150.0;
-    }
-    ```
+   ```cpp
+   bool isValidTemp(float temp) {
+     return temp > -50.0 && temp < 150.0;
+   }
+   ```
 
 2. Disable auto mode if any critical sensor is invalid
 3. Use last known good value with age check
@@ -373,16 +373,16 @@ extremely large values via MQTT.
 
 1. Add validation in `applyProperty()`:
 
-    ```cpp
-    if (property.equalsIgnoreCase(cHysteresis)) {
-      float newHyst = value.toFloat();
-      if (newHyst >= 0.1 && newHyst <= 10.0) {
-        _hysteresis = newHyst;
-      } else {
-        // Reject invalid value
-      }
-    }
-    ```
+   ```cpp
+   if (property.equalsIgnoreCase(cHysteresis)) {
+     float newHyst = value.toFloat();
+     if (newHyst >= 0.1 && newHyst <= 10.0) {
+       _hysteresis = newHyst;
+     } else {
+       // Reject invalid value
+     }
+   }
+   ```
 
 2. Enforce limits: 0.1K to 10K reasonable range
 
@@ -426,14 +426,14 @@ will crash.
 
 1. Add defensive null checks:
 
-    ```cpp
-    void RelayModuleNode::setSwitch(const boolean state) {
-      if (relay == nullptr) {
-        return;  // Or log error
-      }
-      // ... rest of code
-    }
-    ```
+   ```cpp
+   void RelayModuleNode::setSwitch(const boolean state) {
+     if (relay == nullptr) {
+       return;  // Or log error
+     }
+     // ... rest of code
+   }
+   ```
 
 2. Or: Initialize relay in constructor instead of setup()
 
@@ -604,10 +604,10 @@ This is inefficient but safe.
 
 1. Implement batch state save/load:
 
-    ```cpp
-    static void beginSave() { prefs.begin("pool-controller", false); }
-    static void endSave() { prefs.end(); }
-    ```
+   ```cpp
+   static void beginSave() { prefs.begin("pool-controller", false); }
+   static void endSave() { prefs.end(); }
+   ```
 
 2. Call once for multiple saves
 3. Low priority - flash wear is not critical concern
@@ -738,7 +738,7 @@ nodes.
 ### ✅ Fixed in v3.1.0
 
 1. **Sensor disconnection handling** (1.1) - Temperature set to NaN,
-  validation added
+   validation added
 2. **No sensors found** (1.2) - Better initialization and warnings
 3. **NTP time sync failure** (2.1) - Cached time with millis() fallback
 4. **Midnight crossing timers** (2.2) - Midnight-aware logic implemented

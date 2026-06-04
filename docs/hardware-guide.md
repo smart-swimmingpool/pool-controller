@@ -27,10 +27,10 @@ module, see `docs/esp32-complete-wiring-schematic-de.md` (German / DE).
 
 ## Parts List (BOM)
 
-- 1 * ESP32 Development Board (e.g. ESP32 DevKit V1) ([Amazon](https://amzn.to/2Ze9DSh))
-- 2 * DS18B20 Temperature Sensors ([Amazon](https://amzn.to/2ZlfZ2c))
-- 1 * Relais-Module 5V ([Amazon](https://amzn.to/31RBd5s))
-- 1 * Breadboard and wires to connect (alternatively soldering of the circuit)
+- 1 \* ESP32 Development Board (e.g. ESP32 DevKit V1) ([Amazon](https://amzn.to/2Ze9DSh))
+- 2 \* DS18B20 Temperature Sensors ([Amazon](https://amzn.to/2ZlfZ2c))
+- 1 \* Relais-Module 5V ([Amazon](https://amzn.to/31RBd5s))
+- 1 \* Breadboard and wires to connect (alternatively soldering of the circuit)
 
 ## Circuit
 
@@ -48,12 +48,12 @@ The source [Fritzing](https://fritzing.org/) file can be found in the GitHub pro
 
 The ESP32 is connected using the following pins. The constant values are defined in `src/Config.hpp`.
 
-| Constant | GPIO Pin | Description |
-|----------|:--------:|-------------|
-| PIN_DS_SOLAR | GPIO15 | Pin of temperature sensor (DS18B20) for solar storage |
-| PIN_DS_POOL | GPIO16 | Pin of temperature sensor (DS18B20) for pool water |
-| PIN_RELAY_POOL | GPIO18 | Pin to connect relay for pool pump |
-| PIN_RELAY_SOLAR | GPIO19 | Pin to connect relay for solar pump |
+| Constant        | GPIO Pin | Description                                           |
+| --------------- | :------: | ----------------------------------------------------- |
+| PIN_DS_SOLAR    |  GPIO15  | Pin of temperature sensor (DS18B20) for solar storage |
+| PIN_DS_POOL     |  GPIO16  | Pin of temperature sensor (DS18B20) for pool water    |
+| PIN_RELAY_POOL  |  GPIO18  | Pin to connect relay for pool pump                    |
+| PIN_RELAY_SOLAR |  GPIO19  | Pin to connect relay for solar pump                   |
 
 ## Power Supply
 

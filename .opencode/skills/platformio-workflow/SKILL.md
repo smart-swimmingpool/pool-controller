@@ -131,11 +131,13 @@ WARNING: Low memory detected                       # Memory warning threshold
 ## Dependency Management
 
 Dependencies are defined in `platformio.ini` `[common_env_data]` section:
+
 - **lib_deps** uses exact versions (e.g., `ArduinoJson @ 7.3.0`, `NTPClient @ 3.2.1`)
 - Git-based deps: `https://github.com/YuriiSalimov/RelayModule.git#v.1.1.2`
 - Some libs need `lib_ignore` to resolve conflicts (see `CODING_GUIDELINES.md` §5.1)
 
 To update a dependency:
+
 1. Change the version in `platformio.ini`
 2. Run `pio run` to download and build
 3. Verify no compilation errors
@@ -143,12 +145,12 @@ To update a dependency:
 
 ## Troubleshooting
 
-| Issue | Likely Fix |
-|-------|-----------|
-| Build fails on first clone | Run `pio run` to auto-download all dependencies |
-| Serial monitor gibberish | Check baud rate (115200) matches `SERIAL_SPEED` |
-| Upload fails | Hold BOOT button on ESP32 during connection |
-| OTA fails | Verify `upload_port` resolves (mDNS or IP) |
-| Missing libraries | `pio update` to refresh library index |
-| ESP32 not detected | Install USB-to-UART drivers (CP210x/CH340) |
+| Issue                                             | Likely Fix                                          |
+| ------------------------------------------------- | --------------------------------------------------- |
+| Build fails on first clone                        | Run `pio run` to auto-download all dependencies     |
+| Serial monitor gibberish                          | Check baud rate (115200) matches `SERIAL_SPEED`     |
+| Upload fails                                      | Hold BOOT button on ESP32 during connection         |
+| OTA fails                                         | Verify `upload_port` resolves (mDNS or IP)          |
+| Missing libraries                                 | `pio update` to refresh library index               |
+| ESP32 not detected                                | Install USB-to-UART drivers (CP210x/CH340)          |
 | DHT sensor library (in deps but not used in src/) | Potential stale dependency — verify before removing |

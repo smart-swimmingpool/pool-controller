@@ -60,14 +60,14 @@ device will automatically reboot with the new firmware.
 1. Open Arduino IDE
 2. Go to **Tools → Port**
 3. Select your device from the network ports list
-  (e.g., `pool-controller at 192.168.1.100`)
+   (e.g., `pool-controller at 192.168.1.100`)
 4. Click Upload button
 5. Enter OTA password when prompted
 
 ### Method 3: Web Interface (Homie UI)
 
 1. Access Homie web interface at `http://pool-controller.local/`
-  or `http://[DEVICE_IP]/`
+   or `http://[DEVICE_IP]/`
 2. Navigate to **Firmware Update** section
 3. Select compiled `.bin` file
 4. Click **Upload**
@@ -280,7 +280,7 @@ name: Build and Deploy OTA
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
   build-and-deploy:
@@ -289,14 +289,14 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
-      
+          python-version: "3.11"
+
       - name: Install PlatformIO
         run: pip install platformio
-      
+
       - name: Build Firmware
         run: pio run -e nodemcuv2
-      
+
       - name: Upload via OTA
         env:
           DEVICE_IP: ${{ secrets.DEVICE_IP }}
@@ -364,18 +364,20 @@ cp .pio/build/nodemcuv2/firmware.bin \
 If OTA update fails and device becomes unresponsive:
 
 1. **Physical Access Recovery**:
-    - Connect via USB serial
-    - Upload firmware via serial: `pio run -e esp32dev --target upload`
+
+   - Connect via USB serial
+   - Upload firmware via serial: `pio run -e esp32dev --target upload`
 
 1. **Bootloader Recovery**:
-    - ESP32 bootloader allows serial recovery
-    - Hold BOOT button during power-on
-    - Upload firmware via esptool
+
+   - ESP32 bootloader allows serial recovery
+   - Hold BOOT button during power-on
+   - Upload firmware via esptool
 
 1. **Factory Reset**:
-    - Clear EEPROM/NVS
-    - Reset Homie configuration
-    - Reconfigure via Homie AP
+   - Clear EEPROM/NVS
+   - Reset Homie configuration
+   - Reconfigure via Homie AP
 
 ## Future Enhancements
 

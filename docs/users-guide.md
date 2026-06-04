@@ -47,6 +47,7 @@ persistently in `/config.json` on LittleFS.
 ### Finding the Controller on Your Network
 
 Once connected, find the controller's IP:
+
 - Check your router's DHCP client list
 - Or use a network scanner like `nmap`:
   ```bash
@@ -59,9 +60,9 @@ Once connected, find the controller's IP:
 When booting the controller, it will provide feedback on establishing the WiFi connection and connection to the MQTT broker:
 
 - "LED" ![Slowly blinking LED](led_wifi.gif)
-    Slowly when connecting to the Wi-Fi
+  Slowly when connecting to the Wi-Fi
 - "LED" ![Fast blinking LED](led_mqtt.gif)
-    Faster when connecting to the MQTT broker
+  Faster when connecting to the MQTT broker
 
 ## Web Dashboard
 
@@ -110,6 +111,7 @@ There are some specific settings for the controller:
   - Default value: `1`
 
 - **Pump Timer:** time range when pool pump has to run.
+
   - start h/min
   - end h/min
 

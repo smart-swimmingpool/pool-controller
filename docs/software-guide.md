@@ -54,25 +54,25 @@ constexpr uint8_t TEMP_READ_INTERVAL = 30;
 The controller includes a **built-in web server on port 80** that provides a full
 management dashboard. It runs in two modes:
 
-| Mode | When | Access |
-|------|------|--------|
-| **AP Mode** (Access Point) | No WiFi configured (factory state) | SSID `Pool-Controller-Setup`, IP `192.168.4.1`, no password |
-| **STA Mode** (Station) | Normal WiFi connection | DHCP IP of the ESP32 in local network, password login required |
+| Mode                       | When                               | Access                                                         |
+| -------------------------- | ---------------------------------- | -------------------------------------------------------------- |
+| **AP Mode** (Access Point) | No WiFi configured (factory state) | SSID `Pool-Controller-Setup`, IP `192.168.4.1`, no password    |
+| **STA Mode** (Station)     | Normal WiFi connection             | DHCP IP of the ESP32 in local network, password login required |
 
 ### API Endpoints
 
-| Route | Auth | Function |
-|-------|------|----------|
-| `GET /` | Cookie | Dashboard SPA (Single Page Application) |
-| `GET /login` | Cookie | Login page |
-| `POST /api/login` | - | Issue session cookie (SHA-256 password check) |
-| `GET /api/status` | ❌ No | Live telemetry (temperatures, pump states, heap, RSSI) |
-| `GET /api/scan` | Yes | Scan nearby WiFi networks |
-| `GET /api/config` | Yes | Read current configuration |
-| `POST /api/config` | Yes | Save configuration (`type=settings\|wifi\|mqtt\|password`) |
-| `GET /api/restart` | Yes | Reboot the ESP32 |
-| `GET /api/factory_reset` | Yes | Wipe config file, reboot into AP setup mode |
-| `POST /api/update` | Yes | OTA firmware update (signed .bin upload) |
+| Route                    | Auth   | Function                                                   |
+| ------------------------ | ------ | ---------------------------------------------------------- |
+| `GET /`                  | Cookie | Dashboard SPA (Single Page Application)                    |
+| `GET /login`             | Cookie | Login page                                                 |
+| `POST /api/login`        | -      | Issue session cookie (SHA-256 password check)              |
+| `GET /api/status`        | ❌ No  | Live telemetry (temperatures, pump states, heap, RSSI)     |
+| `GET /api/scan`          | Yes    | Scan nearby WiFi networks                                  |
+| `GET /api/config`        | Yes    | Read current configuration                                 |
+| `POST /api/config`       | Yes    | Save configuration (`type=settings\|wifi\|mqtt\|password`) |
+| `GET /api/restart`       | Yes    | Reboot the ESP32                                           |
+| `GET /api/factory_reset` | Yes    | Wipe config file, reboot into AP setup mode                |
+| `POST /api/update`       | Yes    | OTA firmware update (signed .bin upload)                   |
 
 ### Using the REST API Directly
 
@@ -109,19 +109,19 @@ settings survive reboots and power failures:
 
 ### 1. ConfigManager — Device Configuration (LittleFS)
 
-| File | `/config.json` |
-|------|---------------|
-| Max Size | 4 KB |
-| Contents | WiFi, MQTT, NTP, ControllerSettings, admin password hash |
+| File       | `/config.json`                                                      |
+| ---------- | ------------------------------------------------------------------- |
+| Max Size   | 4 KB                                                                |
+| Contents   | WiFi, MQTT, NTP, ControllerSettings, admin password hash            |
 | Management | `ConfigManager::load()` at boot, `ConfigManager::save()` on changes |
-| Reset | `ConfigManager::reset()` → factory defaults |
+| Reset      | `ConfigManager::reset()` → factory defaults                         |
 
 ### 2. StateManager — Runtime State (ESP32 NVS / Preferences)
 
-| Namespace | `pool-controller` |
-|-----------|------------------|
-| Contents | opmode, poolMaxTemp, solarMinTemp, hysteresis, timerStart/End |
-| API | `StateManager::saveString/Float/Int/Bool` → type-safe key-value storage |
+| Namespace | `pool-controller`                                                       |
+| --------- | ----------------------------------------------------------------------- |
+| Contents  | opmode, poolMaxTemp, solarMinTemp, hysteresis, timerStart/End           |
+| API       | `StateManager::saveString/Float/Int/Bool` → type-safe key-value storage |
 
 ### Data Flow on Settings Changes
 
@@ -149,6 +149,7 @@ Web UI / REST API          MQTT (Home Assistant)
 
 The controller uses **Home Assistant MQTT Discovery** (default) with topic
 structure:
+
 ```
 homeassistant/<component>/pool-controller/<object-id>/config  (discovery)
 homeassistant/<component>/pool-controller/<object-id>/state   (state)

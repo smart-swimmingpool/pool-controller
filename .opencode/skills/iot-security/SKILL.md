@@ -30,21 +30,22 @@ Security audit and hardening for the ESP32 pool-controller. This device controls
 
 ## Threat Model
 
-| Threat | Impact | Likelihood | Mitigation |
-|--------|--------|-----------|------------|
-| Unauthorized MQTT control | Pump manipulation | Medium | Admin password, network segmentation |
-| Firmware reverse engineering | IP theft, credential extraction | Low | Flash Encryption |
-| Unauthorized OTA update | Malicious firmware | Low | Secure Boot + signed OTA |
-| WiFi credential theft | Network access | Medium | Encrypted storage, no plaintext logs |
-| Physical device access | Full compromise | Low | JTAG disable, debug UART off |
-| Replay attack on MQTT | State manipulation | Low | TLS + unique client ID |
-| Boot-loop attack | Denial of service | Very Low | Safe mode after 3 boots |
+| Threat                       | Impact                          | Likelihood | Mitigation                           |
+| ---------------------------- | ------------------------------- | ---------- | ------------------------------------ |
+| Unauthorized MQTT control    | Pump manipulation               | Medium     | Admin password, network segmentation |
+| Firmware reverse engineering | IP theft, credential extraction | Low        | Flash Encryption                     |
+| Unauthorized OTA update      | Malicious firmware              | Low        | Secure Boot + signed OTA             |
+| WiFi credential theft        | Network access                  | Medium     | Encrypted storage, no plaintext logs |
+| Physical device access       | Full compromise                 | Low        | JTAG disable, debug UART off         |
+| Replay attack on MQTT        | State manipulation              | Low        | TLS + unique client ID               |
+| Boot-loop attack             | Denial of service               | Very Low   | Safe mode after 3 boots              |
 
 ## 1. Flash Encryption & Secure Boot
 
 Referenced in `Agents.md` §11 — not yet enabled in `platformio.ini`.
 
 **Secure Boot** ensures only signed firmware runs:
+
 ```ini
 ; platformio.ini — add to [env:esp32dev]
 board_build.secure = secure
@@ -52,11 +53,13 @@ board_build.secure_sign_key = secure_boot_signing_key.pem
 ```
 
 **Flash Encryption** protects stored data (WiFi creds, MQTT passwords):
+
 ```ini
 board_build.flash_encrypt = true
 ```
 
 ⚠ **One-time operation**: burning eFuses is irreversible. Generate keys offline:
+
 ```bash
 # Generate Secure Boot key
 espsecure.py generate_signing_key secure_boot_signing_key.pem
@@ -72,12 +75,15 @@ espefuse.py --port /dev/ttyUSB0 burn_key BLOCK_KEY0 flash_encryption_key.bin
 **Location**: `NetworkManager.cpp:126-130`
 
 Currently uses `setInsecure()` which skips certificate validation:
+
 ```cpp
 secureClient_->setInsecure(); // Allows local broker connection without CA verification
 ```
 
 **Security gap**: No certificate pinning or CA verification. Mitigations:
+
 - **For production**: Use a real CA or self-signed cert with fingerprint:
+
 ```cpp
 // Instead of setInsecure():
 secureClient_->setCACert(rootCACertificate);  // CA cert
@@ -85,28 +91,34 @@ secureClient_->setCACert(rootCACertificate);  // CA cert
 secureClient_->setCertificate(clientCert);
 secureClient_->setPrivateKey(clientKey);
 ```
+
 - **Low-risk mitigation**: Keep on isolated VLAN with firewall rules
 - **Minimal mitigation**: Ensure MQTT broker requires authentication even on LAN
 
 ## 3. Credential Storage
 
 **Current practice** (`ConfigManager.cpp:80-91`):
+
 - WiFi SSID/password stored in plaintext on LittleFS
 - MQTT username/password stored in plaintext on LittleFS
 - Admin password stored as SHA256 hash (no salt — see below)
 - WPS credentials persisted to SPIFFS (`WpsProvisioner.cpp:126-127`)
 
 **Improvements**:
+
 - Use ESP32 NVS for credential storage with read-protection
 - At minimum: `chmod`-equivalent filesystem permissions if supported
 - Add salt to password hashing (`Agents.md` §11 recommends against secrets in repo)
 
 **Password hashing issue** (`ConfigManager.cpp:17`):
+
 ```cpp
 // Hardcoded default hash for "admin" — no salt!
 static constexpr const char* kDefaultPasswordHash = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918";
 ```
+
 The default password hash is for "admin" (SHA256). On first login, user should change it. Consider:
+
 - Forcing password change on first login
 - Using `mbedtls_md_hmac` with a per-device salt
 
@@ -120,6 +132,7 @@ The default password hash is for "admin" (SHA256). On first login, user should c
 - **AP mode**: Open WiFi named "Pool-Controller-Setup" (`NetworkManager.cpp:101`)
 
 **Risks**:
+
 - AP mode has no encryption — anyone within range can connect
 - Session timeout is reasonable, but no rate-limiting on login attempts
 - No HTTPS on the web portal (ESP32 can support it with server cert)
@@ -136,6 +149,7 @@ The default password hash is for "admin" (SHA256). On first login, user should c
 - Credentials persisted to SPIFFS after successful WPS
 
 **Risks**:
+
 - WPS PBC is vulnerable to physical attack (someone with 2s GPIO0 access can extract WiFi credentials)
 - Credentials stored in SPIFFS in plaintext at `/homie/config.json`
 - After WPS, the device reconnects with new credentials
@@ -145,6 +159,7 @@ The default password hash is for "admin" (SHA256). On first login, user should c
 **Location**: `platformio.ini:53-61`
 
 OTA is configured but **commented out** by default:
+
 ```ini
 ;upload_protocol = espota
 ;upload_flags =
@@ -152,6 +167,7 @@ OTA is configured but **commented out** by default:
 ```
 
 **When enabling OTA**:
+
 - Always set a strong `--auth` password
 - Consider using HTTPS OTA (`esp_https_ota`) instead of plain ESP-OTA
 - Verify firmware signature before applying (Secure Boot)
@@ -160,9 +176,11 @@ OTA is configured but **commented out** by default:
 ## 7. Debug Interface Security
 
 **From `Agents.md` §11**:
+
 > Debug Interfaces (JTAG/UART) im Produktions-Build deaktivieren.
 
 For ESP32:
+
 ```ini
 ; In platformio.ini production env:
 build_flags =
@@ -175,16 +193,19 @@ build_flags =
 ## 8. Secure Coding Patterns for This Project
 
 ### Memory Safety
+
 - No `new`/`delete` in hot-paths (existing rule in `Agents.md`)
 - `unique_ptr` for rule ownership (`OperationModeNode.hpp:84`) ✓
 - RAII for all resources (`PoolController.hpp:11-21`) ✓
 
 ### Input Validation
+
 - WiFi SSID/MQTT config validated at entry points? Check `WebPortal.cpp` handlers
 - MQTT message payload size: PubSubClient has internal buffer limits
 - JSON deserialization uses `size_t` limits (`ConfigManager.cpp:69`)
 
 ### Rate Limiting
+
 - No login rate-limiting on web portal
 - MQTT reconnect backoff: 5s fixed interval — add jitter for production
 - Sensor polling: already rate-limited by `TEMP_READ_INTERVAL`
@@ -227,6 +248,7 @@ build_flags =
 ```
 
 The pool controller should be on an isolated IoT VLAN with:
+
 - **Outbound**: MQTT broker only (port 8883 TLS)
 - **Inbound**: Nothing (no SSH, no HTTP from main LAN)
 - **DHCP**: Static lease for monitoring

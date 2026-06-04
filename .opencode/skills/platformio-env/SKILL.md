@@ -113,16 +113,16 @@ upload_speed = 230400
 
 #### Key Fields Explained
 
-| Field | Current Value | Purpose |
-|-------|--------------|---------|
-| `platform` | `espressif32 @ 6.9.0` | ESP32 Arduino core, includes ESP-IDF 5.x, FreeRTOS |
-| `board` | `esp32dev` | Board definition: flash size, partitioning, CPU freq |
-| `framework` | `arduino` | Arduino wiring framework on top of ESP-IDF |
-| `build_flags` | `-D SERIAL_SPEED=115200` | Passed to compiler (gcc) |
-| `build_unflags` | `-Werror=reorder` | Removes a flag that would otherwise be set |
-| `lib_deps` | inherits from `[common_env_data]` | All project dependencies |
-| `monitor_filters` | `esp32_exception_decoder, log2file, time, default` | Serial output processing filters |
-| `upload_speed` | `230400` | Serial flash speed |
+| Field             | Current Value                                      | Purpose                                              |
+| ----------------- | -------------------------------------------------- | ---------------------------------------------------- |
+| `platform`        | `espressif32 @ 6.9.0`                              | ESP32 Arduino core, includes ESP-IDF 5.x, FreeRTOS   |
+| `board`           | `esp32dev`                                         | Board definition: flash size, partitioning, CPU freq |
+| `framework`       | `arduino`                                          | Arduino wiring framework on top of ESP-IDF           |
+| `build_flags`     | `-D SERIAL_SPEED=115200`                           | Passed to compiler (gcc)                             |
+| `build_unflags`   | `-Werror=reorder`                                  | Removes a flag that would otherwise be set           |
+| `lib_deps`        | inherits from `[common_env_data]`                  | All project dependencies                             |
+| `monitor_filters` | `esp32_exception_decoder, log2file, time, default` | Serial output processing filters                     |
+| `upload_speed`    | `230400`                                           | Serial flash speed                                   |
 
 ### OTA Configuration (Commented)
 
@@ -143,6 +143,7 @@ See `platformio-workflow` skill for OTA commands.
 Current: single environment `esp32dev`. Multiple environments allow building for different targets.
 
 **Example: Adding a debug environment**:
+
 ```ini
 [env:esp32dev-debug]
 platform = ${env:esp32dev.platform}
@@ -176,11 +177,13 @@ lib_deps = ${common_env_data.lib_deps}
 ### Current Platform: `espressif32 @ 6.9.0`
 
 This is the ESP32 Arduino platform from PlatformIO registry:
+
 - **Package**: `framework-arduinoespressif32` (Arduino core for ESP32)
 - **ESP-IDF**: Ships with ESP-IDF 5.x (important for API compatibility)
 - **Toolchain**: `xtensa-esp32-elf-gcc` (gcc-based)
 
 To check available versions:
+
 ```bash
 pio platform show espressif32
 ```
@@ -188,12 +191,14 @@ pio platform show espressif32
 ### Board Definition: `esp32dev`
 
 The board file defines:
+
 - **Flash size**: 4MB (default)
 - **Partition table**: Default ESP32 partition layout
 - **CPU frequency**: 240MHz
 - **Upload protocol**: esptool (serial) / espota (OTA)
 
 To inspect board config:
+
 ```bash
 pio run -e esp32dev --target board
 ```
@@ -202,14 +207,15 @@ pio run -e esp32dev --target board
 
 ### Currently Used
 
-| Flag | Effect |
-|------|--------|
-| `-std=c++17` | Enable C++17 features (`if constexpr`, `std::optional`, structured bindings) |
-| `-D FW_VERSION="3.2.0"` | Firmware version macro, accessible as `FW_VERSION` in code |
-| `-D SERIAL_SPEED=115200` | Serial baud rate, accessible as `SERIAL_SPEED` macro |
-| `-Wno-deprecated-declarations` | Suppress warnings for deprecated API usage (library compat) |
+| Flag                           | Effect                                                                       |
+| ------------------------------ | ---------------------------------------------------------------------------- |
+| `-std=c++17`                   | Enable C++17 features (`if constexpr`, `std::optional`, structured bindings) |
+| `-D FW_VERSION="3.2.0"`        | Firmware version macro, accessible as `FW_VERSION` in code                   |
+| `-D SERIAL_SPEED=115200`       | Serial baud rate, accessible as `SERIAL_SPEED` macro                         |
+| `-Wno-deprecated-declarations` | Suppress warnings for deprecated API usage (library compat)                  |
 
 Define macros in code with:
+
 ```cpp
 #ifdef FW_VERSION
   Serial.printf("Firmware: %s\n", FW_VERSION);
@@ -218,23 +224,24 @@ Define macros in code with:
 
 ### Common Additional Flags for ESP32
 
-| Flag | Purpose |
-|------|---------|
-| `-Os` | Optimize for binary size (release builds) |
-| `-Og` | Optimize for debugging |
-| `-D LOG_LEVEL=4` | Runtime log level control |
-| `-D NDEBUG` | Disable `assert()` statements |
-| `-DCORE_DEBUG_LEVEL=5` | ESP-IDF debug output level (0=no output, 5=verbose) |
-| `-mno-allow-interrupts-in-sections` | Interrupt safety |
-| `-Werror` | Treat all warnings as errors (CI) |
-| `-flto` | Link-Time Optimization (reduces binary size) |
-| `-D CONFIG_SECURE_DISABLE_OCD=1` | Disable JTAG for production |
+| Flag                                | Purpose                                             |
+| ----------------------------------- | --------------------------------------------------- |
+| `-Os`                               | Optimize for binary size (release builds)           |
+| `-Og`                               | Optimize for debugging                              |
+| `-D LOG_LEVEL=4`                    | Runtime log level control                           |
+| `-D NDEBUG`                         | Disable `assert()` statements                       |
+| `-DCORE_DEBUG_LEVEL=5`              | ESP-IDF debug output level (0=no output, 5=verbose) |
+| `-mno-allow-interrupts-in-sections` | Interrupt safety                                    |
+| `-Werror`                           | Treat all warnings as errors (CI)                   |
+| `-flto`                             | Link-Time Optimization (reduces binary size)        |
+| `-D CONFIG_SECURE_DISABLE_OCD=1`    | Disable JTAG for production                         |
 
 ## 5. Library Management
 
 ### Where Libraries Are Stored
 
 After running `pio run`, dependencies are downloaded to:
+
 ```
 .pio/libdeps/esp32dev/
 ├── ArduinoJson/
@@ -254,6 +261,7 @@ The `nodemcuv2/` subdirectory also exists (legacy ESP8266 support — pre-v3.2.0
 ### Library Conflict Resolution
 
 From `CODING_GUIDELINES.md` §5.1:
+
 ```ini
 ; When two libraries clash (e.g., ESP Async WebServer), use lib_ignore:
 lib_ignore = ESP Async WebServer
@@ -285,6 +293,7 @@ pio run
 ## 6. Python Virtual Environment
 
 PlatformIO is installed in `venv/`:
+
 ```bash
 venv/bin/pio --version
 venv/bin/piodebuggdb
@@ -317,6 +326,7 @@ deactivate
 ```
 
 Clear/update cached state:
+
 ```bash
 pio update        # Update package indexes
 pio platform update  # Update installed platforms
@@ -339,6 +349,7 @@ pio check --files src/PoolController.cpp
 ```
 
 **Note**: `pio check` runs cppcheck under the hood. It catches:
+
 - Memory leaks
 - Uninitialized variables
 - Buffer overflows
@@ -352,6 +363,7 @@ pio check --files src/PoolController.cpp
 Two workflows reference PlatformIO:
 
 **`.github/workflows/plaform.io.yml`**:
+
 ```yaml
 - name: Run PlatformIO Check
   run: platformio check --environment ${{ matrix.environment }} --skip-packages
@@ -362,23 +374,25 @@ Two workflows reference PlatformIO:
 **`.github/workflows/linter.yml`**: Super-Linter runs cpplint separately.
 
 ### GitLab CI (`.gitlab-ci.yml`):
+
 Mirror of the same build process for self-hosted runners.
 
 ### Travis CI (`.travis-ci.yml`):
+
 Legacy — may no longer be active.
 
 ## 9. Troubleshooting Environment Issues
 
-| Problem | Likely Cause | Fix |
-|---------|-------------|-----|
-| `Unknown board: esp32dev` | Platform package not installed | `pio platform install espressif32` |
-| `Could not find the library XYZ` | Library index stale | `pio lib update && pio run` |
-| `fatal error: esp_task_wdt.h` | ESP-IDF version mismatch | Check `espressif32` platform version |
-| `undefined reference to ...` | Missing library in lib_deps | Add required library |
-| Build succeeds, OTA fails | Wrong upload protocol | Set `upload_protocol = espota` |
-| `pio: command not found` | PlatformIO not in PATH | Use `venv/bin/pio` or activate venv |
-| Python version conflict | Venv out of date | `python3 -m venv venv && venv/bin/pip install platformio` |
-| `monitor_filters` not working | Outdated PlatformIO | `venv/bin/pip install --upgrade platformio` |
+| Problem                          | Likely Cause                   | Fix                                                       |
+| -------------------------------- | ------------------------------ | --------------------------------------------------------- |
+| `Unknown board: esp32dev`        | Platform package not installed | `pio platform install espressif32`                        |
+| `Could not find the library XYZ` | Library index stale            | `pio lib update && pio run`                               |
+| `fatal error: esp_task_wdt.h`    | ESP-IDF version mismatch       | Check `espressif32` platform version                      |
+| `undefined reference to ...`     | Missing library in lib_deps    | Add required library                                      |
+| Build succeeds, OTA fails        | Wrong upload protocol          | Set `upload_protocol = espota`                            |
+| `pio: command not found`         | PlatformIO not in PATH         | Use `venv/bin/pio` or activate venv                       |
+| Python version conflict          | Venv out of date               | `python3 -m venv venv && venv/bin/pip install platformio` |
+| `monitor_filters` not working    | Outdated PlatformIO            | `venv/bin/pip install --upgrade platformio`               |
 
 ## 10. Environment Quick Reference
 

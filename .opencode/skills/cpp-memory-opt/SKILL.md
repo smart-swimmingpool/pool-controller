@@ -36,6 +36,7 @@ Optimizing memory for the ESP32-based pool-controller firmware (PlatformIO, Ardu
 ### 1. Eliminate `String` Objects in Loop/Hot-Paths
 
 **BAD** (in `MqttPublisher.cpp`, `OperationModeNode.cpp`):
+
 ```cpp
 // AVOID: frequent allocations fragment heap
 String result = "";
@@ -45,6 +46,7 @@ for (int i = 0; i < count; i++) {
 ```
 
 **GOOD** — use `snprintf` or pre-reserved buffers:
+
 ```cpp
 // PREFER: stack-allocated or pre-reserved buffer
 char buffer[128];
@@ -52,6 +54,7 @@ snprintf(buffer, sizeof(buffer), "format %s %d", str, val);
 ```
 
 **Pattern in this project**: `Utils.hpp` provides `floatToString()` and `intToString()` wrappers.
+
 - Use `Utils::floatToString(value, buf, sizeof(buf))` instead of `String(value)` in temperature paths
 - Use `Utils::intToString(value, buf, sizeof(buf))` instead of `String(value)` in interval paths
 
@@ -60,12 +63,14 @@ snprintf(buffer, sizeof(buffer), "format %s %d", str, val);
 **Location**: `MqttPublisher.cpp`, `WebPortal.cpp`, `ConfigManager.cpp`
 
 Requirements (from `Agents.md` §21):
+
 - Size `StaticJsonDocument` using the [ArduinoJson Assistant](https://arduinojson.org/v6/assistant/)
 - Serialization buffer must be **≥ 25% larger** than expected max JSON output
 - Never serialize `StaticJsonDocument<1024>` into `char buffer[512]` without truncation check
 - One-shot large documents (>1KB) → function-local, never `static` file-scope
 
 **CHECK**: For each JSON serialization in the codebase, verify:
+
 ```
 maxJsonSize = measureJson(doc)  // ArduinoJson 7 returns size_t
 bufferSize  = maxJsonSize * 1.25 + 16  // ≥25% margin + safety
@@ -78,6 +83,7 @@ bufferSize  = maxJsonSize * 1.25 + 16  // ≥25% margin + safety
 - **Heap (`new`/`malloc`)** = managed pool — fragment-prone
 
 **Rule from `Agents.md` §19**:
+
 > Large buffers (>512 B) used only once (e.g., setup path) must be function-local, not file-scope static.
 
 ### 4. Pin Configuration Validation
@@ -87,18 +93,19 @@ Already implemented in `PoolController.cpp:56-84` — uses `uint8_t` array, not 
 ### 5. NVS Preferences Usage
 
 `StateManager.hpp` uses ESP32 Preferences. Best practices:
+
 - Open `Preferences` with `readOnly=true` when only reading (`prefs.begin("ns", true)`)
 - Close with `prefs.end()` promptly
 - Batch writes — don't write each property individually in loops
 
 ### 6. Known High-Allocation Areas to Audit
 
-| File | Risk | Action |
-|------|------|--------|
-| `MqttPublisher.cpp` | JSON serialization per HA discovery | Verify `StaticJsonDocument` size + buffer margin |
-| `OperationModeNode.cpp` | State persistence on every setter | Already has `_suppressPersist` guard — verify it's used correctly |
-| `WebPortal.cpp` | HTTP response construction | Check for `String` concatenation |
-| `NetworkManager.cpp` | WiFi/MQTT reconnection | Verify no String allocations in retry paths |
+| File                    | Risk                                | Action                                                            |
+| ----------------------- | ----------------------------------- | ----------------------------------------------------------------- |
+| `MqttPublisher.cpp`     | JSON serialization per HA discovery | Verify `StaticJsonDocument` size + buffer margin                  |
+| `OperationModeNode.cpp` | State persistence on every setter   | Already has `_suppressPersist` guard — verify it's used correctly |
+| `WebPortal.cpp`         | HTTP response construction          | Check for `String` concatenation                                  |
+| `NetworkManager.cpp`    | WiFi/MQTT reconnection              | Verify no String allocations in retry paths                       |
 
 ## Diagnosis Commands
 

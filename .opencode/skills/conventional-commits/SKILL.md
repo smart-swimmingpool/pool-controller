@@ -32,20 +32,20 @@ This integrates with `release-please` to automate semver version bumps and chang
 
 ### Type
 
-| Type | Release bump | Description |
-|------|-------------|-------------|
-| `fix` | **Patch** (x.y.**Z**) | Bug fix |
-| `feat` | **Minor** (x.**Y**.0) | New feature |
-| `feat!` | **Major** (**X**.0.0) | Breaking change |
-| `fix!` | **Major** (**X**.0.0) | Breaking bug fix |
-| `chore` | *No release* | Maintenance, deps, tooling |
-| `docs` | *No release* | Documentation only |
-| `refactor` | *No release* | Code restructuring |
-| `test` | *No release* | Test additions/changes |
-| `style` | *No release* | Formatting, linting |
-| `perf` | *No release* | Performance improvement |
-| `ci` | *No release* | CI/CD config changes |
-| `build` | *No release* | Build system changes |
+| Type       | Release bump          | Description                |
+| ---------- | --------------------- | -------------------------- |
+| `fix`      | **Patch** (x.y.**Z**) | Bug fix                    |
+| `feat`     | **Minor** (x.**Y**.0) | New feature                |
+| `feat!`    | **Major** (**X**.0.0) | Breaking change            |
+| `fix!`     | **Major** (**X**.0.0) | Breaking bug fix           |
+| `chore`    | _No release_          | Maintenance, deps, tooling |
+| `docs`     | _No release_          | Documentation only         |
+| `refactor` | _No release_          | Code restructuring         |
+| `test`     | _No release_          | Test additions/changes     |
+| `style`    | _No release_          | Formatting, linting        |
+| `perf`     | _No release_          | Performance improvement    |
+| `ci`       | _No release_          | CI/CD config changes       |
+| `build`    | _No release_          | Build system changes       |
 
 > `!` after the type/scope denotes a **breaking change** — always triggers a major version bump.
 
@@ -53,26 +53,26 @@ This integrates with `release-please` to automate semver version bumps and chang
 
 Optional but recommended. Scopes are lowercase, short identifiers.
 
-| Scope | Area | Example |
-|-------|------|---------|
-| *(none)* | General cross-cutting | `fix: correct temperature rounding` |
-| `ha` | Home Assistant / MQTT Discovery | `feat(ha): add heater climate entity` |
-| `wifi` | WiFi, WPS, provisioning | `feat(wifi): add WPS onboarding` |
-| `web` | Web UI dashboard | `fix(web): update version display` |
-| `mqtt` | MQTT communication | `fix(mqtt): increase buffer size` |
-| `sensor` | Temperature sensors (DS18B20, DHT) | `fix(sensor): handle disconnected probe` |
-| `relay` | Pump relay control | `feat(relay): add PWM speed control` |
-| `config` | ConfigManager, NVS, persistence | `feat(config): add MQTT TLS toggle` |
-| `system` | SystemMonitor, watchdog, reliability | `feat(system): add boot-loop detection` |
-| `ota` | OTA updates | `fix(ota): verify signature before flashing` |
-| `ntp` | NTP, timezone, time sync | `fix(ntp): handle DST transition` |
-| `ci` | CI/CD, GitHub Actions | `chore(ci): update platformio version` |
-| `deps` | Library dependencies | `chore(deps): bump ArduinoJson to 7.3.0` |
-| `docs` | Documentation | `docs: add MQTT configuration guide` |
+| Scope    | Area                                 | Example                                      |
+| -------- | ------------------------------------ | -------------------------------------------- |
+| _(none)_ | General cross-cutting                | `fix: correct temperature rounding`          |
+| `ha`     | Home Assistant / MQTT Discovery      | `feat(ha): add heater climate entity`        |
+| `wifi`   | WiFi, WPS, provisioning              | `feat(wifi): add WPS onboarding`             |
+| `web`    | Web UI dashboard                     | `fix(web): update version display`           |
+| `mqtt`   | MQTT communication                   | `fix(mqtt): increase buffer size`            |
+| `sensor` | Temperature sensors (DS18B20, DHT)   | `fix(sensor): handle disconnected probe`     |
+| `relay`  | Pump relay control                   | `feat(relay): add PWM speed control`         |
+| `config` | ConfigManager, NVS, persistence      | `feat(config): add MQTT TLS toggle`          |
+| `system` | SystemMonitor, watchdog, reliability | `feat(system): add boot-loop detection`      |
+| `ota`    | OTA updates                          | `fix(ota): verify signature before flashing` |
+| `ntp`    | NTP, timezone, time sync             | `fix(ntp): handle DST transition`            |
+| `ci`     | CI/CD, GitHub Actions                | `chore(ci): update platformio version`       |
+| `deps`   | Library dependencies                 | `chore(deps): bump ArduinoJson to 7.3.0`     |
+| `docs`   | Documentation                        | `docs: add MQTT configuration guide`         |
 
 ### Subject
 
-- Imperative present tense ("fix", "add", "remove" — *not* "fixed", "added")
+- Imperative present tense ("fix", "add", "remove" — _not_ "fixed", "added")
 - No trailing period
 - Max **72 characters**
 - Lowercase after type/scope
@@ -158,14 +158,14 @@ The CI pipeline (`release.yml`) uses `release-please-action@v4`:
 
 ## Anti-patterns
 
-| ❌ Bad | ✅ Good | Why |
-|--------|---------|-----|
-| `fixed sensor bug` | `fix(sensor): handle disconnected DS18B20` | Missing type/scope, vague |
-| `feat: Added new feature` | `feat: add OTA update support` | Past tense, not imperative |
-| `fix(web): fixed alignment` | `fix(web): correct temperature alignment` | Past tense |
-| `chore: fix stuff` | `fix: correct temperature hysteresis calculation` | Wrong type, vague |
-| `Update file.txt` | `docs: update MQTT configuration example` | Not a conventional commit |
-| `feat: big update` | `feat(web): redesign dashboard layout` | Vague, no scope, no specifics |
+| ❌ Bad                      | ✅ Good                                           | Why                           |
+| --------------------------- | ------------------------------------------------- | ----------------------------- |
+| `fixed sensor bug`          | `fix(sensor): handle disconnected DS18B20`        | Missing type/scope, vague     |
+| `feat: Added new feature`   | `feat: add OTA update support`                    | Past tense, not imperative    |
+| `fix(web): fixed alignment` | `fix(web): correct temperature alignment`         | Past tense                    |
+| `chore: fix stuff`          | `fix: correct temperature hysteresis calculation` | Wrong type, vague             |
+| `Update file.txt`           | `docs: update MQTT configuration example`         | Not a conventional commit     |
+| `feat: big update`          | `feat(web): redesign dashboard layout`            | Vague, no scope, no specifics |
 
 ## Related
 

@@ -34,8 +34,6 @@ install:
 
 script:
   - platformio run
-
-
 #
 # Template #2: The project is intended to by used as a library with examples
 #
