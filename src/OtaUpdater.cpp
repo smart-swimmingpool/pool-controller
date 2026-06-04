@@ -12,6 +12,42 @@
 
 namespace PoolController {
 
+// ISRG Root X1 — Let's Encrypt root CA used by GitHub
+// https://letsencrypt.org/certificates/
+static const char kGitHubRootCA[] PROGMEM =
+  "-----BEGIN CERTIFICATE-----\n"
+  "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\n"
+  "UxM=\n"
+  "-----END CERTIFICATE-----\n";
+
 // ── Statics ──
 
 String OtaUpdater::currentVersion_ = FW_VERSION;
@@ -254,7 +290,7 @@ bool OtaUpdater::isNewerVersion(const String &current, const String &latest) {
 
 bool OtaUpdater::downloadAndApply(const String &url) {
   WiFiClientSecure client;
-  client.setInsecure();
+  client.setCACert(kGitHubRootCA);
   client.setTimeout(10000);
 
   HTTPClient http;

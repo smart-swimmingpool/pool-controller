@@ -9,6 +9,7 @@
 #include "OperationModeNode.hpp"
 #include "PoolController.hpp"
 #include "OtaUpdater.hpp"
+#include "TimeClientHelper.hpp"
 #include <LittleFS.h>
 #include <Update.h>
 #include "DallasTemperatureNode.hpp"
@@ -81,7 +82,9 @@ bool WebPortal::isClientAuthenticated() {
     return true;  // No password protection in initial AP setup mode
   }
 
-  if (server_.hasHeader("Cookie")) {
+  // Only check cookie if a session token was actually generated
+  // (empty token would match 'session=' in any cookie)
+  if (activeSessionToken_.length() > 0 && server_.hasHeader("Cookie")) {
     String cookie = server_.header("Cookie");
     if (cookie.indexOf("session=" + activeSessionToken_) != -1) {
       sessionStartTime_ = millis();  // Refresh timeout
@@ -414,6 +417,9 @@ void WebPortal::apiSaveConfig() {
     ConfigManager::getSettings().timeLossRedHours = server_.arg("red").toInt();
 
     ConfigManager::save();
+
+    // Apply timezone change to running clock immediately (P2)
+    setTimezoneIndex(ConfigManager::getSettings().timezoneIndex);
 
     // Propagate changes directly into runtime parameters
     operationModeNode.setMode(ConfigManager::getSettings().opMode.c_str());

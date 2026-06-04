@@ -11,8 +11,8 @@ async function loadTelemetry() {
     const res = await fetch('/api/status');
     const data = await res.json();
 
-    document.getElementById('poolTemp').textContent = data.pool_temp.toFixed(1) + ' °C';
-    document.getElementById('solarTemp').textContent = data.solar_temp.toFixed(1) + ' °C';
+    document.getElementById('poolTemp').textContent = isFinite(data.pool_temp) ? data.pool_temp.toFixed(1) + ' °C' : '-- °C';
+    document.getElementById('solarTemp').textContent = isFinite(data.solar_temp) ? data.solar_temp.toFixed(1) + ' °C' : '-- °C';
 
     const pb = document.getElementById('poolPump');
     pb.textContent = data.pool_pump ? 'RUNNING' : 'OFF';

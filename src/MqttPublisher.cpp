@@ -178,6 +178,7 @@ void MqttPublisher::publishUpdateDiscovery() {
   doc["state_topic"] = getBaseTopic("update", "firmware-update") + "/state";
   doc["command_topic"] = getBaseTopic("update", "firmware-update") + "/set";
   doc["json_attributes_topic"] = getBaseTopic("update", "firmware-update") + "/attr";
+  doc["latest_version_topic"] = getBaseTopic("update", "firmware-update") + "/latest";
   doc["availability_topic"] = "homeassistant/sensor/pool-controller/availability";
   doc["payload_install"] = "INSTALL";
   doc["device_class"] = "firmware";
@@ -203,7 +204,14 @@ void MqttPublisher::publishUpdateState() {
   String stateTopic = getBaseTopic("update", "firmware-update") + "/state";
   NetworkManager::publish(stateTopic.c_str(), OtaUpdater::getCurrentVersion().c_str(), true);
 
-  // Attributes topic: latest version info
+  // Latest version topic: the newest available version (or current if up to date)
+  String latestTopic = getBaseTopic("update", "firmware-update") + "/latest";
+  String latestVer = OtaUpdater::isUpdateAvailable()
+    ? OtaUpdater::getLatestVersion()
+    : OtaUpdater::getCurrentVersion();
+  NetworkManager::publish(latestTopic.c_str(), latestVer.c_str(), true);
+
+  // Attributes topic: extra metadata
   String attrTopic = getBaseTopic("update", "firmware-update") + "/attr";
 
   JsonDocument doc;
@@ -214,7 +222,6 @@ void MqttPublisher::publishUpdateState() {
     doc["latest_version"] = OtaUpdater::getLatestVersion();
     doc["release_url"] = OtaUpdater::getReleaseUrl();
   } else {
-    // Show same version so HA doesn't show a spurious update
     doc["latest_version"] = OtaUpdater::getCurrentVersion();
   }
 
@@ -371,7 +378,6 @@ void MqttPublisher::handleMqttMessage(char *topic, uint8_t *payload, unsigned in
     TimerSetting ts = operationModeNode.getTimerSetting();
     ts.timerStartHour = val;
     operationModeNode.setTimerSetting(ts);
-    ConfigManager::getSettings().timeLossGreenHours = val;  // or standard config mapping
     ConfigManager::save();
   } else if (top.endsWith("/timer-start-min/set")) {
     int val = value.toInt();

@@ -83,8 +83,14 @@ auto PoolControllerContext::initializeController() -> void {
     Serial.printf("  Solar Relay: GPIO %d\n", PIN_RELAY_SOLAR);
   }
 
-  // Set measurement intervals
+  // Set measurement intervals and propagate to all nodes
   _measurementInterval = ConfigManager::getSettings().loopInterval;
+  solarTemperatureNode.setMeasurementInterval(_measurementInterval);
+  poolTemperatureNode.setMeasurementInterval(_measurementInterval);
+  ctrlTemperatureNode.setMeasurementInterval(_measurementInterval);
+  poolPumpNode.setMeasurementInterval(_measurementInterval);
+  solarPumpNode.setMeasurementInterval(_measurementInterval);
+  operationModeNode.setMeasurementInterval(_measurementInterval);
 
   // Initialize NTP Client
   timeClientSetup(ConfigManager::getNtp().server.c_str());

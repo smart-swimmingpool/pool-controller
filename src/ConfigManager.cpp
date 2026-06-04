@@ -58,6 +58,7 @@ bool ConfigManager::parseDocument(JsonDocument &doc) {
   settings_.tempMinSolar = doc["settings"]["temp_min_solar"] | 55.0;
   settings_.tempHysteresis = doc["settings"]["temp_hysteresis"] | 1.0;
   settings_.opMode = doc["settings"]["op_mode"] | "auto";
+  settings_.timezoneIndex = doc["settings"]["timezone_index"] | 0;
   settings_.timeLossGreenHours = doc["settings"]["time_loss_green_hours"] | 1;
   settings_.timeLossRedHours = doc["settings"]["time_loss_red_hours"] | 24;
 
@@ -175,6 +176,7 @@ bool ConfigManager::save() {
   settingsObj["temp_min_solar"] = settings_.tempMinSolar;
   settingsObj["temp_hysteresis"] = settings_.tempHysteresis;
   settingsObj["op_mode"] = settings_.opMode;
+  settingsObj["timezone_index"] = settings_.timezoneIndex;
   settingsObj["time_loss_green_hours"] = settings_.timeLossGreenHours;
   settingsObj["time_loss_red_hours"] = settings_.timeLossRedHours;
 
