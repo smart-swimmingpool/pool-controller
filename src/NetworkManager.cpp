@@ -6,7 +6,7 @@
 #include <esp_wps.h>
 
 #include "ConfigManager.hpp"
-#include "WpsProvisioner.hpp">
+#include "WpsProvisioner.hpp"
 
 namespace PoolController {
 
