@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-06-04
+title: Release Metadata TLS Verification
+priority: P1
+spec: release-metadata-tls.spec.md
