@@ -350,10 +350,18 @@ void MqttPublisher::handleMqttMessage(char *topic, uint8_t *payload, unsigned in
     return;
   }
 
-  if (top.endsWith("/pool-pump/set")) {
-    poolPumpNode.setSwitch(value == "ON");
-  } else if (top.endsWith("/solar-pump/set")) {
-    solarPumpNode.setSwitch(value == "ON");
+  if (top.endsWith("/pool-pump/set") || top.endsWith("/solar-pump/set")) {
+    // Only allow pump control from HA in manual mode
+    if (operationModeNode.getMode() != "manu") {
+      Serial.printf("MQTT: Ignoring pump command — not in manual mode (current: %s)\n", operationModeNode.getMode().c_str());
+      publishStates();
+      return;
+    }
+    if (top.endsWith("/pool-pump/set")) {
+      poolPumpNode.setSwitch(value == "ON");
+    } else {
+      solarPumpNode.setSwitch(value == "ON");
+    }
   } else if (top.endsWith("/mode/set")) {
     operationModeNode.setMode(valStr);
     ConfigManager::getSettings().opMode = value;
