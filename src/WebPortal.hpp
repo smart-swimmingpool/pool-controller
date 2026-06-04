@@ -22,7 +22,7 @@ public:
 
 private:
   static void setupRoutes();
-  
+
   // HTML Handlers
   static void handleRoot();
   static void handleLogin();
@@ -49,11 +49,11 @@ private:
   static WebServer server_;
   static DNSServer dnsServer_;
   static bool dnsServerStarted_;
-  
+
   static String activeSessionToken_;
   static uint32_t sessionStartTime_;
-  
-  static constexpr uint32_t kSessionTimeoutMs = 15 * 60 * 1000; // 15 mins
+
+  static constexpr uint32_t kSessionTimeoutMs = 15 * 60 * 1000;  // 15 mins
   static constexpr uint16_t kDnsPort = 53;
 };
 

@@ -21,7 +21,7 @@ void ESP32TemperatureNode::loop() {
 
     // Read internal temp of ESP32 (returns Fahrenheit)
     const uint8_t temp_farenheit = temprature_sens_read();
-    
+
     // Convert to Celsius
     // Note: If the sensor reads 0 or is uncalibrated, it may return a value of 128
     // standard conversion is: C = (F - 32) / 1.8

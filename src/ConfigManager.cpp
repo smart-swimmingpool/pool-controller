@@ -17,15 +17,15 @@ bool ConfigManager::configured_ = false;
 bool ConfigManager::configRestored_ = false;
 
 // Default password is "admin"
-static constexpr const char* kDefaultPasswordHash = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918";
+static constexpr const char *kDefaultPasswordHash = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918";
 
-static String hashSha256(const String& input) {
+static String hashSha256(const String &input) {
   uint8_t hash[32];
   mbedtls_md_context_t ctx;
   mbedtls_md_init(&ctx);
   mbedtls_md_setup(&ctx, mbedtls_md_info_from_type(MBEDTLS_MD_SHA256), 0);
   mbedtls_md_starts(&ctx);
-  mbedtls_md_update(&ctx, (const uint8_t*)input.c_str(), input.length());
+  mbedtls_md_update(&ctx, (const uint8_t *)input.c_str(), input.length());
   mbedtls_md_finish(&ctx, hash);
   mbedtls_md_free(&ctx);
 
@@ -40,7 +40,7 @@ static String hashSha256(const String& input) {
 
 // ── OTA-Safe Config Parsing ──
 
-bool ConfigManager::parseDocument(JsonDocument& doc) {
+bool ConfigManager::parseDocument(JsonDocument &doc) {
   wifi_.ssid = doc["wifi"]["ssid"] | "";
   wifi_.password = doc["wifi"]["password"] | "";
 
@@ -272,8 +272,7 @@ bool ConfigManager::restoreConfig() {
   src.close();
   dst.close();
 
-  Serial.printf("✓ Config restored from OTA backup (%s → %s)\n",
-                kConfigBackupPath, kConfigPath);
+  Serial.printf("✓ Config restored from OTA backup (%s → %s)\n", kConfigBackupPath, kConfigPath);
   return true;
 }
 
@@ -291,14 +290,11 @@ void ConfigManager::logOtaTransition() {
     Serial.printf("ℹ First boot — firmware version %s\n", runningVersion.c_str());
   } else if (previousVersion != runningVersion) {
     // Version changed — OTA update just happened
-    Serial.printf("◉ OTA UPDATE DETECTED: %s → %s\n",
-                  previousVersion.c_str(), runningVersion.c_str());
+    Serial.printf("◉ OTA UPDATE DETECTED: %s → %s\n", previousVersion.c_str(), runningVersion.c_str());
 
-    Serial.printf("  ◉ Config backup:   %s\n",
-                  LittleFS.exists(kConfigBackupPath) ? "present ✓" : "not found");
+    Serial.printf("  ◉ Config backup:   %s\n", LittleFS.exists(kConfigBackupPath) ? "present ✓" : "not found");
 
-    Serial.printf("  ◉ Config integrity: %s\n",
-                  configured_ ? "valid ✓" : "INVALID — using defaults");
+    Serial.printf("  ◉ Config integrity: %s\n", configured_ ? "valid ✓" : "INVALID — using defaults");
 
     if (configRestored_) {
       Serial.println("  ◉ Config source: restored from OTA backup (auto) ✓");
@@ -316,11 +312,11 @@ void ConfigManager::logOtaTransition() {
   prefs.end();
 }
 
-void ConfigManager::setAdminPassword(const String& newPassword) {
+void ConfigManager::setAdminPassword(const String &newPassword) {
   adminPasswordHash_ = hashSha256(newPassword);
 }
 
-bool ConfigManager::verifyAdminPassword(const String& password) {
+bool ConfigManager::verifyAdminPassword(const String &password) {
   return hashSha256(password) == adminPasswordHash_;
 }
 

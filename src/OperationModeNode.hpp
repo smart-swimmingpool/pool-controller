@@ -18,10 +18,10 @@ public:
 
   void setMeasurementInterval(uint32_t interval) { _measurementInterval = interval; }
   uint32_t getMeasurementInterval() const { return _measurementInterval; }
-  
+
   bool setMode(String mode);
   String getMode() const { return _mode; }
-  
+
   void addRule(Rule *rule);
   Rule *getRule();
 
@@ -30,25 +30,29 @@ public:
 
   void setPoolMaxTemperature(float temp) {
     _poolMaxTemp = temp;
-    if (!_suppressPersist) saveState();
+    if (!_suppressPersist)
+      saveState();
   }
   float getPoolMaxTemperature() const { return _poolMaxTemp; }
 
   void setSolarMinTemperature(float temp) {
     _solarMinTemp = temp;
-    if (!_suppressPersist) saveState();
+    if (!_suppressPersist)
+      saveState();
   }
   float getSolarMinTemperature() const { return _solarMinTemp; }
 
   void setTemperatureHysteresis(float temp) {
     _hysteresis = temp;
-    if (!_suppressPersist) saveState();
+    if (!_suppressPersist)
+      saveState();
   }
   float getTemperatureHysteresis() const { return _hysteresis; }
 
   void setTimerSetting(TimerSetting setting) {
     _timerSetting = setting;
-    if (!_suppressPersist) saveState();
+    if (!_suppressPersist)
+      saveState();
   }
   TimerSetting getTimerSetting() const { return _timerSetting; }
 
@@ -80,7 +84,7 @@ private:
   float _poolMaxTemp = 28.5f;
   float _solarMinTemp = 55.0f;
   float _hysteresis = 1.0f;
-  
+
   // Use unique_ptr to manage rules automatically and safely (F19 Fix!)
   std::vector<std::unique_ptr<Rule>> _ruleVec;
 

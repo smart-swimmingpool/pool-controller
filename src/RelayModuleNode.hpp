@@ -12,12 +12,12 @@ public:
   RelayModuleNode(const char *id, const char *name, const uint8_t pin, const int measurementInterval = MEASUREMENT_INTERVAL);
   ~RelayModuleNode() = default;
 
-  const char* getId() const { return _id; }
+  const char *getId() const { return _id; }
   uint8_t getPin() const { return _pin; }
-  
+
   void setMeasurementInterval(unsigned long interval) { _measurementInterval = interval; }
   unsigned long getMeasurementInterval() const { return _measurementInterval; }
-  
+
   void setSwitch(const bool state);
   bool getSwitch();
 

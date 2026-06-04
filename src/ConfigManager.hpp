@@ -45,14 +45,14 @@ public:
   static bool save();
   static void reset();
 
-  static WiFiConfig& getWiFi() { return wifi_; }
-  static MqttConfig& getMqtt() { return mqtt_; }
-  static NtpConfig& getNtp() { return ntp_; }
-  static ControllerSettings& getSettings() { return settings_; }
-  
+  static WiFiConfig &getWiFi() { return wifi_; }
+  static MqttConfig &getMqtt() { return mqtt_; }
+  static NtpConfig &getNtp() { return ntp_; }
+  static ControllerSettings &getSettings() { return settings_; }
+
   static String getAdminPasswordHash() { return adminPasswordHash_; }
-  static void setAdminPassword(const String& newPassword);
-  static bool verifyAdminPassword(const String& password);
+  static void setAdminPassword(const String &newPassword);
+  static bool verifyAdminPassword(const String &password);
 
   static bool isConfigured() { return configured_; }
 
@@ -71,10 +71,10 @@ public:
 
 private:
   /// Parse a validated JsonDocument into config structs.
-  static bool parseDocument(JsonDocument& doc);
-  static constexpr const char* kConfigPath = "/config.json";
-  static constexpr const char* kConfigBackupPath = "/config.json.ota";
-  
+  static bool parseDocument(JsonDocument &doc);
+  static constexpr const char *kConfigPath = "/config.json";
+  static constexpr const char *kConfigBackupPath = "/config.json.ota";
+
   static WiFiConfig wifi_;
   static MqttConfig mqtt_;
   static NtpConfig ntp_;

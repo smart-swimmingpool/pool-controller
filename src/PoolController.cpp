@@ -63,8 +63,7 @@ auto PoolControllerContext::initializeController() -> void {
   for (size_t i = 0; i < 4; i++) {
     for (size_t j = i + 1; j < 4; j++) {
       if (pins[i] == pins[j]) {
-        Serial.printf("✖ PIN CONFLICT: %s (pin %d) and %s (pin %d) use same pin!\n",
-          pinNames[i], pins[i], pinNames[j], pins[j]);
+        Serial.printf("✖ PIN CONFLICT: %s (pin %d) and %s (pin %d) use same pin!\n", pinNames[i], pins[i], pinNames[j], pins[j]);
         pinConflict = true;
       }
     }
@@ -75,7 +74,7 @@ auto PoolControllerContext::initializeController() -> void {
     Serial.println("  System will reboot in 5 seconds to try and recover...");
     Serial.flush();
     delay(5000);
-    ESP.restart(); // F27 Fix! Clean restart instead of blocking WDT loop
+    ESP.restart();  // F27 Fix! Clean restart instead of blocking WDT loop
   } else {
     Serial.println("✓ Pin configuration validated - no conflicts");
     Serial.printf("  Solar Temp: GPIO %d\n", PIN_DS_SOLAR);
@@ -86,14 +85,14 @@ auto PoolControllerContext::initializeController() -> void {
 
   // Set measurement intervals
   _measurementInterval = ConfigManager::getSettings().loopInterval;
-  
+
   // Initialize NTP Client
   timeClientSetup(ConfigManager::getNtp().server.c_str());
 
   // Configure time degradation limits
   setTimeDegradationGreenHours(static_cast<uint8_t>(ConfigManager::getSettings().timeLossGreenHours));
   setTimeDegradationRedHours(static_cast<uint8_t>(ConfigManager::getSettings().timeLossRedHours));
-  
+
   // Set Timezone index
   setTimezoneIndex(ConfigManager::getSettings().timezoneIndex);
 
@@ -110,7 +109,7 @@ auto PoolControllerContext::initializeController() -> void {
   operationModeNode.setPoolMaxTemperature(ConfigManager::getSettings().tempMaxPool);
   operationModeNode.setSolarMinTemperature(ConfigManager::getSettings().tempMinSolar);
   operationModeNode.setTemperatureHysteresis(ConfigManager::getSettings().tempHysteresis);
-  
+
   TimerSetting ts = operationModeNode.getTimerSetting();
   ts.timerStartHour = 10;
   ts.timerStartMinutes = 30;
@@ -180,7 +179,7 @@ auto PoolControllerContext::setup() -> void {
 
   // OTA safety: detect version transition and verify config integrity
   ConfigManager::logOtaTransition();
-  
+
   Serial.printf("✓ Controller setup completed. Free heap: %u B\n", ESP.getFreeHeap());
 }
 
@@ -195,8 +194,8 @@ auto PoolControllerContext::loop() -> void {
   // Stable bootloop counter cleanup after 5 minutes
   static uint32_t lastBootClear = 0;
   static bool bootCounterCleared = false;
-  if (!bootCounterCleared && (millis() - lastBootClear) >
-      static_cast<uint32_t>(SystemMonitor::BOOT_LOOP_CLEAR_AFTER_SEC) * 1000UL) {
+  if (!bootCounterCleared &&
+    (millis() - lastBootClear) > static_cast<uint32_t>(SystemMonitor::BOOT_LOOP_CLEAR_AFTER_SEC) * 1000UL) {
     bootCounterCleared = true;
     SystemMonitor::clearBootLoopCounter();
     if (bootLoopDetected_) {

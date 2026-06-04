@@ -32,7 +32,8 @@ void RelayModuleNode::begin() {
 }
 
 void RelayModuleNode::setSwitch(const bool state) {
-  if (!relay) return;
+  if (!relay)
+    return;
 
   bool currentState = relay->isOn();
   if (currentState == state) {
@@ -62,7 +63,8 @@ void RelayModuleNode::setSwitch(const bool state) {
 }
 
 bool RelayModuleNode::getSwitch() {
-  if (!relay) return false;
+  if (!relay)
+    return false;
   return relay->isOn();
 }
 

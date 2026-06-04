@@ -20,7 +20,7 @@ void RuleAuto::loop() {
     Serial.printf("  Pool temp: %f\n", poolTemp);
     Serial.printf("  Solar temp: %f\n", solarTemp);
     Serial.println("  Turning off solar pump for safety");
-    
+
     // Turn off solar pump for safety, but keep pool pump running on timer
     _solarRelay->setSwitch(false);
     _poolRelay->setSwitch(checkPoolPumpTimer());
@@ -39,10 +39,12 @@ void RuleAuto::loop() {
         Serial.printf("  § RuleAuto: Solar below min. required solar temp. (%f). Switch solar off\n", getSolarMinTemperature());
         _solarRelay->setSwitch(false);
       } else if (getPoolTemperature() >= (getSolarTemperature() + hyst)) {
-        Serial.printf("  § RuleAuto: Pool temp. (%f) reaches solar temp (%f). Switch solar off\n", getPoolTemperature(), getSolarTemperature());
+        Serial.printf("  § RuleAuto: Pool temp. (%f) reaches solar temp (%f). Switch solar off\n", getPoolTemperature(),
+          getSolarTemperature());
         _solarRelay->setSwitch(false);
       } else if (getPoolTemperature() >= (getPoolMaxTemperature() + hyst)) {
-        Serial.printf("  § RuleAuto: Pool temp. (%f) above max. temperature (%f). Switch solar off\n", getPoolTemperature(), getPoolMaxTemperature());
+        Serial.printf("  § RuleAuto: Pool temp. (%f) above max. temperature (%f). Switch solar off\n", getPoolTemperature(),
+          getPoolMaxTemperature());
         _solarRelay->setSwitch(false);
       } else {
         Serial.println("  § RuleAuto: Solar on -> no change");
@@ -63,7 +65,7 @@ void RuleAuto::loop() {
       _solarRelay->setSwitch(false);
     }
   }
-  
+
   Serial.printf("  § RuleAuto: Pool temp. :     %f\n", getPoolTemperature());
   Serial.printf("  § RuleAuto: max. Pool temp.: %f\n", getPoolMaxTemperature());
   Serial.printf("  § RuleAuto: Solar temp. :     %f\n", getSolarTemperature());

@@ -34,7 +34,7 @@ public:
   virtual void loop() = 0;
 
 protected:
-  static constexpr const char* cIndent = "  ";
+  static constexpr const char *cIndent = "  ";
 
   bool checkPoolPumpTimer() {
     Serial.println("↕  checkPoolPumpTimer");
@@ -64,8 +64,8 @@ protected:
 
     // Handle midnight crossing: check if timer spans midnight
     TimerSetting ts = getTimerSetting();
-    bool crossesMidnight =
-      (ts.timerStartHour > ts.timerEndHour) || (ts.timerStartHour == ts.timerEndHour && ts.timerStartMinutes > ts.timerEndMinutes);
+    bool crossesMidnight = (ts.timerStartHour > ts.timerEndHour) ||
+      (ts.timerStartHour == ts.timerEndHour && ts.timerStartMinutes > ts.timerEndMinutes);
 
     if (crossesMidnight) {
       // Timer crosses midnight (e.g., 22:00 - 02:00)

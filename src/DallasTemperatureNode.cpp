@@ -51,7 +51,7 @@ void DallasTemperatureNode::loop() {
 
     if (numberOfDevices > 0) {
       Serial.printf("〽 Reading Dallas sensor: %s\n", _id);
-      
+
       // Feed watchdog before blocking 1-Wire operations
       PoolController::SystemMonitor::feedWatchdog();
 
@@ -79,7 +79,7 @@ void DallasTemperatureNode::loop() {
     } else {
       Serial.println("No Sensor found on bus! Rescanning...");
       PoolController::DegradationManager::reportSensorStatus(_id, false);
-      
+
       sensor.begin();
       numberOfDevices = sensor.getDeviceCount();
       if (numberOfDevices > 0) {
@@ -90,8 +90,7 @@ void DallasTemperatureNode::loop() {
   }
 }
 
-void DallasTemperatureNode::address2String(const DeviceAddress deviceAddress, char* buffer, size_t size) {
-  snprintf(buffer, size, "%02X%02X%02X%02X%02X%02X%02X%02X",
-    deviceAddress[0], deviceAddress[1], deviceAddress[2], deviceAddress[3],
-    deviceAddress[4], deviceAddress[5], deviceAddress[6], deviceAddress[7]);
+void DallasTemperatureNode::address2String(const DeviceAddress deviceAddress, char *buffer, size_t size) {
+  snprintf(buffer, size, "%02X%02X%02X%02X%02X%02X%02X%02X", deviceAddress[0], deviceAddress[1], deviceAddress[2],
+    deviceAddress[3], deviceAddress[4], deviceAddress[5], deviceAddress[6], deviceAddress[7]);
 }

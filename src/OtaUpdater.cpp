@@ -18,9 +18,9 @@ String OtaUpdater::currentVersion_ = FW_VERSION;
 String OtaUpdater::latestVersion_;
 String OtaUpdater::releaseUrl_;
 String OtaUpdater::downloadUrl_;
-bool   OtaUpdater::updateAvailable_      = false;
-bool   OtaUpdater::updateInProgress_     = false;
-int    OtaUpdater::progress_             = 0;
+bool OtaUpdater::updateAvailable_ = false;
+bool OtaUpdater::updateInProgress_ = false;
+int OtaUpdater::progress_ = 0;
 String OtaUpdater::statusMessage_;
 unsigned long OtaUpdater::lastCheckTime_ = 0;
 
@@ -81,7 +81,8 @@ String OtaUpdater::getStatusMessage() {
 // ── Check for Update ──
 
 bool OtaUpdater::checkForUpdate() {
-  if (updateInProgress_) return false;
+  if (updateInProgress_)
+    return false;
 
   statusMessage_ = "Checking for updates...";
   Serial.println("OTA: Checking for firmware update...");
@@ -96,8 +97,7 @@ bool OtaUpdater::checkForUpdate() {
   if (isNewerVersion(currentVersion_, latestVersion_)) {
     updateAvailable_ = true;
     statusMessage_ = "Update available: v" + getLatestVersion();
-    Serial.printf("OTA: New version available: %s (current: %s)\n",
-                  latestVersion_.c_str(), currentVersion_.c_str());
+    Serial.printf("OTA: New version available: %s (current: %s)\n", latestVersion_.c_str(), currentVersion_.c_str());
     return true;
   }
 
@@ -129,16 +129,16 @@ bool OtaUpdater::startUpdate() {
   ConfigManager::backupConfig();
 
   updateInProgress_ = true;
-  updateAvailable_  = false;
-  progress_         = 0;
-  statusMessage_    = "Downloading... 0%";
+  updateAvailable_ = false;
+  progress_ = 0;
+  statusMessage_ = "Downloading... 0%";
 
   Serial.printf("OTA: Starting download from %s\n", downloadUrl_.c_str());
 
   bool ok = downloadAndApply(downloadUrl_);
   if (!ok) {
     updateInProgress_ = false;
-    statusMessage_    = "Update failed!";
+    statusMessage_ = "Update failed!";
     Serial.println("OTA: Update failed!");
   }
   // If success, ESP will reboot — we never reach here
@@ -184,7 +184,7 @@ bool OtaUpdater::fetchLatestRelease() {
   }
 
   // Extract tag name (e.g. "v3.2.0")
-  const char* tag = doc["tag_name"];
+  const char *tag = doc["tag_name"];
   if (!tag || strlen(tag) == 0) {
     Serial.println("OTA: No tag_name in response");
     return false;
@@ -192,16 +192,16 @@ bool OtaUpdater::fetchLatestRelease() {
   latestVersion_ = String(tag);
 
   // Release URL
-  const char* htmlUrl = doc["html_url"];
+  const char *htmlUrl = doc["html_url"];
   releaseUrl_ = htmlUrl ? String(htmlUrl) : "";
 
   // Find the firmware binary asset
   JsonArray assets = doc["assets"].as<JsonArray>();
   downloadUrl_ = "";
   for (JsonObject asset : assets) {
-    const char* name = asset["name"];
+    const char *name = asset["name"];
     if (name && strstr(name, ".bin") != nullptr) {
-      const char* url = asset["browser_download_url"];
+      const char *url = asset["browser_download_url"];
       if (url) {
         downloadUrl_ = String(url);
         break;
@@ -220,7 +220,7 @@ bool OtaUpdater::fetchLatestRelease() {
 
 // ── Semver helpers ──
 
-bool OtaUpdater::parseVersion(const String& str, Version& out) {
+bool OtaUpdater::parseVersion(const String &str, Version &out) {
   // Strip leading "v" or "V"
   String s = str;
   s.trim();
@@ -231,23 +231,28 @@ bool OtaUpdater::parseVersion(const String& str, Version& out) {
   return n >= 3;
 }
 
-bool OtaUpdater::isNewerVersion(const String& current, const String& latest) {
+bool OtaUpdater::isNewerVersion(const String &current, const String &latest) {
   Version cur, lat;
   if (!parseVersion(current, cur) || !parseVersion(latest, lat)) {
     // If we can't parse, err on the side of no update
     return false;
   }
-  if (lat.major > cur.major) return true;
-  if (lat.major < cur.major) return false;
-  if (lat.minor > cur.minor) return true;
-  if (lat.minor < cur.minor) return false;
-  if (lat.patch > cur.patch) return true;
+  if (lat.major > cur.major)
+    return true;
+  if (lat.major < cur.major)
+    return false;
+  if (lat.minor > cur.minor)
+    return true;
+  if (lat.minor < cur.minor)
+    return false;
+  if (lat.patch > cur.patch)
+    return true;
   return false;
 }
 
 // ── OTA Download + Flash ──
 
-bool OtaUpdater::downloadAndApply(const String& url) {
+bool OtaUpdater::downloadAndApply(const String &url) {
   WiFiClientSecure client;
   client.setInsecure();
   client.setTimeout(10000);
@@ -280,7 +285,7 @@ bool OtaUpdater::downloadAndApply(const String& url) {
   }
 
   // Stream download in chunks
-  WiFiClient* stream = http.getStreamPtr();
+  WiFiClient *stream = http.getStreamPtr();
   uint8_t buffer[kOtaBufferSize];
   int totalRead = 0;
 

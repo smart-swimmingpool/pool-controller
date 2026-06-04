@@ -1,7 +1,6 @@
 // Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
 
 #include "WpsProvisioner.hpp"
-#include "ConfigManager.hpp"
 
 #include <Arduino.h>
 #include <WiFi.h>
@@ -9,17 +8,19 @@
 #include <esp_wps.h>
 #include <atomic>
 
+#include "ConfigManager.hpp"
+
 namespace {
-constexpr gpio_num_t    WPS_TRIGGER_PIN{GPIO_NUM_0};
-constexpr uint32_t      WPS_TRIGGER_HOLD_MS{2000UL};
-constexpr uint32_t      WPS_SESSION_TIMEOUT_MS{120000UL};
-constexpr uint32_t      WPS_CONNECT_TIMEOUT_MS{30000UL};
-constexpr uint32_t      WPS_TRIGGER_POLL_INTERVAL_MS{10UL};
-constexpr uint32_t      WIFI_STATUS_POLL_INTERVAL_MS{50UL};
-constexpr size_t        WIFI_SSID_MAX_LEN{32};
-constexpr bool          WIFI_KEEP_RADIO_ON{true};
-constexpr bool          WIFI_PRESERVE_CREDENTIALS{true};
-constexpr wps_type_t    WPS_MODE{WPS_TYPE_PBC};
+constexpr gpio_num_t WPS_TRIGGER_PIN{GPIO_NUM_0};
+constexpr uint32_t WPS_TRIGGER_HOLD_MS{2000UL};
+constexpr uint32_t WPS_SESSION_TIMEOUT_MS{120000UL};
+constexpr uint32_t WPS_CONNECT_TIMEOUT_MS{30000UL};
+constexpr uint32_t WPS_TRIGGER_POLL_INTERVAL_MS{10UL};
+constexpr uint32_t WIFI_STATUS_POLL_INTERVAL_MS{50UL};
+constexpr size_t WIFI_SSID_MAX_LEN{32};
+constexpr bool WIFI_KEEP_RADIO_ON{true};
+constexpr bool WIFI_PRESERVE_CREDENTIALS{true};
+constexpr wps_type_t WPS_MODE{WPS_TYPE_PBC};
 
 struct WpsProvisionState final {
   std::atomic<bool> success{false};
@@ -32,8 +33,7 @@ static WpsProvisionState wpsProvisionState{};
 auto stopWps() -> void {
   const esp_err_t disableErr = esp_wifi_wps_disable();
   if (disableErr != ESP_OK && disableErr != ESP_ERR_WIFI_WPS_SM) {
-    Serial.printf("WPS disable failed: 0x%x (%s)\n",
-                  static_cast<unsigned>(disableErr), esp_err_to_name(disableErr));
+    Serial.printf("WPS disable failed: 0x%x (%s)\n", static_cast<unsigned>(disableErr), esp_err_to_name(disableErr));
   }
 }
 
@@ -46,21 +46,19 @@ auto startWps() -> bool {
     snprintf(config.factory_info.model_number, sizeof(config.factory_info.model_number), "pool-controller");
   const int modelNameLen =
     snprintf(config.factory_info.model_name, sizeof(config.factory_info.model_name), "ESP32 Pool Controller");
-  const int deviceNameLen =
-    snprintf(config.factory_info.device_name, sizeof(config.factory_info.device_name), "Pool Controller");
+  const int deviceNameLen = snprintf(config.factory_info.device_name, sizeof(config.factory_info.device_name), "Pool Controller");
 
   if (manufacturerLen < 0 || static_cast<size_t>(manufacturerLen) >= sizeof(config.factory_info.manufacturer) ||
-      modelNumberLen  < 0 || static_cast<size_t>(modelNumberLen)  >= sizeof(config.factory_info.model_number)  ||
-      modelNameLen    < 0 || static_cast<size_t>(modelNameLen)    >= sizeof(config.factory_info.model_name)    ||
-      deviceNameLen   < 0 || static_cast<size_t>(deviceNameLen)   >= sizeof(config.factory_info.device_name)) {
+    modelNumberLen < 0 || static_cast<size_t>(modelNumberLen) >= sizeof(config.factory_info.model_number) || modelNameLen < 0 ||
+    static_cast<size_t>(modelNameLen) >= sizeof(config.factory_info.model_name) || deviceNameLen < 0 ||
+    static_cast<size_t>(deviceNameLen) >= sizeof(config.factory_info.device_name)) {
     Serial.println(F("WPS: factory-info string truncated"));
     return false;
   }
 
   const esp_err_t enableErr = esp_wifi_wps_enable(&config);
   if (enableErr != ESP_OK) {
-    Serial.printf("WPS enable failed: 0x%x (%s)\n",
-                  static_cast<unsigned>(enableErr), esp_err_to_name(enableErr));
+    Serial.printf("WPS enable failed: 0x%x (%s)\n", static_cast<unsigned>(enableErr), esp_err_to_name(enableErr));
     return false;
   }
 
@@ -70,8 +68,7 @@ auto startWps() -> bool {
   const esp_err_t startErr = esp_wifi_wps_start(0);
 #endif
   if (startErr != ESP_OK) {
-    Serial.printf("WPS start failed: 0x%x (%s)\n",
-                  static_cast<unsigned>(startErr), esp_err_to_name(startErr));
+    Serial.printf("WPS start failed: 0x%x (%s)\n", static_cast<unsigned>(startErr), esp_err_to_name(startErr));
     stopWps();
     return false;
   }
@@ -92,7 +89,7 @@ auto persistWpsWifiCredentials() -> bool {
     return false;
   }
 
-  PoolController::ConfigManager::getWiFi().ssid     = connectedSsid;
+  PoolController::ConfigManager::getWiFi().ssid = connectedSsid;
   PoolController::ConfigManager::getWiFi().password = WiFi.psk();
 
   if (!PoolController::ConfigManager::save()) {

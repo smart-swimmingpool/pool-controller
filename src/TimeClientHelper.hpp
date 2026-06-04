@@ -28,11 +28,7 @@ constexpr time_t MIN_VALID_TIME = 1577836800;
  *   time-loss-green-hours (default 1h)
  *   time-loss-red-hours   (default 24h)
  */
-enum class TimeDegradation : uint8_t {
-  GREEN = 0,
-  YELLOW = 1,
-  RED = 2
-};
+enum class TimeDegradation : uint8_t { GREEN = 0, YELLOW = 1, RED = 2 };
 
 void timeClientSetup(const char *ntpServer);
 int getTzCount();

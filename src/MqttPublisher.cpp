@@ -32,35 +32,39 @@ void MqttPublisher::begin() {
   deviceId_ = String(macStr);
 
   Serial.printf("✓ HA Discovery Device ID set to: %s\n", deviceId_.c_str());
-  
+
   // Register callback in NetworkManager
   NetworkManager::setMqttCallback(handleMqttMessage);
 }
 
 String MqttPublisher::getDeviceJson() {
   // Common device block to consolidate all entities in HA (F5 Fix)
-  return String("{\"identifiers\":[\"") + deviceId_ + 
-         "\"],\"name\":\"Pool Controller\",\"manufacturer\":\"smart-swimmingpool\",\"model\":\"Pool Controller\",\"sw_version\":\"" + 
-         FW_VERSION + "\"}";
+  return String("{\"identifiers\":[\"") + deviceId_ +
+    "\"],\"name\":\"Pool Controller\",\"manufacturer\":\"smart-swimmingpool\",\"model\":\"Pool Controller\",\"sw_version\":\"" +
+    FW_VERSION + "\"}";
 }
 
-String MqttPublisher::getBaseTopic(const char* component, const char* objectId) {
+String MqttPublisher::getBaseTopic(const char *component, const char *objectId) {
   // homeassistant/<component>/pool-controller/<object-id>/config
   return String("homeassistant/") + component + "/pool-controller/" + objectId;
 }
 
-void MqttPublisher::publishSensorDiscovery(const char* objectId, const char* name, const char* deviceClass, const char* unit, const char* icon) {
+void MqttPublisher::publishSensorDiscovery(
+  const char *objectId, const char *name, const char *deviceClass, const char *unit, const char *icon) {
   String configTopic = getBaseTopic("sensor", objectId) + "/config";
-  
+
   JsonDocument doc;
   doc["name"] = name;
   doc["unique_id"] = deviceId_ + "_" + objectId;
   doc["state_topic"] = getBaseTopic("sensor", objectId) + "/state";
   doc["availability_topic"] = "homeassistant/sensor/pool-controller/availability";
-  
-  if (deviceClass) doc["device_class"] = deviceClass;
-  if (unit) doc["unit_of_measurement"] = unit;
-  if (icon) doc["icon"] = icon;
+
+  if (deviceClass)
+    doc["device_class"] = deviceClass;
+  if (unit)
+    doc["unit_of_measurement"] = unit;
+  if (icon)
+    doc["icon"] = icon;
 
   // Embedded device block - manually add device info
   JsonObject deviceObj = doc["device"].to<JsonObject>();
@@ -75,9 +79,9 @@ void MqttPublisher::publishSensorDiscovery(const char* objectId, const char* nam
   NetworkManager::publish(configTopic.c_str(), payload.c_str(), true);
 }
 
-void MqttPublisher::publishSwitchDiscovery(const char* objectId, const char* name, const char* icon) {
+void MqttPublisher::publishSwitchDiscovery(const char *objectId, const char *name, const char *icon) {
   String configTopic = getBaseTopic("switch", objectId) + "/config";
-  
+
   JsonDocument doc;
   doc["name"] = name;
   doc["unique_id"] = deviceId_ + "_" + objectId;
@@ -87,7 +91,8 @@ void MqttPublisher::publishSwitchDiscovery(const char* objectId, const char* nam
   doc["payload_on"] = "ON";
   doc["payload_off"] = "OFF";
 
-  if (icon) doc["icon"] = icon;
+  if (icon)
+    doc["icon"] = icon;
   // Embedded device block - manually add device info
   JsonObject deviceObj = doc["device"].to<JsonObject>();
   deviceObj["identifiers"][0] = deviceId_;
@@ -101,22 +106,24 @@ void MqttPublisher::publishSwitchDiscovery(const char* objectId, const char* nam
   NetworkManager::publish(configTopic.c_str(), payload.c_str(), true);
 }
 
-void MqttPublisher::publishSelectDiscovery(const char* objectId, const char* name, const char* const* options, size_t optionCount, const char* icon) {
+void MqttPublisher::publishSelectDiscovery(
+  const char *objectId, const char *name, const char *const *options, size_t optionCount, const char *icon) {
   String configTopic = getBaseTopic("select", objectId) + "/config";
-  
+
   JsonDocument doc;
   doc["name"] = name;
   doc["unique_id"] = deviceId_ + "_" + objectId;
   doc["state_topic"] = getBaseTopic("select", objectId) + "/state";
   doc["command_topic"] = getBaseTopic("select", objectId) + "/set";
   doc["availability_topic"] = "homeassistant/sensor/pool-controller/availability";
-  
+
   JsonArray opts = doc["options"].to<JsonArray>();
   for (size_t i = 0; i < optionCount; ++i) {
-  opts.add(options[i]);
+    opts.add(options[i]);
   }
 
-  if (icon) doc["icon"] = icon;
+  if (icon)
+    doc["icon"] = icon;
   // Embedded device block - manually add device info
   JsonObject deviceObj = doc["device"].to<JsonObject>();
   deviceObj["identifiers"][0] = deviceId_;
@@ -130,9 +137,10 @@ void MqttPublisher::publishSelectDiscovery(const char* objectId, const char* nam
   NetworkManager::publish(configTopic.c_str(), payload.c_str(), true);
 }
 
-void MqttPublisher::publishNumberDiscovery(const char* objectId, const char* name, double minVal, double maxVal, double step, const char* unit, const char* icon) {
+void MqttPublisher::publishNumberDiscovery(
+  const char *objectId, const char *name, double minVal, double maxVal, double step, const char *unit, const char *icon) {
   String configTopic = getBaseTopic("number", objectId) + "/config";
-  
+
   JsonDocument doc;
   doc["name"] = name;
   doc["unique_id"] = deviceId_ + "_" + objectId;
@@ -143,9 +151,11 @@ void MqttPublisher::publishNumberDiscovery(const char* objectId, const char* nam
   doc["max"] = maxVal;
   doc["step"] = step;
   doc["mode"] = "box";
-  
-  if (unit) doc["unit_of_measurement"] = unit;
-  if (icon) doc["icon"] = icon;
+
+  if (unit)
+    doc["unit_of_measurement"] = unit;
+  if (icon)
+    doc["icon"] = icon;
   // Embedded device block - manually add device info
   JsonObject deviceObj = doc["device"].to<JsonObject>();
   deviceObj["identifiers"][0] = deviceId_;
@@ -186,7 +196,8 @@ void MqttPublisher::publishUpdateDiscovery() {
 }
 
 void MqttPublisher::publishUpdateState() {
-  if (!NetworkManager::isMqttConnected()) return;
+  if (!NetworkManager::isMqttConnected())
+    return;
 
   // State topic: current installed version
   String stateTopic = getBaseTopic("update", "firmware-update") + "/state";
@@ -213,7 +224,8 @@ void MqttPublisher::publishUpdateState() {
 }
 
 void MqttPublisher::publishDiscovery() {
-  if (!NetworkManager::isMqttConnected()) return;
+  if (!NetworkManager::isMqttConnected())
+    return;
 
   Serial.println("Publishing HA Discovery Payloads...");
 
@@ -233,7 +245,7 @@ void MqttPublisher::publishDiscovery() {
   publishSwitchDiscovery("solar-pump", "Solar Pump", "mdi:solar-panel");
 
   // Select Mode
-  const char* modeOpts[] = {"auto", "manu", "boost", "timer"};
+  const char *modeOpts[] = {"auto", "manu", "boost", "timer"};
   publishSelectDiscovery("mode", "Operation Mode", modeOpts, 4, "mdi:sync");
 
   // Parameter Numbers
@@ -267,41 +279,53 @@ void MqttPublisher::publishDiscovery() {
 }
 
 void MqttPublisher::publishStates() {
-  if (!NetworkManager::isMqttConnected()) return;
+  if (!NetworkManager::isMqttConnected())
+    return;
 
   // Temperature States
-  NetworkManager::publish((getBaseTopic("sensor", "pool-temp") + "/state").c_str(), String(poolTemperatureNode.getTemperature(), 1).c_str(), true);
-  NetworkManager::publish((getBaseTopic("sensor", "solar-temp") + "/state").c_str(), String(solarTemperatureNode.getTemperature(), 1).c_str(), true);
-  NetworkManager::publish((getBaseTopic("sensor", "controller-temp") + "/state").c_str(), String(ctrlTemperatureNode.getTemperature(), 1).c_str(), true);
+  NetworkManager::publish(
+    (getBaseTopic("sensor", "pool-temp") + "/state").c_str(), String(poolTemperatureNode.getTemperature(), 1).c_str(), true);
+  NetworkManager::publish(
+    (getBaseTopic("sensor", "solar-temp") + "/state").c_str(), String(solarTemperatureNode.getTemperature(), 1).c_str(), true);
+  NetworkManager::publish((getBaseTopic("sensor", "controller-temp") + "/state").c_str(),
+    String(ctrlTemperatureNode.getTemperature(), 1).c_str(), true);
 
   // Diagnostic States
   NetworkManager::publish((getBaseTopic("sensor", "heap") + "/state").c_str(), String(ESP.getFreeHeap()).c_str(), true);
   NetworkManager::publish((getBaseTopic("sensor", "max-alloc") + "/state").c_str(), String(ESP.getMaxAllocHeap()).c_str(), true);
-  NetworkManager::publish((getBaseTopic("sensor", "rssi") + "/state").c_str(), String(NetworkManager::getWiFiRSSI()).c_str(), true);
+  NetworkManager::publish(
+    (getBaseTopic("sensor", "rssi") + "/state").c_str(), String(NetworkManager::getWiFiRSSI()).c_str(), true);
   NetworkManager::publish((getBaseTopic("sensor", "uptime") + "/state").c_str(), String(millis() / 1000).c_str(), true);
 
   // Switch States
-  NetworkManager::publish((getBaseTopic("switch", "pool-pump") + "/state").c_str(), poolPumpNode.getSwitch() ? "ON" : "OFF", true);
-  NetworkManager::publish((getBaseTopic("switch", "solar-pump") + "/state").c_str(), solarPumpNode.getSwitch() ? "ON" : "OFF", true);
+  NetworkManager::publish(
+    (getBaseTopic("switch", "pool-pump") + "/state").c_str(), poolPumpNode.getSwitch() ? "ON" : "OFF", true);
+  NetworkManager::publish(
+    (getBaseTopic("switch", "solar-pump") + "/state").c_str(), solarPumpNode.getSwitch() ? "ON" : "OFF", true);
 
   // Firmware Update
   publishUpdateState();
 
   // Mode & Parameter States
   NetworkManager::publish((getBaseTopic("select", "mode") + "/state").c_str(), operationModeNode.getMode().c_str(), true);
-  NetworkManager::publish((getBaseTopic("number", "pool-max-temp") + "/state").c_str(), String(operationModeNode.getPoolMaxTemperature(), 1).c_str(), true);
-  NetworkManager::publish((getBaseTopic("number", "solar-min-temp") + "/state").c_str(), String(operationModeNode.getSolarMinTemperature(), 1).c_str(), true);
-  NetworkManager::publish((getBaseTopic("number", "hysteresis") + "/state").c_str(), String(operationModeNode.getTemperatureHysteresis(), 1).c_str(), true);
-  
+  NetworkManager::publish((getBaseTopic("number", "pool-max-temp") + "/state").c_str(),
+    String(operationModeNode.getPoolMaxTemperature(), 1).c_str(), true);
+  NetworkManager::publish((getBaseTopic("number", "solar-min-temp") + "/state").c_str(),
+    String(operationModeNode.getSolarMinTemperature(), 1).c_str(), true);
+  NetworkManager::publish((getBaseTopic("number", "hysteresis") + "/state").c_str(),
+    String(operationModeNode.getTemperatureHysteresis(), 1).c_str(), true);
+
   TimerSetting ts = operationModeNode.getTimerSetting();
   NetworkManager::publish((getBaseTopic("number", "timer-start-h") + "/state").c_str(), String(ts.timerStartHour).c_str(), true);
-  NetworkManager::publish((getBaseTopic("number", "timer-start-min") + "/state").c_str(), String(ts.timerStartMinutes).c_str(), true);
+  NetworkManager::publish(
+    (getBaseTopic("number", "timer-start-min") + "/state").c_str(), String(ts.timerStartMinutes).c_str(), true);
   NetworkManager::publish((getBaseTopic("number", "timer-end-h") + "/state").c_str(), String(ts.timerEndHour).c_str(), true);
   NetworkManager::publish((getBaseTopic("number", "timer-end-min") + "/state").c_str(), String(ts.timerEndMinutes).c_str(), true);
-  NetworkManager::publish((getBaseTopic("number", "timezone") + "/state").c_str(), String(ConfigManager::getSettings().timezoneIndex).c_str(), true);
+  NetworkManager::publish(
+    (getBaseTopic("number", "timezone") + "/state").c_str(), String(ConfigManager::getSettings().timezoneIndex).c_str(), true);
 }
 
-void MqttPublisher::handleMqttMessage(char* topic, uint8_t* payload, unsigned int length) {
+void MqttPublisher::handleMqttMessage(char *topic, uint8_t *payload, unsigned int length) {
   // Convert payload to String safely
   char valStr[32];
   size_t valLen = (length < sizeof(valStr) - 1) ? length : sizeof(valStr) - 1;
@@ -310,7 +334,7 @@ void MqttPublisher::handleMqttMessage(char* topic, uint8_t* payload, unsigned in
   String value(valStr);
 
   String top(topic);
-  
+
   if (top.endsWith("/firmware-update/set")) {
     if (value == "INSTALL") {
       Serial.println("MQTT: Firmware update triggered from Home Assistant");
@@ -321,63 +345,53 @@ void MqttPublisher::handleMqttMessage(char* topic, uint8_t* payload, unsigned in
 
   if (top.endsWith("/pool-pump/set")) {
     poolPumpNode.setSwitch(value == "ON");
-  } 
-  else if (top.endsWith("/solar-pump/set")) {
+  } else if (top.endsWith("/solar-pump/set")) {
     solarPumpNode.setSwitch(value == "ON");
-  } 
-  else if (top.endsWith("/mode/set")) {
+  } else if (top.endsWith("/mode/set")) {
     operationModeNode.setMode(valStr);
     ConfigManager::getSettings().opMode = value;
     ConfigManager::save();
-  } 
-  else if (top.endsWith("/pool-max-temp/set")) {
+  } else if (top.endsWith("/pool-max-temp/set")) {
     float val = value.toFloat();
     operationModeNode.setPoolMaxTemperature(val);
     ConfigManager::getSettings().tempMaxPool = val;
     ConfigManager::save();
-  } 
-  else if (top.endsWith("/solar-min-temp/set")) {
+  } else if (top.endsWith("/solar-min-temp/set")) {
     float val = value.toFloat();
     operationModeNode.setSolarMinTemperature(val);
     ConfigManager::getSettings().tempMinSolar = val;
     ConfigManager::save();
-  } 
-  else if (top.endsWith("/hysteresis/set")) {
+  } else if (top.endsWith("/hysteresis/set")) {
     float val = value.toFloat();
     operationModeNode.setTemperatureHysteresis(val);
     ConfigManager::getSettings().tempHysteresis = val;
     ConfigManager::save();
-  } 
-  else if (top.endsWith("/timer-start-h/set")) {
+  } else if (top.endsWith("/timer-start-h/set")) {
     int val = value.toInt();
     TimerSetting ts = operationModeNode.getTimerSetting();
     ts.timerStartHour = val;
     operationModeNode.setTimerSetting(ts);
-    ConfigManager::getSettings().timeLossGreenHours = val; // or standard config mapping
+    ConfigManager::getSettings().timeLossGreenHours = val;  // or standard config mapping
     ConfigManager::save();
-  } 
-  else if (top.endsWith("/timer-start-min/set")) {
+  } else if (top.endsWith("/timer-start-min/set")) {
     int val = value.toInt();
     TimerSetting ts = operationModeNode.getTimerSetting();
     ts.timerStartMinutes = val;
     operationModeNode.setTimerSetting(ts);
     ConfigManager::save();
-  } 
-  else if (top.endsWith("/timer-end-h/set")) {
+  } else if (top.endsWith("/timer-end-h/set")) {
     int val = value.toInt();
     TimerSetting ts = operationModeNode.getTimerSetting();
     ts.timerEndHour = val;
     operationModeNode.setTimerSetting(ts);
     ConfigManager::save();
-  } 
-  else if (top.endsWith("/timer-end-min/set")) {
+  } else if (top.endsWith("/timer-end-min/set")) {
     int val = value.toInt();
     TimerSetting ts = operationModeNode.getTimerSetting();
     ts.timerEndMinutes = val;
     operationModeNode.setTimerSetting(ts);
     ConfigManager::save();
-  } 
-  else if (top.endsWith("/timezone/set")) {
+  } else if (top.endsWith("/timezone/set")) {
     int val = value.toInt();
     ConfigManager::getSettings().timezoneIndex = val;
     ConfigManager::save();

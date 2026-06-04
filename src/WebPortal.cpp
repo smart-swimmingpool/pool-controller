@@ -36,10 +36,9 @@ extern OperationModeNode operationModeNode;
 // PROGMEM fallbacks removed — web assets are served from LittleFS only.
 // Run `pio run --target uploadfs` to deploy data/web/ to the device.
 
-
 bool WebPortal::begin() {
   setupRoutes();
-  
+
   // If AP mode, setup Captive DNS Server
   if (NetworkManager::isApMode()) {
     dnsServer_.setErrorReplyCode(DNSReplyCode::NoError);
@@ -47,7 +46,7 @@ bool WebPortal::begin() {
     Serial.println("✓ Captive Portal DNS running.");
     dnsServerStarted_ = true;
   }
-  
+
   server_.begin();
   Serial.println("✓ Web Server running on port 80.");
   return true;
@@ -64,7 +63,7 @@ void WebPortal::loop() {
     dnsServer_.processNextRequest();
   }
   server_.handleClient();
-  
+
   // Session timeout checking
   if (activeSessionToken_.length() > 0 && (millis() - sessionStartTime_ > kSessionTimeoutMs)) {
     Serial.println("Session timed out.");
@@ -79,13 +78,13 @@ void WebPortal::generateSessionToken() {
 
 bool WebPortal::isClientAuthenticated() {
   if (NetworkManager::isApMode()) {
-    return true; // No password protection in initial AP setup mode
+    return true;  // No password protection in initial AP setup mode
   }
-  
+
   if (server_.hasHeader("Cookie")) {
     String cookie = server_.header("Cookie");
     if (cookie.indexOf("session=" + activeSessionToken_) != -1) {
-      sessionStartTime_ = millis(); // Refresh timeout
+      sessionStartTime_ = millis();  // Refresh timeout
       return true;
     }
   }
@@ -104,87 +103,101 @@ void WebPortal::setupRoutes() {
   // HTML Handlers
   server_.on("/", handleRoot);
   server_.on("/login", handleLogin);
-  
+
   // Static web assets (no authentication required)
   server_.on("/style.css", HTTP_GET, handleStyleCss);
   server_.on("/app.js", HTTP_GET, handleAppJs);
-  
+
   // API Handlers (some password protected)
   server_.on("/api/status", HTTP_GET, apiGetStatus);
   server_.on("/api/scan", HTTP_GET, []() {
-    if (!handleAuthentication()) return;
+    if (!handleAuthentication())
+      return;
     apiScanWiFi();
   });
   server_.on("/api/config", HTTP_GET, []() {
-    if (!handleAuthentication()) return;
+    if (!handleAuthentication())
+      return;
     apiGetConfig();
   });
   server_.on("/api/config", HTTP_POST, []() {
-    if (!handleAuthentication()) return;
+    if (!handleAuthentication())
+      return;
     apiSaveConfig();
   });
   server_.on("/api/mode", HTTP_POST, []() {
-    if (!handleAuthentication()) return;
+    if (!handleAuthentication())
+      return;
     apiSetMode();
   });
-  
+
   server_.on("/api/login", HTTP_POST, apiLogin);
   server_.on("/api/logout", HTTP_GET, apiLogout);
   server_.on("/api/restart", HTTP_GET, []() {
-    if (!handleAuthentication()) return;
+    if (!handleAuthentication())
+      return;
     apiRestart();
   });
   server_.on("/api/factory_reset", HTTP_GET, []() {
-    if (!handleAuthentication()) return;
+    if (!handleAuthentication())
+      return;
     apiFactoryReset();
   });
 
   // OTA Update management
   server_.on("/api/update/check", HTTP_GET, []() {
-    if (!handleAuthentication()) return;
+    if (!handleAuthentication())
+      return;
     apiUpdateCheck();
   });
   server_.on("/api/update/status", HTTP_GET, []() {
-    if (!handleAuthentication()) return;
+    if (!handleAuthentication())
+      return;
     apiUpdateStatus();
   });
   server_.on("/api/update/install", HTTP_POST, []() {
-    if (!handleAuthentication()) return;
+    if (!handleAuthentication())
+      return;
     apiUpdateInstall();
   });
 
   // OTA Firmware handling (manual upload via web form)
-  server_.on("/api/update", HTTP_POST, []() {
-    if (!handleAuthentication()) return;
-    server_.sendHeader("Connection", "close");
-    server_.send(Update.hasError() ? 500 : 200, "text/plain", Update.hasError() ? "FAIL" : "OK");
-    delay(1000);
-    ESP.restart();
-  }, []() {
-    if (!isClientAuthenticated()) return;
-    HTTPUpload& upload = server_.upload();
-    if (upload.status == UPLOAD_FILE_START) {
-      Serial.printf("Signed OTA Update Starting: %s\n", upload.filename.c_str());
-      if (!Update.begin(UPDATE_SIZE_UNKNOWN)) {
-        Update.printError(Serial);
+  server_.on(
+    "/api/update", HTTP_POST,
+    []() {
+      if (!handleAuthentication())
+        return;
+      server_.sendHeader("Connection", "close");
+      server_.send(Update.hasError() ? 500 : 200, "text/plain", Update.hasError() ? "FAIL" : "OK");
+      delay(1000);
+      ESP.restart();
+    },
+    []() {
+      if (!isClientAuthenticated())
+        return;
+      HTTPUpload &upload = server_.upload();
+      if (upload.status == UPLOAD_FILE_START) {
+        Serial.printf("Signed OTA Update Starting: %s\n", upload.filename.c_str());
+        if (!Update.begin(UPDATE_SIZE_UNKNOWN)) {
+          Update.printError(Serial);
+        }
+      } else if (upload.status == UPLOAD_FILE_WRITE) {
+        if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
+          Update.printError(Serial);
+        }
+      } else if (upload.status == UPLOAD_FILE_END) {
+        if (Update.end(true)) {
+          Serial.printf("Signed OTA Update Success: %u bytes\n", upload.totalSize);
+        } else {
+          Update.printError(Serial);
+        }
       }
-    } else if (upload.status == UPLOAD_FILE_WRITE) {
-      if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
-        Update.printError(Serial);
-      }
-    } else if (upload.status == UPLOAD_FILE_END) {
-      if (Update.end(true)) {
-        Serial.printf("Signed OTA Update Success: %u bytes\n", upload.totalSize);
-      } else {
-        Update.printError(Serial);
-      }
-    }
-  });
+    });
 
   server_.onNotFound(handleNotFound);
 
   // Collect Cookie headers for authentication checking
-  const char* headerkeys[] = {"Cookie"};
+  const char *headerkeys[] = {"Cookie"};
   server_.collectHeaders(headerkeys, 1);
 }
 
@@ -193,14 +206,14 @@ void WebPortal::handleRoot() {
     handleLogin();
     return;
   }
-  
+
   File f = LittleFS.open("/web/index.html", "r");
   if (f) {
     server_.streamFile(f, "text/html");
     f.close();
     return;
   }
-  
+
   // No PROGMEM fallback — tell user to upload web assets
   String html = R"HTML(
 <!DOCTYPE html><html><head>
@@ -285,13 +298,13 @@ void WebPortal::handleNotFound() {
     server_.send(302, "text/plain", "");
     return;
   }
-  
+
   server_.send(404, "text/plain", "Page Not Found");
 }
 
 void WebPortal::apiGetStatus() {
   JsonDocument doc;
-  
+
   doc["pool_temp"] = poolTemperatureNode.getTemperature();
   doc["solar_temp"] = solarTemperatureNode.getTemperature();
   doc["ctrl_temp"] = ctrlTemperatureNode.getTemperature();
@@ -316,14 +329,14 @@ void WebPortal::apiScanWiFi() {
   int n = WiFi.scanNetworks();
   JsonDocument doc;
   JsonArray arr = doc.to<JsonArray>();
-  
+
   for (int i = 0; i < n; ++i) {
     JsonObject obj = arr.add<JsonObject>();
     obj["ssid"] = WiFi.SSID(i);
     obj["rssi"] = WiFi.RSSI(i);
     obj["secure"] = WiFi.encryptionType(i) != WIFI_AUTH_OPEN;
   }
-  
+
   String json;
   serializeJson(doc, json);
   server_.send(200, "application/json", json);
@@ -331,10 +344,10 @@ void WebPortal::apiScanWiFi() {
 
 void WebPortal::apiGetConfig() {
   JsonDocument doc;
-  
+
   JsonObject wifiObj = doc["wifi"].to<JsonObject>();
   wifiObj["ssid"] = ConfigManager::getWiFi().ssid;
-  
+
   JsonObject mqttObj = doc["mqtt"].to<JsonObject>();
   mqttObj["host"] = ConfigManager::getMqtt().host;
   mqttObj["port"] = ConfigManager::getMqtt().port;
@@ -367,32 +380,30 @@ void WebPortal::apiSaveConfig() {
   }
 
   String type = server_.arg("type");
-  
+
   if (type == "wifi") {
     ConfigManager::getWiFi().ssid = server_.arg("ssid");
     ConfigManager::getWiFi().password = server_.arg("password");
     ConfigManager::save();
     server_.send(200, "text/plain", "OK");
-    
+
     // Restart soon after saving new WiFi connection setup
     delay(2000);
     ESP.restart();
     return;
-  } 
-  else if (type == "mqtt") {
+  } else if (type == "mqtt") {
     ConfigManager::getMqtt().host = server_.arg("host");
     ConfigManager::getMqtt().port = server_.arg("port").toInt();
     ConfigManager::getMqtt().username = server_.arg("username");
     ConfigManager::getMqtt().password = server_.arg("password");
     ConfigManager::getMqtt().useTls = server_.arg("tls") == "true";
     ConfigManager::save();
-    
+
     // Disconnect MQTT to reconnect immediately with new config
     NetworkManager::disconnectMqtt();
     server_.send(200, "text/plain", "OK");
     return;
-  } 
-  else if (type == "settings") {
+  } else if (type == "settings") {
     ConfigManager::getSettings().opMode = server_.arg("mode");
     ConfigManager::getSettings().loopInterval = server_.arg("interval").toInt();
     ConfigManager::getSettings().tempMaxPool = server_.arg("max_pool").toFloat();
@@ -401,29 +412,32 @@ void WebPortal::apiSaveConfig() {
     ConfigManager::getSettings().timezoneIndex = server_.arg("timezone").toInt();
     ConfigManager::getSettings().timeLossGreenHours = server_.arg("green").toInt();
     ConfigManager::getSettings().timeLossRedHours = server_.arg("red").toInt();
-    
+
     ConfigManager::save();
-    
+
     // Propagate changes directly into runtime parameters
-  operationModeNode.setMode(ConfigManager::getSettings().opMode.c_str());
-  operationModeNode.setPoolMaxTemperature(ConfigManager::getSettings().tempMaxPool);
-  operationModeNode.setSolarMinTemperature(ConfigManager::getSettings().tempMinSolar);
-  operationModeNode.setTemperatureHysteresis(ConfigManager::getSettings().tempHysteresis);
-  
-  // Apply timer settings
-  {
-    TimerSetting ts = operationModeNode.getTimerSetting();
-    if (server_.hasArg("timer_start_h")) ts.timerStartHour = server_.arg("timer_start_h").toInt();
-    if (server_.hasArg("timer_start_m")) ts.timerStartMinutes = server_.arg("timer_start_m").toInt();
-    if (server_.hasArg("timer_end_h")) ts.timerEndHour = server_.arg("timer_end_h").toInt();
-    if (server_.hasArg("timer_end_m")) ts.timerEndMinutes = server_.arg("timer_end_m").toInt();
-    operationModeNode.setTimerSetting(ts);
-  }
-    
+    operationModeNode.setMode(ConfigManager::getSettings().opMode.c_str());
+    operationModeNode.setPoolMaxTemperature(ConfigManager::getSettings().tempMaxPool);
+    operationModeNode.setSolarMinTemperature(ConfigManager::getSettings().tempMinSolar);
+    operationModeNode.setTemperatureHysteresis(ConfigManager::getSettings().tempHysteresis);
+
+    // Apply timer settings
+    {
+      TimerSetting ts = operationModeNode.getTimerSetting();
+      if (server_.hasArg("timer_start_h"))
+        ts.timerStartHour = server_.arg("timer_start_h").toInt();
+      if (server_.hasArg("timer_start_m"))
+        ts.timerStartMinutes = server_.arg("timer_start_m").toInt();
+      if (server_.hasArg("timer_end_h"))
+        ts.timerEndHour = server_.arg("timer_end_h").toInt();
+      if (server_.hasArg("timer_end_m"))
+        ts.timerEndMinutes = server_.arg("timer_end_m").toInt();
+      operationModeNode.setTimerSetting(ts);
+    }
+
     server_.send(200, "text/plain", "OK");
     return;
-  } 
-  else if (type == "password") {
+  } else if (type == "password") {
     ConfigManager::setAdminPassword(server_.arg("password"));
     ConfigManager::save();
     server_.send(200, "text/plain", "OK");
@@ -454,7 +468,7 @@ void WebPortal::apiLogin() {
     server_.send(400, "text/plain", "Password Required");
     return;
   }
-  
+
   String pass = server_.arg("password");
   if (ConfigManager::verifyAdminPassword(pass)) {
     generateSessionToken();

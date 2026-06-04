@@ -28,7 +28,7 @@ void DegradationManager::begin() {
   }
   currentLevel_ = DegradationLevel::NORMAL;
   previousLevel_ = DegradationLevel::NORMAL;
-  poolSensorOk_ = false;   // Pessimistic — both probes must report healthy
+  poolSensorOk_ = false;  // Pessimistic — both probes must report healthy
   solarSensorOk_ = false;
   forcedSafeMode_ = false;
   lastEvaluationMs_ = 0;
@@ -84,12 +84,18 @@ void DegradationManager::forceSafeMode() {
 
 const char *DegradationManager::levelToString(DegradationLevel level) {
   switch (level) {
-    case DegradationLevel::NORMAL:   return "normal";
-    case DegradationLevel::NO_WIFI:  return "no-wifi";
-    case DegradationLevel::NO_TIME:  return "no-time";
-    case DegradationLevel::NO_SENSOR: return "no-sensor";
-    case DegradationLevel::CRITICAL: return "critical";
-    default:                         return "unknown";
+  case DegradationLevel::NORMAL:
+    return "normal";
+  case DegradationLevel::NO_WIFI:
+    return "no-wifi";
+  case DegradationLevel::NO_TIME:
+    return "no-time";
+  case DegradationLevel::NO_SENSOR:
+    return "no-sensor";
+  case DegradationLevel::CRITICAL:
+    return "critical";
+  default:
+    return "unknown";
   }
 }
 
@@ -123,29 +129,29 @@ void DegradationManager::onTransition() {
 
   // Additional per-level actions
   switch (currentLevel_) {
-    case DegradationLevel::NORMAL:
-      Serial.println(F("✓ All systems nominal"));
-      break;
+  case DegradationLevel::NORMAL:
+    Serial.println(F("✓ All systems nominal"));
+    break;
 
-    case DegradationLevel::NO_WIFI:
-      Serial.println(F("⚠ WiFi/MQTT disconnected — operating offline"));
-      Serial.println(F("  All control rules still active"));
-      break;
+  case DegradationLevel::NO_WIFI:
+    Serial.println(F("⚠ WiFi/MQTT disconnected — operating offline"));
+    Serial.println(F("  All control rules still active"));
+    break;
 
-    case DegradationLevel::NO_TIME:
-      Serial.println(F("⚠ NTP time sync lost — timer scheduling degraded"));
-      Serial.println(F("  Timer mode falls back to auto mode"));
-      break;
+  case DegradationLevel::NO_TIME:
+    Serial.println(F("⚠ NTP time sync lost — timer scheduling degraded"));
+    Serial.println(F("  Timer mode falls back to auto mode"));
+    break;
 
-    case DegradationLevel::NO_SENSOR:
-      Serial.println(F("⚠ Temperature sensor fault — using cautious defaults"));
-      Serial.println(F("  Auto mode may not function correctly"));
-      break;
+  case DegradationLevel::NO_SENSOR:
+    Serial.println(F("⚠ Temperature sensor fault — using cautious defaults"));
+    Serial.println(F("  Auto mode may not function correctly"));
+    break;
 
-    case DegradationLevel::CRITICAL:
-      Serial.println(F("✖ CRITICAL: Multiple system failures detected!"));
-      Serial.println(F("  Entering safe mode — all relays off"));
-      break;
+  case DegradationLevel::CRITICAL:
+    Serial.println(F("✖ CRITICAL: Multiple system failures detected!"));
+    Serial.println(F("  Entering safe mode — all relays off"));
+    break;
   }
 
   // MQTT notification — best-effort, no retry.
@@ -175,9 +181,12 @@ DegradationLevel DegradationManager::evaluateLevel() {
   // Time loss without WiFi is a consequence, not an independent failure —
   // counting both would escalate a plain WiFi outage to CRITICAL.
   uint8_t failureCount = 0;
-  if (!wifiOk) failureCount++;
-  if (!timeOk && wifiOk) failureCount++;
-  if (!sensorOk) failureCount++;
+  if (!wifiOk)
+    failureCount++;
+  if (!timeOk && wifiOk)
+    failureCount++;
+  if (!sensorOk)
+    failureCount++;
 
   // --- Decision logic ---
 
@@ -192,9 +201,12 @@ DegradationLevel DegradationManager::evaluateLevel() {
   }
 
   // Single failures — return the most specific level
-  if (!sensorOk) return DegradationLevel::NO_SENSOR;
-  if (!timeOk)   return DegradationLevel::NO_TIME;
-  if (!wifiOk)   return DegradationLevel::NO_WIFI;
+  if (!sensorOk)
+    return DegradationLevel::NO_SENSOR;
+  if (!timeOk)
+    return DegradationLevel::NO_TIME;
+  if (!wifiOk)
+    return DegradationLevel::NO_WIFI;
 
   return DegradationLevel::NORMAL;
 }

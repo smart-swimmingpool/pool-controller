@@ -12,16 +12,19 @@ bool OperationModeNode::_suppressPersist = false;
 
 // Helper: Validate and parse float value from string
 static bool parseFloat(const String &value, float &result, float minVal, float maxVal) {
-  if (value.length() == 0) return false;
+  if (value.length() == 0)
+    return false;
 
   bool hasDigit = false;
   bool hasDot = false;
   for (unsigned int i = 0; i < value.length(); i++) {
     char c = value.charAt(i);
     if (c == '-' || c == '+') {
-      if (i != 0) return false;
+      if (i != 0)
+        return false;
     } else if (c == '.') {
-      if (hasDot) return false;
+      if (hasDot)
+        return false;
       hasDot = true;
     } else if (c >= '0' && c <= '9') {
       hasDigit = true;
@@ -30,7 +33,8 @@ static bool parseFloat(const String &value, float &result, float minVal, float m
     }
   }
 
-  if (!hasDigit) return false;
+  if (!hasDigit)
+    return false;
 
   result = value.toFloat();
   return (result >= minVal && result <= maxVal);
@@ -38,13 +42,15 @@ static bool parseFloat(const String &value, float &result, float minVal, float m
 
 // Helper: Validate and parse int value from string
 static bool parseInt(const String &value, int &result, int minVal, int maxVal) {
-  if (value.length() == 0) return false;
+  if (value.length() == 0)
+    return false;
 
   bool hasDigit = false;
   for (unsigned int i = 0; i < value.length(); i++) {
     char c = value.charAt(i);
     if (c == '-' || c == '+') {
-      if (i != 0) return false;
+      if (i != 0)
+        return false;
     } else if (c >= '0' && c <= '9') {
       hasDigit = true;
     } else {
@@ -52,7 +58,8 @@ static bool parseInt(const String &value, int &result, int minVal, int maxVal) {
     }
   }
 
-  if (!hasDigit) return false;
+  if (!hasDigit)
+    return false;
 
   result = value.toInt();
   return (result >= minVal && result <= maxVal);
@@ -76,7 +83,7 @@ Rule *OperationModeNode::getRule() {
   for (size_t i = 0; i < _ruleVec.size(); i++) {
     if (_mode.equals(_ruleVec[i]->getMode())) {
       Serial.printf("getRule: Active Rule: %s\n", _ruleVec[i]->getMode());
-      
+
       // Update ruleset properties
       _ruleVec[i]->setPoolMaxTemperature(getPoolMaxTemperature());
       _ruleVec[i]->setSolarMinTemperature(getSolarMinTemperature());
@@ -101,7 +108,8 @@ bool OperationModeNode::setMode(String mode) {
   if (mode.equals(STATUS_AUTO) || mode.equals(STATUS_MANU) || mode.equals(STATUS_BOOST) || mode.equals(STATUS_TIMER)) {
     _mode = mode;
     Serial.printf("set mode: %s\n", _mode.c_str());
-    if (!_suppressPersist) saveState();
+    if (!_suppressPersist)
+      saveState();
     return true;
   } else {
     Serial.printf("✖ UNDEFINED Mode: %s. Current unchanged mode: %s\n", mode.c_str(), _mode.c_str());
@@ -144,7 +152,7 @@ void OperationModeNode::loop() {
 bool OperationModeNode::handleHomeAssistantCommand(const char *property, const char *value) {
   Serial.printf("  ◦ HA command -> property '%s' value = %s\n", property, value);
   bool retval = applyProperty(String(property), String(value));
-  _lastMeasurement = 0; // Trigger instant loop evaluation
+  _lastMeasurement = 0;  // Trigger instant loop evaluation
   return retval;
 }
 
@@ -154,8 +162,7 @@ bool OperationModeNode::applyProperty(const String &property, const String &valu
   if (property.equalsIgnoreCase("mode")) {
     Serial.printf("  ✔ set operational mode: %s\n", value.c_str());
     retval = this->setMode(value);
-  } 
-  else if (property.equalsIgnoreCase("hysteresis")) {
+  } else if (property.equalsIgnoreCase("hysteresis")) {
     Serial.printf("  ✔ hysteresis: %s\n", value.c_str());
     float newValue;
     if (parseFloat(value, newValue, 0.0f, 10.0f)) {
@@ -167,8 +174,7 @@ bool OperationModeNode::applyProperty(const String &property, const String &valu
     } else {
       Serial.printf("  ✖ Invalid hysteresis value (must be 0-10): %s\n", value.c_str());
     }
-  } 
-  else if (property.equalsIgnoreCase("solar-min-temp")) {
+  } else if (property.equalsIgnoreCase("solar-min-temp")) {
     Serial.printf("  ✔ solar min temp: %s\n", value.c_str());
     float newValue;
     if (parseFloat(value, newValue, 0.0f, 60.0f)) {
@@ -180,8 +186,7 @@ bool OperationModeNode::applyProperty(const String &property, const String &valu
     } else {
       Serial.printf("  ✖ Invalid solar min temp (must be 0-60°C): %s\n", value.c_str());
     }
-  } 
-  else if (property.equalsIgnoreCase("pool-max-temp")) {
+  } else if (property.equalsIgnoreCase("pool-max-temp")) {
     Serial.printf("  ✔ pool max temp: %s\n", value.c_str());
     float newValue;
     if (parseFloat(value, newValue, 0.0f, 40.0f)) {
@@ -193,8 +198,7 @@ bool OperationModeNode::applyProperty(const String &property, const String &valu
     } else {
       Serial.printf("  ✖ Invalid pool max temp (must be 0-60°C): %s\n", value.c_str());
     }
-  } 
-  else if (property.equalsIgnoreCase("timer-start-h")) {
+  } else if (property.equalsIgnoreCase("timer-start-h")) {
     TimerSetting timerSetting = getTimerSetting();
     int newValue;
     if (parseInt(value, newValue, 0, 23)) {
@@ -206,8 +210,7 @@ bool OperationModeNode::applyProperty(const String &property, const String &valu
     } else {
       Serial.printf("  ✖ Invalid start hour (must be 0-23): %s\n", value.c_str());
     }
-  } 
-  else if (property.equalsIgnoreCase("timer-start-min")) {
+  } else if (property.equalsIgnoreCase("timer-start-min")) {
     TimerSetting timerSetting = getTimerSetting();
     int newValue;
     if (parseInt(value, newValue, 0, 59)) {
@@ -219,8 +222,7 @@ bool OperationModeNode::applyProperty(const String &property, const String &valu
     } else {
       Serial.printf("  ✖ Invalid start minutes (must be 0-59): %s\n", value.c_str());
     }
-  } 
-  else if (property.equalsIgnoreCase("timer-end-h")) {
+  } else if (property.equalsIgnoreCase("timer-end-h")) {
     TimerSetting timerSetting = getTimerSetting();
     int newValue;
     if (parseInt(value, newValue, 0, 23)) {
@@ -232,8 +234,7 @@ bool OperationModeNode::applyProperty(const String &property, const String &valu
     } else {
       Serial.printf("  ✖ Invalid end hour (must be 0-23): %s\n", value.c_str());
     }
-  } 
-  else if (property.equalsIgnoreCase("timer-end-min")) {
+  } else if (property.equalsIgnoreCase("timer-end-min")) {
     TimerSetting timerSetting = getTimerSetting();
     int newValue;
     if (parseInt(value, newValue, 0, 59)) {
@@ -245,8 +246,7 @@ bool OperationModeNode::applyProperty(const String &property, const String &valu
     } else {
       Serial.printf("  ✖ Invalid end minutes (must be 0-59): %s\n", value.c_str());
     }
-  } 
-  else if (property.equalsIgnoreCase("timezone")) {
+  } else if (property.equalsIgnoreCase("timezone")) {
     int tzIndex = value.toInt();
     if (tzIndex >= 0 && tzIndex < getTzCount()) {
       setTimezoneIndex(tzIndex);
@@ -263,8 +263,7 @@ void OperationModeNode::loadState() {
   using PoolController::StateManager;
 
   String savedMode = StateManager::loadString("opmode", STATUS_AUTO);
-  if (savedMode == STATUS_AUTO || savedMode == STATUS_MANU ||
-      savedMode == STATUS_BOOST || savedMode == STATUS_TIMER) {
+  if (savedMode == STATUS_AUTO || savedMode == STATUS_MANU || savedMode == STATUS_BOOST || savedMode == STATUS_TIMER) {
     _mode = savedMode;
   }
 

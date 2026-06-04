@@ -59,11 +59,11 @@ private:
   struct Version {
     int major = 0, minor = 0, patch = 0;
   };
-  static bool parseVersion(const String& str, Version& out);
-  static bool isNewerVersion(const String& current, const String& latest);
+  static bool parseVersion(const String &str, Version &out);
+  static bool isNewerVersion(const String &current, const String &latest);
 
   // ── OTA ──
-  static bool downloadAndApply(const String& url);
+  static bool downloadAndApply(const String &url);
 
   // ── State ──
   static String currentVersion_;

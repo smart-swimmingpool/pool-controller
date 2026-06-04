@@ -11,12 +11,12 @@ public:
   DallasTemperatureNode(
     const char *id, const char *name, const uint8_t pin, const int measurementInterval = MEASUREMENT_INTERVAL);
 
-  const char* getId() const { return _id; }
+  const char *getId() const { return _id; }
   uint8_t getPin() const { return _pin; }
-  
+
   void setMeasurementInterval(unsigned long interval) { _measurementInterval = interval; }
   unsigned long getMeasurementInterval() const { return _measurementInterval; }
-  
+
   float getTemperature() const { return _temperature; }
   bool isSensorFound() const { return _sensorFound; }
 
@@ -41,5 +41,5 @@ private:
   DallasTemperature sensor;
   uint8_t numberOfDevices;
 
-  void address2String(const DeviceAddress deviceAddress, char* buffer, size_t size);
+  void address2String(const DeviceAddress deviceAddress, char *buffer, size_t size);
 };
