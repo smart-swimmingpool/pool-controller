@@ -16,9 +16,6 @@ String ConfigManager::adminPasswordHash_ = "";
 bool ConfigManager::configured_ = false;
 bool ConfigManager::configRestored_ = false;
 
-// Default password is "admin"
-static constexpr const char *kDefaultPasswordHash = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918";
-
 static String hashSha256(const String &input) {
   uint8_t hash[32];
   mbedtls_md_context_t ctx;
@@ -37,6 +34,8 @@ static String hashSha256(const String &input) {
   }
   return result;
 }
+
+static String defaultPasswordHash() { return hashSha256("admin"); }
 
 // ── OTA-Safe Config Parsing ──
 
@@ -62,7 +61,7 @@ bool ConfigManager::parseDocument(JsonDocument &doc) {
   settings_.timeLossGreenHours = doc["settings"]["time_loss_green_hours"] | 1;
   settings_.timeLossRedHours = doc["settings"]["time_loss_red_hours"] | 24;
 
-  adminPasswordHash_ = doc["admin_password_hash"] | kDefaultPasswordHash;
+  adminPasswordHash_ = doc["admin_password_hash"] | defaultPasswordHash();
   configured_ = doc["configured"] | false;
 
   if (configRestored_) {

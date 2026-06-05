@@ -56,7 +56,7 @@ jobs:
 
           # PlatformIO Project Optimizations
           # Exclude build artifacts and dependencies
-          FILTER_REGEX_EXCLUDE: .*/(\.pio|\.vscode|\.platformio|build|lib)/.*
+          FILTER_REGEX_EXCLUDE: .*/(\.pio|\.vscode|\.platformio|build|lib|docs|openspec|\.opencode|\.github/skills|\.github/prompts)/.*
 
           # Enable only relevant linters for PlatformIO project
           # When using selective validation, all other linters are disabled automatically

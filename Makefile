@@ -25,7 +25,7 @@ lint:
 	@docker run --rm \
 		-e VALIDATE_ALL_CODEBASE=false \
 		-e DEFAULT_BRANCH=main \
-		-e FILTER_REGEX_EXCLUDE=.*/(\.pio|\.vscode|\.platformio|build|lib)/.* \
+		-e FILTER_REGEX_EXCLUDE='.*/(\.pio|\.vscode|\.platformio|build|lib|docs|openspec|\.opencode|\.github/skills|\.github/prompts)/.*' \
 		-e VALIDATE_CPP=true \
 		-e VALIDATE_MARKDOWN=true \
 		-e VALIDATE_YAML=true \
