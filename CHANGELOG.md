@@ -6,17 +6,31 @@ All notable changes to this project will be documented in this file.
 
 ### Features
 
-- change default MQTT protocol to HomeAssistant ([5d4cad9](https://github.com/smart-swimmingpool/pool-controller/commit/5d4cad9a3173f67e0d3db6c8722207f1e91a8a80))
-- semver release pipeline via release-please (Conventional Commits) ([#29](https://github.com/smart-swimmingpool/pool-controller/issues/29)) ([102b18b](https://github.com/smart-swimmingpool/pool-controller/commit/102b18b64af6364e59147baf462b970cc73e5d7d))
-- **wifi:** add WPS onboarding for initial WiFi provisioning ([#67](https://github.com/smart-swimmingpool/pool-controller/issues/67)) ([6983af6](https://github.com/smart-swimmingpool/pool-controller/commit/6983af6f68110b1e38e286d5c28fdcc1becb5496))
+- change default MQTT protocol to HomeAssistant
+  ([5d4cad9](https://github.com/smart-swimmingpool/pool-controller/commit/5d4cad9a3173f67e0d3db6c8722207f1e91a8a80))
+- semver release pipeline via release-please (Conventional Commits)
+  ([#29](https://github.com/smart-swimmingpool/pool-controller/issues/29))
+  ([102b18b](https://github.com/smart-swimmingpool/pool-controller/commit/102b18b64af6364e59147baf462b970cc73e5d7d))
+- **wifi:** add WPS onboarding for initial WiFi provisioning
+  ([#67](https://github.com/smart-swimmingpool/pool-controller/issues/67))
+  ([6983af6](https://github.com/smart-swimmingpool/pool-controller/commit/6983af6f68110b1e38e286d5c28fdcc1becb5496))
 
 ### Bug Fixes
 
-- **ci:** make website dispatch workflow non-blocking on token issues ([#69](https://github.com/smart-swimmingpool/pool-controller/issues/69)) ([4e03bd3](https://github.com/smart-swimmingpool/pool-controller/commit/4e03bd3a1e0eb71b7c3538e60a5da05d03a1a35a))
-- ESP32 compatibility, memory & buffer fixes + AGENTS.md update ([#68](https://github.com/smart-swimmingpool/pool-controller/issues/68)) ([b95efbd](https://github.com/smart-swimmingpool/pool-controller/commit/b95efbdbd946c99142c5f688a13c1bf77aa1e7db))
-- improve English grammar and word choice in documentation ([#47](https://github.com/smart-swimmingpool/pool-controller/issues/47)) ([2d71dcd](https://github.com/smart-swimmingpool/pool-controller/commit/2d71dcdf5081f0650fa1ad05ce9b447d95806c41))
-- master Branch renamed to main ([f0d0223](https://github.com/smart-swimmingpool/pool-controller/commit/f0d0223ab34884d903e8ef541ae24fc02328faf6))
-- Remove space between platform name and version specifier in nodemcuv2 environment ([0f34a68](https://github.com/smart-swimmingpool/pool-controller/commit/0f34a689038d78021b88aba3c528cf8c66bdd17c))
+- **ci:** make website dispatch workflow non-blocking on token issues
+  ([#69](https://github.com/smart-swimmingpool/pool-controller/issues/69))
+  ([4e03bd3](https://github.com/smart-swimmingpool/pool-controller/commit/4e03bd3a1e0eb71b7c3538e60a5da05d03a1a35a))
+- ESP32 compatibility, memory & buffer fixes + AGENTS.md update
+  ([#68](https://github.com/smart-swimmingpool/pool-controller/issues/68))
+  ([b95efbd](https://github.com/smart-swimmingpool/pool-controller/commit/b95efbdbd946c99142c5f688a13c1bf77aa1e7db))
+- improve English grammar and word choice in documentation
+  ([#47](https://github.com/smart-swimmingpool/pool-controller/issues/47))
+  ([2d71dcd](https://github.com/smart-swimmingpool/pool-controller/commit/2d71dcdf5081f0650fa1ad05ce9b447d95806c41))
+- master Branch renamed to main
+  ([f0d0223](https://github.com/smart-swimmingpool/pool-controller/commit/f0d0223ab34884d903e8ef541ae24fc02328faf6))
+- Remove space between platform name and version specifier in nodemcuv2
+  environment
+  ([0f34a68](https://github.com/smart-swimmingpool/pool-controller/commit/0f34a689038d78021b88aba3c528cf8c66bdd17c))
 
 ## [3.1.0] - 2026-01-14
 

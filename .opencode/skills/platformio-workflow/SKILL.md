@@ -20,7 +20,9 @@ keywords:
 
 Build, flash, monitor, and OTA operations for the ESP32 pool-controller.
 
-> **🔍 Code Search**: Use `semble search "pio run"` or `semble search "upload_protocol"` to find build-related patterns. See `Agents.md` §7 for full `semble` usage.
+> **🔍 Code Search**: Use `semble search "pio run"` or
+> `semble search "upload_protocol"` to find build-related patterns. See
+> `Agents.md` §7 for full `semble` usage.
 
 ## Environment
 
@@ -98,7 +100,7 @@ pio run --target upload --upload-port 192.168.1.100
 
 ## Project Structure for PlatformIO
 
-```
+```text
 pool-controller/
 ├── platformio.ini       # Build configuration
 ├── src/                 # Source files
@@ -118,7 +120,7 @@ pool-controller/
 
 When monitoring, look for these key patterns:
 
-```
+```text
 ✓ Controller setup completed. Free heap: X B     # Normal boot
 → Boot counter: N                                 # Boot counter (see SystemMonitor)
 ✖ BOOT-LOOP DETECTED                              # Safe mode activated (P8)

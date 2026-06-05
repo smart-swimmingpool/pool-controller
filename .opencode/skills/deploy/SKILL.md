@@ -26,11 +26,12 @@ keywords:
 
 # Deploy — Pool Controller
 
-Complete deployment workflow for the pool-controller ESP32 firmware: build, serial flash, web filesystem upload, OTA update, and semver release management.
+Complete deployment workflow for the pool-controller ESP32 firmware: build,
+serial flash, web filesystem upload, OTA update, and semver release management.
 
 ## Overview
 
-```
+```text
 ┌─────────────┐    ┌──────────────┐    ┌────────────────┐    ┌─────────────────┐
 │  Pre-flight  │ → │  Build       │ → │  Flash / OTA   │ → │  Verify         │
 │  - lint      │    │  pio run     │    │  serial / ota  │    │  - monitor logs │
@@ -110,13 +111,14 @@ find src/ -name '*.cpp' -o -name '*.hpp' -o -name '*.h' | xargs clang-format --d
 
 Expected output:
 
-```
+```text
 RAM:   [==        ]  15.1% (used 49596 bytes from 327680 bytes)
 Flash: [========  ]  83.7% (used 1096433 bytes from 1310720 bytes)
 ========================= [SUCCESS] Took X seconds =========================
 ```
 
-> **Warning:** If flash usage exceeds ~90%, the firmware may not fit. Consider memory optimization (see `cpp-memory-opt` skill).
+> **Warning:** If flash usage exceeds ~90%, the firmware may not fit. Consider
+> memory optimization (see `cpp-memory-opt` skill).
 
 ## Deploy — Serial Flash
 
@@ -217,7 +219,7 @@ The project uses **release-please** for automated semver releases.
 
 Trigger: Push to `main` branch.
 
-```
+```text
 Commit (Conventional Commits) → [release-please] → Release PR
   → Merge PR → [release-please] → GitHub Release + Tag
   → [Build Firmware] → Upload firmware.bin to Release Assets
@@ -250,7 +252,8 @@ Commit (Conventional Commits) → [release-please] → Release PR
 ]
 ```
 
-Release-please automatically updates `FW_VERSION` in both `platformio.ini` and `src/Version.h` when a new release is created.
+Release-please automatically updates `FW_VERSION` in both `platformio.ini` and
+`src/Version.h` when a new release is created.
 
 ### Manual version bump (without release-please)
 
@@ -279,7 +282,7 @@ git tag -a vX.Y.Z -m "Release vX.Y.Z"
 
 Look for these boot patterns:
 
-```
+```text
 ✓ Pin configuration validated
 ✓ Controller setup completed. Free heap: X B     # Normal boot
 ✓ HA Discovery Device ID set to: pool_controller_...

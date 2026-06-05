@@ -22,11 +22,14 @@ keywords:
 
 # PlatformIO Environment — Pool Controller
 
-PlatformIO environment configuration for the ESP32 pool-controller. This skill covers the build system, platform configuration, library management, and environment setup — complementing the `platformio-workflow` skill for operational commands.
+PlatformIO environment configuration for the ESP32 pool-controller. This skill
+covers the build system, platform configuration, library management, and
+environment setup — complementing the `platformio-workflow` skill for
+operational commands.
 
 ## Architecture Overview
 
-```
+```text
 pool-controller/
 ├── platformio.ini          ← Single source of truth for build config
 ├── src/                    ← Source code
@@ -88,6 +91,7 @@ lib_deps =
 ```
 
 **Dependency specification formats**:
+
 | Format | Example | Use Case |
 |--------|---------|----------|
 | `LibName` | `DallasTemperature` | Simplest — takes latest from registry |
@@ -242,7 +246,7 @@ Define macros in code with:
 
 After running `pio run`, dependencies are downloaded to:
 
-```
+```text
 .pio/libdeps/esp32dev/
 ├── ArduinoJson/
 ├── Bounce2/
@@ -317,7 +321,7 @@ deactivate
 
 ### Global PlatformIO State
 
-```
+```text
 ~/.platformio/
 ├── platforms/        # Installed platform packages (espressif32, etc.)
 ├── packages/         # Toolchains, frameworks (toolchain-xtensa-esp32, etc.)
@@ -373,11 +377,11 @@ Two workflows reference PlatformIO:
 
 **`.github/workflows/linter.yml`**: Super-Linter runs cpplint separately.
 
-### GitLab CI (`.gitlab-ci.yml`):
+### GitLab CI (`.gitlab-ci.yml`)
 
 Mirror of the same build process for self-hosted runners.
 
-### Travis CI (`.travis-ci.yml`):
+### Travis CI (`.travis-ci.yml`)
 
 Legacy — may no longer be active.
 
