@@ -1,71 +1,145 @@
-function switchTab(tabId) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+// ── Tab Switching ──
+
+function switchTab(tabName) {
+  // Hide all tab contents
   document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
 
-  // Support both onclick event and programmatic calls via data-tab attribute
-  const tab = document.querySelector(`.tab[data-tab="${tabId}"]`);
-  if (tab) tab.classList.add('active');
-  document.getElementById('tab-' + tabId).style.display = 'block';
+  // Show the requested tab
+  const tab = document.getElementById('tab-' + tabName);
+  if (tab) {
+    tab.style.display = 'block';
+  }
+
+  // Close settings menu if open
+  const menu = document.getElementById('settingsMenu');
+  if (menu) menu.style.display = 'none';
 }
+
+function toggleSettingsMenu() {
+  const menu = document.getElementById('settingsMenu');
+  if (menu) {
+    menu.style.display = menu.style.display === 'none' || menu.style.display === '' ? 'block' : 'none';
+  }
+}
+
+// Close settings menu when clicking outside
+document.addEventListener('click', function(event) {
+  const menu = document.getElementById('settingsMenu');
+  const cog = document.querySelector('.cogwheel');
+  if (menu && menu.style.display === 'block') {
+    if (!menu.contains(event.target) && !cog.contains(event.target)) {
+      menu.style.display = 'none';
+    }
+  }
+});
+
+// ── Telemetry ──
+
+console.log('[pool] app.js loaded, version=2026-06-05');
 
 async function loadTelemetry() {
   try {
     const res = await fetch('/api/status');
     const data = await res.json();
+    console.log('[pool] loadTelemetry got data:', JSON.stringify(data));
 
-    document.getElementById('poolTemp').textContent = isFinite(data.pool_temp) ? data.pool_temp.toFixed(1) + ' °C' : '-- °C';
-    document.getElementById('solarTemp').textContent = isFinite(data.solar_temp) ? data.solar_temp.toFixed(1) + ' °C' : '-- °C';
+    // Temperaturen
+    if (data.pool_temp != null) {
+      document.getElementById('poolTemp').textContent = data.pool_temp.toFixed(1) + ' °C';
+    }
+    if (data.solar_temp != null) {
+      document.getElementById('solarTemp').textContent = data.solar_temp.toFixed(1) + ' °C';
+    }
 
-    const isManual = data.op_mode === 'manu';
-    renderPump('poolPump', data.pool_pump, isManual, 'var(--accent-blue)');
-    renderPump('solarPump', data.solar_pump, isManual, 'var(--accent-solar)');
+    // Pumpen
+    if (data.pool_pump != null) {
+      const el = document.getElementById('poolPump');
+      const isOn = data.pool_pump;
+      el.innerHTML = isOn
+        ? '<span style="color: #22c55e;">●</span> ON'
+        : '<span style="color: var(--text-muted);">○</span> OFF';
+      el.style.color = isOn ? '#22c55e' : 'var(--text-muted)';
+    }
+    if (data.solar_pump != null) {
+      const el = document.getElementById('solarPump');
+      const isOn = data.solar_pump;
+      el.innerHTML = isOn
+        ? '<span style="color: #22c55e;">●</span> ON'
+        : '<span style="color: var(--text-muted);">○</span> OFF';
+      el.style.color = isOn ? '#22c55e' : 'var(--text-muted)';
+    }
 
-    document.getElementById('heapVal').textContent = (data.free_heap / 1024).toFixed(1) + ' KB';
-    document.getElementById('rssiVal').textContent = data.rssi + ' dBm';
-    const uptime = data.uptime;
-    const days = Math.floor(uptime / 86400);
-    const hours = Math.floor((uptime % 86400) / 3600);
-    const mins = Math.floor((uptime % 3600) / 60);
-    document.getElementById('uptimeVal').textContent = days + 'd ' + hours + 'h ' + mins + 'm';
-    // Display firmware version
-    document.getElementById('fwVersionDisplay').textContent = data.fw_version || '--';
-    // Update active mode card on dashboard
-    highlightMode(data.op_mode);
+    // Modus hervorheben
+    if (data.op_mode) {
+      highlightMode(data.op_mode);
+    }
+
+    // Firmware-Version
+    if (data.fw_version) {
+      document.getElementById('fwCurrentVersion').textContent = data.fw_version;
+      document.getElementById('fwVersionDisplay').textContent = data.fw_version;
+    }
+
+    // Telemetrie (klein, unten)
+    if (data.free_heap != null) {
+      document.getElementById('heapVal').textContent = (data.free_heap / 1024).toFixed(0) + ' KB';
+    }
+    if (data.rssi != null) {
+      document.getElementById('rssiVal').textContent = data.rssi + ' dBm';
+    }
+    if (data.uptime != null) {
+      const h = Math.floor(data.uptime / 3600);
+      const m = Math.floor((data.uptime % 3600) / 60);
+      document.getElementById('uptimeVal').textContent = h + 'h ' + m + 'm';
+    }
+
+    // AP-Mode: WiFi-Tab anzeigen
+    if (data.ap_mode) {
+      switchTab('wifi');
+    }
   } catch (e) {
-    console.error("Telemetry failed to refresh");
+    console.error('[pool] loadTelemetry error:', e);
   }
 }
+
+// ── WiFi Scan ──
 
 async function scanNetworks() {
   const select = document.getElementById('wifiSelect');
   select.innerHTML = '<option>Scanning available networks...</option>';
-  const res = await fetch('/api/scan');
-  const data = await res.json();
-
-  select.innerHTML = '<option value="">-- Choose Network --</option>';
-  data.forEach(n => {
-    const opt = document.createElement('option');
-    opt.value = n.ssid;
-    opt.textContent = n.ssid + ' (' + n.rssi + ' dBm) ' + (n.secure ? '🔒' : '🔓');
-    select.appendChild(opt);
-  });
+  try {
+    const res = await fetch('/api/scan');
+    const data = await res.json();
+    select.innerHTML = '<option value="">-- Choose Network --</option>';
+    data.forEach(n => {
+      const opt = document.createElement('option');
+      opt.value = n.ssid;
+      opt.textContent = n.ssid + ' (' + n.rssi + ' dBm) ' + (n.secure ? '🔒' : '🔓');
+      select.appendChild(opt);
+    });
+  } catch (e) {
+    select.innerHTML = '<option value="">Scan failed</option>';
+  }
 }
+
+// ── WiFi Save ──
 
 async function saveWiFi() {
   const ssid = document.getElementById('wifiSsid').value.trim();
   if (!ssid) { alert('Please enter or select a WiFi SSID.'); return; }
   const pass = document.getElementById('wifiPass').value;
-
   const res = await fetch('/api/config', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: 'type=wifi&ssid=' + encodeURIComponent(ssid) + '&password=' + encodeURIComponent(pass)
   });
-  if(res.status===200) {
-    alert("WiFi config saved! Device is rebooting to connect...");
+  if (res.status === 200) {
+    alert('WiFi config saved! Device is rebooting to connect...');
     setTimeout(() => window.location.reload(), 3000);
   }
 }
+
+// ── MQTT Save ──
 
 async function saveMqtt() {
   const host = document.getElementById('mqttHost').value.trim();
@@ -81,43 +155,28 @@ async function saveMqtt() {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: 'type=mqtt&host=' + encodeURIComponent(host) + '&port=' + portVal + '&username=' + encodeURIComponent(user) + '&password=' + encodeURIComponent(pass) + '&tls=' + tls
   });
-  if(res.status===200) alert("MQTT config saved!");
+  if (res.status === 200) alert('MQTT config saved!');
 }
 
-function renderPump(elemId, isOn, isManual, colorOn) {
-  const el = document.getElementById(elemId);
-  const state = isOn ? 'ON' : 'OFF';
-  const toggleClass = isOn ? 'pump-on' : 'pump-off';
-  const clickableClass = isManual ? 'pump-manual' : 'pump-auto';
-  el.className = 'tel-val ' + toggleClass + ' ' + clickableClass;
-  el.style.color = isOn ? colorOn : 'var(--text-muted)';
-  el.innerHTML = isOn
-    ? '<span class="pump-indicator on"></span> ' + state
-    : '<span class="pump-indicator off"></span> ' + state;
-  // Update parent card hint visibility
-  const card = el.closest('.pump-card');
-  if (card) {
-    const hint = card.querySelector('.pump-toggle-hint');
-    if (hint) hint.style.display = isManual ? 'inline' : 'none';
-    card.style.opacity = '1';
-    if (!isManual) card.style.cursor = 'not-allowed';
-    else card.style.cursor = 'pointer';
-  }
-}
+// ── Pump Toggle ──
 
 async function togglePump(pump) {
-  const res = await fetch('/api/pump', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: 'pump=' + encodeURIComponent(pump)
-  });
-  const data = await res.json();
-  if (data.status === 'ok') {
-    // Telemetry will pick up the new state on next poll
-  } else {
-    alert('✖ ' + (data.message || 'Cannot toggle pump'));
+  try {
+    const res = await fetch('/api/pump', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'pump=' + encodeURIComponent(pump)
+    });
+    const data = await res.json();
+    if (data.status !== 'ok') {
+      alert('✖ ' + (data.message || 'Cannot toggle pump'));
+    }
+  } catch (e) {
+    // State will be picked up on next telemetry poll
   }
 }
+
+// ── Mode Switching ──
 
 async function setMode(mode) {
   const fb = document.getElementById('modeFeedback');
@@ -133,33 +192,49 @@ async function setMode(mode) {
       fb.textContent = '✓ Mode switched to ' + mode;
       fb.className = 'mode-feedback mode-feedback-ok';
       fb.style.display = 'block';
+      fb.style.background = 'rgba(34, 197, 94, 0.15)';
+      fb.style.color = '#22c55e';
       setTimeout(() => { fb.style.display = 'none'; }, 3000);
     } else {
       fb.textContent = '✖ ' + (data.message || 'Switch failed');
       fb.className = 'mode-feedback mode-feedback-err';
       fb.style.display = 'block';
+      fb.style.background = 'rgba(239, 68, 68, 0.15)';
+      fb.style.color = '#ef4444';
     }
   } catch (e) {
     fb.textContent = '✖ Network error';
     fb.className = 'mode-feedback mode-feedback-err';
     fb.style.display = 'block';
+    fb.style.background = 'rgba(239, 68, 68, 0.15)';
+    fb.style.color = '#ef4444';
   }
-  // Also update the dropdown in the settings tab
   document.getElementById('opMode').value = mode;
 }
 
 function highlightMode(mode) {
-  document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.mode-card').forEach(c => {
+    c.classList.remove('active');
+    c.style.background = 'var(--panel-bg)';
+    c.style.borderColor = 'var(--panel-border)';
+  });
   const card = document.querySelector('.mode-card[data-mode="' + mode + '"]');
-  if (card) card.classList.add('active');
+  if (card) {
+    card.classList.add('active');
+    card.style.background = 'rgba(0, 229, 255, 0.12)';
+    card.style.borderColor = 'var(--accent-solar)';
+  }
 }
 
-// Helper: build timer params from two time inputs
+// ── Helper: timer params ──
+
 function timerParams() {
   const [sh, sm] = document.getElementById('timerStart').value.split(':');
   const [eh, em] = document.getElementById('timerEnd').value.split(':');
   return '&timer_start_h=' + sh + '&timer_start_m=' + sm + '&timer_end_h=' + eh + '&timer_end_m=' + em;
 }
+
+// ── Set Temperatures ──
 
 async function setMinSolarTemp() {
   const currentMin = document.getElementById('tempMinSolar').value;
@@ -207,6 +282,8 @@ async function setMaxPoolTemp() {
   }
 }
 
+// ── Validate Settings ──
+
 function validateSettings() {
   const fields = [
     { id: 'loopInterval',    name: 'Loop Interval',       min: 1,   max: 300,  type: 'int' },
@@ -226,7 +303,6 @@ function validateSettings() {
       return false;
     }
   }
-  // Validate time inputs
   for (const id of ['timerStart', 'timerEnd']) {
     const el = document.getElementById(id);
     if (!el.value.match(/^\d{2}:\d{2}$/)) {
@@ -237,6 +313,8 @@ function validateSettings() {
   }
   return true;
 }
+
+// ── Save Controller Settings ──
 
 async function saveControllerSettings() {
   if (!validateSettings()) return;
@@ -255,14 +333,15 @@ async function saveControllerSettings() {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: 'type=settings&mode=' + mode + '&interval=' + interval + '&max_pool=' + maxPool + '&min_solar=' + minSolar + '&hysteresis=' + hysteresis + '&timezone=' + tz + '&green=' + green + '&red=' + red + timerParams()
   });
-  if(res.status===200) {
-    // Refresh displayed thresholds with saved values
+  if (res.status === 200) {
     document.getElementById('poolThreshold').textContent = 'max ' + parseFloat(maxPool).toFixed(1) + '°C';
     document.getElementById('solarThreshold').textContent = 'min ' + parseFloat(minSolar).toFixed(1) + '°C';
-    alert("Controller setpoints saved!");
+    alert('Controller setpoints saved!');
     highlightMode(mode);
   }
 }
+
+// ── Save Password ──
 
 async function savePassword() {
   const pass = document.getElementById('adminPass').value;
@@ -272,52 +351,60 @@ async function savePassword() {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: 'type=password&password=' + encodeURIComponent(pass)
   });
-  if(res.status===200) {
-    alert("Admin Password updated!");
+  if (res.status === 200) {
+    alert('Admin Password updated!');
     document.getElementById('adminPass').value = '';
   }
 }
 
+// ── Device Actions ──
+
 async function restartDevice() {
-  if(confirm("Confirm restart?")) {
+  if (confirm('Confirm restart?')) {
     fetch('/api/restart');
-    alert("ESP is rebooting. Reloading soon.");
+    alert('ESP is rebooting. Reloading soon.');
     setTimeout(() => window.location.reload(), 4000);
   }
 }
 
 async function factoryReset() {
-  if(confirm("DANGER: WIPE config file and factory reset device?")) {
+  if (confirm('DANGER: WIPE config file and factory reset device?')) {
     fetch('/api/factory_reset');
-    alert("Config deleted. Rebooting into AP setup mode.");
+    alert('Config deleted. Rebooting into AP setup mode.');
     setTimeout(() => window.location.reload(), 4000);
   }
 }
 
+// ── Load Config ──
+
 async function loadConfig() {
-  const res = await fetch('/api/config');
-  const data = await res.json();
+  try {
+    const res = await fetch('/api/config');
+    const data = await res.json();
 
-  document.getElementById('wifiSsid').value = data.wifi.ssid;
-  document.getElementById('mqttHost').value = data.mqtt.host;
-  document.getElementById('mqttPort').value = data.mqtt.port;
-  document.getElementById('mqttUser').value = data.mqtt.username;
-  document.getElementById('mqttTls').checked = data.mqtt.use_tls;
+    document.getElementById('wifiSsid').value = data.wifi.ssid;
+    document.getElementById('mqttHost').value = data.mqtt.host;
+    document.getElementById('mqttPort').value = data.mqtt.port;
+    document.getElementById('mqttUser').value = data.mqtt.username;
+    document.getElementById('mqttTls').checked = data.mqtt.use_tls;
 
-  document.getElementById('opMode').value = data.settings.op_mode;
-  document.getElementById('loopInterval').value = data.settings.loop_interval;
-  document.getElementById('tempMaxPool').value = data.settings.temp_max_pool;
-  document.getElementById('tempMinSolar').value = data.settings.temp_min_solar;
-  document.getElementById('tempHysteresis').value = data.settings.temp_hysteresis;
-  document.getElementById('timezone').value = data.settings.timezone;
-  document.getElementById('timeLossGreen').value = data.settings.time_loss_green_hours;
-  document.getElementById('timeLossRed').value = data.settings.time_loss_red_hours;
-  const pad2 = (n) => n.toString().padStart(2, '0');
-  document.getElementById('timerStart').value = pad2(data.settings.timer_start_hour) + ':' + pad2(data.settings.timer_start_min);
-  document.getElementById('timerEnd').value = pad2(data.settings.timer_end_hour) + ':' + pad2(data.settings.timer_end_min);
-  document.getElementById('poolThreshold').textContent = 'max ' + data.settings.temp_max_pool.toFixed(1) + '°C';
-  document.getElementById('solarThreshold').textContent = 'min ' + data.settings.temp_min_solar.toFixed(1) + '°C';
-  highlightMode(data.settings.op_mode);
+    document.getElementById('opMode').value = data.settings.op_mode;
+    document.getElementById('loopInterval').value = data.settings.loop_interval;
+    document.getElementById('tempMaxPool').value = data.settings.temp_max_pool;
+    document.getElementById('tempMinSolar').value = data.settings.temp_min_solar;
+    document.getElementById('tempHysteresis').value = data.settings.temp_hysteresis;
+    document.getElementById('timezone').value = data.settings.timezone;
+    document.getElementById('timeLossGreen').value = data.settings.time_loss_green_hours;
+    document.getElementById('timeLossRed').value = data.settings.time_loss_red_hours;
+    const pad2 = (n) => n.toString().padStart(2, '0');
+    document.getElementById('timerStart').value = pad2(data.settings.timer_start_hour) + ':' + pad2(data.settings.timer_start_min);
+    document.getElementById('timerEnd').value = pad2(data.settings.timer_end_hour) + ':' + pad2(data.settings.timer_end_min);
+    document.getElementById('poolThreshold').textContent = 'max ' + data.settings.temp_max_pool.toFixed(1) + '°C';
+    document.getElementById('solarThreshold').textContent = 'min ' + data.settings.temp_min_solar.toFixed(1) + '°C';
+    highlightMode(data.settings.op_mode);
+  } catch (e) {
+    // Silent
+  }
 }
 
 // ── Firmware Update ──
@@ -349,7 +436,7 @@ async function checkFirmwareUpdate() {
       statusEl.textContent = '✓ Firmware is up to date (v' + (data.current_version || '--') + ')';
     }
   } catch (e) {
-    statusEl.style.display = 'block' ;
+    statusEl.style.display = 'block';
     statusEl.style.background = 'rgba(239, 68, 68, 0.12)';
     statusEl.style.color = '#ef4444';
     statusEl.textContent = '✖ Check failed — is WiFi connected?';
@@ -371,7 +458,6 @@ async function installFirmwareUpdate() {
 
   try {
     const res = await fetch('/api/update/install', { method: 'POST' });
-    // Response comes before reboot
     if (!res.ok) {
       const data = await res.json();
       alert('Update failed: ' + (data.message || 'Unknown error'));
@@ -379,12 +465,25 @@ async function installFirmwareUpdate() {
       return;
     }
   } catch (e) {
-    // If the ESP reboots during the request, fetch may fail — that's expected
     console.log('Update triggered, device may be rebooting...');
   }
 
-  // Poll for status while update is running
   pollUpdateProgress();
+}
+
+function resetUpdateUI() {
+  document.getElementById('fwProgressContainer').style.display = 'none';
+  document.getElementById('btnCheckUpdate').disabled = false;
+  document.getElementById('btnInstallUpdate').style.display = 'none';
+  setTimeout(() => {
+    fetch('/api/update/status')
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById('fwCurrentVersion').textContent = data.current_version || '--';
+        document.getElementById('fwLatestVersion').textContent = data.latest_version || '--';
+      })
+      .catch(() => {});
+  }, 2000);
 }
 
 async function pollUpdateProgress() {
@@ -414,48 +513,18 @@ async function pollUpdateProgress() {
         setTimeout(resetUpdateUI, 5000);
       }
     } catch (e) {
-      // ESP likely rebooting — connection lost is expected
       clearInterval(interval);
       document.getElementById('fwProgressLabel').textContent = 'Rebooting...';
-      // After reboot, reload the page
       setTimeout(() => window.location.reload(), 15000);
     }
   }, 1000);
 }
 
-function resetUpdateUI() {
-  document.getElementById('fwProgressContainer').style.display = 'none';
-  document.getElementById('btnCheckUpdate').disabled = false;
-  document.getElementById('btnInstallUpdate').style.display = 'none';
-  // Re-check version after reset
-  setTimeout(() => {
-    fetch('/api/update/status')
-      .then(r => r.json())
-      .then(data => {
-        document.getElementById('fwCurrentVersion').textContent = data.current_version || '--';
-        document.getElementById('fwLatestVersion').textContent = data.latest_version || '--';
-      })
-      .catch(() => {});
-  }, 2000);
-}
+// ── Init ──
 
 setInterval(loadTelemetry, 2000);
-window.onload = () => {
+
+window.onload = function() {
   loadTelemetry();
   loadConfig();
-  // Show current version from telemetry endpoint
-  setTimeout(() => {
-    fetch('/api/status')
-      .then(r => r.json())
-      .then(data => {
-        if (data.fw_version) {
-          document.getElementById('fwCurrentVersion').textContent = data.fw_version;
-        }
-        // In AP mode, show WiFi configuration tab directly
-        if (data.ap_mode) {
-          switchTab('wifi');
-        }
-      })
-      .catch(() => {});
-  }, 500);
 };

@@ -7,257 +7,289 @@
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <h1 style="margin-bottom: 0.1rem;">Pool Controller</h1>
-  <p style="color: var(--text-muted); font-size: 0.75rem; margin-bottom: 2rem;">v<span id="fwVersionDisplay">--</span></p>
+<h1 style="margin-bottom: 0.1rem;">Pool Controller</h1>
 
-  <div class="nav-tabs">
-    <div class="tab active" data-tab="dashboard" onclick="switchTab('dashboard')">Dashboard</div>
-    <div class="tab" data-tab="wifi" onclick="switchTab('wifi')">WiFi Setup</div>
-    <div class="tab" data-tab="mqtt" onclick="switchTab('mqtt')">MQTT Settings</div>
-    <div class="tab" data-tab="settings" onclick="switchTab('settings')">Configuration</div>
-    <div class="tab" data-tab="system" onclick="switchTab('system')">Security & Update</div>
+<!-- Zahnrad-Symbol für Settings-Menü -->
+<div class="cogwheel" onclick="toggleSettingsMenu()" style="position: fixed; top: 20px; right: 20px; z-index: 1000; cursor: pointer;">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="stroke: var(--accent-solar); stroke-width: 2;">
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+  </svg>
+</div>
+
+<!-- Settings-Dropdown-Menü -->
+<div id="settingsMenu" style="display: none; position: fixed; top: 60px; right: 20px; background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 12px; padding: 0.5rem; z-index: 1001; min-width: 180px; box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
+  <div onclick="switchTab('system')" style="padding: 0.75rem; cursor: pointer; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">🔒 System</div>
+  <div onclick="switchTab('wifi')" style="padding: 0.75rem; cursor: pointer; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">📶 WiFi</div>
+  <div onclick="switchTab('mqtt')" style="padding: 0.75rem; cursor: pointer; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">🔌 MQTT</div>
+  <div onclick="switchTab('settings')" style="padding: 0.75rem; cursor: pointer; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">⚙️ Einstellungen</div>
+</div>
+
+<!-- Dashboard Tab (Startseite) -->
+<div id="tab-dashboard" class="tab-content glass-card">
+  <div style="display: flex; flex-direction: column; gap: 1rem;">
+    <!-- Temperaturen -->
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+      <div style="background: var(--glass-bg); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--panel-border); cursor: pointer;" onclick="setMaxPoolTemp()">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <label style="font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Pool</label>
+          <span style="color: var(--accent-solar); font-size: 0.75rem; cursor: pointer;">⤊</span>
+        </div>
+        <div class="tel-val pool-active" id="poolTemp" style="font-size: 1.8rem; font-weight: 700; margin-top: 0.25rem;">--.- °C</div>
+        <div id="poolThreshold" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.15rem;">max --.-°C</div>
+      </div>
+      <div style="background: var(--glass-bg); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--panel-border); cursor: pointer;" onclick="setMinSolarTemp()">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <label style="font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Solar</label>
+          <span style="color: var(--accent-solar); font-size: 0.75rem; cursor: pointer;">⤊</span>
+        </div>
+        <div class="tel-val solar-active" id="solarTemp" style="font-size: 1.8rem; font-weight: 700; margin-top: 0.25rem;">--.- °C</div>
+        <div id="solarThreshold" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.15rem;">min --.-°C</div>
+      </div>
+    </div>
+
+    <!-- Pumpen -->
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+      <div class="pump-card" style="background: var(--glass-bg); padding: 1rem; border-radius: 12px; border: 1px solid var(--panel-border); cursor: pointer;" onclick="togglePump('pool')">
+        <label style="font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Pool Pump <span class="pump-toggle-hint" style="color: var(--accent-solar); font-weight: 400; text-transform: none;">↻ toggle</span></label>
+        <div class="tel-val" id="poolPump" style="font-size: 1.4rem; font-weight: 700; margin-top: 0.25rem; color: var(--text-muted);">OFF</div>
+      </div>
+      <div class="pump-card" style="background: var(--glass-bg); padding: 1rem; border-radius: 12px; border: 1px solid var(--panel-border); cursor: pointer;" onclick="togglePump('solar')">
+        <label style="font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Solar Pump <span class="pump-toggle-hint" style="color: var(--accent-solar); font-weight: 400; text-transform: none;">↻ toggle</span></label>
+        <div class="tel-val" id="solarPump" style="font-size: 1.4rem; font-weight: 700; margin-top: 0.25rem; color: var(--text-muted);">OFF</div>
+      </div>
+    </div>
+
+    <!-- Modus-Auswahl -->
+    <div style="background: var(--glass-bg); padding: 1rem; border-radius: 12px; border: 1px solid var(--panel-border);">
+      <label style="font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Operating Mode</label>
+      <div class="mode-selector" id="modeSelector" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;">
+        <div class="mode-card active" data-mode="auto" onclick="setMode('auto')" style="flex: 1; min-width: 80px; text-align: center; padding: 0.6rem 0.3rem; border-radius: 8px; border: 1px solid var(--panel-border); background: var(--panel-bg); cursor: pointer;">
+          <div class="mode-icon" style="font-size: 1.2rem;">☀️</div>
+          <div class="mode-name" style="font-weight: 600; font-size: 0.75rem; margin-top: 0.2rem;">Auto</div>
+        </div>
+        <div class="mode-card" data-mode="manu" onclick="setMode('manu')" style="flex: 1; min-width: 80px; text-align: center; padding: 0.6rem 0.3rem; border-radius: 8px; border: 1px solid var(--panel-border); background: var(--panel-bg); cursor: pointer;">
+          <div class="mode-icon" style="font-size: 1.2rem;">🔧</div>
+          <div class="mode-name" style="font-weight: 600; font-size: 0.75rem; margin-top: 0.2rem;">Manual</div>
+        </div>
+        <div class="mode-card" data-mode="boost" onclick="setMode('boost')" style="flex: 1; min-width: 80px; text-align: center; padding: 0.6rem 0.3rem; border-radius: 8px; border: 1px solid var(--panel-border); background: var(--panel-bg); cursor: pointer;">
+          <div class="mode-icon" style="font-size: 1.2rem;">🚀</div>
+          <div class="mode-name" style="font-weight: 600; font-size: 0.75rem; margin-top: 0.2rem;">Boost</div>
+        </div>
+        <div class="mode-card" data-mode="timer" onclick="setMode('timer')" style="flex: 1; min-width: 80px; text-align: center; padding: 0.6rem 0.3rem; border-radius: 8px; border: 1px solid var(--panel-border); background: var(--panel-bg); cursor: pointer;">
+          <div class="mode-icon" style="font-size: 1.2rem;">⏱️</div>
+          <div class="mode-name" style="font-weight: 600; font-size: 0.75rem; margin-top: 0.2rem;">Timer</div>
+        </div>
+      </div>
+      <div id="modeFeedback" class="mode-feedback" style="display: none; margin-top: 0.5rem; padding: 0.4rem; border-radius: 6px; text-align: center; font-size: 0.8rem;"></div>
+    </div>
+
+    <!-- Telemetrie (klein, ganz unten) -->
+    <div class="telemetry-grid-bottom" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; font-size: 0.7rem; margin-top: 0.5rem; padding-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.08);">
+      <div style="text-align: center;">
+        <label style="color: var(--text-muted); display: block;">Heap</label>
+        <div id="heapVal" style="font-weight: 600; margin-top: 0.15rem; color: var(--text-muted);">--- KB</div>
+      </div>
+      <div style="text-align: center;">
+        <label style="color: var(--text-muted); display: block;">Signal</label>
+        <div id="rssiVal" style="font-weight: 600; margin-top: 0.15rem; color: var(--text-muted);">--- dBm</div>
+      </div>
+      <div style="text-align: center;">
+        <label style="color: var(--text-muted); display: block;">Uptime</label>
+        <div id="uptimeVal" style="font-weight: 600; margin-top: 0.15rem; color: var(--text-muted);">---</div>
+      </div>
+    </div>
   </div>
+</div>
 
-  <!-- Dashboard Tab -->
-  <div id="tab-dashboard" class="tab-content glass-card">
-    <h2>System Overview</h2>
-    <div class="telemetry-grid">
-      <div class="tel-card" onclick="setMaxPoolTemp()" style="cursor: pointer;">
-        <label>Pool Temperature ⤊</label>
-        <div class="tel-val pool-active" id="poolTemp">--.- °C</div>
-        <div class="tel-threshold" id="poolThreshold">max --.-°C</div>
-      </div>
-      <div class="tel-card" onclick="setMinSolarTemp()" style="cursor: pointer;">
-        <label>Solar Temperature ⤊</label>
-        <div class="tel-val solar-active" id="solarTemp">--.- °C</div>
-        <div class="tel-threshold" id="solarThreshold">min --.-°C</div>
-      </div>
-      <div class="tel-card pump-card" onclick="togglePump('pool')">
-        <label>Pool Pump <span class="pump-toggle-hint">↻ toggle</span></label>
-        <div class="tel-val" id="poolPump" style="color: var(--text-muted);">OFF</div>
-      </div>
-      <div class="tel-card pump-card" onclick="togglePump('solar')">
-        <label>Solar Pump <span class="pump-toggle-hint">↻ toggle</span></label>
-        <div class="tel-val" id="solarPump" style="color: var(--text-muted);">OFF</div>
-      </div>
-    </div>
-    <div class="telemetry-grid" style="grid-template-columns: repeat(3, 1fr); font-size: 0.875rem;">
-      <div class="tel-card">
-        <label>Heap Space</label>
-        <div id="heapVal" style="font-weight: bold; margin-top: 0.25rem;">--- KB</div>
-      </div>
-      <div class="tel-card">
-        <label>Signal strength</label>
-        <div id="rssiVal" style="font-weight: bold; margin-top: 0.25rem;">--- dBm</div>
-      </div>
-      <div class="tel-card">
-        <label>Uptime</label>
-        <div id="uptimeVal" style="font-weight: bold; margin-top: 0.25rem;">---</div>
-      </div>
-    </div>
-
-    <h2 style="margin-top: 1rem;">Operating Mode</h2>
-    <div class="mode-selector" id="modeSelector">
-      <div class="mode-card" data-mode="auto" onclick="setMode('auto')">
-        <div class="mode-icon">☀️</div>
-        <div class="mode-name">Automatic</div>
-        <div class="mode-desc">Solar-optimized</div>
-      </div>
-      <div class="mode-card" data-mode="manu" onclick="setMode('manu')">
-        <div class="mode-icon">🔧</div>
-        <div class="mode-name">Manual</div>
-        <div class="mode-desc">Full control</div>
-      </div>
-      <div class="mode-card" data-mode="boost" onclick="setMode('boost')">
-        <div class="mode-icon">🚀</div>
-        <div class="mode-name">Boost</div>
-        <div class="mode-desc">Continuous pump</div>
-      </div>
-      <div class="mode-card" data-mode="timer" onclick="setMode('timer')">
-        <div class="mode-icon">⏱️</div>
-        <div class="mode-name">Timer</div>
-        <div class="mode-desc">Scheduled</div>
-      </div>
-    </div>
-    <div id="modeFeedback" class="mode-feedback" style="display: none;"></div>
+<!-- WiFi Tab (für AP-Mode) -->
+<div id="tab-wifi" class="tab-content glass-card" style="display: none;">
+  <div style="margin-bottom: 0.75rem;"><a href="#" onclick="switchTab('dashboard'); return false;" style="color: var(--accent-solar); text-decoration: none; font-size: 0.85rem;">← Dashboard</a></div>
+  <h2>WLAN Configuration</h2>
+  <div class="input-group">
+    <button class="btn btn-primary" onclick="scanNetworks()" style="margin-bottom: 1rem;">Scan Local Networks</button>
+    <label for="wifiSsid">Select or Enter WiFi SSID</label>
+    <select id="wifiSelect" onchange="document.getElementById('wifiSsid').value = this.value">
+      <option value="">-- Choose Network --</option>
+    </select>
+    <input type="text" id="wifiSsid" placeholder="Or enter manual SSID" style="margin-top: 0.5rem;">
   </div>
+  <div class="input-group">
+    <label for="wifiPass">WLAN Password</label>
+    <input type="password" id="wifiPass" placeholder="Enter WiFi password">
+  </div>
+  <button class="btn btn-primary" onclick="saveWiFi()">Save WiFi settings</button>
+</div>
 
-  <!-- WiFi Tab -->
-  <div id="tab-wifi" class="tab-content glass-card" style="display: none;">
-    <h2>WLAN Configuration</h2>
+<!-- MQTT Tab -->
+<div id="tab-mqtt" class="tab-content glass-card" style="display: none;">
+  <div style="margin-bottom: 0.75rem;"><a href="#" onclick="switchTab('dashboard'); return false;" style="color: var(--accent-solar); text-decoration: none; font-size: 0.85rem;">← Dashboard</a></div>
+  <h2>MQTT Settings</h2>
+  <div class="input-group">
+    <label for="mqttHost">MQTT Hostname/IP</label>
+    <input type="text" id="mqttHost" placeholder="192.168.1.xxx">
+  </div>
+  <div class="input-group">
+    <label for="mqttPort">MQTT Port</label>
+    <input type="number" id="mqttPort" value="1883">
+  </div>
+  <div class="input-group">
+    <label for="mqttUser">MQTT Username</label>
+    <input type="text" id="mqttUser" placeholder="Optional">
+  </div>
+  <div class="input-group">
+    <label for="mqttPass">MQTT Password</label>
+    <input type="password" id="mqttPass" placeholder="Optional">
+  </div>
+  <div class="input-group" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1rem;">
+    <input type="checkbox" id="mqttTls" style="width: 20px; height: 20px;">
+    <label for="mqttTls" style="margin-bottom: 0; cursor: pointer;">Enable Secure TLS Encryption (MQTTS)</label>
+  </div>
+  <button class="btn btn-primary" onclick="saveMqtt()" style="margin-top: 1.5rem;">Save MQTT configuration</button>
+</div>
+
+<!-- Configuration Tab -->
+<div id="tab-settings" class="tab-content glass-card" style="display: none;">
+  <div style="margin-bottom: 0.75rem;"><a href="#" onclick="switchTab('dashboard'); return false;" style="color: var(--accent-solar); text-decoration: none; font-size: 0.85rem;">← Dashboard</a></div>
+  <h2>Controller Settings</h2>
+  <div class="telemetry-grid">
     <div class="input-group">
-      <button class="btn btn-primary" onclick="scanNetworks()" style="margin-bottom: 1rem;">Scan Local Networks</button>
-      <label for="wifiSsid">Select or Enter WiFi SSID</label>
-      <select id="wifiSelect" onchange="document.getElementById('wifiSsid').value = this.value">
-        <option value="">-- Choose Network --</option>
+      <label for="opMode">Operation Mode</label>
+      <select id="opMode">
+        <option value="auto">Automatic (Solar)</option>
+        <option value="manu">Manual Control</option>
+        <option value="boost">Boost Pump</option>
+        <option value="timer">Timer Schedule</option>
       </select>
-      <input type="text" id="wifiSsid" placeholder="Or enter manual SSID" style="margin-top: 0.5rem;">
     </div>
     <div class="input-group">
-      <label for="wifiPass">WLAN Password</label>
-      <input type="password" id="wifiPass" placeholder="Enter WiFi password">
+      <label for="loopInterval">Loop Interval (s)</label>
+      <input type="number" id="loopInterval" min="1" max="300" value="10">
+      <span class="input-hint">How often the controller evaluates sensors · Recommended: 10 s</span>
     </div>
-    <button class="btn btn-primary" onclick="saveWiFi()">Save WiFi settings</button>
   </div>
-
-  <!-- MQTT Tab -->
-  <div id="tab-mqtt" class="tab-content glass-card" style="display: none;">
-    <h2>MQTT Settings</h2>
+  <div class="telemetry-grid">
     <div class="input-group">
-      <label for="mqttHost">MQTT Hostname/IP</label>
-      <input type="text" id="mqttHost" placeholder="192.168.1.xxx">
+      <label for="tempMaxPool">Max Pool Temp (°C)</label>
+      <input type="number" id="tempMaxPool" min="0" max="40" step="0.1" value="28.5">
+      <span class="input-hint">Pool pump shuts off above this temperature · Recommended: 28.5 °C</span>
     </div>
     <div class="input-group">
-      <label for="mqttPort">MQTT Port</label>
-      <input type="number" id="mqttPort" value="1883">
+      <label for="tempMinSolar">Min Solar Temp (°C)</label>
+      <input type="number" id="tempMinSolar" min="0" max="90" step="0.1" value="55.0">
+      <span class="input-hint">Solar pump activates when panels exceed this · Recommended: 55.0 °C</span>
     </div>
-    <div class="input-group">
-      <label for="mqttUser">MQTT Username</label>
-      <input type="text" id="mqttUser" placeholder="Optional">
-    </div>
-    <div class="input-group">
-      <label for="mqttPass">MQTT Password</label>
-      <input type="password" id="mqttPass" placeholder="Optional">
-    </div>
-    <div class="input-group" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1rem;">
-      <input type="checkbox" id="mqttTls" style="width: 20px; height: 20px;">
-      <label for="mqttTls" style="margin-bottom: 0; cursor: pointer;">Enable Secure TLS Encryption (MQTTS)</label>
-    </div>
-    <button class="btn btn-primary" onclick="saveMqtt()" style="margin-top: 1.5rem;">Save MQTT configuration</button>
   </div>
-
-  <!-- Configuration Tab -->
-  <div id="tab-settings" class="tab-content glass-card" style="display: none;">
-    <h2>Controller Settings</h2>
-    <div class="telemetry-grid">
-      <div class="input-group">
-        <label for="opMode">Operation Mode</label>
-        <select id="opMode">
-          <option value="auto">Automatic (Solar)</option>
-          <option value="manu">Manual Control</option>
-          <option value="boost">Boost Pump</option>
-          <option value="timer">Timer Schedule</option>
-        </select>
-      </div>
-      <div class="input-group">
-        <label for="loopInterval">Loop Interval (s)</label>
-        <input type="number" id="loopInterval" min="1" max="300" value="10">
-        <span class="input-hint">How often the controller evaluates sensors · Recommended: 10 s</span>
-      </div>
-    </div>
-    <div class="telemetry-grid">
-      <div class="input-group">
-        <label for="tempMaxPool">Max Pool Temp (°C)</label>
-        <input type="number" id="tempMaxPool" min="0" max="40" step="0.1" value="28.5">
-        <span class="input-hint">Pool pump shuts off above this temperature · Recommended: 28.5 °C</span>
-      </div>
-      <div class="input-group">
-        <label for="tempMinSolar">Min Solar Temp (°C)</label>
-        <input type="number" id="tempMinSolar" min="0" max="90" step="0.1" value="55.0">
-        <span class="input-hint">Solar pump activates when panels exceed this · Recommended: 55.0 °C</span>
-      </div>
-    </div>
-    <div class="telemetry-grid">
-      <div class="input-group">
-        <label for="tempHysteresis">Temp Hysteresis (K)</label>
-        <input type="number" id="tempHysteresis" min="0" max="10" step="0.1" value="1.0">
-        <span class="input-hint">Prevents rapid pump cycling · Recommended: 1.0 K (±0.1–10 K)</span>
-      </div>
-      <div class="input-group">
-        <label for="timezone">Timezone</label>
-        <select id="timezone">
-          <option value="0">Central Europe (CET/CEST)</option>
-          <option value="1">Eastern Europe (EET/EEST)</option>
-          <option value="2">Western Europe (WET/WEST)</option>
-          <option value="3">US Eastern Time</option>
-          <option value="4">US Central Time</option>
-          <option value="5">US Mountain Time</option>
-          <option value="6">US Pacific Time</option>
-        </select>
-      </div>
-    </div>
-    <div class="telemetry-grid">
-      <div class="input-group">
-        <label for="timeLossGreen">Time Sync Green (hours)</label>
-        <input type="number" id="timeLossGreen" min="1" max="6" value="1">
-        <span class="input-hint">Status stays green during short NTP outages · Recommended: 1 h</span>
-      </div>
-      <div class="input-group">
-        <label for="timeLossRed">Time Sync Red (hours)</label>
-        <input type="number" id="timeLossRed" min="1" max="72" value="24">
-        <span class="input-hint">Status turns red after prolonged NTP outage · Recommended: 24 h</span>
-      </div>
-    </div>
-    <h2 style="margin-top: 1.5rem;">Timer Schedule</h2>
-    <div class="telemetry-grid">
-      <div class="input-group">
-        <label for="timerStart">Timer Start</label>
-        <input type="time" id="timerStart" value="10:30">
-        <span class="input-hint">Pump starts at this time in Timer mode · Recommended: 10:30</span>
-      </div>
-      <div class="input-group">
-        <label for="timerEnd">Timer End</label>
-        <input type="time" id="timerEnd" value="17:30">
-        <span class="input-hint">Pump stops at this time in Timer mode · Recommended: 17:30</span>
-      </div>
-    </div>
-    <button class="btn btn-primary" onclick="saveControllerSettings()">Save parameters</button>
-  </div>
-
-  <!-- Security & Update Tab -->
-  <div id="tab-system" class="tab-content glass-card" style="display: none;">
-    <h2>Security Settings</h2>
+  <div class="telemetry-grid">
     <div class="input-group">
-      <label for="adminPass">New Admin Password</label>
-      <input type="password" id="adminPass" placeholder="Enter new panel password">
+      <label for="tempHysteresis">Temp Hysteresis (K)</label>
+      <input type="number" id="tempHysteresis" min="0" max="10" step="0.1" value="1.0">
+      <span class="input-hint">Prevents rapid pump cycling · Recommended: 1.0 K (±0.1–10 K)</span>
     </div>
-    <button class="btn btn-primary" onclick="savePassword()" style="margin-bottom: 2rem;">Update Security Password</button>
-
-    <h2>Firmware Version</h2>
-    <div class="telemetry-grid" style="grid-template-columns: repeat(2, 1fr);">
-      <div class="tel-card">
-        <label>Current Version</label>
-        <div style="font-weight: bold; margin-top: 0.25rem; font-size: 1.1rem;" id="fwCurrentVersion">--</div>
-      </div>
-      <div class="tel-card">
-        <label>Latest Release</label>
-        <div style="font-weight: bold; margin-top: 0.25rem; font-size: 1.1rem;" id="fwLatestVersion">--</div>
-      </div>
+    <div class="input-group">
+      <label for="timezone">Timezone</label>
+      <select id="timezone">
+        <option value="0">Central Europe (CET/CEST)</option>
+        <option value="1">Eastern Europe (EET/EEST)</option>
+        <option value="2">Western Europe (WET/WEST)</option>
+        <option value="3">US Eastern Time</option>
+        <option value="4">US Central Time</option>
+        <option value="5">US Mountain Time</option>
+        <option value="6">US Pacific Time</option>
+      </select>
     </div>
-    <div id="fwUpdateStatus" style="margin-top: 0.5rem; padding: 0.5rem; border-radius: 8px; display: none;"></div>
-
-    <!-- Update progress bar -->
-    <div id="fwProgressContainer" style="display: none; margin-top: 0.75rem;">
-      <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 0.25rem;">
-        <span id="fwProgressLabel">Downloading...</span>
-        <span id="fwProgressPercent">0%</span>
-      </div>
-      <div style="width: 100%; height: 12px; background: rgba(255,255,255,0.1); border-radius: 6px; overflow: hidden;">
-        <div id="fwProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #00b4d8, #00e5ff); border-radius: 6px; transition: width 0.3s;"></div>
-      </div>
+  </div>
+  <div class="telemetry-grid">
+    <div class="input-group">
+      <label for="timeLossGreen">Time Sync Green (hours)</label>
+      <input type="number" id="timeLossGreen" min="1" max="6" value="1">
+      <span class="input-hint">Status stays green during short NTP outages · Recommended: 1 h</span>
     </div>
-
-    <div style="display: flex; gap: 0.75rem; margin-top: 1rem;">
-      <button class="btn btn-primary" onclick="checkFirmwareUpdate()" id="btnCheckUpdate" style="flex: 1;">Check for Updates</button>
-      <button class="btn btn-primary" onclick="installFirmwareUpdate()" id="btnInstallUpdate" style="flex: 1; background: var(--accent-solar); display: none;">Install Update</button>
+    <div class="input-group">
+      <label for="timeLossRed">Time Sync Red (hours)</label>
+      <input type="number" id="timeLossRed" min="1" max="72" value="24">
+      <span class="input-hint">Status turns red after prolonged NTP outage · Recommended: 24 h</span>
     </div>
+  </div>
+  <h2 style="margin-top: 1.5rem;">Timer Schedule</h2>
+  <div class="telemetry-grid">
+    <div class="input-group">
+      <label for="timerStart">Timer Start</label>
+      <input type="time" id="timerStart" value="10:30">
+      <span class="input-hint">Pump starts at this time in Timer mode · Recommended: 10:30</span>
+    </div>
+    <div class="input-group">
+      <label for="timerEnd">Timer End</label>
+      <input type="time" id="timerEnd" value="17:30">
+      <span class="input-hint">Pump stops at this time in Timer mode · Recommended: 17:30</span>
+    </div>
+  </div>
+  <button class="btn btn-primary" onclick="saveControllerSettings()">Save parameters</button>
+</div>
 
-    <h2 style="margin-top: 1.5rem;">Manual Firmware Upload</h2>
-    <form method="POST" action="/api/update" enctype="multipart/form-data" id="otaForm">
-      <div class="input-group">
-        <label>Select signed firmware binary (.bin)</label>
-        <input type="file" name="update" accept=".bin" style="width: 100%; padding: 0.5rem; border: 1px solid var(--panel-border); border-radius: 8px;" required>
-      </div>
-      <button type="submit" class="btn btn-primary">Flash Signed Firmware</button>
-    </form>
+<!-- Security & Update Tab -->
+<div id="tab-system" class="tab-content glass-card" style="display: none;">
+  <div style="margin-bottom: 0.75rem;"><a href="#" onclick="switchTab('dashboard'); return false;" style="color: var(--accent-solar); text-decoration: none; font-size: 0.85rem;">← Dashboard</a></div>
+  <h2>Security Settings</h2>
+  <div class="input-group">
+    <label for="adminPass">New Admin Password</label>
+    <input type="password" id="adminPass" placeholder="Enter new panel password">
+  </div>
+  <button class="btn btn-primary" onclick="savePassword()" style="margin-bottom: 2rem;">Update Security Password</button>
 
-    <h2 style="margin-top: 2rem; color: var(--danger);">Danger Zone</h2>
-    <div style="display: flex; gap: 1rem;">
-      <button class="btn btn-primary" onclick="restartDevice()" style="background: var(--accent-solar); flex: 1;">Restart ESP</button>
-      <button class="btn btn-primary" onclick="factoryReset()" style="background: var(--danger); flex: 1;">Factory Reset</button>
+  <h2>Firmware Version</h2>
+  <div class="telemetry-grid" style="grid-template-columns: repeat(2, 1fr);">
+    <div class="tel-card">
+      <label>Current Version</label>
+      <div style="font-weight: bold; margin-top: 0.25rem; font-size: 1.1rem;" id="fwCurrentVersion">--</div>
+    </div>
+    <div class="tel-card">
+      <label>Latest Release</label>
+      <div style="font-weight: bold; margin-top: 0.25rem; font-size: 1.1rem;" id="fwLatestVersion">--</div>
+    </div>
+  </div>
+  <div id="fwUpdateStatus" style="margin-top: 0.5rem; padding: 0.5rem; border-radius: 8px; display: none;"></div>
+
+  <!-- Update progress bar -->
+  <div id="fwProgressContainer" style="display: none; margin-top: 0.75rem;">
+    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 0.25rem;">
+      <span id="fwProgressLabel">Downloading...</span>
+      <span id="fwProgressPercent">0%</span>
+    </div>
+    <div style="width: 100%; height: 12px; background: rgba(255,255,255,0.1); border-radius: 6px; overflow: hidden;">
+      <div id="fwProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #00b4d8, #00e5ff); border-radius: 6px; transition: width 0.3s;"></div>
     </div>
   </div>
 
-  <script src="/app.js"></script>
+  <div style="display: flex; gap: 0.75rem; margin-top: 1rem;">
+    <button class="btn btn-primary" onclick="checkFirmwareUpdate()" id="btnCheckUpdate" style="flex: 1;">Check for Updates</button>
+    <button class="btn btn-primary" onclick="installFirmwareUpdate()" id="btnInstallUpdate" style="flex: 1; background: var(--accent-solar); display: none;">Install Update</button>
+  </div>
+
+  <h2 style="margin-top: 1.5rem;">Manual Firmware Upload</h2>
+  <form method="POST" action="/api/update" enctype="multipart/form-data" id="otaForm">
+    <div class="input-group">
+      <label>Select signed firmware binary (.bin)</label>
+      <input type="file" name="update" accept=".bin" style="width: 100%; padding: 0.5rem; border: 1px solid var(--panel-border); border-radius: 8px;" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Flash Signed Firmware</button>
+  </form>
+
+  <h2 style="margin-top: 2rem; color: var(--danger);">Danger Zone</h2>
+  <div style="display: flex; gap: 1rem;">
+    <button class="btn btn-primary" onclick="restartDevice()" style="background: var(--accent-solar); flex: 1;">Restart ESP</button>
+    <button class="btn btn-primary" onclick="factoryReset()" style="background: var(--danger); flex: 1;">Factory Reset</button>
+  </div>
+</div>
+
+<!-- Footer mit Versionsinfo und Link -->
+<footer class="footer" style="position: fixed; bottom: 0; left: 0; right: 0; background: var(--panel-bg); padding: 0.75rem 1rem; border-top: 1px solid var(--panel-border); z-index: 1000;">
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+    <span style="color: var(--text-muted); font-size: 0.7rem;">v<span id="fwVersionDisplay">--</span></span>
+    <a href="https://www.smart-swimmingpool.com" target="_blank" rel="noopener" style="color: var(--accent-solar); text-decoration: none; font-size: 0.75rem;">smart-swimmingpool.com</a>
+  </div>
+</footer>
+
+<script src="/app.js"></script>
 </body>
 </html>
