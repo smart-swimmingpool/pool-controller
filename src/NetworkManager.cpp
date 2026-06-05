@@ -47,7 +47,6 @@ bool NetworkManager::begin() {
     return true;
   }
 
-  Serial.printf("Connecting to WiFi: %s\n", ConfigManager::getWiFi().ssid.c_str());
   connectWiFi();
   connectionStartTime_ = millis();
   return true;
@@ -93,7 +92,19 @@ void NetworkManager::loop() {
 
     if (now - lastWiFiRetryTime_ >= kWiFiRetryIntervalMs) {
       lastWiFiRetryTime_ = now;
-      Serial.println("🔄 WiFi disconnected, retrying...");
+      wl_status_t status = WiFi.status();
+      const char *statusStr = "";
+      switch (status) {
+      case WL_IDLE_STATUS:     statusStr = "IDLE"; break;
+      case WL_NO_SSID_AVAIL:   statusStr = "NO_SSID_AVAIL"; break;
+      case WL_SCAN_COMPLETED:  statusStr = "SCAN_COMPLETED"; break;
+      case WL_CONNECT_FAILED:  statusStr = "CONNECT_FAILED"; break;
+      case WL_CONNECTION_LOST: statusStr = "CONNECTION_LOST"; break;
+      case WL_DISCONNECTED:    statusStr = "DISCONNECTED"; break;
+      default:                 statusStr = "UNKNOWN"; break;
+      }
+      Serial.printf("🔄 WiFi retry... status=%s (%d), elapsed=%ums\n",
+        statusStr, status, now - connectionStartTime_);
       connectWiFi();
     }
     return;
@@ -140,7 +151,9 @@ void NetworkManager::startAPMode() {
 }
 
 void NetworkManager::connectWiFi() {
-  WiFi.begin(ConfigManager::getWiFi().ssid.c_str(), ConfigManager::getWiFi().password.c_str());
+  const String &ssid = ConfigManager::getWiFi().ssid;
+  Serial.printf("📡 Connecting to WiFi: %s ...\n", ssid.c_str());
+  WiFi.begin(ssid.c_str(), ConfigManager::getWiFi().password.c_str());
 }
 
 void NetworkManager::connectMqtt() {
@@ -232,12 +245,13 @@ void NetworkManager::disconnectMqtt() {
 void NetworkManager::handleWiFiEvent(WiFiEvent_t event) {
   switch (event) {
   case ARDUINO_EVENT_WIFI_STA_GOT_IP:
-    Serial.print("✓ WiFi connected! Local IP: ");
-    Serial.println(WiFi.localIP());
+    Serial.printf(
+      "✓ WiFi connected! SSID: \"%s\", IP: %s, RSSI: %d dBm, Channel: %d\n",
+      WiFi.SSID().c_str(), WiFi.localIP().toString().c_str(), WiFi.RSSI(), WiFi.channel());
     apModeActive_ = false;
     break;
   case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
-    Serial.println("✖ WiFi connection lost");
+    Serial.printf("✖ WiFi disconnected. Status: %d (SSID: \"%s\")\n", WiFi.status(), WiFi.SSID().c_str());
     break;
   default:
     break;
