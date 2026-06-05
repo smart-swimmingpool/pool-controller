@@ -91,6 +91,7 @@ auto persistWpsWifiCredentials() -> bool {
 
   PoolController::ConfigManager::getWiFi().ssid = connectedSsid;
   PoolController::ConfigManager::getWiFi().password = WiFi.psk();
+  PoolController::ConfigManager::setConfigured(true);  // P1: Mark device as configured
 
   if (!PoolController::ConfigManager::save()) {
     Serial.println(F("WPS: failed to persist WiFi credentials to config"));

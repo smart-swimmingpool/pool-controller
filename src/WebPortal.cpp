@@ -399,6 +399,7 @@ void WebPortal::apiSaveConfig() {
   if (type == "wifi") {
     ConfigManager::getWiFi().ssid = server_.arg("ssid");
     ConfigManager::getWiFi().password = server_.arg("password");
+    ConfigManager::setConfigured(true);  // P1: Mark device as configured
     ConfigManager::save();
     server_.send(200, "text/plain", "OK");
 

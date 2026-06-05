@@ -55,6 +55,7 @@ public:
   static bool verifyAdminPassword(const String &password);
 
   static bool isConfigured() { return configured_; }
+  static void setConfigured(bool configured) { configured_ = configured; }
 
   // ── OTA-Safe Config: Backup + Restore ──
   /// Copy /config.json → /config.json.ota before OTA update.
