@@ -50,9 +50,11 @@ Once connected, find the controller's IP:
 
 - Check your router's DHCP client list
 - Or use a network scanner like `nmap`:
+
   ```bash
   nmap -p 80 192.168.1.0/24  # scan your subnet for open port 80
   ```
+
 - The web interface shows the assigned IP in the dashboard header
 
 ## Booting Controller
@@ -79,12 +81,14 @@ The controller provides a modern web dashboard at `http://<controller-ip>/` with
 1. Login with your admin password (default: `admin`)
 2. Navigate to the **Configuration** tab
 3. Adjust settings as needed:
-  - **Operation Mode**: Automatic (Solar), Manual Control, Boost Pump, Timer Schedule
-  - **Max Pool Temp**: Target water temperature (°C)
-  - **Min Solar Temp**: Minimum solar collector temperature (°C)
-  - **Temperature Hysteresis**: Deadband to prevent rapid toggling (K)
-  - **Loop Interval**: How often the controller evaluates rules (seconds)
-  - **Timezone**: Select from 10 supported timezones with DST handling
+
+    - **Operation Mode**: Automatic (Solar), Manual Control, Boost Pump, Timer Schedule
+    - **Max Pool Temp**: Target water temperature (°C)
+    - **Min Solar Temp**: Minimum solar collector temperature (°C)
+    - **Temperature Hysteresis**: Deadband to prevent rapid toggling (K)
+    - **Loop Interval**: How often the controller evaluates rules (seconds)
+    - **Timezone**: Select from 10 supported timezones with DST handling
+
 4. Click **Save parameters** — changes are **immediately active** and **persist across reboots**
 5. If MQTT/Home Assistant is connected, the new values are automatically published
 
