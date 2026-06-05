@@ -61,4 +61,5 @@ Manage your swimming pool in a smart way to enjoy it comfortably and affordably 
 [![works with MQTT Homie](https://homieiot.github.io/img/works-with-homie.svg "works with MQTT Homie")](https://homieiot.github.io/)
 
 <!-- markdownlint-disable-next-line MD013 -->
+
 {{< figure library="true" src="pool-controller_breadboard.png" title="Breadboard Circuit of Pool Controller" lightbox="true" >}}

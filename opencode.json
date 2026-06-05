@@ -1,0 +1,22 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "agentmemory": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@agentmemory/mcp"
+      ],
+      "enabled": true
+    }
+  },
+  "skills": {
+    "paths": [
+      ".opencode/skills"
+    ]
+  },
+  "plugin": [
+    ".opencode/plugins/agentmemory-capture.ts"
+  ]
+}

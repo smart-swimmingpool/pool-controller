@@ -3,12 +3,12 @@
 #include "WpsProvisioner.hpp"
 
 #include <Arduino.h>
-#include <ArduinoJson.h>
-#include <SPIFFS.h>
 #include <WiFi.h>
 #include <esp_wifi.h>
 #include <esp_wps.h>
 #include <atomic>
+
+#include "ConfigManager.hpp"
 
 namespace {
 constexpr gpio_num_t WPS_TRIGGER_PIN{GPIO_NUM_0};
@@ -20,9 +20,6 @@ constexpr uint32_t WIFI_STATUS_POLL_INTERVAL_MS{50UL};
 constexpr size_t WIFI_SSID_MAX_LEN{32};
 constexpr bool WIFI_KEEP_RADIO_ON{true};
 constexpr bool WIFI_PRESERVE_CREDENTIALS{true};
-constexpr size_t HOMIE_CONFIG_BUFFER_SIZE{4096};
-constexpr const char *HOMIE_CONFIG_PATH{"/homie/config.json"};
-constexpr const char *HOMIE_CONFIG_TMP_PATH{"/homie/config.wps.tmp"};
 constexpr wps_type_t WPS_MODE{WPS_TYPE_PBC};
 
 struct WpsProvisionState final {
@@ -32,7 +29,6 @@ struct WpsProvisionState final {
 };
 
 static WpsProvisionState wpsProvisionState{};
-static bool spiffsMountedForWps{false};
 
 auto stopWps() -> void {
   const esp_err_t disableErr = esp_wifi_wps_disable();
@@ -51,13 +47,15 @@ auto startWps() -> bool {
   const int modelNameLen =
     snprintf(config.factory_info.model_name, sizeof(config.factory_info.model_name), "ESP32 Pool Controller");
   const int deviceNameLen = snprintf(config.factory_info.device_name, sizeof(config.factory_info.device_name), "Pool Controller");
+
   if (manufacturerLen < 0 || static_cast<size_t>(manufacturerLen) >= sizeof(config.factory_info.manufacturer) ||
     modelNumberLen < 0 || static_cast<size_t>(modelNumberLen) >= sizeof(config.factory_info.model_number) || modelNameLen < 0 ||
     static_cast<size_t>(modelNameLen) >= sizeof(config.factory_info.model_name) || deviceNameLen < 0 ||
     static_cast<size_t>(deviceNameLen) >= sizeof(config.factory_info.device_name)) {
-    Serial.println("WPS: factory-info string truncated");
+    Serial.println(F("WPS: factory-info string truncated"));
     return false;
   }
+
   const esp_err_t enableErr = esp_wifi_wps_enable(&config);
   if (enableErr != ESP_OK) {
     Serial.printf("WPS enable failed: 0x%x (%s)\n", static_cast<unsigned>(enableErr), esp_err_to_name(enableErr));
@@ -77,79 +75,26 @@ auto startWps() -> bool {
   return true;
 }
 
+/**
+ * Persist the WiFi credentials obtained via WPS into ConfigManager
+ * and save to LittleFS (replaces the old SPIFFS + /homie/config.json approach).
+ */
 auto persistWpsWifiCredentials() -> bool {
-  if (!spiffsMountedForWps && !SPIFFS.begin(false)) {
-    Serial.println("WPS: cannot mount SPIFFS");
-    return false;
-  }
-  spiffsMountedForWps = true;
-
-  if (!SPIFFS.exists(HOMIE_CONFIG_PATH)) {
-    Serial.println("WPS: Homie config missing, skip credential persistence");
-    return false;
-  }
-
-  File configFile = SPIFFS.open(HOMIE_CONFIG_PATH, "r");
-  if (!configFile) {
-    Serial.println("WPS: cannot open Homie config for read");
-    return false;
-  }
-
-  const size_t configSize = configFile.size();
-  if (configSize == 0 || configSize >= HOMIE_CONFIG_BUFFER_SIZE) {
-    Serial.println("WPS: Homie config size invalid");
-    configFile.close();
-    return false;
-  }
-
-  // Declared function-local so the 4 KB buffer only occupies RAM while WPS
-  // provisioning is active (once, during setup) — not for the entire runtime.
-  StaticJsonDocument<HOMIE_CONFIG_BUFFER_SIZE> homieConfigJson{};
-  const DeserializationError parseErr = deserializeJson(homieConfigJson, configFile);
-  configFile.close();
-  if (parseErr != DeserializationError::Ok || !homieConfigJson.is<JsonObject>()) {
-    Serial.println("WPS: Homie config JSON parse failed");
-    return false;
-  }
-
   char connectedSsid[WIFI_SSID_MAX_LEN + 1];
   connectedSsid[0] = '\0';
   WiFi.SSID().toCharArray(connectedSsid, sizeof(connectedSsid));
+
   if (connectedSsid[0] == '\0') {
-    Serial.println("WPS: no SSID after successful pairing");
+    Serial.println(F("WPS: no SSID after successful pairing"));
     return false;
   }
 
-  JsonObject root = homieConfigJson.as<JsonObject>();
-  JsonObject wifi = root["wifi"].is<JsonObject>() ? root["wifi"].as<JsonObject>() : root.createNestedObject("wifi");
-  wifi["ssid"] = connectedSsid;
-  wifi["password"] = WiFi.psk();
+  PoolController::ConfigManager::getWiFi().ssid = connectedSsid;
+  PoolController::ConfigManager::getWiFi().password = WiFi.psk();
+  PoolController::ConfigManager::setConfigured(true);  // P1: Mark device as configured
 
-  SPIFFS.remove(HOMIE_CONFIG_TMP_PATH);
-  File outFile = SPIFFS.open(HOMIE_CONFIG_TMP_PATH, "w");
-  if (!outFile) {
-    Serial.println("WPS: cannot open Homie config for write");
-    return false;
-  }
-
-  const size_t written = serializeJson(homieConfigJson, outFile);
-  outFile.close();
-
-  if (written == 0) {
-    SPIFFS.remove(HOMIE_CONFIG_TMP_PATH);
-    Serial.println("WPS: failed serializing Homie config");
-    return false;
-  }
-
-  if (SPIFFS.exists(HOMIE_CONFIG_PATH) && !SPIFFS.remove(HOMIE_CONFIG_PATH)) {
-    SPIFFS.remove(HOMIE_CONFIG_TMP_PATH);
-    Serial.println("WPS: cannot replace old Homie config");
-    return false;
-  }
-
-  if (!SPIFFS.rename(HOMIE_CONFIG_TMP_PATH, HOMIE_CONFIG_PATH)) {
-    SPIFFS.remove(HOMIE_CONFIG_TMP_PATH);
-    Serial.println("WPS: cannot activate updated Homie config");
+  if (!PoolController::ConfigManager::save()) {
+    Serial.println(F("WPS: failed to persist WiFi credentials to config"));
     return false;
   }
 
@@ -205,13 +150,14 @@ auto shouldStartWpsProvisioning() -> bool {
 }  // namespace
 
 namespace PoolController {
+
 auto WpsProvisioner::runIfRequested() -> void {
   // This runs only during setup and uses bounded waits to detect trigger/WPS completion.
   if (!shouldStartWpsProvisioning()) {
     return;
   }
 
-  Serial.println("WPS: trigger button held, starting WPS provisioning");
+  Serial.println(F("WPS: trigger button held, starting WPS provisioning"));
 
   wpsProvisionState.success.store(false);
   wpsProvisionState.failed.store(false);
@@ -236,10 +182,10 @@ auto WpsProvisioner::runIfRequested() -> void {
   if (wpsProvisionState.success.load() && waitForWifiConnected(WPS_CONNECT_TIMEOUT_MS)) {
     const bool persisted = persistWpsWifiCredentials();
     if (!persisted) {
-      Serial.println("WPS: connected, but credentials were not persisted");
+      Serial.println(F("WPS: connected, but credentials were not persisted"));
     }
   } else {
-    Serial.println("WPS: provisioning failed or timed out");
+    Serial.println(F("WPS: provisioning failed or timed out"));
     stopWps();
     // Retry with previously stored WiFi credentials.
     WiFi.begin();
@@ -247,4 +193,5 @@ auto WpsProvisioner::runIfRequested() -> void {
 
   WiFi.removeEvent(handlerId);
 }
+
 }  // namespace PoolController

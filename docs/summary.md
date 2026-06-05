@@ -73,12 +73,12 @@ setProperty(cTemperature).send(buffer);
 
 ### Results
 
-| Component | String Allocations Before | After | Savings |
-| --- | --- | --- | --- |
-| DallasTemperatureNode | 1 per cycle | 0 | 100% |
-| ESP32TemperatureNode | 1 per cycle | 0 | 100% |
-| OperationModeNode | 7 per cycle | 0 | 100% |
-| **Total** | **10+ per cycle** | **0** | **100%** |
+| Component             | String Allocations Before | After | Savings  |
+| --------------------- | ------------------------- | ----- | -------- |
+| DallasTemperatureNode | 1 per cycle               | 0     | 100%     |
+| ESP32TemperatureNode  | 1 per cycle               | 0     | 100%     |
+| OperationModeNode     | 7 per cycle               | 0     | 100%     |
+| **Total**             | **10+ per cycle**         | **0** | **100%** |
 
 **Daily Impact** (30-300 second measurement interval):
 
@@ -97,14 +97,15 @@ setProperty(cTemperature).send(buffer);
 #### Configuration Options
 
 1. **Homie Convention** (Default)
-    - Topic format: `homie/<device>/<node>/<property>`
-    - Compatible with: openHAB, Home Assistant (via Homie integration)
-    - Proven and stable
+
+   - Topic format: `homie/<device>/<node>/<property>`
+   - Compatible with: openHAB, Home Assistant (via Homie integration)
+   - Proven and stable
 
 2. **Home Assistant MQTT Discovery** (New)
-    - Topic format: `homeassistant/<component>/<device>/<object>/config`
-    - Native Home Assistant auto-discovery
-    - Optimized for Home Assistant
+   - Topic format: `homeassistant/<component>/<device>/<object>/config`
+   - Native Home Assistant auto-discovery
+   - Optimized for Home Assistant
 
 #### Setup
 
@@ -232,11 +233,11 @@ setProperty(cTemperature).send(buffer);
 
 ### Memory Usage
 
-| Metric | Before | After | Change |
-| --- | --- | --- | --- |
-| String allocations/cycle | 10+ | 0 | -100% |
-| Heap fragmentation | High | Minimal | ~-90% |
-| Stack usage | Low | +80 bytes | Acceptable |
+| Metric                   | Before | After     | Change     |
+| ------------------------ | ------ | --------- | ---------- |
+| String allocations/cycle | 10+    | 0         | -100%      |
+| Heap fragmentation       | High   | Minimal   | ~-90%      |
+| Stack usage              | Low    | +80 bytes | Acceptable |
 
 ### Long-term Stability
 

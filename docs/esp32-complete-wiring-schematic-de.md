@@ -104,9 +104,9 @@ v
 2. Sensorleitungen getrennt von Netz- und Relaisleitungen führen.
 3. Beim Relaismodul aktive Logik prüfen (active-low oder active-high).
 4. Für störarmen Betrieb nahe ESP32 zusätzliche Entkopplung (z. B. 100nF)
-    vorsehen.
+   vorsehen.
 5. Die Firmware nutzt standardmäßig NTP; das RTC-Modul ist als zusätzliche
-    Hardware-Uhr für Erweiterungen/Offline-Szenarien vorgesehen.
+   Hardware-Uhr für Erweiterungen/Offline-Szenarien vorgesehen.
 
 ## 5) Bezug zu bestehender Doku
 

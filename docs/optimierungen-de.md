@@ -204,20 +204,20 @@ Controller für einen zuverlässigen 24/7-Betrieb.
 ## Empfohlene Tests
 
 1. **Langzeitbetrieb**: 60+ Tage Betrieb zur Verifizierung des
-    Überlauf-Handlings
+   Überlauf-Handlings
 2. **Speicher-Überwachung**: Free Heap über 24-48 Stunden überwachen
 3. **MQTT-Protokoll-Wechsel**: Beide Modi (Homie und Home Assistant) testen
 4. **Sensor-Tests**: Mit getrennten Sensoren und schnellen
-    Temperaturänderungen testen
+   Temperaturänderungen testen
 
 ## Zukünftige Verbesserungsmöglichkeiten
 
 1. **Watchdog Timer**: ESP Watchdog für automatische Wiederherstellung
-    implementieren
+   implementieren
 2. **NTP-Konfiguration**: NTP-Server konfigurierbar machen (aktuell
-    hartcodiert)
+   hartcodiert)
 3. **Persistente Einstellungen**: Laufzeit-Konfigurationsänderungen im Flash
-    speichern
+   speichern
 4. **OTA-Updates**: Zuverlässige Over-the-Air Updates sicherstellen
 
 ## Versions-Informationen

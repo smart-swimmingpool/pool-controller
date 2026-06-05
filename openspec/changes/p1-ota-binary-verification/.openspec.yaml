@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-06-04
+title: OTA Binary Verification
+priority: P1
+spec: ota-binary-verification.spec.md

@@ -1,12 +1,16 @@
 // Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
 
 #include "DegradationManager.hpp"
+#include "NetworkManager.hpp"
 #include "SystemMonitor.hpp"
 #include "TimeClientHelper.hpp"  // TimeDegradation, getTimeDegradation
-
-#include <Homie.h>
+#include "RelayModuleNode.hpp"
 
 namespace PoolController {
+
+// Nodes declared in PoolController.cpp
+extern RelayModuleNode poolPumpNode;
+extern RelayModuleNode solarPumpNode;
 
 // Static member definitions
 DegradationLevel DegradationManager::currentLevel_ = DegradationLevel::NORMAL;
@@ -34,7 +38,7 @@ void DegradationManager::begin() {
   forcedSafeMode_ = false;
   lastEvaluationMs_ = 0;
 
-  Homie.getLogger() << F("✓ DegradationManager initialized") << endl;
+  Serial.println(F("✓ DegradationManager initialized"));
 }
 
 void DegradationManager::evaluate() {
@@ -123,46 +127,51 @@ void DegradationManager::unforceSafeMode() {
 
 void DegradationManager::onTransition() {
   // Log the transition
-  Homie.getLogger() << F("⚙ Degradation: ") << levelToString(previousLevel_) << F(" → ") << levelToString(currentLevel_) << endl;
+  Serial.print(F("⚙ Degradation: "));
+  Serial.print(levelToString(previousLevel_));
+  Serial.print(F(" → "));
+  Serial.println(levelToString(currentLevel_));
 
   // Additional per-level actions
   switch (currentLevel_) {
   case DegradationLevel::NORMAL:
-    Homie.getLogger() << F("✓ All systems nominal") << endl;
+    Serial.println(F("✓ All systems nominal"));
     break;
 
   case DegradationLevel::NO_WIFI:
-    Homie.getLogger() << F("⚠ WiFi/MQTT disconnected — operating offline") << endl;
-    Homie.getLogger() << F("  All control rules still active") << endl;
+    Serial.println(F("⚠ WiFi/MQTT disconnected — operating offline"));
+    Serial.println(F("  All control rules still active"));
     break;
 
   case DegradationLevel::NO_TIME:
-    Homie.getLogger() << F("⚠ NTP time sync lost — timer scheduling degraded") << endl;
-    Homie.getLogger() << F("  Timer mode falls back to auto mode") << endl;
+    Serial.println(F("⚠ NTP time sync lost — timer scheduling degraded"));
+    Serial.println(F("  Timer mode falls back to auto mode"));
     break;
 
   case DegradationLevel::NO_SENSOR:
-    Homie.getLogger() << F("⚠ Temperature sensor fault — using cautious defaults") << endl;
-    Homie.getLogger() << F("  Auto mode may not function correctly") << endl;
+    Serial.println(F("⚠ Temperature sensor fault — using cautious defaults"));
+    Serial.println(F("  Auto mode may not function correctly"));
     break;
 
   case DegradationLevel::CRITICAL:
-    Homie.getLogger() << F("✖ CRITICAL: Multiple system failures detected!") << endl;
-    Homie.getLogger() << F("  Entering safe mode — all relays off") << endl;
+    Serial.println(F("✖ CRITICAL: Multiple system failures detected!"));
+    Serial.println(F("  Entering safe mode — all relays off"));
+    // De-energize both relays immediately (P1 review fix)
+    poolPumpNode.setSwitch(false);
+    solarPumpNode.setSwitch(false);
     break;
   }
 
-  // MQTT notification — best-effort, no retry
-  if (Homie.isConnected()) {
-    Homie.getLogger() << F("  Published via MQTT") << endl;
-    // Full MQTT publish of degradation state will be handled by
-    // OperationModeNode or MqttInterface in P4+
+  // MQTT notification — best-effort, no retry.
+  // Full publish is handled by MqttPublisher on its next publish cycle.
+  if (NetworkManager::isMqttConnected()) {
+    Serial.println(F("  Degradation state will be published via MQTT"));
   }
 }
 
 DegradationLevel DegradationManager::evaluateLevel() {
   // Gather system health signals
-  bool wifiOk = Homie.isConnected();
+  bool wifiOk = NetworkManager::isWiFiConnected();
 
   // If time is RED (lost) but WiFi is up, try an NTP sync immediately.
   // The Time library only syncs every SYNC_INTERVAL (3600s), so without

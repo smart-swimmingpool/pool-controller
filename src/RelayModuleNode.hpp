@@ -1,60 +1,39 @@
-/**
- * Homie Node for Relays.
- *
- * ESP8266 support was removed in v3.2.0.
- */
+// Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
 
 #pragma once
 
-#include <Homie.hpp>
+#include <Arduino.h>
 #include <RelayModule.h>
 #include <Preferences.h>
+#include <memory>
 
-class RelayModuleNode : public HomieNode {
-
+class RelayModuleNode {
 public:
   RelayModuleNode(const char *id, const char *name, const uint8_t pin, const int measurementInterval = MEASUREMENT_INTERVAL);
+  ~RelayModuleNode() = default;
 
-  ~RelayModuleNode() { delete relay; }
-
+  const char *getId() const { return _id; }
   uint8_t getPin() const { return _pin; }
+
   void setMeasurementInterval(unsigned long interval) { _measurementInterval = interval; }
   unsigned long getMeasurementInterval() const { return _measurementInterval; }
-  void setSwitch(const boolean state);
-  boolean getSwitch();
 
-protected:
-  virtual void setup() override;
-  virtual bool handleInput(const HomieRange &range, const String &property, const String &value);
+  void setSwitch(const bool state);
+  bool getSwitch();
 
-  virtual void loop() override;
+  void begin();
+  void loop();
 
 private:
-  // suggested rate is 1/60Hz (1m)
-  static const int MIN_INTERVAL = 60;  // in seconds
+  static const int MIN_INTERVAL = 10;  // in seconds
   static const int MEASUREMENT_INTERVAL = 300;
 
-  const char *cCaption = "• Relay Module:";
-  const char *cIndent = "  ◦ ";
-
-  const char *cSwitch = "switch";
-  const char *cSwitchName = "Switch";
-
-  const char *cFlagOn = "true";
-  const char *cFlagOff = "false";
-
-  const char *cHomieNodeState = "state";
-  const char *cHomieNodeStateName = "State";
-
-  const char *cHomieNodeState_OK = "OK";
-  const char *cHomieNodeState_Error = "Error";
-
+  const char *_id;
+  const char *_name;
   uint8_t _pin;
   unsigned long _measurementInterval;
   unsigned long _lastMeasurement;
-  RelayModule *relay = NULL;
 
+  std::unique_ptr<RelayModule> relay;
   Preferences preferences;
-
-  void printCaption();
 };

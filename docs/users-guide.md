@@ -17,6 +17,20 @@ menu:
 
 ## Setup
 
+### Initial WiFi setup via Web Interface (AP Mode)
+
+When the controller has no WiFi configured, it starts in **Access Point mode**:
+
+1. Power on the controller
+2. Connect your phone/laptop to WiFi SSID **`Pool-Controller-Setup`** (open network)
+3. Open a browser and go to **`http://192.168.4.1`** — the captive portal redirects automatically
+4. Go to the **WiFi Setup** tab, scan networks, select yours and enter the password
+5. The controller saves the config and reboots into **STA mode**
+6. Find the controller's IP in your router's DHCP list and reconnect
+
+> **Note:** In AP mode, the web interface has no password (intentional for initial setup).
+> Once connected to your WiFi, a login is required (default password: `admin`).
+
 ### Initial WiFi setup via WPS
 
 You can trigger WPS onboarding during boot to pair the controller with your router
@@ -27,17 +41,54 @@ without typing WiFi credentials manually:
 3. Start **WPS Push Button Connect (PBC)** on your router.
 4. Wait until pairing completes.
 
-When WPS succeeds, the controller updates the WiFi credentials in
-`/homie/config.json` automatically (if the file already exists).
+When WPS succeeds, the controller updates the WiFi credentials and stores them
+persistently in `/config.json` on LittleFS.
+
+### Finding the Controller on Your Network
+
+Once connected, find the controller's IP:
+
+- Check your router's DHCP client list
+- Or use a network scanner like `nmap`:
+  ```bash
+  nmap -p 80 192.168.1.0/24  # scan your subnet for open port 80
+  ```
+- The web interface shows the assigned IP in the dashboard header
 
 ## Booting Controller
 
 When booting the controller, it will provide feedback on establishing the WiFi connection and connection to the MQTT broker:
 
 - "LED" ![Slowly blinking LED](led_wifi.gif)
-    Slowly when connecting to the Wi-Fi
+  Slowly when connecting to the Wi-Fi
 - "LED" ![Fast blinking LED](led_mqtt.gif)
-    Faster when connecting to the MQTT broker
+  Faster when connecting to the MQTT broker
+
+## Web Dashboard
+
+The controller provides a modern web dashboard at `http://<controller-ip>/` with the following tabs:
+
+- **Dashboard** — Live telemetry: pool/solar/controller temperature, pump states, free heap, RSSI, operating mode
+- **WiFi Setup** — Scan and configure WiFi credentials
+- **MQTT Settings** — Broker host, port, username, password, TLS toggle
+- **Configuration** — Operation mode, temperature limits, hysteresis, timer, timezone
+- **Security & Update** — Change admin password, OTA firmware update, restart, factory reset
+
+### Changing Settings via Web UI
+
+1. Login with your admin password (default: `admin`)
+2. Navigate to the **Configuration** tab
+3. Adjust settings as needed:
+   - **Operation Mode**: Automatic (Solar), Manual Control, Boost Pump, Timer Schedule
+   - **Max Pool Temp**: Target water temperature (°C)
+   - **Min Solar Temp**: Minimum solar collector temperature (°C)
+   - **Temperature Hysteresis**: Deadband to prevent rapid toggling (K)
+   - **Loop Interval**: How often the controller evaluates rules (seconds)
+   - **Timezone**: Select from 10 supported timezones with DST handling
+4. Click **Save parameters** — changes are **immediately active** and **persist across reboots**
+5. If MQTT/Home Assistant is connected, the new values are automatically published
+
+> **Tip:** You can also change settings programmatically via the REST API — see the [Software Guide](software-guide.md#web-interface--direct-access).
 
 ## Settings
 
@@ -60,6 +111,7 @@ There are some specific settings for the controller:
   - Default value: `1`
 
 - **Pump Timer:** time range when pool pump has to run.
+
   - start h/min
   - end h/min
 

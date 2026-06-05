@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-06-04
+title: GitHub CA Chain for OTA Downloads
+priority: P1
+spec: github-ca-chain.spec.md

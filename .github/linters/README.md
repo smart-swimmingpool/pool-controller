@@ -5,11 +5,12 @@ This directory contains configuration files for the [GitHub Super-Linter](https:
 ## Configuration Files
 
 ### `.super-linter.yml`
+
 Main configuration file for Super-Linter. Optimized for PlatformIO embedded projects:
 
 - **Excludes**: Build artifacts (`.pio`, `.platformio`, `build`), libraries (`lib/`), and test files
 - **C/C++ Linting**: Only validates source code in `src/` directory
-- **Enabled Linters**: 
+- **Enabled Linters**:
   - C/C++ (clang-format, cpplint)
   - Markdown
   - YAML
@@ -21,14 +22,18 @@ Main configuration file for Super-Linter. Optimized for PlatformIO embedded proj
 - **Disabled Linters**: Languages not used in this project (Go, Python, Ruby, etc.)
 
 ### `.markdown-lint.yml`
+
 Markdown linting rules:
+
 - Line length: 120 characters
 - List indentation: 2 spaces
 - Allows inline HTML for documentation
 - Consistent list style (dash)
 
 ### `.yaml-lint.yml`
+
 YAML linting rules:
+
 - Line length: 120 characters (warning level)
 - Indentation: 2 spaces
 - Lenient truthy checking
@@ -70,6 +75,7 @@ To exclude specific files or patterns, edit `FILTER_REGEX_EXCLUDE` in `.super-li
 ### Linter Failing on Library Code
 
 The configuration excludes `lib/` and `.pio/` directories. If linter still processes library code, check:
+
 1. The `FILTER_REGEX_EXCLUDE` pattern in `.super-linter.yml`
 2. The workflow's `fetch-depth` setting (should be 0 for full history)
 

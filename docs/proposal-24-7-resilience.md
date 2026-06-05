@@ -3,7 +3,7 @@
 > **Status**: Phase 1+2 implemented, Phase 3 in progress, ESP8266 removal complete  
 > **Date**: 2026-05-17  
 > **Branch**: `proposal/24-7-resilience`  
-> **Base**: Version 3.1.0 → 3.2.0  
+> **Base**: Version 3.1.0 → 3.2.0
 
 ---
 
@@ -21,24 +21,24 @@ even under:
 
 Already implemented in v3.1.0:
 
-| Mechanism | Status |
-|---|---|
-| State Persistence (ESP32 Preferences, ~~ESP8266 EEPROM~~) | ✅ |
-| Relay state restoration after reboot | ✅ |
-| `setRunLoopDisconnected(true)` for offline operation | ✅ |
-| SystemMonitor with watchdog (ESP32 HW) | ✅ |
-| Memory monitoring with auto-reboot on critical | ✅ |
-| NTP time caching with millis() fallback | ✅ |
-| NaN validation for sensor values in Rules | ✅ |
-| Pin conflict detection at startup | ✅ |
-| Timer midnight-crossing logic | ✅ |
-| **State-Load independent of MQTT (P1)** | **✅ Since 840f3a8** |
-| **~~ESP8266 EEPROM collision fix (P3)~~** | **✅ Since 840f3a8 (obsolete)** |
-| **Watchdog feeding in long ops (P6)** | **✅ Since 840f3a8** |
-| **DegradationManager (P5)** | **✅ Since 50be817** |
-| **NTP three-stage degradation (P2)** | **✅ Since c969663** |
-| **MQTT state refresh on reconnect (P4)** | **✅ Since 6eedebf** |
-| **ESP8266 support removed** | **✅ 3.2.0** |
+| Mechanism                                                 | Status                          |
+| --------------------------------------------------------- | ------------------------------- |
+| State Persistence (ESP32 Preferences, ~~ESP8266 EEPROM~~) | ✅                              |
+| Relay state restoration after reboot                      | ✅                              |
+| `setRunLoopDisconnected(true)` for offline operation      | ✅                              |
+| SystemMonitor with watchdog (ESP32 HW)                    | ✅                              |
+| Memory monitoring with auto-reboot on critical            | ✅                              |
+| NTP time caching with millis() fallback                   | ✅                              |
+| NaN validation for sensor values in Rules                 | ✅                              |
+| Pin conflict detection at startup                         | ✅                              |
+| Timer midnight-crossing logic                             | ✅                              |
+| **State-Load independent of MQTT (P1)**                   | **✅ Since 840f3a8**            |
+| **~~ESP8266 EEPROM collision fix (P3)~~**                 | **✅ Since 840f3a8 (obsolete)** |
+| **Watchdog feeding in long ops (P6)**                     | **✅ Since 840f3a8**            |
+| **DegradationManager (P5)**                               | **✅ Since 50be817**            |
+| **NTP three-stage degradation (P2)**                      | **✅ Since c969663**            |
+| **MQTT state refresh on reconnect (P4)**                  | **✅ Since 6eedebf**            |
+| **ESP8266 support removed**                               | **✅ 3.2.0**                    |
 
 This proposal addresses the **remaining gaps** for truly resilient 24/7 operation.
 
@@ -217,11 +217,11 @@ intelligently.
 
 **Approach — Three-Level Model**:
 
-| Level | Condition | Behavior |
-|---|---|---|
-| **Green** | last NTP sync < 1h | Normal operation |
-| **Yellow** | 1h–24h since last sync | Timer runs with millis() estimate, warning via MQTT/Serial |
-| **Red** | >24h since last sync **or** time jump | Timer mode falls back to Auto mode, pump runs on temperature logic |
+| Level      | Condition                             | Behavior                                                           |
+| ---------- | ------------------------------------- | ------------------------------------------------------------------ |
+| **Green**  | last NTP sync < 1h                    | Normal operation                                                   |
+| **Yellow** | 1h–24h since last sync                | Timer runs with millis() estimate, warning via MQTT/Serial         |
+| **Red**    | >24h since last sync **or** time jump | Timer mode falls back to Auto mode, pump runs on temperature logic |
 
 ```cpp
 // Proposed RuleAuto::checkPoolPumpTimer()
@@ -314,13 +314,13 @@ enum class DegradationLevel {
 };
 ```
 
-| Level | Pool Pump | Solar Pump | Logging |
-|---|---|---|---|
-| NORMAL | Rule-based | Rule-based | MQTT + Serial |
-| NO_WIFI | Rule-based | Rule-based | Serial |
-| NO_TIME | Auto mode | Rule-based | Serial + Warning |
-| NO_SENSOR | Last good value (max 1h) | OFF | Serial + Alarm |
-| CRITICAL | Manual (last state) | OFF | Serial + Persistent Warning |
+| Level     | Pool Pump                | Solar Pump | Logging                     |
+| --------- | ------------------------ | ---------- | --------------------------- |
+| NORMAL    | Rule-based               | Rule-based | MQTT + Serial               |
+| NO_WIFI   | Rule-based               | Rule-based | Serial                      |
+| NO_TIME   | Auto mode                | Rule-based | Serial + Warning            |
+| NO_SENSOR | Last good value (max 1h) | OFF        | Serial + Alarm              |
+| CRITICAL  | Manual (last state)      | OFF        | Serial + Persistent Warning |
 
 **Effort**: 2–3 days  
 **Risk**: Medium
@@ -406,43 +406,43 @@ HomieSetting<long> timeLossMaxHoursSetting_{"time-loss-max-hours",
 
 ### Phase 1: Critical Stability (Immediate)
 
-| Priority | Proposal | Effort |
-|---|---|---|
-| 🔴 P1 | Decouple State Load from MQTT | 1–2 days |
-| 🟡 P3 | Fix ESP8266 EEPROM collisions | 1–2 days |
-| 🟠 P6 | Watchdog feeding in long ops | 0.5 days |
+| Priority | Proposal                      | Effort   |
+| -------- | ----------------------------- | -------- |
+| 🔴 P1    | Decouple State Load from MQTT | 1–2 days |
+| 🟡 P3    | Fix ESP8266 EEPROM collisions | 1–2 days |
+| 🟠 P6    | Watchdog feeding in long ops  | 0.5 days |
 
 ### Phase 2: Graceful Degradation (Next 2 weeks)
 
-| Priority | Proposal | Effort |
-|---|---|---|
-| 🟡 P2 | Graceful degradation for NTP failure | 2–3 days |
-| 🟠 P4 | MQTT publish retry & reconnect refresh | 2–3 days |
-| 🟠 P5 | Explicit degradation strategy | 2–3 days |
+| Priority | Proposal                               | Effort   |
+| -------- | -------------------------------------- | -------- |
+| 🟡 P2    | Graceful degradation for NTP failure   | 2–3 days |
+| 🟠 P4    | MQTT publish retry & reconnect refresh | 2–3 days |
+| 🟠 P5    | Explicit degradation strategy          | 2–3 days |
 
 ### Phase 3: Proactive Resilience 🔄 In Progress
 
-| Priority | Proposal | Effort |
-|---|---|---|
-| 🟠 P7 | Accelerated sensor recovery | 1 day |
-| 🟠 P8 | Boot-loop detection + Safe Mode | 1 day |
-| 🟠 P9 | Configurable fallback behavior | 1 day |
+| Priority | Proposal                        | Effort |
+| -------- | ------------------------------- | ------ |
+| 🟠 P7    | Accelerated sensor recovery     | 1 day  |
+| 🟠 P8    | Boot-loop detection + Safe Mode | 1 day  |
+| 🟠 P9    | Configurable fallback behavior  | 1 day  |
 
 ---
 
 ## 5. Testing & Verification
 
-| Proposal | Test Scenario |
-|---|---|
-| P1 | Boot without WiFi → states loaded ✓. Boot without WiFi after mode change → new mode active |
-| P2 | NTP blocked (1h, 6h, 24h, 48h) → correct degradation. Timer falls back to Auto |
-| P3 | All 9 keys write → read back → correct values. CRC corruption → defaults used |
-| P4 | MQTT outage 5 min → 10 state changes → after reconnect all 10 correctly published |
-| P5 | Simulated sensor failure → degradation to NO_SENSOR → correct pump behavior |
-| P6 | 500ms blocking call → watchdog not triggered |
-| P7 | Sensor disconnect → recovery in <10s instead of >30s |
-| P8 | 5 short boots in sequence → Safe Mode active. One long boot → counter reset |
-| P9 | Fallback mode set via MQTT to "manu" → pump runs on last command during time loss |
+| Proposal | Test Scenario                                                                              |
+| -------- | ------------------------------------------------------------------------------------------ |
+| P1       | Boot without WiFi → states loaded ✓. Boot without WiFi after mode change → new mode active |
+| P2       | NTP blocked (1h, 6h, 24h, 48h) → correct degradation. Timer falls back to Auto             |
+| P3       | All 9 keys write → read back → correct values. CRC corruption → defaults used              |
+| P4       | MQTT outage 5 min → 10 state changes → after reconnect all 10 correctly published          |
+| P5       | Simulated sensor failure → degradation to NO_SENSOR → correct pump behavior                |
+| P6       | 500ms blocking call → watchdog not triggered                                               |
+| P7       | Sensor disconnect → recovery in <10s instead of >30s                                       |
+| P8       | 5 short boots in sequence → Safe Mode active. One long boot → counter reset                |
+| P9       | Fallback mode set via MQTT to "manu" → pump runs on last command during time loss          |
 
 ---
 
@@ -461,18 +461,18 @@ src/
 
 ### Changed Files
 
-| File | Changes |
-|---|---|
-| `PoolController.cpp` | State load in `setup()`, DegradationManager loop |
-| `StateManager.cpp` | ESP8266 EEPROM new layout (P3) |
+| File                        | Changes                                           |
+| --------------------------- | ------------------------------------------------- |
+| `PoolController.cpp`        | State load in `setup()`, DegradationManager loop  |
+| `StateManager.cpp`          | ESP8266 EEPROM new layout (P3)                    |
 | `DallasTemperatureNode.cpp` | Recovery interval on NaN (P7), watchdog feed (P6) |
-| `OperationModeNode.cpp` | Fallback logic on time loss (P2) |
-| `RuleAuto.cpp` | Three-level timer (P2) |
-| `RuleTimer.cpp` | Three-level timer (P2) |
-| `SystemMonitor.hpp/cpp` | Degradation integration (P5) |
-| `MqttInterface.hpp` | Publish queue integration (P4) |
-| `HomeAssistantMQTT.hpp/cpp` | Queue-capable publishes (P4) |
-| `Config.hpp` | New HomieSettings for fallback (P9) |
+| `OperationModeNode.cpp`     | Fallback logic on time loss (P2)                  |
+| `RuleAuto.cpp`              | Three-level timer (P2)                            |
+| `RuleTimer.cpp`             | Three-level timer (P2)                            |
+| `SystemMonitor.hpp/cpp`     | Degradation integration (P5)                      |
+| `MqttInterface.hpp`         | Publish queue integration (P4)                    |
+| `HomeAssistantMQTT.hpp/cpp` | Queue-capable publishes (P4)                      |
+| `Config.hpp`                | New HomieSettings for fallback (P9)               |
 
 ### Backward Compatibility
 
@@ -488,11 +488,11 @@ The system is **fundamentally well-positioned** for 24/7 operation (see
 existing features), but has several critical gaps:
 
 1. **🔴 P1** is the most urgent: without it, combined power+WiFi failure
-    loses all settings.
+   loses all settings.
 2. **🟡 P2 + P3** address the two most common extended-failure scenarios
-    (WiFi outage >24h, ESP8266 storage corruption).
+   (WiFi outage >24h, ESP8266 storage corruption).
 3. **🟠 P4–P9** move the system from "mostly works" to "runs reliably
-    under all conditions".
+   under all conditions".
 
 > **Recommendation**: Implement P1, P3, and P6 in a first sprint, then
 > P2+P5 as a second step, remaining proposals as needed.
@@ -533,4 +533,4 @@ Relay setSwitch() → GPIO toggles → State persisted to NVS/EEPROM
 
 ---
 
-*End of proposal. For questions or change requests please open an issue.*
+_End of proposal. For questions or change requests please open an issue._

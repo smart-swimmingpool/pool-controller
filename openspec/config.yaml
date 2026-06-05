@@ -1,0 +1,28 @@
+schema: spec-driven
+
+context: |
+  Project: Smart Swimming Pool Controller (ESP32/ESP8266)
+  Language: C++17 with Arduino framework
+  PlatformIO build system
+  Hardware: ESP32 or ESP8266 with relays, Dallas DS18B20 temperature sensors
+  Communication: WiFi + MQTT (Homie framework + Home Assistant auto-discovery)
+  State Storage: ESP32 NVS (Preferences), ESP8266 EEPROM (512 bytes)
+  Key constraint: Must run 24/7 autonomously. Pumps must never run uncontrolled.
+  All relays are Normally Open (NO) - safe state is OFF.
+
+rules:
+  proposal:
+    - Include specific file paths and line references
+    - Identify affected components
+    - State backward compatibility impact
+  specs:
+    - Use Given/When/Then format for behavioral specs
+    - Reference existing patterns before inventing new ones
+    - Every spec must be testable
+  design:
+    - Specify exact API signatures where applicable
+    - Cover error handling and edge cases
+    - Address ESP32/ESP8266 differences
+  tasks:
+    - Each task must be independently completable
+    - Include test requirements per task

@@ -116,14 +116,15 @@ if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval))
 #### Unterstützte Protokolle
 
 1. **Homie Convention** (Standard)
-    - Topic-Format: `homie/<device>/<node>/<property>`
-    - Kompatibel mit: openHAB, Home Assistant (via Homie Integration)
-    - Bewährt und stabil
+
+   - Topic-Format: `homie/<device>/<node>/<property>`
+   - Kompatibel mit: openHAB, Home Assistant (via Homie Integration)
+   - Bewährt und stabil
 
 2. **Home Assistant MQTT Discovery** (NEU)
-    - Topic-Format: `homeassistant/<component>/<device>/<object>/config`
-    - Native Home Assistant Auto-Discovery
-    - Optimiert für Home Assistant
+   - Topic-Format: `homeassistant/<component>/<device>/<object>/config`
+   - Native Home Assistant Auto-Discovery
+   - Optimiert für Home Assistant
 
 #### Implementierung
 
@@ -217,11 +218,11 @@ if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval))
 
 ### Speicherverbrauch
 
-| Komponente | Vorher | Nachher | Einsparung |
-| --- | --- | --- | --- |
-| String Allokationen/Zyklus | 10+ | 0 | 100% |
-| Heap-Fragmentierung | Hoch | Minimal | ~90% |
-| Stack-Nutzung | Niedrig | +80 bytes | Akzeptabel |
+| Komponente                 | Vorher  | Nachher   | Einsparung |
+| -------------------------- | ------- | --------- | ---------- |
+| String Allokationen/Zyklus | 10+     | 0         | 100%       |
+| Heap-Fragmentierung        | Hoch    | Minimal   | ~90%       |
+| Stack-Nutzung              | Niedrig | +80 bytes | Akzeptabel |
 
 ### Langzeit-Stabilität
 

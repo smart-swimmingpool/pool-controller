@@ -61,4 +61,5 @@ Steuer deinen Swimming-Pool auf smarte Art und Weise, um diesen bequem und güns
 [![works with MQTT Homie](https://homieiot.github.io/img/works-with-homie.svg "works with MQTT Homie")](https://homieiot.github.io/)
 
 <!-- markdownlint-disable-next-line MD013 -->
+
 {{< figure library="true" src="pool-controller_breadboard.png" title="Breadboard Circuid of Pool Controller" lightbox="true" >}}

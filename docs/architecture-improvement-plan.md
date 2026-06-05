@@ -3,7 +3,7 @@
 > **Status**: Draft  
 > **Erstellt**: 2024  
 > **Version**: 1.0  
-> **Autor**: Mistral Vibe Code  
+> **Autor**: Mistral Vibe Code
 
 ---
 
@@ -28,90 +28,90 @@ Funktionalität erhalten bleibt.
 
 ## 🎯 Ziele
 
-| **Ziel** | **Priorität** | **Messbarer Erfolg** |
-|----------|--------------|----------------------|
-| Beheben von Speicherlecks | ⭐⭐⭐⭐⭐ | Keine Memory Leaks in Valgrind/PlatformIO Debug |
-| Einführung von Unit Tests | ⭐⭐⭐⭐⭐ | Testabdeckung > 80% für Kernlogik |
-| Reduzierung von Code-Duplikation | ⭐⭐⭐⭐ | Keine duplizierte Logik in `git grep` |
-| Verbesserung der Testbarkeit | ⭐⭐⭐⭐ | Mocking von Hardware-Abhängigkeiten möglich |
-| Persistenz für Konfiguration | ⭐⭐⭐ | Einstellungen überleben Reset |
-| Plattformunabhängigkeit | ⭐⭐ | Ein Code für ESP32 und ESP8266 |
+| **Ziel**                         | **Priorität** | **Messbarer Erfolg**                            |
+| -------------------------------- | ------------- | ----------------------------------------------- |
+| Beheben von Speicherlecks        | ⭐⭐⭐⭐⭐    | Keine Memory Leaks in Valgrind/PlatformIO Debug |
+| Einführung von Unit Tests        | ⭐⭐⭐⭐⭐    | Testabdeckung > 80% für Kernlogik               |
+| Reduzierung von Code-Duplikation | ⭐⭐⭐⭐      | Keine duplizierte Logik in `git grep`           |
+| Verbesserung der Testbarkeit     | ⭐⭐⭐⭐      | Mocking von Hardware-Abhängigkeiten möglich     |
+| Persistenz für Konfiguration     | ⭐⭐⭐        | Einstellungen überleben Reset                   |
+| Plattformunabhängigkeit          | ⭐⭐          | Ein Code für ESP32 und ESP8266                  |
 
 ---
 
 ## 📅 Meilensteine
 
 ### **🟢 Phase 1: Kritische Fehler beheben (1-2 Wochen)**
->
+
 > **Fokus**: Speicherlecks, Fehlerbehandlung, Grundlegende Tests
 
-| **Task** | **Aufwand** | **Verantwortlich** | **Status** | **Abhängigkeiten** |
-|----------|------------|--------------------|------------|-------------------|
-| [#101](https://github.com/smart-swimmingpool/pool-controller/issues/101) | Speicherlecks in `OperationModeNode` beheben | 2 Tage | ⬜ | Keine |
-| [#102](https://github.com/smart-swimmingpool/pool-controller/issues/102) | Null-Checks in `OperationModeNode::getRule()` hinzufügen | 1 Tag | ⬜ | Keine |
-| [#103](https://github.com/smart-swimmingpool/pool-controller/issues/103) | Plattformunabhängige Pin-Definitionen | 2 Tage | ⬜ | Keine |
-| [#104](https://github.com/smart-swimmingpool/pool-controller/issues/104) | Grundlegende Unit-Test-Infrastruktur aufsetzen | 3 Tage | ⬜ | Keine |
+| **Task**                                                                 | **Aufwand**                                              | **Verantwortlich** | **Status** | **Abhängigkeiten** |
+| ------------------------------------------------------------------------ | -------------------------------------------------------- | ------------------ | ---------- | ------------------ |
+| [#101](https://github.com/smart-swimmingpool/pool-controller/issues/101) | Speicherlecks in `OperationModeNode` beheben             | 2 Tage             | ⬜         | Keine              |
+| [#102](https://github.com/smart-swimmingpool/pool-controller/issues/102) | Null-Checks in `OperationModeNode::getRule()` hinzufügen | 1 Tag              | ⬜         | Keine              |
+| [#103](https://github.com/smart-swimmingpool/pool-controller/issues/103) | Plattformunabhängige Pin-Definitionen                    | 2 Tage             | ⬜         | Keine              |
+| [#104](https://github.com/smart-swimmingpool/pool-controller/issues/104) | Grundlegende Unit-Test-Infrastruktur aufsetzen           | 3 Tage             | ⬜         | Keine              |
 
 **Ergebnis**: Stabilere Codebasis ohne kritische Fehler.
 
 ---
 
 ### **🟡 Phase 2: Architektur verbessern (2-3 Wochen)**
->
+
 > **Fokus**: Dependency Injection, Code-Duplikation entfernen, Interfaces
 
-| **Task** | **Aufwand** | **Verantwortlich** | **Status** | **Abhängigkeiten** |
-|----------|------------|--------------------|------------|-------------------|
-| [#201](https://github.com/smart-swimmingpool/pool-controller/issues/201) | `IRelayController`-Interface einführen | 2 Tage | ⬜ | Phase 1 |
-| [#202](https://github.com/smart-swimmingpool/pool-controller/issues/202) | Regeln auf `IRelayController` umstellen | 3 Tage | ⬜ | #201 |
-| [#203](https://github.com/smart-swimmingpool/pool-controller/issues/203) | `checkPoolPumpTimer()` in gemeinsame Basisklasse verschieben | 1 Tag | ⬜ | Phase 1 |
-| [#204](https://github.com/smart-swimmingpool/pool-controller/issues/204) | Logger-Interface injizieren (statt `Homie.getLogger()`) | 2 Tage | ⬜ | Phase 1 |
-| [#205](https://github.com/smart-swimmingpool/pool-controller/issues/205) | `ITemperatureSensor`-Interface einführen | 2 Tage | ⬜ | Phase 1 |
+| **Task**                                                                 | **Aufwand**                                                  | **Verantwortlich** | **Status** | **Abhängigkeiten** |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------ | ------------------ | ---------- | ------------------ |
+| [#201](https://github.com/smart-swimmingpool/pool-controller/issues/201) | `IRelayController`-Interface einführen                       | 2 Tage             | ⬜         | Phase 1            |
+| [#202](https://github.com/smart-swimmingpool/pool-controller/issues/202) | Regeln auf `IRelayController` umstellen                      | 3 Tage             | ⬜         | #201               |
+| [#203](https://github.com/smart-swimmingpool/pool-controller/issues/203) | `checkPoolPumpTimer()` in gemeinsame Basisklasse verschieben | 1 Tag              | ⬜         | Phase 1            |
+| [#204](https://github.com/smart-swimmingpool/pool-controller/issues/204) | Logger-Interface injizieren (statt `Homie.getLogger()`)      | 2 Tage             | ⬜         | Phase 1            |
+| [#205](https://github.com/smart-swimmingpool/pool-controller/issues/205) | `ITemperatureSensor`-Interface einführen                     | 2 Tage             | ⬜         | Phase 1            |
 
 **Ergebnis**: Entkoppelte Komponenten, bessere Testbarkeit.
 
 ---
 
 ### **🟠 Phase 3: Persistenz & Konfiguration (1 Woche)**
->
+
 > **Fokus**: Speichern von Einstellungen, Konfigurierbarkeit
 
-| **Task** | **Aufwand** | **Verantwortlich** | **Status** | **Abhängigkeiten** |
-|----------|------------|--------------------|------------|-------------------|
-| [#301](https://github.com/smart-swimmingpool/pool-controller/issues/301) | Timer-Einstellungen mit `HomieSetting` speichern | 2 Tage | ⬜ | Phase 1 |
-| [#302](https://github.com/smart-swimmingpool/pool-controller/issues/302) | NTP-Server konfigurierbar machen | 1 Tag | ⬜ | Phase 1 |
-| [#303](https://github.com/smart-swimmingpool/pool-controller/issues/303) | Temperaturschwellen als `HomieSetting` | 1 Tag | ⬜ | Phase 1 |
+| **Task**                                                                 | **Aufwand**                                      | **Verantwortlich** | **Status** | **Abhängigkeiten** |
+| ------------------------------------------------------------------------ | ------------------------------------------------ | ------------------ | ---------- | ------------------ |
+| [#301](https://github.com/smart-swimmingpool/pool-controller/issues/301) | Timer-Einstellungen mit `HomieSetting` speichern | 2 Tage             | ⬜         | Phase 1            |
+| [#302](https://github.com/smart-swimmingpool/pool-controller/issues/302) | NTP-Server konfigurierbar machen                 | 1 Tag              | ⬜         | Phase 1            |
+| [#303](https://github.com/smart-swimmingpool/pool-controller/issues/303) | Temperaturschwellen als `HomieSetting`           | 1 Tag              | ⬜         | Phase 1            |
 
 **Ergebnis**: Konfigurationen überleben Reset, Benutzerfreundlichkeit ↑
 
 ---
 
 ### **🔵 Phase 4: Tests & Qualitätssicherung (2-3 Wochen)**
->
+
 > **Fokus**: Testabdeckung erhöhen, CI/CD verbessern
 
-| **Task** | **Aufwand** | **Verantwortlich** | **Status** | **Abhängigkeiten** |
-|----------|------------|--------------------|------------|-------------------|
-| [#401](https://github.com/smart-swimmingpool/pool-controller/issues/401) | Unit Tests für `RuleAuto` | 2 Tage | ⬜ | Phase 2 |
-| [#402](https://github.com/smart-swimmingpool/pool-controller/issues/402) | Unit Tests für `RuleTimer` | 2 Tage | ⬜ | Phase 2 |
-| [#403](https://github.com/smart-swimmingpool/pool-controller/issues/403) | Unit Tests für `OperationModeNode` | 3 Tage | ⬜ | Phase 2 |
-| [#404](https://github.com/smart-swimmingpool/pool-controller/issues/404) | Unit Tests für `Timer`-Logik | 1 Tag | ⬜ | Phase 2 |
-| [#405](https://github.com/smart-swimmingpool/pool-controller/issues/405) | CI/CD Pipeline für Tests erweitern | 2 Tage | ⬜ | Phase 1 |
+| **Task**                                                                 | **Aufwand**                        | **Verantwortlich** | **Status** | **Abhängigkeiten** |
+| ------------------------------------------------------------------------ | ---------------------------------- | ------------------ | ---------- | ------------------ |
+| [#401](https://github.com/smart-swimmingpool/pool-controller/issues/401) | Unit Tests für `RuleAuto`          | 2 Tage             | ⬜         | Phase 2            |
+| [#402](https://github.com/smart-swimmingpool/pool-controller/issues/402) | Unit Tests für `RuleTimer`         | 2 Tage             | ⬜         | Phase 2            |
+| [#403](https://github.com/smart-swimmingpool/pool-controller/issues/403) | Unit Tests für `OperationModeNode` | 3 Tage             | ⬜         | Phase 2            |
+| [#404](https://github.com/smart-swimmingpool/pool-controller/issues/404) | Unit Tests für `Timer`-Logik       | 1 Tag              | ⬜         | Phase 2            |
+| [#405](https://github.com/smart-swimmingpool/pool-controller/issues/405) | CI/CD Pipeline für Tests erweitern | 2 Tage             | ⬜         | Phase 1            |
 
 **Ergebnis**: Testabdeckung > 80%, Regressionsschutz ✅
 
 ---
 
 ### **⚪ Phase 5: Fortgeschrittene Verbesserungen (Optional, 2-4 Wochen)**
->
+
 > **Fokus**: Architektur-Patterns, Event-Driven Design
 
-| **Task** | **Aufwand** | **Verantwortlich** | **Status** | **Abhängigkeiten** |
-|----------|------------|--------------------|------------|-------------------|
-| [#501](https://github.com/smart-swimmingpool/pool-controller/issues/501) | State-Pattern für Betriebsmodi | 3 Tage | ⬜ | Phase 2 |
-| [#502](https://github.com/smart-swimmingpool/pool-controller/issues/502) | Event-Bus für Temperaturänderungen | 4 Tage | ⬜ | Phase 2 |
-| [#503](https://github.com/smart-swimmingpool/pool-controller/issues/503) | Factory-Pattern für Node-Erstellung | 2 Tage | ⬜ | Phase 2 |
-| [#504](https://github.com/smart-swimmingpool/pool-controller/issues/504) | Dokumentation aktualisieren | 2 Tage | ⬜ | Alle Phasen |
+| **Task**                                                                 | **Aufwand**                         | **Verantwortlich** | **Status** | **Abhängigkeiten** |
+| ------------------------------------------------------------------------ | ----------------------------------- | ------------------ | ---------- | ------------------ |
+| [#501](https://github.com/smart-swimmingpool/pool-controller/issues/501) | State-Pattern für Betriebsmodi      | 3 Tage             | ⬜         | Phase 2            |
+| [#502](https://github.com/smart-swimmingpool/pool-controller/issues/502) | Event-Bus für Temperaturänderungen  | 4 Tage             | ⬜         | Phase 2            |
+| [#503](https://github.com/smart-swimmingpool/pool-controller/issues/503) | Factory-Pattern für Node-Erstellung | 2 Tage             | ⬜         | Phase 2            |
+| [#504](https://github.com/smart-swimmingpool/pool-controller/issues/504) | Dokumentation aktualisieren         | 2 Tage             | ⬜         | Alle Phasen        |
 
 **Ergebnis**: Moderne, wartbare Architektur 🚀
 
@@ -187,7 +187,7 @@ pool-controller/
   class RuleAuto {
       void loop() { Homie.getLogger() << "..." << endl; }
   };
-  
+
   // ✅ Guter Stil
   class RuleAuto {
       RuleAuto(ILogger& logger) : _logger(logger) {}
@@ -206,7 +206,7 @@ pool-controller/
   ```cpp
   // ❌ Schlechter Stil
   Rule* rule = new RuleAuto(...);
-  
+
   // ✅ Guter Stil
   auto rule = std::make_unique<RuleAuto>(...);
   ```
@@ -235,14 +235,14 @@ pool-controller/
 
 ## 📊 Erfolgsmetriken
 
-| **Metrik** | **Aktuell** | **Ziel** | **Messmethode** |
-|------------|------------|----------|-----------------|
-| Code-Duplikation | Hoch | 0% | `git grep` / SonarQube |
-| Testabdeckung | 0% | >80% | PlatformIO Test Coverage |
-| Cyclomatic Complexity | Hoch | <10 pro Funktion | SonarQube |
-| Speicherlecks | Ja | Nein | Valgrind / PlatformIO Debug |
-| Build-Zeit | ? | <2 Min | `time pio run` |
-| Binärgröße | ? | <500KB | `pio run -t size` |
+| **Metrik**            | **Aktuell** | **Ziel**         | **Messmethode**             |
+| --------------------- | ----------- | ---------------- | --------------------------- |
+| Code-Duplikation      | Hoch        | 0%               | `git grep` / SonarQube      |
+| Testabdeckung         | 0%          | >80%             | PlatformIO Test Coverage    |
+| Cyclomatic Complexity | Hoch        | <10 pro Funktion | SonarQube                   |
+| Speicherlecks         | Ja          | Nein             | Valgrind / PlatformIO Debug |
+| Build-Zeit            | ?           | <2 Min           | `time pio run`              |
+| Binärgröße            | ?           | <500KB           | `pio run -t size`           |
 
 ---
 
@@ -250,9 +250,9 @@ pool-controller/
 
 1. **Issue-Tracker vorbereiten**: Issues für alle Tasks in diesem Plan erstellen
 2. **Branch-Strategie festlegen**:
-    - `main`: Stabiler Code
-    - `develop`: Integrationsbranch
-    - `feature/*`: Feature-Branches
+   - `main`: Stabiler Code
+   - `develop`: Integrationsbranch
+   - `feature/*`: Feature-Branches
 3. **CI/CD anpassen**: Tests in GitHub Actions/PlatformIO CI integrieren
 4. **Code Review**: Alle Änderungen müssen über Pull Requests mit Review
 
@@ -269,9 +269,9 @@ pool-controller/
 
 ## 📝 Changelog
 
-| **Version** | **Datum** | **Änderungen** | **Autor** |
-|-------------|-----------|----------------|-----------|
-| 1.0 | 2024 | Initialer Plan | Mistral Vibe Code |
+| **Version** | **Datum** | **Änderungen** | **Autor**         |
+| ----------- | --------- | -------------- | ----------------- |
+| 1.0         | 2024      | Initialer Plan | Mistral Vibe Code |
 
 ---
 
