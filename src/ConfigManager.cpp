@@ -35,7 +35,10 @@ static String hashSha256(const String &input) {
   return result;
 }
 
-static String defaultPasswordHash() { return hashSha256("admin"); }
+static const String &defaultPasswordHash() {
+  static const String kDefaultPasswordHash = hashSha256("admin");
+  return kDefaultPasswordHash;
+}
 
 // ── OTA-Safe Config Parsing ──
 
