@@ -55,7 +55,27 @@ bool NetworkManager::begin() {
 
 void NetworkManager::loop() {
   if (apModeActive_) {
-    return;
+    // Auch im AP-Mode regelmäßig WiFi-Verbindung versuchen, wenn Credentials vorhanden
+    if (ConfigManager::getWiFi().ssid.length() > 0) {
+      uint32_t now = millis();
+      if (now - lastWiFiRetryTime_ >= kWiFiRetryIntervalMs) {
+        lastWiFiRetryTime_ = now;
+        Serial.println("🔄 AP mode: retrying WiFi connection with saved credentials...");
+        WiFi.mode(WIFI_MODE_APSTA);
+        connectWiFi();
+      }
+
+      if (WiFi.status() == WL_CONNECTED) {
+        Serial.println("✓ AP mode: WiFi reconnected! Switching back to normal mode.");
+        WiFi.mode(WIFI_MODE_STA);
+        apModeActive_ = false;
+        connectionStartTime_ = 0;
+      } else {
+        return;
+      }
+    } else {
+      return;
+    }
   }
 
   // Handle WiFi reconnection
