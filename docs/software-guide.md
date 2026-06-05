@@ -125,18 +125,18 @@ settings survive reboots and power failures:
 
 ### Data Flow on Settings Changes
 
-```
-Web UI / REST API          MQTT (Home Assistant)
-       │                          │
-       ▼                          ▼
-───────┴──── ConfigManager ───────┴────
-              save() → /config.json (LittleFS)
-              ↓
-       OperationModeNode
-       (runtime parameters)
-              ↓
-       MqttPublisher::publishStates()
-       → MQTT topics → Home Assistant
+```text
+Web UI / REST API            MQTT (Home Assistant)
+        │                            │
+        ▼                            ▼
+────────┴────── ConfigManager ───────┴────
+                save() → /config.json (LittleFS)
+                ↓
+        OperationModeNode
+        (runtime parameters)
+                ↓
+        MqttPublisher::publishStates()
+        → MQTT topics → Home Assistant
 ```
 
 > **Note:** When settings are changed via the Web UI, Home Assistant is updated
@@ -150,7 +150,7 @@ Web UI / REST API          MQTT (Home Assistant)
 The controller uses **Home Assistant MQTT Discovery** (default) with topic
 structure:
 
-```
+```text
 homeassistant/<component>/pool-controller/<object-id>/config  (discovery)
 homeassistant/<component>/pool-controller/<object-id>/state   (state)
 homeassistant/<component>/pool-controller/<object-id>/set     (command)
@@ -163,7 +163,11 @@ See `docs/mqtt-configuration.md` for a complete entity mapping.
 If you need to clear retained MQTT messages:
 
 ```bash
+# Clear a specific Home Assistant topic
 mosquitto_pub -h hostname -t "homeassistant/sensor/pool-controller/pool-temp/state" -n -r
+
+# Clear a Homie topic
+mosquitto_pub -h hostname -t homie -n -r -d
 ```
 
 ## Configuration
@@ -197,16 +201,4 @@ How to upload JSON config files see [Homie documentation](https://homieiot.githu
 }
 ```
 
-## MQTT Communication
-
-### Clearing retained messages
-
-In some cases, retained messages may be desired and we don’t want to clear all the retained messages.
-
-The messages will have to be cleared one by one using the topic
-
-To clear a specific message:
-
-```bash
-mosquitto_pub -h hostname -t homie -n -r -d
-```
+<!-- (duplicate MQTT Communication heading removed — content already covered above) -->
