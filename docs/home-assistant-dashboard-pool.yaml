@@ -1,24 +1,57 @@
 # Home Assistant Lovelace Dashboard (Raw configuration)
-# Note: If your entity IDs differ, adjust the IDs below.
+# Layout orientiert sich an der Pool Controller Web UI:
+#   🏠 Dashboard → View "Pool"
+#   🌊 Pool + 🕐 Zeit + 🔒 System → View "Konfiguration"
+#
+# Hinweis: Falls deine Entity-IDs abweichen, passe sie unten an.
+# Die tatsächlichen IDs hängen vom unique_id ab (MAC-basiert).
+# Ersetze pool_controller durch deinen device identifier (z. B. 3c71bf1b180c).
+
 title: Pool Controller
 views:
+  # ═══════════════════════════════════════════════
+  # View 1: Pool — Dashboard + Steuerung
+  # Entspricht Web UI: 🏠 Dashboard + 🌊 Pool
+  # ═══════════════════════════════════════════════
   - title: Pool
     path: pool
     icon: mdi:pool
     badges:
       - entity: select.pool_controller_mode
+        name: Mode
       - entity: switch.pool_controller_pool_pump
+        name: Pool Pump
       - entity: switch.pool_controller_solar_pump
-    cards:
-      - type: entities
-        title: Operation Mode
-        show_header_toggle: false
-        entities:
-          - entity: select.pool_controller_mode
-            name: Current Mode
+        name: Solar Pump
 
+    cards:
+      # ── Temperaturen (wie Web UI Dashboard) ──
+      - type: horizontal-stack
+        cards:
+          - type: gauge
+            entity: sensor.pool_controller_pool_temp
+            name: Pool Temperature
+            unit: °C
+            min: 0
+            max: 45
+            severity:
+              green: 20
+              yellow: 28
+              red: 33
+          - type: gauge
+            entity: sensor.pool_controller_solar_temp
+            name: Solar Storage Tank
+            unit: °C
+            min: 0
+            max: 90
+            severity:
+              green: 35
+              yellow: 50
+              red: 70
+
+      # ── Betriebsart (wie Web UI Mode-Karten) ──
       - type: grid
-        title: Quick Switch
+        title: Operation Mode
         columns: 4
         square: false
         cards:
@@ -63,55 +96,37 @@ views:
               data:
                 option: manu
 
-      - type: horizontal-stack
-        cards:
-          - type: gauge
-            entity: sensor.pool_controller_pool_temp
-            name: Pool Temperature
-            unit: °C
-            min: 0
-            max: 45
-            severity:
-              green: 20
-              yellow: 28
-              red: 33
-          - type: gauge
-            entity: sensor.pool_controller_solar_temp
-            name: Solar Storage Tank
-            unit: °C
-            min: 0
-            max: 90
-            severity:
-              green: 35
-              yellow: 50
-              red: 70
-
-  - title: Configuration
-    path: configuration
-    icon: mdi:tune
-    cards:
+      # ── Aktueller Modus + Timer (wie Web UI 🌊 Pool) ──
       - type: entities
-        title: Control Parameters
+        title: Pool Settings
         show_header_toggle: false
         entities:
+          - entity: select.pool_controller_mode
+            name: Current Mode
           - entity: number.pool_controller_pool_max_temp
             name: Max. Pool Temperature
           - entity: number.pool_controller_solar_min_temp
             name: Min. Water Storage Temperature
           - entity: number.pool_controller_hysteresis
             name: Hysteresis
+          - entity: time.pool_controller_timer_start
+            name: Timer Start
+          - entity: time.pool_controller_timer_end
+            name: Timer End
 
+      # ── Pumpenschalter (wie Web UI Pump-Indikatoren) ──
       - type: entities
-        title: Timer
+        title: Pump Control
         show_header_toggle: false
         entities:
-          - entity: text.pool_controller_timer_start
-            name: Start Time (HH:MM)
-          - entity: text.pool_controller_timer_end
-            name: End Time (HH:MM)
+          - entity: switch.pool_controller_pool_pump
+            name: Pool Pump
+          - entity: switch.pool_controller_solar_pump
+            name: Solar Pump
 
+      # ── Temperaturverlauf (24h) ──
       - type: history-graph
-        title: Switching Times & Temperatures (24h)
+        title: Temperatures & Pump States (24h)
         hours_to_show: 24
         refresh_interval: 30
         entities:
@@ -123,3 +138,38 @@ views:
             name: Pool Pump
           - entity: switch.pool_controller_solar_pump
             name: Solar Pump
+
+  # ═══════════════════════════════════════════════
+  # View 2: Konfiguration — Zeit + System
+  # Entspricht Web UI: 🕐 Zeit + 🔒 System
+  # ═══════════════════════════════════════════════
+  - title: Konfiguration
+    path: konfiguration
+    icon: mdi:tune
+
+    cards:
+      # ── Zeiteinstellungen (wie Web UI 🕐 Zeit) ──
+      - type: entities
+        title: Time & NTP
+        show_header_toggle: false
+        entities:
+          - entity: select.pool_controller_timezone
+            name: Timezone
+          - entity: text.pool_controller_ntp_server
+            name: NTP Server
+
+      # ── System-Info (wie Web UI Dashboard-Zeile + System-Tab) ──
+      - type: entities
+        title: System
+        show_header_toggle: false
+        entities:
+          - entity: sensor.pool_controller_local_time
+            name: Local Time
+          - entity: sensor.pool_controller_rssi
+            name: WiFi Signal
+          - entity: sensor.pool_controller_heap
+            name: Free Heap
+          - entity: sensor.pool_controller_uptime
+            name: Uptime
+          - entity: update.pool_controller_firmware_update
+            name: Firmware
