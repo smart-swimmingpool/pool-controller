@@ -7,6 +7,11 @@
 # Passe die IDs an deine Installation an:
 #   HA → Entwickler-Tools → Entities → nach "pool" filtern
 # Ersetze `pool_controller` / `garten_pool_controller` durch deinen Prefix.
+#
+# Abhängigkeiten:
+#   - button-card (optional, für Mode-Buttons mit aktivem Highlight)
+#     Installation: HACS → Frontend → button-card
+#     Ohne button-card: Standard HA-Buttons (kein visuelles Highlight)
 
 title: Pool Controller
 views:
@@ -55,59 +60,103 @@ views:
               red: 70
 
       # ── Betriebsart (wie Web UI Mode-Karten) ──
-      # Zeigt den aktuellen Mode an; Tap wechselt direkt
+      # Aktiver Mode wird farbig hervorgehoben (button-card erforderlich)
       - type: grid
         title: Operation Mode
         columns: 4
         square: false
         cards:
-          - type: button
+          - type: custom:button-card
             name: Auto
             icon: mdi:robot
             entity: select.pool_controller_operation_mode
-            show_state: false
+            state:
+              - value: 'auto'
+                styles:
+                  card:
+                    - background-color: rgba(0, 229, 255, 0.15)
+                    - border: 2px solid var(--accent-color)
+                    - color: var(--primary-color)
+              - value: default
+                styles:
+                  card:
+                    - background-color: var(--card-background-color)
+                    - border: 1px solid var(--divider-color)
+                    - opacity: 0.7
             tap_action:
               action: call-service
               service: select.select_option
-              target:
+              service_data:
                 entity_id: select.pool_controller_operation_mode
-              data:
                 option: auto
-          - type: button
+          - type: custom:button-card
             name: Timer
             icon: mdi:timer-outline
             entity: select.pool_controller_operation_mode
-            show_state: false
+            state:
+              - value: 'timer'
+                styles:
+                  card:
+                    - background-color: rgba(0, 229, 255, 0.15)
+                    - border: 2px solid var(--accent-color)
+                    - color: var(--primary-color)
+              - value: default
+                styles:
+                  card:
+                    - background-color: var(--card-background-color)
+                    - border: 1px solid var(--divider-color)
+                    - opacity: 0.7
             tap_action:
               action: call-service
               service: select.select_option
-              target:
+              service_data:
                 entity_id: select.pool_controller_operation_mode
-              data:
                 option: timer
-          - type: button
+          - type: custom:button-card
             name: Boost
             icon: mdi:rocket-launch
             entity: select.pool_controller_operation_mode
-            show_state: false
+            state:
+              - value: 'boost'
+                styles:
+                  card:
+                    - background-color: rgba(0, 229, 255, 0.15)
+                    - border: 2px solid var(--accent-color)
+                    - color: var(--primary-color)
+              - value: default
+                styles:
+                  card:
+                    - background-color: var(--card-background-color)
+                    - border: 1px solid var(--divider-color)
+                    - opacity: 0.7
             tap_action:
               action: call-service
               service: select.select_option
-              target:
+              service_data:
                 entity_id: select.pool_controller_operation_mode
-              data:
                 option: boost
-          - type: button
+          - type: custom:button-card
             name: Manual
             icon: mdi:hand-back-right
             entity: select.pool_controller_operation_mode
-            show_state: false
+            state:
+              - value: 'manu'
+                styles:
+                  card:
+                    - background-color: rgba(0, 229, 255, 0.15)
+                    - border: 2px solid var(--accent-color)
+                    - color: var(--primary-color)
+              - value: default
+                styles:
+                  card:
+                    - background-color: var(--card-background-color)
+                    - border: 1px solid var(--divider-color)
+                    - opacity: 0.7
             tap_action:
               action: call-service
               service: select.select_option
-              target:
+              service_data:
                 entity_id: select.pool_controller_operation_mode
-              data:
                 option: manu
 
       # ── Einstellungen (wie Web UI 🌊 Pool) ──
