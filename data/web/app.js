@@ -340,8 +340,20 @@ async function saveControllerSettings() {
   const minSolar = document.getElementById('tempMinSolar').value;
   const hysteresis = document.getElementById('tempHysteresis').value;
   const tz = document.getElementById('timezone').value;
-  const green = document.getElementById('timeLossGreen').value;
-  const red = document.getElementById('timeLossRed').value;
+
+  // Validate time fields included alongside pool fields
+  const green = parseInt(document.getElementById('timeLossGreen').value, 10);
+  const red = parseInt(document.getElementById('timeLossRed').value, 10);
+  if (isNaN(green) || green < 1 || green > 6) {
+    alert('Time Sync Green must be between 1 and 6 hours.');
+    document.getElementById('timeLossGreen').focus();
+    return;
+  }
+  if (isNaN(red) || red < 1 || red > 72) {
+    alert('Time Sync Red must be between 1 and 72 hours.');
+    document.getElementById('timeLossRed').focus();
+    return;
+  }
   const ntpServer = encodeURIComponent(document.getElementById('ntpServer').value);
 
   const res = await fetch('/api/config', {
