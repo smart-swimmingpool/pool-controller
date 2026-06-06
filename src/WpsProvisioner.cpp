@@ -171,6 +171,11 @@ auto WpsProvisioner::runIfRequested() -> bool {
     return false;
   }
 
+  const auto cleanupAndReturn = [handlerId](const bool result) {
+    WiFi.removeEvent(handlerId);
+    return result;
+  };
+
   const uint32_t startedAt = millis();
   while ((millis() - startedAt) < WPS_SESSION_TIMEOUT_MS) {
     if (wpsProvisionState.success.load() || wpsProvisionState.failed.load() || wpsProvisionState.timedOut.load()) {
@@ -179,12 +184,12 @@ auto WpsProvisioner::runIfRequested() -> bool {
     vTaskDelay(pdMS_TO_TICKS(WIFI_STATUS_POLL_INTERVAL_MS));
   }
 
-  bool persisted = false;
   if (wpsProvisionState.success.load() && waitForWifiConnected(WPS_CONNECT_TIMEOUT_MS)) {
-    persisted = persistWpsWifiCredentials();
+    const bool persisted = persistWpsWifiCredentials();
     if (!persisted) {
       Serial.println(F("WPS: connected, but credentials were not persisted"));
     }
+    return cleanupAndReturn(persisted);
   } else {
     Serial.println(F("WPS: provisioning failed or timed out"));
     stopWps();
@@ -192,8 +197,7 @@ auto WpsProvisioner::runIfRequested() -> bool {
     WiFi.begin();
   }
 
-  WiFi.removeEvent(handlerId);
-  return persisted;
+  return cleanupAndReturn(false);
 }
 
 }  // namespace PoolController
