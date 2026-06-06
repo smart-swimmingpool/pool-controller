@@ -350,6 +350,20 @@ void MqttPublisher::publishDiscovery() {
   NetworkManager::subscribe("homeassistant/text/pool-controller/ntp-server/set");
   NetworkManager::subscribe("homeassistant/update/pool-controller/firmware-update/set");
 
+  // ── Cleanup old retained discovery configs (migrated entities) ──
+  // Timer was 4 Number entities → now 2 Time entities
+  static const char *kOldConfigTopics[] = {
+    "homeassistant/number/pool-controller/timer-start-h/config",
+    "homeassistant/number/pool-controller/timer-start-min/config",
+    "homeassistant/number/pool-controller/timer-end-h/config",
+    "homeassistant/number/pool-controller/timer-end-min/config",
+    // Timezone was Number → now Select
+    "homeassistant/number/pool-controller/timezone/config",
+  };
+  for (auto &topic : kOldConfigTopics) {
+    NetworkManager::publish(topic, "", true);  // empty retained → HA removes entity
+  }
+
   Serial.println("✓ HA Discovery Payloads & Subscriptions complete");
 }
 

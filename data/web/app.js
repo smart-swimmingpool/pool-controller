@@ -307,8 +307,6 @@ function validateSettings() {
     { id: 'tempMaxPool',     name: 'Max Pool Temp',       min: 0,   max: 40,   type: 'float' },
     { id: 'tempMinSolar',    name: 'Min Solar Temp',      min: 0,   max: 90,   type: 'float' },
     { id: 'tempHysteresis',  name: 'Hysteresis',          min: 0,   max: 10,   type: 'float' },
-    { id: 'timeLossGreen',   name: 'Time Sync Green',     min: 1,   max: 6,    type: 'int' },
-    { id: 'timeLossRed',     name: 'Time Sync Red',       min: 1,   max: 72,   type: 'int' },
   ];
   for (const f of fields) {
     const el = document.getElementById(f.id);
@@ -362,6 +360,9 @@ async function saveControllerSettings() {
 // ── Save Time Settings (Time Tab) ──
 
 async function saveTimeSettings() {
+  // Validate pool fields (read alongside the request)
+  if (!validateSettings()) return;
+
   const tz = document.getElementById('timezone').value;
   const ntpServer = encodeURIComponent(document.getElementById('ntpServer').value);
   const green = parseInt(document.getElementById('timeLossGreen').value, 10);
