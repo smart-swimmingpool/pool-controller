@@ -3,19 +3,9 @@
 #   🏠 Dashboard → View "Pool"
 #   🌊 Pool + 🕐 Zeit + 🔒 System → View "Konfiguration"
 #
-# ⚠️  Entity-IDs anpassen!
-# Die tatsächlichen IDs in HA sind MAC-basiert: {domain}.{MAC}_{object_id}
-#
-# So findest du deine IDs:
-#   1. In HA: Entwickler-Tools → Entities
-#   2. Nach "pool" oder "controller" filtern
-#   3. Domain + Namen in dieses YAML übernehmen
-#
-# Beispiel für MAC 3c:71:bf:1b:18:0c:
-#   select.3c71bf1b180c_mode
-#   sensor.3c71bf1b180c_pool_temp
-#
-# → Ersetze im ganzen YAML MAC durch deinen tatsächlichen Identifier.
+# ⚠️  Entity-IDs ggf. anpassen!
+# Falls deine IDs abweichen, ersetze pool_controller durch deinen Prefix.
+# Zeige alle verfügbaren Entities via HA: Entwickler-Tools → Entities → "pool"
 
 title: Pool Controller
 views:
@@ -27,11 +17,11 @@ views:
     path: pool
     icon: mdi:pool
     badges:
-      - entity: select.MAC_mode
+      - entity: select.pool_controller_mode
         name: Mode
-      - entity: switch.MAC_pool_pump
+      - entity: switch.pool_controller_pool_pump
         name: Pool Pump
-      - entity: switch.MAC_solar_pump
+      - entity: switch.pool_controller_solar_pump
         name: Solar Pump
 
     cards:
@@ -39,7 +29,7 @@ views:
       - type: horizontal-stack
         cards:
           - type: gauge
-            entity: sensor.MAC_pool_temp
+            entity: sensor.pool_controller_pool_temp
             name: Pool Temperature
             unit: °C
             min: 0
@@ -49,7 +39,7 @@ views:
               yellow: 28
               red: 33
           - type: gauge
-            entity: sensor.MAC_solar_temp
+            entity: sensor.pool_controller_solar_temp
             name: Solar Storage Tank
             unit: °C
             min: 0
@@ -72,7 +62,7 @@ views:
               action: call-service
               service: select.select_option
               target:
-                entity_id: select.MAC_mode
+                entity_id: select.pool_controller_mode
               data:
                 option: auto
           - type: button
@@ -82,7 +72,7 @@ views:
               action: call-service
               service: select.select_option
               target:
-                entity_id: select.MAC_mode
+                entity_id: select.pool_controller_mode
               data:
                 option: timer
           - type: button
@@ -92,7 +82,7 @@ views:
               action: call-service
               service: select.select_option
               target:
-                entity_id: select.MAC_mode
+                entity_id: select.pool_controller_mode
               data:
                 option: boost
           - type: button
@@ -102,7 +92,7 @@ views:
               action: call-service
               service: select.select_option
               target:
-                entity_id: select.MAC_mode
+                entity_id: select.pool_controller_mode
               data:
                 option: manu
 
@@ -111,17 +101,17 @@ views:
         title: Pool Settings
         show_header_toggle: false
         entities:
-          - entity: select.MAC_mode
+          - entity: select.pool_controller_mode
             name: Current Mode
-          - entity: number.MAC_pool_max_temp
+          - entity: number.pool_controller_pool_max_temp
             name: Max. Pool Temperature
-          - entity: number.MAC_solar_min_temp
+          - entity: number.pool_controller_solar_min_temp
             name: Min. Water Storage Temperature
-          - entity: number.MAC_hysteresis
+          - entity: number.pool_controller_hysteresis
             name: Hysteresis
-          - entity: time.MAC_timer_start
+          - entity: time.pool_controller_timer_start
             name: Timer Start
-          - entity: time.MAC_timer_end
+          - entity: time.pool_controller_timer_end
             name: Timer End
 
       # ── Pumpenschalter (wie Web UI Pump-Indikatoren) ──
@@ -129,9 +119,9 @@ views:
         title: Pump Control
         show_header_toggle: false
         entities:
-          - entity: switch.MAC_pool_pump
+          - entity: switch.pool_controller_pool_pump
             name: Pool Pump
-          - entity: switch.MAC_solar_pump
+          - entity: switch.pool_controller_solar_pump
             name: Solar Pump
 
       # ── Temperaturverlauf (24h) ──
@@ -140,13 +130,13 @@ views:
         hours_to_show: 24
         refresh_interval: 30
         entities:
-          - entity: sensor.MAC_pool_temp
+          - entity: sensor.pool_controller_pool_temp
             name: Pool
-          - entity: sensor.MAC_solar_temp
+          - entity: sensor.pool_controller_solar_temp
             name: Solar Storage Tank
-          - entity: switch.MAC_pool_pump
+          - entity: switch.pool_controller_pool_pump
             name: Pool Pump
-          - entity: switch.MAC_solar_pump
+          - entity: switch.pool_controller_solar_pump
             name: Solar Pump
 
   # ═══════════════════════════════════════════════
@@ -163,9 +153,9 @@ views:
         title: Time & NTP
         show_header_toggle: false
         entities:
-          - entity: select.MAC_timezone
+          - entity: select.pool_controller_timezone
             name: Timezone
-          - entity: text.MAC_ntp_server
+          - entity: text.pool_controller_ntp_server
             name: NTP Server
 
       # ── System-Info (wie Web UI Dashboard-Zeile + System-Tab) ──
@@ -173,13 +163,13 @@ views:
         title: System
         show_header_toggle: false
         entities:
-          - entity: sensor.MAC_local_time
+          - entity: sensor.pool_controller_local_time
             name: Local Time
-          - entity: sensor.MAC_rssi
+          - entity: sensor.pool_controller_rssi
             name: WiFi Signal
-          - entity: sensor.MAC_heap
+          - entity: sensor.pool_controller_heap
             name: Free Heap
-          - entity: sensor.MAC_uptime
+          - entity: sensor.pool_controller_uptime
             name: Uptime
-          - entity: update.MAC_firmware_update
+          - entity: update.pool_controller_firmware_update
             name: Firmware
