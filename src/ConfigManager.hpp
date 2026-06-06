@@ -3,7 +3,6 @@
 #pragma once
 
 #include <Arduino.h>
-#include <ArduinoJson.h>
 
 namespace PoolController {
 
@@ -57,32 +56,17 @@ public:
   static bool isConfigured() { return configured_; }
   static void setConfigured(bool configured) { configured_ = configured; }
 
-  // ── OTA-Safe Config: Backup + Restore ──
-  /// Copy /config.json → /config.json.ota before OTA update.
-  static bool backupConfig();
-  /// Restore /config.json.ota → /config.json after failed OTA / corruption.
-  static bool restoreConfig();
-
   // ── Boot Version Tracking ──
   /// Call once after loading config to log OTA transition status.
   static void logOtaTransition();
 
-  /// True if config was restored from .ota backup on last load.
-  static bool wasRestoredFromBackup() { return configRestored_; }
-
 private:
-  /// Parse a validated JsonDocument into config structs.
-  static bool parseDocument(JsonDocument &doc);
-  static constexpr const char *kConfigPath = "/config.json";
-  static constexpr const char *kConfigBackupPath = "/config.json.ota";
-
   static WiFiConfig wifi_;
   static MqttConfig mqtt_;
   static NtpConfig ntp_;
   static ControllerSettings settings_;
   static String adminPasswordHash_;
   static bool configured_;
-  static bool configRestored_;
 };
 
 }  // namespace PoolController

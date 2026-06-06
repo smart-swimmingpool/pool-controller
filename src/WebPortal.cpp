@@ -10,6 +10,7 @@
 #include "PoolController.hpp"
 #include "OtaUpdater.hpp"
 #include "TimeClientHelper.hpp"
+#include <ArduinoJson.h>
 #include <LittleFS.h>
 #include <Preferences.h>
 #include <Update.h>

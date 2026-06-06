@@ -159,10 +159,7 @@ bool OtaUpdater::startUpdate() {
     return false;
   }
 
-  // ── OTA Safety: backup config before flashing ──
-  Serial.println("OTA: Backing up configuration before update...");
-  ConfigManager::backupConfig();
-
+  // Config persists in NVS — survives OTA natively, no backup needed
   updateInProgress_ = true;
   // Don't clear updateAvailable_ yet — preserved so UI can retry on failure (P2 review fix)
   progress_ = 0;
