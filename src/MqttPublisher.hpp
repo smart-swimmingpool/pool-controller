@@ -16,6 +16,7 @@ public:
   static void handleMqttMessage(char *topic, uint8_t *payload, unsigned int length);
 
 private:
+  static void publishTextDiscovery(const char *objectId, const char *name, const char *icon = nullptr);
   static void publishSensorDiscovery(const char *objectId, const char *name, const char *deviceClass = nullptr,
     const char *unit = nullptr, const char *icon = nullptr);
   static void publishSwitchDiscovery(const char *objectId, const char *name, const char *icon = nullptr);

@@ -80,6 +80,23 @@ async function loadTelemetry() {
       document.getElementById('fwVersionDisplay').textContent = data.fw_version;
     }
 
+    // Lokale Uhrzeit
+    if (data.local_time) {
+      const parts = data.local_time.split(' ');
+      document.getElementById('localTimeDisplay').textContent = parts[1] || data.local_time;
+      document.getElementById('localTimeDate').textContent = parts[0] || '';
+      document.getElementById('localTimeZone').textContent = data.timezone_name || '';
+      // Farbpunkt basierend auf Zeit-Sync-Status
+      const dot = document.getElementById('timeDegradationDot');
+      if (data.time_degradation === 0) {
+        dot.style.background = '#22c55e';
+      } else if (data.time_degradation === 1) {
+        dot.style.background = '#eab308';
+      } else {
+        dot.style.background = '#ef4444';
+      }
+    }
+
     // Telemetrie (klein, unten)
     if (data.free_heap != null) {
       document.getElementById('heapVal').textContent = (data.free_heap / 1024).toFixed(0) + ' KB';
@@ -327,11 +344,12 @@ async function saveControllerSettings() {
   const tz = document.getElementById('timezone').value;
   const green = document.getElementById('timeLossGreen').value;
   const red = document.getElementById('timeLossRed').value;
+  const ntpServer = encodeURIComponent(document.getElementById('ntpServer').value);
 
   const res = await fetch('/api/config', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: 'type=settings&mode=' + mode + '&interval=' + interval + '&max_pool=' + maxPool + '&min_solar=' + minSolar + '&hysteresis=' + hysteresis + '&timezone=' + tz + '&green=' + green + '&red=' + red + timerParams()
+    body: 'type=settings&mode=' + mode + '&interval=' + interval + '&max_pool=' + maxPool + '&min_solar=' + minSolar + '&hysteresis=' + hysteresis + '&timezone=' + tz + '&green=' + green + '&red=' + red + timerParams() + '&ntp_server=' + ntpServer
   });
   if (res.status === 200) {
     document.getElementById('poolThreshold').textContent = 'max ' + parseFloat(maxPool).toFixed(1) + '°C';
@@ -394,6 +412,7 @@ async function loadConfig() {
     document.getElementById('tempMinSolar').value = data.settings.temp_min_solar;
     document.getElementById('tempHysteresis').value = data.settings.temp_hysteresis;
     document.getElementById('timezone').value = data.settings.timezone;
+    document.getElementById('ntpServer').value = data.ntp.server;
     document.getElementById('timeLossGreen').value = data.settings.time_loss_green_hours;
     document.getElementById('timeLossRed').value = data.settings.time_loss_red_hours;
     const pad2 = (n) => n.toString().padStart(2, '0');
