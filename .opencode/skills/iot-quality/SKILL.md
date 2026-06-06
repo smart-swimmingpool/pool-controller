@@ -261,10 +261,29 @@ static void Manager::loop();
 ### Local Make Targets:
 
 ```bash
-make lint      # Super-Linter (Docker)
+make lint      # Super-Linter (Docker — nur x86_64)
 make lint-fix  # clang-format + prettier auto-fix
 make build     # pio run -e esp32dev
 make clean     # Clean build artifacts
+```
+
+### ARM64 — Super-Linter Alternative (kein ARM64 Docker Image)
+
+Super-Linter läuft auf ARM64 nicht via Docker. Einzel-Linter installieren:
+
+```bash
+# Python (in venv):
+python3 -m venv /tmp/lint-venv
+/tmp/lint-venv/bin/pip install cpplint yamllint
+
+# Node.js:
+sudo npm install -g markdownlint-cli editorconfig-checker
+
+# Einzel-Checks (gematcht auf CI-Konfiguration):
+markdownlint --config /dev/null --rules '~MD013=120' docs/
+yamllint .github/linters/
+cpplint --linelength=130 --recursive src/
+editorconfig-checker -exclude '.git' .
 ```
 
 ## 5. Production Readiness Checklist

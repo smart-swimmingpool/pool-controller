@@ -320,9 +320,48 @@ The hook runs clang-format on staged `.cpp`/`.hpp` files before each commit.
 
 ---
 
-## Full CI Simulation
+## Full CI Simulation (ARM64)
+
+Super-Linter Docker image (`ghcr.io/super-linter/super-linter:v8`) hat **kein ARM64 Image**. Lokal auf ARM64 daher
+nicht via Docker ausführbar. Stattdessen die einzelnen Linter direkt installieren und ausführen:
+
+### Installation der Einzel-Linter
 
 ```bash
-# Lässt sich aufgrund von Super-Linter ARM64-Inkompatibilität nicht lokal ausführen.
-# Stattdessen die Quality Gates 1-5 manuell durchgehen (siehe Pre-PR Checkliste oben).
+# Python Linter (in venv):
+python3 -m venv /tmp/lint-venv
+/tmp/lint-venv/bin/pip install cpplint yamllint
+
+# Node.js Linter (systemweit):
+sudo npm install -g markdownlint-cli editorconfig-checker
+
+# Eventuell weitere:
+sudo apt install -y shellcheck  # VALIDATE_BASH
+```
+
+### Einzel-Linter ausführen (Alternative zu Super-Linter)
+
+```bash
+# MARKDOWN (120 Zeichen wie CI):
+markdownlint --config /dev/null --rules '~MD013=120' \
+  docs/**/*.md   # oder gezielt geänderte Dateien
+
+# YAML:
+yamllint .github/linters/ data/web/ templates/
+
+# EditorConfig (via editorconfig-checker):
+editorconfig-checker -exclude '.git' .
+
+# Gitleaks (secret detection):
+gitleaks detect --source . -v --no-git
+
+# Bash:
+shellcheck scripts/*.sh .github/scripts/*.sh
+```
+
+### Kurzcheck für PRs (nur geänderte Dateien)
+
+```bash
+# Geänderte Markdown-Dateien checken:
+markdownlint $(git diff --name-only --diff-filter=AM HEAD~1 | grep '\.md$')
 ```
