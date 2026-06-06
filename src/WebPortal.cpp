@@ -39,6 +39,10 @@ extern OperationModeNode operationModeNode;
 // Run `pio run --target uploadfs` to deploy data/web/ to the device.
 
 bool WebPortal::begin() {
+  if (!LittleFS.begin(false)) {
+    Serial.println("✖ LittleFS mount failed — static web assets may be unavailable");
+  }
+
   setupRoutes();
 
   // If AP mode, setup Captive DNS Server
