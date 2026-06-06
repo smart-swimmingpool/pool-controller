@@ -55,6 +55,7 @@ views:
               red: 70
 
       # ── Betriebsart (wie Web UI Mode-Karten) ──
+      # Zeigt den aktuellen Mode an; Tap wechselt direkt
       - type: grid
         title: Operation Mode
         columns: 4
@@ -63,41 +64,49 @@ views:
           - type: button
             name: Auto
             icon: mdi:robot
+            entity: select.pool_controller_operation_mode
+            show_state: false
             tap_action:
               action: call-service
               service: select.select_option
               target:
-                entity_id: select.pool_controller_mode
+                entity_id: select.pool_controller_operation_mode
               data:
                 option: auto
           - type: button
             name: Timer
             icon: mdi:timer-outline
+            entity: select.pool_controller_operation_mode
+            show_state: false
             tap_action:
               action: call-service
               service: select.select_option
               target:
-                entity_id: select.pool_controller_mode
+                entity_id: select.pool_controller_operation_mode
               data:
                 option: timer
           - type: button
             name: Boost
             icon: mdi:rocket-launch
+            entity: select.pool_controller_operation_mode
+            show_state: false
             tap_action:
               action: call-service
               service: select.select_option
               target:
-                entity_id: select.pool_controller_mode
+                entity_id: select.pool_controller_operation_mode
               data:
                 option: boost
           - type: button
             name: Manual
             icon: mdi:hand-back-right
+            entity: select.pool_controller_operation_mode
+            show_state: false
             tap_action:
               action: call-service
               service: select.select_option
               target:
-                entity_id: select.pool_controller_mode
+                entity_id: select.pool_controller_operation_mode
               data:
                 option: manu
 
