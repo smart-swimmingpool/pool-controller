@@ -14,8 +14,8 @@ ControllerSettings ConfigManager::settings_;
 String ConfigManager::adminPasswordHash_ = "";
 bool ConfigManager::configured_ = false;
 
-// Default password is "admin"
-static constexpr const char *kDefaultPasswordHash = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918";
+// Default password is "admin" (SHA-256 hash, not a real secret)
+static constexpr const char *kDefaultPasswordHash = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918";  // NOLINT(whitespace/line_length) gitleaks:allow
 
 static String hashSha256(const String &input) {
   uint8_t hash[32];
@@ -29,7 +29,7 @@ static String hashSha256(const String &input) {
 
   char result[65];
   for (int i = 0; i < 32; i++) {
-    snprintf(result + (i * 2), 3, "%02x", hash[i]);
+    snprintf(result + (i * 2), sizeof(result) - (i * 2), "%02x", hash[i]);
   }
   result[64] = '\0';
   return String(result);
