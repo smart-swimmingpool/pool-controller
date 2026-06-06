@@ -19,6 +19,11 @@ All notable changes to this project will be documented in this file.
 
 * mount LittleFS during web portal startup ([#85](https://github.com/smart-swimmingpool/pool-controller/issues/85)) ([592a4c8](https://github.com/smart-swimmingpool/pool-controller/commit/592a4c8105b3ebf54391a371650100e08fbebab1))
 
+
+### Miscellaneous
+
+* **refactor:** migrate config from LittleFS JSON to NVS/Preferences ([#84](https://github.com/smart-swimmingpool/pool-controller/issues/84)) ([ba841f5](https://github.com/smart-swimmingpool/pool-controller/commit/ba841f56e7a360c2ab10f4bccfa53ee3e8a4ffe2))
+
 ## [3.2.0](https://github.com/smart-swimmingpool/pool-controller/compare/v3.1.0...v3.2.0) (2026-05-22)
 
 ### Features
