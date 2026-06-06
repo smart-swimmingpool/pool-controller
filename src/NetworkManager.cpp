@@ -32,10 +32,10 @@ bool NetworkManager::begin() {
   WiFi.mode(WIFI_MODE_STA);
 
   // Check if WPS button is held down at startup
-  WpsProvisioner::runIfRequested();
+  const bool wpsCredentialsUpdated = WpsProvisioner::runIfRequested();
 
   // Refresh credentials in case WPS saved them
-  if (WpsProvisioner::runIfRequested != nullptr) {
+  if (wpsCredentialsUpdated) {
     ConfigManager::load();
   }
 

@@ -151,10 +151,10 @@ auto shouldStartWpsProvisioning() -> bool {
 
 namespace PoolController {
 
-auto WpsProvisioner::runIfRequested() -> void {
+auto WpsProvisioner::runIfRequested() -> bool {
   // This runs only during setup and uses bounded waits to detect trigger/WPS completion.
   if (!shouldStartWpsProvisioning()) {
-    return;
+    return false;
   }
 
   Serial.println(F("WPS: trigger button held, starting WPS provisioning"));
@@ -168,7 +168,7 @@ auto WpsProvisioner::runIfRequested() -> void {
 
   if (!startWps()) {
     WiFi.removeEvent(handlerId);
-    return;
+    return false;
   }
 
   const uint32_t startedAt = millis();
@@ -179,8 +179,9 @@ auto WpsProvisioner::runIfRequested() -> void {
     vTaskDelay(pdMS_TO_TICKS(WIFI_STATUS_POLL_INTERVAL_MS));
   }
 
+  bool persisted = false;
   if (wpsProvisionState.success.load() && waitForWifiConnected(WPS_CONNECT_TIMEOUT_MS)) {
-    const bool persisted = persistWpsWifiCredentials();
+    persisted = persistWpsWifiCredentials();
     if (!persisted) {
       Serial.println(F("WPS: connected, but credentials were not persisted"));
     }
@@ -192,6 +193,7 @@ auto WpsProvisioner::runIfRequested() -> void {
   }
 
   WiFi.removeEvent(handlerId);
+  return persisted;
 }
 
 }  // namespace PoolController

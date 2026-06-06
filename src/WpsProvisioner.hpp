@@ -11,6 +11,6 @@ public:
   auto operator=(const WpsProvisioner &) -> WpsProvisioner & = delete;
   auto operator=(WpsProvisioner &&) -> WpsProvisioner & = delete;
 
-  static auto runIfRequested() -> void;
+  static auto runIfRequested() -> bool;
 };
 }  // namespace PoolController
