@@ -51,7 +51,8 @@ String MqttPublisher::getBaseTopic(const char *component, const char *objectId) 
 }
 
 void MqttPublisher::publishSensorDiscovery(
-  const char *objectId, const char *name, const char *deviceClass, const char *unit, const char *icon) {
+  const char *objectId, const char *name, const char *deviceClass, const char *unit, const char *icon,
+  const char *entityCategory) {
   String configTopic = getBaseTopic("sensor", objectId) + "/config";
 
   JsonDocument doc;
@@ -66,6 +67,8 @@ void MqttPublisher::publishSensorDiscovery(
     doc["unit_of_measurement"] = unit;
   if (icon)
     doc["icon"] = icon;
+  if (entityCategory)
+    doc["entity_category"] = entityCategory;
 
   // Embedded device block - manually add device info
   JsonObject deviceObj = doc["device"].to<JsonObject>();
@@ -80,7 +83,8 @@ void MqttPublisher::publishSensorDiscovery(
   NetworkManager::publish(configTopic.c_str(), payload.c_str(), true);
 }
 
-void MqttPublisher::publishSwitchDiscovery(const char *objectId, const char *name, const char *icon) {
+void MqttPublisher::publishSwitchDiscovery(const char *objectId, const char *name, const char *icon,
+  const char *entityCategory) {
   String configTopic = getBaseTopic("switch", objectId) + "/config";
 
   JsonDocument doc;
@@ -94,6 +98,8 @@ void MqttPublisher::publishSwitchDiscovery(const char *objectId, const char *nam
 
   if (icon)
     doc["icon"] = icon;
+  if (entityCategory)
+    doc["entity_category"] = entityCategory;
   // Embedded device block - manually add device info
   JsonObject deviceObj = doc["device"].to<JsonObject>();
   deviceObj["identifiers"][0] = deviceId_;
@@ -108,7 +114,8 @@ void MqttPublisher::publishSwitchDiscovery(const char *objectId, const char *nam
 }
 
 void MqttPublisher::publishSelectDiscovery(
-  const char *objectId, const char *name, const char *const *options, size_t optionCount, const char *icon) {
+  const char *objectId, const char *name, const char *const *options, size_t optionCount, const char *icon,
+  const char *entityCategory) {
   String configTopic = getBaseTopic("select", objectId) + "/config";
 
   JsonDocument doc;
@@ -125,6 +132,8 @@ void MqttPublisher::publishSelectDiscovery(
 
   if (icon)
     doc["icon"] = icon;
+  if (entityCategory)
+    doc["entity_category"] = entityCategory;
   // Embedded device block - manually add device info
   JsonObject deviceObj = doc["device"].to<JsonObject>();
   deviceObj["identifiers"][0] = deviceId_;
@@ -139,7 +148,8 @@ void MqttPublisher::publishSelectDiscovery(
 }
 
 void MqttPublisher::publishNumberDiscovery(
-  const char *objectId, const char *name, double minVal, double maxVal, double step, const char *unit, const char *icon) {
+  const char *objectId, const char *name, double minVal, double maxVal, double step, const char *unit, const char *icon,
+  const char *entityCategory) {
   String configTopic = getBaseTopic("number", objectId) + "/config";
 
   JsonDocument doc;
@@ -157,6 +167,8 @@ void MqttPublisher::publishNumberDiscovery(
     doc["unit_of_measurement"] = unit;
   if (icon)
     doc["icon"] = icon;
+  if (entityCategory)
+    doc["entity_category"] = entityCategory;
   // Embedded device block - manually add device info
   JsonObject deviceObj = doc["device"].to<JsonObject>();
   deviceObj["identifiers"][0] = deviceId_;
@@ -260,18 +272,20 @@ void MqttPublisher::publishDiscovery() {
 
   Serial.println("Publishing HA Discovery Payloads...");
 
+  // ── Diagnostics (entity_category: "diagnostic") ──
   // Temperatures
-  publishSensorDiscovery("pool-temp", "Pool Temperature", "temperature", "°C", "mdi:pool");
-  publishSensorDiscovery("solar-temp", "Solar Temperature", "temperature", "°C", "mdi:solar-power");
-  publishSensorDiscovery("controller-temp", "Controller Temperature", "temperature", "°C", "mdi:thermometer");
+  publishSensorDiscovery("pool-temp", "Pool Temperature", "temperature", "°C", "mdi:pool", "diagnostic");
+  publishSensorDiscovery("solar-temp", "Solar Temperature", "temperature", "°C", "mdi:solar-power", "diagnostic");
+  publishSensorDiscovery("controller-temp", "Controller Temperature", "temperature", "°C", "mdi:thermometer", "diagnostic");
 
-  // System Diagnostics (F8)
-  publishSensorDiscovery("heap", "Free Heap Space", nullptr, "B", "mdi:memory");
-  publishSensorDiscovery("max-alloc", "Max Alloc Block", nullptr, "B", "mdi:memory");
-  publishSensorDiscovery("rssi", "WiFi Signal Strength", nullptr, "dBm", "mdi:wifi");
-  publishSensorDiscovery("uptime", "System Uptime", nullptr, "s", "mdi:clock-outline");
-  publishSensorDiscovery("local-time", "Local Time", nullptr, nullptr, "mdi:clock");
+  // System diagnostics
+  publishSensorDiscovery("heap", "Free Heap Space", nullptr, "B", "mdi:memory", "diagnostic");
+  publishSensorDiscovery("max-alloc", "Max Alloc Block", nullptr, "B", "mdi:memory", "diagnostic");
+  publishSensorDiscovery("rssi", "WiFi Signal Strength", nullptr, "dBm", "mdi:wifi", "diagnostic");
+  publishSensorDiscovery("uptime", "System Uptime", nullptr, "s", "mdi:clock-outline", "diagnostic");
+  publishSensorDiscovery("local-time", "Local Time", nullptr, nullptr, "mdi:clock", "diagnostic");
 
+  // ── Controls (no entity_category — shown on device page) ──
   // Relays (Switches)
   publishSwitchDiscovery("pool-pump", "Pool Pump", "mdi:pump");
   publishSwitchDiscovery("solar-pump", "Solar Pump", "mdi:solar-panel");
@@ -288,7 +302,9 @@ void MqttPublisher::publishDiscovery() {
   publishNumberDiscovery("timer-start-min", "Timer Start Minute", 0.0, 59.0, 1.0, "min", "mdi:clock-start");
   publishNumberDiscovery("timer-end-h", "Timer End Hour", 0.0, 23.0, 1.0, "h", "mdi:clock-end");
   publishNumberDiscovery("timer-end-min", "Timer End Minute", 0.0, 59.0, 1.0, "min", "mdi:clock-end");
-  publishNumberDiscovery("timezone", "Timezone Index", 0.0, 9.0, 1.0, nullptr, "mdi:map-clock");
+
+  // ── Configuration (entity_category: "config") ──
+  publishNumberDiscovery("timezone", "Timezone Index", 0.0, 9.0, 1.0, nullptr, "mdi:map-clock", "config");
   publishTextDiscovery("ntp-server", "NTP Server", "mdi:clock-outline");
 
   // Firmware Update entity

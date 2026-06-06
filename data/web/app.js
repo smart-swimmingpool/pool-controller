@@ -331,7 +331,7 @@ function validateSettings() {
   return true;
 }
 
-// ── Save Controller Settings ──
+// ── Save Controller Settings (Pool Tab) ──
 
 async function saveControllerSettings() {
   if (!validateSettings()) return;
@@ -354,8 +354,44 @@ async function saveControllerSettings() {
   if (res.status === 200) {
     document.getElementById('poolThreshold').textContent = 'max ' + parseFloat(maxPool).toFixed(1) + '°C';
     document.getElementById('solarThreshold').textContent = 'min ' + parseFloat(minSolar).toFixed(1) + '°C';
-    alert('Controller setpoints saved!');
+    alert('✓ Pool settings saved!');
     highlightMode(mode);
+  }
+}
+
+// ── Save Time Settings (Time Tab) ──
+
+async function saveTimeSettings() {
+  const tz = document.getElementById('timezone').value;
+  const ntpServer = encodeURIComponent(document.getElementById('ntpServer').value);
+  const green = parseInt(document.getElementById('timeLossGreen').value, 10);
+  const red = parseInt(document.getElementById('timeLossRed').value, 10);
+
+  if (isNaN(green) || green < 1 || green > 6) {
+    alert('Green Threshold must be between 1 and 6 hours.');
+    document.getElementById('timeLossGreen').focus();
+    return;
+  }
+  if (isNaN(red) || red < 1 || red > 72) {
+    alert('Red Threshold must be between 1 and 72 hours.');
+    document.getElementById('timeLossRed').focus();
+    return;
+  }
+
+  // Read all pool fields to preserve them on save
+  const mode = document.getElementById('opMode').value;
+  const interval = document.getElementById('loopInterval').value;
+  const maxPool = document.getElementById('tempMaxPool').value;
+  const minSolar = document.getElementById('tempMinSolar').value;
+  const hysteresis = document.getElementById('tempHysteresis').value;
+
+  const res = await fetch('/api/config', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: 'type=settings&mode=' + mode + '&interval=' + interval + '&max_pool=' + maxPool + '&min_solar=' + minSolar + '&hysteresis=' + hysteresis + '&timezone=' + tz + '&green=' + green + '&red=' + red + timerParams() + '&ntp_server=' + ntpServer
+  });
+  if (res.status === 200) {
+    alert('✓ Time settings saved!');
   }
 }
 
