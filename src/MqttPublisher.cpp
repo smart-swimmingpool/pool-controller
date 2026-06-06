@@ -207,6 +207,33 @@ void MqttPublisher::publishTextDiscovery(const char *objectId, const char *name,
   NetworkManager::publish(configTopic.c_str(), payload.c_str(), true);
 }
 
+void MqttPublisher::publishTimeDiscovery(const char *objectId, const char *name, const char *icon,
+  const char *entityCategory) {
+  String configTopic = getBaseTopic("time", objectId) + "/config";
+
+  JsonDocument doc;
+  doc["name"] = name;
+  doc["unique_id"] = deviceId_ + "_" + objectId;
+  doc["state_topic"] = getBaseTopic("time", objectId) + "/state";
+  doc["command_topic"] = getBaseTopic("time", objectId) + "/set";
+  doc["availability_topic"] = "homeassistant/sensor/pool-controller/availability";
+
+  if (icon)
+    doc["icon"] = icon;
+  if (entityCategory)
+    doc["entity_category"] = entityCategory;
+  JsonObject deviceObj = doc["device"].to<JsonObject>();
+  deviceObj["identifiers"][0] = deviceId_;
+  deviceObj["name"] = "Pool Controller";
+  deviceObj["manufacturer"] = "smart-swimmingpool";
+  deviceObj["model"] = "Pool Controller";
+  deviceObj["sw_version"] = FW_VERSION;
+
+  String payload;
+  serializeJson(doc, payload);
+  NetworkManager::publish(configTopic.c_str(), payload.c_str(), true);
+}
+
 void MqttPublisher::publishUpdateDiscovery() {
   String configTopic = getBaseTopic("update", "firmware-update") + "/config";
 
@@ -297,14 +324,14 @@ void MqttPublisher::publishDiscovery() {
   // Parameter Numbers
   publishNumberDiscovery("pool-max-temp", "Max. Pool Temp", 0.0, 40.0, 0.1, "°C", "mdi:thermometer-chevron-up");
   publishNumberDiscovery("solar-min-temp", "Min. Solar Temp", 0.0, 100.0, 0.1, "°C", "mdi:thermometer-chevron-down");
-  publishNumberDiscovery("hysteresis", "Temperature Hysteresis", 0.0, 10.0, 0.1, "K", "mdi:delta");
-  publishNumberDiscovery("timer-start-h", "Timer Start Hour", 0.0, 23.0, 1.0, "h", "mdi:clock-start");
-  publishNumberDiscovery("timer-start-min", "Timer Start Minute", 0.0, 59.0, 1.0, "min", "mdi:clock-start");
-  publishNumberDiscovery("timer-end-h", "Timer End Hour", 0.0, 23.0, 1.0, "h", "mdi:clock-end");
-  publishNumberDiscovery("timer-end-min", "Timer End Minute", 0.0, 59.0, 1.0, "min", "mdi:clock-end");
+
+  // Timer as Time entities (HH:MM:SS format)
+  publishTimeDiscovery("timer-start", "Timer Start", "mdi:clock-start");
+  publishTimeDiscovery("timer-end", "Timer End", "mdi:clock-end");
 
   // ── Configuration (entity_category: "config") ──
-  publishNumberDiscovery("timezone", "Timezone Index", 0.0, 9.0, 1.0, nullptr, "mdi:map-clock", "config");
+  publishSelectDiscovery("timezone", "Timezone", getTimezoneLabelList(), getTimezoneLabelCount(), "mdi:map-clock", "config");
+  publishNumberDiscovery("hysteresis", "Temperature Hysteresis", 0.0, 10.0, 0.1, "K", "mdi:delta", "config");
   publishTextDiscovery("ntp-server", "NTP Server", "mdi:clock-outline");
 
   // Firmware Update entity
@@ -317,11 +344,9 @@ void MqttPublisher::publishDiscovery() {
   NetworkManager::subscribe("homeassistant/number/pool-controller/pool-max-temp/set");
   NetworkManager::subscribe("homeassistant/number/pool-controller/solar-min-temp/set");
   NetworkManager::subscribe("homeassistant/number/pool-controller/hysteresis/set");
-  NetworkManager::subscribe("homeassistant/number/pool-controller/timer-start-h/set");
-  NetworkManager::subscribe("homeassistant/number/pool-controller/timer-start-min/set");
-  NetworkManager::subscribe("homeassistant/number/pool-controller/timer-end-h/set");
-  NetworkManager::subscribe("homeassistant/number/pool-controller/timer-end-min/set");
-  NetworkManager::subscribe("homeassistant/number/pool-controller/timezone/set");
+  NetworkManager::subscribe("homeassistant/time/pool-controller/timer-start/set");
+  NetworkManager::subscribe("homeassistant/time/pool-controller/timer-end/set");
+  NetworkManager::subscribe("homeassistant/select/pool-controller/timezone/set");
   NetworkManager::subscribe("homeassistant/text/pool-controller/ntp-server/set");
   NetworkManager::subscribe("homeassistant/update/pool-controller/firmware-update/set");
 
@@ -376,14 +401,16 @@ void MqttPublisher::publishStates() {
   NetworkManager::publish((getBaseTopic("number", "hysteresis") + "/state").c_str(),
     String(operationModeNode.getTemperatureHysteresis(), 1).c_str(), true);
 
-  TimerSetting ts = operationModeNode.getTimerSetting();
-  NetworkManager::publish((getBaseTopic("number", "timer-start-h") + "/state").c_str(), String(ts.timerStartHour).c_str(), true);
-  NetworkManager::publish(
-    (getBaseTopic("number", "timer-start-min") + "/state").c_str(), String(ts.timerStartMinutes).c_str(), true);
-  NetworkManager::publish((getBaseTopic("number", "timer-end-h") + "/state").c_str(), String(ts.timerEndHour).c_str(), true);
-  NetworkManager::publish((getBaseTopic("number", "timer-end-min") + "/state").c_str(), String(ts.timerEndMinutes).c_str(), true);
-  NetworkManager::publish(
-    (getBaseTopic("number", "timezone") + "/state").c_str(), String(ConfigManager::getSettings().timezoneIndex).c_str(), true);
+  {
+    TimerSetting ts = operationModeNode.getTimerSetting();
+    char timeBuf[9];
+    snprintf(timeBuf, sizeof(timeBuf), "%02d:%02d:00", ts.timerStartHour, ts.timerStartMinutes);
+    NetworkManager::publish((getBaseTopic("time", "timer-start") + "/state").c_str(), timeBuf, true);
+    snprintf(timeBuf, sizeof(timeBuf), "%02d:%02d:00", ts.timerEndHour, ts.timerEndMinutes);
+    NetworkManager::publish((getBaseTopic("time", "timer-end") + "/state").c_str(), timeBuf, true);
+  }
+  NetworkManager::publish((getBaseTopic("select", "timezone") + "/state").c_str(),
+    getTimeInfoFor(ConfigManager::getSettings().timezoneIndex).c_str(), true);
   NetworkManager::publish(
     (getBaseTopic("text", "ntp-server") + "/state").c_str(), ConfigManager::getNtp().server.c_str(), true);
 }
@@ -437,40 +464,36 @@ void MqttPublisher::handleMqttMessage(char *topic, uint8_t *payload, unsigned in
     operationModeNode.setTemperatureHysteresis(val);
     ConfigManager::getSettings().tempHysteresis = val;
     ConfigManager::save();
-  } else if (top.endsWith("/timer-start-h/set")) {
-    int val = value.toInt();
-    if (val >= 0 && val <= 23) {
+  } else if (top.endsWith("/timer-start/set")) {
+    // Payload format: HH:MM:SS
+    int h = value.substring(0, 2).toInt();
+    int m = value.substring(3, 5).toInt();
+    if (h >= 0 && h <= 23 && m >= 0 && m <= 59) {
       TimerSetting ts = operationModeNode.getTimerSetting();
-      ts.timerStartHour = val;
-      operationModeNode.setTimerSetting(ts);  // Persisted via NVS, no ConfigManager save needed
-    }
-  } else if (top.endsWith("/timer-start-min/set")) {
-    int val = value.toInt();
-    if (val >= 0 && val <= 59) {
-      TimerSetting ts = operationModeNode.getTimerSetting();
-      ts.timerStartMinutes = val;
+      ts.timerStartHour = h;
+      ts.timerStartMinutes = m;
       operationModeNode.setTimerSetting(ts);
     }
-  } else if (top.endsWith("/timer-end-h/set")) {
-    int val = value.toInt();
-    if (val >= 0 && val <= 23) {
+  } else if (top.endsWith("/timer-end/set")) {
+    int h = value.substring(0, 2).toInt();
+    int m = value.substring(3, 5).toInt();
+    if (h >= 0 && h <= 23 && m >= 0 && m <= 59) {
       TimerSetting ts = operationModeNode.getTimerSetting();
-      ts.timerEndHour = val;
-      operationModeNode.setTimerSetting(ts);
-    }
-  } else if (top.endsWith("/timer-end-min/set")) {
-    int val = value.toInt();
-    if (val >= 0 && val <= 59) {
-      TimerSetting ts = operationModeNode.getTimerSetting();
-      ts.timerEndMinutes = val;
+      ts.timerEndHour = h;
+      ts.timerEndMinutes = m;
       operationModeNode.setTimerSetting(ts);
     }
   } else if (top.endsWith("/timezone/set")) {
-    int val = value.toInt();
-    ConfigManager::getSettings().timezoneIndex = val;
+    int idx = getTimezoneIndexFromLabel(value);
+    if (idx < 0) {
+      Serial.printf("MQTT: Unknown timezone label \"%s\" — ignoring\n", value.c_str());
+      publishStates();
+      return;
+    }
+    ConfigManager::getSettings().timezoneIndex = idx;
     ConfigManager::save();
     // Apply timezone change to running clock immediately (P2 review fix)
-    setTimezoneIndex(val);
+    setTimezoneIndex(idx);
   } else if (top.endsWith("/ntp-server/set")) {
     if (value.length() > 0 && value.length() < 128) {
       ConfigManager::getNtp().server = value;

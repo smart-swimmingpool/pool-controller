@@ -10,7 +10,7 @@
 #include <NTPClient.h>
 
 struct TimeZoneInfo {
-  char description[21];  // 20 chars max
+  char description[40];  // friendly name, e.g. "Central Europe (CET/CEST)"
   Timezone *timezone;
 };
 
@@ -35,6 +35,9 @@ int getTzCount();
 time_t getUtcTime();
 time_t getTimeFor(int index, TimeChangeRule **tcr);
 String getTimeInfoFor(int index);
+const char *const *getTimezoneLabelList();
+int getTimezoneLabelCount();
+int getTimezoneIndexFromLabel(const String &label);
 String getFormattedTime(time_t rawTime);
 void setTimezoneIndex(int index);
 int getTimezoneIndex();

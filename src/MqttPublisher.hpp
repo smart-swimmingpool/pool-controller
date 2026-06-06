@@ -26,6 +26,8 @@ private:
     const char *entityCategory = nullptr);
   static void publishNumberDiscovery(const char *objectId, const char *name, double minVal, double maxVal, double step,
     const char *unit = nullptr, const char *icon = nullptr, const char *entityCategory = nullptr);
+  static void publishTimeDiscovery(const char *objectId, const char *name, const char *icon = nullptr,
+    const char *entityCategory = nullptr);
   static void publishUpdateDiscovery();
 
   static String getBaseTopic(const char *component, const char *objectId);
