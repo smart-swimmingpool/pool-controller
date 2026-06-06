@@ -335,6 +335,18 @@ void WebPortal::apiGetStatus() {
   doc["local_ip"] = NetworkManager::getLocalIP();
   doc["fw_version"] = FW_VERSION;
 
+  // Current date/time in configured timezone
+  TimeChangeRule *tcr;
+  time_t localTime = getTimeFor(ConfigManager::getSettings().timezoneIndex, &tcr);
+  char timeBuf[64];
+  snprintf(timeBuf, sizeof(timeBuf), "%04d-%02d-%02d %02d:%02d:%02d",
+    year(localTime), month(localTime), day(localTime),
+    hour(localTime), minute(localTime), second(localTime));
+  doc["local_time"] = timeBuf;
+  doc["local_time_epoch"] = static_cast<long>(localTime);
+  doc["timezone_name"] = getTimeInfoFor(ConfigManager::getSettings().timezoneIndex);
+  doc["time_degradation"] = static_cast<int>(getTimeDegradation());
+
   String json;
   serializeJson(doc, json);
   server_.send(200, "application/json", json);
@@ -368,6 +380,9 @@ void WebPortal::apiGetConfig() {
   mqttObj["port"] = ConfigManager::getMqtt().port;
   mqttObj["username"] = ConfigManager::getMqtt().username;
   mqttObj["use_tls"] = ConfigManager::getMqtt().useTls;
+
+  JsonObject ntpObj = doc["ntp"].to<JsonObject>();
+  ntpObj["server"] = ConfigManager::getNtp().server;
 
   JsonObject settingsObj = doc["settings"].to<JsonObject>();
   settingsObj["op_mode"] = ConfigManager::getSettings().opMode;
@@ -454,6 +469,13 @@ void WebPortal::apiSaveConfig() {
     operationModeNode.setPoolMaxTemperature(ConfigManager::getSettings().tempMaxPool);
     operationModeNode.setSolarMinTemperature(ConfigManager::getSettings().tempMinSolar);
     operationModeNode.setTemperatureHysteresis(ConfigManager::getSettings().tempHysteresis);
+
+    // NTP server live update
+    if (server_.hasArg("ntp_server")) {
+      ConfigManager::getNtp().server = server_.arg("ntp_server");
+      ConfigManager::save();
+      timeClientSetup(ConfigManager::getNtp().server.c_str());
+    }
 
     // Apply timer settings
     {

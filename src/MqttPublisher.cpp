@@ -9,6 +9,7 @@
 #include "ESP32TemperatureNode.hpp"
 #include "RelayModuleNode.hpp"
 #include "OperationModeNode.hpp"
+#include "TimeClientHelper.hpp"
 #include <ArduinoJson.h>
 
 namespace PoolController {
@@ -169,6 +170,31 @@ void MqttPublisher::publishNumberDiscovery(
   NetworkManager::publish(configTopic.c_str(), payload.c_str(), true);
 }
 
+void MqttPublisher::publishTextDiscovery(const char *objectId, const char *name, const char *icon) {
+  String configTopic = getBaseTopic("text", objectId) + "/config";
+
+  JsonDocument doc;
+  doc["name"] = name;
+  doc["unique_id"] = deviceId_ + "_" + objectId;
+  doc["state_topic"] = getBaseTopic("text", objectId) + "/state";
+  doc["command_topic"] = getBaseTopic("text", objectId) + "/set";
+  doc["availability_topic"] = "homeassistant/sensor/pool-controller/availability";
+  doc["entity_category"] = "config";
+
+  if (icon)
+    doc["icon"] = icon;
+  JsonObject deviceObj = doc["device"].to<JsonObject>();
+  deviceObj["identifiers"][0] = deviceId_;
+  deviceObj["name"] = "Pool Controller";
+  deviceObj["manufacturer"] = "smart-swimmingpool";
+  deviceObj["model"] = "Pool Controller";
+  deviceObj["sw_version"] = FW_VERSION;
+
+  String payload;
+  serializeJson(doc, payload);
+  NetworkManager::publish(configTopic.c_str(), payload.c_str(), true);
+}
+
 void MqttPublisher::publishUpdateDiscovery() {
   String configTopic = getBaseTopic("update", "firmware-update") + "/config";
 
@@ -244,6 +270,7 @@ void MqttPublisher::publishDiscovery() {
   publishSensorDiscovery("max-alloc", "Max Alloc Block", nullptr, "B", "mdi:memory");
   publishSensorDiscovery("rssi", "WiFi Signal Strength", nullptr, "dBm", "mdi:wifi");
   publishSensorDiscovery("uptime", "System Uptime", nullptr, "s", "mdi:clock-outline");
+  publishSensorDiscovery("local-time", "Local Time", nullptr, nullptr, "mdi:clock");
 
   // Relays (Switches)
   publishSwitchDiscovery("pool-pump", "Pool Pump", "mdi:pump");
@@ -262,6 +289,7 @@ void MqttPublisher::publishDiscovery() {
   publishNumberDiscovery("timer-end-h", "Timer End Hour", 0.0, 23.0, 1.0, "h", "mdi:clock-end");
   publishNumberDiscovery("timer-end-min", "Timer End Minute", 0.0, 59.0, 1.0, "min", "mdi:clock-end");
   publishNumberDiscovery("timezone", "Timezone Index", 0.0, 9.0, 1.0, nullptr, "mdi:map-clock");
+  publishTextDiscovery("ntp-server", "NTP Server", "mdi:clock-outline");
 
   // Firmware Update entity
   publishUpdateDiscovery();
@@ -278,6 +306,7 @@ void MqttPublisher::publishDiscovery() {
   NetworkManager::subscribe("homeassistant/number/pool-controller/timer-end-h/set");
   NetworkManager::subscribe("homeassistant/number/pool-controller/timer-end-min/set");
   NetworkManager::subscribe("homeassistant/number/pool-controller/timezone/set");
+  NetworkManager::subscribe("homeassistant/text/pool-controller/ntp-server/set");
   NetworkManager::subscribe("homeassistant/update/pool-controller/firmware-update/set");
 
   Serial.println("✓ HA Discovery Payloads & Subscriptions complete");
@@ -301,6 +330,17 @@ void MqttPublisher::publishStates() {
   NetworkManager::publish(
     (getBaseTopic("sensor", "rssi") + "/state").c_str(), String(NetworkManager::getWiFiRSSI()).c_str(), true);
   NetworkManager::publish((getBaseTopic("sensor", "uptime") + "/state").c_str(), String(millis() / 1000).c_str(), true);
+
+  // Local time state
+  {
+    TimeChangeRule *tcr;
+    time_t localTime = getTimeFor(ConfigManager::getSettings().timezoneIndex, &tcr);
+    char timeBuf[64];
+    snprintf(timeBuf, sizeof(timeBuf), "%04d-%02d-%02d %02d:%02d:%02d",
+      year(localTime), month(localTime), day(localTime),
+      hour(localTime), minute(localTime), second(localTime));
+    NetworkManager::publish((getBaseTopic("sensor", "local-time") + "/state").c_str(), timeBuf, true);
+  }
 
   // Switch States
   NetworkManager::publish(
@@ -328,6 +368,8 @@ void MqttPublisher::publishStates() {
   NetworkManager::publish((getBaseTopic("number", "timer-end-min") + "/state").c_str(), String(ts.timerEndMinutes).c_str(), true);
   NetworkManager::publish(
     (getBaseTopic("number", "timezone") + "/state").c_str(), String(ConfigManager::getSettings().timezoneIndex).c_str(), true);
+  NetworkManager::publish(
+    (getBaseTopic("text", "ntp-server") + "/state").c_str(), ConfigManager::getNtp().server.c_str(), true);
 }
 
 void MqttPublisher::handleMqttMessage(char *topic, uint8_t *payload, unsigned int length) {
@@ -413,6 +455,13 @@ void MqttPublisher::handleMqttMessage(char *topic, uint8_t *payload, unsigned in
     ConfigManager::save();
     // Apply timezone change to running clock immediately (P2 review fix)
     setTimezoneIndex(val);
+  } else if (top.endsWith("/ntp-server/set")) {
+    if (value.length() > 0 && value.length() < 128) {
+      ConfigManager::getNtp().server = value;
+      ConfigManager::save();
+      // Restart NTP client with new server immediately
+      timeClientSetup(ConfigManager::getNtp().server.c_str());
+    }
   }
 
   // Refresh states to confirm changes to Home Assistant

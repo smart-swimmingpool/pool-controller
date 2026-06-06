@@ -85,6 +85,16 @@
       <div id="modeFeedback" class="mode-feedback" style="display: none; margin-top: 0.5rem; padding: 0.4rem; border-radius: 6px; text-align: center; font-size: 0.8rem;"></div>
     </div>
 
+    <!-- Lokale Uhrzeit -->
+    <div style="background: var(--glass-bg); padding: 0.75rem 1rem; border-radius: 10px; border: 1px solid var(--panel-border); text-align: center;">
+      <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+        <span id="timeDegradationDot" style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--text-muted);"></span>
+        <span id="localTimeDisplay" style="font-size: 1.2rem; font-weight: 700; font-variant-numeric: tabular-nums;">--:--:--</span>
+      </div>
+      <div id="localTimeDate" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.15rem;">----</div>
+      <div id="localTimeZone" style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.05rem;">---</div>
+    </div>
+
     <!-- Telemetrie (klein, ganz unten) -->
     <div class="telemetry-grid-bottom" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; font-size: 0.7rem; margin-top: 0.5rem; padding-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.08);">
       <div style="text-align: center;">
@@ -197,7 +207,15 @@
         <option value="4">US Central Time</option>
         <option value="5">US Mountain Time</option>
         <option value="6">US Pacific Time</option>
+        <option value="7">Australian Eastern</option>
+        <option value="8">Japan (JST)</option>
+        <option value="9">China (CST)</option>
       </select>
+    </div>
+    <div class="input-group">
+      <label for="ntpServer">NTP Server</label>
+      <input type="text" id="ntpServer" placeholder="pool.ntp.org">
+      <span class="input-hint">NTP time server for clock sync · Default: pool.ntp.org</span>
     </div>
   </div>
   <div class="telemetry-grid">
