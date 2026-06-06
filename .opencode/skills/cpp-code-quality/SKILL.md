@@ -24,7 +24,9 @@ keywords:
 
 Linting and formatting standards for the pool-controller project. CI uses Super-Linter v8.3.1 with specific linters enabled.
 
-> **🔍 Code Search**: Use `semble search "lint error"` or `semble search "clang-format violation"` to locate formatting issues. `semble find-related` helps trace patterns across the codebase. See `Agents.md` §7 for full `semble` usage.
+> **🔍 Code Search**: Use `semble search "lint error"` or `semble search "clang-format violation"` to
+> locate formatting issues. `semble find-related` helps trace patterns across the codebase. See
+> `Agents.md` §7 for full `semble` usage.
 
 ---
 
@@ -171,9 +173,11 @@ Das entspricht den **enabled checks** aus `platformio.ini`. Typische Checks:
 The project has a custom `CPPLINT.cfg` at the repository root that sets:
 
 - `linelength=130` (matching `.clang-format`, overriding cpplint's default 80)
-- Disabled filters for embedded/Arduino patterns: `-legal/copyright`, `-build/include_subdir`, `-runtime/int`, `-whitespace/indent`, `-readability/casting`, and more
+- Disabled filters for embedded/Arduino patterns: `-legal/copyright`, `-build/include_subdir`,
+  `-runtime/int`, `-whitespace/indent`, `-readability/casting`, and more
 
-Check `CPPLINT.cfg` before adding/removing filters — it reflects deliberate project decisions to accommodate Arduino/ESP32 idioms while enforcing Google C++ Style where it matters.
+Check `CPPLINT.cfg` before adding/removing filters — it reflects deliberate project decisions to
+accommodate Arduino/ESP32 idioms while enforcing Google C++ Style where it matters.
 
 ---
 
@@ -254,7 +258,8 @@ Cpplint erwartet: eigener Header, C System Headers, C++ System Headers, andere P
 
 ### 4. Cpplint Line Length
 
-Cpplint (via Super-Linter im CI) verwendet das `CPPLINT.cfg` mit `linelength=130`. Wenn der CI cpplint-Trotzdem 80 Zeichen meldet, liegt es an einer veralteten CI-Cache oder Konfiguration.
+Cpplint (via Super-Linter im CI) verwendet das `CPPLINT.cfg` mit `linelength=130`. Wenn der CI
+cpplint-Trotzdem 80 Zeichen meldet, liegt es an einer veralteten CI-Cache oder Konfiguration.
 
 ### 5. Include Guard Style
 
