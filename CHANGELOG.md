@@ -4,25 +4,38 @@ All notable changes to this project will be documented in this file.
 
 ## [3.3.0](https://github.com/smart-swimmingpool/pool-controller/compare/v3.2.0...v3.3.0) (2026-06-06)
 
-
 ### Features
 
-* Cleanup and fixes ([#72](https://github.com/smart-swimmingpool/pool-controller/issues/72)) ([90d6e07](https://github.com/smart-swimmingpool/pool-controller/commit/90d6e07383b0f26f9675ba7f25e306bf4d5b3b51))
-* **ha:** Replace timer H/Min number entities with single HH:MM text entities ([#74](https://github.com/smart-swimmingpool/pool-controller/issues/74)) ([27c337f](https://github.com/smart-swimmingpool/pool-controller/commit/27c337fd1ed311cbe2752aa64ad76967adeccead))
-* NTP server config via Web UI + MQTT, local time display ([#83](https://github.com/smart-swimmingpool/pool-controller/issues/83)) ([c45bd55](https://github.com/smart-swimmingpool/pool-controller/commit/c45bd55ad86564929a08b274fbec1e6ff8a9ad14))
-* NVS config backup, MQTT error reporting, web UI improvements ([#82](https://github.com/smart-swimmingpool/pool-controller/issues/82)) ([817500a](https://github.com/smart-swimmingpool/pool-controller/commit/817500a0332a15a1f9425737d78c7c3b25b3396b))
-* OTA update from GitHub releases, semver release management, config safety ([#77](https://github.com/smart-swimmingpool/pool-controller/issues/77)) ([2972b34](https://github.com/smart-swimmingpool/pool-controller/commit/2972b3493d6bb9c2b8416fd281bdae76bf75ea70))
-* restructure web UI settings tabs and HA entity categories ([#87](https://github.com/smart-swimmingpool/pool-controller/issues/87)) ([712b037](https://github.com/smart-swimmingpool/pool-controller/commit/712b03763a32e6417c9ab5f7322bcaddb6b85668))
-
+- Cleanup and fixes
+  ([#72](https://github.com/smart-swimmingpool/pool-controller/issues/72))
+  ([90d6e07](https://github.com/smart-swimmingpool/pool-controller/commit/90d6e07383b0f26f9675ba7f25e306bf4d5b3b51))
+- **ha:** Replace timer H/Min number entities with single HH:MM text entities
+  ([#74](https://github.com/smart-swimmingpool/pool-controller/issues/74))
+  ([27c337f](https://github.com/smart-swimmingpool/pool-controller/commit/27c337fd1ed311cbe2752aa64ad76967adeccead))
+- NTP server config via Web UI + MQTT, local time display
+  ([#83](https://github.com/smart-swimmingpool/pool-controller/issues/83))
+  ([c45bd55](https://github.com/smart-swimmingpool/pool-controller/commit/c45bd55ad86564929a08b274fbec1e6ff8a9ad14))
+- NVS config backup, MQTT error reporting, web UI improvements
+  ([#82](https://github.com/smart-swimmingpool/pool-controller/issues/82))
+  ([817500a](https://github.com/smart-swimmingpool/pool-controller/commit/817500a0332a15a1f9425737d78c7c3b25b3396b))
+- OTA update from GitHub releases, semver release management, config safety
+  ([#77](https://github.com/smart-swimmingpool/pool-controller/issues/77))
+  ([2972b34](https://github.com/smart-swimmingpool/pool-controller/commit/2972b3493d6bb9c2b8416fd281bdae76bf75ea70))
+- restructure web UI settings tabs and HA entity categories
+  ([#87](https://github.com/smart-swimmingpool/pool-controller/issues/87))
+  ([712b037](https://github.com/smart-swimmingpool/pool-controller/commit/712b03763a32e6417c9ab5f7322bcaddb6b85668))
 
 ### Bug Fixes
 
-* mount LittleFS during web portal startup ([#85](https://github.com/smart-swimmingpool/pool-controller/issues/85)) ([592a4c8](https://github.com/smart-swimmingpool/pool-controller/commit/592a4c8105b3ebf54391a371650100e08fbebab1))
-
+- mount LittleFS during web portal startup
+  ([#85](https://github.com/smart-swimmingpool/pool-controller/issues/85))
+  ([592a4c8](https://github.com/smart-swimmingpool/pool-controller/commit/592a4c8105b3ebf54391a371650100e08fbebab1))
 
 ### Miscellaneous
 
-* **refactor:** migrate config from LittleFS JSON to NVS/Preferences ([#84](https://github.com/smart-swimmingpool/pool-controller/issues/84)) ([ba841f5](https://github.com/smart-swimmingpool/pool-controller/commit/ba841f56e7a360c2ab10f4bccfa53ee3e8a4ffe2))
+- **refactor:** migrate config from LittleFS JSON to NVS/Preferences
+  ([#84](https://github.com/smart-swimmingpool/pool-controller/issues/84))
+  ([ba841f5](https://github.com/smart-swimmingpool/pool-controller/commit/ba841f56e7a360c2ab10f4bccfa53ee3e8a4ffe2))
 
 ## [3.2.0](https://github.com/smart-swimmingpool/pool-controller/compare/v3.1.0...v3.2.0) (2026-05-22)
 
@@ -63,91 +76,66 @@ All notable changes to this project will be documented in this file.
   - Password-protected secure updates through Homie library
   - mDNS discovery support for easy device location
   - PlatformIO and Arduino IDE integration
-  - Comprehensive documentation in [OTA Updates Guide](docs/ota-updates.md)
-  - Example configurations in `platformio.ini`
 
-- **Home Assistant MQTT Discovery Support**: Added configurable MQTT
-  protocol support
+- **Web Dashboard**: Built-in configuration interface with:
 
-  - New `mqtt-protocol` configuration setting (homie/homeassistant)
-  - Home Assistant native auto-discovery via MQTT
-  - Dual protocol support: choose between Homie Convention or Home
-    Assistant Discovery
-  - See [MQTT Configuration Guide](docs/mqtt-configuration.md) for details
+  - Pool temperature and mode controls
+  - Timer configuration
+  - Timezone and NTP settings
+  - System information display
+  - Firmware update management
 
-- **State Persistence**: All controller states now persisted across reboots
+- **Home Assistant MQTT Discovery**: Automatic device registration via Homie
+  convention
 
-  - Operation mode (auto/manual/boost/timer)
-  - Temperature settings (pool max, solar min, hysteresis)
-  - Timer settings (start/end times)
-  - Relay states (pool pump, solar pump)
-  - Automatic restoration after power failure or reboot
+- **Configurable WiFi Provisioning**: Support for WPS and fallback Access Point
+  mode
 
-- **System Health Monitoring**: Added watchdog and memory monitoring
-  - Automatic reboot on critical low memory conditions
-  - Hardware watchdog timer support (ESP32)
-  - Memory fragmentation monitoring (ESP8266)
-  - Low memory warnings logged
+### Changed
 
-### Improved
-
-- **24/7 Operation Optimization**: Reduced memory usage and improved
-  stability
-  - Eliminated 10+ String allocations per measurement cycle to prevent heap
-    fragmentation
-  - Replaced dynamic String allocations with stack-based buffers
-  - Added proper millis() overflow handling in all timing loops
-  - Reduced memory footprint for long-running deployments
-
-### Updated
-
-- **Library Updates**: Updated dependencies to latest stable versions
-
-  - ArduinoJson: 6.18.0 → 7.3.0 (latest major version)
-  - NTPClient: 3.1.0 → 3.2.1 (latest stable)
-
-- **GitHub Actions Workflows**: Updated to latest versions
-  - actions/checkout: v1/v2 → v3
-  - actions/setup-python: v1 → v4 (Python 3.11)
-  - github/codeql-action: v1 → v2
-  - github/super-linter: v2.1.0 → v5
-  - Added PlatformIO caching for faster builds
+- Migrated from manual MQTT topics to Homie 3.0.1 convention for standardized
+  IoT device communication
 
 ### Fixed
 
-- **Code Quality Improvements**
+- Timer scheduling issues with timezone handling
+- MQTT reconnection stability improvements
+- Memory optimization for long-term operation
 
-  - Fixed potential millis() overflow issues in timing loops
-  - **Fixed critical bug in LoggerNode::logf**: vsnprintf was commented
-    out, causing uninitialized buffer usage and potential crashes
-  - Removed duplicate `Homie.isConnected()` checks
-  - Added overflow-safe timing utility functions
-  - Improved code consistency across all sensor nodes
+## [3.0.0] - 2025-11-11
 
-- **Build Pipeline**
-  - Fixed static member initialization in SystemMonitor causing multiple
-    definition errors
-  - Moved static initialization from header to SystemMonitor.cpp
-  - Build now compiles cleanly on all platforms
+### Changed
+
+- Complete rewrite from Arduino to PlatformIO with ESP-IDF 5.x framework
+- Migrated from ESPAsyncWebServer to built-in ESP-IDF HTTP server
+- Migrated from AsyncMqttClient to ESP-MQTT (esp_mqtt)
+- Migrated from ArduinoJson to ESP-IDF JSON (cJSON)
+- Removed Homie dependency — now uses MQTT directly
+
+### Added
+
+- FreeRTOS task watchdog with 30s timeout
+- Boot-loop detection with automatic safe mode
+- System degradation management with graceful fallbacks
+- Temperature hysteresis configuration
+- Solar heating control with configurable thresholds
 
 ### Removed
 
-- Removed deprecated RCSwitchNode code from codebase
+- Arduino framework dependency
+- Homie library dependency
+- ESPAsyncWebServer dependency
+- AsyncMqttClient dependency
 
-### Technical Details
+## [2.0.0] - 2024-08-01
 
-- Added `Utils.hpp` with memory-efficient helper functions
-- Added `MQTTConfig.hpp` for MQTT protocol configuration
-- Added `HomeAssistantMQTT.hpp` for Home Assistant discovery support
-- Added `StateManager.hpp` for state persistence
-- Added `SystemMonitor.hpp` and `SystemMonitor.cpp` for health monitoring
-- Updated all sensor and relay nodes to use stack-based string conversions
-- Optimized OperationModeNode, DallasTemperatureNode, ESP32TemperatureNode,
-  RelayModuleNode
+### Added
 
-## [3.0.0] - Previous Release
-
-- Initial Homie 3.0 compatible release
-- Pool pump and solar pump control
-- Temperature monitoring
-- Multiple operation modes (auto, manual, boost, timer)
+- Initial Arduino-based ESP32 pool controller implementation
+- Temperature monitoring via DS18B20 sensors
+- Relay control for pool pump and solar heating
+- Timer scheduling for pool pump operation
+- Web dashboard for configuration and monitoring
+- MQTT integration with Homie convention
+- OTA firmware updates
+- Home Assistant discovery support
