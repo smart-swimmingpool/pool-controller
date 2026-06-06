@@ -23,7 +23,9 @@ keywords:
 
 # NVS Configuration Storage — Pool Controller
 
-The pool-controller stores all configuration data in ESP32 **NVS (Non-Volatile Storage)** via the Arduino `Preferences` library. This replaces the earlier LittleFS JSON-based `/config.json` approach.
+The pool-controller stores all configuration data in ESP32
+**NVS (Non-Volatile Storage)** via the Arduino `Preferences` library.
+This replaces the earlier LittleFS JSON-based `/config.json` approach.
 
 ## Why NVS over LittleFS/JSON?
 
@@ -38,7 +40,7 @@ The pool-controller stores all configuration data in ESP32 **NVS (Non-Volatile S
 
 ## Architecture
 
-```
+```text
 ConfigManager (static class)
 │
 ├── begin()   → opens NVS namespace "config", calls load()
@@ -55,7 +57,9 @@ ConfigManager (static class)
 └── isConfigured() / setConfigured()
 ```
 
-> **⚠️ Save pattern**: After modifying any field via the getters above, call `ConfigManager::save()` explicitly:
+> **⚠️ Save pattern**: After modifying any field via the getters above,
+> call `ConfigManager::save()` explicitly:
+>
 > ```cpp
 > ConfigManager::getSettings().opMode = "timer";
 > ConfigManager::save();
@@ -97,11 +101,15 @@ NVS data **survives all firmware update methods** automatically:
 - **USB serial flash**: ✅ Safe as long as *Erase All Flash Before Sketch Upload* is **Disabled** (default in PlatformIO)
 - **PlatformIO `pio run --target erase`**: ❌ Will wipe NVS — use with caution
 
-The old OTA backup/restore logic (`backupConfig()` / `restoreConfig()`) and the `/config.json.ota` file have been **removed**. They are no longer needed.
+The old OTA backup/restore logic (`backupConfig()` / `restoreConfig()`)
+and the `/config.json.ota` file have been **removed**.
+They are no longer needed.
 
 ## Boot Version Tracking
 
-`ConfigManager::logOtaTransition()` uses a separate NVS namespace `"ota-version"` with a single key `"fw_version"` to detect version transitions across OTA updates. It logs:
+`ConfigManager::logOtaTransition()` uses a separate NVS namespace
+`"ota-version"` with a single key `"fw_version"` to detect version
+transitions across OTA updates. It logs:
 
 - **First boot ever** — no previous version found
 - **OTA update detected** — version changed (logs old → new)

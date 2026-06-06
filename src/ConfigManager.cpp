@@ -27,13 +27,12 @@ static String hashSha256(const String &input) {
   mbedtls_md_finish(&ctx, hash);
   mbedtls_md_free(&ctx);
 
-  String result = "";
+  char result[65];
   for (int i = 0; i < 32; i++) {
-    char buf[3];
-    snprintf(buf, sizeof(buf), "%02x", hash[i]);
-    result += buf;
+    snprintf(result + (i * 2), 3, "%02x", hash[i]);
   }
-  return result;
+  result[64] = '\0';
+  return String(result);
 }
 
 // ── NVS Key Names ──
