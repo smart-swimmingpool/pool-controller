@@ -22,13 +22,16 @@ keywords:
 
 # IoT Quality — Pool Controller
 
-Quality assurance specific to embedded/IoT firmware for the pool-controller. This goes beyond general C++ quality — it targets patterns that cause failures in always-on resource-constrained devices.
+Quality assurance specific to embedded/IoT firmware for the pool-controller. This goes beyond general C++
+quality — it targets patterns that cause failures in always-on resource-constrained devices.
 
-> **🔍 Code Search**: Use `semble search "delay("` to find blocking patterns, `semble search "String"` for heap allocations. `semble find-related` helps trace anti-pattern instances across modules. See `Agents.md` §7 for full `semble` usage.
+> **🔍 Code Search**: Use `semble search "delay("` to find blocking patterns, `semble search "String"` for
+> heap allocations. `semble find-related` helps trace anti-pattern instances across modules. See
+> `Agents.md` §7 for full `semble` usage.
 
 ## Quality Gates (Required Before Merge)
 
-```
+```text
 ┌─────────────────────────────────────────────┐
 │              PRE-MERGE CHECKLIST             │
 ├─────────────────────────────────────────────┤
@@ -100,7 +103,8 @@ The main loop at `PoolController.cpp:180-232` must never block for more than a f
 
 **Check these**:
 
-- `delay(5000)` at `PoolController.cpp:77` — only in `initializeController()` on fatal error (acceptable — it's followed by `ESP.restart()`)
+- `delay(5000)` at `PoolController.cpp:77` — only in `initializeController()` on fatal error
+  (acceptable — it's followed by `ESP.restart()`)
 - `delay(1000)` at `SystemMonitor.hpp:92` — before reboot on critical memory (acceptable)
 - Any `while(!condition)` without yield/watchdog feed — **banned**
 
@@ -156,7 +160,8 @@ ESP32 NVS (Preferences) has ~100K write cycles per key.
 - Safe Mode: all relays OFF, relay state cleared from NVS
 - After 5 min stable → counter cleared, normal operation resumes
 
-**Verify on changes**: Any new initialization code must not interfere with boot-loop detection (which runs at the very start of `setup()`).
+**Verify on changes**: Any new initialization code must not interfere with boot-loop detection (which
+runs at the very start of `setup()`).
 
 ### Memory Leak Detection
 
@@ -182,7 +187,7 @@ if (millis() - lastHeapCheck > 60000) {
 
 **Current structure** (`src/` is flat — all modules mixed):
 
-```
+```text
 src/
 ├── main.cpp            ← Entry point
 ├── PoolController.*    ← Orchestrator
@@ -241,13 +246,13 @@ static void Manager::loop();
 
 ## 4. Automated Quality Checks
 
-### In CI (GitHub Actions):
+### In CI (GitHub Actions)
 
 - **Super-Linter**: cpplint, EditorConfig, Markdown, YAML, JSON, GHA, Gitleaks, Bash
 - **PlatformIO Check**: static analysis on source
 - **PlatformIO Build**: compilation for esp32dev
 
-### Missing CI (future work):
+### Missing CI (future work)
 
 - `platformio test` — unit tests (none exist yet; no `test/` directory)
 - Memory analysis (heap/stack usage report)
@@ -258,13 +263,32 @@ static void Manager::loop();
 
 - `DHT sensor library` listed in `platformio.ini` lib_deps but **not used** in any source file — candidate for cleanup
 
-### Local Make Targets:
+### Local Make Targets
 
 ```bash
-make lint      # Super-Linter (Docker)
+make lint      # Super-Linter (Docker — nur x86_64)
 make lint-fix  # clang-format + prettier auto-fix
 make build     # pio run -e esp32dev
 make clean     # Clean build artifacts
+```
+
+### ARM64 — Super-Linter Alternative (kein ARM64 Docker Image)
+
+Super-Linter läuft auf ARM64 nicht via Docker. Einzel-Linter installieren:
+
+```bash
+# Python (in venv):
+python3 -m venv /tmp/lint-venv
+/tmp/lint-venv/bin/pip install cpplint yamllint
+
+# Node.js:
+sudo npm install -g markdownlint-cli editorconfig-checker
+
+# Einzel-Checks (gematcht auf CI-Konfiguration):
+markdownlint --config /dev/null --rules '~MD013=120' docs/
+yamllint .github/linters/
+cpplint --linelength=130 --recursive src/
+editorconfig-checker -exclude '.git' .
 ```
 
 ## 5. Production Readiness Checklist

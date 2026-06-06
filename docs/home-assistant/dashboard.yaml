@@ -1,0 +1,237 @@
+# Home Assistant Lovelace Dashboard (Raw configuration)
+# Layout orientiert sich an der Pool Controller Web UI:
+#   🏠 Dashboard → View "Pool"
+#   🌊 Pool + 🕐 Zeit + 🔒 System → View "Konfiguration"
+#
+# ⚠️  Entity-IDs können abweichen!
+# Passe die IDs an deine Installation an:
+#   HA → Entwickler-Tools → Entities → nach "pool" filtern
+# Ersetze `pool_controller` / `garten_pool_controller` durch deinen Prefix.
+#
+# Abhängigkeiten:
+#   - button-card (optional, für Mode-Buttons mit aktivem Highlight)
+#     Installation: HACS → Frontend → button-card
+#     Ohne button-card: Standard HA-Buttons (kein visuelles Highlight)
+
+title: Pool Controller
+views:
+  # ═══════════════════════════════════════════════
+  # View 1: Pool — Dashboard + Steuerung
+  # Entspricht Web UI: 🏠 Dashboard + 🌊 Pool
+  # ═══════════════════════════════════════════════
+  - title: Pool
+    path: pool
+    icon: mdi:pool
+    badges:
+      - type: entity
+        show_name: false
+        show_state: true
+        show_icon: true
+        entity: select.pool_controller_operation_mode
+        name: Mode
+      - entity: switch.pool_controller_pool_pump
+        name: Pool Pump
+      - entity: switch.pool_controller_solar_pump
+        name: Solar Pump
+
+    cards:
+      # ── Temperaturen (wie Web UI Dashboard) ──
+      - type: horizontal-stack
+        cards:
+          - type: gauge
+            entity: sensor.pool_controller_pool_temperature
+            name: Pool Temperature
+            unit: °C
+            min: 0
+            max: 45
+            severity:
+              green: 20
+              yellow: 28
+              red: 33
+          - type: gauge
+            entity: sensor.pool_controller_solar_temperature
+            name: Solar Storage Tank
+            unit: °C
+            min: 0
+            max: 90
+            severity:
+              green: 35
+              yellow: 50
+              red: 70
+
+      # ── Betriebsart (wie Web UI Mode-Karten) ──
+      # Aktiver Mode wird farbig hervorgehoben (button-card erforderlich)
+      - type: grid
+        title: Operation Mode
+        columns: 4
+        square: false
+        cards:
+          - type: custom:button-card
+            name: Auto
+            icon: mdi:robot
+            entity: select.pool_controller_operation_mode
+            state:
+              - value: 'auto'
+                styles:
+                  card:
+                    - background-color: rgba(0, 229, 255, 0.15)
+                    - border: 2px solid var(--accent-color)
+                    - color: var(--primary-color)
+              - value: default
+                styles:
+                  card:
+                    - background-color: var(--card-background-color)
+                    - border: 1px solid var(--divider-color)
+                    - opacity: 0.7
+            tap_action:
+              action: call-service
+              service: select.select_option
+              service_data:
+                entity_id: select.pool_controller_operation_mode
+                option: auto
+          - type: custom:button-card
+            name: Timer
+            icon: mdi:timer-outline
+            entity: select.pool_controller_operation_mode
+            state:
+              - value: 'timer'
+                styles:
+                  card:
+                    - background-color: rgba(0, 229, 255, 0.15)
+                    - border: 2px solid var(--accent-color)
+                    - color: var(--primary-color)
+              - value: default
+                styles:
+                  card:
+                    - background-color: var(--card-background-color)
+                    - border: 1px solid var(--divider-color)
+                    - opacity: 0.7
+            tap_action:
+              action: call-service
+              service: select.select_option
+              service_data:
+                entity_id: select.pool_controller_operation_mode
+                option: timer
+          - type: custom:button-card
+            name: Boost
+            icon: mdi:rocket-launch
+            entity: select.pool_controller_operation_mode
+            state:
+              - value: 'boost'
+                styles:
+                  card:
+                    - background-color: rgba(0, 229, 255, 0.15)
+                    - border: 2px solid var(--accent-color)
+                    - color: var(--primary-color)
+              - value: default
+                styles:
+                  card:
+                    - background-color: var(--card-background-color)
+                    - border: 1px solid var(--divider-color)
+                    - opacity: 0.7
+            tap_action:
+              action: call-service
+              service: select.select_option
+              service_data:
+                entity_id: select.pool_controller_operation_mode
+                option: boost
+          - type: custom:button-card
+            name: Manual
+            icon: mdi:hand-back-right
+            entity: select.pool_controller_operation_mode
+            state:
+              - value: 'manu'
+                styles:
+                  card:
+                    - background-color: rgba(0, 229, 255, 0.15)
+                    - border: 2px solid var(--accent-color)
+                    - color: var(--primary-color)
+              - value: default
+                styles:
+                  card:
+                    - background-color: var(--card-background-color)
+                    - border: 1px solid var(--divider-color)
+                    - opacity: 0.7
+            tap_action:
+              action: call-service
+              service: select.select_option
+              service_data:
+                entity_id: select.pool_controller_operation_mode
+                option: manu
+
+      # ── Einstellungen (wie Web UI 🌊 Pool) ──
+      - type: entities
+        title: Pool Settings
+        show_header_toggle: false
+        entities:
+          - entity: select.pool_controller_operation_mode
+            name: Current Mode
+          - entity: number.pool_controller_max_pool_temp
+            name: Max. Pool Temperature
+          - entity: number.pool_controller_min_solar_temp
+            name: Min. Water Storage Temperature
+          - entity: number.pool_controller_temperature_hysteresis
+            name: Hysteresis
+          - entity: time.garten_pool_controller_timer_start
+            name: Timer Start
+          - entity: time.garten_pool_controller_timer_end
+            name: Timer End
+
+      # ── Pumpenschalter ──
+      - type: entities
+        title: Pump Control
+        show_header_toggle: false
+        entities:
+          - entity: switch.pool_controller_pool_pump
+            name: Pool Pump
+          - entity: switch.pool_controller_solar_pump
+            name: Solar Pump
+
+      # ── Temperaturverlauf (24h) ──
+      - type: history-graph
+        title: Temperatures & Pump States (24h)
+        hours_to_show: 24
+        refresh_interval: 30
+        entities:
+          - entity: sensor.pool_controller_pool_temperature
+            name: Pool
+          - entity: sensor.pool_controller_solar_temperature
+            name: Solar Storage Tank
+          - entity: switch.pool_controller_pool_pump
+            name: Pool Pump
+          - entity: switch.pool_controller_solar_pump
+            name: Solar Pump
+
+  # ═══════════════════════════════════════════════
+  # View 2: Konfiguration — Zeit + System
+  # Entspricht Web UI: 🕐 Zeit + 🔒 System
+  # ═══════════════════════════════════════════════
+  - title: Konfiguration
+    path: konfiguration
+    icon: mdi:tune
+    cards:
+      # ── Zeiteinstellungen (wie Web UI 🕐 Zeit) ──
+      - type: entities
+        title: Time & NTP
+        show_header_toggle: false
+        entities:
+          - entity: select.garten_pool_controller_timezone
+            name: Timezone
+          - entity: text.garten_pool_controller_ntp_server
+            name: NTP Server
+
+      # ── System-Info (wie Web UI Dashboard + System-Tab) ──
+      - type: entities
+        title: System
+        show_header_toggle: false
+        entities:
+          - entity: sensor.garten_pool_controller_local_time
+            name: Local Time
+          - entity: sensor.pool_controller_wifi_signal_strength
+            name: WiFi Signal
+          - entity: sensor.pool_controller_free_heap_space
+            name: Free Heap
+          - entity: sensor.pool_controller_system_uptime
+            name: Uptime
+          - entity: update.garten_pool_controller_firmware
+            name: Firmware

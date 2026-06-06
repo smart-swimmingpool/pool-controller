@@ -24,7 +24,9 @@ keywords:
 
 Linting and formatting standards for the pool-controller project. CI uses Super-Linter v8.3.1 with specific linters enabled.
 
-> **🔍 Code Search**: Use `semble search "lint error"` or `semble search "clang-format violation"` to locate formatting issues. `semble find-related` helps trace patterns across the codebase. See `Agents.md` §7 for full `semble` usage.
+> **🔍 Code Search**: Use `semble search "lint error"` or `semble search "clang-format violation"` to
+> locate formatting issues. `semble find-related` helps trace patterns across the codebase. See
+> `Agents.md` §7 for full `semble` usage.
 
 ---
 
@@ -171,9 +173,11 @@ Das entspricht den **enabled checks** aus `platformio.ini`. Typische Checks:
 The project has a custom `CPPLINT.cfg` at the repository root that sets:
 
 - `linelength=130` (matching `.clang-format`, overriding cpplint's default 80)
-- Disabled filters for embedded/Arduino patterns: `-legal/copyright`, `-build/include_subdir`, `-runtime/int`, `-whitespace/indent`, `-readability/casting`, and more
+- Disabled filters for embedded/Arduino patterns: `-legal/copyright`, `-build/include_subdir`,
+  `-runtime/int`, `-whitespace/indent`, `-readability/casting`, and more
 
-Check `CPPLINT.cfg` before adding/removing filters — it reflects deliberate project decisions to accommodate Arduino/ESP32 idioms while enforcing Google C++ Style where it matters.
+Check `CPPLINT.cfg` before adding/removing filters — it reflects deliberate project decisions to
+accommodate Arduino/ESP32 idioms while enforcing Google C++ Style where it matters.
 
 ---
 
@@ -254,7 +258,8 @@ Cpplint erwartet: eigener Header, C System Headers, C++ System Headers, andere P
 
 ### 4. Cpplint Line Length
 
-Cpplint (via Super-Linter im CI) verwendet das `CPPLINT.cfg` mit `linelength=130`. Wenn der CI cpplint-Trotzdem 80 Zeichen meldet, liegt es an einer veralteten CI-Cache oder Konfiguration.
+Cpplint (via Super-Linter im CI) verwendet das `CPPLINT.cfg` mit `linelength=130`. Wenn der CI
+cpplint-Trotzdem 80 Zeichen meldet, liegt es an einer veralteten CI-Cache oder Konfiguration.
 
 ### 5. Include Guard Style
 
@@ -320,9 +325,48 @@ The hook runs clang-format on staged `.cpp`/`.hpp` files before each commit.
 
 ---
 
-## Full CI Simulation
+## Full CI Simulation (ARM64)
+
+Super-Linter Docker image (`ghcr.io/super-linter/super-linter:v8`) hat **kein ARM64 Image**. Lokal auf ARM64 daher
+nicht via Docker ausführbar. Stattdessen die einzelnen Linter direkt installieren und ausführen:
+
+### Installation der Einzel-Linter
 
 ```bash
-# Lässt sich aufgrund von Super-Linter ARM64-Inkompatibilität nicht lokal ausführen.
-# Stattdessen die Quality Gates 1-5 manuell durchgehen (siehe Pre-PR Checkliste oben).
+# Python Linter (in venv):
+python3 -m venv /tmp/lint-venv
+/tmp/lint-venv/bin/pip install cpplint yamllint
+
+# Node.js Linter (systemweit):
+sudo npm install -g markdownlint-cli editorconfig-checker
+
+# Eventuell weitere:
+sudo apt install -y shellcheck  # VALIDATE_BASH
+```
+
+### Einzel-Linter ausführen (Alternative zu Super-Linter)
+
+```bash
+# MARKDOWN (120 Zeichen wie CI):
+markdownlint --config /dev/null --rules '~MD013=120' \
+  docs/**/*.md   # oder gezielt geänderte Dateien
+
+# YAML:
+yamllint .github/linters/ data/web/ templates/
+
+# EditorConfig (via editorconfig-checker):
+editorconfig-checker -exclude '.git' .
+
+# Gitleaks (secret detection):
+gitleaks detect --source . -v --no-git
+
+# Bash:
+shellcheck scripts/*.sh .github/scripts/*.sh
+```
+
+### Kurzcheck für PRs (nur geänderte Dateien)
+
+```bash
+# Geänderte Markdown-Dateien checken:
+markdownlint $(git diff --name-only --diff-filter=AM HEAD~1 | grep '\.md$')
 ```

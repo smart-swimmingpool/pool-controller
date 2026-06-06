@@ -294,3 +294,36 @@ input:focus, select:focus {
   color: var(--danger);
   border: 1px solid rgba(239, 68, 68, 0.3);
 }
+
+/* ── Mobile: Single-Column Layout ── */
+@media (max-width: 520px) {
+  body { padding: 1rem 0.5rem; }
+  .glass-card { padding: 1rem; border-radius: 0 12px 12px 12px; }
+
+  .telemetry-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  .mode-selector {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+  .mode-card { padding: 0.5rem 0.25rem; }
+  .mode-card .mode-icon { font-size: 1.25rem; }
+  .mode-card .mode-name { font-size: 0.8rem; }
+
+  .telemetry-grid-bottom {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 0.4rem;
+  }
+
+  h1 { font-size: 1.3rem; }
+  h2 { font-size: 1rem; }
+  label { font-size: 0.8rem; }
+  input, select { font-size: 0.9rem; padding: 0.6rem 0.75rem; }
+  .input-hint { font-size: 0.65rem; }
+
+  .footer { font-size: 0.65rem; padding: 0.5rem 0.75rem; }
+  .cogwheel { top: 12px; right: 12px; }
+  #settingsMenu { right: 12px; min-width: 150px; }
+}

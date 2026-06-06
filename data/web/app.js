@@ -307,8 +307,6 @@ function validateSettings() {
     { id: 'tempMaxPool',     name: 'Max Pool Temp',       min: 0,   max: 40,   type: 'float' },
     { id: 'tempMinSolar',    name: 'Min Solar Temp',      min: 0,   max: 90,   type: 'float' },
     { id: 'tempHysteresis',  name: 'Hysteresis',          min: 0,   max: 10,   type: 'float' },
-    { id: 'timeLossGreen',   name: 'Time Sync Green',     min: 1,   max: 6,    type: 'int' },
-    { id: 'timeLossRed',     name: 'Time Sync Red',       min: 1,   max: 72,   type: 'int' },
   ];
   for (const f of fields) {
     const el = document.getElementById(f.id);
@@ -331,7 +329,7 @@ function validateSettings() {
   return true;
 }
 
-// ── Save Controller Settings ──
+// ── Save Controller Settings (Pool Tab) ──
 
 async function saveControllerSettings() {
   if (!validateSettings()) return;
@@ -342,8 +340,20 @@ async function saveControllerSettings() {
   const minSolar = document.getElementById('tempMinSolar').value;
   const hysteresis = document.getElementById('tempHysteresis').value;
   const tz = document.getElementById('timezone').value;
-  const green = document.getElementById('timeLossGreen').value;
-  const red = document.getElementById('timeLossRed').value;
+
+  // Validate time fields included alongside pool fields
+  const green = parseInt(document.getElementById('timeLossGreen').value, 10);
+  const red = parseInt(document.getElementById('timeLossRed').value, 10);
+  if (isNaN(green) || green < 1 || green > 6) {
+    alert('Time Sync Green must be between 1 and 6 hours.');
+    document.getElementById('timeLossGreen').focus();
+    return;
+  }
+  if (isNaN(red) || red < 1 || red > 72) {
+    alert('Time Sync Red must be between 1 and 72 hours.');
+    document.getElementById('timeLossRed').focus();
+    return;
+  }
   const ntpServer = encodeURIComponent(document.getElementById('ntpServer').value);
 
   const res = await fetch('/api/config', {
@@ -354,8 +364,47 @@ async function saveControllerSettings() {
   if (res.status === 200) {
     document.getElementById('poolThreshold').textContent = 'max ' + parseFloat(maxPool).toFixed(1) + '°C';
     document.getElementById('solarThreshold').textContent = 'min ' + parseFloat(minSolar).toFixed(1) + '°C';
-    alert('Controller setpoints saved!');
+    alert('✓ Pool settings saved!');
     highlightMode(mode);
+  }
+}
+
+// ── Save Time Settings (Time Tab) ──
+
+async function saveTimeSettings() {
+  // Validate pool fields (read alongside the request)
+  if (!validateSettings()) return;
+
+  const tz = document.getElementById('timezone').value;
+  const ntpServer = encodeURIComponent(document.getElementById('ntpServer').value);
+  const green = parseInt(document.getElementById('timeLossGreen').value, 10);
+  const red = parseInt(document.getElementById('timeLossRed').value, 10);
+
+  if (isNaN(green) || green < 1 || green > 6) {
+    alert('Green Threshold must be between 1 and 6 hours.');
+    document.getElementById('timeLossGreen').focus();
+    return;
+  }
+  if (isNaN(red) || red < 1 || red > 72) {
+    alert('Red Threshold must be between 1 and 72 hours.');
+    document.getElementById('timeLossRed').focus();
+    return;
+  }
+
+  // Read all pool fields to preserve them on save
+  const mode = document.getElementById('opMode').value;
+  const interval = document.getElementById('loopInterval').value;
+  const maxPool = document.getElementById('tempMaxPool').value;
+  const minSolar = document.getElementById('tempMinSolar').value;
+  const hysteresis = document.getElementById('tempHysteresis').value;
+
+  const res = await fetch('/api/config', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: 'type=settings&mode=' + mode + '&interval=' + interval + '&max_pool=' + maxPool + '&min_solar=' + minSolar + '&hysteresis=' + hysteresis + '&timezone=' + tz + '&green=' + green + '&red=' + red + timerParams() + '&ntp_server=' + ntpServer
+  });
+  if (res.status === 200) {
+    alert('✓ Time settings saved!');
   }
 }
 

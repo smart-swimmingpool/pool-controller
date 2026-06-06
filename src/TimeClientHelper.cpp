@@ -52,9 +52,16 @@ Timezone Japan(JST, JST);
 TimeChangeRule CST_CHINA = {"CST", First, Sun, Mar, 0, 8 * 60};  // UTC + 8 hours
 Timezone China(CST_CHINA, CST_CHINA);
 
-TimeZoneInfo _timezones[10] = {{"Central European", &Europe}, {"Eastern European", &EasternEurope},
-  {"Western European", &WesternEurope}, {"US Eastern", &USEastern}, {"US Central", &USCentral}, {"US Mountain", &USMountain},
-  {"US Pacific", &USPacific}, {"Australian Eastern", &AustralianEastern}, {"Japan", &Japan}, {"China", &China}};
+TimeZoneInfo _timezones[10] = {{"Central Europe (CET/CEST)", &Europe}, {"Eastern Europe (EET/EEST)", &EasternEurope},
+  {"Western Europe (WET/WEST)", &WesternEurope}, {"US Eastern Time", &USEastern}, {"US Central Time", &USCentral},
+  {"US Mountain Time", &USMountain}, {"US Pacific Time", &USPacific}, {"Australian Eastern", &AustralianEastern},
+  {"Japan (JST)", &Japan}, {"China (CST)", &China}};
+
+// Pointer array for MQTT Select / web UI labels — mirrors _timezones descriptions
+static const char *kTzLabels[] = {"Central Europe (CET/CEST)", "Eastern Europe (EET/EEST)", "Western Europe (WET/WEST)",
+  "US Eastern Time", "US Central Time", "US Mountain Time", "US Pacific Time",
+  "Australian Eastern", "Japan (JST)", "China (CST)"};
+static constexpr int kTzLabelCount = sizeof(kTzLabels) / sizeof(kTzLabels[0]);
 
 int _selectedTimezoneIndex = 0;  // Default to Central European Time
 
@@ -188,6 +195,22 @@ String getTimeInfoFor(int index) {
   } else {
     return "UTC";
   }
+}
+
+const char *const *getTimezoneLabelList() {
+  return kTzLabels;
+}
+
+int getTimezoneLabelCount() {
+  return kTzLabelCount;
+}
+
+int getTimezoneIndexFromLabel(const String &label) {
+  for (int i = 0; i < kTzLabelCount; i++) {
+    if (label == kTzLabels[i])
+      return i;
+  }
+  return -1;
 }
 
 String getFormattedTime(time_t rawTime) {
