@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.3.0](https://github.com/smart-swimmingpool/pool-controller/compare/v3.2.0...v3.3.0) (2026-06-06)
+
+
+### Features
+
+* Cleanup and fixes ([#72](https://github.com/smart-swimmingpool/pool-controller/issues/72)) ([90d6e07](https://github.com/smart-swimmingpool/pool-controller/commit/90d6e07383b0f26f9675ba7f25e306bf4d5b3b51))
+* **ha:** Replace timer H/Min number entities with single HH:MM text entities ([#74](https://github.com/smart-swimmingpool/pool-controller/issues/74)) ([27c337f](https://github.com/smart-swimmingpool/pool-controller/commit/27c337fd1ed311cbe2752aa64ad76967adeccead))
+* NTP server config via Web UI + MQTT, local time display ([#83](https://github.com/smart-swimmingpool/pool-controller/issues/83)) ([c45bd55](https://github.com/smart-swimmingpool/pool-controller/commit/c45bd55ad86564929a08b274fbec1e6ff8a9ad14))
+* NVS config backup, MQTT error reporting, web UI improvements ([#82](https://github.com/smart-swimmingpool/pool-controller/issues/82)) ([817500a](https://github.com/smart-swimmingpool/pool-controller/commit/817500a0332a15a1f9425737d78c7c3b25b3396b))
+* OTA update from GitHub releases, semver release management, config safety ([#77](https://github.com/smart-swimmingpool/pool-controller/issues/77)) ([2972b34](https://github.com/smart-swimmingpool/pool-controller/commit/2972b3493d6bb9c2b8416fd281bdae76bf75ea70))
+* restructure web UI settings tabs and HA entity categories ([#87](https://github.com/smart-swimmingpool/pool-controller/issues/87)) ([712b037](https://github.com/smart-swimmingpool/pool-controller/commit/712b03763a32e6417c9ab5f7322bcaddb6b85668))
+
+
+### Bug Fixes
+
+* mount LittleFS during web portal startup ([#85](https://github.com/smart-swimmingpool/pool-controller/issues/85)) ([592a4c8](https://github.com/smart-swimmingpool/pool-controller/commit/592a4c8105b3ebf54391a371650100e08fbebab1))
+
 ## [3.2.0](https://github.com/smart-swimmingpool/pool-controller/compare/v3.1.0...v3.2.0) (2026-05-22)
 
 ### Features
