@@ -4,10 +4,10 @@ summary: Die smarte Steuerung deines Swimmingpools
 weight: 2
 
 # page metadata.
-title: Pool Controller 2.0
+title: Pool Controller 3.3
 summary: Steuer deinen Swimmingpool smart
 date: "2020-05-28"
-lastmod: "2020-06-02"
+lastmod: "2026-06-07"
 draft: false
 toc: true
 type: docs

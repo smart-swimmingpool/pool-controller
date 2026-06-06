@@ -3,9 +3,15 @@ on:
   push:
     branches:
       - main
+    # Only trigger when doc-related files change — avoids unnecessary website rebuilds
+    paths:
+      - docs/**
+      - README.md
+      - CHANGELOG.md
+      - .github/workflows/notify-website-doc.yml
 jobs:
   build:
-    name: Dispatch to `website` repository for regeneration of documents
+    name: Dispatch to `website` repository for docs regeneration
     runs-on: ubuntu-latest
     env:
       HUGO_DEPLOY_TOKEN: ${{ secrets.HUGO_DEPLOY_TOKEN }}

@@ -1,4 +1,7 @@
-# Pool Controller v3.1.0 - Complete Summary
+# Pool Controller — Complete Summary
+
+> **⚠️ Historical Document**: This describes changes from the **v3.1.0** release (2026-01-14).
+> The current version is **v3.3.0**. See [CHANGELOG.md](../CHANGELOG.md) for the complete version history.
 
 ## Executive Summary
 

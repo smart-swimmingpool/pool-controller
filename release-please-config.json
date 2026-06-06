@@ -7,13 +7,11 @@
       "extra-files": [
         {
           "type": "generic",
-          "path": "platformio.ini",
-          "search-regex": "FW_VERSION=\"[^\"]*\""
+          "path": "platformio.ini"
         },
         {
           "type": "generic",
-          "path": "src/Version.h",
-          "search-regex": "FW_VERSION \"[^\"]*\""
+          "path": "src/Version.h"
         }
       ]
     }

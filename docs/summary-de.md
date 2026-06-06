@@ -1,5 +1,8 @@
 # Pool Controller - Vollständige Zusammenfassung der Änderungen
 
+> **⚠️ Historisches Dokument**: Dies beschreibt Änderungen aus dem **v3.1.0** Release (2026-01-14).
+> Die aktuelle Version ist **v3.3.0**. Siehe [CHANGELOG.md](../CHANGELOG.md) für die vollständige Versionshistorie.
+
 ## Überblick
 
 Dieses Projekt wurde umfassend analysiert und optimiert gemäß den
