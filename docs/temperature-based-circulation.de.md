@@ -48,6 +48,29 @@ effektiveLaufzeit = min(effektiveLaufzeit, tempCircMaxRuntime)
 | `effectiveRuntime` | Berechnete Laufzeit in Minuten (für Status/Logging) |
 | `effectiveEndTime` | Resultierende Ausschaltzeit (Uhrzeit) |
 
+### Verhalten bei Temperaturänderungen während des Laufs
+
+Die Berechnung läuft **kontinuierlich** (jede `loop()`), aber die Endzeit darf sich **nur nach hinten** verschieben. Sobald die Pumpe läuft, wird die höchste jemals berechnete Endzeit gemerkt.
+
+```
+Start (10:00, 24 °C):   Ende = 10:00 + 480 min = 18:00
+14:00, 28 °C → +4×30:   neueEnde = max(18:00, 20:00) = 20:00 ✓
+16:00, 26 °C → +2×30:   neueEnde = max(20:00, 19:00) = 20:00 ⛔ bleibt
+```
+
+**Regel:** Die Pumpe schaltet **frühestens** zur ursprünglichen Timer-Endzeit aus — auch wenn es später wieder abkühlt. Dadurch gibt es keine Überraschungen und die Pumpe springt nicht unerwartet aus.
+
+```cpp
+// Kernlogik in RuleTimer/RuleAuto::loop():
+uint16_t newEndMinutes = calculateEffectiveEndMinutes(
+    baseStartMinutes, baseEndMinutes, poolTemp);
+
+// Nur verlängern, nie verkürzen:
+if (newEndMinutes > activeEndMinutes) {
+    activeEndMinutes = newEndMinutes;
+}
+```
+
 ## 3. Beispiele
 
 ### Sommer (Pool 30 °C)

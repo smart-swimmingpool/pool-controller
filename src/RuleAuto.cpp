@@ -32,7 +32,7 @@ void RuleAuto::loop() {
     return;
   }
 
-  _poolRelay->setSwitch(checkPoolPumpTimer());
+  _poolRelay->setSwitch(checkPoolPumpTimer(poolTemp));
 
   if (_poolRelay->getSwitch()) {
     // pool pump is running
