@@ -204,7 +204,127 @@ Zusätzlich ein Sensor für die berechnete effektive Laufzeit:
 | 6. Build + Test | — | ~10 min |
 | **Gesamt** | | **~1,5 h** |
 
-## 7. Mögliche Erweiterungen (v2)
+## 7. Benutzerhandbuch
+
+### 7.1 Schnellstart
+
+1. **Timer einstellen** — Die temperaturabhängige Filterlaufzeit funktioniert nur im **Timer**- oder **Auto**-Modus mit einem konfigurierten Zeitfenster. Stelle zuerst die Basis-Filterzeit ein (z. B. 10:00–18:00 Uhr).
+2. **Schwellwert setzen** — Starte mit `24 °C`. Unterhalb dieser Temperatur läuft die Pumpe normal nach Timer.
+3. **Faktor einstellen** — Starte mit `30 min/°C`. Jedes Grad über dem Schwellwert verlängert die Laufzeit um 30 Minuten.
+4. **Maximale Laufzeit festlegen** — Starte mit `720 min (12 h)`. Verhindert übermäßige Laufzeiten an extrem heißen Tagen.
+
+Fertig — die Pumpe läuft jetzt bei warmem Wasser automatisch länger.
+
+> **Faustregel:** Einmal konfiguriert arbeitet das Feature vollautomatisch. Der **Circ. Runtime**-Wert auf dem Dashboard zeigt jederzeit die berechnete Laufzeit an.
+
+### 7.2 Empfohlene Einstellungen nach Pool-Typ
+
+Finde deine Pool-Situation und nutze diese Werte als Ausgangspunkt:
+
+| Pool-Typ | Schwelle | Faktor | Max-Laufzeit | Warum |
+|---|---|---|---|---|
+| ☀️ **Kleiner Aufstellpool** (≤15 m³) | 22 °C | 20 min/°C | 480 min (8 h) | Weniger Volumen, weniger Reserve nötig |
+| 🏊 **Mittlerer Familienpool** (25–50 m³) | 24 °C | 30 min/°C | 720 min (12 h) | Gute Balance aus Wasserqualität und Kosten |
+| 🌴 **Großer Pool / hohe Belastung** (50+ m³) | 22 °C | 40 min/°C | 960 min (16 h) | Mehr Umwälzung für Hygiene nötig |
+| 🌡️ **Beheizter Pool** | 26 °C | 15 min/°C | 600 min (10 h) | Wird ohnehin mehr gefiltert (Heizungspumpe) |
+
+Bei solarem Heizen sollte der Schwellwert **mindestens** auf oder über der Solar-Minimumtemperatur liegen, um Überlappungen zu vermeiden.
+
+### 7.3 Konfiguration über das Web-Interface
+
+#### Pool-Tab
+
+Öffne das Einstellungsmenü (Zahnrad) → **Pool** → Abschnitt **🌡️ Temperature-Based Circulation**.
+
+| Feld | Beschreibung |
+|---|---|
+| **Circ. Temp Threshold** | Pooltemperatur muss diesen Wert überschreiten, damit die Verlängerung greift. |
+| **Circ. Temp Factor** | Zusätzliche Minuten pro °C über dem Schwellwert. Höher = aggressivere Verlängerung. |
+| **Circ. Max Runtime** | Absolute Obergrenze der täglichen Pumpenlaufzeit (inkl. Verlängerung). |
+
+Klicke unten **Save Pool Settings**.
+
+#### Dashboard
+
+Ganz unten auf dem Dashboard zeigt **Circ. Runtime** die aktuell berechnete effektive Laufzeit in Minuten. Dieser Wert aktualisiert sich live — die `only-extend`-Regel merkt sich den jeweils höchsten Wert.
+
+### 7.4 Konfiguration über Home Assistant
+
+Nach MQTT-Verbindung erscheinen drei Number-Entities in Home Assistant:
+
+| Entity | Zweck |
+|---|---|
+| `number.pool_controller_temp_circ_threshold` | Schwellwert einstellen |
+| `number.pool_controller_temp_circ_factor` | Verlängerungsfaktor anpassen |
+| `number.pool_controller_temp_circ_max_runtime` | Obergrenze setzen |
+| `sensor.pool_controller_effective_runtime` | Nur-Lesen — zeigt berechnete Laufzeit |
+
+Änderungen wirken sofort — kein Neustart nötig.
+
+### 7.5 Beispiel: Mit Home Assistant automatisieren
+
+**Szenario:** Faktor bei extremen Temperaturen automatisch erhöhen.
+
+```yaml
+automation:
+  - alias: "Faktor bei Hitzewelle erhöhen"
+    trigger:
+      platform: numeric_state
+      entity_id: weather.home
+      attribute: temperature
+      above: 32
+    action:
+      service: number.set_value
+      target:
+        entity_id: number.pool_controller_temp_circ_factor
+      data:
+        value: 45
+```
+
+**Szenario:** Benachrichtigung bei hoher Filterlaufzeit.
+
+```yaml
+automation:
+  - alias: "Hohe Filterlaufzeit melden"
+    trigger:
+      platform: numeric_state
+      entity_id: sensor.pool_controller_effective_runtime
+      above: 700
+    action:
+      service: notify.mobile_app_phone
+      data:
+        message: "Pool-Filterlaufzeit nahe Maximum ({{ states('sensor.pool_controller_effective_runtime') }} min)"
+```
+
+### 7.6 FAQ / Problemlösung
+
+> **F: Die Pumpe läuft viel länger als erwartet — woran liegt das?**
+
+Prüfe die Pooltemperatur. Liegt sie über dem Schwellwert und der Faktor ist hoch eingestellt, sind längere Laufzeiten normal. Der **Circ. Runtime**-Wert zeigt die berechnete Verlängerung. Reduziere bei Bedarf den **Faktor** oder erhöhe den **Schwellwert**.
+
+> **F: Die Pumpe hat früher ausgeschaltet als erwartet — warum?**
+
+Die Verlängerung gilt nur, während die Pumpe aktiv ist. War sie schon länger an, wurde die Endzeit vielleicht früher verlängert, aber das Wasser ist inzwischen abgekühlt — die `only-extend`-Regel behält den höchsten Wert. Prüfe:
+1. Liegt die Pooltemperatur tatsächlich über dem Schwellwert?
+2. Ist das Timer-Fenster konfiguriert? (Die temperatur-basierte Verlängerung schaltet die Pumpe nicht selbst ein.)
+
+> **F: Kann die Pumpe früher starten als der Timer?**
+
+Nein. Die Funktion verlängert nur die **Endzeit**. Die Startzeit bleibt exakt wie im Timer eingestellt. (Siehe `only-extend`-Regel in §2.)
+
+> **F: Setzt sich die Max-Laufzeit jeden Tag zurück?**
+
+Ja. Zu Beginn jedes Timer-Zyklus wird die effektive Endzeit auf die Basis-Timer-Zeit zurückgesetzt. Die Verlängerung wird dann neu berechnet.
+
+> **F: Ich habe Werte im Web-UI geändert, aber nichts passiert — warum?**
+
+Prüfe den **Modus** auf dem Dashboard. Die temperaturabhängige Laufzeit funktioniert nur im **Timer**- und **Auto**-Modus. Im **Manuell**- oder **Boost**-Modus ist die Funktion deaktiviert.
+
+> **F: Verschleißt das meine Pumpe schneller?**
+
+Der Parameter `tempCircMaxRuntime` begrenzt die Laufzeit genau für diesen Zweck. 12 Stunden/Tag sind für die meisten Poolpumpen unbedenklich. Prüfe zur Sicherheit das Datenblatt deiner Pumpe (Einschaltdauer / duty cycle).
+
+## 8. Mögliche Erweiterungen (v2)
 
 - **Kürzung bei Kälte**: Zusätzlicher Parameter `tempCircMinRuntime`, der bei Unterschreitung eines Schwellwerts die Laufzeit reduziert
 - **Trend-basiert**: Berücksichtigung des Temperatur-Trends (steigend/falend), nicht nur des Absolutwerts
