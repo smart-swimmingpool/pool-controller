@@ -1,18 +1,25 @@
 // Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
 
 /**
- * Smart Swimming Pool - Pool Controller
+ * @file main.cpp
+ * @brief Main entry point for the Pool Controller firmware.
  *
- * Main entry of sketch.
+ * Arduino entry point: setup() initializes all subsystems, loop() runs
+ * the control, monitoring, and network stack indefinitely.
  */
 
 #include <Arduino.h>
 #include "PoolController.hpp"
 
+/** @brief Singleton context owning all controller subsystems. */
 static PoolController::PoolControllerContext context{};
 
 /**
- * Setup of controller.
+ * @brief Arduino setup() — initializes serial and delegates to PoolControllerContext.
+ *
+ * Waits up to 3 seconds for a USB serial connection (non-blocking fallback
+ * for headless operation), then calls context.setup() to initialize all
+ * subsystems.
  */
 auto setup() -> void {
   Serial.begin(SERIAL_SPEED);
@@ -28,7 +35,10 @@ auto setup() -> void {
 }
 
 /**
- * Main loop of ESP.
+ * @brief Arduino loop() — runs the control, monitoring, and network stack.
+ *
+ * Called continuously after setup(). Delegates to context.loop() which
+ * handles watchdog feeding, memory checks, node updates, MQTT, and OTA.
  */
 auto loop() -> void {
   context.loop();

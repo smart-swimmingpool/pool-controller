@@ -1,5 +1,11 @@
 // Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
 
+/**
+ * @file WebPortal.cpp
+ * @brief Web server implementation — dashboard HTML, REST API handlers,
+ *        static asset serving, session management, and OTA upload.
+ */
+
 #include "WebPortal.hpp"
 #include "Version.h"
 #include "ConfigManager.hpp"

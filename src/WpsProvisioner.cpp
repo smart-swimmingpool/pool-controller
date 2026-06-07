@@ -1,5 +1,11 @@
 // Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
 
+/**
+ * @file WpsProvisioner.cpp
+ * @brief WPS push-button provisioning implementation — trigger via BOOT button,
+ *        WPS session management, and credential persistence.
+ */
+
 #include "WpsProvisioner.hpp"
 
 #include <Arduino.h>

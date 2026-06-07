@@ -1,10 +1,22 @@
 // Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
 
+/**
+ * @file Rule.hpp
+ * @brief Abstract base class for all operation mode rules.
+ */
+
 #pragma once
 
 #include <Arduino.h>
 #include "Timer.hpp"
 
+/**
+ * @brief Abstract base for operation mode rule implementations.
+ *
+ * Each concrete subclass (RuleAuto, RuleManu, RuleBoost, RuleTimer)
+ * implements a specific pump control strategy. The base class provides
+ * shared temperature accessors and the pool-pump timer logic.
+ */
 class Rule {
 public:
   Rule() : _poolTemp(0.0), _solarTemp(0.0), _poolMaxTemp(0.0), _solarMinTemp(0.0), _hysteresis(0.0) {}
@@ -28,7 +40,8 @@ public:
   TimerSetting getTimerSetting() const { return _timerSetting; }
 
   /**
-   * get the Mode for which the Rule is created.
+   * @brief Get the mode identifier for this rule.
+   * @return String constant e.g. "auto", "manu", "boost", "timer".
    */
   virtual const char *getMode() = 0;
   virtual void loop() = 0;

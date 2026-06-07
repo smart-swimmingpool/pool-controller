@@ -1,5 +1,10 @@
 // Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
 
+/**
+ * @file DegradationManager.hpp
+ * @brief Central system health monitor — degradation detection and level tracking.
+ */
+
 #pragma once
 
 /**

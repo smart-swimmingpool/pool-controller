@@ -1,5 +1,11 @@
 // Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
 
+/**
+ * @file DegradationManager.cpp
+ * @brief Degradation detection — sensor failure tracking, time degradation,
+ *        level computation, and system health aggregation.
+ */
+
 #include "DegradationManager.hpp"
 #include "NetworkManager.hpp"
 #include "SystemMonitor.hpp"

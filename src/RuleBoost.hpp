@@ -1,9 +1,21 @@
+// Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
+
+/**
+ * @file RuleBoost.hpp
+ * @brief Boost mode — full heating power, both pumps enabled.
+ */
 
 #pragma once
 
 #include "Rule.hpp"
 #include "RelayModuleNode.hpp"
 
+/**
+ * @brief Boost operation mode — both pumps run continuously.
+ *
+ * Pool pump and solar pump are both switched ON regardless of temperature
+ * conditions. Used for rapid heating or manual override.
+ */
 class RuleBoost : public Rule {
 public:
   RuleBoost(RelayModuleNode *solarRelay, RelayModuleNode *poolRelay);

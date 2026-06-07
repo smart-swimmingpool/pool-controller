@@ -1,5 +1,10 @@
 // Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
 
+/**
+ * @file OtaUpdater.cpp
+ * @brief OTA firmware update implementation — GitHub API check, download, and flashing.
+ */
+
 #include "OtaUpdater.hpp"
 #include "Version.h"
 #include "ConfigManager.hpp"

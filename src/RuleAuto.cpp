@@ -1,5 +1,10 @@
 // Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
 
+/**
+ * @file RuleAuto.cpp
+ * @brief Automatic solar-optimised mode implementation with smart heating logic.
+ */
+
 #include "RuleAuto.hpp"
 #include <cmath>  // for isnan()
 

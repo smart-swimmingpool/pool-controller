@@ -1,5 +1,11 @@
 // Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
 
+/**
+ * @file DallasTemperatureNode.cpp
+ * @brief DS18B20 sensor node implementation with bus scanning, recovery, and
+ *        degradation reporting.
+ */
+
 #include "DallasTemperatureNode.hpp"
 #include "SystemMonitor.hpp"
 #include "DegradationManager.hpp"

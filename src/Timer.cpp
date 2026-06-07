@@ -1,3 +1,10 @@
+// Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
+
+/**
+ * @file Timer.cpp
+ * @brief Timer calculation helpers — daily timer active checks and time parsing.
+ */
+
 #include "Timer.hpp"
 #include "TimeClientHelper.hpp"
 

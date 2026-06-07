@@ -1,5 +1,11 @@
 // Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
 
+/**
+ * @file MqttPublisher.cpp
+ * @brief Home Assistant MQTT Discovery implementation — entity configs,
+ *        state publishing, and command handling.
+ */
+
 #include "MqttPublisher.hpp"
 #include "Version.h"
 #include "NetworkManager.hpp"
