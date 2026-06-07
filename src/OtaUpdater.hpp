@@ -1,7 +1,9 @@
 // Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
-//
-// OTA update checker and installer.
-// Checks GitHub Releases for new firmware, downloads and applies it via OTA.
+
+/**
+ * @file OtaUpdater.hpp
+ * @brief OTA firmware update checker and installer — GitHub Releases integration.
+ */
 
 #pragma once
 
@@ -9,6 +11,14 @@
 
 namespace PoolController {
 
+/**
+ * @brief Checks GitHub Releases for new firmware, downloads and applies it via OTA.
+ *
+ * Periodically checks the GitHub Releases API for a newer version than the
+ * currently running firmware (FW_VERSION from platformio.ini). Supports
+ * manual update check and automatic install from the Web UI.
+ * Uses the ESP32 Arduino Update library for OTA flashing.
+ */
 class OtaUpdater {
 public:
   OtaUpdater() = default;

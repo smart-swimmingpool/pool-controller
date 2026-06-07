@@ -1,19 +1,19 @@
+// Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
+
+/**
+ * @file RuleBoost.cpp
+ * @brief Boost mode — both pumps run continuously.
+ */
 
 #include "RuleBoost.hpp"
 #include <Arduino.h>
 #include <cmath>  // For isnan()
 
-/**
- *
- */
 RuleBoost::RuleBoost(RelayModuleNode *solarRelay, RelayModuleNode *poolRelay) {
   _solarRelay = solarRelay;
   _poolRelay = poolRelay;
 }
 
-/**
- *
- */
 void RuleBoost::loop() {
   Serial.print(cIndent);
   Serial.println(F("§ RuleBoost: loop"));

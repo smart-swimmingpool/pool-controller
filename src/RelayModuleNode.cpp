@@ -1,5 +1,11 @@
 // Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
 
+/**
+ * @file RelayModuleNode.cpp
+ * @brief Relay node implementation — state persistence via NVS and safe-mode
+ *        override for boot-loop protection.
+ */
+
 #include "RelayModuleNode.hpp"
 #include "Utils.hpp"
 #include "DegradationManager.hpp"

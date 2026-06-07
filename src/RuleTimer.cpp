@@ -1,5 +1,10 @@
 // Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
 
+/**
+ * @file RuleTimer.cpp
+ * @brief Timer-only mode — pool pump follows schedule, solar stays off.
+ */
+
 #include "RuleTimer.hpp"
 
 RuleTimer::RuleTimer(RelayModuleNode *solarRelay, RelayModuleNode *poolRelay) {

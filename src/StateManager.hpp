@@ -1,5 +1,10 @@
 // Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
 
+/**
+ * @file StateManager.hpp
+ * @brief Controller state persistence via ESP32 Preferences (NVS).
+ */
+
 #pragma once
 
 /**

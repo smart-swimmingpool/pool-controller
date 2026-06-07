@@ -1,5 +1,10 @@
 // Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
 
+/**
+ * @file ESP32TemperatureNode.cpp
+ * @brief ESP32 internal chip temperature reader implementation.
+ */
+
 #include "ESP32TemperatureNode.hpp"
 #include "Utils.hpp"
 

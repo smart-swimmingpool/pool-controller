@@ -1,5 +1,10 @@
 // Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
 
+/**
+ * @file ConfigManager.cpp
+ * @brief Persistent configuration — LittleFS read/write, JSON parsing, factory reset.
+ */
+
 #include "ConfigManager.hpp"
 #include "Version.h"
 #include <Preferences.h>

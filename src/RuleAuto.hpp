@@ -1,11 +1,24 @@
 // Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
 
+/**
+ * @file RuleAuto.hpp
+ * @brief Automatic solar-optimised mode — heats pool when solar temperature permits.
+ */
+
 #pragma once
 
 #include "Rule.hpp"
 #include "RelayModuleNode.hpp"
 #include "TimeClientHelper.hpp"
 
+/**
+ * @brief Automatic operation mode with smart solar heating.
+ *
+ * The pool pump runs on a timer schedule. Solar heating is activated when:
+ *   - The pool pump is running (timer active)
+ *   - Solar collector temperature exceeds pool temperature + hysteresis
+ *   - Pool water temperature is below the configured maximum
+ */
 class RuleAuto : public Rule {
 public:
   RuleAuto(RelayModuleNode *solarRelay, RelayModuleNode *poolRelay);

@@ -1,3 +1,10 @@
+// Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
+
+/**
+ * @file TimeClientHelper.cpp
+ * @brief NTP client, timezone database, daylight-saving switching, and time estimation.
+ */
+
 #include "TimeClientHelper.hpp"
 #include "NetworkManager.hpp"
 

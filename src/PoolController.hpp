@@ -1,12 +1,21 @@
 // Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
 
+/**
+ * @file PoolController.hpp
+ * @brief Core controller context — owns all subsystems and drives the main loop.
+ */
+
 #pragma once
 
 namespace PoolController {
 
 /**
- * Core controller class using RAII principles.
- * Only one instance allowed.
+ * @brief Singleton context that initializes and runs all controller subsystems.
+ *
+ * Owns temperature sensor nodes, relay nodes, rule engine, network stack,
+ * web portal, MQTT publisher, OTA updater, and system monitoring.
+ * Uses RAII — constructor builds the context, setup() initializes hardware,
+ * loop() runs the control cycle.
  */
 struct PoolControllerContext final {
   PoolControllerContext();
@@ -21,18 +30,27 @@ struct PoolControllerContext final {
   ~PoolControllerContext();
 
   /**
-   * Startup the controller.
-   * Should be called from the standard setup() entry function.
+   * @brief Startup the controller.
+   * Calls begin() on all subsystems in dependency order (Preferences → SystemMonitor
+   * → DegradationManager → ConfigManager → Network → WebPortal → MQTT → nodes).
+   * @note Call from the Arduino setup() function exactly once.
    */
   auto setup() -> void;
 
   /**
-   * Invoked the loop event.
-   * Should be called from the standard loop() entry function.
+   * @brief Run the main control loop iteration.
+   * Feeds watchdog, checks memory, runs managers (network, web, OTA), updates
+   * sensor/relay nodes, evaluates rules, and publishes MQTT states periodically.
+   * @note Call from the Arduino loop() function indefinitely.
    */
   auto loop() -> void;
 
 private:
+  /**
+   * @brief Initialize hardware nodes and rule engine.
+   * Validates pin configuration, sets measurement intervals, initializes NTP,
+   * configures time degradation limits, creates rule instances.
+   */
   auto initializeController() -> void;
 
   bool bootLoopDetected_ = false;

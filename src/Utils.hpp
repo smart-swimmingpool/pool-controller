@@ -1,9 +1,8 @@
 // Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
 
-#pragma once
-
 /**
- * Utility functions for 24/7 operation optimization
+ * @file Utils.hpp
+ * @brief Utility functions: measurement timing, float/int-to-string conversion.
  */
 
 #include <cstdio>

@@ -1,5 +1,13 @@
-/*
- * Author: Lübbe Onken (http://github.com/luebbe)
+// Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
+
+/**
+ * @file TimeClientHelper.hpp
+ * @brief NTP time client and timezone database for pool scheduling.
+ *
+ * PoolController integration of the upstream TimeClientHelper by Lübbe Onken.
+ * Provides an NTP-synced local time via TimeLib + timezone support, a table
+ * of selectable timezone definitions, and helper functions to work with
+ * time-of-day and day-of-week for rule scheduling.
  */
 
 #pragma once

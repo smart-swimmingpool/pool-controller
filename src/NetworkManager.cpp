@@ -1,5 +1,10 @@
 // Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
 
+/**
+ * @file NetworkManager.cpp
+ * @brief WiFi STA/AP connection, MQTT broker management, captive portal handlers.
+ */
+
 #include "NetworkManager.hpp"
 
 #include <esp_wifi.h>

@@ -1,5 +1,11 @@
 // Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
 
+/**
+ * @file PoolController.cpp
+ * @brief PoolControllerContext implementation — boot-loop detection, subsystem
+ *        initialization, and the main control loop.
+ */
+
 #include "PoolController.hpp"
 
 #include <Arduino.h>
@@ -44,18 +50,26 @@ static uint32_t _lastMeasurement = 0;
 
 static PoolControllerContext *Self = nullptr;
 
+/**
+ * @brief Construct the singleton context.
+ * Stores the instance pointer for internal access. All subsystems are
+ * initialized later in setup() and initializeController().
+ */
 PoolControllerContext::PoolControllerContext() {
   assert(!Self);
   Self = this;
 }
 
+/**
+ * @brief Destroy the context and clear the instance pointer.
+ */
 PoolControllerContext::~PoolControllerContext() {
   assert(Self);
   Self = nullptr;
 }
 
 auto PoolControllerContext::initializeController() -> void {
-  // Validate pin configuration - check for conflicts
+  // Validate pin configuration — check for conflicts
   const uint8_t pins[] = {PIN_DS_SOLAR, PIN_DS_POOL, PIN_RELAY_POOL, PIN_RELAY_SOLAR};
   const char *pinNames[] = {"Solar Temp", "Pool Temp", "Pool Relay", "Solar Relay"};
   bool pinConflict = false;
@@ -135,6 +149,20 @@ auto PoolControllerContext::initializeController() -> void {
   _lastMeasurement = 0;
 }
 
+/**
+ * @brief Full initialization sequence called once at boot.
+ *
+ * Order:
+ *   1. StateManager (NVS), SystemMonitor, DegradationManager
+ *   2. Boot-loop detection — forces safe mode if detected
+ *   3. ConfigManager (LittleFS config.json)
+ *   4. NetworkManager (WiFi + MQTT)
+ *   5. WebPortal (HTTP server + captive portal)
+ *   6. MqttPublisher (HA Discovery)
+ *   7. OtaUpdater (GitHub release check)
+ *   8. initializeController() — pins, nodes, rules
+ *   9. Load persisted operational state from NVS
+ */
 auto PoolControllerContext::setup() -> void {
   // Initialize Preferences (NVS), System Monitor and Degradation tracker
   StateManager::begin();
@@ -189,6 +217,18 @@ auto PoolControllerContext::setup() -> void {
   Serial.printf("✓ Controller setup completed. Free heap: %u B\n", ESP.getFreeHeap());
 }
 
+/**
+ * @brief Main control loop — runs every iteration of Arduino loop().
+ *
+ * Order:
+ *   1. Feed watchdog + check free memory (SystemMonitor)
+ *   2. Evaluate degradation levels (DegradationManager)
+ *   3. Clear boot-loop counter after 5 min stable uptime
+ *   4. Run managers: NetworkManager, WebPortal, OtaUpdater
+ *   5. Run nodes: sensors, relays, operation mode (triggers rule engine)
+ *   6. Publish HA Discovery + states on MQTT (re)connect
+ *   7. Periodically publish telemetry states to MQTT (every loopInterval s)
+ */
 auto PoolControllerContext::loop() -> void {
   // Feed watchdog and check memory thresholds
   SystemMonitor::feedWatchdog();

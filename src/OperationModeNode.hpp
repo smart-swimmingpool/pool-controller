@@ -1,5 +1,10 @@
 // Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
 
+/**
+ * @file OperationModeNode.hpp
+ * @brief Operation mode selector — manages rules, mode switching, and state persistence.
+ */
+
 #pragma once
 
 #include <Arduino.h>
@@ -11,6 +16,13 @@
 #include "Timer.hpp"
 #include "TimeClientHelper.hpp"
 
+/**
+ * @brief Manages the active operation mode and delegates control to the matching Rule.
+ *
+ * Holds a vector of Rule instances (Auto, Manu, Boost, Timer), switches between
+ * them on mode change, and persists the active mode and temperature thresholds
+ * to NVS. Exposes configuration properties for Home Assistant integration.
+ */
 class OperationModeNode {
 public:
   OperationModeNode(const char *id, const char *name, const int measurementInterval = MEASUREMENT_INTERVAL);

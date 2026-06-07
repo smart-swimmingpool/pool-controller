@@ -1,5 +1,11 @@
 // Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
 
+/**
+ * @file StateManager.cpp
+ * @brief Controller state persistence — save/restore operation mode and
+ *        temperature thresholds via ESP32 Preferences (NVS).
+ */
+
 #include "StateManager.hpp"
 
 namespace PoolController {

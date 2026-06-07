@@ -1,5 +1,10 @@
 // Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
 
+/**
+ * @file OperationModeNode.cpp
+ * @brief Operation mode selector — mode switching, rule delegation, NVS persistence.
+ */
+
 #include "OperationModeNode.hpp"
 #include "RuleManu.hpp"
 #include "RuleAuto.hpp"

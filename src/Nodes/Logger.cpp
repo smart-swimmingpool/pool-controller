@@ -1,4 +1,10 @@
 // Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
+
+/**
+ * @file Logger.cpp
+ * @brief Logger implementation — currently a stub; Logger is a plain struct.
+ */
+
 #include "Logger.hpp"
 
 namespace PoolController {

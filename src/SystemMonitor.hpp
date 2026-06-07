@@ -1,5 +1,10 @@
 // Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
 
+/**
+ * @file SystemMonitor.hpp
+ * @brief Watchdog, memory monitor, and min/max tracking for 24/7 operation.
+ */
+
 #pragma once
 
 /**
