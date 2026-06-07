@@ -110,6 +110,11 @@ async function loadTelemetry() {
       document.getElementById('uptimeVal').textContent = h + 'h ' + m + 'm';
     }
 
+    // Effective Runtime (temperature-based circulation)
+    if (data.effective_runtime != null) {
+      document.getElementById('effectiveRuntimeVal').textContent = data.effective_runtime + ' min';
+    }
+
     // AP-Mode: WiFi-Tab anzeigen
     if (data.ap_mode) {
       switchTab('wifi');
@@ -307,6 +312,9 @@ function validateSettings() {
     { id: 'tempMaxPool',     name: 'Max Pool Temp',       min: 0,   max: 40,   type: 'float' },
     { id: 'tempMinSolar',    name: 'Min Solar Temp',      min: 0,   max: 90,   type: 'float' },
     { id: 'tempHysteresis',  name: 'Hysteresis',          min: 0,   max: 10,   type: 'float' },
+    { id: 'tempCircThreshold',  name: 'Circ. Temp Threshold',   min: 0,   max: 40,   type: 'float' },
+    { id: 'tempCircFactor',     name: 'Circ. Temp Factor',      min: 0,   max: 120,  type: 'int' },
+    { id: 'tempCircMaxRuntime', name: 'Circ. Max Runtime',      min: 60,  max: 1440, type: 'int' },
   ];
   for (const f of fields) {
     const el = document.getElementById(f.id);
@@ -339,6 +347,9 @@ async function saveControllerSettings() {
   const maxPool = document.getElementById('tempMaxPool').value;
   const minSolar = document.getElementById('tempMinSolar').value;
   const hysteresis = document.getElementById('tempHysteresis').value;
+  const circThreshold = document.getElementById('tempCircThreshold').value;
+  const circFactor = document.getElementById('tempCircFactor').value;
+  const circMaxRuntime = document.getElementById('tempCircMaxRuntime').value;
   const tz = document.getElementById('timezone').value;
 
   // Validate time fields included alongside pool fields
@@ -359,7 +370,7 @@ async function saveControllerSettings() {
   const res = await fetch('/api/config', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: 'type=settings&mode=' + mode + '&interval=' + interval + '&max_pool=' + maxPool + '&min_solar=' + minSolar + '&hysteresis=' + hysteresis + '&timezone=' + tz + '&green=' + green + '&red=' + red + timerParams() + '&ntp_server=' + ntpServer
+    body: 'type=settings&mode=' + mode + '&interval=' + interval + '&max_pool=' + maxPool + '&min_solar=' + minSolar + '&hysteresis=' + hysteresis + '&circ_threshold=' + circThreshold + '&circ_factor=' + circFactor + '&circ_max_runtime=' + circMaxRuntime + '&timezone=' + tz + '&green=' + green + '&red=' + red + timerParams() + '&ntp_server=' + ntpServer
   });
   if (res.status === 200) {
     document.getElementById('poolThreshold').textContent = 'max ' + parseFloat(maxPool).toFixed(1) + '°C';
@@ -460,6 +471,9 @@ async function loadConfig() {
     document.getElementById('tempMaxPool').value = data.settings.temp_max_pool;
     document.getElementById('tempMinSolar').value = data.settings.temp_min_solar;
     document.getElementById('tempHysteresis').value = data.settings.temp_hysteresis;
+    document.getElementById('tempCircThreshold').value = data.settings.temp_circ_threshold;
+    document.getElementById('tempCircFactor').value = data.settings.temp_circ_factor;
+    document.getElementById('tempCircMaxRuntime').value = data.settings.temp_circ_max_runtime;
     document.getElementById('timezone').value = data.settings.timezone;
     document.getElementById('ntpServer').value = data.ntp.server;
     document.getElementById('timeLossGreen').value = data.settings.time_loss_green_hours;
