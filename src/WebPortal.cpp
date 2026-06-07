@@ -358,6 +358,12 @@ void WebPortal::apiGetStatus() {
   doc["timezone_name"] = getTimeInfoFor(ConfigManager::getSettings().timezoneIndex);
   doc["time_degradation"] = static_cast<int>(getTimeDegradation());
 
+  // Effective runtime (temperature-based circulation)
+  {
+    Rule *active = operationModeNode.getRule();
+    doc["effective_runtime"] = (active != nullptr) ? active->getActiveEndMinutes() : 0;
+  }
+
   String json;
   serializeJson(doc, json);
   server_.send(200, "application/json", json);
@@ -401,6 +407,9 @@ void WebPortal::apiGetConfig() {
   settingsObj["temp_max_pool"] = ConfigManager::getSettings().tempMaxPool;
   settingsObj["temp_min_solar"] = ConfigManager::getSettings().tempMinSolar;
   settingsObj["temp_hysteresis"] = ConfigManager::getSettings().tempHysteresis;
+  settingsObj["temp_circ_threshold"] = ConfigManager::getSettings().tempCircThreshold;
+  settingsObj["temp_circ_factor"] = ConfigManager::getSettings().tempCircFactor;
+  settingsObj["temp_circ_max_runtime"] = ConfigManager::getSettings().tempCircMaxRuntime;
   settingsObj["timezone"] = ConfigManager::getSettings().timezoneIndex;
   settingsObj["time_loss_green_hours"] = ConfigManager::getSettings().timeLossGreenHours;
   settingsObj["time_loss_red_hours"] = ConfigManager::getSettings().timeLossRedHours;
@@ -454,6 +463,9 @@ void WebPortal::apiSaveConfig() {
     ConfigManager::getSettings().tempMaxPool = server_.arg("max_pool").toFloat();
     ConfigManager::getSettings().tempMinSolar = server_.arg("min_solar").toFloat();
     ConfigManager::getSettings().tempHysteresis = server_.arg("hysteresis").toFloat();
+    ConfigManager::getSettings().tempCircThreshold = server_.arg("circ_threshold").toFloat();
+    ConfigManager::getSettings().tempCircFactor = server_.arg("circ_factor").toInt();
+    ConfigManager::getSettings().tempCircMaxRuntime = server_.arg("circ_max_runtime").toInt();
     ConfigManager::getSettings().timezoneIndex = server_.arg("timezone").toInt();
     ConfigManager::getSettings().timeLossGreenHours = server_.arg("green").toInt();
     ConfigManager::getSettings().timeLossRedHours = server_.arg("red").toInt();
