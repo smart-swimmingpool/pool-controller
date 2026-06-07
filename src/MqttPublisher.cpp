@@ -267,6 +267,92 @@ void MqttPublisher::publishUpdateDiscovery() {
   NetworkManager::publish(configTopic.c_str(), payload.c_str(), true);
 }
 
+void MqttPublisher::publishClimateDiscovery() {
+  String configTopic = getBaseTopic("climate", "thermostat") + "/config";
+
+  JsonDocument doc;
+  doc["name"] = "Pool Thermostat";
+  doc["unique_id"] = deviceId_ + "_thermostat";
+  doc["availability_topic"] = "homeassistant/sensor/pool-controller/availability";
+
+  // Temperatures
+  doc["current_temperature_topic"] = getBaseTopic("climate", "thermostat") + "/current-temperature/state";
+  doc["temperature_command_topic"] = getBaseTopic("climate", "thermostat") + "/temperature/set";
+  doc["temperature_state_topic"] = getBaseTopic("climate", "thermostat") + "/temperature/state";
+  doc["temperature_unit"] = "C";
+
+  // HVAC modes
+  JsonArray modes = doc["modes"].to<JsonArray>();
+  modes.add("off");
+  modes.add("auto");
+  modes.add("heat");
+
+  doc["mode_command_topic"] = getBaseTopic("climate", "thermostat") + "/mode/set";
+  doc["mode_state_topic"] = getBaseTopic("climate", "thermostat") + "/mode/state";
+
+  // Action (heating / idle / off)
+  doc["action_topic"] = getBaseTopic("climate", "thermostat") + "/action/state";
+
+  // Temp range
+  doc["min_temp"] = 0.0;
+  doc["max_temp"] = 40.0;
+  doc["temp_step"] = 0.5;
+
+  // Device block
+  JsonObject deviceObj = doc["device"].to<JsonObject>();
+  deviceObj["identifiers"][0] = deviceId_;
+  deviceObj["name"] = "Pool Controller";
+  deviceObj["manufacturer"] = "smart-swimmingpool";
+  deviceObj["model"] = "Pool Controller";
+  deviceObj["sw_version"] = FW_VERSION;
+
+  String payload;
+  serializeJson(doc, payload);
+  NetworkManager::publish(configTopic.c_str(), payload.c_str(), true);
+}
+
+void MqttPublisher::publishClimateState() {
+  if (!NetworkManager::isMqttConnected())
+    return;
+
+  // Current temperature (pool water)
+  NetworkManager::publish((getBaseTopic("climate", "thermostat") + "/current-temperature/state").c_str(),
+    String(poolTemperatureNode.getTemperature(), 1).c_str(), true);
+
+  // Target temperature (= pool max temp setting)
+  NetworkManager::publish((getBaseTopic("climate", "thermostat") + "/temperature/state").c_str(),
+    String(operationModeNode.getPoolMaxTemperature(), 1).c_str(), true);
+
+  // HVAC mode ← pool operation mode
+  //   manu  → off
+  //   auto  → auto
+  //   boost → heat
+  //   timer → auto (pool pump runs on schedule)
+  const char *hvacMode = "off";
+  String poolMode = operationModeNode.getMode();
+  if (poolMode == "auto" || poolMode == "timer") {
+    hvacMode = "auto";
+  } else if (poolMode == "boost") {
+    hvacMode = "heat";
+  } else {
+    hvacMode = "off";
+  }
+  NetworkManager::publish(
+    (getBaseTopic("climate", "thermostat") + "/mode/state").c_str(), hvacMode, true);
+
+  // Action: solar pump ON → heating, pool pump ON → idle, both OFF → off
+  const char *action = "off";
+  if (solarPumpNode.getSwitch()) {
+    action = "heating";
+  } else if (poolPumpNode.getSwitch()) {
+    action = "idle";
+  } else {
+    action = "off";
+  }
+  NetworkManager::publish(
+    (getBaseTopic("climate", "thermostat") + "/action/state").c_str(), action, true);
+}
+
 void MqttPublisher::publishUpdateState() {
   if (!NetworkManager::isMqttConnected())
     return;
@@ -343,6 +429,9 @@ void MqttPublisher::publishDiscovery() {
   // Firmware Update entity
   publishUpdateDiscovery();
 
+  // Climate thermostat entity (additional — existing entities stay)
+  publishClimateDiscovery();
+
   // Subscribe to command topics
   NetworkManager::subscribe("homeassistant/switch/pool-controller/pool-pump/set");
   NetworkManager::subscribe("homeassistant/switch/pool-controller/solar-pump/set");
@@ -355,6 +444,10 @@ void MqttPublisher::publishDiscovery() {
   NetworkManager::subscribe("homeassistant/select/pool-controller/timezone/set");
   NetworkManager::subscribe("homeassistant/text/pool-controller/ntp-server/set");
   NetworkManager::subscribe("homeassistant/update/pool-controller/firmware-update/set");
+
+  // Climate thermostat commands
+  NetworkManager::subscribe("homeassistant/climate/pool-controller/thermostat/mode/set");
+  NetworkManager::subscribe("homeassistant/climate/pool-controller/thermostat/temperature/set");
 
   // ── Cleanup old retained discovery configs (migrated entities) ──
   // Timer was 4 Number entities → now 2 Time entities
@@ -412,6 +505,9 @@ void MqttPublisher::publishStates() {
   // Firmware Update
   publishUpdateState();
 
+  // Climate thermostat
+  publishClimateState();
+
   // Mode & Parameter States
   NetworkManager::publish((getBaseTopic("select", "mode") + "/state").c_str(), operationModeNode.getMode().c_str(), true);
   NetworkManager::publish((getBaseTopic("number", "pool-max-temp") + "/state").c_str(),
@@ -450,6 +546,38 @@ void MqttPublisher::handleMqttMessage(char *topic, uint8_t *payload, unsigned in
       Serial.println("MQTT: Firmware update triggered from Home Assistant");
       OtaUpdater::startUpdate();
     }
+    return;
+  }
+
+  // Climate thermostat commands (mode + temperature)
+  if (top.endsWith("/thermostat/mode/set")) {
+    String poolMode;
+    if (value == "off")
+      poolMode = "manu";
+    else if (value == "auto")
+      poolMode = "auto";
+    else if (value == "heat")
+      poolMode = "boost";
+    else {
+      Serial.printf("MQTT: Unknown climate mode \"%s\" — ignoring\n", value.c_str());
+      publishStates();
+      return;
+    }
+    Serial.printf("MQTT: Climate mode → pool mode \"%s\"\n", poolMode.c_str());
+    operationModeNode.setMode(poolMode.c_str());
+    ConfigManager::getSettings().opMode = poolMode;
+    ConfigManager::save();
+    publishStates();
+    return;
+  }
+
+  if (top.endsWith("/thermostat/temperature/set")) {
+    float val = value.toFloat();
+    Serial.printf("MQTT: Climate target temperature → %.1f\n", val);
+    operationModeNode.setPoolMaxTemperature(val);
+    ConfigManager::getSettings().tempMaxPool = val;
+    ConfigManager::save();
+    publishStates();
     return;
   }
 
