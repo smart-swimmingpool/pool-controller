@@ -155,3 +155,10 @@ Die empfohlenen Pins sind in `src/Config.hpp` umgesetzt. Relevant sind:
 Für den produktiven 24/7-Betrieb und Sicherheitsaspekte bitte zusätzlich
 `AGENTS.md` beachten (insbesondere Ressourcenmanagement, Security, OTA und
 Robustheit).
+
+## 7) Siehe auch
+
+- Ausführliche Aufbauanleitung mit Schritt-für-Schritt-Anleitung und
+  Fertigungstipps: [Hardware-Anleitung](hardware-guide.de.md)
+- Kompletter Verdrahtungsplan mit RTC-Modul:
+  [ESP32 Komplett-Schaltplan](esp32-complete-wiring-schematic-de.md)

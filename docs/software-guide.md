@@ -37,7 +37,7 @@ Many thanks to maintainers of these libraries!
 ## Pin Configuration
 
 Within the sources at `Config.hpp`, the GPIO pin assignments are defined. For details,
-see also at [hardware guide](../hardware-guide/#esp32-pin-usage).
+see also in the [hardware guide](../hardware-guide/#pin-assignment-firmware-defaults).
 
 ```cpp
 constexpr uint8_t PIN_DS_SOLAR   = 15;  // Pin of Temp-Sensor Solar (GPIO15)

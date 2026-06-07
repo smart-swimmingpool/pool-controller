@@ -110,7 +110,8 @@ v
 
 ## 5) Bezug zu bestehender Doku
 
+- Ausführliche Aufbauanleitung (auch für Einsteiger):
+  [Hardware-Anleitung](hardware-guide.de.md) — Schritt-für-Schritt,
+  Fertigungstipps, Fehlersuche
 - Pin-Hintergrund und Optimierung:
-  `docs/esp32-schematic-optimization-de.md`
-- Allgemeiner Hardware-Guide:
-  `docs/hardware-guide.md`
+  [ESP32 Schaltplananalyse und Optimierung](esp32-schematic-optimization-de.md)
