@@ -358,10 +358,10 @@ void WebPortal::apiGetStatus() {
   doc["timezone_name"] = getTimeInfoFor(ConfigManager::getSettings().timezoneIndex);
   doc["time_degradation"] = static_cast<int>(getTimeDegradation());
 
-  // Effective runtime (temperature-based circulation)
+  // Effective runtime (temperature-based circulation) — actual minutes, not end-of-day
   {
     Rule *active = operationModeNode.getRule();
-    doc["effective_runtime"] = (active != nullptr) ? active->getActiveEndMinutes() : 0;
+    doc["effective_runtime"] = (active != nullptr) ? active->getEffectiveRuntimeMinutes() : 0;
   }
 
   String json;
@@ -463,9 +463,12 @@ void WebPortal::apiSaveConfig() {
     ConfigManager::getSettings().tempMaxPool = server_.arg("max_pool").toFloat();
     ConfigManager::getSettings().tempMinSolar = server_.arg("min_solar").toFloat();
     ConfigManager::getSettings().tempHysteresis = server_.arg("hysteresis").toFloat();
-    ConfigManager::getSettings().tempCircThreshold = server_.arg("circ_threshold").toFloat();
-    ConfigManager::getSettings().tempCircFactor = server_.arg("circ_factor").toInt();
-    ConfigManager::getSettings().tempCircMaxRuntime = server_.arg("circ_max_runtime").toInt();
+    if (server_.hasArg("circ_threshold"))
+      ConfigManager::getSettings().tempCircThreshold = server_.arg("circ_threshold").toFloat();
+    if (server_.hasArg("circ_factor"))
+      ConfigManager::getSettings().tempCircFactor = server_.arg("circ_factor").toInt();
+    if (server_.hasArg("circ_max_runtime"))
+      ConfigManager::getSettings().tempCircMaxRuntime = server_.arg("circ_max_runtime").toInt();
     ConfigManager::getSettings().timezoneIndex = server_.arg("timezone").toInt();
     ConfigManager::getSettings().timeLossGreenHours = server_.arg("green").toInt();
     ConfigManager::getSettings().timeLossRedHours = server_.arg("red").toInt();
