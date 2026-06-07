@@ -43,10 +43,6 @@ pool-controller/docs/              # Source: Hugo markdown + frontmatter
   ├── mqtt-configuration.md
   ├── state-persistence.md
   ├── ota-updates.md
-  ├── optimization-report.md
-  ├── edge-case-analysis.md
-  ├── build-fix.md
-  ├── summary.md
   ├── home-assistant/
   │   ├── _index.md                # EN HA integration doc
   │   ├── _index.de.md             # DE HA integration doc
@@ -125,10 +121,6 @@ Each page has an English (`_index.md`) and German (`_index.de.md`) variant.
 | ------------------- | -------- |
 | `_index.md`         | English  |
 | `_index.de.md`      | German   |
-| `summary.md`        | English  |
-| `summary-de.md`     | German   |
-| `optimization-report.md` | English |
-| `optimierungen-de.md`    | German |
 
 When creating new doc pages, always provide both language variants.
 
@@ -163,8 +155,8 @@ The project version is maintained in these locations:
 - **On every major/minor release**: Update `title: Pool Controller X.Y` in
   `docs/_index.md` and `docs/_index.de.md`
 - **On every release**: Update `README.md` title line
-- **Historical docs** (summary, edge-case-analysis, etc.): These reference the
-  version they were written for — only update if the content is revised
+- **Version strings in docs**: Always update version references (`Pool Controller X.Y`,
+  `vX.Y.Z`) to match the current release
 
 ### Common Version Strings to Update
 

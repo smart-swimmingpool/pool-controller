@@ -149,12 +149,10 @@ See [docs/state-persistence.md](docs/state-persistence.md) for details.
 - [Hardware Guide](docs/hardware-guide.md)
 - [ESP32 Schaltplananalyse & Optimierung (DE)](docs/esp32-schematic-optimization-de.md)
 - [Software Guide](docs/software-guide.md)
-- [MQTT Configuration Guide](docs/mqtt-configuration.md) (New in v3.1.0)
-- [State Persistence & Monitoring](docs/state-persistence.md) (New in v3.1.0)
-- [Over-The-Air Updates](docs/ota-updates.md) (New in v3.1.0)
-- [Optimization Report](docs/optimization-report.md) (New in v3.1.0)
-- [Edge Case Analysis](docs/edge-case-analysis.md) - Reliability analysis
-  and potential failure modes
+- [MQTT Configuration Guide](docs/mqtt-configuration.md)
+- [State Persistence & Monitoring](docs/state-persistence.md)
+- [Over-The-Air Updates](docs/ota-updates.md)
+- [Home Assistant Integration](docs/home-assistant/) — MQTT Discovery, Lovelace Dashboard
 
 ## Development
 
