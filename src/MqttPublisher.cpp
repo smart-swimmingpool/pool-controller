@@ -421,6 +421,16 @@ void MqttPublisher::publishDiscovery() {
   publishTimeDiscovery("timer-start", "Timer Start", "mdi:clock-start");
   publishTimeDiscovery("timer-end", "Timer End", "mdi:clock-end");
 
+  // Temperature-based circulation parameters
+  publishNumberDiscovery(
+    "temp-circ-threshold", "Circ. Temp Threshold", 0.0, 40.0, 0.5, "°C", "mdi:thermometer-auto");
+  publishNumberDiscovery(
+    "temp-circ-factor", "Circ. Temp Factor", 0.0, 120.0, 5.0, "min/°C", "mdi:plus-minus");
+  publishNumberDiscovery(
+    "temp-circ-max-runtime", "Circ. Max Runtime", 60.0, 1440.0, 15.0, "min", "mdi:timer-outline");
+  publishSensorDiscovery(
+    "effective-runtime", "Effective Runtime", nullptr, "min", "mdi:timer-sand", "diagnostic");
+
   // ── Configuration (entity_category: "config") ──
   publishSelectDiscovery("timezone", "Timezone", getTimezoneLabelList(), getTimezoneLabelCount(), "mdi:map-clock", "config");
   publishNumberDiscovery("hysteresis", "Temperature Hysteresis", 0.0, 10.0, 0.1, "K", "mdi:delta", "config");
@@ -441,6 +451,12 @@ void MqttPublisher::publishDiscovery() {
   NetworkManager::subscribe("homeassistant/number/pool-controller/hysteresis/set");
   NetworkManager::subscribe("homeassistant/time/pool-controller/timer-start/set");
   NetworkManager::subscribe("homeassistant/time/pool-controller/timer-end/set");
+
+  // Temperature-based circulation commands
+  NetworkManager::subscribe("homeassistant/number/pool-controller/temp-circ-threshold/set");
+  NetworkManager::subscribe("homeassistant/number/pool-controller/temp-circ-factor/set");
+  NetworkManager::subscribe("homeassistant/number/pool-controller/temp-circ-max-runtime/set");
+
   NetworkManager::subscribe("homeassistant/select/pool-controller/timezone/set");
   NetworkManager::subscribe("homeassistant/text/pool-controller/ntp-server/set");
   NetworkManager::subscribe("homeassistant/update/pool-controller/firmware-update/set");
@@ -524,6 +540,22 @@ void MqttPublisher::publishStates() {
     NetworkManager::publish((getBaseTopic("time", "timer-start") + "/state").c_str(), timeBuf, true);
     snprintf(timeBuf, sizeof(timeBuf), "%02d:%02d:00", ts.timerEndHour, ts.timerEndMinutes);
     NetworkManager::publish((getBaseTopic("time", "timer-end") + "/state").c_str(), timeBuf, true);
+  }
+
+  // Temperature-based circulation parameters
+  NetworkManager::publish((getBaseTopic("number", "temp-circ-threshold") + "/state").c_str(),
+    String(ConfigManager::getSettings().tempCircThreshold, 1).c_str(), true);
+  NetworkManager::publish((getBaseTopic("number", "temp-circ-factor") + "/state").c_str(),
+    String(ConfigManager::getSettings().tempCircFactor).c_str(), true);
+  NetworkManager::publish((getBaseTopic("number", "temp-circ-max-runtime") + "/state").c_str(),
+    String(ConfigManager::getSettings().tempCircMaxRuntime).c_str(), true);
+
+  // Effective runtime sensor
+  {
+    Rule *active = operationModeNode.getRule();
+    uint16_t effectiveMin = (active != nullptr) ? active->getActiveEndMinutes() : 0;
+    NetworkManager::publish((getBaseTopic("sensor", "effective-runtime") + "/state").c_str(),
+      String(effectiveMin).c_str(), true);
   }
   NetworkManager::publish((getBaseTopic("select", "timezone") + "/state").c_str(),
     getTimeInfoFor(ConfigManager::getSettings().timezoneIndex).c_str(), true);
@@ -612,6 +644,24 @@ void MqttPublisher::handleMqttMessage(char *topic, uint8_t *payload, unsigned in
     operationModeNode.setTemperatureHysteresis(val);
     ConfigManager::getSettings().tempHysteresis = val;
     ConfigManager::save();
+  } else if (top.endsWith("/temp-circ-threshold/set")) {
+    float val = value.toFloat();
+    if (val >= 0.0f && val <= 40.0f) {
+      ConfigManager::getSettings().tempCircThreshold = val;
+      ConfigManager::save();
+    }
+  } else if (top.endsWith("/temp-circ-factor/set")) {
+    uint16_t val = value.toInt();
+    if (val <= 120) {
+      ConfigManager::getSettings().tempCircFactor = val;
+      ConfigManager::save();
+    }
+  } else if (top.endsWith("/temp-circ-max-runtime/set")) {
+    uint16_t val = value.toInt();
+    if (val >= 60 && val <= 1440) {
+      ConfigManager::getSettings().tempCircMaxRuntime = val;
+      ConfigManager::save();
+    }
   } else if (top.endsWith("/timer-start/set")) {
     // Payload format: HH:MM:SS
     int h = value.substring(0, 2).toInt();

@@ -111,6 +111,10 @@ Rule *OperationModeNode::getRule() {
 
 bool OperationModeNode::setMode(String mode) {
   if (mode.equals(STATUS_AUTO) || mode.equals(STATUS_MANU) || mode.equals(STATUS_BOOST) || mode.equals(STATUS_TIMER)) {
+    // Reset temperature-based runtime extension on mode change
+    for (auto &rule : _ruleVec) {
+      rule->resetTemperatureExtension();
+    }
     _mode = mode;
     Serial.printf("set mode: %s\n", _mode.c_str());
     if (!_suppressPersist)
