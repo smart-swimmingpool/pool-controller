@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.3.1](https://github.com/smart-swimmingpool/pool-controller/compare/v3.3.0...v3.3.1) (2026-06-07)
+
+
+### Bug Fixes
+
+* **web:** clarify that timer start/end also applies in Auto mode ([5985a00](https://github.com/smart-swimmingpool/pool-controller/commit/5985a008e3a6168fa9b291c5210b3224eb2dd014))
+
 ## [3.3.0](https://github.com/smart-swimmingpool/pool-controller/compare/v3.2.0...v3.3.0) (2026-06-06)
 
 ### Features
