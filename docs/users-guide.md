@@ -141,7 +141,7 @@ There are some specific settings for the controller:
   - This setting can be configured during initial setup or changed at runtime via MQTT
   - **Note:** Runtime changes via MQTT (operation-mode/timezone) are temporary.
     To persist the timezone setting across reboots, update the `timezone`
-    configuration in the Homie settings.
+    configuration in the device settings.
 
 ## Rules
 
@@ -170,12 +170,10 @@ Heating of pool water with all power.
 ## MQTT Interface
 
 The **Smart Swimmingpool Controller** uses [MQTT](http://mqtt.org/) to
-communicate with your smart home. For the transmission of data the IoT standard
-[Homie 3.0](https://homieiot.github.io) is used.
-
-Using Homie 3.0 it is possible to integrate **Smart Pool Controller** directly
-in open source smarthome server [openHAB](https://www.openhab.org/) or
-[Home Assistant](https://www.home-assistant.io/).
+communicate with your smart home. It supports
+[Home Assistant MQTT Discovery](https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery)
+for automatic device registration — devices appear automatically in Home Assistant
+without any manual configuration.
 
 ## OpenHAB Integration
 

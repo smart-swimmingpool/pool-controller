@@ -21,7 +21,7 @@ menu:
     weight: 10
 ---
 
-## 🏊 The Homie 3.0 compatible Smart Swimmingpool Controller 🎛️
+## 🏊 The MQTT-enabled Smart Swimmingpool Controller 🎛️
 
 <span style="text-shadow: none;">
 <!-- markdownlint-disable MD013 -->
@@ -38,12 +38,12 @@ Manage your swimming pool in a smart way to enjoy it comfortably and affordably 
 
 - [x] Manage water timed circulation for cleaning
 - [x] Manage water heating by additional pump for solar circuit
-- [x] [Homie 3.0](https://homieiot.github.io/) compatible MQTT messaging
+- [x] [Home Assistant MQTT Discovery](https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery) - Native HA integration
 - [x] Independent of specific smarthome servers
-  - [x] [openHAB](https://www.openhab.org) since Version 2.4 using MQTT Homie
-  - [x] [Home Assistant](https://home-assistant.io) using MQTT Homie
+  - [x] [Home Assistant](https://home-assistant.io) via native MQTT Discovery
+  - [x] [openHAB](https://www.openhab.org) via MQTT
 - [x] Timesync via NTP (europe.pool.ntp.org)
-- [x] Logging-Information via Homie-Node
+- [x] Logging of system events and diagnostics
 
 ## Planned Features
 
@@ -53,12 +53,10 @@ Manage your swimming pool in a smart way to enjoy it comfortably and affordably 
 - [ ] Store configuration changes persistently on the controller
 - [ ] Temperature based cleaning circulation time (colder == shorter, hotter == longer)
 - [ ] Improved sketch to work completely without WiFi connection
-- [ ] Homie should run without WiFi connection
+- [ ] Operation without WiFi connection
 - [ ] Enhance sketch using display and buttons to setup environment.
 - [ ] Use only one power supply for ESP32 (5V) and relays (230V)
 - see also the [issue list](https://github.com/smart-swimmingpool/pool-controller/issues)
-
-[![works with MQTT Homie](https://homieiot.github.io/img/works-with-homie.svg "works with MQTT Homie")](https://homieiot.github.io/)
 
 <!-- markdownlint-disable-next-line MD013 -->
 

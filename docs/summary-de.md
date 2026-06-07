@@ -104,44 +104,26 @@ if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval))
 
 ### Home Assistant MQTT Discovery Support
 
-**Neue Funktionalität**: Konfigurierbare MQTT-Protokolle
+**Neue Funktionalität**: Home Assistant MQTT Discovery (ersetzt das bisherige Homie-Protokoll)
 
-#### Konfiguration
+**Wichtig**: Das Homie-Protokoll wurde in v3.3.0 entfernt. Der Controller verwendet
+ausschließlich Home Assistant MQTT Discovery.
 
-```json
-{
-  "mqtt-protocol": "homeassistant"   // Standard (Home Assistant Discovery)
-  // ODER
-  "mqtt-protocol": "homie"           // Homie 3.0 (Legacy)
-}
-```
-
-#### Unterstützte Protokolle
-
-1. **Homie Convention** (Standard)
-
-   - Topic-Format: `homie/<device>/<node>/<property>`
-   - Kompatibel mit: openHAB, Home Assistant (via Homie Integration)
-   - Bewährt und stabil
-
-2. **Home Assistant MQTT Discovery** (NEU)
-   - Topic-Format: `homeassistant/<component>/<device>/<object>/config`
-   - Native Home Assistant Auto-Discovery
-   - Optimiert für Home Assistant
+- Topic-Format: `homeassistant/<component>/<device>/<object>/config`
+- Automatische Geräte-Registrierung — keine manuelle Konfiguration in HA nötig
+- Geräte erscheinen automatisch als Sensoren, Schalter, Numbers, Selects und Text-Entities
 
 #### Implementierung
 
-- `src/MQTTConfig.hpp` - Protokoll-Konfiguration
 - `src/HomeAssistantMQTT.hpp` - Discovery Publisher
 - JSON-basierte Auto-Discovery Nachrichten
 - Vollständige Geräte-Metadaten
 
 #### Vorteile
 
-- ✅ Flexibilität bei Smart Home Integration
-- ✅ Keine Breaking Changes (Homie bleibt Standard)
-- ✅ Einfache Konfiguration via Web-UI
+- ✅ Einfache Einrichtung via Web-UI
 - ✅ Automatische Geräte-Erkennung
+- ✅ Optimiert für Home Assistant
 
 ---
 
@@ -238,25 +220,17 @@ if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval))
 
 ## Installation und Verwendung
 
-### MQTT-Protokoll konfigurieren
+### MQTT-Protokoll
 
-#### Via Homie Web-UI
+**Hinweis**: Das Homie-Protokoll wird seit v3.3.0 nicht mehr unterstützt.
+Der Controller verwendet ausschließlich Home Assistant MQTT Discovery.
 
-1. Mit WiFi-AP des Geräts verbinden (beim ersten Start)
-2. Zur Konfigurationsseite navigieren
-3. "mqtt-protocol" auf "homeassistant" (Standard) oder "homie" setzen
-4. Speichern und neu starten
+#### Konfiguration via Web-UI
 
-#### Via config.json
-
-```json
-{
-  "name": "Pool Controller",
-  "settings": {
-    "mqtt-protocol": "homeassistant"
-  }
-}
-```
+1. Mit WiFi-AP des Geräts verbinden (beim ersten Start) oder Einstellungsseite öffnen
+2. Zur MQTT-Konfiguration navigieren
+3. MQTT-Broker-Verbindungsdaten eingeben
+4. Speichern und neu starten — Entities erscheinen automatisch in Home Assistant
 
 ### Empfohlene Tests
 

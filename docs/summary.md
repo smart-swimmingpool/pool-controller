@@ -95,29 +95,23 @@ setProperty(cTemperature).send(buffer);
 
 ### Home Assistant MQTT Discovery Support
 
-**New Feature**: Configurable MQTT protocols
+**New Feature**: Home Assistant MQTT Discovery (replaced the former Homie protocol)
 
-#### Configuration Options
+**Important**: The Homie protocol support has been removed in v3.3.0.
+The controller now exclusively uses Home Assistant MQTT Discovery.
 
-1. **Homie Convention** (Default)
-
-   - Topic format: `homie/<device>/<node>/<property>`
-   - Compatible with: openHAB, Home Assistant (via Homie integration)
-   - Proven and stable
-
-2. **Home Assistant MQTT Discovery** (New)
-   - Topic format: `homeassistant/<component>/<device>/<object>/config`
-   - Native Home Assistant auto-discovery
-   - Optimized for Home Assistant
+- Topic format: `homeassistant/<component>/<device>/<object>/config`
+- Automatic device registration — no manual configuration in HA needed
+- Devices appear automatically as sensors, switches, numbers, selects, and text entities
 
 #### Setup
 
 **Via Web UI**:
 
-1. Connect to device WiFi AP during setup
+1. Connect to device WiFi AP during setup (or use the settings page)
 2. Navigate to configuration page
-3. Set "mqtt-protocol" to "homeassistant" (default) or "homie"
-4. Save and reboot
+3. Set your MQTT broker connection details
+4. Save and reboot — entities appear automatically in Home Assistant
 
 **Via config.json**:
 
@@ -125,7 +119,7 @@ setProperty(cTemperature).send(buffer);
 {
   "name": "Pool Controller",
   "settings": {
-    "mqtt-protocol": "homeassistant"
+    "mqtt_host": "192.168.1.100"
   }
 }
 ```

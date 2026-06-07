@@ -350,6 +350,8 @@ This skill works alongside:
 | `platformio-workflow` | General build/monitor/debug commands     |
 | `platformio-env`      | Deep platformio.ini configuration        |
 | `web-ui`              | Web interface changes (before deploying) |
+| `release-please`      | Release pipeline internals (detailed)    |
+| `conventional-commits`| Commit format for automatic releases     |
 | `cpp-code-quality`    | Linting before deployment                |
 | `esp32-reliability`   | 24/7 stability checks                    |
 | `cpp-memory-opt`      | Flash/RAM optimization if space is tight |

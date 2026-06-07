@@ -4,9 +4,8 @@
 namespace PoolController {
 namespace Nodes {
 
-// Logger is now a plain struct with no HomieNode constructor.
-// All Homie-specific initialisation (advertise, setDatatype, etc.) has
-// been removed as part of the full migration to standalone MQTT via
+// Logger is now a plain struct — the former Node-based constructor
+// was removed as part of the migration to standalone MQTT via
 // MqttPublisher + NetworkManager.
 
 }  // namespace Nodes

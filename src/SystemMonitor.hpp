@@ -132,7 +132,7 @@ public:
 
   /**
    * Detect boot-loop pattern.
-   * Call this as early as possible in setup(), before Homie initializes.
+   * Call this as early as possible in setup(), before MQTT/network initializes.
    *
    * Increments a persistent boot counter in NVS on every boot.
    * Returns true when BOOT_LOOP_MAX_COUNT consecutive boots have occurred

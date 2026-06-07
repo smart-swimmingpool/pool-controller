@@ -1,102 +1,65 @@
-# MQTT Protocol Configuration
+# MQTT Configuration (Home Assistant Discovery)
 
-The Pool Controller now supports two MQTT protocols:
+The Pool Controller uses [Home Assistant MQTT Discovery](https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery)
+for automatic device registration. All devices appear automatically in Home Assistant
+without any manual configuration.
 
-## 1. Home Assistant MQTT Discovery **(Default)**
-
-[Home Assistant MQTT Discovery](https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery)
-allows automatic device discovery in Home Assistant.
-
-To use Home Assistant (default):
-
-```json
-{
-  "mqtt-protocol": "homeassistant"
-}
-```
-
-## 2. Homie Convention (Legacy)
-
-The [Homie Convention](https://homieiot.github.io/) provides a standardized
-MQTT device discovery convention.
-
-To use Homie:
-
-```json
-{
-  "mqtt-protocol": "homie"
-}
-```
+> **Note**: The former Homie protocol support was removed in v3.3.0. The controller
+> exclusively uses Home Assistant MQTT Discovery.
 
 ## Configuration
 
-You can set the MQTT protocol in the Homie configuration UI or in the
-`config.json` file:
+Configure your MQTT broker connection via the Web UI (Settings → MQTT tab):
 
-### Via Homie UI
+- **MQTT Hostname/IP**: Your MQTT broker address
+- **MQTT Port**: Default 1883 (or 8883 for TLS)
+- **MQTT Username/Password**: Optional authentication credentials
+- **Enable TLS**: Toggle for encrypted MQTTS connection
 
-1. Connect to the device's WiFi AP during initial setup
-2. Navigate to the configuration page
-3. Set "mqtt-protocol" to either "homeassistant" (default) or "homie"
-4. Save and reboot
+After saving and rebooting, all entities appear automatically in Home Assistant.
 
 ### Via config.json
 
-Add or modify the setting in your device's `config.json`:
+Add or modify the setting in your device's `config.json` on LittleFS:
 
 ```json
 {
   "name": "Pool Controller",
   "settings": {
-    "mqtt-protocol": "homeassistant"
+    "mqtt_host": "192.168.1.100",
+    "mqtt_port": 1883
   }
 }
 ```
 
-## Protocol Differences
+## Home Assistant Entities
 
-### Homie Convention
+The controller publishes the following entities via MQTT Discovery:
 
-- Topic structure: `homie/<device-id>/<node-id>/<property>`
-- Example: `homie/pool-controller/pool-temp/temperature`
-- Standardized device discovery
-- Works with openHAB, Home Assistant (via Homie integration)
-
-### Home Assistant MQTT Discovery
-
-- Topic structure: `homeassistant/<component>/<device-id>/<object-id>/config`
-- Example: `homeassistant/sensor/pool-controller/pool-temp/config`
-- Native Home Assistant auto-discovery
-- Optimized for Home Assistant
-
-## Home Assistant Mapping
-
-The table maps Homie properties to Home Assistant discovery objects.
-
-| Function                       | Homie node/property                                   | HA component/object-id   | State topic                                                  | Command topic                                             |
-| ------------------------------ | ----------------------------------------------------- | ------------------------ | ------------------------------------------------------------ | --------------------------------------------------------- |
-| Solar temperature              | `homie/pool-controller/solar-temp/temperature`        | `sensor/solar-temp`      | `homeassistant/sensor/pool-controller/solar-temp/state`      | -                                                         |
-| Pool temperature               | `homie/pool-controller/pool-temp/temperature`         | `sensor/pool-temp`       | `homeassistant/sensor/pool-controller/pool-temp/state`       | -                                                         |
-| Controller temperature (ESP32) | `homie/pool-controller/controller-temp/temperature`   | `sensor/controller-temp` | `homeassistant/sensor/pool-controller/controller-temp/state` | -                                                         |
-| Pool pump relay                | `homie/pool-controller/pool-pump/switch`              | `switch/pool-pump`       | `homeassistant/switch/pool-controller/pool-pump/state`       | `homeassistant/switch/pool-controller/pool-pump/set`      |
-| Solar pump relay               | `homie/pool-controller/solar-pump/switch`             | `switch/solar-pump`      | `homeassistant/switch/pool-controller/solar-pump/state`      | `homeassistant/switch/pool-controller/solar-pump/set`     |
-| Operation mode                 | `homie/pool-controller/operation-mode/mode`           | `select/mode`            | `homeassistant/select/pool-controller/mode/state`            | `homeassistant/select/pool-controller/mode/set`           |
-| Pool max temp                  | `homie/pool-controller/operation-mode/pool-max-temp`  | `number/pool-max-temp`   | `homeassistant/number/pool-controller/pool-max-temp/state`   | `homeassistant/number/pool-controller/pool-max-temp/set`  |
-| Solar min temp                 | `homie/pool-controller/operation-mode/solar-min-temp` | `number/solar-min-temp`  | `homeassistant/number/pool-controller/solar-min-temp/state`  | `homeassistant/number/pool-controller/solar-min-temp/set` |
-| Hysteresis                     | `homie/pool-controller/operation-mode/hysteresis`     | `number/hysteresis`      | `homeassistant/number/pool-controller/hysteresis/state`      | `homeassistant/number/pool-controller/hysteresis/set`     |
-| Timer start time               | `homie/pool-controller/operation-mode/timer-start`    | `text/timer-start`       | `homeassistant/text/pool-controller/timer-start/state`       | `homeassistant/text/pool-controller/timer-start/set`      |
-| Timer end time                 | `homie/pool-controller/operation-mode/timer-end`      | `text/timer-end`         | `homeassistant/text/pool-controller/timer-end/state`         | `homeassistant/text/pool-controller/timer-end/set`        |
-| Timezone index                 | `homie/pool-controller/operation-mode/timezone`       | `number/timezone`        | `homeassistant/number/pool-controller/timezone/state`        | `homeassistant/number/pool-controller/timezone/set`       |
-| Timezone info                  | `homie/pool-controller/operation-mode/timezone-info`  | `sensor/timezone-info`   | `homeassistant/sensor/pool-controller/timezone-info/state`   | -                                                         |
-| Log output                     | `homie/pool-controller/Log/log`                       | `sensor/log`             | `homeassistant/sensor/pool-controller/log/state`             | -                                                         |
-| Log level                      | `homie/pool-controller/Log/Level`                     | `select/log-level`       | `homeassistant/select/pool-controller/log-level/state`       | `homeassistant/select/pool-controller/log-level/set`      |
-| Log to serial                  | `homie/pool-controller/Log/LogSerial`                 | `switch/log-serial`      | `homeassistant/switch/pool-controller/log-serial/state`      | `homeassistant/switch/pool-controller/log-serial/set`     |
-| OTA update trigger             | -                                                     | `button/ota-update`      | -                                                            | `homeassistant/button/pool-controller/ota-update/set`     |
-| OTA status                     | -                                                     | `sensor/ota-status`      | `homeassistant/sensor/pool-controller/ota-status/state`      | -                                                         |
+| Function                       | HA component/object-id   | State topic                                                  | Command topic                                             |
+| ------------------------------ | ------------------------ | ------------------------------------------------------------ | --------------------------------------------------------- |
+| Solar temperature              | `sensor/solar-temp`      | `homeassistant/sensor/pool-controller/solar-temp/state`      | -                                                         |
+| Pool temperature               | `sensor/pool-temp`       | `homeassistant/sensor/pool-controller/pool-temp/state`       | -                                                         |
+| Controller temperature (ESP32) | `sensor/controller-temp` | `homeassistant/sensor/pool-controller/controller-temp/state` | -                                                         |
+| Pool pump relay                | `switch/pool-pump`       | `homeassistant/switch/pool-controller/pool-pump/state`       | `homeassistant/switch/pool-controller/pool-pump/set`      |
+| Solar pump relay               | `switch/solar-pump`      | `homeassistant/switch/pool-controller/solar-pump/state`      | `homeassistant/switch/pool-controller/solar-pump/set`     |
+| Operation mode                 | `select/mode`            | `homeassistant/select/pool-controller/mode/state`            | `homeassistant/select/pool-controller/mode/set`           |
+| Pool max temp                  | `number/pool-max-temp`   | `homeassistant/number/pool-controller/pool-max-temp/state`   | `homeassistant/number/pool-controller/pool-max-temp/set`  |
+| Solar min temp                 | `number/solar-min-temp`  | `homeassistant/number/pool-controller/solar-min-temp/state`  | `homeassistant/number/pool-controller/solar-min-temp/set` |
+| Hysteresis                     | `number/hysteresis`      | `homeassistant/number/pool-controller/hysteresis/state`      | `homeassistant/number/pool-controller/hysteresis/set`     |
+| Timer start time               | `text/timer-start`       | `homeassistant/text/pool-controller/timer-start/state`       | `homeassistant/text/pool-controller/timer-start/set`      |
+| Timer end time                 | `text/timer-end`         | `homeassistant/text/pool-controller/timer-end/state`         | `homeassistant/text/pool-controller/timer-end/set`        |
+| Timezone index                 | `number/timezone`        | `homeassistant/number/pool-controller/timezone/state`        | `homeassistant/number/pool-controller/timezone/set`       |
+| Timezone info                  | `sensor/timezone-info`   | `homeassistant/sensor/pool-controller/timezone-info/state`   | -                                                         |
+| Log output                     | `sensor/log`             | `homeassistant/sensor/pool-controller/log/state`             | -                                                         |
+| Log level                      | `select/log-level`       | `homeassistant/select/pool-controller/log-level/state`       | `homeassistant/select/pool-controller/log-level/set`      |
+| Log to serial                  | `switch/log-serial`      | `homeassistant/switch/pool-controller/log-serial/state`      | `homeassistant/switch/pool-controller/log-serial/set`     |
+| OTA update trigger             | `button/ota-update`      | -                                                            | `homeassistant/button/pool-controller/ota-update/set`     |
+| OTA status                     | `sensor/ota-status`      | `homeassistant/sensor/pool-controller/ota-status/state`      | -                                                         |
 
 ## Features
 
-Both protocols support:
+All entities support:
 
 - Temperature sensors (pool, solar, controller)
 - Relay switches (pool pump, solar pump)
@@ -117,11 +80,19 @@ is available in:
 
 - [`docs/home-assistant-dashboard-pool.yaml`](home-assistant-dashboard-pool.yaml)
 
-## Migration
+## Migration from Homie (Pre-v3.3.0)
 
-If you're migrating from Homie to Home Assistant or vice versa:
+If you're upgrading from an older firmware that used the Homie protocol:
 
-1. Update the `mqtt-protocol` setting (default: "homeassistant")
-2. Reboot the device
-3. The device will automatically start publishing in the new format
-4. Update your home automation system to use the new topics
+1. The **Homie protocol has been removed** in v3.3.0 — the controller now uses
+   **Home Assistant MQTT Discovery exclusively**
+2. After flashing the new firmware, **delete stale retained Homie messages**
+   from your MQTT broker to avoid confusion:
+   ```bash
+   mosquitto_pub -h broker -t homie -n -r
+   mosquitto_sub -t 'homie/#' -v | cut -d' ' -f1 | xargs -I{} mosquitto_pub -h broker -t {} -n -r
+   ```
+3. In Home Assistant, delete the old device entry (Settings → Devices & services →
+   MQTT → Devices → pool-controller → Delete) — the new entities will appear
+   automatically via MQTT Discovery
+4. Reboot the device to trigger fresh discovery announcements

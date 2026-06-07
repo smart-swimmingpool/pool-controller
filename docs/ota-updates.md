@@ -4,107 +4,46 @@
 
 The Pool Controller supports Over-The-Air (OTA) firmware updates, allowing
 you to update the device remotely without physical access to the hardware.
-This feature is provided by the Homie library and is enabled by default.
 
 ## Features
 
-- **Network-based updates**: Upload firmware via Wi-Fi
-- **Password-protected**: Secure updates with authentication
-- **Low memory footprint**: Optimized for ESP32
-- **Automatic discovery**: mDNS support for easy device location
-- **Status feedback**: Progress indication via MQTT
-
-## Prerequisites
-
-- Pool Controller connected to Wi-Fi network
-- PlatformIO installed (for uploading firmware)
-- Device IP address or mDNS hostname
-- OTA password (configured in Homie config)
+- **WebUI firmware upload**: Flash a signed `.bin` via the dashboard
+- **GitHub Release updates**: Check for new versions and install automatically
+- **PlatformIO serial upload**: Flash via USB for development
+- **Status feedback**: Progress indication via WebUI + MQTT
 
 ## Update Methods
 
-### Method 1: PlatformIO OTA Upload (Recommended)
+### Method 1: WebUI (Recommended)
 
-#### 1. Configure Upload Settings
+The simplest method — no tools needed beyond a web browser:
 
-Edit `platformio.ini` and uncomment/modify OTA settings:
+1. Open the Pool Controller dashboard in your browser
+2. Go to **System** tab
+3. Choose one of:
+   - **Manual Firmware Upload**: Select a `.bin` file and flash
+   - **Check for Updates**: Automatically fetches latest release from GitHub
+4. Follow the progress bar — device reboots when done
 
-```ini
-[env:nodemcuv2]
-; ... existing settings ...
-upload_protocol = espota
-upload_port = pool-controller.local  ; or IP address like 192.168.1.100
-upload_flags =
-  --timeout=30
-  --port=8266
-  --auth=YOUR_OTA_PASSWORD
-```
+### Method 2: GitHub Release (Automated)
 
-#### 2. Upload Firmware
+Firmware is built and published automatically on each GitHub release:
+
+1. In the **System** tab, click **Check for Updates**
+2. If a newer version is found, **Install Update** appears
+3. Click to download and flash the latest firmware directly from GitHub
+4. Progress is shown in the UI; device reboots on completion
+
+### Method 3: PlatformIO Serial Upload
+
+For development:
 
 ```bash
-# Build and upload via OTA
-pio run -e nodemcuv2 --target upload
-
-# Or using platform-specific environment
+# Build and upload via USB
 pio run -e esp32dev --target upload
-```
 
-#### 3. Monitor Progress
-
-The upload progress will be shown in the terminal. After completion, the
-device will automatically reboot with the new firmware.
-
-### Method 2: Arduino IDE OTA Upload
-
-1. Open Arduino IDE
-2. Go to **Tools → Port**
-3. Select your device from the network ports list
-   (e.g., `pool-controller at 192.168.1.100`)
-4. Click Upload button
-5. Enter OTA password when prompted
-
-### Method 3: Web Interface (Homie UI)
-
-1. Access Homie web interface at `http://pool-controller.local/`
-   or `http://[DEVICE_IP]/`
-2. Navigate to **Firmware Update** section
-3. Select compiled `.bin` file
-4. Click **Upload**
-5. Wait for update completion and automatic reboot
-
-## OTA Configuration
-
-### Setting OTA Password
-
-The OTA password is configured through the Homie configuration portal:
-
-1. **Reset device** to enter configuration mode (hold button during boot)
-2. Connect to Wi-Fi AP `Homie-XXXXXX`
-3. Open browser to `http://192.168.123.1`
-4. Set **OTA Password** in the configuration
-5. Save and reboot
-
-### Homie Configuration File
-
-OTA settings are stored in the Homie configuration:
-
-```json
-{
-  "name": "Pool Controller",
-  "wifi": {
-    "ssid": "YourWiFiSSID",
-    "password": "YourWiFiPassword"
-  },
-  "mqtt": {
-    "host": "192.168.1.10",
-    "port": 1883
-  },
-  "ota": {
-    "enabled": true
-  },
-  "device_id": "pool-controller"
-}
+# Or with project venv
+./venv/bin/pio run -e esp32dev --target upload
 ```
 
 ## Building Firmware for OTA
@@ -131,21 +70,15 @@ pio run -e esp32dev
 
 ## Security Best Practices
 
-### 1. Set Strong OTA Password
-
-- Use minimum 8 characters
-- Include uppercase, lowercase, numbers, symbols
-- Example: `MyP00l#Update2026`
-
-### 2. Network Security
+### 1. Network Security
 
 - Use WPA2/WPA3 Wi-Fi encryption
 - Isolate IoT devices on separate VLAN if possible
-- Restrict OTA port (8266) at firewall level
 
-### 3. Firmware Verification
+### 2. Firmware Verification
 
-- Always verify firmware builds before uploading
+- Only flash firmware from trusted sources (official GitHub releases)
+- Verify firmware builds before uploading to production
 - Test on development device first
 - Keep backup of working firmware version
 
@@ -201,12 +134,11 @@ pio run -e esp32dev
 
 ### How It Works
 
-1. **Homie OTA Server**: Runs on port 3232 (ESP32)
-2. **mDNS Advertisement**: Device broadcasts `_arduino._tcp` service
-3. **Authentication**: Password challenge before accepting firmware
-4. **Flash Writing**: New firmware written to OTA partition
-5. **Verification**: Boot partition updated to new firmware
-6. **Reboot**: Automatic restart with new firmware
+1. **WebUI OR GitHub**: User triggers update via dashboard or automated check
+2. **Firmware Download**: Binary fetched from local upload or GitHub release
+3. **Flash Writing**: New firmware written to OTA partition (ESP32 Update library)
+4. **Verification**: Firmware signature and integrity checked
+5. **Reboot**: Automatic restart with new firmware
 
 ### Memory Requirements
 
@@ -222,12 +154,7 @@ network stack memory usage, ensuring reliable OTA updates.
 
 ### Via MQTT
 
-OTA progress is published to MQTT topics:
-
-```text
-homie/pool-controller/$state = "ota"       # During OTA update
-homie/pool-controller/$state = "ready"     # After successful update
-```
+OTA progress is visible in the WebUI progress bar and via serial console.
 
 ### Via Serial Console
 
@@ -313,20 +240,9 @@ jobs:
 
 ### Firmware Versioning
 
-Update version in `src/PoolController.cpp`:
-
-```cpp
-const char* FIRMWARE_VERSION = "3.1.0";
-```
-
-### MQTT Version Publishing
-
-Version is published automatically:
-
-```text
-homie/pool-controller/$fw/version = "3.1.0"
-homie/pool-controller/$fw/name = "pool-controller"
-```
+Version is managed by **release-please** and stored in `platformio.ini`
+as `FW_VERSION`. The firmware version is published via Home Assistant
+Discovery and visible in the WebUI (System tab → Current Version).
 
 ## Best Practices
 
@@ -375,24 +291,22 @@ If OTA update fails and device becomes unresponsive:
    - Upload firmware via esptool
 
 1. **Factory Reset**:
-   - Clear EEPROM/NVS
-   - Reset Homie configuration
-   - Reconfigure via Homie AP
+   - In WebUI: System tab → **Factory Reset**
+   - Or serial command: clear NVS + LittleFS
 
 ## Future Enhancements
 
-- [ ] Web-based OTA update interface
-- [ ] Automatic update checking from GitHub releases
+- [x] Web-based OTA update interface (System tab)
+- [x] Automatic update checking from GitHub releases
 - [ ] Rollback capability to previous firmware
 - [ ] A/B partition updates for safer updates
 - [ ] Update scheduling via MQTT commands
 
 ## References
 
-- [Homie OTA Documentation](https://homieiot.github.io/homie-esp8266/docs/develop/others/ota-configuration-updates/)
-- [PlatformIO OTA Guide](https://docs.platformio.org/en/latest/platforms/espressif8266.html#over-the-air-ota-update)
-- [Arduino OTA Documentation](https://arduino-esp8266.readthedocs.io/en/latest/ota_updates/readme.html)
+- [PlatformIO OTA Guide](https://docs.platformio.org/en/latest/platforms/espressif32.html#over-the-air-ota-update)
 - [ESP32 Arduino OTA](https://docs.espressif.com/projects/arduino-esp32/en/latest/api/ota.html)
+- [GitHub Releases](https://github.com/smart-swimmingpool/pool-controller/releases)
 
 ## Support
 
@@ -403,6 +317,6 @@ For OTA-related issues:
 
 ---
 
-**Note**: OTA functionality is enabled by default through the Homie library.
-No code changes required in the application - just configure upload settings
-in `platformio.ini` and use PlatformIO OTA upload feature.
+**Note**: OTA is implemented using the ESP32 Arduino Update library integrated
+into the WebPortal. GitHub release builds are handled by the CI pipeline
+(`release.yml`).

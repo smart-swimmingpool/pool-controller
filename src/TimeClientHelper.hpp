@@ -24,7 +24,7 @@ constexpr time_t MIN_VALID_TIME = 1577836800;
  *            millis()-estimate is usable
  *   RED    — last sync > redAfterHours OR never synced, time is effectively lost
  *
- * Thresholds configured via HomieSettings (P9):
+ * Thresholds configured via ConfigManager:
  *   time-loss-green-hours (default 1h)
  *   time-loss-red-hours   (default 24h)
  */

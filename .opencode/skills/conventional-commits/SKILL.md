@@ -171,5 +171,6 @@ The CI pipeline (`release.yml`) uses `release-please-action@v4`:
 
 - [Conventional Commits spec](https://www.conventionalcommits.org/)
 - [release-please docs](https://github.com/googleapis/release-please)
-- Project skill: `deploy` — release pipeline and version management
+- Project skill: `release-please` — release pipeline and version management (detailed)
+- Project skill: `deploy` — build, flash, OTA, uploadfs
 - Project file: `release-please-config.json` — configuration

@@ -39,7 +39,7 @@ storing key `"switch"`.
 When the controller reboots:
 
 1. **State Manager** loads all persisted values
-2. **Configuration settings** from Homie config can override persisted state
+2. **Configuration settings** from LittleFS config.json can override persisted state
 3. **Last known state** is used if no config override exists
 
 This ensures that:
@@ -182,7 +182,7 @@ CRITICAL: Free heap 3,842 bytes < 4,096 bytes. Rebooting...
 System status is published via the LoggerNode to MQTT topic:
 
 ```text
-homie/pool-controller/log
+pool-controller/log
 ```
 
 Example messages:

@@ -166,14 +166,14 @@ If you need to clear retained MQTT messages:
 # Clear a specific Home Assistant topic
 mosquitto_pub -h hostname -t "homeassistant/sensor/pool-controller/pool-temp/state" -n -r
 
-# Clear a Homie topic
+# Clear a root Homie topic (legacy cleanup)
 mosquitto_pub -h hostname -t homie -n -r -d
 ```
 
 ## Configuration
 
-Homie supports configuration (e.g. WiFi credentials) using JSON-files.
-How to upload JSON config files see [Homie documentation](https://homieiot.github.io/homie-esp8266/docs/develop/configuration/json-configuration-file/).
+The controller uses a `config.json` file on its LittleFS filesystem for
+base configuration (WiFi credentials, MQTT settings). Use `uploadfs` to deploy it.
 
 ### Example `config.json`
 

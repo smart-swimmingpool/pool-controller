@@ -111,8 +111,8 @@ pool-controller/
 │   └── Nodes/           # Sub-node implementations
 ├── lib/                 # Private libraries
 │   └── Vector/          # Custom Vector implementation
-├── data/                # SPIFFS filesystem data
-│   └── homie/           # Homie config files
+├── data/                # LittleFS filesystem data
+│   └── web/             # Web UI files (index.html, style.css, app.js)
 └── .pio/                # Build artifacts (gitignored)
 ```
 

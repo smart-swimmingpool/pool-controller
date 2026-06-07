@@ -9,7 +9,7 @@ namespace PoolController {
 namespace Nodes {
 
 /**
- * Lightweight serial logger — replaces the former HomieNode-based Logger.
+ * Lightweight serial logger — replaces the former Node-based Logger.
  * All output goes to Serial. The struct is kept for API compatibility with
  * sites that previously used Logger::LogLevel / Logger::Flags.
  */

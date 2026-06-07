@@ -77,7 +77,7 @@ auto startWps() -> bool {
 
 /**
  * Persist the WiFi credentials obtained via WPS into ConfigManager
- * and save to LittleFS (replaces the old SPIFFS + /homie/config.json approach).
+ * and save to LittleFS (replaces the old SPIFFS-based config approach).
  */
 auto persistWpsWifiCredentials() -> bool {
   char connectedSsid[WIFI_SSID_MAX_LEN + 1];

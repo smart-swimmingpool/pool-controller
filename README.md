@@ -5,8 +5,6 @@
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v1.4%20adopted-ff69b4.svg)](code-of-conduct.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-[![works with MQTT Homie](https://homieiot.github.io/img/works-with-homie.svg "[works with MQTT Homie")](https://homieiot.github.io/)
-
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/J3J33A8DT)
 
 ## 🏊 The MQTT-enabled Smart Swimming Pool Controller 🎛️
@@ -26,12 +24,10 @@ Discussions: <https://github.com/smart-swimmingpool/smart-swimmingpool.github.io
 
 ### MQTT Integration
 
-- [x] **Configurable MQTT protocols** - Choose your preferred protocol
-  - [x] [Homie 3.0](https://homieiot.github.io/) - IoT convention
-  - [x] [Home Assistant MQTT Discovery](https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery) - Native HA integration
+- [x] [Home Assistant MQTT Discovery](https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery) - Native HA integration
 - [x] Independent of specific smart home servers
-  - [x] [openHAB](https://www.openhab.org) (v2.4+) via MQTT Homie
-  - [x] [Home Assistant](https://www.home-assistant.io/) via Homie or native MQTT Discovery
+  - [x] [Home Assistant](https://www.home-assistant.io/) via native MQTT Discovery
+  - [x] [openHAB](https://www.openhab.org) via MQTT
 
 ### Reliability & 24/7 Operation (v3.2.0)
 
@@ -89,7 +85,7 @@ Discussions: <https://github.com/smart-swimmingpool/smart-swimmingpool.github.io
 - **P7: Fast Sensor Recovery** — DallasTemperatureNode polls every 5s (instead of 300s) when sensor reads NaN
 - **P8: Boot-Loop Detection** — NVS-based boot counter, Safe Mode after 4
   consecutive short boots (<5 min), all relays forced OFF
-- **P9: Configurable Fallback Times** — HomieSettings
+- **P9: Configurable Fallback Times** — ConfigManager settings
   `time-loss-green-hours` and `time-loss-red-hours` replace hardcoded NTP
   thresholds
 
@@ -132,8 +128,7 @@ See [CHANGELOG.md](CHANGELOG.md) for complete details.
 
 Configure your preferred MQTT protocol in the device settings:
 
-- `mqtt-protocol = "homeassistant"` - Home Assistant native discovery **(default)**
-- `mqtt-protocol = "homie"` - Homie 3.0 convention
+- `mqtt-protocol = "homeassistant"` - Home Assistant native discovery **(only option)**
 
 See [docs/mqtt-configuration.md](docs/mqtt-configuration.md) for setup details.
 
@@ -211,9 +206,7 @@ Markdown/YAML/JSON validation) before merge.
 
 ## Credits
 
-- [Community of Homie-ESP8266](https://gitter.im/homie-iot/ESP8266)
 - [Lübbe Onken](http://github.com/luebbe) for `TimeClientHelper`
-- [Ian Hubbertz](https://github.com/euphi) for [HomieLoggerNode](https://github.com/euphi/HomieLoggerNode)
 
 ## License
 
