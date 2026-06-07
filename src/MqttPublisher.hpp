@@ -50,10 +50,12 @@ private:
   static void publishTimeDiscovery(const char *objectId, const char *name, const char *icon = nullptr,
     const char *entityCategory = nullptr);
   static void publishUpdateDiscovery();
+  static void publishClimateDiscovery();
 
   static String getBaseTopic(const char *component, const char *objectId);
   static String getDeviceJson();
   static void publishUpdateState();
+  static void publishClimateState();
 
   static String deviceId_;
 };
