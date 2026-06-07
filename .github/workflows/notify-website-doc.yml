@@ -9,6 +9,9 @@ on:
       - README.md
       - CHANGELOG.md
       - .github/workflows/notify-website-doc.yml
+concurrency:
+  group: notify-website-${{ github.sha }}
+  cancel-in-progress: true
 jobs:
   build:
     name: Dispatch to `website` repository for docs regeneration
@@ -16,6 +19,15 @@ jobs:
     env:
       HUGO_DEPLOY_TOKEN: ${{ secrets.HUGO_DEPLOY_TOKEN }}
     steps:
+      - name: Check commit status
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          status=$(gh api "repos/${{ github.repository }}/commits/${{ github.sha }}/status" --jq '.state')
+          if [ "$status" != "success" ]; then
+            echo "::warning::Commit status is '$status' — still proceeding, but docs may be from a failed build."
+          fi
+
       - name: Emit repository_dispatch
         id: website_dispatch
         if: env.HUGO_DEPLOY_TOKEN != ''
