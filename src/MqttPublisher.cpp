@@ -550,10 +550,10 @@ void MqttPublisher::publishStates() {
   NetworkManager::publish((getBaseTopic("number", "temp-circ-max-runtime") + "/state").c_str(),
     String(ConfigManager::getSettings().tempCircMaxRuntime).c_str(), true);
 
-  // Effective runtime sensor
+  // Effective runtime sensor — actual runtime in minutes, not end-of-day
   {
     Rule *active = operationModeNode.getRule();
-    uint16_t effectiveMin = (active != nullptr) ? active->getActiveEndMinutes() : 0;
+    uint16_t effectiveMin = (active != nullptr) ? active->getEffectiveRuntimeMinutes() : 0;
     NetworkManager::publish((getBaseTopic("sensor", "effective-runtime") + "/state").c_str(),
       String(effectiveMin).c_str(), true);
   }

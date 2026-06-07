@@ -60,6 +60,9 @@ static constexpr const char *kSetOpMode     = "set_opmode";
 static constexpr const char *kSetTzIdx      = "set_tzidx";
 static constexpr const char *kSetGreen      = "set_green";
 static constexpr const char *kSetRed        = "set_red";
+static constexpr const char *kSetCircThresh = "set_circth";
+static constexpr const char *kSetCircFactor = "set_circfa";
+static constexpr const char *kSetCircMax    = "set_circmx";
 static constexpr const char *kAdmPass       = "adm_pass";
 static constexpr const char *kCfgConfigured = "cfg_configured";
 
@@ -98,6 +101,9 @@ bool ConfigManager::load() {
   settings_.timezoneIndex      = prefs.getInt(kSetTzIdx, 0);
   settings_.timeLossGreenHours = prefs.getUChar(kSetGreen, 1);
   settings_.timeLossRedHours   = prefs.getUChar(kSetRed, 24);
+  settings_.tempCircThreshold  = prefs.getDouble(kSetCircThresh, 24.0);
+  settings_.tempCircFactor     = prefs.getUShort(kSetCircFactor, 30);
+  settings_.tempCircMaxRuntime = prefs.getUShort(kSetCircMax, 720);
 
   adminPasswordHash_ = prefs.getString(kAdmPass, kDefaultPasswordHash);
   configured_        = prefs.getBool(kCfgConfigured, false);
@@ -135,6 +141,9 @@ bool ConfigManager::save() {
   prefs.putInt(kSetTzIdx, settings_.timezoneIndex);
   prefs.putUChar(kSetGreen, settings_.timeLossGreenHours);
   prefs.putUChar(kSetRed, settings_.timeLossRedHours);
+  prefs.putDouble(kSetCircThresh, settings_.tempCircThreshold);
+  prefs.putUShort(kSetCircFactor, settings_.tempCircFactor);
+  prefs.putUShort(kSetCircMax, settings_.tempCircMaxRuntime);
 
   prefs.putString(kAdmPass, adminPasswordHash_);
   prefs.putBool(kCfgConfigured, configured_);
