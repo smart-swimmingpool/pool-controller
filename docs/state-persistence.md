@@ -1,3 +1,19 @@
+---
+title: State Persistence and System Monitoring
+summary: 24/7 reliability features for the ESP32 Pool Controller — NVS state persistence, memory monitoring, watchdog timer, health API, and troubleshooting
+date: "2026-06-07"
+lastmod: "2026-06-07"
+draft: false
+toc: true
+type: docs
+tags: ["docs", "persistence", "monitoring", "watchdog", "reliability"]
+menu:
+  docs:
+    parent: Pool Controller
+    name: State Persistence
+    weight: 60
+---
+
 # State Persistence and System Monitoring
 
 ## Overview

@@ -1,6 +1,6 @@
 ---
-title: ESP32 Schaltplananalyse und Optimierung (Sensoren & Relais)
-summary:
+title: ESP32 Schaltplananalyse und Optimierung
+summary: ESP32 Schaltplan-Optimierung für Sensoren (DS18B20, DHT22) und Relais-Ansteuerung — GPIO-Analyse, Pull-Up-Widerstände, Störungsvermeidung und Stromversorgung
 date: "2026-05-14"
 lastmod: "2026-05-14"
 draft: false

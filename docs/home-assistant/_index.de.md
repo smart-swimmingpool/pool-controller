@@ -1,6 +1,6 @@
 ---
 title: Home Assistant Integration
-summary: MQTT Discovery, Entitäten und Lovelace Dashboard für Home Assistant
+summary: Pool Controller Home Assistant Integration — automatische MQTT Discovery Entitäten, Sensor/Switch/Number/Select/Time-Domänen, Lovelace Dashboard YAML, Migration von alten Konfigurationen
 date: "2026-06-06"
 lastmod: "2026-06-06"
 draft: false

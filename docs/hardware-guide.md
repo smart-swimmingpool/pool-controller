@@ -1,6 +1,6 @@
 ---
 title: Hardware Guide of Pool Controller
-summary:
+summary: Hardware assembly guide for the ESP32 Pool Controller — parts list (BOM), DS18B20 temperature sensor wiring, relay module pin mapping, and power supply setup under 100€
 date: "2020-05-28"
 lastmod: "2020-06-02"
 draft: false
@@ -39,7 +39,7 @@ The circuit of the controller can be found in the following image based on a bre
 {{< figure
   library="true"
   src="../pool-controller_breadboard.png"
-  title="Breadboard Circuit of Pool Controller"
+  title="ESP32 Pool Controller breadboard circuit with DS18B20 sensors and relay modules"
   lightbox="true" >}}
 
 The source [Fritzing](https://fritzing.org/) file can be found in the GitHub project: [pool-controller.fzz](https://github.com/smart-swimmingpool/pool-controller/raw/main/docs/pool-controller.fzz)

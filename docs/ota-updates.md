@@ -1,3 +1,19 @@
+---
+title: OTA Updates
+summary: Over-The-Air firmware update guide for the ESP32 Pool Controller — WebUI upload, GitHub Release auto-updates, PlatformIO serial flashing, and security best practices
+date: "2026-06-07"
+lastmod: "2026-06-07"
+draft: false
+toc: true
+type: docs
+tags: ["docs", "ota", "firmware", "update", "esp32"]
+menu:
+  docs:
+    parent: Pool Controller
+    name: OTA Updates
+    weight: 55
+---
+
 # Over-The-Air (OTA) Updates
 
 ## Overview

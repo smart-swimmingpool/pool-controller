@@ -1,3 +1,9 @@
+---
+title: "Code Optimization Report (Internal)"
+noindex: true
+private: true
+---
+
 # Code Optimization Report for 24/7 Operation
 
 ## Overview

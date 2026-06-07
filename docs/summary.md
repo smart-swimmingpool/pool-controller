@@ -1,3 +1,9 @@
+---
+title: "Complete Summary (Historical v3.1.0)"
+noindex: true
+private: true
+---
+
 # Pool Controller — Complete Summary
 
 > **⚠️ Historical Document**: This describes changes from the **v3.1.0** release (2026-01-14).

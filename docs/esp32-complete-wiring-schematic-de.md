@@ -1,6 +1,6 @@
 ---
-title: ESP32 Komplett-Schaltplan (Verdrahtung aller Bauteile)
-summary:
+title: ESP32 Komplett-Schaltplan
+summary: Vollständiger ESP32-Verdrahtungsplan für den Pool Controller — DS18B20-Temperatursensoren, Relaismodule, optionaler RTC-DS3231, Widerstandsberechnung und Spannungsversorgung
 date: "2026-05-15"
 lastmod: "2026-05-15"
 draft: false

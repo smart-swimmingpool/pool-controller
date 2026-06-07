@@ -1,3 +1,9 @@
+---
+title: "Edge-Case-Analyse Zusammenfassung (Intern)"
+noindex: true
+private: true
+---
+
 # Zusammenfassung: Edge-Case-Analyse
 
 ## Pool Controller - Potenzielle Fehlerquellen und Randfälle

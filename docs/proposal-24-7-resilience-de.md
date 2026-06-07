@@ -1,3 +1,9 @@
+---
+title: "24/7 Resilienz-Konzept (Intern)"
+noindex: true
+private: true
+---
+
 # 24/7 Betrieb: Resilienz-Konzept für den Pool Controller
 
 > **Status**: Phase 1+2 implementiert, Phase 3 in Arbeit, ESP8266-Removal abgeschlossen  

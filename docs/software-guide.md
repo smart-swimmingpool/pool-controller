@@ -1,6 +1,6 @@
 ---
 title: Software Guide of Pool Controller
-summary:
+summary: Software development guide for the Pool Controller — PlatformIO build environment, library dependencies, REST API reference, web interface, and code architecture overview
 date: "2020-05-28"
 lastmod: "2020-06-02"
 draft: false

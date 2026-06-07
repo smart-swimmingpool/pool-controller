@@ -1,11 +1,11 @@
 ---
 linktitle: Pool Controller
-summary: Die smarte Steuerung deines Swimmingpools
+summary: ESP32-basierte MQTT-Steuerung für den Swimmingpool mit Home Assistant Discovery, Solarheizungsregelung und Pumpen-Timer — Eigenbau für unter 100€
 weight: 2
 
 # page metadata.
 title: Pool Controller 3.3
-summary: Steuer deinen Swimmingpool smart
+summary: ESP32-basierte MQTT-Steuerung für den Swimmingpool mit Home Assistant Discovery, Solarheizungsregelung und Pumpen-Timer — Eigenbau für unter 100€
 date: "2020-05-28"
 lastmod: "2026-06-07"
 draft: false
@@ -45,19 +45,22 @@ Steuer deinen Swimming-Pool auf smarte Art und Weise, um diesen bequem und güns
 - [x] Automatische Zeitsynchronisierung mit NTP (europe.pool.ntp.org)
 - [x] System-Logging und Diagnose-Ereignisse
 
-## Geplante Funktionen
+## Roadmap
 
-- [ ] Konfigurierbarer NTP-Server (aktuell hardcoded: europe.pool.ntp.org)
-- [ ] noch smarter: selbstanpassendes für eine verbesserte zeitgesteuerte Zirkulation der Poolpumpe zur
-      Reinigung und Erwärmung
-- [ ] Zwei getrennte Zirkulationszeiten
-- [ ] Konfigurationsänderungen dauerhaft auf dem Controller speichern
-- [ ] Temperaturabhängige Zirkulationszeiten (kühleres Wetter == kürzere Pumpenzeit, wäremer == längere Zeit)
-- [ ] Verbesserte Schaltung die komplett ohne WiFi-Verbindung funktioniert
-- [ ] Verbesserung der Schaltung mit Anzeige und Tasten zur Einrichtung der Konfiguration.
-- [ ] Eine Stromversorgung für die ganze Schaltung (ESP32 und Relais)
+✔️ Zustandsspeicherung über Neustarts hinweg (v3.1.0+)
+✔️ Web-basierte OTA-Firmware-Updates (v3.2.0+)
+✔️ Home Assistant MQTT Discovery (v3.3.0)
+✔️ Automatische Update-Prüfung via GitHub Releases (v3.3.0)
+- [ ] Konfigurierbarer NTP-Server
+- [ ] Selbstlernende Zirkulationsoptimierung
+- [ ] Temperaturabhängige Zirkulationszeiten
+- [ ] Zwei getrennte Zirkulationszyklen (Pool + Solar unabhängig)
+- [ ] Offline-Betriebsmodus (ohne WiFi)
+- [ ] Einheitliche Stromversorgung (ESP32 + Relais aus einer Quelle)
+- [ ] Rollback-Funktion für OTA-Updates
+- [ ] A/B-Partition-Updates für sicherere Firmware-Upgrades
 - siehe auch: [Issue-Liste](https://github.com/smart-swimmingpool/pool-controller/issues)
 
 <!-- markdownlint-disable-next-line MD013 -->
 
-{{< figure library="true" src="pool-controller_breadboard.png" title="Breadboard Circuid of Pool Controller" lightbox="true" >}}
+{{< figure library="true" src="pool-controller_breadboard.png" title="ESP32 Pool Controller Breadboard-Schaltung mit DS18B20-Temperatursensoren und Relaismodulen" lightbox="true" >}}

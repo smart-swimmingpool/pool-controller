@@ -1,3 +1,19 @@
+---
+title: MQTT Configuration
+summary: Home Assistant MQTT Discovery configuration, entity reference table, and migration from Homie for the ESP32 Pool Controller
+date: "2026-06-07"
+lastmod: "2026-06-07"
+draft: false
+toc: true
+type: docs
+tags: ["docs", "mqtt", "home-assistant", "discovery", "configuration"]
+menu:
+  docs:
+    parent: Pool Controller
+    name: MQTT Configuration
+    weight: 45
+---
+
 # MQTT Configuration (Home Assistant Discovery)
 
 The Pool Controller uses [Home Assistant MQTT Discovery](https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery)

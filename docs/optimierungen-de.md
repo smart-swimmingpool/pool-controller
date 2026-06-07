@@ -1,3 +1,9 @@
+---
+title: "Optimierungen (Intern)"
+noindex: true
+private: true
+---
+
 # Pool Controller - Optimierungen und Verbesserungen
 
 ## Zusammenfassung

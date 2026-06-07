@@ -1,3 +1,9 @@
+---
+title: "Architekturverbesserungsplan (Intern)"
+noindex: true
+private: true
+---
+
 # Architekturverbesserungsplan - Smart Swimming Pool Controller
 
 > **Status**: Draft  

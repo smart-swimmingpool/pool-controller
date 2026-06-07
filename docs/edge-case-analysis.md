@@ -1,3 +1,9 @@
+---
+title: "Edge Case Analysis Report (Internal)"
+noindex: true
+private: true
+---
+
 # Edge Case Analysis Report
 
 ## Pool Controller - Potential Edge Cases & Reliability Issues

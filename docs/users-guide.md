@@ -1,6 +1,6 @@
 ---
 title: Users Guide of Pool Controller
-summary: Control your Smart Swimming Pool in a smart way
+summary: Pool Controller user guide — WiFi setup via AP mode and WPS, web dashboard walkthrough, all operation modes (Auto/Timer/Boost/Manual), MQTT Discovery, and openHAB integration
 date: "2020-05-28"
 lastmod: "2020-06-02"
 draft: false
