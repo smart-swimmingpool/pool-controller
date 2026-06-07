@@ -15,7 +15,7 @@ RuleTimer::RuleTimer(RelayModuleNode *solarRelay, RelayModuleNode *poolRelay) {
 void RuleTimer::loop() {
   Serial.println("§ RuleTimer: loop");
 
-  _poolRelay->setSwitch(checkPoolPumpTimer());
+  _poolRelay->setSwitch(checkPoolPumpTimer(getPoolTemperature()));
 
   if (_solarRelay->getSwitch()) {
     _solarRelay->setSwitch(false);

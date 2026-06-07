@@ -48,6 +48,29 @@ effectiveRuntime = min(effectiveRuntime, tempCircMaxRuntime)
 | `effectiveRuntime` | Calculated runtime in minutes (for status/logging) |
 | `effectiveEndTime` | Resulting switch-off time |
 
+### Behavior During Temperature Changes
+
+The calculation runs **continuously** (every `loop()`), but the end time may **only move later**. Once the pump is running, the highest calculated end time is remembered.
+
+```
+Start (10:00, 24 °C):   end = 10:00 + 480 min = 18:00
+14:00, 28 °C → +4×30:   newEnd = max(18:00, 20:00) = 20:00 ✓
+16:00, 26 °C → +2×30:   newEnd = max(20:00, 19:00) = 20:00 ⛔ stays
+```
+
+**Rule:** The pump switches off **no earlier** than the original timer end time — even if it cools down later. This prevents surprise shutoffs and erratic behavior.
+
+```cpp
+// Core logic in RuleTimer/RuleAuto::loop():
+uint16_t newEndMinutes = calculateEffectiveEndMinutes(
+    baseStartMinutes, baseEndMinutes, poolTemp);
+
+// Only extend, never shorten:
+if (newEndMinutes > activeEndMinutes) {
+    activeEndMinutes = newEndMinutes;
+}
+```
+
 ## 3. Examples
 
 ### Summer (Pool 30 °C / 86 °F)
