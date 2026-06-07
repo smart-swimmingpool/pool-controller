@@ -70,9 +70,9 @@ private:
   static void handleNotFound();
 
   // ── Static Asset Handlers (LittleFS-served web assets with PROGMEM fallback) ──
-  /** @brief Serve style.css (LittleFS). */
+  /** @brief Serve style.css (LittleFS → PROGMEM fallback). */
   static void handleStyleCss();
-  /** @brief Serve app.js (LittleFS). */
+  /** @brief Serve app.js (LittleFS → PROGMEM fallback). */
   static void handleAppJs();
   /** @brief Serve manifest.json for PWA (LittleFS). */
   static void handleManifestJson();
