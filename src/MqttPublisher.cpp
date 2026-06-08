@@ -401,7 +401,7 @@ void MqttPublisher::publishDiscovery() {
   publishSensorDiscovery("heap", "Free Heap Space", nullptr, "B", "mdi:memory", "diagnostic");
   publishSensorDiscovery("max-alloc", "Max Alloc Block", nullptr, "B", "mdi:memory", "diagnostic");
   publishSensorDiscovery("rssi", "WiFi Signal Strength", nullptr, "dBm", "mdi:wifi", "diagnostic");
-  publishSensorDiscovery("uptime", "System Uptime", nullptr, "s", "mdi:clock-outline", "diagnostic");
+  publishSensorDiscovery("uptime", "System Uptime", "duration", "s", "mdi:clock-outline", "diagnostic");
   publishSensorDiscovery("local-time", "Local Time", nullptr, nullptr, "mdi:clock", "diagnostic");
 
   // ── Controls (no entity_category — shown on device page) ──
@@ -429,7 +429,7 @@ void MqttPublisher::publishDiscovery() {
   publishNumberDiscovery(
     "temp-circ-max-runtime", "Circ. Max Runtime", 60.0, 1440.0, 15.0, "min", "mdi:timer-outline");
   publishSensorDiscovery(
-    "effective-runtime", "Effective Runtime", nullptr, "min", "mdi:timer-sand", "diagnostic");
+    "effective-runtime", "Effective Runtime", "duration", "s", "mdi:timer-sand", "diagnostic");
 
   // ── Configuration (entity_category: "config") ──
   publishSelectDiscovery("timezone", "Timezone", getTimezoneLabelList(), getTimezoneLabelCount(), "mdi:map-clock", "config");
@@ -550,12 +550,12 @@ void MqttPublisher::publishStates() {
   NetworkManager::publish((getBaseTopic("number", "temp-circ-max-runtime") + "/state").c_str(),
     String(ConfigManager::getSettings().tempCircMaxRuntime).c_str(), true);
 
-  // Effective runtime sensor — actual runtime in minutes, not end-of-day
+  // Effective runtime sensor — actual runtime, published in seconds (for HA duration display)
   {
     Rule *active = operationModeNode.getRule();
     uint16_t effectiveMin = (active != nullptr) ? active->getEffectiveRuntimeMinutes() : 0;
     NetworkManager::publish((getBaseTopic("sensor", "effective-runtime") + "/state").c_str(),
-      String(effectiveMin).c_str(), true);
+      String(static_cast<uint32_t>(effectiveMin) * 60).c_str(), true);
   }
   NetworkManager::publish((getBaseTopic("select", "timezone") + "/state").c_str(),
     getTimeInfoFor(ConfigManager::getSettings().timezoneIndex).c_str(), true);

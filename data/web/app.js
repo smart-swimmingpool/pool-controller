@@ -110,9 +110,11 @@ async function loadTelemetry() {
       document.getElementById('uptimeVal').textContent = h + 'h ' + m + 'm';
     }
 
-    // Effective Runtime (temperature-based circulation)
+    // Effective Runtime (temperature-based circulation) — formatted as duration
     if (data.effective_runtime != null) {
-      document.getElementById('effectiveRuntimeVal').textContent = data.effective_runtime + ' min';
+      const h = Math.floor(data.effective_runtime / 60);
+      const m = data.effective_runtime % 60;
+      document.getElementById('effectiveRuntimeVal').textContent = h + 'h ' + m + 'm';
     }
 
     // AP-Mode: WiFi-Tab anzeigen
