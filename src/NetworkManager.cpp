@@ -15,9 +15,7 @@
 
 namespace PoolController {
 
-WiFiClient *NetworkManager::wifiClient_ = nullptr;
-WiFiClientSecure *NetworkManager::secureClient_ = nullptr;
-PubSubClient NetworkManager::mqttClient_;
+AsyncMqttClient NetworkManager::mqttClient_;
 
 NetworkManager::MqttMessageCallback NetworkManager::mqttCallback_ = nullptr;
 
@@ -25,12 +23,6 @@ bool NetworkManager::apModeActive_ = false;
 uint32_t NetworkManager::lastWiFiRetryTime_ = 0;
 uint32_t NetworkManager::lastMqttRetryTime_ = 0;
 uint32_t NetworkManager::connectionStartTime_ = 0;
-
-static void internalMqttCallback(char *topic, uint8_t *payload, unsigned int length) {
-  if (NetworkManager::isMqttConnected() && NetworkManager::subscribe != nullptr) {
-    // Forward to configured callback
-  }
-}
 
 bool NetworkManager::begin() {
   WiFi.disconnect(true, true);
@@ -45,6 +37,16 @@ bool NetworkManager::begin() {
   }
 
   WiFi.onEvent(handleWiFiEvent);
+
+  // Set up MQTT event handlers (one-time, async)
+  mqttClient_.onConnect([](bool sessionPresent) {
+    Serial.println("✓ MQTT connected!");
+    // Publish online to LWT topic immediately (async, non-blocking)
+    mqttClient_.publish("homeassistant/sensor/pool-controller/availability", 1, true, "online");
+  });
+  mqttClient_.onDisconnect([](AsyncMqttClientDisconnectReason reason) {
+    Serial.printf("✖ MQTT disconnected, reason=%d\n", static_cast<int>(reason));
+  });
 
   if (ConfigManager::getWiFi().ssid.length() == 0) {
     Serial.println("⚠ No WiFi SSID configured! Starting AP mode.");
@@ -117,7 +119,7 @@ void NetworkManager::loop() {
     connectionStartTime_ = 0;
   }
 
-  // Handle MQTT connection & loop
+  // Handle MQTT connection & retry (async client — no loop() needed)
   if (ConfigManager::getMqtt().host.length() > 0) {
     if (!isMqttConnected()) {
       uint32_t now = millis();
@@ -126,8 +128,6 @@ void NetworkManager::loop() {
         Serial.println("🔄 MQTT disconnected, retrying...");
         connectMqtt();
       }
-    } else {
-      mqttClient_.loop();
     }
   }
 }
@@ -167,78 +167,56 @@ void NetworkManager::connectMqtt() {
     return;
   }
 
-  // Clean up existing clients
-  if (wifiClient_ != nullptr) {
-    delete wifiClient_;
-    wifiClient_ = nullptr;
-  }
-  if (secureClient_ != nullptr) {
-    delete secureClient_;
-    secureClient_ = nullptr;
-  }
-
-  if (config.useTls) {
-    Serial.println("🔒 Connecting to MQTT via TLS...");
-    secureClient_ = new WiFiClientSecure();
-    secureClient_->setInsecure();  // Allows local broker connection without CA verification
-    mqttClient_.setClient(*secureClient_);
-  } else {
-    Serial.println("🔓 Connecting to MQTT unencrypted...");
-    wifiClient_ = new WiFiClient();
-    mqttClient_.setClient(*wifiClient_);
-  }
-
+  // AsyncMqttClient remembers previous config; re-apply for safety
   mqttClient_.setServer(config.host.c_str(), config.port);
 
-  // Increase buffer size for HA Discovery JSON payloads (~400B, default 256 is too small)
-  mqttClient_.setBufferSize(1024);
-
-  if (mqttCallback_ != nullptr) {
-    mqttClient_.setCallback(mqttCallback_);
+#if ASYNC_TCP_SSL_ENABLED
+  mqttClient_.setSecure(config.useTls);
+#else
+  if (config.useTls) {
+    Serial.println("⚠ TLS requested but AsyncTCP SSL not enabled — connecting without TLS");
   }
+#endif
 
   // Generate standard unique client ID
   String clientId = "pool-controller-" + String((uint32_t)ESP.getEfuseMac(), HEX);
+  mqttClient_.setClientId(clientId.c_str());
+  mqttClient_.setKeepAlive(15);
 
-  // Set LWT (Last Will and Testament) availability topic for HA
-  String lwtTopic = "homeassistant/sensor/pool-controller/availability";
-
-  bool success;
   if (config.username.length() > 0) {
-    success = mqttClient_.connect(
-      clientId.c_str(), config.username.c_str(), config.password.c_str(), lwtTopic.c_str(), 1, true, "offline");
-  } else {
-    success = mqttClient_.connect(clientId.c_str(), lwtTopic.c_str(), 1, true, "offline");
+    mqttClient_.setCredentials(config.username.c_str(), config.password.c_str());
   }
 
-  if (success) {
-    Serial.println("✓ MQTT connected!");
-    // Publish standard online availability payload
-    mqttClient_.publish(lwtTopic.c_str(), "online", true);
-  } else {
-    Serial.printf("✖ MQTT connection failed, rc=%d\n", mqttClient_.state());
+  // LWT — broker publishes "offline" if we disconnect unexpectedly
+  mqttClient_.setWill("homeassistant/sensor/pool-controller/availability", 1, true, "offline");
+
+  // Register message callback
+  if (mqttCallback_ != nullptr) {
+    mqttClient_.onMessage(mqttCallback_);
   }
+
+  // Initiate async connection
+  mqttClient_.connect();
 }
 
 bool NetworkManager::publish(const char *topic, const char *payload, bool retained) {
   if (!isMqttConnected()) {
     return false;
   }
-  return mqttClient_.publish(topic, payload, retained);
+  return mqttClient_.publish(topic, 0, retained, payload) != 0;
 }
 
 bool NetworkManager::subscribe(const char *topic) {
   if (!isMqttConnected()) {
     return false;
   }
-  return mqttClient_.subscribe(topic);
+  return mqttClient_.subscribe(topic, 0) != 0;
 }
 
 void NetworkManager::setMqttCallback(MqttMessageCallback callback) {
   mqttCallback_ = callback;
-  if (isMqttConnected() || ConfigManager::getMqtt().host.length() > 0) {
-    mqttClient_.setCallback(callback);
-  }
+  // AsyncMqttClient onMessage is persistent (not connection-bound)
+  mqttClient_.onMessage(callback);
 }
 
 void NetworkManager::disconnectMqtt() {

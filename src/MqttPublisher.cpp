@@ -563,14 +563,15 @@ void MqttPublisher::publishStates() {
     (getBaseTopic("text", "ntp-server") + "/state").c_str(), ConfigManager::getNtp().server.c_str(), true);
 }
 
-void MqttPublisher::handleMqttMessage(char *topic, uint8_t *payload, unsigned int length) {
-  // Convert payload to String safely
-  char valStr[32];
-  size_t valLen = (length < sizeof(valStr) - 1) ? length : sizeof(valStr) - 1;
-  memcpy(valStr, payload, valLen);
-  valStr[valLen] = '\0';
-  String value(valStr);
+void MqttPublisher::handleMqttMessage(char *topic, char *payload, AsyncMqttClientMessageProperties properties,
+  size_t len, size_t index, size_t total) {
+  // Only process complete messages (single-chunk delivery for typical HA commands)
+  if (index != 0) {
+    return;
+  }
 
+  // Convert payload to String safely (AsyncMqttClient null-terminates)
+  String value(payload, len);
   String top(topic);
 
   if (top.endsWith("/firmware-update/set")) {
@@ -626,7 +627,7 @@ void MqttPublisher::handleMqttMessage(char *topic, uint8_t *payload, unsigned in
       solarPumpNode.setSwitch(value == "ON");
     }
   } else if (top.endsWith("/mode/set")) {
-    operationModeNode.setMode(valStr);
+    operationModeNode.setMode(value.c_str());
     ConfigManager::getSettings().opMode = value;
     ConfigManager::save();
   } else if (top.endsWith("/pool-max-temp/set")) {
