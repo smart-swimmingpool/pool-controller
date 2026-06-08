@@ -68,16 +68,6 @@ pio run -e esp32dev --target upload
 
 ```bash
 # Build firmware without uploading
-pio run -e nodemcuv2
-
-# Binary location
-.pio/build/nodemcuv2/firmware.bin
-```
-
-### ESP32 Build
-
-```bash
-# Build for ESP32
 pio run -e esp32dev
 
 # Binary location
@@ -107,9 +97,7 @@ pio run -e esp32dev
 **Solutions**:
 
 - Verify device is online: `ping pool-controller.local`
-- Check firewall allows port 8266
-- Ensure correct OTA password
-- Verify device has sufficient free memory (>50KB)
+- Ensure device has sufficient free memory (>50KB)
 - Try increasing timeout in `upload_flags`
 
 ### Device Not Found
@@ -168,17 +156,11 @@ network stack memory usage, ensuring reliable OTA updates.
 
 ## Monitoring OTA Status
 
-### Via MQTT
-
 OTA progress is visible in the WebUI progress bar and via serial console.
-
-### Via Serial Console
-
-Connect to serial port to monitor OTA progress:
 
 ```bash
 # PlatformIO monitor
-pio device monitor -e nodemcuv2
+pio device monitor
 
 # Look for log messages
 [OTA] Start
@@ -187,107 +169,6 @@ pio device monitor -e nodemcuv2
 [OTA] Progress: 75%
 [OTA] Success
 ```
-
-## Automation Examples
-
-### Automated OTA Updates Script
-
-```bash
-#!/bin/bash
-# ota-update.sh
-
-DEVICE_IP="192.168.1.100"
-OTA_PASSWORD="MyP00l#Update2026"
-FIRMWARE=".pio/build/nodemcuv2/firmware.bin"
-
-# Build firmware
-echo "Building firmware..."
-pio run -e nodemcuv2
-
-# Upload via OTA
-echo "Uploading to $DEVICE_IP..."
-python ~/.platformio/packages/framework-arduinoespressif8266/tools/espota.py \
-  -i $DEVICE_IP \
-  -p 8266 \
-  -a $OTA_PASSWORD \
-  -f $FIRMWARE
-
-echo "Update complete!"
-```
-
-### GitHub Actions CI/CD (Example)
-
-```yaml
-name: Build and Deploy OTA
-
-on:
-  push:
-    tags:
-      - "v*"
-
-jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
-
-      - name: Install PlatformIO
-        run: pip install platformio
-
-      - name: Build Firmware
-        run: pio run -e nodemcuv2
-
-      - name: Upload via OTA
-        env:
-          DEVICE_IP: ${{ secrets.DEVICE_IP }}
-          OTA_PASSWORD: ${{ secrets.OTA_PASSWORD }}
-        run: |
-          python ~/.platformio/packages/framework-arduinoespressif8266/tools/espota.py \
-            -i $DEVICE_IP \
-            -p 8266 \
-            -a $OTA_PASSWORD \
-            -f .pio/build/nodemcuv2/firmware.bin
-```
-
-## Version Management
-
-### Firmware Versioning
-
-Version is managed by **release-please** and stored in `platformio.ini`
-as `FW_VERSION`. The firmware version is published via Home Assistant
-Discovery and visible in the WebUI (System tab → Current Version).
-
-## Best Practices
-
-### 1. Test Before Production
-
-- Always test new firmware on development device
-- Verify all features work after OTA update
-- Check MQTT connectivity and state restoration
-
-### 2. Staged Rollout
-
-- Update one device first
-- Monitor for 24 hours
-- Roll out to remaining devices if stable
-
-### 3. Backup Current Firmware
-
-```bash
-# Backup current firmware before update
-pio run -e nodemcuv2
-cp .pio/build/nodemcuv2/firmware.bin \
-  backups/firmware-v3.1.0-$(date +%Y%m%d).bin
-```
-
-### 4. Schedule Updates
-
-- Perform OTA during low-activity periods
-- Avoid updates during critical pool operation
-- Consider scheduled maintenance windows
 
 ## Recovery Procedures
 

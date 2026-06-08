@@ -28,24 +28,19 @@ without any manual configuration.
 Configure your MQTT broker connection via the Web UI (Settings → MQTT tab):
 
 - **MQTT Hostname/IP**: Your MQTT broker address
-- **MQTT Port**: Default 1883 (or 8883 for TLS)
+- **MQTT Port**: Default 1883
 - **MQTT Username/Password**: Optional authentication credentials
-- **Enable TLS**: Toggle for encrypted MQTTS connection
 
 After saving and rebooting, all entities appear automatically in Home Assistant.
 
-### Via config.json
+### Via the REST API
 
-Add or modify the setting in your device's `config.json` on LittleFS:
+The MQTT settings can also be configured programmatically:
 
-```json
-{
-  "name": "Pool Controller",
-  "settings": {
-    "mqtt_host": "192.168.1.100",
-    "mqtt_port": 1883
-  }
-}
+```bash
+curl -b "session=<session>" -X POST \
+  -d "type=mqtt&host=192.168.1.100&port=1883&username=mqtt_user&password=secret" \
+  http://<controller-ip>/api/config
 ```
 
 ## Home Assistant Entities
@@ -72,6 +67,10 @@ The controller publishes the following entities via MQTT Discovery:
 | Log to serial                  | `switch/log-serial`      | `homeassistant/switch/pool-controller/log-serial/state`      | `homeassistant/switch/pool-controller/log-serial/set`     |
 | OTA update trigger             | `button/ota-update`      | -                                                            | `homeassistant/button/pool-controller/ota-update/set`     |
 | OTA status                     | `sensor/ota-status`      | `homeassistant/sensor/pool-controller/ota-status/state`      | -                                                         |
+| Effective Runtime              | `sensor/effective-runtime` | `homeassistant/sensor/pool-controller/effective-runtime/state` | -                                                       |
+| Circ. Temp Threshold           | `number/temp-circ-threshold` | `homeassistant/number/pool-controller/temp-circ-threshold/state` | `homeassistant/number/pool-controller/temp-circ-threshold/set` |
+| Circ. Temp Factor              | `number/temp-circ-factor` | `homeassistant/number/pool-controller/temp-circ-factor/state`   | `homeassistant/number/pool-controller/temp-circ-factor/set`   |
+| Circ. Max Runtime              | `number/temp-circ-max-runtime` | `homeassistant/number/pool-controller/temp-circ-max-runtime/state` | `homeassistant/number/pool-controller/temp-circ-max-runtime/set` |
 
 ## Features
 
@@ -80,6 +79,7 @@ All entities support:
 - Temperature sensors (pool, solar, controller)
 - Relay switches (pool pump, solar pump)
 - Operation modes (auto, manual, boost, timer)
+- Temperature-based circulation parameters (threshold, factor, max runtime)
 - Configuration via MQTT
 - State monitoring
 

@@ -1,5 +1,5 @@
 ---
-title: Software Guide of Pool Controller
+title: Software Guide
 summary: Software development guide for the Pool Controller — PlatformIO build environment, library dependencies, REST API reference, web interface, and code architecture overview
 date: "2020-05-28"
 lastmod: "2020-06-02"
@@ -19,25 +19,23 @@ menu:
 
 ## Required Libraries
 
-- RelayModule (self-hosted, replaced external dependency)
-- [Vector](https://github.com/tomstewart89/Vector)
-- DallasTemperature
-- OneWire
-- Adafruit Unified Sensor
-- DHT sensor library
-- NTPClient @ 3.2.1
-- TimeZone @ 1.2.4
-- ArduinoJson @ 7.3.0
-- Bounce2
-- PubSubClient @ 2.8
-- Wire
+- [AsyncMqttClient](https://github.com/marvinroger/async-mqtt-client) @ 0.9.0
+- [DallasTemperature](https://github.com/milesburton/Arduino-Temperature-Control-Library)
+- [OneWire](https://github.com/PaulStoffregen/OneWire)
+- [Adafruit Unified Sensor](https://github.com/adafruit/Adafruit_Sensor)
+- [DHT sensor library](https://github.com/adafruit/DHT-sensor-library)
+- [NTPClient](https://github.com/arduino-libraries/NTPClient) @ 3.2.1
+- [Timezone](https://github.com/JChristensen/Timezone) @ 1.2.6
+- [ArduinoJson](https://github.com/bblanchon/ArduinoJson) @ 7.3.2
+- [Bounce2](https://github.com/thomasfredericks/Bounce2)
+- [Wire](https://github.com/espressif/arduino-esp32/tree/master/libraries/Wire)
 
-Many thanks to maintainers of these libraries!
+Many thanks to the maintainers of these libraries!
 
 ## Pin Configuration
 
 Within the sources at `Config.hpp`, the GPIO pin assignments are defined. For details,
-see also in the [hardware guide](../hardware-guide/#pin-assignment-firmware-defaults).
+see also the [hardware guide](../hardware-guide/#pin-assignment-firmware-defaults).
 
 ```cpp
 constexpr uint8_t PIN_DS_SOLAR   = 15;  // Pin of Temp-Sensor Solar (GPIO15)
@@ -145,18 +143,11 @@ Web UI / REST API            MQTT (Home Assistant)
 
 ## MQTT Communication
 
-### Protocol
+The controller uses **Home Assistant MQTT Discovery** exclusively since v3.3.0.
+See the dedicated documentation for details:
 
-The controller uses **Home Assistant MQTT Discovery** (default) with topic
-structure:
-
-```text
-homeassistant/<component>/pool-controller/<object-id>/config  (discovery)
-homeassistant/<component>/pool-controller/<object-id>/state   (state)
-homeassistant/<component>/pool-controller/<object-id>/set     (command)
-```
-
-See `docs/mqtt-configuration.md` for a complete entity mapping.
+- **[MQTT Configuration](../mqtt-configuration)** — Protocol, entity reference, Homie migration
+- **[Home Assistant Integration](../home-assistant)** — Lovelace dashboard, HA entity IDs
 
 ### Clearing retained messages
 
@@ -165,40 +156,39 @@ If you need to clear retained MQTT messages:
 ```bash
 # Clear a specific Home Assistant topic
 mosquitto_pub -h hostname -t "homeassistant/sensor/pool-controller/pool-temp/state" -n -r
-
-# Clear a root Homie topic (legacy cleanup)
-mosquitto_pub -h hostname -t homie -n -r -d
 ```
 
-## Configuration
+## Configuration Persistence
 
-The controller uses a `config.json` file on its LittleFS filesystem for
-base configuration (WiFi credentials, MQTT settings). Use `uploadfs` to deploy it.
+Configuration is persisted in two independent storage systems, ensuring all
+settings survive reboots and power failures:
 
-### Example `config.json`
+### 1. ConfigManager — Device Settings (LittleFS)
 
-```json
-{
-  "name": "Pool Controller",
-  "device_id": "pool-controller",
-  "wifi": {
-    "ssid": "<SSID>",
-    "password": "<XXX>"
-  },
-  "mqtt": {
-    "host": "<MQTT_HOST>",
-    "port": 1883
-  },
-  "ota": {
-    "enabled": true
-  },
-  "settings": {
-    "loop-interval": 60,
-    "temperature-max-pool": 28,
-    "temperature-min-solar": 50,
-    "temperature-hysteresis": 0.5
-  }
-}
+The controller stores WiFi, MQTT, NTP, and device settings in a JSON file on
+LittleFS. See [`ConfigManager`](../state-persistence) for details.
+
+### 2. Runtime State (ESP32 NVS / Preferences)
+
+Operation mode, relay states, and temperature parameters are persisted in NVS
+for immediate recovery after power loss.
+
+### Data Flow on Settings Changes
+
+```text
+Web UI / REST API            MQTT (Home Assistant)
+        │                            │
+        ▼                            ▼
+────────┴────── ConfigManager ───────┴────
+                save() → /config.json (LittleFS)
+                ↓
+        OperationModeNode
+        (runtime parameters)
+                ↓
+        MqttPublisher::publishStates()
+        → MQTT topics → Home Assistant
 ```
 
-<!-- (duplicate MQTT Communication heading removed — content already covered above) -->
+> **Note:** When settings are changed via the Web UI, Home Assistant is updated
+> on the next measurement cycle (every `loopInterval` seconds, default 10s).
+> Changes made via MQTT are confirmed immediately.

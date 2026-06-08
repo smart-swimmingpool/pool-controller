@@ -1,5 +1,5 @@
 ---
-title: Users Guide of Pool Controller
+title: User Guide
 summary: Pool Controller user guide — WiFi setup via AP mode and WPS, web dashboard walkthrough, all operation modes (Auto/Timer/Boost/Manual), MQTT Discovery, and openHAB integration
 date: "2020-05-28"
 lastmod: "2020-06-02"
@@ -72,7 +72,7 @@ The controller provides a modern web dashboard at `http://<controller-ip>/` with
 
 - **Dashboard** — Live telemetry: pool/solar/controller temperature, pump states, free heap, RSSI, operating mode
 - **WiFi Setup** — Scan and configure WiFi credentials
-- **MQTT Settings** — Broker host, port, username, password, TLS toggle
+- **MQTT Settings** — Broker host, port, username, password
 - **Configuration** — Operation mode, temperature limits, hysteresis, timer, timezone
 - **Security & Update** — Change admin password, OTA firmware update, restart, factory reset
 

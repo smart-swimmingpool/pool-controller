@@ -33,7 +33,8 @@ erscheinen automatisch in Home Assistant.
 | `sensor` | `free_heap_space` | diagnostic | Freier Heap-Speicher |
 | `sensor` | `max_alloc_block` | diagnostic | Größter allozierbarer Block |
 | `sensor` | `wifi_signal_strength` | diagnostic | WiFi-Signalstärke |
-| `sensor` | `system_uptime` | diagnostic | Betriebszeit in Sekunden |
+| `sensor` | `system_uptime` | diagnostic | Betriebszeit (Dauer) |
+| `sensor` | `effective_runtime` | diagnostic | Effektive Filterlaufzeit (Dauer) |
 | `sensor` | `local_time` | diagnostic | Aktuelle Ortszeit |
 | `select` | `operation_mode` | — | Betriebsart (auto/manu/boost/timer) |
 | `switch` | `pool_pump` | — | Pool-Umwälzpumpe |
@@ -41,6 +42,9 @@ erscheinen automatisch in Home Assistant.
 | `number` | `max_pool_temp` | — | Zieltemperatur Pool max. |
 | `number` | `min_solar_temp` | — | Minimale Solar-Aktivierungstemperatur |
 | `number` | `temperature_hysteresis` | config | Temperaturhysterese |
+| `number` | `temp_circ_threshold` | — | Schwellwert temp. Filterlaufzeit |
+| `number` | `temp_circ_factor` | — | Faktor temp. Filterlaufzeit |
+| `number` | `temp_circ_max_runtime` | — | Maximale Laufzeit temp. Filterlaufzeit |
 | `time` | `timer_start` | — | Timer Startzeit (HH:MM) |
 | `time` | `timer_end` | — | Timer Endzeit (HH:MM) |
 | `select` | `timezone` | config | Zeitzonenauswahl |

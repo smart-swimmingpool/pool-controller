@@ -32,7 +32,8 @@ Assistant automatically.
 | `sensor` | `free_heap_space` | diagnostic | Free heap memory |
 | `sensor` | `max_alloc_block` | diagnostic | Largest allocatable block |
 | `sensor` | `wifi_signal_strength` | diagnostic | WiFi RSSI |
-| `sensor` | `system_uptime` | diagnostic | Device uptime in seconds |
+| `sensor` | `system_uptime` | diagnostic | Device uptime (duration) |
+| `sensor` | `effective_runtime` | diagnostic | Effective circulation runtime (duration) |
 | `sensor` | `local_time` | diagnostic | Current local time |
 | `select` | `operation_mode` | — | Operating mode (auto/manu/boost/timer) |
 | `switch` | `pool_pump` | — | Pool circulation pump |
@@ -40,6 +41,9 @@ Assistant automatically.
 | `number` | `max_pool_temp` | — | Maximum pool temperature target |
 | `number` | `min_solar_temp` | — | Minimum solar activation temperature |
 | `number` | `temperature_hysteresis` | config | Temperature hysteresis value |
+| `number` | `temp_circ_threshold` | — | Temperature-based circulation threshold |
+| `number` | `temp_circ_factor` | — | Temperature-based circulation factor |
+| `number` | `temp_circ_max_runtime` | — | Temperature-based circulation max runtime |
 | `time` | `timer_start` | — | Timer start time (HH:MM) |
 | `time` | `timer_end` | — | Timer end time (HH:MM) |
 | `select` | `timezone` | config | Timezone selection |

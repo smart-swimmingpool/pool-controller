@@ -179,7 +179,7 @@ Plus a sensor for computed effective runtime:
 
 | Entity | Topic Suffix | Unit |
 |---|---|---|
-| `effective-runtime` | `/sensor/pool-controller/effective-runtime/…` | min |
+| `effective-runtime` | `/sensor/pool-controller/effective-runtime/…` | s |
 
 ## 6. Implementation Plan
 
