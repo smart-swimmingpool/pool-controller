@@ -170,9 +170,12 @@ void NetworkManager::connectMqtt() {
   // AsyncMqttClient remembers previous config; re-apply for safety
   mqttClient_.setServer(config.host.c_str(), config.port);
 
-  // Generate standard unique client ID
-  String clientId = "pool-controller-" + String((uint32_t)ESP.getEfuseMac(), HEX);
-  mqttClient_.setClientId(clientId.c_str());
+  // Generate standard unique client ID (static to survive async CONNECT packet)
+  static char clientId[32];
+  if (clientId[0] == '\0') {
+    snprintf(clientId, sizeof(clientId), "pool-controller-%08X", (uint32_t)ESP.getEfuseMac());
+  }
+  mqttClient_.setClientId(clientId);
   mqttClient_.setKeepAlive(15);
 
   if (config.username.length() > 0) {
@@ -182,10 +185,8 @@ void NetworkManager::connectMqtt() {
   // LWT — broker publishes "offline" if we disconnect unexpectedly
   mqttClient_.setWill("homeassistant/sensor/pool-controller/availability", 1, true, "offline");
 
-  // Register message callback
-  if (mqttCallback_ != nullptr) {
-    mqttClient_.onMessage(mqttCallback_);
-  }
+  // onMessage callback is registered once in setMqttCallback() — do NOT re-add here
+  // to avoid accumulating duplicates in AsyncMqttClient's internal vector.
 
   // Initiate async connection
   mqttClient_.connect();
