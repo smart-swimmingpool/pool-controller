@@ -170,14 +170,6 @@ void NetworkManager::connectMqtt() {
   // AsyncMqttClient remembers previous config; re-apply for safety
   mqttClient_.setServer(config.host.c_str(), config.port);
 
-#if ASYNC_TCP_SSL_ENABLED
-  mqttClient_.setSecure(config.useTls);
-#else
-  if (config.useTls) {
-    Serial.println("⚠ TLS requested but AsyncTCP SSL not enabled — connecting without TLS");
-  }
-#endif
-
   // Generate standard unique client ID
   String clientId = "pool-controller-" + String((uint32_t)ESP.getEfuseMac(), HEX);
   mqttClient_.setClientId(clientId.c_str());

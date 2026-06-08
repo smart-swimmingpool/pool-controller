@@ -396,7 +396,6 @@ void WebPortal::apiGetConfig() {
   mqttObj["host"] = ConfigManager::getMqtt().host;
   mqttObj["port"] = ConfigManager::getMqtt().port;
   mqttObj["username"] = ConfigManager::getMqtt().username;
-  mqttObj["use_tls"] = ConfigManager::getMqtt().useTls;
 
   JsonObject ntpObj = doc["ntp"].to<JsonObject>();
   ntpObj["server"] = ConfigManager::getNtp().server;
@@ -450,7 +449,6 @@ void WebPortal::apiSaveConfig() {
     if (server_.arg("password").length() > 0) {
       ConfigManager::getMqtt().password = server_.arg("password");
     }
-    ConfigManager::getMqtt().useTls = server_.arg("tls") == "true";
     ConfigManager::save();
 
     // Disconnect MQTT to reconnect immediately with new config
