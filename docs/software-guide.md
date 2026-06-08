@@ -19,7 +19,7 @@ menu:
 
 ## Required Libraries
 
-- [RelayModule](https://github.com/YuriiSalimov/RelayModule)
+- RelayModule (self-hosted, replaced external dependency)
 - [Vector](https://github.com/tomstewart89/Vector)
 - DallasTemperature
 - OneWire
