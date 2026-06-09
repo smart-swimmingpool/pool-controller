@@ -453,8 +453,8 @@ dem Standard für IoT-Statusanzeigen.
 
 | LED-Muster | Systemzustand | Darstellung |
 |------------|--------------|-------------|
-| **Schnelles Blinken** (100ms an/aus = 5 Hz) | **AP-Modus** — kein WLAN konfiguriert, Setup-Portal aktiv | ![WLAN-Verbindung](led_wifi.gif) |
-| **Langsames Blinken** (500ms an/aus = 1 Hz) | **Verbindungsaufbau** — WLAN-Verbindung läuft | |
+| **Schnelles Blinken** (100ms an/aus = 5 Hz) | **AP-Modus** — kein WLAN konfiguriert, Setup-Portal aktiv | |
+| **Langsames Blinken** (500ms an/aus = 1 Hz) | **Verbindungsaufbau** — WLAN-Verbindung läuft | ![WLAN-Verbindung](led_wifi.gif) |
 | **Meist an, kurzer Aus-Blinker alle 2s** | **WLAN OK, MQTT getrennt** — Netzwerk aktiv, Broker nicht erreichbar | ![MQTT getrennt](led_mqtt.gif) |
 | **Dauerhaft an** | **Voll verbunden** — WLAN + MQTT betriebsbereit | |
 | **Sehr schnelles Blinken** (50ms an/aus = 10 Hz) | **OTA-Update** — Firmware-Download/-Installation aktiv | |

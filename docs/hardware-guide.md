@@ -433,8 +433,8 @@ IoT device status indication. The LED is updated once per control loop cycle.
 
 | LED Pattern | System State | Visual |
 |-------------|-------------|--------|
-| **Rapid blink** (100ms on/off = 5 Hz) | **AP Mode** — no WiFi configured, setup captive portal active | ![WiFi connecting](led_wifi.gif) |
-| **Slow blink** (500ms on/off = 1 Hz) | **Connecting** — WiFi connection in progress | |
+| **Rapid blink** (100ms on/off = 5 Hz) | **AP Mode** — no WiFi configured, setup captive portal active | |
+| **Slow blink** (500ms on/off = 1 Hz) | **Connecting** — WiFi connection in progress | ![WiFi connecting](led_wifi.gif) |
 | **Mostly on, brief blink every 2s** | **WiFi OK, MQTT disconnected** — network up, broker not reachable | ![MQTT disconnected](led_mqtt.gif) |
 | **Solid on** | **Fully connected** — WiFi + MQTT operational | |
 | **Very fast blink** (50ms on/off = 10 Hz) | **OTA Update** — firmware download/install in progress | |
@@ -451,6 +451,8 @@ IoT device status indication. The LED is updated once per control loop cycle.
 > `Pool-Controller-Setup` WiFi network to configure your home WiFi.
 
 ---
+
+## References
 
 - Fritzing source file: [pool-controller.fzz](https://github.com/smart-swimmingpool/pool-controller/raw/main/docs/pool-controller.fzz)
 - [ESP32 Schematic Optimization (DE)](esp32-schematic-optimization-de.md)
