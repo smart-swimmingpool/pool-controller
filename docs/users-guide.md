@@ -57,14 +57,34 @@ Once connected, find the controller's IP:
 
 - The web interface shows the assigned IP in the dashboard header
 
-## Booting Controller
+## LED Status Codes (Homie Convention)
 
-When booting the controller, it will provide feedback on establishing the WiFi connection and connection to the MQTT broker:
+The controller uses its **built-in LED** to signal the current system state,
+following the [Homie Convention](https://homieiot.github.io/) — an industry
+standard for IoT device status indication.
 
-- "LED" ![Slowly blinking LED](led_wifi.gif)
-  Slowly when connecting to the Wi-Fi
-- "LED" ![Fast blinking LED](led_mqtt.gif)
-  Faster when connecting to the MQTT broker
+| LED Pattern | When? | What it means |
+|-------------|-------|---------------|
+| ![WiFi connecting](led_wifi.gif) **Slow blink** (1x/sec) | **WiFi connecting** | The controller is trying to join your home WiFi network. This should take 5–20 seconds. |
+| ![MQTT connecting](led_mqtt.gif) **Mostly on, brief blip off every 2s** | **WiFi OK, MQTT connecting/disconnected** | Network is up, but the MQTT broker is not yet connected. Check broker address or network. |
+| **Rapid blink** (5x/sec) | **AP Mode / Setup** | No WiFi credentials stored. The controller is hosting its own `Pool-Controller-Setup` WiFi network. |
+| **Solid on** (always on) | **Fully connected** | Everything is running normally — WiFi + MQTT connected. |
+| **Very fast blink** (10x/sec) | **OTA Update in progress** | Firmware is being downloaded and flashed. Do not power off! |
+| **Double blink** (two flashes, pause) | **Safe Mode / Error** | Boot-loop detected or critical system degradation. Relays are forced OFF. |
+
+### What to expect at first power-on
+
+1. **Power on** the controller
+2. **Rapid blink** — AP mode (no WiFi configured yet)
+3. Open the `Pool-Controller-Setup` network and configure your WiFi
+4. **Slow blink** — connecting to your home WiFi
+5. **Mostly on** — WiFi connected, MQTT connecting
+6. **Solid on** — everything is running normally
+
+> **Troubleshooting**: If the LED **never leaves rapid blink**, the controller
+> has no WiFi credentials or cannot find your network. Connect to the
+> `Pool-Controller-Setup` access point to configure it. If it stays in
+> **double-blink**, a critical error has occurred — check the serial log.
 
 ## Web Dashboard
 
