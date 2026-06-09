@@ -57,6 +57,34 @@ Once connected, find the controller's IP:
 
 - The web interface shows the assigned IP in the dashboard header
 
+## OLED Display (NORVI AE01-R Variant)
+
+The industrial NORVI AE01-R controller includes a **0.96" OLED display**
+(128×64 pixels) on the front panel. When your firmware is built with the
+`NORVI_AE01_R` flag, the display shows system information across four
+switchable pages:
+
+| Page | What You See |
+|:----:|--------------|
+| **1** | **Main** — Pool and solar water temperatures with pump ON/OFF indicators (filled/empty circle), operation mode (auto/manu/boost/timer), and shortcut hints for the three front buttons |
+| **2** | **Network** — Connected WiFi SSID, IP address, MQTT connection status. In AP mode it shows the setup hotspot name and URL |
+| **3** | **System** — Uptime (e.g. 3d 12h 30m), current and minimum free heap memory, firmware version |
+| **4** | **QR Code** — Generates a scannable QR code of the web dashboard URL so you can open it on your phone without typing the IP address |
+
+**Footer:** Each page has a bottom bar showing the local time (HH:MM, with
+automatic DST handling), the firmware version (`vX.Y.Z`), and the current page
+number. On page 1 the active operation mode is also shown in the footer.
+
+**Auto WiFi page:** If no WiFi is configured yet (AP mode), the display jumps
+directly to page 2 at startup so you can see the setup instructions immediately.
+
+**QR Quick-Access:** Use your phone's camera app to scan the QR code on page 4
+— most modern phones recognize the URL and offer to open it in a browser. No
+extra app needed.
+
+The display updates every 2 seconds. Navigate pages using the front-panel
+buttons (see the [NORVI AE01-R documentation](norvi-ae01-r.md) for details).
+
 ## LED Status Codes (Homie Convention)
 
 The controller uses its **built-in LED** to signal the current system state,
