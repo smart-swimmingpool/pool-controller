@@ -24,7 +24,8 @@ namespace PoolController {
  */
 class NetworkManager {
 public:
-  using MqttMessageCallback = std::function<void(char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total)>;
+  using MqttMessageCallback = std::function<void(char *topic, char *payload,
+    AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total)>;
 
   NetworkManager() = default;
 
