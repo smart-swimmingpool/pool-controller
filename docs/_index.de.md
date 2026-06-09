@@ -1,13 +1,9 @@
 ---
 linktitle: Pool Controller
-summary: ESP32-basierte MQTT-Steuerung für den Swimmingpool mit Home Assistant Discovery, Solarheizungsregelung und Pumpen-Timer — Eigenbau für unter 100€
-weight: 2
-
-# page metadata.
 title: Pool Controller 3.3
-summary: ESP32-basierte MQTT-Steuerung für den Swimmingpool mit Home Assistant Discovery, Solarheizungsregelung und Pumpen-Timer — Eigenbau für unter 100€
+summary: ESP32-basierte MQTT-Steuerung für den Swimmingpool mit Home Assistant Discovery, Solarheizungsregelung, temperaturabhängiger Filterlaufzeit und Pumpen-Timer — Eigenbau für unter 100€
 date: "2020-05-28"
-lastmod: "2026-06-07"
+lastmod: "2026-06-08"
 draft: false
 toc: true
 type: docs
@@ -51,9 +47,8 @@ Steuer deinen Swimming-Pool auf smarte Art und Weise, um diesen bequem und güns
 ✔️ Web-basierte OTA-Firmware-Updates (v3.2.0+)
 ✔️ Home Assistant MQTT Discovery (v3.3.0)
 ✔️ Automatische Update-Prüfung via GitHub Releases (v3.3.0)
+✔️ Temperaturabhängige Filterlaufzeit (v3.4.0)
 - [ ] Konfigurierbarer NTP-Server
-- [ ] Selbstlernende Zirkulationsoptimierung
-- [ ] Temperaturabhängige Zirkulationszeiten
 - [ ] Zwei getrennte Zirkulationszyklen (Pool + Solar unabhängig)
 - [ ] Offline-Betriebsmodus (ohne WiFi)
 - [ ] Einheitliche Stromversorgung (ESP32 + Relais aus einer Quelle)

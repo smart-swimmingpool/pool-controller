@@ -8,9 +8,7 @@
 #pragma once
 
 #include <Arduino.h>
-#include <RelayModule.h>
 #include <Preferences.h>
-#include <memory>
 
 /**
  * @brief Manages a single relay via a GPIO pin (active-high logic).
@@ -64,6 +62,6 @@ private:
   unsigned long _measurementInterval;
   unsigned long _lastMeasurement;
 
-  std::unique_ptr<RelayModule> relay;
+  bool _currentState = false;  // Cached logical state (true = relay ON)
   Preferences preferences;
 };

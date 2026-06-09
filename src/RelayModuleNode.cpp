@@ -21,28 +21,21 @@ RelayModuleNode::RelayModuleNode(const char *id, const char *name, const uint8_t
 void RelayModuleNode::begin() {
   Serial.printf("• RelayModule Node '%s' initializing on PIN %d...\n", _id, _pin);
 
-  // Use direct new allocation as make_unique is not working
-  relay = std::unique_ptr<RelayModule>(new RelayModule(_pin));
+  pinMode(_pin, OUTPUT);
 
   // Load and restore relay state from persistent storage (NVS)
   preferences.begin(_id, false);
-  bool storedSwitchValue = preferences.getBool("switch", false);
+  _currentState = preferences.getBool("switch", false);
   preferences.end();
 
-  if (storedSwitchValue) {
-    relay->on();
-  } else {
-    relay->off();
-  }
-  Serial.printf("  ◦ Relay restored to state: %s\n", storedSwitchValue ? "ON" : "OFF");
+  // Active-LOW relay: ON = LOW, OFF = HIGH (matching original RelayModule library behavior)
+  digitalWrite(_pin, _currentState ? LOW : HIGH);
+
+  Serial.printf("  ◦ Relay restored to state: %s\n", _currentState ? "ON" : "OFF");
 }
 
 void RelayModuleNode::setSwitch(const bool state) {
-  if (!relay)
-    return;
-
-  bool currentState = relay->isOn();
-  if (currentState == state) {
+  if (_currentState == state) {
     return;
   }
 
@@ -54,11 +47,9 @@ void RelayModuleNode::setSwitch(const bool state) {
     return;
   }
 
-  if (state) {
-    relay->on();
-  } else {
-    relay->off();
-  }
+  // Active-LOW relay: ON = LOW, OFF = HIGH
+  digitalWrite(_pin, state ? LOW : HIGH);
+  _currentState = state;
 
   // Persist relay state via Preferences (NVS)
   preferences.begin(_id, false);
@@ -69,9 +60,7 @@ void RelayModuleNode::setSwitch(const bool state) {
 }
 
 bool RelayModuleNode::getSwitch() {
-  if (!relay)
-    return false;
-  return relay->isOn();
+  return _currentState;
 }
 
 void RelayModuleNode::loop() {

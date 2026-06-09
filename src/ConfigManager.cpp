@@ -49,7 +49,6 @@ static constexpr const char *kMqttHost      = "mqtt_host";
 static constexpr const char *kMqttPort      = "mqtt_port";
 static constexpr const char *kMqttUser      = "mqtt_user";
 static constexpr const char *kMqttPass      = "mqtt_pass";
-static constexpr const char *kMqttTls       = "mqtt_tls";
 static constexpr const char *kNtpServer     = "ntp_server";
 static constexpr const char *kNtpTz         = "ntp_tz";
 static constexpr const char *kSetInterval   = "set_interval";
@@ -88,7 +87,6 @@ bool ConfigManager::load() {
   mqtt_.port       = prefs.getUInt(kMqttPort, 1883);
   mqtt_.username   = prefs.getString(kMqttUser, "");
   mqtt_.password   = prefs.getString(kMqttPass, "");
-  mqtt_.useTls     = prefs.getBool(kMqttTls, false);
 
   ntp_.server      = prefs.getString(kNtpServer, "pool.ntp.org");
   ntp_.timezone    = prefs.getLong(kNtpTz, 0);
@@ -128,7 +126,6 @@ bool ConfigManager::save() {
   prefs.putUInt(kMqttPort, mqtt_.port);
   prefs.putString(kMqttUser, mqtt_.username);
   prefs.putString(kMqttPass, mqtt_.password);
-  prefs.putBool(kMqttTls, mqtt_.useTls);
 
   prefs.putString(kNtpServer, ntp_.server);
   prefs.putLong(kNtpTz, ntp_.timezone);

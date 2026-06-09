@@ -110,9 +110,11 @@ async function loadTelemetry() {
       document.getElementById('uptimeVal').textContent = h + 'h ' + m + 'm';
     }
 
-    // Effective Runtime (temperature-based circulation)
+    // Effective Runtime (temperature-based circulation) — formatted as duration
     if (data.effective_runtime != null) {
-      document.getElementById('effectiveRuntimeVal').textContent = data.effective_runtime + ' min';
+      const h = Math.floor(data.effective_runtime / 60);
+      const m = data.effective_runtime % 60;
+      document.getElementById('effectiveRuntimeVal').textContent = h + 'h ' + m + 'm';
     }
 
     // AP-Mode: WiFi-Tab anzeigen
@@ -170,12 +172,11 @@ async function saveMqtt() {
   if (isNaN(portVal) || portVal < 1 || portVal > 65535) { alert('MQTT Port must be a number between 1 and 65535.'); return; }
   const user = document.getElementById('mqttUser').value;
   const pass = document.getElementById('mqttPass').value;
-  const tls = document.getElementById('mqttTls').checked;
 
   const res = await fetch('/api/config', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: 'type=mqtt&host=' + encodeURIComponent(host) + '&port=' + portVal + '&username=' + encodeURIComponent(user) + '&password=' + encodeURIComponent(pass) + '&tls=' + tls
+    body: 'type=mqtt&host=' + encodeURIComponent(host) + '&port=' + portVal + '&username=' + encodeURIComponent(user) + '&password=' + encodeURIComponent(pass)
   });
   if (res.status === 200) alert('MQTT config saved!');
 }
@@ -464,7 +465,6 @@ async function loadConfig() {
     document.getElementById('mqttHost').value = data.mqtt.host;
     document.getElementById('mqttPort').value = data.mqtt.port;
     document.getElementById('mqttUser').value = data.mqtt.username;
-    document.getElementById('mqttTls').checked = data.mqtt.use_tls;
 
     document.getElementById('opMode').value = data.settings.op_mode;
     document.getElementById('loopInterval').value = data.settings.loop_interval;

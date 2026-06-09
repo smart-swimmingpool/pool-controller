@@ -23,7 +23,6 @@ struct MqttConfig {
   uint16_t port = 1883;
   String username = "";
   String password = "";
-  bool useTls = false;
 };
 
 /** @brief NTP server and timezone settings. */

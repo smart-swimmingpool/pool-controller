@@ -71,57 +71,72 @@ distributors like Reichelt, Pollin, Conrad (DE/AT/CH).
 
 ## Pin Assignment (Firmware Defaults)
 
-The firmware uses these GPIO pins (defined in `src/Config.hpp`):
+The firmware uses an **optimized pin assignment** that avoids strapping pins and
+ADC2-related issues (see [Alternative Pin Assignment](#alternative-pin-assignment-original)
+for details). Defined in `src/Config.hpp`:
 
 | Constant | GPIO | Purpose |
 |----------|:----:|---------|
-| `PIN_DS_SOLAR` | **GPIO15** | DS18B20 data — Solar collector temperature |
-| `PIN_DS_POOL` | **GPIO16** | DS18B20 data — Pool water temperature |
-| `PIN_RELAY_POOL` | **GPIO18** | Relay control — Pool circulation pump |
-| `PIN_RELAY_SOLAR` | **GPIO19** | Relay control — Solar heating pump |
+| `PIN_DS_SOLAR` | **GPIO32** | DS18B20 data — Solar collector temperature |
+| `PIN_DS_POOL` | **GPIO33** | DS18B20 data — Pool water temperature |
+| `PIN_RELAY_POOL` | **GPIO25** | Relay control — Pool circulation pump |
+| `PIN_RELAY_SOLAR` | **GPIO26** | Relay control — Solar heating pump |
+| `PIN_LED_STATUS` | **Built-in LED** | Status LED (Homie convention blink codes) |
 
-> **Note on GPIO15**: This pin is a **Strapping pin** on the ESP32 — it affects
-> the boot process if pulled HIGH or LOW at startup. The firmware works reliably
-> with it here, but if you experience boot issues, consider moving the DS18B20
-> sensors to **GPIO32/33** and updating `src/Config.hpp` accordingly (see the
-> [Wiring Optimization](#optional-wiring-optimization) section).
+> **Note**: These pins are chosen for maximum compatibility. GPIO15/16/18/19
+> (the original assignment) work for most users, but the optimized pins
+> eliminate any boot-strapping risk and avoid ADC2 pins entirely — see
+> [Alternative Pin Assignment](#alternative-pin-assignment-original) for the original layout.
 
 ---
 
 ## Wiring Diagram
 
 ```
-                         +-------------------------+
-                         |         ESP32           |
-                         |                         |
-  DS18B20 SOLAR DATA --->| GPIO15   (PIN_DS_SOLAR) |
-  DS18B20 POOL  DATA --->| GPIO16   (PIN_DS_POOL)  |
-  Relay IN1 (Pool)  ---->| GPIO18   (PIN_RELAY_POOL)|
-  Relay IN2 (Solar) ---->| GPIO19   (PIN_RELAY_SOLAR)|
-                         |                         |
-  3.3V ------------------>| 3V3                     |
-  GND ------------------->| GND                     |
-                         +-----------+-------------+
-                                     |
-                                     | common GND
-                                     v
-         +--------+--------+--------+--------+
-         |        |        |        |        |
-    +----+--+  +--+----+  |   +----+--+  +--+----+
-    |Solar  |  | Pool  |  |   | RLY1  |  | RLY2  |
-    |DS18B20|  |DS18B20|  |   |(Pool) |  |(Solar)|
-    |       |  |       |  |   |       |  |       |
-    | VDD --+--+ VDD --+--+---> 3.3V  |  |       |
-    | GND --+--+ GND --+-------> GND  |  |       |
-    |DATA --->| GPIO15|  |   |       |  |       |
-    |       |  |DATA -->|  |   | VCC  |  | VCC  |
-    +-------+  +-------+  |   | -- 5V |  | -- 5V|
-                           |   | GND  |  | GND  |
-                           |   |      |  |      |
-                    4.7kΩ  |   | IN1  |  | IN2  |
-                     |     |   | <-18 |  | <-19 |
-                     v     |   +------+  +------+
-                3.3V ----+-+--- 3.3V
+ ─── POWER SUPPLY ──────────────────────────────────────────────────
+
+  [USB PSU 5V/1A+]           [ESP32 Board]           [Relay Module]
+   ┌──────────┐              ┌─────────────┐          ┌────────────┐
+   │ 5V (+) ──┼──────────────┤ VIN         │          │ VCC        │
+   │          │              │  (powers    │      ┌───┤ (powers    │
+   │          │              │   board)    │      │   │  coils)    │
+   │          │              │             │      │   │            │
+   │          │              │ 3V3 ───┬────┘      │   │ GND ◄──────┼──┐
+   │          │              │        │           │   └────────────┘  │
+   │ GND ─────┼──────────────┤ GND ◄──┼───────────┼──────────────────┘
+   └──────────┘              └────────┘           │
+
+ ─── SENSORS ──────────────────────────────────────────────────────
+
+  [DS18B20 Solar]                               [DS18B20 Pool]
+   ┌───────────┐                                 ┌───────────┐
+   │ VDD (red) ─┼── 3.3V ─────────────────────────┼── VDD (red)│
+   │           │                                 │           │
+   │ GND (blk) ─┼── GND ──────────────────────────┼── GND (blk)│
+   │           │                                 │           │
+   │DATA (yel) ─┼── GPIO32 (PIN_DS_SOLAR)         │           │
+   │           │  │                              │           │
+   │           │  └──[4.7kΩ]── 3.3V ← pull-up    │           │
+   │           │                   resistor      │           │
+   │           │                                 │DATA (yel) ─┼── GPIO33 (PIN_DS_POOL)
+   │           │                                 │           │  │
+   │           │                                 │           │  └──[4.7kΩ]── 3.3V
+   └───────────┘                                 └───────────┘
+
+ ─── RELAY CONTROL SIGNALS ────────────────────────────────────────
+
+  ESP32 GPIO25 ────────────────────────────────── Relay IN1 (Pool)
+  ESP32 GPIO26 ────────────────────────────────── Relay IN2 (Solar)
+
+ ─── STATUS INDICATION ────────────────────────────────────────────
+
+  ESP32 Built-in LED (GPIO2) ── Status blink codes (Homie)
+
+ ─── RELAY LOAD SIDE (230V AC) ────────────────────────────────────
+
+  L (mains) ─── RCD ─── MCB ──┬── Relay COM1 ── Pool Pump
+                               └── Relay COM2 ── Solar Pump
+  N (neutral) ───────────────────────── Neutral bar ── Pump N
 ```
 
 ### Wire Connections (Step by Step)
@@ -132,44 +147,50 @@ The DS18B20 has three wires (on waterproof probes: typically **red = VDD**,
 **yellow/white = DATA**, **black = GND** — but **verify with your sensor's
 datasheet**):
 
-| DS18B20 Wire | Connect to |
-|:------------:|------------|
-| Red (VDD) | ESP32 **3.3V** |
-| Black (GND) | ESP32 **GND** |
-| Yellow/White (DATA) | **GPIO15** (solar) or **GPIO16** (pool) |
+| DS18B20 Wire | Color (typical) | Connect to |
+|:------------:|:---------------:|------------|
+| VDD | **Red** | ESP32 **3.3V** |
+| GND | **Black** | ESP32 **GND** |
+| DATA | **Yellow / White** | ESP32 **GPIO32** (solar) or **GPIO33** (pool) |
 
-**Critical — add the pull-up resistor:**
+**Critical — add the 4.7kΩ pull-up resistor:**
 
-Connect a **4.7kΩ resistor** between the DATA wire and the **3.3V** line.
-One resistor per sensor, as close to the sensor wire connection as possible.
+Each sensor DATA line **must** have a **4.7kΩ resistor** connecting it to
+**3.3V**. Without it, the sensor will not be detected.
 
 ```
-    ESP32 3.3V ──┬── 4.7kΩ ──── DS18B20 DATA
-                  │
-                DS18B20 VDD
+   Solar DATA ──── 4.7kΩ ──── 3.3V
+   Pool  DATA ──── 4.7kΩ ──── 3.3V
 ```
 
-Without this resistor, the sensor will not be detected — this is the #1
-cause of "no sensor found" errors.
+Solder the resistor as close to the ESP32 pin header as possible, connecting
+between the DATA pin and the 3.3V rail. The resistor can be any 4.7kΩ ±5%
+(¼W or ⅛W, metal film or carbon film).
 
 #### 2. Relay Module
 
-| Relay Module | Connect to |
-|:------------:|------------|
-| VCC (or VDD) | **5V** (from the ESP32 board's VIN/5V pin, or external 5V supply) |
-| GND | **GND** (common with ESP32) |
-| IN1 | **GPIO18** (pool pump) |
-| IN2 | **GPIO19** (solar pump) |
+| Relay Terminal | Typical Label | Connect to | Wire Color |
+|:--------------:|:-------------:|------------|:----------:|
+| Module power | `VCC` or `VDD` | **5V** (from ESP32 VIN or external 5V PSU) | **Red** |
+| Ground | `GND` | **GND** (common ground with ESP32) | **Black** |
+| Control input 1 | `IN1` or `D1` | **GPIO25** (Pool Pump) | **Yellow/Blue** |
+| Control input 2 | `IN2` or `D2` | **GPIO26** (Solar Pump) | **Green/Blue** |
 
-**Relay Logic**: The firmware sets the GPIO pin HIGH (3.3V) to activate the
-relay. If your module switches with LOW (active-low), flip the jumper or adapt
-the firmware (see `src/RelayModuleNode.cpp`).
+**Important — Logic Level**: The firmware sets the GPIO pin **HIGH (3.3V)**
+to activate (close) the relay. If your relay module switches with LOW instead
+(active-low), look for a **jumper** on the module to change the mode, or choose
+a different module — active-high modules are easier to work with.
+
 
 **Load wiring (230V side):**
 
 ```
-    L ──┤ RCD ├──┤ MCB ├──┬──┤ Relay-COM1 ├── Pool Pump ── N
-                           └──┤ Relay-COM2 ├── Solar Pump ── N
+   L (mains live) ─── RCD ─── MCB ──┬── Relay COM1 ── Pool Pump
+                                     │       NO1 ─────┘
+                                     │
+                                     └── Relay COM2 ── Solar Pump
+                                             NO2 ─────┘
+   N (neutral) ───────────────────────── Neutral bar ── Pump N
 ```
 
 - Connect the pump's live wire to the relay's **COM** (common) terminal.
@@ -179,12 +200,12 @@ the firmware (see `src/RelayModuleNode.cpp`).
 
 #### 3. Power Supply
 
-| Component | Supply | Source |
-|-----------|:------:|--------|
-| ESP32 board | **5V USB** (regulated) | Phone charger, USB port, or dedicated 5V PSU |
-| Relay module (coils) | **5V** | From ESP32 VIN pin OR external 5V supply |
-| DS18B20 sensors | **3.3V** | From ESP32 3.3V output pin |
-| (Optional) RTC DS3231 | **3.3V** | From ESP32 3.3V output pin |
+| Component | Voltage | Source | Notes |
+|-----------|:-------:|--------|-------|
+| ESP32 board | **5V** | USB charger port (on ESP32) | Powers the board + provides 5V on VIN pin |
+| Relay module coils | **5V** | ESP32 VIN pin (same as USB input) | The relay module draws power from the same 5V supply |
+| DS18B20 sensors | **3.3V** | ESP32 3V3 output pin | Both sensors share the same 3.3V rail |
+| (Optional) RTC DS3231 | **3.3V** | ESP32 3V3 output pin | Same rail as sensors |
 
 > **Important**: The ESP32's on-board 3.3V regulator can supply ~600mA. The
 > DS18B20 sensors draw < 5mA total — well within limits. If you add many
@@ -314,20 +335,24 @@ Before connecting power:
 ### 2. Power On
 
 1. Connect USB power (or 5V PSU)
-2. The ESP32's **built-in LED** should flash quickly (boot sequence)
-3. After ~3 seconds, the LED blinks **slowly** — waiting for WiFi
+2. The ESP32's **built-in LED** follows the [LED Status Codes](#led-status-codes-homie-convention):
+   - **Fast blink (5 Hz)** — AP mode (no WiFi configured welcome page active)
+   - **Slow blink (1 Hz)** — WiFi connecting
+   - **Mostly on, brief blink every 2s** — WiFi connected, MQTT disconnected
+   - **Solid on** — WiFi + MQTT fully connected
 
 ### 3. Verify Sensors
 
-Open the serial monitor (9600 baud):
+Open the serial monitor (115200 baud):
 ```
 Pool Controller v3.3.0
 Starting up...
-Initialized pins: GPIO15, GPIO16, GPIO18, GPIO19
-Solar Temp: GPIO15
-Pool Temp:  GPIO16
-Pool Relay: GPIO18
-Solar Relay: GPIO19
+✓ Pin configuration validated - no conflicts (optimierte Belegung)
+  Solar Temp (DS18B20): GPIO32
+  Pool Temp  (DS18B20): GPIO33
+  Pool Pump  (Relay):   GPIO25
+  Solar Pump (Relay):   GPIO26
+  Status LED:           GPIO2 (LED_BUILTIN)
 ```
 
 If sensors are connected and working:
@@ -373,31 +398,57 @@ If relay doesn't click:
 
 ---
 
-## Optional: Wiring Optimization
+## Alternative Pin Assignment (Original)
 
-The default pins (GPIO15/16/18/19) work reliably for most users. If you
-experience boot instability or want the most robust configuration, use these
-**optimized pins** instead:
-
-| Function | Default Pin | Optimized Pin | Reason |
-|----------|:-----------:|:-------------:|--------|
-| DS18B20 Solar | GPIO15 | **GPIO32** | GPIO15 is a Strapping pin — removing OneWire from it eliminates any boot risk |
-| DS18B20 Pool | GPIO16 | **GPIO33** | Clean separation from remaining Strapping pin GPIO0 |
-| Relay Pool | GPIO18 | **GPIO25** | ADC2 pads (GPIO18/19) are avoided; GPIO25 is a clean digital output |
-| Relay Solar | GPIO19 | **GPIO26** | Same as above |
-
-To use optimized pins, edit `src/Config.hpp`:
+The firmware now uses the **optimized pins (GPIO32/33/25/26)** by default,
+as shown in the [Pin Assignment](#pin-assignment-firmware-defaults) table above.
+The original assignment (GPIO15/16/18/19) is available if you need to share pins
+with legacy shield boards or other hardware — simply edit `src/Config.hpp`:
 
 ```cpp
-constexpr uint8_t PIN_DS_SOLAR{32};     // was 15
-constexpr uint8_t PIN_DS_POOL{33};      // was 16
-constexpr uint8_t PIN_RELAY_POOL{25};   // was 18
-constexpr uint8_t PIN_RELAY_SOLAR{26};  // was 19
+constexpr uint8_t PIN_DS_SOLAR{15};     // was 32
+constexpr uint8_t PIN_DS_POOL{16};      // was 33
+constexpr uint8_t PIN_RELAY_POOL{18};   // was 25
+constexpr uint8_t PIN_RELAY_SOLAR{19};  // was 26
 ```
 
-This pinout is already analyzed and recommended in the
+| Function | Optimized (Default) | Original Pin | Why the change? |
+|----------|:-------------------:|:------------:|-----------------|
+| DS18B20 Solar | **GPIO32** | GPIO15 | GPIO15 is a Strapping pin — removing OneWire eliminates any boot risk |
+| DS18B20 Pool | **GPIO33** | GPIO16 | Clean separation from remaining Strapping pin GPIO0 |
+| Relay Pool | **GPIO25** | GPIO18 | Avoid ADC2 pins (18/19) — GPIO25 is a clean digital output |
+| Relay Solar | **GPIO26** | GPIO19 | Same as above |
+
+The optimization is analyzed in detail in the
 [ESP32 Schematic Optimization](esp32-schematic-optimization-de.md) document
 (German).
+
+---
+
+## LED Status Codes (Homie Convention)
+
+The controller uses its **built-in LED** to signal the current system state,
+following the [Homie Convention](https://homieiot.github.io/) standard for
+IoT device status indication. The LED is updated once per control loop cycle.
+
+| LED Pattern | System State | Visual |
+|-------------|-------------|--------|
+| **Rapid blink** (100ms on/off = 5 Hz) | **AP Mode** — no WiFi configured, setup captive portal active | |
+| **Slow blink** (500ms on/off = 1 Hz) | **Connecting** — WiFi connection in progress | ![WiFi connecting](led_wifi.gif) |
+| **Mostly on, brief blink every 2s** | **WiFi OK, MQTT disconnected** — network up, broker not reachable | ![MQTT disconnected](led_mqtt.gif) |
+| **Solid on** | **Fully connected** — WiFi + MQTT operational | |
+| **Very fast blink** (50ms on/off = 10 Hz) | **OTA Update** — firmware download/install in progress | |
+| **Double blink** (200/200/200/600ms) | **Safe Mode** — boot-loop detected or critical degradation | |
+
+**What to expect at first power-on:**
+
+1. **Fast blink** — AP mode (no WiFi configured yet)
+2. After configuring WiFi via the web portal → **slow blink** while connecting
+3. Once connected → **mostly on** while MQTT connects
+4. **Solid on** — everything is running normally
+
+> **Tip**: If the LED stays in **fast blink** after power-on, open the
+> `Pool-Controller-Setup` WiFi network to configure your home WiFi.
 
 ---
 

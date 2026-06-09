@@ -18,8 +18,8 @@ menu:
 
 ## Overview
 
-The Pool Controller now includes comprehensive state persistence and system
-health monitoring to ensure reliable 24/7 operation. ESP32-only since v3.2.0.
+The Pool Controller includes comprehensive state persistence and system
+health monitoring to ensure reliable 24/7 operation.
 
 ## State Persistence
 
@@ -46,9 +46,8 @@ and restored after reboots or power failures:
 Uses the Preferences library for persistent storage in NVS
 (Non-Volatile Storage). Each value is stored with a type-specific key.
 
-Relay states are persisted individually per relay via their own Preferences
-namespace named after the relay node-id (e.g., `pool-pump`, `solar-pump`),
-storing key `"switch"`.
+Relay states are persisted individually per relay via their own namespace
+in NVS, storing the on/off state under the key `"switch"`.
 
 ### Automatic Restoration
 
@@ -136,8 +135,7 @@ uint8_t fragmentation = SystemMonitor::getHeapFragmentation();
 
 ### Enabling Features
 
-Both state persistence and system monitoring are **automatically enabled** in
-version 3.1.0+. No configuration required.
+Both state persistence and system monitoring are **automatically enabled**. No configuration required.
 
 ### Customizing Thresholds
 
@@ -283,21 +281,11 @@ If watchdog triggers (ESP32):
 
 ## Future Enhancements
 
-Completed in v3.2.0:
-
-1. ✅ **Degradation Manager**: Central health state (NORMAL → CRITICAL)
-2. ✅ **MQTT Reconnect-Refresh**: Full state republish on reconnection
-3. ✅ **NTP Graceful Degradation**: Three-stage time degradation (GREEN/YELLOW/RED)
-
-Planned:
-
-1. 🔜 **Configurable thresholds**: MQTT-based threshold configuration
-2. 🔜 **Memory stats**: Historical memory usage tracking
-3. 🔜 **Remote reboot**: MQTT command to trigger reboot
-4. 🔜 **Health dashboard**: Web UI for health monitoring
+- 🔜 **Configurable thresholds**: MQTT-based threshold configuration
+- 🔜 **Health dashboard**: Web UI for health monitoring
 
 ---
 
-**Version**: 3.2.0
+**Version**: 3.3.0
 **Status**: Production Ready
 **Platform**: ESP32
