@@ -163,7 +163,7 @@ protected:
     if (_activeEndMinutes > 0) {
       // Normalize extended end to 0-1439 for comparison with nowMinutes
       uint16_t normalizedEnd = _activeEndMinutes % 1440;
-      
+
       bool inExtendedWindow;
       if (crossesMidnight) {
         // Extended window with midnight crossing
