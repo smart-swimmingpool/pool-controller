@@ -59,11 +59,11 @@ public:
 
   /**
    * @brief Get the effective runtime in minutes (actual circulation duration).
-   * 
+   *
    * Computes the difference between the extended end time and the timer start,
    * handling midnight crossing. When no extension is active, returns the base
    * timer runtime.
-   * 
+   *
    * @return Effective runtime in minutes (0–1440).
    */
   uint16_t getEffectiveRuntimeMinutes() const {
