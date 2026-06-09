@@ -64,7 +64,7 @@ public:
    * handling midnight crossing. When no extension is active, returns the base
    * timer runtime.
    *
-   * @return Effective runtime in minutes (0–1440).
+   * @return Effective runtime in minutes (0-1440).
    */
   uint16_t getEffectiveRuntimeMinutes() const {
     TimerSetting ts = getTimerSetting();
