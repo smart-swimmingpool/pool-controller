@@ -110,6 +110,13 @@ async function loadTelemetry() {
       document.getElementById('uptimeVal').textContent = h + 'h ' + m + 'm';
     }
 
+    // Effective Runtime (temperature-based circulation) — formatted as duration
+    if (data.effective_runtime != null) {
+      const h = Math.floor(data.effective_runtime / 60);
+      const m = data.effective_runtime % 60;
+      document.getElementById('effectiveRuntimeVal').textContent = h + 'h ' + m + 'm';
+    }
+
     // AP-Mode: WiFi-Tab anzeigen
     if (data.ap_mode) {
       switchTab('wifi');
@@ -165,12 +172,11 @@ async function saveMqtt() {
   if (isNaN(portVal) || portVal < 1 || portVal > 65535) { alert('MQTT Port must be a number between 1 and 65535.'); return; }
   const user = document.getElementById('mqttUser').value;
   const pass = document.getElementById('mqttPass').value;
-  const tls = document.getElementById('mqttTls').checked;
 
   const res = await fetch('/api/config', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: 'type=mqtt&host=' + encodeURIComponent(host) + '&port=' + portVal + '&username=' + encodeURIComponent(user) + '&password=' + encodeURIComponent(pass) + '&tls=' + tls
+    body: 'type=mqtt&host=' + encodeURIComponent(host) + '&port=' + portVal + '&username=' + encodeURIComponent(user) + '&password=' + encodeURIComponent(pass)
   });
   if (res.status === 200) alert('MQTT config saved!');
 }
@@ -307,6 +313,9 @@ function validateSettings() {
     { id: 'tempMaxPool',     name: 'Max Pool Temp',       min: 0,   max: 40,   type: 'float' },
     { id: 'tempMinSolar',    name: 'Min Solar Temp',      min: 0,   max: 90,   type: 'float' },
     { id: 'tempHysteresis',  name: 'Hysteresis',          min: 0,   max: 10,   type: 'float' },
+    { id: 'tempCircThreshold',  name: 'Circ. Temp Threshold',   min: 0,   max: 40,   type: 'float' },
+    { id: 'tempCircFactor',     name: 'Circ. Temp Factor',      min: 0,   max: 120,  type: 'int' },
+    { id: 'tempCircMaxRuntime', name: 'Circ. Max Runtime',      min: 60,  max: 1440, type: 'int' },
   ];
   for (const f of fields) {
     const el = document.getElementById(f.id);
@@ -339,6 +348,9 @@ async function saveControllerSettings() {
   const maxPool = document.getElementById('tempMaxPool').value;
   const minSolar = document.getElementById('tempMinSolar').value;
   const hysteresis = document.getElementById('tempHysteresis').value;
+  const circThreshold = document.getElementById('tempCircThreshold').value;
+  const circFactor = document.getElementById('tempCircFactor').value;
+  const circMaxRuntime = document.getElementById('tempCircMaxRuntime').value;
   const tz = document.getElementById('timezone').value;
 
   // Validate time fields included alongside pool fields
@@ -359,7 +371,7 @@ async function saveControllerSettings() {
   const res = await fetch('/api/config', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: 'type=settings&mode=' + mode + '&interval=' + interval + '&max_pool=' + maxPool + '&min_solar=' + minSolar + '&hysteresis=' + hysteresis + '&timezone=' + tz + '&green=' + green + '&red=' + red + timerParams() + '&ntp_server=' + ntpServer
+    body: 'type=settings&mode=' + mode + '&interval=' + interval + '&max_pool=' + maxPool + '&min_solar=' + minSolar + '&hysteresis=' + hysteresis + '&circ_threshold=' + circThreshold + '&circ_factor=' + circFactor + '&circ_max_runtime=' + circMaxRuntime + '&timezone=' + tz + '&green=' + green + '&red=' + red + timerParams() + '&ntp_server=' + ntpServer
   });
   if (res.status === 200) {
     document.getElementById('poolThreshold').textContent = 'max ' + parseFloat(maxPool).toFixed(1) + '°C';
@@ -453,13 +465,15 @@ async function loadConfig() {
     document.getElementById('mqttHost').value = data.mqtt.host;
     document.getElementById('mqttPort').value = data.mqtt.port;
     document.getElementById('mqttUser').value = data.mqtt.username;
-    document.getElementById('mqttTls').checked = data.mqtt.use_tls;
 
     document.getElementById('opMode').value = data.settings.op_mode;
     document.getElementById('loopInterval').value = data.settings.loop_interval;
     document.getElementById('tempMaxPool').value = data.settings.temp_max_pool;
     document.getElementById('tempMinSolar').value = data.settings.temp_min_solar;
     document.getElementById('tempHysteresis').value = data.settings.temp_hysteresis;
+    document.getElementById('tempCircThreshold').value = data.settings.temp_circ_threshold;
+    document.getElementById('tempCircFactor').value = data.settings.temp_circ_factor;
+    document.getElementById('tempCircMaxRuntime').value = data.settings.temp_circ_max_runtime;
     document.getElementById('timezone').value = data.settings.timezone;
     document.getElementById('ntpServer').value = data.ntp.server;
     document.getElementById('timeLossGreen').value = data.settings.time_loss_green_hours;

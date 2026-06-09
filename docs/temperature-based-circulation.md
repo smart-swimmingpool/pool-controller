@@ -179,7 +179,7 @@ Plus a sensor for computed effective runtime:
 
 | Entity | Topic Suffix | Unit |
 |---|---|---|
-| `effective-runtime` | `/sensor/pool-controller/effective-runtime/…` | min |
+| `effective-runtime` | `/sensor/pool-controller/effective-runtime/…` | s |
 
 ## 6. Implementation Plan
 
@@ -193,7 +193,127 @@ Plus a sensor for computed effective runtime:
 | 6. Build + Test | — | ~10 min |
 | **Total** | | **~1.5 h** |
 
-## 7. Future Extensions (v2)
+## 7. User Guide
+
+### 7.1 Quick Start
+
+1. **Set a timer** — temperature-based circulation only works in **Timer** or **Auto** mode with a configured time window. Set your desired base runtime first (e.g. 10:00–18:00).
+2. **Set a threshold** — start with `24 °C`. Below this temperature, the pump runs the normal timer schedule.
+3. **Set a factor** — start with `30 min/°C`. Every degree above threshold adds half an hour.
+4. **Set a max runtime** — start with `720 min (12 h)`. Prevents excessive runtime on very hot days.
+
+That's it — the pump will now run longer when the water is warm.
+
+> **Rule of thumb:** Once configured, the feature works automatically. No manual intervention needed. You can watch the **Circ. Runtime** value on the dashboard to see the calculated extension at a glance.
+
+### 7.2 Recommended Settings by Pool Type
+
+Find your setup and use these as a starting point:
+
+| Pool Type | Threshold | Factor | Max Runtime | Why |
+|---|---|---|---|---|
+| ☀️ **Small above-ground** (≤15 m³) | 22 °C | 20 min/°C | 480 min (8 h) | Smaller volume needs less margin |
+| 🏊 **Medium family pool** (25–50 m³) | 24 °C | 30 min/°C | 720 min (12 h) | Good balance of water quality and cost |
+| 🌴 **Large pool / high bather load** (50+ m³) | 22 °C | 40 min/°C | 960 min (16 h) | More circulation needed for hygiene |
+| 🌡️ **Heated pool** | 26 °C | 15 min/°C | 600 min (10 h) | Already filtered more via heating pump |
+
+If you have solar heating, keep the threshold at or above your solar minimum temperature to avoid overlap.
+
+### 7.3 Configuration via Web UI
+
+#### Pool Tab
+
+Open the settings menu (gear icon) → **Pool** → **🌡️ Temperature-Based Circulation** section.
+
+| Field | Description |
+|---|---|
+| **Circ. Temp Threshold** | Pool temperature must exceed this value for extension to apply. |
+| **Circ. Temp Factor** | How many extra minutes per °C above threshold. Higher = more aggressive extension. |
+| **Circ. Max Runtime** | The absolute maximum pump runtime per day, including any extension. |
+
+Click **Save Pool Settings** at the bottom of the tab.
+
+#### Dashboard Telemetry
+
+On the main dashboard, the bottom strip shows **Circ. Runtime** — the currently calculated effective runtime in minutes. This number updates live as the pool temperature changes and the `only-extend` rule tracks the highest computed value.
+
+### 7.4 Configuration via Home Assistant
+
+Once connected via MQTT, three Number entities appear in Home Assistant:
+
+| Entity | Purpose |
+|---|---|
+| `number.pool_controller_temp_circ_threshold` | Set the temperature threshold |
+| `number.pool_controller_temp_circ_factor` | Adjust the extension factor |
+| `number.pool_controller_temp_circ_max_runtime` | Set the upper runtime limit |
+| `sensor.pool_controller_effective_runtime` | Read-only — shows computed runtime |
+
+You can change values from the Home Assistant UI, automations, or dashboards. Changes take effect immediately — no reboot required.
+
+### 7.5 Example: Automating with Home Assistant
+
+**Scenario:** Adjust factor based on weather forecast.
+
+```yaml
+automation:
+  - alias: "Aggressive circulation on hot days"
+    trigger:
+      platform: numeric_state
+      entity_id: weather.home
+      attribute: temperature
+      above: 32
+    action:
+      service: number.set_value
+      target:
+        entity_id: number.pool_controller_temp_circ_factor
+      data:
+        value: 45
+```
+
+**Scenario:** Notify when circulation ran near max.
+
+```yaml
+automation:
+  - alias: "High circulation alert"
+    trigger:
+      platform: numeric_state
+      entity_id: sensor.pool_controller_effective_runtime
+      above: 700
+    action:
+      service: notify.mobile_app_phone
+      data:
+        message: "Pool circulation running near max ({{ states('sensor.pool_controller_effective_runtime') }} min)"
+```
+
+### 7.6 FAQ / Troubleshooting
+
+> **Q: The pump runs much longer than expected — why?**
+
+Check your pool temperature. If it's above the threshold and the factor is high, long runtimes are normal. Look at the **Circ. Runtime** value to see the calculated extension. Lower the **factor** or raise the **threshold** if needed.
+
+> **Q: The pump stopped earlier than I expected — why?**
+
+The extension only applies while the pump is running. If the pump was already on, the end time may have been extended earlier but then cooled down — the `only-extend` rule preserves the highest end time. Check that:
+1. The pool temperature is actually above the threshold
+2. The timer window is configured (temperature extension doesn't activate the pump by itself)
+
+> **Q: Can the pump start earlier than the timer start?**
+
+No. The feature only **extends** the end time. The start time remains exactly as configured in the timer. (See `only-extend` rule in §2.)
+
+> **Q: Does the max runtime reset each day?**
+
+Yes. At the start of each timer cycle, the effective end time resets to the base timer end. The extension is recalculated fresh.
+
+> **Q: I changed values in the Web UI but nothing happened — why?**
+
+Check the **Mode** on the dashboard. Temperature-based circulation works in **Timer** and **Auto** modes. In **Manual** or **Boost** mode, the feature is inactive.
+
+> **Q: Will this wear out my pump faster?**
+
+The `tempCircMaxRuntime` parameter is specifically designed to prevent excessive runtime. Set it to a value your pump can handle — 12 hours/day is safe for most pool pumps. Consult your pump's duty cycle specification.
+
+## 8. Future Extensions (v2)
 
 - **Cold reduction**: Optional `tempCircMinRuntime` below a lower threshold
 - **Trend-based**: Factor in whether temperature is rising or falling

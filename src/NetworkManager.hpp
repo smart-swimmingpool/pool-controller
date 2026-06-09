@@ -9,8 +9,8 @@
 
 #include <Arduino.h>
 #include <WiFi.h>
-#include <WiFiClientSecure.h>
-#include <PubSubClient.h>
+#include <functional>
+#include <AsyncMqttClient.h>
 
 namespace PoolController {
 
@@ -24,7 +24,7 @@ namespace PoolController {
  */
 class NetworkManager {
 public:
-  using MqttMessageCallback = void (*)(char *topic, uint8_t *payload, unsigned int length);
+  using MqttMessageCallback = std::function<void(char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total)>;
 
   NetworkManager() = default;
 
@@ -61,9 +61,7 @@ private:
   static void connectWiFi();
   static void connectMqtt();
 
-  static WiFiClient *wifiClient_;
-  static WiFiClientSecure *secureClient_;
-  static PubSubClient mqttClient_;
+  static AsyncMqttClient mqttClient_;
 
   static MqttMessageCallback mqttCallback_;
 

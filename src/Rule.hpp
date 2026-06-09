@@ -57,6 +57,41 @@ public:
    */
   uint16_t getActiveEndMinutes() const { return _activeEndMinutes; }
 
+  /**
+   * @brief Get the effective runtime in minutes (actual circulation duration).
+   * 
+   * Computes the difference between the extended end time and the timer start,
+   * handling midnight crossing. When no extension is active, returns the base
+   * timer runtime.
+   * 
+   * @return Effective runtime in minutes (0–1440).
+   */
+  uint16_t getEffectiveRuntimeMinutes() const {
+    TimerSetting ts = getTimerSetting();
+    uint16_t baseStart = ts.timerStartHour * 60 + ts.timerStartMinutes;
+    uint16_t baseEnd   = ts.timerEndHour * 60 + ts.timerEndMinutes;
+
+    // Base runtime (handles midnight crossing)
+    uint16_t baseRuntime;
+    if (baseEnd >= baseStart) {
+      baseRuntime = baseEnd - baseStart;
+    } else {
+      baseRuntime = (1440 - baseStart) + baseEnd;
+    }
+
+    if (_activeEndMinutes == 0) {
+      return baseRuntime;
+    }
+
+    // Extended runtime
+    if (_activeEndMinutes >= baseStart) {
+      return _activeEndMinutes - baseStart;
+    } else {
+      // Extended end wraps past midnight
+      return (1440 - baseStart) + _activeEndMinutes;
+    }
+  }
+
 protected:
   static constexpr const char *cIndent = "  ";
 
@@ -87,6 +122,8 @@ protected:
     TimerSetting ts = getTimerSetting();
     tm startTime = getStartTime(time, ts);
     tm endTime = getEndTime(time, ts);
+    uint16_t baseStartMinutes = ts.timerStartHour * 60 + ts.timerStartMinutes;
+    uint16_t baseEndMinutes = ts.timerEndHour * 60 + ts.timerEndMinutes;
 
     Serial.printf("  currenttime = %s", asctime(&time));
     Serial.printf("  startTime   = %s", asctime(&startTime));
@@ -107,18 +144,10 @@ protected:
       timerActive = (difftime(now, start) >= 0) && (difftime(now, end) <= 0);
     }
 
-    if (!timerActive) {
-      // Timer is not active → pump stays OFF
-      _activeEndMinutes = 0;
-      Serial.printf("  checkPoolPumpTimer = false\n");
-      return false;
-    }
+    uint16_t nowMinutes = time.tm_hour * 60 + time.tm_min;
 
-    // Timer is active — apply temperature extension if temperature is valid
-    if (poolTemp > 0.0f && poolTemp == poolTemp) {
-      // Call the free function from Timer.hpp (uses ConfigManager internally)
-      uint16_t baseStartMinutes = ts.timerStartHour * 60 + ts.timerStartMinutes;
-      uint16_t baseEndMinutes = ts.timerEndHour * 60 + ts.timerEndMinutes;
+    // Step 1: If timer is active, apply temperature extension
+    if (timerActive && poolTemp > 0.0f && poolTemp == poolTemp) {
       uint16_t extendedEnd = calculateEffectiveEndMinutes(baseStartMinutes, baseEndMinutes, poolTemp);
 
       // Only extend, never shorten
@@ -128,31 +157,37 @@ protected:
         uint8_t em = _activeEndMinutes % 60;
         Serial.printf("  → Temperature extension: end now %02d:%02d\n", eh, em);
       }
-
-      // Check if we're still within the extended window
-      if (_activeEndMinutes > 0 && crossesMidnight) {
-        // With midnight crossing of extended end, check if now < extended end
-        uint16_t nowMinutes = time.tm_hour * 60 + time.tm_min;
-        // Extended end wraps: active if now >= baseStart OR now <= extendedEnd
-        if (nowMinutes >= baseStartMinutes || nowMinutes <= _activeEndMinutes) {
-          Serial.printf("  checkPoolPumpTimer = true (extended, crosses midnight)\n");
-          return true;
-        }
-      } else if (_activeEndMinutes > 0) {
-        uint16_t nowMinutes = time.tm_hour * 60 + time.tm_min;
-        if (nowMinutes < _activeEndMinutes) {
-          Serial.printf("  checkPoolPumpTimer = true (extended to %02d:%02d)\n",
-            (uint8_t)(_activeEndMinutes / 60), (uint8_t)(_activeEndMinutes % 60));
-          return true;
-        }
-        // Extended window expired — reset
-        _activeEndMinutes = 0;
-      }
     }
 
-    // Standard timer is active, no extension (or extension expired)
-    Serial.printf("  checkPoolPumpTimer = true\n");
-    return true;
+    // Step 2: Check if we're within the extended window
+    if (_activeEndMinutes > 0) {
+      bool inExtendedWindow;
+      if (crossesMidnight) {
+        // Extended window with midnight crossing
+        inExtendedWindow = (nowMinutes >= baseStartMinutes || nowMinutes <= _activeEndMinutes);
+      } else {
+        inExtendedWindow = (nowMinutes < _activeEndMinutes);
+      }
+
+      if (inExtendedWindow) {
+        Serial.printf("  checkPoolPumpTimer = true (extended to %02d:%02d)\n",
+          (uint8_t)(_activeEndMinutes / 60), (uint8_t)(_activeEndMinutes % 60));
+        return true;
+      }
+
+      // Extended window expired — reset
+      _activeEndMinutes = 0;
+    }
+
+    // Step 3: Base timer active (no extension or extension expired)
+    if (timerActive) {
+      Serial.printf("  checkPoolPumpTimer = true\n");
+      return true;
+    }
+
+    // Timer not active and no extension → pump stays OFF
+    Serial.printf("  checkPoolPumpTimer = false\n");
+    return false;
   }
 
   /** @brief Standard timer check without temperature extension. */

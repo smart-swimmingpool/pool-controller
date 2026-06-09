@@ -97,7 +97,7 @@
     </div>
 
     <!-- Telemetrie (klein, ganz unten) -->
-    <div class="telemetry-grid-bottom" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; font-size: 0.7rem; margin-top: 0.5rem; padding-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.08);">
+    <div class="telemetry-grid-bottom" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; font-size: 0.7rem; margin-top: 0.5rem; padding-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.08);">
       <div style="text-align: center;">
         <label style="color: var(--text-muted); display: block;">Heap</label>
         <div id="heapVal" style="font-weight: 600; margin-top: 0.15rem; color: var(--text-muted);">--- KB</div>
@@ -109,6 +109,10 @@
       <div style="text-align: center;">
         <label style="color: var(--text-muted); display: block;">Uptime</label>
         <div id="uptimeVal" style="font-weight: 600; margin-top: 0.15rem; color: var(--text-muted);">---</div>
+      </div>
+      <div style="text-align: center;">
+        <label style="color: var(--text-muted); display: block;">Circ. Runtime</label>
+        <div id="effectiveRuntimeVal" style="font-weight: 600; margin-top: 0.15rem; color: var(--text-muted);">--- min</div>
       </div>
     </div>
   </div>
@@ -152,10 +156,6 @@
   <div class="input-group">
     <label for="mqttPass">MQTT Password</label>
     <input type="password" id="mqttPass" placeholder="Optional">
-  </div>
-  <div class="input-group" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1rem;">
-    <input type="checkbox" id="mqttTls" style="width: 20px; height: 20px;">
-    <label for="mqttTls" style="margin-bottom: 0; cursor: pointer;">Enable Secure TLS Encryption (MQTTS)</label>
   </div>
   <button class="btn btn-primary" onclick="saveMqtt()" style="margin-top: 1.5rem;">Save MQTT configuration</button>
 </div>
@@ -201,6 +201,30 @@
       <label for="tempHysteresis">Temp Hysteresis (K)</label>
       <input type="number" id="tempHysteresis" min="0" max="10" step="0.1" value="1.0">
       <span class="input-hint">Prevents rapid pump cycling · Recommended: 1.0 K (±0.1–10 K)</span>
+    </div>
+    <div class="input-group" style="visibility:hidden;">
+      <div style="height:1px;"></div>
+    </div>
+  </div>
+
+  <h2>🌡️ Temperature-Based Circulation</h2>
+  <div class="telemetry-grid">
+    <div class="input-group">
+      <label for="tempCircThreshold">Circ. Temp Threshold (°C)</label>
+      <input type="number" id="tempCircThreshold" min="0" max="40" step="0.5" value="24.0">
+      <span class="input-hint">Pump runtime extends above this temperature · Default: 24 °C</span>
+    </div>
+    <div class="input-group">
+      <label for="tempCircFactor">Circ. Temp Factor (min/°C)</label>
+      <input type="number" id="tempCircFactor" min="0" max="120" step="5" value="30">
+      <span class="input-hint">Extra minutes per °C above threshold · Default: 30 min/°C</span>
+    </div>
+  </div>
+  <div class="telemetry-grid">
+    <div class="input-group">
+      <label for="tempCircMaxRuntime">Circ. Max Runtime (min)</label>
+      <input type="number" id="tempCircMaxRuntime" min="60" max="1440" step="15" value="720">
+      <span class="input-hint">Absolute upper limit for total pump runtime · Default: 720 min (12 h)</span>
     </div>
     <div class="input-group" style="visibility:hidden;">
       <div style="height:1px;"></div>

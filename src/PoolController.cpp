@@ -33,6 +33,8 @@
 #include "Utils.hpp"
 #include "WpsProvisioner.hpp"
 
+#include "StatusLed.hpp"
+
 #include "Config.hpp"
 
 namespace PoolController {
@@ -90,11 +92,16 @@ auto PoolControllerContext::initializeController() -> void {
     delay(5000);
     ESP.restart();  // F27 Fix! Clean restart instead of blocking WDT loop
   } else {
-    Serial.println("✓ Pin configuration validated - no conflicts");
-    Serial.printf("  Solar Temp: GPIO %d\n", PIN_DS_SOLAR);
-    Serial.printf("  Pool Temp:  GPIO %d\n", PIN_DS_POOL);
-    Serial.printf("  Pool Relay: GPIO %d\n", PIN_RELAY_POOL);
-    Serial.printf("  Solar Relay: GPIO %d\n", PIN_RELAY_SOLAR);
+    Serial.println("✓ Pin configuration validated - no conflicts (optimierte Belegung)");
+    Serial.printf("  Solar Temp (DS18B20): GPIO %d\n", PIN_DS_SOLAR);
+    Serial.printf("  Pool Temp  (DS18B20): GPIO %d\n", PIN_DS_POOL);
+    Serial.printf("  Pool Pump  (Relay):   GPIO %d\n", PIN_RELAY_POOL);
+    Serial.printf("  Solar Pump (Relay):   GPIO %d\n", PIN_RELAY_SOLAR);
+    Serial.printf("  Status LED:           GPIO %d", PIN_LED_STATUS);
+#ifdef LED_BUILTIN
+    Serial.print(" (LED_BUILTIN)");
+#endif
+    Serial.println();
   }
 
   // Set measurement intervals and propagate to all nodes
@@ -168,6 +175,9 @@ auto PoolControllerContext::setup() -> void {
   StateManager::begin();
   SystemMonitor::begin();
   DegradationManager::begin();
+
+  // Initialize Status-LED with Homie-compatible blink codes
+  StatusLed::begin();
 
   // --- Boot-loop detection ---
   bootLoopDetected_ = SystemMonitor::detectBootLoop();
@@ -256,6 +266,22 @@ auto PoolControllerContext::loop() -> void {
   NetworkManager::loop();
   WebPortal::loop();
   OtaUpdater::loop();
+
+  // --- Status-LED: Pattern an Systemzustand anpassen (Homie-Convention) ---
+  if (OtaUpdater::isUpdateInProgress()) {
+    StatusLed::setPattern(StatusLedPattern::OTA_UPDATE);
+  } else if (bootLoopDetected_ || DegradationManager::isSafe()) {
+    StatusLed::setPattern(StatusLedPattern::SAFE_MODE);
+  } else if (NetworkManager::isApMode()) {
+    StatusLed::setPattern(StatusLedPattern::AP_MODE);
+  } else if (!NetworkManager::isWiFiConnected()) {
+    StatusLed::setPattern(StatusLedPattern::CONNECTING);
+  } else if (!NetworkManager::isMqttConnected()) {
+    StatusLed::setPattern(StatusLedPattern::CONNECTED_NO_MQTT);
+  } else {
+    StatusLed::setPattern(StatusLedPattern::ONLINE);
+  }
+  StatusLed::loop();
 
   // Run drivers & logic rules
   solarTemperatureNode.loop();

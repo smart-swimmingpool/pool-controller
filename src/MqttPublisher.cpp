@@ -401,7 +401,7 @@ void MqttPublisher::publishDiscovery() {
   publishSensorDiscovery("heap", "Free Heap Space", nullptr, "B", "mdi:memory", "diagnostic");
   publishSensorDiscovery("max-alloc", "Max Alloc Block", nullptr, "B", "mdi:memory", "diagnostic");
   publishSensorDiscovery("rssi", "WiFi Signal Strength", nullptr, "dBm", "mdi:wifi", "diagnostic");
-  publishSensorDiscovery("uptime", "System Uptime", nullptr, "s", "mdi:clock-outline", "diagnostic");
+  publishSensorDiscovery("uptime", "System Uptime", "duration", "s", "mdi:clock-outline", "diagnostic");
   publishSensorDiscovery("local-time", "Local Time", nullptr, nullptr, "mdi:clock", "diagnostic");
 
   // ── Controls (no entity_category — shown on device page) ──
@@ -429,7 +429,7 @@ void MqttPublisher::publishDiscovery() {
   publishNumberDiscovery(
     "temp-circ-max-runtime", "Circ. Max Runtime", 60.0, 1440.0, 15.0, "min", "mdi:timer-outline");
   publishSensorDiscovery(
-    "effective-runtime", "Effective Runtime", nullptr, "min", "mdi:timer-sand", "diagnostic");
+    "effective-runtime", "Effective Runtime", "duration", "s", "mdi:timer-sand", "diagnostic");
 
   // ── Configuration (entity_category: "config") ──
   publishSelectDiscovery("timezone", "Timezone", getTimezoneLabelList(), getTimezoneLabelCount(), "mdi:map-clock", "config");
@@ -550,12 +550,12 @@ void MqttPublisher::publishStates() {
   NetworkManager::publish((getBaseTopic("number", "temp-circ-max-runtime") + "/state").c_str(),
     String(ConfigManager::getSettings().tempCircMaxRuntime).c_str(), true);
 
-  // Effective runtime sensor
+  // Effective runtime sensor — actual runtime, published in seconds (for HA duration display)
   {
     Rule *active = operationModeNode.getRule();
-    uint16_t effectiveMin = (active != nullptr) ? active->getActiveEndMinutes() : 0;
+    uint16_t effectiveMin = (active != nullptr) ? active->getEffectiveRuntimeMinutes() : 0;
     NetworkManager::publish((getBaseTopic("sensor", "effective-runtime") + "/state").c_str(),
-      String(effectiveMin).c_str(), true);
+      String(static_cast<uint32_t>(effectiveMin) * 60).c_str(), true);
   }
   NetworkManager::publish((getBaseTopic("select", "timezone") + "/state").c_str(),
     getTimeInfoFor(ConfigManager::getSettings().timezoneIndex).c_str(), true);
@@ -563,14 +563,15 @@ void MqttPublisher::publishStates() {
     (getBaseTopic("text", "ntp-server") + "/state").c_str(), ConfigManager::getNtp().server.c_str(), true);
 }
 
-void MqttPublisher::handleMqttMessage(char *topic, uint8_t *payload, unsigned int length) {
-  // Convert payload to String safely
-  char valStr[32];
-  size_t valLen = (length < sizeof(valStr) - 1) ? length : sizeof(valStr) - 1;
-  memcpy(valStr, payload, valLen);
-  valStr[valLen] = '\0';
-  String value(valStr);
+void MqttPublisher::handleMqttMessage(char *topic, char *payload, AsyncMqttClientMessageProperties properties,
+  size_t len, size_t index, size_t total) {
+  // Only process complete messages (single-chunk delivery for typical HA commands)
+  if (index != 0) {
+    return;
+  }
 
+  // Convert payload to String safely (AsyncMqttClient null-terminates)
+  String value(payload, len);
   String top(topic);
 
   if (top.endsWith("/firmware-update/set")) {
@@ -626,7 +627,7 @@ void MqttPublisher::handleMqttMessage(char *topic, uint8_t *payload, unsigned in
       solarPumpNode.setSwitch(value == "ON");
     }
   } else if (top.endsWith("/mode/set")) {
-    operationModeNode.setMode(valStr);
+    operationModeNode.setMode(value.c_str());
     ConfigManager::getSettings().opMode = value;
     ConfigManager::save();
   } else if (top.endsWith("/pool-max-temp/set")) {

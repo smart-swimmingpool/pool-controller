@@ -49,7 +49,6 @@ static constexpr const char *kMqttHost      = "mqtt_host";
 static constexpr const char *kMqttPort      = "mqtt_port";
 static constexpr const char *kMqttUser      = "mqtt_user";
 static constexpr const char *kMqttPass      = "mqtt_pass";
-static constexpr const char *kMqttTls       = "mqtt_tls";
 static constexpr const char *kNtpServer     = "ntp_server";
 static constexpr const char *kNtpTz         = "ntp_tz";
 static constexpr const char *kSetInterval   = "set_interval";
@@ -60,6 +59,9 @@ static constexpr const char *kSetOpMode     = "set_opmode";
 static constexpr const char *kSetTzIdx      = "set_tzidx";
 static constexpr const char *kSetGreen      = "set_green";
 static constexpr const char *kSetRed        = "set_red";
+static constexpr const char *kSetCircThresh = "set_circth";
+static constexpr const char *kSetCircFactor = "set_circfa";
+static constexpr const char *kSetCircMax    = "set_circmx";
 static constexpr const char *kAdmPass       = "adm_pass";
 static constexpr const char *kCfgConfigured = "cfg_configured";
 
@@ -85,7 +87,6 @@ bool ConfigManager::load() {
   mqtt_.port       = prefs.getUInt(kMqttPort, 1883);
   mqtt_.username   = prefs.getString(kMqttUser, "");
   mqtt_.password   = prefs.getString(kMqttPass, "");
-  mqtt_.useTls     = prefs.getBool(kMqttTls, false);
 
   ntp_.server      = prefs.getString(kNtpServer, "pool.ntp.org");
   ntp_.timezone    = prefs.getLong(kNtpTz, 0);
@@ -98,6 +99,9 @@ bool ConfigManager::load() {
   settings_.timezoneIndex      = prefs.getInt(kSetTzIdx, 0);
   settings_.timeLossGreenHours = prefs.getUChar(kSetGreen, 1);
   settings_.timeLossRedHours   = prefs.getUChar(kSetRed, 24);
+  settings_.tempCircThreshold  = prefs.getDouble(kSetCircThresh, 24.0);
+  settings_.tempCircFactor     = prefs.getUShort(kSetCircFactor, 30);
+  settings_.tempCircMaxRuntime = prefs.getUShort(kSetCircMax, 720);
 
   adminPasswordHash_ = prefs.getString(kAdmPass, kDefaultPasswordHash);
   configured_        = prefs.getBool(kCfgConfigured, false);
@@ -122,7 +126,6 @@ bool ConfigManager::save() {
   prefs.putUInt(kMqttPort, mqtt_.port);
   prefs.putString(kMqttUser, mqtt_.username);
   prefs.putString(kMqttPass, mqtt_.password);
-  prefs.putBool(kMqttTls, mqtt_.useTls);
 
   prefs.putString(kNtpServer, ntp_.server);
   prefs.putLong(kNtpTz, ntp_.timezone);
@@ -135,6 +138,9 @@ bool ConfigManager::save() {
   prefs.putInt(kSetTzIdx, settings_.timezoneIndex);
   prefs.putUChar(kSetGreen, settings_.timeLossGreenHours);
   prefs.putUChar(kSetRed, settings_.timeLossRedHours);
+  prefs.putDouble(kSetCircThresh, settings_.tempCircThreshold);
+  prefs.putUShort(kSetCircFactor, settings_.tempCircFactor);
+  prefs.putUShort(kSetCircMax, settings_.tempCircMaxRuntime);
 
   prefs.putString(kAdmPass, adminPasswordHash_);
   prefs.putBool(kCfgConfigured, configured_);

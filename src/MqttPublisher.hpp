@@ -8,6 +8,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include <AsyncMqttClient.h>
 
 namespace PoolController {
 
@@ -31,10 +32,14 @@ public:
   /**
    * @brief Handle an incoming MQTT message from Home Assistant.
    * @param topic   The MQTT topic the message was received on.
-   * @param payload Raw payload bytes.
-   * @param length  Payload length in bytes.
+   * @param payload Null-terminated payload string.
+   * @param properties  Message properties (QoS, retain, dup).
+   * @param len     Payload length.
+   * @param index   Chunk index (0 for single-chunk messages).
+   * @param total   Total payload size across all chunks.
    */
-  static void handleMqttMessage(char *topic, uint8_t *payload, unsigned int length);
+  static void handleMqttMessage(char *topic, char *payload, AsyncMqttClientMessageProperties properties,
+    size_t len, size_t index, size_t total);
 
 private:
   static void publishTextDiscovery(const char *objectId, const char *name, const char *icon = nullptr);
