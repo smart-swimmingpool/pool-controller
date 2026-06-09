@@ -7,10 +7,19 @@
  * All GPIO pin assignments and tunable constants are centralized here.
  * Changing these values requires rebuilding the firmware.
  *
- * ## Optimierte Pin-Belegung
+ * ## Hardware Variants
  *
- * Gegenüber den ursprünglichen Pins (GPIO15/16/18/19) wird hier die
- * in der Hardware-Dokumentation empfohlene optimierte Belegung verwendet:
+ * Two hardware configurations are supported:
+ *
+ *   **Standard** — ESP32 Dev Board (default)
+ *     Uses the optimized pin assignment documented in the hardware guides:
+ *     DS18B20 on GPIO32/33, relays on GPIO25/26.
+ *
+ *   **NORVI AE01-R** — define the preprocessor macro `NORVI_AE01_R`
+ *     Industrial ESP32-WROOM32 controller with built-in relays, OLED display,
+ *     buttons, and 24V DC supply. See docs/norvi-ae01-r.md for details.
+ *
+ * ## Standard Pin Assignment (optimierte Belegung)
  *
  *   | Funktion      | Alt  | Optimiert | Grund                                          |
  *   |---------------|:----:|:---------:|------------------------------------------------|
@@ -41,7 +50,55 @@ namespace PoolController {
 
 constexpr std::uint8_t TEMP_READ_INTERVAL{30};
 
-// ── Optimierte Pin-Belegung ────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// NORVI IIOT-AE01-R — Industrial ESP32 Controller
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// Build with:  pio run -e norvi_ae01_r
+//
+// Pin mapping derived from the official datasheet:
+//   https://norvi.io/docs/norvi-iiot-ae01-r-datasheet/
+//   https://norvi.io/docs/norvi-iiot-ae01-r-user-guide/
+//
+// Key differences from a standard ESP32 dev board:
+//   • Supply voltage: 24V DC (no 5V USB needed)
+//   • 6 built-in SPST relays (we use Relay 0 & 1)
+//   • 0.96" SSD1306 OLED on I2C (GPIO16/GPIO17)
+//   • 3 front-panel buttons via analog ADC (GPIO32)
+//   • No built-in status LED — use Transistor Output 0.1 (GPIO27)
+//   • Digital inputs (GPIO18/19/21/22/23/34/35/39) are INPUT-ONLY
+//     (optocoupler-isolated for 24V signals) — NOT usable for OneWire
+// ═══════════════════════════════════════════════════════════════════════════
+
+#ifdef NORVI_AE01_R
+
+/** @brief DS18B20 data pin — both sensors share a single bus on Expansion Port Pin 1. */
+constexpr std::uint8_t PIN_DS_SOLAR{25};
+/** @brief DS18B20 data pin — shared bus with solar sensor on GPIO25 (Expansion Port Pin 1). */
+constexpr std::uint8_t PIN_DS_POOL{25};
+/** @brief Relay control pin — pool circulation pump (Relay Output 0). */
+constexpr std::uint8_t PIN_RELAY_POOL{14};
+/** @brief Relay control pin — solar heating pump (Relay Output 1). */
+constexpr std::uint8_t PIN_RELAY_SOLAR{12};
+/** @brief Status LED — external LED via transistor output 0.1 (open-collector, 100 mA max). */
+constexpr std::uint8_t PIN_LED_STATUS{27};
+/** @brief Optional warning LED — not used on NORVI. */
+constexpr std::int8_t  PIN_LED_WARN{-1};
+
+// ── NORVI-specific peripheral pins ─────────────────────────────────────────
+
+/** @brief I2C SDA pin for the built-in 0.96" SSD1306 OLED display. */
+constexpr std::uint8_t PIN_OLED_SDA{16};
+/** @brief I2C SCL pin for the built-in 0.96" SSD1306 OLED display. */
+constexpr std::uint8_t PIN_OLED_SCL{17};
+/** @brief Analog input pin for the three front-panel buttons. */
+constexpr std::uint8_t PIN_BUTTON_ADC{32};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Standard ESP32 Dev Board (default)
+// ═══════════════════════════════════════════════════════════════════════════
+
+#else
 
 /** @brief DS18B20 data pin — solar collector temperature sensor (optimiert: GPIO32 statt 15). */
 constexpr std::uint8_t PIN_DS_SOLAR{32};
@@ -51,8 +108,6 @@ constexpr std::uint8_t PIN_DS_POOL{33};
 constexpr std::uint8_t PIN_RELAY_POOL{25};
 /** @brief Relay control pin — solar heating pump (optimiert: GPIO26 statt 19). */
 constexpr std::uint8_t PIN_RELAY_SOLAR{26};
-
-// ── Status-LED (modellunabhängig via LED_BUILTIN) ──────────────────────────
 
 /** @brief Status-LED-Pin (built-in). Beim ESP32 DevKit i. d. R. GPIO2.
  *
@@ -64,5 +119,7 @@ constexpr std::uint8_t PIN_LED_STATUS{2};
 
 /** @brief Optionale zweite Warn-LED (z. B. für Safe-Mode). -1 = deaktiviert. */
 constexpr std::int8_t PIN_LED_WARN{-1};
+
+#endif
 
 }  // namespace PoolController

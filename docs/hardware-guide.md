@@ -320,6 +320,12 @@ control panel, use a **DIN-rail 5V PSU** (e.g., Mean Well HDR-15-5). It's
 clean, reliable, and can power both the ESP32 and the relay module without
 issue.
 
+> **Alternative — Industrial controller:** The [NORVI IIOT-AE01-R](norvi-ae01-r.md)
+> is an ESP32-based industrial controller with **built-in relays, 24V DC supply,
+> DIN-rail mount, and CE certification**. If you already have a 230V AC → 24V DC
+> power supply, no additional 5V PSU is needed. See the
+> [NORVI AE01-R Configuration Guide](norvi-ae01-r.md) for details.
+
 ---
 
 ## First Power-On and Testing
@@ -455,6 +461,7 @@ IoT device status indication. The LED is updated once per control loop cycle.
 ## References
 
 - Fritzing source file: [pool-controller.fzz](https://github.com/smart-swimmingpool/pool-controller/raw/main/docs/pool-controller.fzz)
+- [NORVI AE01-R Configuration Guide](norvi-ae01-r.md) — industrial ESP32 controller pin mapping & wiring
 - [ESP32 Schematic Optimization (DE)](esp32-schematic-optimization-de.md)
 - [ESP32 Complete Wiring Schematic (DE)](esp32-complete-wiring-schematic-de.md)
 - [DS18B20 Datasheet](https://www.analog.com/media/en/technical-documentation/data-sheets/DS18B20.pdf)

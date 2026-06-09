@@ -16,6 +16,9 @@ namespace PoolController {
  * web portal, MQTT publisher, OTA updater, and system monitoring.
  * Uses RAII — constructor builds the context, setup() initializes hardware,
  * loop() runs the control cycle.
+ *
+ * When built with `NORVI_AE01_R`, the context also owns the NORVI-specific
+ * OLED display and front-panel button handler.
  */
 struct PoolControllerContext final {
   PoolControllerContext();

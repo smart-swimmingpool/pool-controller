@@ -340,6 +340,13 @@ Pumpensteuerung hast, nimm ein **Hutschienen-5V-Netzteil** (z.B. Mean Well
 HDR-15-5). Das ist sauber, zuverlässig und versorgt ESP32 und Relaismodul
 problemlos.
 
+> **Alternative — Industriesteuerung:** Der [NORVI IIOT-AE01-R](norvi-ae01-r.de.md)
+> ist ein ESP32-basierter Industriecontroller mit **integrierten Relais,
+> 24V-DC-Versorgung, Hutschienenmontage und CE-Zertifizierung**. Wenn du bereits
+> ein 230V AC → 24V DC Netzteil hast, wird kein zusätzliches 5V-Netzteil
+> benötigt. Siehe [NORVI AE01-R Konfigurationsanleitung](norvi-ae01-r.de.md) für
+> Details.
+
 ---
 
 ## Inbetriebnahme und Test
@@ -476,6 +483,7 @@ dem Standard für IoT-Statusanzeigen.
 ## Referenzen
 
 - Fritzing-Quelldatei: [pool-controller.fzz](https://github.com/smart-swimmingpool/pool-controller/raw/main/docs/pool-controller.fzz)
+- [NORVI AE01-R Konfigurationsanleitung](norvi-ae01-r.de.md) — Industrie-ESP32-Controller Pinbelegung & Verdrahtung
 - [ESP32 Schaltplananalyse und Optimierung](esp32-schematic-optimization-de.md)
 - [ESP32 Komplett-Schaltplan](esp32-complete-wiring-schematic-de.md)
 - [DS18B20 Datenblatt](https://www.analog.com/media/en/technical-documentation/data-sheets/DS18B20.pdf)
