@@ -113,7 +113,7 @@ bool StatusLed::computeDesiredState(const uint32_t nowMs) {
     // Gesamtzyklus: 1200ms
     const uint32_t phase = nowMs % T_SAFE_CYCLE;
     return (phase < T_SAFE_PHASE1_END) ||
-           (phase >= T_SAFE_PHASE2_END && phase < T_SAFE_PHASE3_END);
+      (phase >= T_SAFE_PHASE2_END && phase < T_SAFE_PHASE3_END);
   }
   }
 
