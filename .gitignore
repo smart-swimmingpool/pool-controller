@@ -116,3 +116,4 @@ data/**/config.json
 .vscode/settings.json
 _codeql_detected_source_root
 logs/
+.cache/
