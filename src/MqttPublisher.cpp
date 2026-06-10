@@ -580,25 +580,16 @@ void MqttPublisher::publishStates() {
     }
 
     char addrBuf[17];
-    float sTemp = solarTemperatureNode.getTemperature();
-    float pTemp = poolTemperatureNode.getTemperature();
-
     if (solarTemperatureNode.hasAddressFilter()) {
       solarTemperatureNode.getDeviceAddressString(addrBuf, sizeof(addrBuf));
-      String state = String(addrBuf) + " (";
-      state += isnan(sTemp) ? "--.-" : String(sTemp, 1);
-      state += "°C)";
-      NetworkManager::publish((getBaseTopic("select", "solar-sensor") + "/state").c_str(), state.c_str(), true);
+      NetworkManager::publish((getBaseTopic("select", "solar-sensor") + "/state").c_str(), addrBuf, true);
     } else {
       NetworkManager::publish((getBaseTopic("select", "solar-sensor") + "/state").c_str(), "— Not configured —", true);
     }
 
     if (poolTemperatureNode.hasAddressFilter()) {
       poolTemperatureNode.getDeviceAddressString(addrBuf, sizeof(addrBuf));
-      String state = String(addrBuf) + " (";
-      state += isnan(pTemp) ? "--.-" : String(pTemp, 1);
-      state += "°C)";
-      NetworkManager::publish((getBaseTopic("select", "pool-sensor") + "/state").c_str(), state.c_str(), true);
+      NetworkManager::publish((getBaseTopic("select", "pool-sensor") + "/state").c_str(), addrBuf, true);
     } else {
       NetworkManager::publish((getBaseTopic("select", "pool-sensor") + "/state").c_str(), "— Not configured —", true);
     }
@@ -615,11 +606,13 @@ void MqttPublisher::publishStates() {
 // ═══════════════════════════════════════════════════════════════════════
 
 void MqttPublisher::publishSensorMappingDiscovery() {
-  // Collect unique detected addresses with temperatures
+  // Collect unique detected addresses
   uint8_t maxDev = max(solarTemperatureNode.getDeviceCount(), poolTemperatureNode.getDeviceCount());
   if (maxDev == 0) return;
 
-  // Build options: "ADDRESS (TEMP°C)" for each detected sensor + "Not configured"
+  // Options: hex addresses only (no temperature — temps are volatile and would
+  // cause state/option mismatches when NaN). Users identify sensors via the
+  // sensor.solar_sensor_found / sensor.pool_sensor_found diagnostic entities.
   static constexpr uint8_t kMaxOpts = 21;
   const char *solarOpts[kMaxOpts];
   uint8_t solarOptCount = 0;
@@ -627,46 +620,28 @@ void MqttPublisher::publishSensorMappingDiscovery() {
   const char *kNotCfg = "— Not configured —";
   solarOpts[solarOptCount++] = kNotCfg;
 
-  // Keep formatted strings alive for duration of this function
-  String optionLabels[kMaxOpts];
-  uint8_t labelCount = 0;
+  String storedAddrs[kMaxOpts];
+  uint8_t storedCount = 0;
 
-  for (uint8_t i = 0; i < maxDev && labelCount < kMaxOpts - 1; i++) {
+  for (uint8_t i = 0; i < maxDev && storedCount < kMaxOpts - 1; i++) {
     DeviceAddress addr;
-    float temp = NAN;
+    if (solarTemperatureNode.getDetectedDeviceAddress(i, addr) ||
+        poolTemperatureNode.getDetectedDeviceAddress(i, addr)) {
+      char buf[17];
+      snprintf(buf, sizeof(buf), "%02X%02X%02X%02X%02X%02X%02X%02X",
+        addr[0], addr[1], addr[2], addr[3], addr[4], addr[5], addr[6], addr[7]);
 
-    if (i < solarTemperatureNode.getDeviceCount() && solarTemperatureNode.getDetectedDeviceAddress(i, addr)) {
-      temp = solarTemperatureNode.getDetectedDeviceTemperature(i);
-    } else if (i < poolTemperatureNode.getDeviceCount() && poolTemperatureNode.getDetectedDeviceAddress(i, addr)) {
-      temp = poolTemperatureNode.getDetectedDeviceTemperature(i);
-    } else {
-      continue;
+      // Deduplicate (same address may appear on shared bus)
+      bool seen = false;
+      for (uint8_t si = 0; si < storedCount; si++) {
+        if (storedAddrs[si] == buf) { seen = true; break; }
+      }
+      if (seen) continue;
+
+      storedAddrs[storedCount] = buf;
+      solarOpts[solarOptCount++] = storedAddrs[storedCount].c_str();
+      storedCount++;
     }
-
-    // Format address + temperature
-    char addrStr[17];
-    snprintf(addrStr, sizeof(addrStr), "%02X%02X%02X%02X%02X%02X%02X%02X",
-      addr[0], addr[1], addr[2], addr[3], addr[4], addr[5], addr[6], addr[7]);
-
-    // Deduplicate (same address may appear on shared bus)
-    bool seen = false;
-    for (uint8_t si = 0; si < labelCount; si++) {
-      if (optionLabels[si].startsWith(addrStr)) { seen = true; break; }
-    }
-    if (seen) continue;
-
-    // Build label: "ADDR (TEMP°C)"
-    String label = String(addrStr) + " (";
-    if (!isnan(temp)) {
-      label += String(temp, 1);
-    } else {
-      label += "--.-";
-    }
-    label += "°C)";
-
-    optionLabels[labelCount] = label;
-    solarOpts[solarOptCount++] = optionLabels[labelCount].c_str();
-    labelCount++;
   }
 
   // Publish both select entities with the same option list
@@ -818,7 +793,7 @@ void MqttPublisher::handleMqttMessage(char *topic, char *payload, AsyncMqttClien
       timeClientSetup(ConfigManager::getNtp().server.c_str());
     }
   } else if (top.endsWith("/solar-sensor/set") || top.endsWith("/pool-sensor/set")) {
-    // Handle select entity: value is "ADDR (TEMP°C)" or "— Not configured —"
+    // Handle select entity: value is hex address or "— Not configured —"
     uint8_t addr[8] = {0};
     bool hasAddr = (value.length() >= 16);
 
