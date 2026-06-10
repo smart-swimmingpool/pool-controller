@@ -45,7 +45,7 @@ jobs:
 
     strategy:
       matrix:
-        environment: [esp32dev]
+        environment: [esp32dev, norvi_ae01_r]
 
     steps:
       - name: Checkout

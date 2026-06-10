@@ -7,10 +7,14 @@ on:
 
 jobs:
   check-dependencies:
-    name: Check PlatformIO Library Dependencies
+    name: Check PlatformIO Library Dependencies (${{ matrix.environment }})
     runs-on: ubuntu-latest
     permissions:
       contents: read
+
+    strategy:
+      matrix:
+        environment: [esp32dev, norvi_ae01_r]
 
     steps:
       - name: Checkout
@@ -26,6 +30,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install platformio intelhex
 
-      - name: Check outdated packages (esp32dev)
-        run: pio pkg outdated --environment esp32dev
+      - name: Check outdated packages (${{ matrix.environment }})
+        run: pio pkg outdated --environment ${{ matrix.environment }}
         continue-on-error: true
