@@ -4,10 +4,17 @@
  * @file NorviOledDisplay.hpp
  * @brief OLED display driver for the NORVI IIOT-AE01-R built-in 0.96" SSD1306.
  *
- * Shows system status on a 128×64 I2C OLED:
- *   Page 0 — Main: pool temp, solar temp, operation mode, status
- *   Page 1 — Network: WiFi SSID, IP, MQTT connection state
- *   Page 2 — System: uptime, free heap, firmware version
+ * Shows system status on a 128×64 I2C OLED with multiple pages:
+ *   MAIN     — Pool & solar temps, operation mode, pump status
+ *   NETWORK  — WiFi SSID, IP, MQTT connection state
+ *   SYSTEM   — Uptime, free heap, firmware version
+ *   QRCODE   — QR code link to web interface
+ *   WIFI_SETUP — Captive portal / QR code for first-time WiFi config
+ *   SENSOR_SETUP — DS18B20 address mapping wizard (two-step: pick sensor → pick role)
+ *
+ * Navigation: S1 (UP) prev page, S2 (DOWN) next page, S3 (CONFIRM) action.
+ * Auto-returns to MAIN after 60 s of inactivity.
+ * Includes OLED burn-in mitigation (periodic 2 px shift).
  *
  * @note Only available when the NORVI_AE01_R preprocessor macro is defined.
  *       I2C pins: SDA = GPIO16, SCL = GPIO17 (fixed by NORVI hardware).
@@ -27,132 +34,180 @@ namespace PoolController {
  * @brief Manages the NORVI's built-in 0.96" SSD1306 OLED display.
  *
  * Singleton with static methods. Initialized once in PoolController::setup()
- * and updated periodically in loop(). Supports multiple display pages that
- * can be cycled via NorviButtonHandler.
+ * and updated periodically in loop().
  */
 class NorviOledDisplay {
 public:
   /** @brief Display page identifiers. */
   enum class Page : std::uint8_t {
-    MAIN = 0,    ///< Pool/Solar temps, operation mode, status LED
-    NETWORK,     ///< WiFi SSID, IP address, MQTT state
-    SYSTEM,      ///< Uptime, free heap, firmware version
-    QRCODE,      ///< QR code link to web interface
-    SENSOR_SETUP,///< Address mapping setup wizard
-    COUNT        ///< Number of pages (sentinel)
+    MAIN = 0,       ///< Pool/Solar temps, operation mode, pump status
+    NETWORK,        ///< WiFi SSID, IP, MQTT state
+    SYSTEM,         ///< Uptime, free heap, firmware version
+    QRCODE,         ///< QR code link to web interface
+    WIFI_SETUP,     ///< Captive portal QR for first-time WiFi config
+    SENSOR_SETUP,   ///< Address mapping wizard (two-step)
+    COUNT           ///< Number of pages (sentinel)
   };
 
-  // ── Sensor setup wizard ──────────────────────────────────────────────
+  // ── Sensor setup wizard states ───────────────────────────────────────
 
-  /** @brief Check if the sensor setup wizard is active. */
-  static bool isSetupModeActive() { return setupActive_; }
-  /** @brief Enter the sensor setup wizard (switches to SENSOR_SETUP page). */
-  static void enterSetupMode();
-  /** @brief Exit the sensor setup wizard (returns to MAIN page). */
-  static void exitSetupMode();
-  /** @brief Move selection to the next detected device. */
-  static void setupSelectNext();
-  /**
-   * @brief Assign the currently selected device as Solar.
-   * @return true if assignment was accepted.
-   */
-  static bool setupAssignAsSolar();
-  /**
-   * @brief Assign the currently selected device as Pool.
-   * @return true if assignment was accepted.
-   */
-  static bool setupAssignAsPool();
-  /** @brief Check if both sensors have been assigned. */
-  static bool isMappingComplete();
-  /** @brief Copy the current mapping into the provided 8-byte buffers. */
-  static void getMapping(uint8_t solarAddr[8], uint8_t poolAddr[8]);
+  /** @brief Sub-states for the sensor setup wizard. */
+  enum class SetupStep : std::uint8_t {
+    IDLE,            ///< On SENSOR_SETUP page but not in active assignment
+    SELECT_SENSOR,   ///< S1/S2 picks a sensor, S3 confirms
+    SELECT_ROLE,     ///< S1/S2 picks Solar or Pool, S3 assigns
+  };
 
-  /** @brief Get the number of devices detected on the shared bus (0, 1, or 2). */
-  static uint8_t getDetectedDeviceCount();
+  // ── Public API ───────────────────────────────────────────────────────
 
-  /**
-   * @brief Initialize the OLED display.
-   * Configures I2C (SDA=16, SCL=17), initializes the SSD1306 driver,
-   * and shows a brief splash screen.
-   */
+  /** @brief Initialize the OLED display + splash screen. */
   static void begin();
 
   /**
    * @brief Update the display periodically.
-   * Refreshes the active page content at most every 2 seconds.
+   * Handles auto-return to MAIN, burn-in shift, and page redraw.
    * Must be called from PoolController::loop().
    */
   static void loop();
 
-  /** @brief Switch to the next display page (wraps around). */
+  /** @brief Previous page (S1 / UP). */
+  static void previousPage();
+
+  /** @brief Next page (S2 / DOWN). */
   static void nextPage();
 
-  /** @brief Switch to the previous display page (wraps around). */
-  static void prevPage();
+  /** @brief Confirm / action button (S3). */
+  static void confirmAction();
 
   /** @brief Get the currently active page. */
   static Page getCurrentPage() { return currentPage_; }
 
-  /**
-   * @brief Request an immediate redraw on next loop() cycle.
-   * Useful after button presses or mode changes.
-   */
+  /** @brief Request an immediate redraw on next loop() cycle. */
   static void requestRedraw() { forceRedraw_ = true; }
 
+  /** @brief Get current burn-in horizontal offset (px). */
+  static int8_t getBurnInDx() { return burnInDx_; }
+  /** @brief Get current burn-in vertical offset (px). */
+  static int8_t getBurnInDy() { return burnInDy_; }
+
+  // ── Sensor setup wizard ──────────────────────────────────────────────
+
+  /** @brief Check if the sensor setup wizard is actively assigning. */
+  static bool isSetupActive() { return setupStep_ != SetupStep::IDLE; }
+
+  /** @brief Check if the mapping page should be forced on first boot. */
+  static bool needsSensorMapping();
+
+  /** @brief Check if both sensors have been assigned. */
+  static bool isMappingComplete();
+
+  /** @brief Copy the current mapping into the provided 8-byte buffers. */
+  static void getMapping(uint8_t solarAddr[8], uint8_t poolAddr[8]);
+
+  /** @brief Get the number of devices detected on the shared bus. */
+  static uint8_t getDetectedDeviceCount();
+
+  // ── Setup-step queries (for button wiring) ───────────────────────────
+
+  static bool isSelectSensorStep()  { return setupStep_ == SetupStep::SELECT_SENSOR; }
+  static bool isSelectRoleStep()    { return setupStep_ == SetupStep::SELECT_ROLE; }
+
+  /** @brief Move sensor selection up (previous sensor). */
+  static void setupSelectPrevious();
+  /** @brief Move sensor selection down (next sensor). */
+  static void setupSelectNext();
+  /** @brief Move role selection (Solar ↔ Pool). */
+  static void setupToggleRole();
+
+  /** @brief Assign the selected sensor with the chosen role. */
+  static bool setupApplyAssignment();
+
+  // ── WiFi first-boot query ────────────────────────────────────────────
+
+  /** @brief Check if WiFi credentials are configured. */
+  static bool needsWiFiSetup();
+
 private:
+  // ═════════════════════════════════════════════════════════════════════
+  // Draw methods
+  // ═════════════════════════════════════════════════════════════════════
+
   /** @brief Draw the current page content to the display buffer. */
   static void drawPage();
 
-  /** @brief Draw the MAIN page — temperatures, mode, status. */
+  /** @brief Draw MAIN — temperatures, mode, pump status. */
   static void drawMainPage();
 
-  /** @brief Draw the NETWORK page — WiFi, IP, MQTT. */
+  /** @brief Draw NETWORK — WiFi, IP, MQTT. */
   static void drawNetworkPage();
 
-  /** @brief Draw the SYSTEM page — uptime, heap, firmware. */
+  /** @brief Draw SYSTEM — uptime, heap, firmware. */
   static void drawSystemPage();
+
+  /** @brief Draw QRCODE — QR code for web UI. */
+  static void drawQrCodePage();
+
+  /** @brief Draw WIFI_SETUP — captive portal info + QR. */
+  static void drawWiFiSetupPage();
+
+  /** @brief Draw SENSOR_SETUP — address mapping wizard. */
+  static void drawSensorSetupPage();
+
+  /** @brief Draw the shared footer (mode, time, version, page). */
+  static void drawFooter();
+
+  /** @brief Draw the SENSOR_SETUP footer (context-sensitive hints). */
+  static void drawSensorSetupFooter();
 
   /** @brief Format uptime milliseconds into a "Xd Yh Zm" string. */
   static void formatUptime(uint32_t ms, char *buffer, size_t size);
 
-  /// Currently active display page.
-  static Page currentPage_;
-
-  /// Timestamp of the last display refresh (ms).
-  static uint32_t lastUpdateMs_;
-
-  /// Minimum interval between display refreshes (ms).
-  static constexpr uint32_t UPDATE_INTERVAL_MS{2000};
-
-  /// Force an immediate redraw on the next loop() cycle.
-  static bool forceRedraw_;
-
-  // ── Sensor setup wizard state ─────────────────────────────────────────
-  static bool setupActive_;          ///< Wizard is active
-  static uint8_t setupSelectedDev_;  ///< Currently selected device index
-  static bool setupSolarDone_;        ///< Solar has been assigned
-  static bool setupPoolDone_;         ///< Pool has been assigned
-  static uint8_t setupSolarAddr_[8];  ///< Solar device address (8-byte ROM)
-  static uint8_t setupPoolAddr_[8];   ///< Pool device address (8-byte ROM)
-
-  /** @brief Draw the SENSOR_SETUP page. */
-  static void drawSensorSetupPage();
-
-  /** @brief Draw the QRCODE page — QR code linking to web interface. */
-  static void drawQrCodePage();
-
-  /**
-   * @brief Draw the shared footer bar on all informational pages.
-   * Shows separator line + time + firmware version + page number.
-   * Not called on SENSOR_SETUP (has its own footer).
-   */
-  static void drawFooter();
-
-  /** @brief Maximum page index used in normal navigation (excludes SENSOR_SETUP). */
-  static constexpr uint8_t MAX_NAV_PAGE{static_cast<uint8_t>(Page::QRCODE)};
+  // ═════════════════════════════════════════════════════════════════════
+  // Utility
+  // ═════════════════════════════════════════════════════════════════════
 
   /** @brief Check if a DeviceAddress is all zeros. */
   static bool isAddressZero(const uint8_t addr[8]);
+
+  /** @brief Get the maximum navigable page index (COUNT - 1). */
+  static uint8_t maxNavPage() { return static_cast<uint8_t>(Page::COUNT) - 1; }
+
+  /**
+   * @brief Update the burn-in prevention offset.
+   * Cycles through a pattern of (dx, dy) shifts every BURN_IN_CYCLE_MS.
+   */
+  static void updateBurnInOffset();
+
+  // ═════════════════════════════════════════════════════════════════════
+  // Static state
+  // ═════════════════════════════════════════════════════════════════════
+
+  static Page currentPage_;
+  static uint32_t lastUpdateMs_;
+  static constexpr uint32_t UPDATE_INTERVAL_MS{2000};
+  static bool forceRedraw_;
+
+  // ── Idle auto-return ─────────────────────────────────────────────────
+  static uint32_t lastButtonPressMs_;
+  static constexpr uint32_t AUTO_RETURN_MS{60000};
+
+  // ── Burn-in mitigation ───────────────────────────────────────────────
+  static int8_t burnInDx_;          ///< Current horizontal shift (px)
+  static int8_t burnInDy_;          ///< Current vertical shift (px)
+  static uint32_t lastBurnInShiftMs_;
+  static constexpr uint32_t BURN_IN_CYCLE_MS{120000};  ///< Shift every 2 min
+
+  // ── Sensor setup state ───────────────────────────────────────────────
+  static SetupStep setupStep_;
+  static uint8_t setupSelectedDev_;
+  static bool setupSolarDone_;
+  static bool setupPoolDone_;
+  static uint8_t setupSolarAddr_[8];
+  static uint8_t setupPoolAddr_[8];
+  static bool setupRoleIsSolar_;   ///< true = Solar, false = Pool (in SELECT_ROLE)
+
+  // ── First-boot flow tracking ─────────────────────────────────────────
+  static bool firstBootDone_;      ///< True after initial setup flow completed
 };
 
 }  // namespace PoolController

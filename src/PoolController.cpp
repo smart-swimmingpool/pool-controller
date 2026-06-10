@@ -291,44 +291,56 @@ auto PoolControllerContext::setup() -> void {
   // Initialize Status-LED with Homie-compatible blink codes
   StatusLed::begin();
 
+  // Load persistent sensor address mapping from NVS early.
+  // Must run before NorviOledDisplay::begin() so that first-boot detection
+  // (needsSensorMapping) correctly checks whether sensors are assigned.
+  loadSensorAddressMapping();
+
+  // Initialize persisted config (WiFi, MQTT, NTP, settings).
+  // Must run before NorviOledDisplay::begin() for needsWiFiSetup() check.
+  ConfigManager::begin();
+
 #ifdef NORVI_AE01_R
   // Initialize NORVI-specific peripherals (OLED display + front buttons)
   NorviOledDisplay::begin();
   NorviButtonHandler::begin();
 
-  // Wire button callbacks
+  // Wire button callbacks (new navigation: S1=UP, S2=DOWN, S3=CONFIRM)
+  // ── S1 (UP) ───────────────────────────────────────────────────────────
   NorviButtonHandler::onButton1Press([]() {
-    if (NorviOledDisplay::isSetupModeActive()) {
-      // Setup mode: cycle to next detected device
-      NorviOledDisplay::setupSelectNext();
+    if (NorviOledDisplay::isSelectSensorStep()) {
+      // Sensor selection: move to previous sensor
+      NorviOledDisplay::setupSelectPrevious();
+      NorviOledDisplay::requestRedraw();
+    } else if (NorviOledDisplay::isSelectRoleStep()) {
+      // Role selection: toggle Solar ↔ Pool
+      NorviOledDisplay::setupToggleRole();
       NorviOledDisplay::requestRedraw();
     } else {
-      // Normal mode: cycle display page forward
+      // Normal mode: previous page
+      NorviOledDisplay::previousPage();
+    }
+  });
+  // ── S2 (DOWN) ─────────────────────────────────────────────────────────
+  NorviButtonHandler::onButton2Press([]() {
+    if (NorviOledDisplay::isSelectSensorStep()) {
+      // Sensor selection: move to next sensor
+      NorviOledDisplay::setupSelectNext();
+      NorviOledDisplay::requestRedraw();
+    } else if (NorviOledDisplay::isSelectRoleStep()) {
+      // Role selection: toggle Solar ↔ Pool
+      NorviOledDisplay::setupToggleRole();
+      NorviOledDisplay::requestRedraw();
+    } else {
+      // Normal mode: next page
       NorviOledDisplay::nextPage();
     }
   });
-  NorviButtonHandler::onButton2Press([]() {
-    if (NorviOledDisplay::isSetupModeActive()) {
-      // Setup mode: assign selected device as Solar
-      if (NorviOledDisplay::setupAssignAsSolar()) {
-        Serial.println("→ Sensor setup: assigned as Solar");
-        NorviOledDisplay::requestRedraw();
-      }
-    } else {
-      // Normal mode: request immediate OLED redraw + toggle pump in manual mode
-      NorviOledDisplay::requestRedraw();
-      if (operationModeNode.getMode() == "manu") {
-        poolPumpNode.setSwitch(!poolPumpNode.getSwitch());
-      }
-    }
-  });
+  // ── S3 (CONFIRM) ──────────────────────────────────────────────────────
   NorviButtonHandler::onButton3Press([]() {
-    if (NorviOledDisplay::isSetupModeActive()) {
-      // Setup mode: assign selected device as Pool
-      if (NorviOledDisplay::setupAssignAsPool()) {
-        Serial.println("→ Sensor setup: assigned as Pool");
-        NorviOledDisplay::requestRedraw();
-      }
+    if (NorviOledDisplay::getCurrentPage() == NorviOledDisplay::Page::SENSOR_SETUP) {
+      // Sensor setup page: advance the state machine (IDLE→SELECT→ROLE→assign)
+      NorviOledDisplay::confirmAction();
     } else {
       // Normal mode: cycle operation mode
       NorviOledDisplay::requestRedraw();
@@ -345,36 +357,18 @@ auto PoolControllerContext::setup() -> void {
       Serial.printf("→ Mode switched to: %s\n", operationModeNode.getMode().c_str());
     }
   });
-  // Wire long-press: enter/exit sensor setup wizard (consumes press)
-  NorviButtonHandler::onButton1LongPress([]() -> bool {
-    if (NorviOledDisplay::isSetupModeActive()) {
-      // Long-press while in setup: exit without saving
-      NorviOledDisplay::exitSetupMode();
-      Serial.println("→ Sensor setup: cancelled");
-      return true;
-    } else if (solarTemperatureNode.getDeviceCount() > 0) {
-      // Enter sensor setup wizard (only if sensors are detected)
-      NorviOledDisplay::enterSetupMode();
-      Serial.println("→ Sensor setup: entered (long-press B1 to exit)");
-      return true;
-    }
-    return false;  // Not consumed — normal short-press allowed
-  });
-  // In setup mode with both assigned: B2 long-press = save & reboot
-  NorviButtonHandler::onButton2LongPress([]() -> bool {
-    if (NorviOledDisplay::isSetupModeActive() && NorviOledDisplay::isMappingComplete()) {
-      NorviOledDisplay::requestRedraw();
-      NorviOledDisplay::exitSetupMode();
-      // Save mapping and reboot
+  // ── S3 long-press: save sensor mapping & reboot ───────────────────────
+  NorviButtonHandler::onButton3LongPress([]() -> bool {
+    if (NorviOledDisplay::isMappingComplete()) {
       uint8_t solarAddr[8], poolAddr[8];
       NorviOledDisplay::getMapping(solarAddr, poolAddr);
       saveSensorAddressMapping(solarAddr, poolAddr);
       Serial.println("→ Sensor mapping saved — rebooting in 1 second...");
       delay(1000);
       ESP.restart();
-      return true;  // unreachable, but for clarity
+      return true;
     }
-    return false;  // Not consumed — normal short-press allowed
+    return false;
   });
 #endif
 
@@ -394,9 +388,6 @@ auto PoolControllerContext::setup() -> void {
     prefs.end();
   }
 
-  // Initialize Configuration
-  ConfigManager::begin();
-
   // Start WiFi/WPS and MQTT services
   NetworkManager::begin();
 
@@ -411,11 +402,6 @@ auto PoolControllerContext::setup() -> void {
 
   // Suppress NVS persistence during setup initialization
   OperationModeNode::suppressPersist(true);
-
-  // Load persistent sensor address mapping from NVS.
-  // Must run before initializeController() so that each node's begin()
-  // can resolve the address filter during bus scan.
-  loadSensorAddressMapping();
 
   // Initialize core drivers and parameters
   initializeController();

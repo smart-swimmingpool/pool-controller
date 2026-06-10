@@ -9,6 +9,7 @@
 
 #include <esp_wifi.h>
 #include <esp_wps.h>
+#include <ESPmDNS.h>
 
 #include "ConfigManager.hpp"
 #include "WpsProvisioner.hpp"
@@ -225,6 +226,13 @@ void NetworkManager::handleWiFiEvent(WiFiEvent_t event) {
       "✓ WiFi connected! SSID: \"%s\", IP: %s, RSSI: %d dBm, Channel: %d\n",
       WiFi.SSID().c_str(), WiFi.localIP().toString().c_str(), WiFi.RSSI(), WiFi.channel());
     apModeActive_ = false;
+    // Start mDNS responder so the device is reachable as pool-controller.local
+    if (MDNS.begin("pool-controller")) {
+      MDNS.addService("http", "tcp", 80);
+      Serial.println("✓ mDNS: pool-controller.local");
+    } else {
+      Serial.println("✖ mDNS responder setup failed");
+    }
     break;
   case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
     Serial.printf("✖ WiFi disconnected. Status: %d (SSID: \"%s\")\n", WiFi.status(), WiFi.SSID().c_str());

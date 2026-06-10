@@ -24,6 +24,7 @@
   <div onclick="switchTab('mqtt')" style="padding: 0.75rem; cursor: pointer; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">🔌 MQTT</div>
   <div onclick="switchTab('pool')" style="padding: 0.75rem; cursor: pointer; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">🌊 Pool</div>
   <div onclick="switchTab('time')" style="padding: 0.75rem; cursor: pointer; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">🕐 Zeit</div>
+  <div onclick="switchTab('sensors')" style="padding: 0.75rem; cursor: pointer; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">🔬 Sensors</div>
   <div onclick="switchTab('system')" style="padding: 0.75rem; cursor: pointer; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">🔒 System</div>
 </div>
 
@@ -292,6 +293,47 @@
   </div>
 
   <button class="btn btn-primary" onclick="saveTimeSettings()">Save Time Settings</button>
+</div>
+
+<!-- Sensors Tab (DS18B20 Mapping) -->
+<div id="tab-sensors" class="tab-content glass-card" style="display: none;">
+  <div style="margin-bottom: 0.75rem;"><a href="#" onclick="switchTab('dashboard'); return false;" style="color: var(--accent-solar); text-decoration: none; font-size: 0.85rem;">← Dashboard</a></div>
+  <h2>🔬 Temperature Sensor Mapping</h2>
+  <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+    Choose which DS18B20 sensor monitors <strong>Solar</strong> vs. <strong>Pool</strong> temperature.
+    The mapping is stored in NVS and survives firmware updates.
+  </p>
+
+  <!-- Detected sensors summary -->
+  <div id="sensorList" style="margin-bottom: 1rem;">
+    <div style="padding: 1rem; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+      Loading sensors...
+    </div>
+  </div>
+
+  <!-- Solar sensor selection -->
+  <div style="background: var(--glass-bg); border: 1px solid var(--panel-border); border-radius: 12px; padding: 1rem; margin-bottom: 0.75rem;">
+    <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem; color: var(--accent-solar);">☀️ Solar Sensor</h3>
+    <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0 0 0.5rem 0;">Select which detected sensor measures solar panel temperature.</p>
+    <div id="solarRadioGroup" style="display: flex; flex-direction: column; gap: 0.4rem;"></div>
+  </div>
+
+  <!-- Pool sensor selection -->
+  <div style="background: var(--glass-bg); border: 1px solid var(--panel-border); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+    <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem; color: #00b4d8;">🌊 Pool Sensor</h3>
+    <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0 0 0.5rem 0;">Select which detected sensor measures pool water temperature.</p>
+    <div id="poolRadioGroup" style="display: flex; flex-direction: column; gap: 0.4rem;"></div>
+  </div>
+
+  <!-- Save bar -->
+  <div id="sensorSaveBar" style="display: none; margin-bottom: 1rem; padding: 1rem; border-radius: 10px; background: rgba(0, 229, 255, 0.08); border: 1px solid rgba(0, 229, 255, 0.2);">
+    <p style="margin: 0 0 0.5rem 0; font-size: 0.85rem; color: var(--accent-solar);">
+      ⚡ Mapping changed — save and reboot to apply.
+    </p>
+    <button class="btn btn-primary" onclick="saveSensorMapping()" id="btnSaveMapping" style="background: var(--accent-solar);">💾 Save Mapping & Reboot</button>
+  </div>
+
+  <div id="sensorFeedback" style="display: none; padding: 0.5rem; border-radius: 8px; font-size: 0.85rem; margin-top: 0.5rem;"></div>
 </div>
 
 <!-- Security & Update Tab -->
