@@ -179,22 +179,22 @@ void NorviOledDisplay::drawPage() {
 ///   S1 (top)    = ▲ next page    ·   S2 (middle) = ▼ toggle pump
 ///   S3 (bottom) = ■ cycle mode
 static void drawButtonHints() {
-  // ── Left-aligned vertical bar as button reference ───────────────────
-  display.drawFastVLine(86, 20, 34, SSD1306_WHITE);
+  // ── Vertical bar flush-right, icons touching bar, text right-aligned ──
+  display.drawFastVLine(125, 14, 34, SSD1306_WHITE);  // y=14..48
 
   // S1 ▲ nxt (top button) ─────────────────────────────────────────────
-  display.fillTriangle(90, 21, 94, 27, 86, 27, SSD1306_WHITE);
-  display.setCursor(96, 20);
+  display.fillTriangle(121, 14, 125, 20, 117, 20, SSD1306_WHITE);
+  display.setCursor(99, 14);
   display.print(F("nxt"));
 
   // S2 ▼ tog (middle button) ──────────────────────────────────────────
-  display.fillTriangle(86, 35, 94, 35, 90, 41, SSD1306_WHITE);
-  display.setCursor(96, 34);
+  display.fillTriangle(117, 27, 125, 27, 121, 33, SSD1306_WHITE);
+  display.setCursor(99, 27);
   display.print(F("tog"));
 
   // S3 ■ mod (bottom button) ──────────────────────────────────────────
-  display.fillRoundRect(86, 47, 8, 6, 1, SSD1306_WHITE);
-  display.setCursor(96, 46);
+  display.fillRoundRect(117, 40, 8, 6, 1, SSD1306_WHITE);
+  display.setCursor(99, 40);
   display.print(F("mod"));
 }
 
@@ -292,8 +292,8 @@ void NorviOledDisplay::drawNetworkPage() {
       display.print(F("AP MODE"));
     } else {
       String ssid = WiFi.SSID();
-      if (ssid.length() > 14) {
-        ssid = ssid.substring(0, 14);
+      if (ssid.length() > 9) {
+        ssid = ssid.substring(0, 9);
       }
       display.print(ssid);
     }
@@ -303,10 +303,12 @@ void NorviOledDisplay::drawNetworkPage() {
 
   // ── IP address ────────────────────────────────────────────────────────
   display.setCursor(0, 24);
-  display.print(F("IP: "));
+  display.print(F("IP"));
   if (NetworkManager::isWiFiConnected()) {
+    display.setCursor(14, 24);
     display.print(WiFi.localIP().toString());
   } else {
+    display.setCursor(14, 24);
     display.print(F("---.---.---.---"));
   }
 
@@ -340,7 +342,7 @@ void NorviOledDisplay::drawSystemPage() {
 
   // ── Uptime ────────────────────────────────────────────────────────────
   display.setCursor(0, 13);
-  display.print(F("Uptime: "));
+  display.print(F("Up: "));
   char uptimeBuf[24];
   formatUptime(millis(), uptimeBuf, sizeof(uptimeBuf));
   display.print(uptimeBuf);
@@ -357,7 +359,7 @@ void NorviOledDisplay::drawSystemPage() {
 
   // ── Min free heap (low watermark) ────────────────────────────────────
   display.setCursor(0, 46);
-  display.print(F("MinHeap: "));
+  display.print(F("Min: "));
   display.print(SystemMonitor::getMinFreeHeap());
   display.print(F(" B"));
 }
