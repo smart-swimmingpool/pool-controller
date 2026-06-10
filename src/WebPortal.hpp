@@ -89,6 +89,10 @@ private:
   static void apiUpdateStatus();
   /** @brief POST /api/update-install — start OTA firmware download + flash. */
   static void apiUpdateInstall();
+  /** @brief GET /api/sensors — list detected DS18B20 devices and current role mapping. */
+  static void apiGetSensors();
+  /** @brief POST /api/sensors/map — save sensor-to-role address mapping to NVS. */
+  static void apiSaveSensorMapping();
 
   static WebServer server_;
   static DNSServer dnsServer_;

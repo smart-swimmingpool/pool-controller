@@ -55,6 +55,8 @@ private:
     const char *objectId, const char *name, const char *icon = nullptr, const char *entityCategory = nullptr);
   static void publishUpdateDiscovery();
   static void publishClimateDiscovery();
+  /** @brief Publish select-entity discovery for sensor-to-role mapping (detected addresses as options). */
+  static void publishSensorMappingDiscovery();
 
   static String getBaseTopic(const char *component, const char *objectId);
   static String getDeviceJson();

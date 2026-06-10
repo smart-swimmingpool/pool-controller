@@ -189,6 +189,16 @@ void WebPortal::setupRoutes() {
     apiUpdateInstall();
   });
 
+  // Sensor mapping endpoints
+  server_.on("/api/sensors", HTTP_GET, []() {
+    if (!handleAuthentication()) return;
+    apiGetSensors();
+  });
+  server_.on("/api/sensors/map", HTTP_POST, []() {
+    if (!handleAuthentication()) return;
+    apiSaveSensorMapping();
+  });
+
   // OTA Firmware handling (manual upload via web form)
   server_.on(
     "/api/update", HTTP_POST,
@@ -717,6 +727,175 @@ void WebPortal::apiUpdateInstall() {
 
   OtaUpdater::startUpdate();
   // If we return here, the update failed (success reboots)
+}
+
+// ── Sensor mapping helpers ─────────────────────────────────────────────
+
+/**
+ * @brief Parse a 16-character hex string into an 8-byte DeviceAddress.
+ * @param hex  Hex string like "28AABBCCDDEEFF11" (case-insensitive).
+ * @param addr Output buffer for the 8-byte address.
+ * @return true on success, false if the string is malformed.
+ */
+static bool hexStringToAddress(const String &hex, uint8_t addr[8]) {
+  if (hex.length() != 16) return false;
+  for (uint8_t i = 0; i < 8; i++) {
+    char byteStr[3] = {hex[i * 2], hex[i * 2 + 1], '\0'};
+    char *end = nullptr;
+    unsigned long val = strtoul(byteStr, &end, 16);
+    if (end != byteStr + 2) return false;
+    addr[i] = static_cast<uint8_t>(val);
+  }
+  return true;
+}
+
+/**
+ * @brief Save a sensor-to-role address mapping to NVS.
+ *
+ * Stores the 8-byte ROM addresses for solar and pool sensors in the
+ * `ds18b20` Preferences namespace, making them persist across reboots.
+ *
+ * @param solarAddr  Solar sensor address (or nullptr / all-zero to clear).
+ * @param poolAddr   Pool sensor address (or nullptr / all-zero to clear).
+ */
+static void saveSensorMappingNvs(const uint8_t solarAddr[8], const uint8_t poolAddr[8]) {
+  Preferences prefs;
+  prefs.begin("ds18b20", false);  // read-write
+  prefs.putBytes("solar_adr", solarAddr, 8);
+  prefs.putBytes("pool_adr", poolAddr, 8);
+  prefs.end();
+
+  char buf[17];
+  snprintf(buf, sizeof(buf), "%02X%02X%02X%02X%02X%02X%02X%02X",
+    solarAddr[0], solarAddr[1], solarAddr[2], solarAddr[3],
+    solarAddr[4], solarAddr[5], solarAddr[6], solarAddr[7]);
+  Serial.printf("• Sensor mapping saved via WebUI — Solar [%s]", buf);
+  snprintf(buf, sizeof(buf), "%02X%02X%02X%02X%02X%02X%02X%02X",
+    poolAddr[0], poolAddr[1], poolAddr[2], poolAddr[3],
+    poolAddr[4], poolAddr[5], poolAddr[6], poolAddr[7]);
+  Serial.printf(", Pool [%s]\n", buf);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Sensor REST API handlers
+// ═══════════════════════════════════════════════════════════════════════
+
+void WebPortal::apiGetSensors() {
+  JsonDocument doc;
+
+  // ── Detected devices ────────────────────────────────────────────────
+  // Collect unique addresses from both temperature node buses.
+  // In shared-bus mode (NORVI) this produces one list; in dual-bus mode
+  // devices from both segments are merged.
+  JsonArray detected = doc["detected"].to<JsonArray>();
+  uint8_t maxDevices = max(solarTemperatureNode.getDeviceCount(), poolTemperatureNode.getDeviceCount());
+
+  // Dedup with a fixed-size array (practical max ~20 DS18B20 per bus)
+  static constexpr uint8_t kMaxDevices = 20;
+  String seen[kMaxDevices];
+  uint8_t seenCount = 0;
+
+  for (uint8_t i = 0; i < maxDevices && seenCount < kMaxDevices; i++) {
+    DeviceAddress addr;
+    float temp = NAN;
+
+    // Try solar node first, fall back to pool node
+    if (i < solarTemperatureNode.getDeviceCount() && solarTemperatureNode.getDetectedDeviceAddress(i, addr)) {
+      temp = solarTemperatureNode.getDetectedDeviceTemperature(i);
+    } else if (i < poolTemperatureNode.getDeviceCount() && poolTemperatureNode.getDetectedDeviceAddress(i, addr)) {
+      temp = poolTemperatureNode.getDetectedDeviceTemperature(i);
+    } else {
+      continue;
+    }
+
+    // Format address as hex string
+    char addrStr[17];
+    snprintf(addrStr, sizeof(addrStr), "%02X%02X%02X%02X%02X%02X%02X%02X",
+      addr[0], addr[1], addr[2], addr[3], addr[4], addr[5], addr[6], addr[7]);
+
+    // Deduplicate (same address may appear on shared bus)
+    bool alreadySeen = false;
+    for (uint8_t si = 0; si < seenCount; si++) {
+      if (seen[si] == addrStr) { alreadySeen = true; break; }
+    }
+    if (alreadySeen) continue;
+    seen[seenCount++] = addrStr;
+
+    JsonObject dev = detected.add<JsonObject>();
+    dev["address"] = addrStr;
+    if (!isnan(temp)) dev["temperature"] = temp;
+  }
+
+  // ── Current role mapping ────────────────────────────────────────────
+  JsonObject mapping = doc["mapping"].to<JsonObject>();
+
+  if (solarTemperatureNode.hasAddressFilter()) {
+    char buf[17];
+    solarTemperatureNode.getDeviceAddressString(buf, sizeof(buf));
+    mapping["solar"] = buf;
+  } else {
+    mapping["solar"] = nullptr;
+  }
+
+  if (poolTemperatureNode.hasAddressFilter()) {
+    char buf[17];
+    poolTemperatureNode.getDeviceAddressString(buf, sizeof(buf));
+    mapping["pool"] = buf;
+  } else {
+    mapping["pool"] = nullptr;
+  }
+
+  // Also include whether the address is currently found on the bus
+  mapping["solar_found"] = solarTemperatureNode.isSensorFound();
+  mapping["pool_found"] = poolTemperatureNode.isSensorFound();
+
+  // Sensor node names for display
+  mapping["solar_name"] = "Solar Temperature";
+  mapping["pool_name"] = "Pool Temperature";
+
+  String json;
+  serializeJson(doc, json);
+  server_.send(200, "application/json", json);
+}
+
+void WebPortal::apiSaveSensorMapping() {
+  uint8_t solarAddr[8] = {0};
+  uint8_t poolAddr[8] = {0};
+  bool hasSolar = false, hasPool = false;
+
+  if (server_.hasArg("solar_addr") && server_.arg("solar_addr").length() > 0) {
+    if (!hexStringToAddress(server_.arg("solar_addr"), solarAddr)) {
+      server_.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Invalid solar address format\"}");
+      return;
+    }
+    hasSolar = true;
+  }
+
+  if (server_.hasArg("pool_addr") && server_.arg("pool_addr").length() > 0) {
+    if (!hexStringToAddress(server_.arg("pool_addr"), poolAddr)) {
+      server_.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Invalid pool address format\"}");
+      return;
+    }
+    hasPool = true;
+  }
+
+  if (!hasSolar && !hasPool) {
+    server_.send(400, "application/json", "{\"status\":\"error\",\"message\":\"At least one sensor address required\"}");
+    return;
+  }
+
+  // Save to NVS (persistent across reboots)
+  saveSensorMappingNvs(solarAddr, poolAddr);
+
+  // Apply to running instances immediately
+  if (hasSolar) {
+    solarTemperatureNode.setAddressFilter(solarAddr);
+  }
+  if (hasPool) {
+    poolTemperatureNode.setAddressFilter(poolAddr);
+  }
+
+  server_.send(200, "application/json", "{\"status\":\"ok\",\"message\":\"Sensor mapping saved. Reboot to apply.\"}");
 }
 
 }  // namespace PoolController
