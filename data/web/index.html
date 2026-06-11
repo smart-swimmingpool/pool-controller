@@ -63,6 +63,10 @@
     <div class="more-sheet-item" onclick="switchTab('system'); toggleMoreMenu();">
       <span class="more-sheet-icon">🔒</span> System
     </div>
+    <div class="more-sheet-divider"></div>
+    <div class="more-sheet-item" onclick="switchTab('about'); toggleMoreMenu();">
+      <span class="more-sheet-icon">ℹ️</span> About
+    </div>
   </div>
 </div>
 
@@ -425,9 +429,42 @@
   </div>
 </div>
 
-<!-- Version Info (in header integriert) -->
-<div style="text-align: center; font-size: 0.7rem; color: var(--text-muted); margin-top: -1rem; margin-bottom: 1rem;">
-  v<span id="fwVersionDisplay">--</span>
+<!-- About Tab -->
+<div id="tab-about" class="tab-content glass-card" style="display: none;">
+  <h2>ℹ️ About</h2>
+
+  <div style="text-align: center; margin: 1.5rem 0;">
+    <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem;">Pool Controller</div>
+    <div style="font-size: 1.8rem; font-weight: 700; background: linear-gradient(135deg, #e2f0f7 30%, var(--accent-blue) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">v<span id="fwVersionDisplayAbout">--</span></div>
+  </div>
+
+  <div style="background: var(--glass-bg); border: 1px solid var(--panel-border); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+    <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+      <span style="color: var(--text-muted); font-size: 0.8rem;">Device</span>
+      <span style="font-size: 0.8rem;" id="aboutDeviceName">ESP32</span>
+    </div>
+    <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+      <span style="color: var(--text-muted); font-size: 0.8rem;">Uptime</span>
+      <span style="font-size: 0.8rem;" id="aboutUptime">--</span>
+    </div>
+    <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+      <span style="color: var(--text-muted); font-size: 0.8rem;">Free Heap</span>
+      <span style="font-size: 0.8rem;" id="aboutHeap">-- KB</span>
+    </div>
+    <div style="display: flex; justify-content: space-between; padding: 0.4rem 0;">
+      <span style="color: var(--text-muted); font-size: 0.8rem;">IP Address</span>
+      <span style="font-size: 0.8rem;" id="aboutIP">--</span>
+    </div>
+  </div>
+
+  <div style="text-align: center; margin: 1rem 0; font-size: 0.75rem; color: var(--text-muted); line-height: 1.6;">
+    <a href="https://www.smart-swimmingpool.com" target="_blank" rel="noopener" style="color: var(--accent-solar); text-decoration: none;">smart-swimmingpool.com</a><br>
+    <a href="https://github.com/smart-swimmingpool/pool-controller" target="_blank" rel="noopener" style="color: var(--accent-solar); text-decoration: none;">GitHub</a>
+  </div>
+
+  <div style="text-align: center; font-size: 0.65rem; color: var(--text-muted); opacity: 0.6; margin-top: 0.5rem;">
+    Open Source · GPL-3.0
+  </div>
 </div>
 
 <script src="/app.js"></script>

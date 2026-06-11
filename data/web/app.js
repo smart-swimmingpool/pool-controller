@@ -10,9 +10,12 @@ function switchTab(tabName) {
     tab.style.display = 'block';
   }
 
-  // Update bottom tab bar active state
+  // Update bottom tab bar active state.
+  // Tabs under "More" (wifi, mqtt, system, about) keep "more" highlighted.
+  const moreTabs = ['wifi', 'mqtt', 'system', 'about'];
+  const barTab = moreTabs.includes(tabName) ? 'more' : tabName;
   document.querySelectorAll('.tab-bar-item').forEach(item => {
-    item.classList.toggle('active', item.dataset.tab === tabName);
+    item.classList.toggle('active', item.dataset.tab === barTab);
   });
 
   // Close more menu if open
@@ -80,6 +83,8 @@ async function loadTelemetry() {
     if (data.fw_version) {
       document.getElementById('fwCurrentVersion').textContent = data.fw_version;
       document.getElementById('fwVersionDisplay').textContent = data.fw_version;
+      const aboutVer = document.getElementById('fwVersionDisplayAbout');
+      if (aboutVer) aboutVer.textContent = data.fw_version;
     }
 
     // Lokale Uhrzeit
@@ -122,6 +127,25 @@ async function loadTelemetry() {
     // AP-Mode: WiFi-Tab anzeigen
     if (data.ap_mode) {
       switchTab('wifi');
+    }
+
+    // About Tab – system info
+    if (data.uptime != null) {
+      const aboutUptime = document.getElementById('aboutUptime');
+      if (aboutUptime) {
+        const d = Math.floor(data.uptime / 86400);
+        const h = Math.floor((data.uptime % 86400) / 3600);
+        const m = Math.floor((data.uptime % 3600) / 60);
+        aboutUptime.textContent = d + 'd ' + h + 'h ' + m + 'm';
+      }
+    }
+    if (data.free_heap != null) {
+      const aboutHeap = document.getElementById('aboutHeap');
+      if (aboutHeap) aboutHeap.textContent = (data.free_heap / 1024).toFixed(0) + ' KB';
+    }
+    if (data.local_ip) {
+      const aboutIP = document.getElementById('aboutIP');
+      if (aboutIP) aboutIP.textContent = data.local_ip;
     }
   } catch (e) {
     console.error('[pool] loadTelemetry error:', e);
