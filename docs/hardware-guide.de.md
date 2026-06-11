@@ -447,7 +447,7 @@ constexpr uint8_t PIN_RELAY_SOLAR{19};  // war 26
 | Relais Solar | **GPIO26** | GPIO19 | Gleicher Grund wie oben |
 
 Die Optimierung ist im Dokument
-[ESP32 Schaltplananalyse und Optimierung](esp32-schematic-optimization-de.md)
+[ESP32 Schaltplananalyse und Optimierung](esp32-schematic-optimization.de.md)
 ausführlich analysiert und begründet.
 
 ---
@@ -484,8 +484,8 @@ dem Standard für IoT-Statusanzeigen.
 
 - Fritzing-Quelldatei: [pool-controller.fzz](https://github.com/smart-swimmingpool/pool-controller/raw/main/docs/pool-controller.fzz)
 - [NORVI AE01-R Konfigurationsanleitung](norvi-ae01-r.de.md) — Industrie-ESP32-Controller Pinbelegung & Verdrahtung
-- [ESP32 Schaltplananalyse und Optimierung](esp32-schematic-optimization-de.md)
-- [ESP32 Komplett-Schaltplan](esp32-complete-wiring-schematic-de.md)
+- [ESP32 Schaltplananalyse und Optimierung](esp32-schematic-optimization.de.md)
+- [ESP32 Komplett-Schaltplan](esp32-complete-wiring-schematic.de.md)
 - [DS18B20 Datenblatt](https://www.analog.com/media/en/technical-documentation/data-sheets/DS18B20.pdf)
 - [ESP32 Pin-Referenz](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/gpio.html)
 - [Config.hpp Pin-Quelle](https://github.com/smart-swimmingpool/pool-controller/blob/main/src/Config.hpp)
