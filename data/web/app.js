@@ -51,6 +51,14 @@ async function loadTelemetry() {
       document.getElementById('solarTemp').textContent = data.solar_temp.toFixed(1) + ' °C';
     }
 
+    // Thresholds (von apiGetStatus, damit sie ohne Auth funktionieren)
+    if (data.temp_max_pool != null) {
+      document.getElementById('poolThreshold').textContent = 'max ' + data.temp_max_pool.toFixed(1) + '°C';
+    }
+    if (data.temp_min_solar != null) {
+      document.getElementById('solarThreshold').textContent = 'min ' + data.temp_min_solar.toFixed(1) + '°C';
+    }
+
     // Pumpen
     if (data.pool_pump != null) {
       const el = document.getElementById('poolPump');

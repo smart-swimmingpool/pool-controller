@@ -15,6 +15,12 @@
   --success: #10b981;
   --danger: #ef4444;
   --wave-light: rgba(0, 180, 216, 0.06);
+
+  /* Safe area insets — PWA notch/status bar */
+  --sat: env(safe-area-inset-top, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, sans-serif; }
 body {
@@ -24,10 +30,11 @@ body {
     linear-gradient(180deg, #06121e 0%, #0a1e2f 50%, #06121e 100%);
   color: var(--text-main);
   min-height: 100vh;
+  min-height: -webkit-fill-available;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 2rem 1rem;
+  padding: calc(var(--sat) + 2rem) 1rem calc(var(--sab) + 1rem);
 }
 .glass-card {
   background: var(--panel-bg);
@@ -238,15 +245,15 @@ input:focus, select:focus {
 /* ── Mode Selector ── */
 .mode-selector {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.75rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.6rem;
   margin-top: 0.5rem;
 }
 .mode-card {
   background: rgba(0, 180, 216, 0.04);
   border: 1px solid rgba(0, 200, 220, 0.08);
   border-radius: 12px;
-  padding: 1rem 0.75rem;
+  padding: 0.8rem 0.4rem;
   text-align: center;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -261,16 +268,17 @@ input:focus, select:focus {
   box-shadow: 0 0 20px var(--accent-pool-glow), inset 0 0 20px rgba(0, 229, 255, 0.05);
 }
 .mode-card .mode-icon {
-  font-size: 1.75rem;
-  margin-bottom: 0.25rem;
+  font-size: 1.5rem;
+  margin-bottom: 0.15rem;
+  line-height: 1;
 }
 .mode-card .mode-name {
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 0.85rem;
   margin-bottom: 0.1rem;
 }
 .mode-card .mode-desc {
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   color: var(--text-muted);
 }
 .mode-card.active .mode-desc {
@@ -295,9 +303,19 @@ input:focus, select:focus {
   border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
+/* ── Fixed Position Elements (notch-safe) ── */
+.cogwheel {
+  top: calc(var(--sat) + 20px) !important;
+  right: 20px !important;
+}
+#settingsMenu {
+  top: calc(var(--sat) + 60px) !important;
+  right: 20px !important;
+}
+
 /* ── Mobile: Single-Column Layout ── */
 @media (max-width: 520px) {
-  body { padding: 1rem 0.5rem; }
+  body { padding: calc(var(--sat) + 1rem) 0.5rem calc(var(--sab) + 0.5rem); }
   .glass-card { padding: 1rem; border-radius: 0 12px 12px 12px; }
 
   .telemetry-grid {
@@ -305,12 +323,12 @@ input:focus, select:focus {
     gap: 0.75rem;
   }
   .mode-selector {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.5rem;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.4rem;
   }
-  .mode-card { padding: 0.5rem 0.25rem; }
-  .mode-card .mode-icon { font-size: 1.25rem; }
-  .mode-card .mode-name { font-size: 0.8rem; }
+  .mode-card { padding: 0.5rem 0.2rem; }
+  .mode-card .mode-icon { font-size: 1.1rem; }
+  .mode-card .mode-name { font-size: 0.7rem; }
 
   .telemetry-grid-bottom {
     grid-template-columns: repeat(3, 1fr) !important;
@@ -323,7 +341,7 @@ input:focus, select:focus {
   input, select { font-size: 0.9rem; padding: 0.6rem 0.75rem; }
   .input-hint { font-size: 0.65rem; }
 
-  .footer { font-size: 0.65rem; padding: 0.5rem 0.75rem; }
-  .cogwheel { top: 12px; right: 12px; }
-  #settingsMenu { right: 12px; min-width: 150px; }
+  .footer { font-size: 0.65rem; padding: calc(var(--sab) + 0.5rem) 0.75rem; }
+  .cogwheel { top: calc(var(--sat) + 12px) !important; right: 12px; }
+  #settingsMenu { top: calc(var(--sat) + 50px) !important; right: 12px; min-width: 150px; }
 }

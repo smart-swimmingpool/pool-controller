@@ -400,6 +400,11 @@ void WebPortal::apiGetStatus() {
   doc["timezone_name"] = getTimeInfoFor(ConfigManager::getSettings().timezoneIndex);
   doc["time_degradation"] = static_cast<int>(getTimeDegradation());
 
+  // Thresholds — also in apiGetConfig, but duplicated here so the dashboard
+  // can show them without authentication (apiGetStatus is unauthenticated).
+  doc["temp_max_pool"] = ConfigManager::getSettings().tempMaxPool;
+  doc["temp_min_solar"] = ConfigManager::getSettings().tempMinSolar;
+
   // Effective runtime (temperature-based circulation) — actual minutes, not end-of-day
   {
     Rule *active = operationModeNode.getRule();

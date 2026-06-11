@@ -26,7 +26,7 @@
 <h1 style="margin-bottom: 0.1rem;">Pool Controller</h1>
 
 <!-- Zahnrad-Symbol für Settings-Menü -->
-<div class="cogwheel" onclick="toggleSettingsMenu()" style="position: fixed; top: 20px; right: 20px; z-index: 1000; cursor: pointer;">
+<div class="cogwheel" onclick="toggleSettingsMenu()" style="position: fixed; top: calc(env(safe-area-inset-top) + 20px); right: 20px; z-index: 1000; cursor: pointer;">
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="stroke: var(--accent-solar); stroke-width: 2;">
     <circle cx="12" cy="12" r="3"/>
     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
@@ -34,7 +34,7 @@
 </div>
 
 <!-- Settings-Dropdown-Menü -->
-<div id="settingsMenu" style="display: none; position: fixed; top: 60px; right: 20px; background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 12px; padding: 0.5rem; z-index: 1001; min-width: 180px; box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
+<div id="settingsMenu" style="display: none; position: fixed; top: calc(env(safe-area-inset-top) + 60px); right: 20px; background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 12px; padding: 0.5rem; z-index: 1001; min-width: 180px; box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
   <div onclick="switchTab('wifi')" style="padding: 0.75rem; cursor: pointer; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">📶 WiFi</div>
   <div onclick="switchTab('mqtt')" style="padding: 0.75rem; cursor: pointer; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">🔌 MQTT</div>
   <div onclick="switchTab('pool')" style="padding: 0.75rem; cursor: pointer; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">🌊 Pool</div>
@@ -81,22 +81,22 @@
     <!-- Modus-Auswahl -->
     <div style="background: var(--glass-bg); padding: 1rem; border-radius: 12px; border: 1px solid var(--panel-border);">
       <label style="font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Operating Mode</label>
-      <div class="mode-selector" id="modeSelector" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;">
-        <div class="mode-card active" data-mode="auto" onclick="setMode('auto')" style="flex: 1; min-width: 80px; text-align: center; padding: 0.6rem 0.3rem; border-radius: 8px; border: 1px solid var(--panel-border); background: var(--panel-bg); cursor: pointer;">
-          <div class="mode-icon" style="font-size: 1.2rem;">☀️</div>
-          <div class="mode-name" style="font-weight: 600; font-size: 0.75rem; margin-top: 0.2rem;">Auto</div>
+      <div class="mode-selector" id="modeSelector">
+        <div class="mode-card active" data-mode="auto" onclick="setMode('auto')">
+          <div class="mode-icon">☀️</div>
+          <div class="mode-name">Auto</div>
         </div>
-        <div class="mode-card" data-mode="manu" onclick="setMode('manu')" style="flex: 1; min-width: 80px; text-align: center; padding: 0.6rem 0.3rem; border-radius: 8px; border: 1px solid var(--panel-border); background: var(--panel-bg); cursor: pointer;">
-          <div class="mode-icon" style="font-size: 1.2rem;">🔧</div>
-          <div class="mode-name" style="font-weight: 600; font-size: 0.75rem; margin-top: 0.2rem;">Manual</div>
+        <div class="mode-card" data-mode="manu" onclick="setMode('manu')">
+          <div class="mode-icon">🔧</div>
+          <div class="mode-name">Manual</div>
         </div>
-        <div class="mode-card" data-mode="boost" onclick="setMode('boost')" style="flex: 1; min-width: 80px; text-align: center; padding: 0.6rem 0.3rem; border-radius: 8px; border: 1px solid var(--panel-border); background: var(--panel-bg); cursor: pointer;">
-          <div class="mode-icon" style="font-size: 1.2rem;">🚀</div>
-          <div class="mode-name" style="font-weight: 600; font-size: 0.75rem; margin-top: 0.2rem;">Boost</div>
+        <div class="mode-card" data-mode="boost" onclick="setMode('boost')">
+          <div class="mode-icon">🚀</div>
+          <div class="mode-name">Boost</div>
         </div>
-        <div class="mode-card" data-mode="timer" onclick="setMode('timer')" style="flex: 1; min-width: 80px; text-align: center; padding: 0.6rem 0.3rem; border-radius: 8px; border: 1px solid var(--panel-border); background: var(--panel-bg); cursor: pointer;">
-          <div class="mode-icon" style="font-size: 1.2rem;">⏱️</div>
-          <div class="mode-name" style="font-weight: 600; font-size: 0.75rem; margin-top: 0.2rem;">Timer</div>
+        <div class="mode-card" data-mode="timer" onclick="setMode('timer')">
+          <div class="mode-icon">⏱️</div>
+          <div class="mode-name">Timer</div>
         </div>
       </div>
       <div id="modeFeedback" class="mode-feedback" style="display: none; margin-top: 0.5rem; padding: 0.4rem; border-radius: 6px; text-align: center; font-size: 0.8rem;"></div>
