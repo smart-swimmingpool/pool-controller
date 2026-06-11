@@ -1,0 +1,27 @@
+{
+  "name": "Smart Pool Controller",
+  "short_name": "Pool Ctrl",
+  "description": "Smart Swimming Pool Controller — monitor temperatures, control pumps, and manage settings",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#06121e",
+  "theme_color": "#06121e",
+  "categories": ["utilities", "home"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "splash_pages": null
+}

@@ -127,6 +127,9 @@ void WebPortal::setupRoutes() {
   // Static web assets (no authentication required)
   server_.on("/style.css", HTTP_GET, handleStyleCss);
   server_.on("/app.js", HTTP_GET, handleAppJs);
+  server_.on("/manifest.json", HTTP_GET, handleManifestJson);
+  server_.on("/sw.js", HTTP_GET, handleSwJs);
+  server_.on("/icon.svg", HTTP_GET, handleIconSvg);
 
   // API Handlers (some password protected)
   server_.on("/api/status", HTTP_GET, apiGetStatus);
@@ -270,6 +273,36 @@ void WebPortal::handleAppJs() {
   File f = LittleFS.open("/web/app.js", "r");
   if (f) {
     server_.streamFile(f, "application/javascript");
+    f.close();
+    return;
+  }
+  server_.send(404, "text/plain", "Not Found");
+}
+
+void WebPortal::handleManifestJson() {
+  File f = LittleFS.open("/web/manifest.json", "r");
+  if (f) {
+    server_.streamFile(f, "application/manifest+json");
+    f.close();
+    return;
+  }
+  server_.send(404, "text/plain", "Not Found");
+}
+
+void WebPortal::handleSwJs() {
+  File f = LittleFS.open("/web/sw.js", "r");
+  if (f) {
+    server_.streamFile(f, "application/javascript");
+    f.close();
+    return;
+  }
+  server_.send(404, "text/plain", "Not Found");
+}
+
+void WebPortal::handleIconSvg() {
+  File f = LittleFS.open("/web/icon.svg", "r");
+  if (f) {
+    server_.streamFile(f, "image/svg+xml");
     f.close();
     return;
   }

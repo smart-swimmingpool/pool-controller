@@ -51,10 +51,16 @@ private:
   static void handleNotFound();
 
   // ── Static Asset Handlers (LittleFS-served web assets with PROGMEM fallback) ──
-  /** @brief Serve style.css (LittleFS → PROGMEM fallback). */
+  /** @brief Serve style.css (LittleFS). */
   static void handleStyleCss();
-  /** @brief Serve app.js (LittleFS → PROGMEM fallback). */
+  /** @brief Serve app.js (LittleFS). */
   static void handleAppJs();
+  /** @brief Serve manifest.json for PWA (LittleFS). */
+  static void handleManifestJson();
+  /** @brief Serve sw.js service worker for PWA (LittleFS). */
+  static void handleSwJs();
+  /** @brief Serve icon.svg for PWA (LittleFS). */
+  static void handleIconSvg();
 
   // ── REST API Handlers ──
   /** @brief GET /api/status — return JSON with all telemetry data. */
