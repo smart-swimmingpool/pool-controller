@@ -69,7 +69,7 @@ public:
   uint16_t getEffectiveRuntimeMinutes() const {
     TimerSetting ts = getTimerSetting();
     uint16_t baseStart = ts.timerStartHour * 60 + ts.timerStartMinutes;
-    uint16_t baseEnd   = ts.timerEndHour * 60 + ts.timerEndMinutes;
+    uint16_t baseEnd = ts.timerEndHour * 60 + ts.timerEndMinutes;
 
     // Base runtime (handles midnight crossing)
     uint16_t baseRuntime;
@@ -173,8 +173,8 @@ protected:
       }
 
       if (inExtendedWindow) {
-        Serial.printf("  checkPoolPumpTimer = true (extended to %02d:%02d)\n",
-          (uint8_t)(normalizedEnd / 60), (uint8_t)(normalizedEnd % 60));
+        Serial.printf(
+          "  checkPoolPumpTimer = true (extended to %02d:%02d)\n", (uint8_t)(normalizedEnd / 60), (uint8_t)(normalizedEnd % 60));
         return true;
       }
 

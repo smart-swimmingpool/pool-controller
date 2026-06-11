@@ -82,7 +82,7 @@ bool StatusLed::computeDesiredState(const uint32_t nowMs) {
     return true;  // dauerhaft an
 
   case StatusLedPattern::OFF:
-    return false; // dauerhaft aus
+    return false;  // dauerhaft aus
 
   case StatusLedPattern::AP_MODE: {
     // 100ms an / 100ms aus = 5 Hz
@@ -112,8 +112,7 @@ bool StatusLed::computeDesiredState(const uint32_t nowMs) {
     // Doppel-Blink: 200ms an, 200ms aus, 200ms an, 600ms aus
     // Gesamtzyklus: 1200ms
     const uint32_t phase = nowMs % T_SAFE_CYCLE;
-    return (phase < T_SAFE_PHASE1_END) ||
-      (phase >= T_SAFE_PHASE2_END && phase < T_SAFE_PHASE3_END);
+    return (phase < T_SAFE_PHASE1_END) || (phase >= T_SAFE_PHASE2_END && phase < T_SAFE_PHASE3_END);
   }
   }
 

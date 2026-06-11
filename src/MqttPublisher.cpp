@@ -56,9 +56,8 @@ String MqttPublisher::getBaseTopic(const char *component, const char *objectId) 
   return String("homeassistant/") + component + "/pool-controller/" + objectId;
 }
 
-void MqttPublisher::publishSensorDiscovery(
-  const char *objectId, const char *name, const char *deviceClass, const char *unit, const char *icon,
-  const char *entityCategory) {
+void MqttPublisher::publishSensorDiscovery(const char *objectId, const char *name, const char *deviceClass, const char *unit,
+  const char *icon, const char *entityCategory) {
   String configTopic = getBaseTopic("sensor", objectId) + "/config";
 
   JsonDocument doc;
@@ -89,8 +88,7 @@ void MqttPublisher::publishSensorDiscovery(
   NetworkManager::publish(configTopic.c_str(), payload.c_str(), true);
 }
 
-void MqttPublisher::publishSwitchDiscovery(const char *objectId, const char *name, const char *icon,
-  const char *entityCategory) {
+void MqttPublisher::publishSwitchDiscovery(const char *objectId, const char *name, const char *icon, const char *entityCategory) {
   String configTopic = getBaseTopic("switch", objectId) + "/config";
 
   JsonDocument doc;
@@ -119,9 +117,8 @@ void MqttPublisher::publishSwitchDiscovery(const char *objectId, const char *nam
   NetworkManager::publish(configTopic.c_str(), payload.c_str(), true);
 }
 
-void MqttPublisher::publishSelectDiscovery(
-  const char *objectId, const char *name, const char *const *options, size_t optionCount, const char *icon,
-  const char *entityCategory) {
+void MqttPublisher::publishSelectDiscovery(const char *objectId, const char *name, const char *const *options, size_t optionCount,
+  const char *icon, const char *entityCategory) {
   String configTopic = getBaseTopic("select", objectId) + "/config";
 
   JsonDocument doc;
@@ -153,9 +150,8 @@ void MqttPublisher::publishSelectDiscovery(
   NetworkManager::publish(configTopic.c_str(), payload.c_str(), true);
 }
 
-void MqttPublisher::publishNumberDiscovery(
-  const char *objectId, const char *name, double minVal, double maxVal, double step, const char *unit, const char *icon,
-  const char *entityCategory) {
+void MqttPublisher::publishNumberDiscovery(const char *objectId, const char *name, double minVal, double maxVal, double step,
+  const char *unit, const char *icon, const char *entityCategory) {
   String configTopic = getBaseTopic("number", objectId) + "/config";
 
   JsonDocument doc;
@@ -213,8 +209,7 @@ void MqttPublisher::publishTextDiscovery(const char *objectId, const char *name,
   NetworkManager::publish(configTopic.c_str(), payload.c_str(), true);
 }
 
-void MqttPublisher::publishTimeDiscovery(const char *objectId, const char *name, const char *icon,
-  const char *entityCategory) {
+void MqttPublisher::publishTimeDiscovery(const char *objectId, const char *name, const char *icon, const char *entityCategory) {
   String configTopic = getBaseTopic("time", objectId) + "/config";
 
   JsonDocument doc;
@@ -337,8 +332,7 @@ void MqttPublisher::publishClimateState() {
   } else {
     hvacMode = "off";
   }
-  NetworkManager::publish(
-    (getBaseTopic("climate", "thermostat") + "/mode/state").c_str(), hvacMode, true);
+  NetworkManager::publish((getBaseTopic("climate", "thermostat") + "/mode/state").c_str(), hvacMode, true);
 
   // Action: solar pump ON → heating, pool pump ON → idle, both OFF → off
   const char *action = "off";
@@ -349,8 +343,7 @@ void MqttPublisher::publishClimateState() {
   } else {
     action = "off";
   }
-  NetworkManager::publish(
-    (getBaseTopic("climate", "thermostat") + "/action/state").c_str(), action, true);
+  NetworkManager::publish((getBaseTopic("climate", "thermostat") + "/action/state").c_str(), action, true);
 }
 
 void MqttPublisher::publishUpdateState() {
@@ -422,14 +415,10 @@ void MqttPublisher::publishDiscovery() {
   publishTimeDiscovery("timer-end", "Timer End", "mdi:clock-end");
 
   // Temperature-based circulation parameters (entity_category: "config")
-  publishNumberDiscovery(
-    "temp-circ-threshold", "Circ. Temp Threshold", 0.0, 40.0, 0.5, "°C", "mdi:thermometer-auto", "config");
-  publishNumberDiscovery(
-    "temp-circ-factor", "Circ. Temp Factor", 0.0, 120.0, 5.0, "min/°C", "mdi:plus-minus", "config");
-  publishNumberDiscovery(
-    "temp-circ-max-runtime", "Circ. Max Runtime", 60.0, 1440.0, 15.0, "min", "mdi:timer-outline", "config");
-  publishSensorDiscovery(
-    "effective-runtime", "Effective Runtime", "duration", "s", "mdi:timer-sand", "diagnostic");
+  publishNumberDiscovery("temp-circ-threshold", "Circ. Temp Threshold", 0.0, 40.0, 0.5, "°C", "mdi:thermometer-auto", "config");
+  publishNumberDiscovery("temp-circ-factor", "Circ. Temp Factor", 0.0, 120.0, 5.0, "min/°C", "mdi:plus-minus", "config");
+  publishNumberDiscovery("temp-circ-max-runtime", "Circ. Max Runtime", 60.0, 1440.0, 15.0, "min", "mdi:timer-outline", "config");
+  publishSensorDiscovery("effective-runtime", "Effective Runtime", "duration", "s", "mdi:timer-sand", "diagnostic");
 
   // ── Configuration (entity_category: "config") ──
   publishSelectDiscovery("timezone", "Timezone", getTimezoneLabelList(), getTimezoneLabelCount(), "mdi:map-clock", "config");
@@ -506,8 +495,7 @@ void MqttPublisher::publishStates() {
     TimeChangeRule *tcr;
     time_t localTime = getTimeFor(ConfigManager::getSettings().timezoneIndex, &tcr);
     char timeBuf[64];
-    snprintf(timeBuf, sizeof(timeBuf), "%04d-%02d-%02d %02d:%02d:%02d",
-      year(localTime), month(localTime), day(localTime),
+    snprintf(timeBuf, sizeof(timeBuf), "%04d-%02d-%02d %02d:%02d:%02d", year(localTime), month(localTime), day(localTime),
       hour(localTime), minute(localTime), second(localTime));
     NetworkManager::publish((getBaseTopic("sensor", "local-time") + "/state").c_str(), timeBuf, true);
   }
@@ -559,12 +547,11 @@ void MqttPublisher::publishStates() {
   }
   NetworkManager::publish((getBaseTopic("select", "timezone") + "/state").c_str(),
     getTimeInfoFor(ConfigManager::getSettings().timezoneIndex).c_str(), true);
-  NetworkManager::publish(
-    (getBaseTopic("text", "ntp-server") + "/state").c_str(), ConfigManager::getNtp().server.c_str(), true);
+  NetworkManager::publish((getBaseTopic("text", "ntp-server") + "/state").c_str(), ConfigManager::getNtp().server.c_str(), true);
 }
 
-void MqttPublisher::handleMqttMessage(char *topic, char *payload, AsyncMqttClientMessageProperties properties,
-  size_t len, size_t index, size_t total) {
+void MqttPublisher::handleMqttMessage(
+  char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total) {
   // Only process complete messages (single-chunk delivery for typical HA commands)
   if (index != 0) {
     return;

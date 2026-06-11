@@ -350,8 +350,7 @@ void WebPortal::apiGetStatus() {
   TimeChangeRule *tcr;
   time_t localTime = getTimeFor(ConfigManager::getSettings().timezoneIndex, &tcr);
   char timeBuf[64];
-  snprintf(timeBuf, sizeof(timeBuf), "%04d-%02d-%02d %02d:%02d:%02d",
-    year(localTime), month(localTime), day(localTime),
+  snprintf(timeBuf, sizeof(timeBuf), "%04d-%02d-%02d %02d:%02d:%02d", year(localTime), month(localTime), day(localTime),
     hour(localTime), minute(localTime), second(localTime));
   doc["local_time"] = timeBuf;
   doc["local_time_epoch"] = static_cast<long>(localTime);
