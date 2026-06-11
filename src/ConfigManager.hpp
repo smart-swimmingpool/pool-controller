@@ -38,8 +38,8 @@ struct ControllerSettings {
   double tempMinSolar = 55.0;
   double tempHysteresis = 1.0;
   double tempCircThreshold = 24.0;    ///< Temperature-based circulation: threshold in °C
-  uint16_t tempCircFactor = 30;        ///< Temperature-based circulation: extra minutes per °C
-  uint16_t tempCircMaxRuntime = 720;   ///< Temperature-based circulation: max total runtime in minutes
+  uint16_t tempCircFactor = 30;       ///< Temperature-based circulation: extra minutes per °C
+  uint16_t tempCircMaxRuntime = 720;  ///< Temperature-based circulation: max total runtime in minutes
   String opMode = "auto";
   long timeLossGreenHours = 1;
   long timeLossRedHours = 24;

@@ -20,7 +20,8 @@ String ConfigManager::adminPasswordHash_ = "";
 bool ConfigManager::configured_ = false;
 
 // Default password is "admin" (SHA-256 hash, not a real secret)
-static constexpr const char *kDefaultPasswordHash = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918";  // NOLINT(whitespace/line_length) gitleaks:allow
+static constexpr const char *kDefaultPasswordHash =
+  "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918";  // NOLINT(whitespace/line_length) gitleaks:allow
 
 static String hashSha256(const String &input) {
   uint8_t hash[32];
@@ -43,26 +44,26 @@ static String hashSha256(const String &input) {
 // ── NVS Key Names ──
 
 static constexpr const char *kNvsNamespace = "config";
-static constexpr const char *kWifiSsid      = "wifi_ssid";
-static constexpr const char *kWifiPass      = "wifi_pass";
-static constexpr const char *kMqttHost      = "mqtt_host";
-static constexpr const char *kMqttPort      = "mqtt_port";
-static constexpr const char *kMqttUser      = "mqtt_user";
-static constexpr const char *kMqttPass      = "mqtt_pass";
-static constexpr const char *kNtpServer     = "ntp_server";
-static constexpr const char *kNtpTz         = "ntp_tz";
-static constexpr const char *kSetInterval   = "set_interval";
-static constexpr const char *kSetMaxPool    = "set_maxpool";
-static constexpr const char *kSetMinSolar   = "set_minsolar";
-static constexpr const char *kSetHyst       = "set_hyst";
-static constexpr const char *kSetOpMode     = "set_opmode";
-static constexpr const char *kSetTzIdx      = "set_tzidx";
-static constexpr const char *kSetGreen      = "set_green";
-static constexpr const char *kSetRed        = "set_red";
+static constexpr const char *kWifiSsid = "wifi_ssid";
+static constexpr const char *kWifiPass = "wifi_pass";
+static constexpr const char *kMqttHost = "mqtt_host";
+static constexpr const char *kMqttPort = "mqtt_port";
+static constexpr const char *kMqttUser = "mqtt_user";
+static constexpr const char *kMqttPass = "mqtt_pass";
+static constexpr const char *kNtpServer = "ntp_server";
+static constexpr const char *kNtpTz = "ntp_tz";
+static constexpr const char *kSetInterval = "set_interval";
+static constexpr const char *kSetMaxPool = "set_maxpool";
+static constexpr const char *kSetMinSolar = "set_minsolar";
+static constexpr const char *kSetHyst = "set_hyst";
+static constexpr const char *kSetOpMode = "set_opmode";
+static constexpr const char *kSetTzIdx = "set_tzidx";
+static constexpr const char *kSetGreen = "set_green";
+static constexpr const char *kSetRed = "set_red";
 static constexpr const char *kSetCircThresh = "set_circth";
 static constexpr const char *kSetCircFactor = "set_circfa";
-static constexpr const char *kSetCircMax    = "set_circmx";
-static constexpr const char *kAdmPass       = "adm_pass";
+static constexpr const char *kSetCircMax = "set_circmx";
+static constexpr const char *kAdmPass = "adm_pass";
 static constexpr const char *kCfgConfigured = "cfg_configured";
 
 // ── Lifecycle ──
@@ -80,31 +81,31 @@ bool ConfigManager::load() {
     return false;
   }
 
-  wifi_.ssid       = prefs.getString(kWifiSsid, "");
-  wifi_.password   = prefs.getString(kWifiPass, "");
+  wifi_.ssid = prefs.getString(kWifiSsid, "");
+  wifi_.password = prefs.getString(kWifiPass, "");
 
-  mqtt_.host       = prefs.getString(kMqttHost, "");
-  mqtt_.port       = prefs.getUInt(kMqttPort, 1883);
-  mqtt_.username   = prefs.getString(kMqttUser, "");
-  mqtt_.password   = prefs.getString(kMqttPass, "");
+  mqtt_.host = prefs.getString(kMqttHost, "");
+  mqtt_.port = prefs.getUInt(kMqttPort, 1883);
+  mqtt_.username = prefs.getString(kMqttUser, "");
+  mqtt_.password = prefs.getString(kMqttPass, "");
 
-  ntp_.server      = prefs.getString(kNtpServer, "pool.ntp.org");
-  ntp_.timezone    = prefs.getLong(kNtpTz, 0);
+  ntp_.server = prefs.getString(kNtpServer, "pool.ntp.org");
+  ntp_.timezone = prefs.getLong(kNtpTz, 0);
 
-  settings_.loopInterval       = prefs.getLong(kSetInterval, 10);
-  settings_.tempMaxPool        = prefs.getDouble(kSetMaxPool, 28.5);
-  settings_.tempMinSolar       = prefs.getDouble(kSetMinSolar, 55.0);
-  settings_.tempHysteresis     = prefs.getDouble(kSetHyst, 1.0);
-  settings_.opMode             = prefs.getString(kSetOpMode, "auto");
-  settings_.timezoneIndex      = prefs.getInt(kSetTzIdx, 0);
+  settings_.loopInterval = prefs.getLong(kSetInterval, 10);
+  settings_.tempMaxPool = prefs.getDouble(kSetMaxPool, 28.5);
+  settings_.tempMinSolar = prefs.getDouble(kSetMinSolar, 55.0);
+  settings_.tempHysteresis = prefs.getDouble(kSetHyst, 1.0);
+  settings_.opMode = prefs.getString(kSetOpMode, "auto");
+  settings_.timezoneIndex = prefs.getInt(kSetTzIdx, 0);
   settings_.timeLossGreenHours = prefs.getUChar(kSetGreen, 1);
-  settings_.timeLossRedHours   = prefs.getUChar(kSetRed, 24);
-  settings_.tempCircThreshold  = prefs.getDouble(kSetCircThresh, 24.0);
-  settings_.tempCircFactor     = prefs.getUShort(kSetCircFactor, 30);
+  settings_.timeLossRedHours = prefs.getUChar(kSetRed, 24);
+  settings_.tempCircThreshold = prefs.getDouble(kSetCircThresh, 24.0);
+  settings_.tempCircFactor = prefs.getUShort(kSetCircFactor, 30);
   settings_.tempCircMaxRuntime = prefs.getUShort(kSetCircMax, 720);
 
   adminPasswordHash_ = prefs.getString(kAdmPass, kDefaultPasswordHash);
-  configured_        = prefs.getBool(kCfgConfigured, false);
+  configured_ = prefs.getBool(kCfgConfigured, false);
 
   prefs.end();
 
