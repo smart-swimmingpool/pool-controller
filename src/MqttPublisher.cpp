@@ -449,6 +449,9 @@ void MqttPublisher::publishDiscovery() {
   // Climate thermostat entity (additional — existing entities stay)
   publishClimateDiscovery();
 
+  // Sensor mapping select entities (config-category, needs fresh sensor data)
+  publishSensorMappingDiscovery();
+
   // Subscribe to command topics
   NetworkManager::subscribe("homeassistant/switch/pool-controller/pool-pump/set");
   NetworkManager::subscribe("homeassistant/switch/pool-controller/solar-pump/set");
@@ -571,14 +574,8 @@ void MqttPublisher::publishStates() {
   NetworkManager::publish(
     (getBaseTopic("text", "ntp-server") + "/state").c_str(), ConfigManager::getNtp().server.c_str(), true);
 
-  // Sensor mapping states — publish select discovery on first sensor data, then states
+  // Sensor mapping states
   {
-    static bool mappingDiscoveryPublished = false;
-    if (!mappingDiscoveryPublished && (solarTemperatureNode.getDeviceCount() > 0 || poolTemperatureNode.getDeviceCount() > 0)) {
-      publishSensorMappingDiscovery();
-      mappingDiscoveryPublished = true;
-    }
-
     char addrBuf[17];
     if (solarTemperatureNode.hasAddressFilter()) {
       solarTemperatureNode.getDeviceAddressString(addrBuf, sizeof(addrBuf));
