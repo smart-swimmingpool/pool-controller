@@ -9,6 +9,7 @@
 
 #include <esp_wifi.h>
 #include <esp_wps.h>
+#include <ESPmDNS.h>
 
 #include "ConfigManager.hpp"
 #include "WpsProvisioner.hpp"
@@ -20,6 +21,7 @@ AsyncMqttClient NetworkManager::mqttClient_;
 NetworkManager::MqttMessageCallback NetworkManager::mqttCallback_ = nullptr;
 
 bool NetworkManager::apModeActive_ = false;
+bool NetworkManager::mdnsRunning_ = false;
 uint32_t NetworkManager::lastWiFiRetryTime_ = 0;
 uint32_t NetworkManager::lastMqttRetryTime_ = 0;
 uint32_t NetworkManager::connectionStartTime_ = 0;
@@ -225,9 +227,24 @@ void NetworkManager::handleWiFiEvent(WiFiEvent_t event) {
       "✓ WiFi connected! SSID: \"%s\", IP: %s, RSSI: %d dBm, Channel: %d\n",
       WiFi.SSID().c_str(), WiFi.localIP().toString().c_str(), WiFi.RSSI(), WiFi.channel());
     apModeActive_ = false;
+    // Start mDNS responder so the device is reachable as pool-controller.local
+    if (!mdnsRunning_) {
+      if (MDNS.begin("pool-controller")) {
+        MDNS.addService("http", "tcp", 80);
+        mdnsRunning_ = true;
+        Serial.println("✓ mDNS: pool-controller.local");
+      } else {
+        Serial.println("✖ mDNS responder setup failed");
+      }
+    }
     break;
   case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
     Serial.printf("✖ WiFi disconnected. Status: %d (SSID: \"%s\")\n", WiFi.status(), WiFi.SSID().c_str());
+    if (mdnsRunning_) {
+      MDNS.end();
+      mdnsRunning_ = false;
+      Serial.println("✓ mDNS stopped");
+    }
     break;
   default:
     break;
