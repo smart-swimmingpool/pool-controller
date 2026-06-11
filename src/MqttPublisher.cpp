@@ -421,13 +421,13 @@ void MqttPublisher::publishDiscovery() {
   publishTimeDiscovery("timer-start", "Timer Start", "mdi:clock-start");
   publishTimeDiscovery("timer-end", "Timer End", "mdi:clock-end");
 
-  // Temperature-based circulation parameters
+  // Temperature-based circulation parameters (entity_category: "config")
   publishNumberDiscovery(
-    "temp-circ-threshold", "Circ. Temp Threshold", 0.0, 40.0, 0.5, "°C", "mdi:thermometer-auto");
+    "temp-circ-threshold", "Circ. Temp Threshold", 0.0, 40.0, 0.5, "°C", "mdi:thermometer-auto", "config");
   publishNumberDiscovery(
-    "temp-circ-factor", "Circ. Temp Factor", 0.0, 120.0, 5.0, "min/°C", "mdi:plus-minus");
+    "temp-circ-factor", "Circ. Temp Factor", 0.0, 120.0, 5.0, "min/°C", "mdi:plus-minus", "config");
   publishNumberDiscovery(
-    "temp-circ-max-runtime", "Circ. Max Runtime", 60.0, 1440.0, 15.0, "min", "mdi:timer-outline");
+    "temp-circ-max-runtime", "Circ. Max Runtime", 60.0, 1440.0, 15.0, "min", "mdi:timer-outline", "config");
   publishSensorDiscovery(
     "effective-runtime", "Effective Runtime", "duration", "s", "mdi:timer-sand", "diagnostic");
 
