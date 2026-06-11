@@ -10,28 +10,22 @@ function switchTab(tabName) {
     tab.style.display = 'block';
   }
 
-  // Close settings menu if open
-  const menu = document.getElementById('settingsMenu');
-  if (menu) menu.style.display = 'none';
+  // Update bottom tab bar active state
+  document.querySelectorAll('.tab-bar-item').forEach(item => {
+    item.classList.toggle('active', item.dataset.tab === tabName);
+  });
+
+  // Close more menu if open
+  const moreMenu = document.getElementById('moreMenu');
+  if (moreMenu) moreMenu.style.display = 'none';
 }
 
-function toggleSettingsMenu() {
-  const menu = document.getElementById('settingsMenu');
+function toggleMoreMenu() {
+  const menu = document.getElementById('moreMenu');
   if (menu) {
-    menu.style.display = menu.style.display === 'none' || menu.style.display === '' ? 'block' : 'none';
+    menu.style.display = menu.style.display === 'none' || menu.style.display === '' ? 'flex' : 'none';
   }
 }
-
-// Close settings menu when clicking outside
-document.addEventListener('click', function(event) {
-  const menu = document.getElementById('settingsMenu');
-  const cog = document.querySelector('.cogwheel');
-  if (menu && menu.style.display === 'block') {
-    if (!menu.contains(event.target) && !cog.contains(event.target)) {
-      menu.style.display = 'none';
-    }
-  }
-});
 
 // ── Telemetry ──
 

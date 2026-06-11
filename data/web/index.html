@@ -25,22 +25,45 @@
 <body>
 <h1 style="margin-bottom: 0.1rem;">Pool Controller</h1>
 
-<!-- Zahnrad-Symbol für Settings-Menü -->
-<div class="cogwheel" onclick="toggleSettingsMenu()" style="position: fixed; top: calc(env(safe-area-inset-top) + 20px); right: 20px; z-index: 1000; cursor: pointer;">
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="stroke: var(--accent-solar); stroke-width: 2;">
-    <circle cx="12" cy="12" r="3"/>
-    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-  </svg>
-</div>
+<!-- Bottom Tab Bar (iOS 26 Style) -->
+<nav class="tab-bar" id="tabBar">
+  <button class="tab-bar-item active" data-tab="dashboard" onclick="switchTab('dashboard')">
+    <span class="tab-icon">🏠</span>
+    <span class="tab-label">Dashboard</span>
+  </button>
+  <button class="tab-bar-item" data-tab="pool" onclick="switchTab('pool')">
+    <span class="tab-icon">🌊</span>
+    <span class="tab-label">Pool</span>
+  </button>
+  <button class="tab-bar-item" data-tab="time" onclick="switchTab('time')">
+    <span class="tab-icon">🕐</span>
+    <span class="tab-label">Time</span>
+  </button>
+  <button class="tab-bar-item" data-tab="sensors" onclick="switchTab('sensors')">
+    <span class="tab-icon">🔬</span>
+    <span class="tab-label">Sensors</span>
+  </button>
+  <button class="tab-bar-item" data-tab="more" onclick="toggleMoreMenu()">
+    <span class="tab-icon">⚙️</span>
+    <span class="tab-label">More</span>
+  </button>
+</nav>
 
-<!-- Settings-Dropdown-Menü -->
-<div id="settingsMenu" style="display: none; position: fixed; top: calc(env(safe-area-inset-top) + 60px); right: 20px; background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 12px; padding: 0.5rem; z-index: 1001; min-width: 180px; box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
-  <div onclick="switchTab('wifi')" style="padding: 0.75rem; cursor: pointer; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">📶 WiFi</div>
-  <div onclick="switchTab('mqtt')" style="padding: 0.75rem; cursor: pointer; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">🔌 MQTT</div>
-  <div onclick="switchTab('pool')" style="padding: 0.75rem; cursor: pointer; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">🌊 Pool</div>
-  <div onclick="switchTab('time')" style="padding: 0.75rem; cursor: pointer; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">🕐 Zeit</div>
-  <div onclick="switchTab('sensors')" style="padding: 0.75rem; cursor: pointer; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">🔬 Sensors</div>
-  <div onclick="switchTab('system')" style="padding: 0.75rem; cursor: pointer; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">🔒 System</div>
+<!-- More-Menü (Bottom Sheet) -->
+<div id="moreMenu" class="more-sheet" style="display: none;">
+  <div class="more-sheet-overlay" onclick="toggleMoreMenu()"></div>
+  <div class="more-sheet-panel">
+    <div class="more-sheet-handle"></div>
+    <div class="more-sheet-item" onclick="switchTab('wifi'); toggleMoreMenu();">
+      <span class="more-sheet-icon">📶</span> WiFi
+    </div>
+    <div class="more-sheet-item" onclick="switchTab('mqtt'); toggleMoreMenu();">
+      <span class="more-sheet-icon">🔌</span> MQTT
+    </div>
+    <div class="more-sheet-item" onclick="switchTab('system'); toggleMoreMenu();">
+      <span class="more-sheet-icon">🔒</span> System
+    </div>
+  </div>
 </div>
 
 <!-- Dashboard Tab (Startseite) -->
@@ -136,7 +159,6 @@
 
 <!-- WiFi Tab (für AP-Mode) -->
 <div id="tab-wifi" class="tab-content glass-card" style="display: none;">
-  <div style="margin-bottom: 0.75rem;"><a href="#" onclick="switchTab('dashboard'); return false;" style="color: var(--accent-solar); text-decoration: none; font-size: 0.85rem;">← Dashboard</a></div>
   <h2>WLAN Configuration</h2>
   <div class="input-group">
     <button class="btn btn-primary" onclick="scanNetworks()" style="margin-bottom: 1rem;">Scan Local Networks</button>
@@ -155,7 +177,6 @@
 
 <!-- MQTT Tab -->
 <div id="tab-mqtt" class="tab-content glass-card" style="display: none;">
-  <div style="margin-bottom: 0.75rem;"><a href="#" onclick="switchTab('dashboard'); return false;" style="color: var(--accent-solar); text-decoration: none; font-size: 0.85rem;">← Dashboard</a></div>
   <h2>MQTT Settings</h2>
   <div class="input-group">
     <label for="mqttHost">MQTT Hostname/IP</label>
@@ -178,9 +199,7 @@
 
 <!-- Pool Settings Tab -->
 <div id="tab-pool" class="tab-content glass-card" style="display: none;">
-  <div style="margin-bottom: 0.75rem;"><a href="#" onclick="switchTab('dashboard'); return false;" style="color: var(--accent-solar); text-decoration: none; font-size: 0.85rem;">← Dashboard</a></div>
-
-  <h2>🌊 Pool Controller</h2>
+    <h2>🌊 Pool Controller</h2>
 
   <div class="telemetry-grid">
     <div class="input-group">
@@ -266,7 +285,7 @@
 
 <!-- Time Settings Tab -->
 <div id="tab-time" class="tab-content glass-card" style="display: none;">
-  <div style="margin-bottom: 0.75rem;"><a href="#" onclick="switchTab('dashboard'); return false;" style="color: var(--accent-solar); text-decoration: none; font-size: 0.85rem;">← Dashboard</a></div>
+
 
   <h2>🕐 Time & NTP Configuration</h2>
 
@@ -312,7 +331,7 @@
 
 <!-- Sensors Tab (DS18B20 Mapping) -->
 <div id="tab-sensors" class="tab-content glass-card" style="display: none;">
-  <div style="margin-bottom: 0.75rem;"><a href="#" onclick="switchTab('dashboard'); return false;" style="color: var(--accent-solar); text-decoration: none; font-size: 0.85rem;">← Dashboard</a></div>
+
   <h2>🔬 Temperature Sensor Mapping</h2>
   <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
     Choose which DS18B20 sensor monitors <strong>Solar</strong> vs. <strong>Pool</strong> temperature.
@@ -353,7 +372,7 @@
 
 <!-- Security & Update Tab -->
 <div id="tab-system" class="tab-content glass-card" style="display: none;">
-  <div style="margin-bottom: 0.75rem;"><a href="#" onclick="switchTab('dashboard'); return false;" style="color: var(--accent-solar); text-decoration: none; font-size: 0.85rem;">← Dashboard</a></div>
+
   <h2>Security Settings</h2>
   <div class="input-group">
     <label for="adminPass">New Admin Password</label>
@@ -406,13 +425,10 @@
   </div>
 </div>
 
-<!-- Footer mit Versionsinfo und Link -->
-<footer class="footer" style="position: fixed; bottom: 0; left: 0; right: 0; background: var(--panel-bg); padding: 0.75rem 1rem; border-top: 1px solid var(--panel-border); z-index: 1000;">
-  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
-    <span style="color: var(--text-muted); font-size: 0.7rem;">v<span id="fwVersionDisplay">--</span></span>
-    <a href="https://www.smart-swimmingpool.com" target="_blank" rel="noopener" style="color: var(--accent-solar); text-decoration: none; font-size: 0.75rem;">smart-swimmingpool.com</a>
-  </div>
-</footer>
+<!-- Version Info (in header integriert) -->
+<div style="text-align: center; font-size: 0.7rem; color: var(--text-muted); margin-top: -1rem; margin-bottom: 1rem;">
+  v<span id="fwVersionDisplay">--</span>
+</div>
 
 <script src="/app.js"></script>
 
