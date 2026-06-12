@@ -42,7 +42,7 @@ public:
     char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total);
 
 private:
-  static void publishTextDiscovery(const char *objectId, const char *name, const char *icon = nullptr);
+  static void publishTextDiscovery(const char *objectId, const char *name, const char *icon = nullptr, const char *entityCategory = nullptr);
   static void publishSensorDiscovery(const char *objectId, const char *name, const char *deviceClass = nullptr,
     const char *unit = nullptr, const char *icon = nullptr, const char *entityCategory = nullptr);
   static void publishSwitchDiscovery(

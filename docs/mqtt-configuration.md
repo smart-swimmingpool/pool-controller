@@ -45,49 +45,77 @@ curl -b "session=<session>" -X POST \
 
 ## Home Assistant Entities
 
-The controller publishes the following entities via MQTT Discovery, grouped by type.
+The controller publishes the following entities via MQTT Discovery, grouped by type with their standard HA entity category:
+
+| Category | Display in HA |
+|---|---|
+| *(none)* | Main device page — primary measurements |
+| `control` | **Controls** section |
+| `config` | **Configuration** section |
+| `diagnostic` | **Diagnostics** section |
 
 ### Sensors (read-only)
 
-| Function                       | HA component/object-id   | State topic                                                  |
-| ------------------------------ | ------------------------ | ------------------------------------------------------------ |
-| Solar temperature              | `sensor/solar-temp`      | `homeassistant/sensor/pool-controller/solar-temp/state`      |
-| Pool temperature               | `sensor/pool-temp`       | `homeassistant/sensor/pool-controller/pool-temp/state`       |
-| Controller temperature (ESP32) | `sensor/controller-temp` | `homeassistant/sensor/pool-controller/controller-temp/state` |
-| Timezone info                  | `sensor/timezone-info`   | `homeassistant/sensor/pool-controller/timezone-info/state`   |
-| Log output                     | `sensor/log`             | `homeassistant/sensor/pool-controller/log/state`             |
-| OTA status                     | `sensor/ota-status`      | `homeassistant/sensor/pool-controller/ota-status/state`      |
-| Effective Runtime              | `sensor/effective-runtime` | `homeassistant/sensor/pool-controller/effective-runtime/state` |
+| Function                       | HA component/object-id   | Entity Category | State topic                                                  |
+| ------------------------------ | ------------------------ | --------------- | ------------------------------------------------------------ |
+| Solar temperature              | `sensor/solar-temp`      | —               | `homeassistant/sensor/pool-controller/solar-temp/state`      |
+| Pool temperature               | `sensor/pool-temp`       | —               | `homeassistant/sensor/pool-controller/pool-temp/state`       |
+| Controller temperature (ESP32) | `sensor/controller-temp` | `diagnostic`    | `homeassistant/sensor/pool-controller/controller-temp/state` |
+| Free Heap Space                | `sensor/heap`            | `diagnostic`    | `homeassistant/sensor/pool-controller/heap/state`            |
+| Max Alloc Block                | `sensor/max-alloc`       | `diagnostic`    | `homeassistant/sensor/pool-controller/max-alloc/state`       |
+| WiFi Signal Strength           | `sensor/rssi`            | `diagnostic`    | `homeassistant/sensor/pool-controller/rssi/state`            |
+| System Uptime                  | `sensor/uptime`          | `diagnostic`    | `homeassistant/sensor/pool-controller/uptime/state`          |
+| Local Time                     | `sensor/local-time`      | `diagnostic`    | `homeassistant/sensor/pool-controller/local-time/state`      |
+| Timezone info                  | `sensor/timezone-info`   | `diagnostic`    | `homeassistant/sensor/pool-controller/timezone-info/state`   |
+| Log output                     | `sensor/log`             | `diagnostic`    | `homeassistant/sensor/pool-controller/log/state`             |
+| OTA status                     | `sensor/ota-status`      | `diagnostic`    | `homeassistant/sensor/pool-controller/ota-status/state`      |
+| Effective Runtime              | `sensor/effective-runtime` | `diagnostic`    | `homeassistant/sensor/pool-controller/effective-runtime/state` |
+| Solar Sensor Found             | `sensor/solar-sensor-found` | `diagnostic`  | `homeassistant/sensor/pool-controller/solar-sensor-found/state` |
+| Pool Sensor Found              | `sensor/pool-sensor-found`  | `diagnostic`  | `homeassistant/sensor/pool-controller/pool-sensor-found/state`  |
 
-### Switches
+### Controls
 
-| Function                       | HA component/object-id   | Command topic                                               |
-| ------------------------------ | ------------------------ | ----------------------------------------------------------- |
-| Pool pump relay                | `switch/pool-pump`       | `homeassistant/switch/pool-controller/pool-pump/set`        |
-| Solar pump relay               | `switch/solar-pump`      | `homeassistant/switch/pool-controller/solar-pump/set`       |
-| Log to serial                  | `switch/log-serial`      | `homeassistant/switch/pool-controller/log-serial/set`       |
+| Function                       | HA component/object-id   | Entity Category | Command topic                                               |
+| ------------------------------ | ------------------------ | --------------- | ----------------------------------------------------------- |
+| Pool pump relay                | `switch/pool-pump`       | `control`       | `homeassistant/switch/pool-controller/pool-pump/set`        |
+| Solar pump relay               | `switch/solar-pump`      | `control`       | `homeassistant/switch/pool-controller/solar-pump/set`       |
+| Operation mode                 | `select/mode`            | `control`       | `homeassistant/select/pool-controller/mode/set`             |
 
 ### Configuration (settable via HA)
 
-| Function                       | HA component/object-id   | Command topic                                                   |
-| ------------------------------ | ------------------------ | --------------------------------------------------------------- |
-| Operation mode                 | `select/mode`            | `homeassistant/select/pool-controller/mode/set`                 |
-| Pool max temp                  | `number/pool-max-temp`   | `homeassistant/number/pool-controller/pool-max-temp/set`        |
-| Solar min temp                 | `number/solar-min-temp`  | `homeassistant/number/pool-controller/solar-min-temp/set`       |
-| Hysteresis                     | `number/hysteresis`      | `homeassistant/number/pool-controller/hysteresis/set`           |
-| Circ. temp threshold           | `number/temp-circ-threshold` | `homeassistant/number/pool-controller/temp-circ-threshold/set` |
-| Circ. temp factor              | `number/temp-circ-factor`    | `homeassistant/number/pool-controller/temp-circ-factor/set`    |
-| Circ. max runtime              | `number/temp-circ-max-runtime` | `homeassistant/number/pool-controller/temp-circ-max-runtime/set` |
-| Timer start time               | `text/timer-start`       | `homeassistant/text/pool-controller/timer-start/set`           |
-| Timer end time                 | `text/timer-end`         | `homeassistant/text/pool-controller/timer-end/set`             |
-| Timezone index                 | `number/timezone`        | `homeassistant/number/pool-controller/timezone/set`            |
-| Log level                      | `select/log-level`       | `homeassistant/select/pool-controller/log-level/set`           |
+| Function                       | HA component/object-id   | Entity Category | Command topic                                                   |
+| ------------------------------ | ------------------------ | --------------- | --------------------------------------------------------------- |
+| Pool max temp                  | `number/pool-max-temp`   | `config`        | `homeassistant/number/pool-controller/pool-max-temp/set`        |
+| Solar min temp                 | `number/solar-min-temp`  | `config`        | `homeassistant/number/pool-controller/solar-min-temp/set`       |
+| Hysteresis                     | `number/hysteresis`      | `config`        | `homeassistant/number/pool-controller/hysteresis/set`           |
+| Circ. temp threshold           | `number/temp-circ-threshold` | `config`    | `homeassistant/number/pool-controller/temp-circ-threshold/set` |
+| Circ. temp factor              | `number/temp-circ-factor`    | `config`    | `homeassistant/number/pool-controller/temp-circ-factor/set`    |
+| Circ. max runtime              | `number/temp-circ-max-runtime` | `config`  | `homeassistant/number/pool-controller/temp-circ-max-runtime/set` |
+| Timer start time               | `time/timer-start`       | `config`        | `homeassistant/time/pool-controller/timer-start/set`           |
+| Timer end time                 | `time/timer-end`         | `config`        | `homeassistant/time/pool-controller/timer-end/set`             |
+| Timezone                       | `select/timezone`        | `config`        | `homeassistant/select/pool-controller/timezone/set`            |
+| NTP Server                     | `text/ntp-server`        | `config`        | `homeassistant/text/pool-controller/ntp-server/set`            |
+| Log level                      | `select/log-level`       | `config`        | `homeassistant/select/pool-controller/log-level/set`           |
+| Log to serial                  | `switch/log-serial`      | `config`        | `homeassistant/switch/pool-controller/log-serial/set`          |
+| Solar Sensor mapping           | `select/solar-sensor`    | `config`        | `homeassistant/select/pool-controller/solar-sensor/set`        |
+| Pool Sensor mapping            | `select/pool-sensor`     | `config`        | `homeassistant/select/pool-controller/pool-sensor/set`         |
 
 ### Buttons & Diagnostics
 
-| Function                       | HA component/object-id   | Command topic                                               |
-| ------------------------------ | ------------------------ | ----------------------------------------------------------- |
-| OTA update trigger             | `button/ota-update`      | `homeassistant/button/pool-controller/ota-update/set`       |
+| Function                       | HA component/object-id   | Entity Category | Command topic                                               |
+| ------------------------------ | ------------------------ | --------------- | ----------------------------------------------------------- |
+| OTA update trigger             | `button/ota-update`      | `config`        | `homeassistant/button/pool-controller/ota-update/set`       |
+| Firmware                       | `update/firmware-update` | `config`        | `homeassistant/update/pool-controller/firmware-update/set`  |
+| Pool Thermostat                | `climate/thermostat`     | `config`        | (mode + temperature via climate topics)                     |
+
+### Entity Category Reference
+
+| Category | Description |
+|---|---|
+| *(none)* | Primary measurements, shown on the device front page |
+| `control` | Primary controls (switches, mode selection) |
+| `config` | Configuration values and settings |
+| `diagnostic` | Device diagnostics and system information |
 
 ## Features
 
