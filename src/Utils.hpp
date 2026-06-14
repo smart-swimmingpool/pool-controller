@@ -7,6 +7,12 @@
 
 #include <cstdio>
 
+// Provide dtostrf for native builds (normally an AVR function from avr-libc)
+inline char* dtostrf(double val, int width, int precision, char* buf) {
+  snprintf(buf, 32, "%*.*f", width, precision, val);
+  return buf;
+}
+
 namespace Utils {
 
 /**

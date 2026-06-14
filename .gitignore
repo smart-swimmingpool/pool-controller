@@ -117,3 +117,11 @@ data/**/config.json
 _codeql_detected_source_root
 logs/
 .cache/
+
+# Native test build artifacts
+test/native/build/
+
+# Coverage data files (gcov)
+*.gcda
+*.gcno
+*.gcov
