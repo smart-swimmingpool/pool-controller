@@ -410,14 +410,14 @@ void MqttPublisher::publishDiscovery() {
   publishSensorDiscovery("uptime", "System Uptime", "duration", "s", "mdi:clock-outline", "diagnostic");
   publishSensorDiscovery("local-time", "Local Time", nullptr, nullptr, "mdi:clock", "diagnostic");
 
-  // ── Controls (entity_category: "control") ──
+  // ── Controls (no entity_category — shown on device front page) ──
   // Relays (Switches)
-  publishSwitchDiscovery("pool-pump", "Pool Pump", "mdi:pump", "control");
-  publishSwitchDiscovery("solar-pump", "Solar Pump", "mdi:solar-panel", "control");
+  publishSwitchDiscovery("pool-pump", "Pool Pump", "mdi:pump");
+  publishSwitchDiscovery("solar-pump", "Solar Pump", "mdi:solar-panel");
 
   // Select Mode
   const char *modeOpts[] = {"auto", "manu", "boost", "timer"};
-  publishSelectDiscovery("mode", "Operation Mode", modeOpts, 4, "mdi:sync", "control");
+  publishSelectDiscovery("mode", "Operation Mode", modeOpts, 4, "mdi:sync");
 
   // ── Configuration (entity_category: "config") ──
   // Parameter Numbers
@@ -641,7 +641,10 @@ void MqttPublisher::publishSensorMappingDiscovery() {
       // Deduplicate (same address may appear on shared bus)
       bool seen = false;
       for (uint8_t si = 0; si < storedCount; si++) {
-        if (storedAddrs[si] == buf) { seen = true; break; }
+        if (storedAddrs[si] == buf) {
+          seen = true;
+          break;
+        }
       }
       if (seen) continue;
 

@@ -82,7 +82,6 @@ async function loadTelemetry() {
     // Firmware-Version
     if (data.fw_version) {
       document.getElementById('fwCurrentVersion').textContent = data.fw_version;
-      document.getElementById('fwVersionDisplay').textContent = data.fw_version;
       const aboutVer = document.getElementById('fwVersionDisplayAbout');
       if (aboutVer) aboutVer.textContent = data.fw_version;
     }
@@ -743,7 +742,7 @@ async function saveSensorMapping() {
   btn.textContent = '⏳ Saving...';
 
   const body = 'solar_addr=' + encodeURIComponent(pendingMapping.solar || '') +
-               '&pool_addr=' + encodeURIComponent(pendingMapping.pool || '');
+    '&pool_addr=' + encodeURIComponent(pendingMapping.pool || '');
 
   try {
     const res = await fetch('/api/sensors/map', {
