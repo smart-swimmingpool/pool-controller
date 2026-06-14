@@ -125,3 +125,6 @@ test/native/build/
 *.gcda
 *.gcno
 *.gcov
+
+# Frontend (separate JS project) — ignore lockfiles and node_modules
+test/frontend/

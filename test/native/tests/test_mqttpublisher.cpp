@@ -20,13 +20,16 @@
 
 using namespace PoolController;
 
-// Node instances (matching extern declarations in MqttPublisher.cpp)
-DallasTemperatureNode g_solarTemperatureNode("solar-temp", "Solar Temperature", 32);
-DallasTemperatureNode g_poolTemperatureNode("pool-temp", "Pool Temperature", 33);
-ESP32TemperatureNode g_ctrlTemperatureNode("ctrl-temp", "Controller Temperature");
-RelayModuleNode g_poolPumpNode("pool-pump", "Pool Pump", 25);
-RelayModuleNode g_solarPumpNode("solar-pump", "Solar Pump", 26);
-OperationModeNode g_operationModeNode;
+// Declare the globals defined in mocks/globals.cpp (matching extern in MqttPublisher.cpp)
+// MUST be inside PoolController namespace to reference the same symbols as globals.cpp
+namespace PoolController {
+extern DallasTemperatureNode solarTemperatureNode;
+extern DallasTemperatureNode poolTemperatureNode;
+extern ESP32TemperatureNode ctrlTemperatureNode;
+extern RelayModuleNode poolPumpNode;
+extern RelayModuleNode solarPumpNode;
+extern OperationModeNode operationModeNode;
+}
 
 // Capture globals
 extern MqttClientCapture mqttCapture;
@@ -130,6 +133,7 @@ int run_mqttpublisher_tests() {
     
     for (const auto &msg : mqttCapture.published) {
       if (msg.topic.find("/config") == std::string::npos) continue;
+      if (msg.payload.empty()) continue;  // Skip cleanup empty-retained messages (old entity topics)
       
       JsonDocument doc;
       DeserializationError err = deserializeJson(doc, msg.payload);
@@ -172,7 +176,7 @@ int run_mqttpublisher_tests() {
     test_begin("MqttPublisher::publishStates", "all state topics published");
 
     mqttCapture.clear();
-    g_operationModeNode.setMode("auto");
+    operationModeNode.setMode("auto");
     
     MqttPublisher::publishStates();
 
@@ -213,7 +217,7 @@ int run_mqttpublisher_tests() {
     test_begin("MqttPublisher", "handle mode command from HA");
 
     mqttCapture.clear();
-    g_operationModeNode.setMode("auto");
+    operationModeNode.setMode("auto");
 
     // Simulate incoming MQTT message setting mode to "boost"
     MqttPublisher::handleMqttMessage(
@@ -224,7 +228,7 @@ int run_mqttpublisher_tests() {
     );
 
     // The mode should have been set to "boost"
-    std::string mode = g_operationModeNode.getMode().c_str();
+    std::string mode = operationModeNode.getMode().c_str();
     rc = (mode == "boost") ? 0 : 1;
     if (rc == 0) {
       test_pass(__FILE__, __LINE__);
@@ -243,8 +247,8 @@ int run_mqttpublisher_tests() {
     test_begin("MqttPublisher", "handle pump command in manual mode");
 
     mqttCapture.clear();
-    g_operationModeNode.setMode("manu");
-    g_poolPumpNode.setSwitch(false);
+    operationModeNode.setMode("manu");
+    poolPumpNode.setSwitch(false);
 
     MqttPublisher::handleMqttMessage(
       const_cast<char*>("homeassistant/switch/pool-controller/pool-pump/set"),
@@ -254,7 +258,7 @@ int run_mqttpublisher_tests() {
     );
 
     // Pump should have turned ON
-    bool pumpState = g_poolPumpNode.getSwitch();
+    bool pumpState = poolPumpNode.getSwitch();
     rc = (pumpState) ? 0 : 1;
     if (rc == 0) {
       test_pass(__FILE__, __LINE__);
@@ -271,8 +275,8 @@ int run_mqttpublisher_tests() {
     test_begin("MqttPublisher", "reject pump command in auto mode");
 
     mqttCapture.clear();
-    g_operationModeNode.setMode("auto");
-    g_poolPumpNode.setSwitch(false);
+    operationModeNode.setMode("auto");
+    poolPumpNode.setSwitch(false);
 
     MqttPublisher::handleMqttMessage(
       const_cast<char*>("homeassistant/switch/pool-controller/pool-pump/set"),
@@ -282,7 +286,7 @@ int run_mqttpublisher_tests() {
     );
 
     // Pump should still be OFF (rejected because not in manual mode)
-    bool pumpState = g_poolPumpNode.getSwitch();
+    bool pumpState = poolPumpNode.getSwitch();
     rc = (!pumpState) ? 0 : 1;
     if (rc == 0) {
       test_pass(__FILE__, __LINE__);
