@@ -82,6 +82,7 @@ async function loadTelemetry() {
     // Firmware-Version
     if (data.fw_version) {
       document.getElementById('fwCurrentVersion').textContent = data.fw_version;
+      document.getElementById('fwVersionDisplay').textContent = data.fw_version;
       const aboutVer = document.getElementById('fwVersionDisplayAbout');
       if (aboutVer) aboutVer.textContent = data.fw_version;
     }

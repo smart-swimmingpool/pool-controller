@@ -410,14 +410,14 @@ void MqttPublisher::publishDiscovery() {
   publishSensorDiscovery("uptime", "System Uptime", "duration", "s", "mdi:clock-outline", "diagnostic");
   publishSensorDiscovery("local-time", "Local Time", nullptr, nullptr, "mdi:clock", "diagnostic");
 
-  // ── Controls (no entity_category — shown on device front page) ──
+  // ── Controls (entity_category: "control") ──
   // Relays (Switches)
-  publishSwitchDiscovery("pool-pump", "Pool Pump", "mdi:pump");
-  publishSwitchDiscovery("solar-pump", "Solar Pump", "mdi:solar-panel");
+  publishSwitchDiscovery("pool-pump", "Pool Pump", "mdi:pump", "control");
+  publishSwitchDiscovery("solar-pump", "Solar Pump", "mdi:solar-panel", "control");
 
   // Select Mode
   const char *modeOpts[] = {"auto", "manu", "boost", "timer"};
-  publishSelectDiscovery("mode", "Operation Mode", modeOpts, 4, "mdi:sync");
+  publishSelectDiscovery("mode", "Operation Mode", modeOpts, 4, "mdi:sync", "control");
 
   // ── Configuration (entity_category: "config") ──
   // Parameter Numbers
