@@ -69,11 +69,11 @@ public:
     routes_.push_back({uri, HTTP_ANY, handler});
   }
 
-   void on(const char *uri, int method, std::function<void()> handler) {
+  void on(const char *uri, int method, std::function<void()> handler) {
     routes_.push_back({uri, method, handler});
   }
 
-   void on(const char *uri, int method, std::function<void()> handler, std::function<void()> uploadHandler) {
+  void on(const char *uri, int method, std::function<void()> handler, std::function<void()> uploadHandler) {
     routes_.push_back({uri, method, handler});
   }
 

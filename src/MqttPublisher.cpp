@@ -641,7 +641,10 @@ void MqttPublisher::publishSensorMappingDiscovery() {
       // Deduplicate (same address may appear on shared bus)
       bool seen = false;
       for (uint8_t si = 0; si < storedCount; si++) {
-        if (storedAddrs[si] == buf) { seen = true; break; }
+        if (storedAddrs[si] == buf) {
+          seen = true;
+          break;
+        }
       }
       if (seen) continue;
 
