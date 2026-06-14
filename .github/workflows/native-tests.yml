@@ -23,6 +23,7 @@ concurrency:
 
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
   test-and-coverage:
@@ -74,19 +75,50 @@ jobs:
         if: always()
         run: |
           lcov --capture --directory test/native/build --output-file coverage.info \
-            --rc lcov_branch_coverage=1
+            --rc lcov_branch_coverage=1 \
+            --ignore-errors unused
           lcov --remove coverage.info \
             '/usr/*' '*/test/*' '*/lib/*' '*/mbedtls/*' '.pio/*' \
             --output-file coverage.info \
-            --rc lcov_branch_coverage=1
+            --rc lcov_branch_coverage=1 \
+            --ignore-errors unused
           lcov --list coverage.info --rc lcov_branch_coverage=1
 
-      - name: Upload coverage to Codecov
-        if: always()
-        uses: codecov/codecov-action@v6
+      - name: Post coverage summary as PR comment
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
         with:
-          files: coverage.info
-          flags: unittests
-          name: codecov-native-tests
-          fail_ci_if_error: false
-          token: ${{ secrets.CODECOV_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const lcovFile = 'coverage.info';
+            if (!fs.existsSync(lcovFile)) {
+              console.log('No coverage.info found — skipping comment');
+              return;
+            }
+            const content = fs.readFileSync(lcovFile, 'utf8');
+            const lines = content.split('\n');
+            let lineHit = 0, lineFound = 0, branchHit = 0, branchFound = 0;
+            for (const line of lines) {
+              if (line.startsWith('DA:')) lineFound++;
+              if (line.startsWith('DA:') && !line.endsWith(',0')) lineHit++;
+              if (line.startsWith('BRDA:') && line.split(',').length >= 5) {
+                const val = line.split(',')[4];
+                if (val !== '-') { branchFound++; if (val !== '0') branchHit++; }
+              }
+            }
+            const linePct = lineFound > 0 ? ((lineHit / lineFound) * 100).toFixed(1) : '—';
+            const branchPct = branchFound > 0 ? ((branchHit / branchFound) * 100).toFixed(1) : '—';
+            const body = `## Native Test Coverage\n\n` +
+              `| Metric | Value |\n` +
+              `|--------|------:|\n` +
+              `| **Line Coverage** | ${linePct}% |\n` +
+              `| **Branch Coverage** | ${branchPct}% |\n` +
+              `| **Lines Hit/Total** | ${lineHit}/${lineFound} |\n` +
+              `| **Branches Hit/Total** | ${branchHit}/${branchFound} |\n\n` +
+              `_Report from native unit tests (ASan + gcov)._`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
