@@ -742,7 +742,7 @@ async function saveSensorMapping() {
   btn.textContent = '⏳ Saving...';
 
   const body = 'solar_addr=' + encodeURIComponent(pendingMapping.solar || '') +
-               '&pool_addr=' + encodeURIComponent(pendingMapping.pool || '');
+    '&pool_addr=' + encodeURIComponent(pendingMapping.pool || '');
 
   try {
     const res = await fetch('/api/sensors/map', {
