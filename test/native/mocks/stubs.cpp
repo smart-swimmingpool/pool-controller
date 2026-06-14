@@ -12,11 +12,12 @@
  */
 
 #include "Arduino.h"
-#include "Rule.hpp"
-#include "Timer.hpp"
-#include "TimeLib.h"
 
 #include <cstdint>
+
+#include "Rule.hpp"
+#include "TimeLib.h"
+#include "Timer.hpp"
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Time helpers (normally in TimeClientHelper.cpp / Timer.cpp)

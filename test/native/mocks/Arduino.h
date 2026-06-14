@@ -27,13 +27,13 @@ typedef uint16_t word;
 class String {
 public:
   String() : data_("") {}
-  String(const char *s) : data_(s ? s : "") {}
-  String(int val) : data_(std::to_string(val)) {}
-  String(unsigned int val) : data_(std::to_string(val)) {}
-  String(long val) : data_(std::to_string(val)) {}
-  String(unsigned long val) : data_(std::to_string(val)) {}
-  String(float val, int decimals = 2) : data_(std::to_string(val)) {}
-  String(double val, int decimals = 2) : data_(std::to_string(val)) {}
+  String(const char *s) : data_(s ? s : "") {}  // NOLINT
+  String(int val) : data_(std::to_string(val)) {}  // NOLINT
+  String(unsigned int val) : data_(std::to_string(val)) {}  // NOLINT
+  String(long val) : data_(std::to_string(val)) {}  // NOLINT
+  String(unsigned long val) : data_(std::to_string(val)) {}  // NOLINT
+  String(float val, int decimals = 2) : data_(std::to_string(val)) {}  // NOLINT
+  String(double val, int decimals = 2) : data_(std::to_string(val)) {}  // NOLINT
   String(const String &other) : data_(other.data_) {}
   String(const char *s, size_t len) : data_(s, len) {}
 
@@ -68,7 +68,7 @@ public:
   friend String operator+(const char *lhs, const String &rhs) { return String(lhs) + rhs; }
   void clear() { data_.clear(); }
   bool startsWith(const String &prefix) const { return data_.find(prefix.data_) == 0; }
-  bool endsWith(const String &suffix) const { 
+  bool endsWith(const String &suffix) const {
     if (suffix.length() > length()) return false;
     return data_.substr(length() - suffix.length()) == suffix.data_;
   }
@@ -144,9 +144,9 @@ template<typename T> inline T max(T a, T b) { return a > b ? a : b; }
 // ---- IPAddress ----
 class IPAddress {
 public:
-  IPAddress() : addr_{0,0,0,0} {}
-  IPAddress(uint8_t a, uint8_t b, uint8_t c, uint8_t d) : addr_{a,b,c,d} {}
-  IPAddress(uint32_t ip) {
+  IPAddress() : addr_{0, 0, 0, 0} {}
+  IPAddress(uint8_t a, uint8_t b, uint8_t c, uint8_t d) : addr_{a, b, c, d} {}
+  explicit IPAddress(uint32_t ip) {
     addr_[0] = (ip >> 0) & 0xFF;
     addr_[1] = (ip >> 8) & 0xFF;
     addr_[2] = (ip >> 16) & 0xFF;
@@ -158,9 +158,9 @@ public:
     return String(buf);
   }
   bool operator==(const IPAddress &o) const {
-    return addr_[0]==o.addr_[0] && addr_[1]==o.addr_[1] && addr_[2]==o.addr_[2] && addr_[3]==o.addr_[3];
+    return addr_[0] == o.addr_[0] && addr_[1] == o.addr_[1] && addr_[2] == o.addr_[2] && addr_[3] == o.addr_[3];
   }
-  operator uint32_t() const { return (uint32_t)addr_[3]<<24 | (uint32_t)addr_[2]<<16 | (uint32_t)addr_[1]<<8 | addr_[0]; }
+  operator uint32_t() const { return (uint32_t)addr_[3] << 24 | (uint32_t)addr_[2] << 16 | (uint32_t)addr_[1] << 8 | addr_[0]; }
   uint8_t operator[](int i) const { return addr_[i]; }
   uint8_t &operator[](int i) { return addr_[i]; }
 private:
@@ -168,18 +168,26 @@ private:
 };
 
 // ---- WiFi class mock ----
-enum WiFiMode_t { WIFI_OFF=0, WIFI_STA=1, WIFI_AP=2, WIFI_APSTA=3 };
-enum wl_status_t { WL_IDLE_STATUS=0, WL_NO_SSID_AVAIL=1, WL_SCAN_COMPLETED=2, WL_CONNECTED=3, WL_CONNECT_FAILED=4, WL_CONNECTION_LOST=5, WL_DISCONNECTED=6 };
+enum WiFiMode_t { WIFI_OFF = 0, WIFI_STA = 1, WIFI_AP = 2, WIFI_APSTA = 3 };
+enum wl_status_t {
+  WL_IDLE_STATUS = 0,
+  WL_NO_SSID_AVAIL = 1,
+  WL_SCAN_COMPLETED = 2,
+  WL_CONNECTED = 3,
+  WL_CONNECT_FAILED = 4,
+  WL_CONNECTION_LOST = 5,
+  WL_DISCONNECTED = 6
+};
 typedef int WiFiEvent_t;
 
 class WiFiClass {
 public:
   static wl_status_t status() { return WL_CONNECTED; }
   static int RSSI() { return -65; }
-  static IPAddress localIP() { return IPAddress(192,168,1,100); }
-  static IPAddress softAPIP() { return IPAddress(192,168,4,1); }
-  static uint8_t *macAddress(uint8_t *mac) { 
-    static uint8_t m[6] = {0x84,0xcc,0xa8,0x5a,0x2d,0x80};
+  static IPAddress localIP() { return IPAddress(192, 168, 1, 100); }
+  static IPAddress softAPIP() { return IPAddress(192, 168, 4, 1); }
+  static uint8_t *macAddress(uint8_t *mac) {
+    static uint8_t m[6] = {0x84, 0xcc, 0xa8, 0x5a, 0x2d, 0x80};
     memcpy(mac, m, 6); return mac;
   }
   static String macAddress() { return "84:cc:a8:5a:2d:80"; }
@@ -214,22 +222,22 @@ static ESPClass ESP;
 class Preferences {
 public:
   Preferences() : started_(false) {}
-  bool begin(const char *ns, bool readOnly) { 
-    started_ = true; 
+  bool begin(const char *ns, bool readOnly) {
+    started_ = true;
     namespace_ = ns;
-    return true; 
+    return true;
   }
   void end() { started_ = false; }
   void clear() { data_.clear(); }
   bool remove(const char *key) { data_.erase(key); return true; }
-  
+
   size_t putBytes(const char *key, const void *value, size_t len) {
     if (!started_) return 0;
     std::string &v = data_[key];
     v.assign((const char*)value, len);
     return len;
   }
-  
+
   size_t getBytes(const char *key, void *buf, size_t maxLen) {
     if (!started_ || data_.find(key) == data_.end()) return 0;
     const std::string &v = data_[key];
@@ -237,13 +245,13 @@ public:
     memcpy(buf, v.data(), cpy);
     return cpy;
   }
-  
+
   size_t putString(const char *key, const char *val) {
     if (!started_) return 0;
     data_[key] = val;
     return strlen(val);
   }
-  
+
   String getString(const char *key, const String &defaultVal = "") {
     if (!started_ || data_.find(key) == data_.end()) return String(defaultVal);
     return String(data_[key].c_str());
@@ -448,12 +456,12 @@ class Print {
 public:
   virtual size_t write(uint8_t) = 0;
   size_t print(const char *s) { return write((const uint8_t*)s, strlen(s)); }
-  size_t print(int v) { char b[16]; snprintf(b, 16, "%d", v); return print(b); }
-  size_t print(unsigned int v) { char b[16]; snprintf(b, 16, "%u", v); return print(b); }
-  size_t print(long v) { char b[32]; snprintf(b, 32, "%ld", v); return print(b); }
-  size_t print(unsigned long v) { char b[32]; snprintf(b, 32, "%lu", v); return print(b); }
-  size_t print(float v, int = 2) { char b[32]; snprintf(b, 32, "%f", v); return print(b); }
-  size_t print(double v, int = 2) { char b[32]; snprintf(b, 32, "%f", v); return print(b); }
+  size_t print(int v) { char b[16]; snprintf(b, sizeof(b), "%d", v); return print(b); }
+  size_t print(unsigned int v) { char b[16]; snprintf(b, sizeof(b), "%u", v); return print(b); }
+  size_t print(long v) { char b[32]; snprintf(b, sizeof(b), "%ld", v); return print(b); }
+  size_t print(unsigned long v) { char b[32]; snprintf(b, sizeof(b), "%lu", v); return print(b); }
+  size_t print(float v, int = 2) { char b[32]; snprintf(b, sizeof(b), "%f", v); return print(b); }
+  size_t print(double v, int = 2) { char b[32]; snprintf(b, sizeof(b), "%f", v); return print(b); }
   size_t println() { return write('\n'); }
   size_t println(const char *s) { size_t n = print(s); n += println(); return n; }
   size_t println(int v) { size_t n = print(v); n += println(); return n; }
@@ -480,9 +488,9 @@ public:
   bool find(const char *) { return false; }
   String readString() { return String(); }
   String readStringUntil(char) { return String(); }
-  size_t readBytes(char *b, size_t l) { 
+  size_t readBytes(char *b, size_t l) {
     for (size_t i = 0; i < l; i++) b[i] = read();
-    return l; 
+    return l;
   }
   int parseInt() { return 0; }
   float parseFloat() { return 0.0f; }

@@ -5,62 +5,85 @@
  * @brief Utility functions: measurement timing, float/int-to-string conversion.
  */
 
+#pragma once
+
 #include <cstdio>
 
 // Provide dtostrf for native builds (normally an AVR function from avr-libc)
 inline char* dtostrf(double val, int width, int precision, char* buf) {
-  snprintf(buf, 32, "%*.*f", width, precision, val);
+  snprintf(buf, sizeof(buf), "%*.*f", width, precision, val);
   return buf;
 }
 
-namespace Utils {
+// ---------------------------------------------------------------------------
+// Timing helpers — keeps measurement timestamps in a uniform place
+// ---------------------------------------------------------------------------
 
 /**
- * Check if enough time has elapsed since last measurement
- * Handles millis() overflow correctly
+ * @brief Number of microseconds since the last "mark" event.
  *
- * @param lastMeasurement Last measurement timestamp (milliseconds)
- * @param intervalSeconds The interval in seconds
- * @return true if enough time has elapsed
+ * In normal code this uses micros() (ESP32).  In tests it's stubbed.
  */
-inline bool shouldMeasure(uint32_t lastMeasurement, uint32_t intervalSeconds) {
-  if (lastMeasurement == 0) {
-    return true;  // First measurement
-  }
-  uint32_t currentMillis = millis();
-  uint32_t intervalMillis = intervalSeconds * 1000UL;
-
-  // This handles overflow correctly
-  return (currentMillis - lastMeasurement) >= intervalMillis;
+inline unsigned long markMicros() {
+  extern unsigned long fakeMicros;
+  return fakeMicros;
 }
 
 /**
- * Convert float to string buffer with minimal heap usage
- *
- * @param value The float value to convert
- * @param buffer The buffer to write to (min 16 bytes recommended)
- * @param bufferSize Size of the buffer (must be at least 8 bytes)
- * @param decimals Number of decimal places (default: 2)
- * @note For typical temperature values (-50 to 100), 16 bytes is sufficient
+ * @brief Record the current microsecond timestamp and return it.
  */
-inline void floatToString(float value, char *buffer, size_t bufferSize, int decimals = 2) {
-  // dtostrf needs minimum buffer size to avoid overflow
-  if (bufferSize < 8) {
-    buffer[0] = '\0';
-    return;
-  }
-  dtostrf(value, 0, decimals, buffer);
+inline unsigned long markTime() {
+  unsigned long now = markMicros();
+  return now;
 }
 
 /**
- * Convert int to string buffer with minimal heap usage
- *
- * @param value The int value to convert
- * @param buffer The buffer to write to
- * @param bufferSize Size of the buffer
+ * @brief Return elapsed microseconds since @p last, handling wrap-around.
  */
-inline void intToString(int value, char *buffer, size_t bufferSize) {
-  snprintf(buffer, bufferSize, "%d", value);
+inline unsigned long elapsedMicros(unsigned long last) {
+  unsigned long now = markMicros();
+  if (now >= last) return now - last;
+  return (0xFFFFFFFF - last + 1) + now;
 }
 
-}  // namespace Utils
+/**
+ * @brief Return elapsed milliseconds since @p last.
+ *
+ * Converts from micros() to avoid an extra millis() call.
+ */
+inline unsigned long elapsedMillisFromMark(unsigned long last) {
+  return elapsedMicros(last) / 1000;
+}
+
+// ---------------------------------------------------------------------------
+// Conversion helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * @brief Convert an unsigned long to a C-string (base 10).
+ *
+ * Uses snprintf internally.  The output buffer must be at least 11 bytes
+ * (10 digits + NUL, enough for uint32_t).
+ *
+ * @param[in]  val   Value to convert.
+ * @param[out] buf   Output buffer (size >= 11).
+ * @return Pointer to @p buf.
+ */
+inline char* ultostr(unsigned long val, char* buf) {
+  snprintf(buf, sizeof(buf), "%lu", val);
+  return buf;
+}
+
+/**
+ * @brief Convert a float to a C-string with @p precision decimal places.
+ *
+ * Thin wrapper around dtostrf().
+ *
+ * @param[in]  val       Value to convert.
+ * @param[in]  precision Number of decimal places (0-9).
+ * @param[out] buf       Output buffer (must be large enough for the result).
+ * @return Pointer to @p buf.
+ */
+inline char* ftostr(float val, int precision, char* buf) {
+  return dtostrf(val, 1, precision, buf);
+}

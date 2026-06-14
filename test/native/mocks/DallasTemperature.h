@@ -11,8 +11,8 @@
 class DallasTemperature {
 public:
   DallasTemperature() {}
-  DallasTemperature(void *) {}
-  
+  explicit DallasTemperature(void *) {}
+
   void begin() {}
   void requestTemperatures() {}
   float getTempCByIndex(int) { return 25.0f; }

@@ -5,9 +5,9 @@
 
 class NTPClient {
 public:
-    NTPClient(WiFiUDP &udp, const char *poolServerName = "pool.ntp.org", int timeOffset = 0, int updateInterval = 60000)
+    explicit NTPClient(WiFiUDP &udp, const char *poolServerName = "pool.ntp.org", int timeOffset = 0, int updateInterval = 60000)
         : _udp(&udp) {}
-    
+
     void begin() {}
     void end() {}
     void forceUpdate() { _lastUpdate = millis() / 1000; _lastEpoch = _lastUpdate; }

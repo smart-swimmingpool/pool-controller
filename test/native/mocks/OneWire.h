@@ -7,7 +7,7 @@ typedef uint8_t DeviceAddress[8];
 class OneWire {
 public:
     OneWire() : _pin(0) {}
-    OneWire(uint8_t pin) : _pin(pin) {}
+    explicit OneWire(uint8_t pin) : _pin(pin) {}
     void begin() { _pin = _pin; }
     void begin(uint8_t pin) { _pin = pin; }
     bool reset() { return false; }

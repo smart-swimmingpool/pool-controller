@@ -8,7 +8,7 @@
 class RuleManu : public Rule {
 public:
   RuleManu() {}
-  RuleManu(void *) {}
+  explicit RuleManu(void *) {}
 
   const char *getMode() override { return "manu"; }
   void loop() override {}

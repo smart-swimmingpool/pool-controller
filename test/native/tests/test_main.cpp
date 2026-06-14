@@ -49,9 +49,12 @@ void test_suite_end(const char *name, int passed, int failed) {
 
 // Assertion macros
 #define ASSERT_TRUE(cond) do { \
-  if (!(cond)) { test_fail(__FILE__, __LINE__, "Expected true: " #cond); return 1; } \
-  else { test_pass(__FILE__, __LINE__); } \
-} while(0)
+  if (!(cond)) { \
+    test_fail(__FILE__, __LINE__, "Expected true: " #cond); \
+    return 1; \
+  } \
+  test_pass(__FILE__, __LINE__); \
+} while (0)
 
 #define ASSERT_FALSE(cond) ASSERT_TRUE(!(cond))
 
@@ -62,7 +65,7 @@ void test_suite_end(const char *name, int passed, int failed) {
     test_fail(__FILE__, __LINE__, _msg); return 1; \
   } \
   test_pass(__FILE__, __LINE__); \
-} while(0)
+} while (0)
 
 #define ASSERT_STREQ(a, b) do { \
   const char *_a = (a); const char *_b = (b); \
@@ -71,7 +74,7 @@ void test_suite_end(const char *name, int passed, int failed) {
     test_fail(__FILE__, __LINE__, _msg); return 1; \
   } \
   test_pass(__FILE__, __LINE__); \
-} while(0)
+} while (0)
 
 #define ASSERT_NEAR(a, b, eps) do { \
   float _a = (a); float _b = (b); \
@@ -80,7 +83,7 @@ void test_suite_end(const char *name, int passed, int failed) {
     test_fail(__FILE__, __LINE__, _msg); return 1; \
   } \
   test_pass(__FILE__, __LINE__); \
-} while(0)
+} while (0)
 
 // Suite declarations
 extern int run_rule_tests();

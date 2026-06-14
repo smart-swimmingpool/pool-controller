@@ -18,7 +18,7 @@
 #include "RelayModuleNode.hpp"
 #include "OperationModeNode.hpp"
 
-using namespace PoolController;
+using namespace PoolController;  // NOLINT(build/namespaces)
 
 // Declare the globals defined in mocks/globals.cpp (matching extern in MqttPublisher.cpp)
 // MUST be inside PoolController namespace to reference the same symbols as globals.cpp
@@ -40,9 +40,12 @@ extern void test_fail(const char *file, int line, const char *msg);
 extern void test_suite_end(const char *name, int passed, int failed);
 
 #define ASSERT_TRUE(cond) do { \
-  if (!(cond)) { test_fail(__FILE__, __LINE__, "Expected true: " #cond); return 1; } \
-  else { test_pass(__FILE__, __LINE__); } \
-} while(0)
+  if (!(cond)) { \
+    test_fail(__FILE__, __LINE__, "Expected true: " #cond); \
+    return 1; \
+  } \
+  test_pass(__FILE__, __LINE__); \
+} while (0)
 
 #define ASSERT_FALSE(cond) ASSERT_TRUE(!(cond))
 
@@ -53,7 +56,7 @@ extern void test_suite_end(const char *name, int passed, int failed);
     test_fail(__FILE__, __LINE__, _msg); return 1; \
   } \
   test_pass(__FILE__, __LINE__); \
-} while(0)
+} while (0)
 
 int run_mqttpublisher_tests() {
   int passed = 0, failed = 0;
@@ -65,7 +68,7 @@ int run_mqttpublisher_tests() {
 
     // Clear MQTT capture
     mqttCapture.clear();
-    
+
     // Initialize MQTT
     NetworkManager::setMqttConnected(true);
     MqttPublisher::begin();
@@ -82,7 +85,7 @@ int run_mqttpublisher_tests() {
     bool hasFirmwareUpdate = false;
     bool hasClimate = false;
     bool hasTimerStart = false;
-    
+
     for (const auto &msg : mqttCapture.published) {
       if (msg.topic.find("sensor/pool-controller/pool-temp/config") != std::string::npos) hasPoolTemp = true;
       if (msg.topic.find("sensor/pool-controller/solar-temp/config") != std::string::npos) hasSolarTemp = true;
@@ -95,28 +98,28 @@ int run_mqttpublisher_tests() {
       if (msg.topic.find("climate/pool-controller/thermostat/config") != std::string::npos) hasClimate = true;
       if (msg.topic.find("time/pool-controller/timer-start/config") != std::string::npos) hasTimerStart = true;
     }
-    
+
     int missing = 0;
-    if (!hasPoolTemp) { test_fail(__FILE__, __LINE__, "Missing pool-temp discovery"); missing++; }
-    else test_pass(__FILE__, __LINE__);
-    if (!hasSolarTemp) { test_fail(__FILE__, __LINE__, "Missing solar-temp discovery"); missing++; }
-    else test_pass(__FILE__, __LINE__);
-    if (!hasPoolPump) { test_fail(__FILE__, __LINE__, "Missing pool-pump discovery"); missing++; }
-    else test_pass(__FILE__, __LINE__);
-    if (!hasMode) { test_fail(__FILE__, __LINE__, "Missing mode discovery"); missing++; }
-    else test_pass(__FILE__, __LINE__);
-    if (!hasHeap) { test_fail(__FILE__, __LINE__, "Missing heap discovery"); missing++; }
-    else test_pass(__FILE__, __LINE__);
-    if (!hasUptime) { test_fail(__FILE__, __LINE__, "Missing uptime discovery"); missing++; }
-    else test_pass(__FILE__, __LINE__);
-    if (!hasTimezone) { test_fail(__FILE__, __LINE__, "Missing timezone discovery"); missing++; }
-    else test_pass(__FILE__, __LINE__);
-    if (!hasFirmwareUpdate) { test_fail(__FILE__, __LINE__, "Missing firmware update discovery"); missing++; }
-    else test_pass(__FILE__, __LINE__);
-    if (!hasClimate) { test_fail(__FILE__, __LINE__, "Missing climate discovery"); missing++; }
-    else test_pass(__FILE__, __LINE__);
-    if (!hasTimerStart) { test_fail(__FILE__, __LINE__, "Missing timer-start discovery"); missing++; }
-    else test_pass(__FILE__, __LINE__);
+    if (!hasPoolTemp) { test_fail(__FILE__, __LINE__, "Missing pool-temp discovery"); missing++; }  // NOLINT
+    else test_pass(__FILE__, __LINE__);  // NOLINT
+    if (!hasSolarTemp) { test_fail(__FILE__, __LINE__, "Missing solar-temp discovery"); missing++; }  // NOLINT
+    else test_pass(__FILE__, __LINE__);  // NOLINT
+    if (!hasPoolPump) { test_fail(__FILE__, __LINE__, "Missing pool-pump discovery"); missing++; }  // NOLINT
+    else test_pass(__FILE__, __LINE__);  // NOLINT
+    if (!hasMode) { test_fail(__FILE__, __LINE__, "Missing mode discovery"); missing++; }  // NOLINT
+    else test_pass(__FILE__, __LINE__);  // NOLINT
+    if (!hasHeap) { test_fail(__FILE__, __LINE__, "Missing heap discovery"); missing++; }  // NOLINT
+    else test_pass(__FILE__, __LINE__);  // NOLINT
+    if (!hasUptime) { test_fail(__FILE__, __LINE__, "Missing uptime discovery"); missing++; }  // NOLINT
+    else test_pass(__FILE__, __LINE__);  // NOLINT
+    if (!hasTimezone) { test_fail(__FILE__, __LINE__, "Missing timezone discovery"); missing++; }  // NOLINT
+    else test_pass(__FILE__, __LINE__);  // NOLINT
+    if (!hasFirmwareUpdate) { test_fail(__FILE__, __LINE__, "Missing firmware update discovery"); missing++; }  // NOLINT
+    else test_pass(__FILE__, __LINE__);  // NOLINT
+    if (!hasClimate) { test_fail(__FILE__, __LINE__, "Missing climate discovery"); missing++; }  // NOLINT
+    else test_pass(__FILE__, __LINE__);  // NOLINT
+    if (!hasTimerStart) { test_fail(__FILE__, __LINE__, "Missing timer-start discovery"); missing++; }  // NOLINT
+    else test_pass(__FILE__, __LINE__);  // NOLINT
 
     rc = (missing == 0) ? 0 : 1;
     if (rc == 0) passed++;
@@ -127,14 +130,14 @@ int run_mqttpublisher_tests() {
   // ── Test: publishDiscovery payloads contain valid JSON ──
   {
     test_begin("MqttPublisher", "discovery payloads are valid JSON");
-    
+
     int validCount = 0;
     int invalidCount = 0;
-    
+
     for (const auto &msg : mqttCapture.published) {
       if (msg.topic.find("/config") == std::string::npos) continue;
       if (msg.payload.empty()) continue;  // Skip cleanup empty-retained messages (old entity topics)
-      
+
       JsonDocument doc;
       DeserializationError err = deserializeJson(doc, msg.payload);
       if (err) {
@@ -152,7 +155,7 @@ int run_mqttpublisher_tests() {
         } else {
           validCount++;
         }
-        
+
         // Verify device block exists
         if (!doc.containsKey("device")) {
           char buf[128];
@@ -162,7 +165,7 @@ int run_mqttpublisher_tests() {
         }
       }
     }
-    
+
     if (invalidCount == 0) test_pass(__FILE__, __LINE__);
     int totalValid = validCount;
     rc = (invalidCount == 0) ? 0 : 1;
@@ -177,7 +180,7 @@ int run_mqttpublisher_tests() {
 
     mqttCapture.clear();
     operationModeNode.setMode("auto");
-    
+
     MqttPublisher::publishStates();
 
     bool hasPoolTempState = false;
@@ -195,16 +198,16 @@ int run_mqttpublisher_tests() {
     }
 
     int missing = 0;
-    if (!hasPoolTempState) { test_fail(__FILE__, __LINE__, "Missing pool-temp state"); missing++; }
-    else test_pass(__FILE__, __LINE__);
-    if (!hasPoolPumpState) { test_fail(__FILE__, __LINE__, "Missing pool-pump state"); missing++; }
-    else test_pass(__FILE__, __LINE__);
-    if (!hasModeState) { test_fail(__FILE__, __LINE__, "Missing mode state"); missing++; }
-    else test_pass(__FILE__, __LINE__);
-    if (!hasHeapState) { test_fail(__FILE__, __LINE__, "Missing heap state"); missing++; }
-    else test_pass(__FILE__, __LINE__);
-    if (!hasUptimeState) { test_fail(__FILE__, __LINE__, "Missing uptime state"); missing++; }
-    else test_pass(__FILE__, __LINE__);
+    if (!hasPoolTempState) { test_fail(__FILE__, __LINE__, "Missing pool-temp state"); missing++; }  // NOLINT
+    else test_pass(__FILE__, __LINE__);  // NOLINT
+    if (!hasPoolPumpState) { test_fail(__FILE__, __LINE__, "Missing pool-pump state"); missing++; }  // NOLINT
+    else test_pass(__FILE__, __LINE__);  // NOLINT
+    if (!hasModeState) { test_fail(__FILE__, __LINE__, "Missing mode state"); missing++; }  // NOLINT
+    else test_pass(__FILE__, __LINE__);  // NOLINT
+    if (!hasHeapState) { test_fail(__FILE__, __LINE__, "Missing heap state"); missing++; }  // NOLINT
+    else test_pass(__FILE__, __LINE__);  // NOLINT
+    if (!hasUptimeState) { test_fail(__FILE__, __LINE__, "Missing uptime state"); missing++; }  // NOLINT
+    else test_pass(__FILE__, __LINE__);  // NOLINT
 
     rc = (missing == 0) ? 0 : 1;
     if (rc == 0) passed++;
@@ -224,8 +227,7 @@ int run_mqttpublisher_tests() {
       const_cast<char*>("homeassistant/select/pool-controller/mode/set"),
       const_cast<char*>("boost"),
       AsyncMqttClientMessageProperties{0, false, false},
-      5, 0, 5
-    );
+      5, 0, 5);
 
     // The mode should have been set to "boost"
     std::string mode = operationModeNode.getMode().c_str();
@@ -254,8 +256,7 @@ int run_mqttpublisher_tests() {
       const_cast<char*>("homeassistant/switch/pool-controller/pool-pump/set"),
       const_cast<char*>("ON"),
       AsyncMqttClientMessageProperties{0, false, false},
-      2, 0, 2
-    );
+      2, 0, 2);
 
     // Pump should have turned ON
     bool pumpState = poolPumpNode.getSwitch();
@@ -282,8 +283,7 @@ int run_mqttpublisher_tests() {
       const_cast<char*>("homeassistant/switch/pool-controller/pool-pump/set"),
       const_cast<char*>("ON"),
       AsyncMqttClientMessageProperties{0, false, false},
-      2, 0, 2
-    );
+      2, 0, 2);
 
     // Pump should still be OFF (rejected because not in manual mode)
     bool pumpState = poolPumpNode.getSwitch();
@@ -333,7 +333,7 @@ int run_mqttpublisher_tests() {
         break;
       }
     }
-    
+
     test_suite_end("MqttPublisher::no_entity_category", 1, 0);
   }
 

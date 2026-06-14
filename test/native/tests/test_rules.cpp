@@ -21,9 +21,12 @@ extern void test_fail(const char *file, int line, const char *msg);
 extern void test_suite_end(const char *name, int passed, int failed);
 
 #define ASSERT_TRUE(cond) do { \
-  if (!(cond)) { test_fail(__FILE__, __LINE__, "Expected true: " #cond); return 1; } \
-  else { test_pass(__FILE__, __LINE__); } \
-} while(0)
+  if (!(cond)) { \
+    test_fail(__FILE__, __LINE__, "Expected true: " #cond); \
+    return 1; \
+  } \
+  test_pass(__FILE__, __LINE__); \
+} while (0)
 
 #define ASSERT_FALSE(cond) ASSERT_TRUE(!(cond))
 
@@ -34,7 +37,7 @@ extern void test_suite_end(const char *name, int passed, int failed);
     test_fail(__FILE__, __LINE__, _msg); return 1; \
   } \
   test_pass(__FILE__, __LINE__); \
-} while(0)
+} while (0)
 
 int run_rule_tests() {
   int passed = 0, failed = 0;
@@ -50,7 +53,7 @@ int run_rule_tests() {
     ts.timerEndHour = 18;
     ts.timerEndMinutes = 0;
     timer.setTimerSetting(ts);
-    
+
     // Base runtime: 18:00 - 08:00 = 10h = 600min
     uint16_t runtime = timer.getEffectiveRuntimeMinutes();
     rc = (runtime == 600) ? 0 : 1;
@@ -75,7 +78,7 @@ int run_rule_tests() {
     ts.timerEndHour = 6;
     ts.timerEndMinutes = 0;
     timer.setTimerSetting(ts);
-    
+
     // Midnight crossing: (1440 - 1320) + 360 = 120 + 360 = 480min = 8h
     uint16_t runtime = timer.getEffectiveRuntimeMinutes();
     rc = (runtime == 480) ? 0 : 1;
@@ -155,7 +158,7 @@ int run_rule_tests() {
     ts.timerEndMinutes = 0;
     timer.setTimerSetting(ts);
     timer.setCustomEndMinutes(20 * 60); // 20:00
-    
+
     // Extended: 20:00 - 08:00 = 12h = 720min
     uint16_t runtime = timer.getEffectiveRuntimeMinutes();
     rc = (runtime == 720) ? 0 : 1;

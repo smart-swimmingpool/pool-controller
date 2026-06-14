@@ -8,7 +8,7 @@
 #include "Arduino.h"
 #include "ConfigManager.hpp"
 
-using namespace PoolController;
+using namespace PoolController;  // NOLINT(build/namespaces)
 
 extern void test_begin(const char *suite, const char *name);
 extern void test_pass(const char *file, int line);
@@ -16,9 +16,12 @@ extern void test_fail(const char *file, int line, const char *msg);
 extern void test_suite_end(const char *name, int passed, int failed);
 
 #define ASSERT_TRUE(cond) do { \
-  if (!(cond)) { test_fail(__FILE__, __LINE__, "Expected true: " #cond); return 1; } \
-  else { test_pass(__FILE__, __LINE__); } \
-} while(0)
+  if (!(cond)) { \
+    test_fail(__FILE__, __LINE__, "Expected true: " #cond); \
+    return 1; \
+  } \
+  test_pass(__FILE__, __LINE__); \
+} while (0)
 
 #define ASSERT_EQ(a, b) do { \
   auto _a = (a); auto _b = (b); \
@@ -27,7 +30,7 @@ extern void test_suite_end(const char *name, int passed, int failed);
     test_fail(__FILE__, __LINE__, _msg); return 1; \
   } \
   test_pass(__FILE__, __LINE__); \
-} while(0)
+} while (0)
 
 int run_config_manager_tests() {
   int passed = 0, failed = 0;
@@ -38,11 +41,11 @@ int run_config_manager_tests() {
     test_begin("ConfigManager", "default settings");
     ConfigManager::load();
     Settings &s = ConfigManager::getSettings();
-    
+
     int errs = 0;
-    if (s.opMode != "auto") { test_fail(__FILE__, __LINE__, "opMode should be auto"); errs++; }
-    else { test_pass(__FILE__, __LINE__); passed++; }
-    
+    if (s.opMode != "auto") { test_fail(__FILE__, __LINE__, "opMode should be auto"); errs++; }  // NOLINT
+    else { test_pass(__FILE__, __LINE__); passed++; }  // NOLINT
+
     rc = (errs == 0) ? 0 : 1;
     if (rc != 0) failed++;
     test_suite_end("ConfigManager::defaults", errs == 0 ? 1 : 0, errs);
@@ -52,8 +55,8 @@ int run_config_manager_tests() {
   {
     test_begin("ConfigManager", "WiFi config access");
     WiFiConfig &w = ConfigManager::getWiFi();
-    ASSERT_TRUE(w.ssid.length() > 0);
-    ASSERT_TRUE(w.password.length() > 0);
+    ASSERT_TRUE(w.ssid.length() > 0);  // NOLINT(readability/check)
+    ASSERT_TRUE(w.password.length() > 0);  // NOLINT(readability/check)
     test_suite_end("ConfigManager::wifi", 1, 0);
     passed++;
   }
@@ -62,7 +65,7 @@ int run_config_manager_tests() {
   {
     test_begin("ConfigManager", "MQTT config access");
     MqttConfig &m = ConfigManager::getMqtt();
-    ASSERT_TRUE(m.host.length() > 0);
+    ASSERT_TRUE(m.host.length() > 0);  // NOLINT(readability/check)
     ASSERT_EQ(m.port, 1883);
     test_suite_end("ConfigManager::mqtt", 1, 0);
     passed++;
