@@ -41,16 +41,10 @@ Netzwerk geändert werden.
   - Mindestens 8 Zeichen
   - Mischung aus Groß-/Kleinbuchstaben, Ziffern und Sonderzeichen
   - Kein wiederverwendetes Passwort aus anderen Diensten
+- **Hinweis**: Dieses Passwort schützt auch die OTA-Update-Endpunkte — es
+  gibt kein separates OTA-Passwort.
 
-### 2. OTA-Update-Passwort ändern
-
-Das OTA-Update-Passwort ist getrennt vom Web-UI-Passwort.
-
-- **Standard**: Wie Web-UI-Passwort
-- **Aktion**: Web-UI → Security & Update → OTA-Passwort
-- **Warum**: Verhindert unbefugte Firmware-Uploads
-
-### 3. MQTT-Authentifizierung verwenden
+### 2. MQTT-Authentifizierung verwenden
 
 - **Aktion**: MQTT-Benutzername und -Passwort in den Controller-Einstellungen
   konfigurieren
@@ -59,7 +53,7 @@ Das OTA-Update-Passwort ist getrennt vom Web-UI-Passwort.
 - **Empfehlung**: Dedizierten MQTT-Benutzer für den Controller mit minimalen
   Berechtigungen anlegen
 
-### 4. MQTT-Broker nur intern erreichbar
+### 3. MQTT-Broker nur intern erreichbar
 
 - **Aktion**: MQTT-Broker nur an lokale Netzwerkschnittstelle binden
 - **Warum**: Ein öffentlich erreichbarer MQTT-Broker kann gefunden und
@@ -67,7 +61,7 @@ Das OTA-Update-Passwort ist getrennt vom Web-UI-Passwort.
 - **Mosquitto-Konfiguration**:
 
   ```ini
-  listener 1883 192.168.1.0/24
+  listener 1883 192.168.1.10
   allow_anonymous false
   password_file /etc/mosquitto/passwd
   ```
@@ -78,7 +72,7 @@ Das OTA-Update-Passwort ist getrennt vom Web-UI-Passwort.
 
 ## Hoch (Dringend empfohlen)
 
-### 5. Web-Interface nur im LAN
+### 4. Web-Interface nur im LAN
 
 - Das Web-Interface hört standardmäßig auf allen Schnittstellen
 - **Aktion**: Sicherstellen, dass sich der Controller in einem vertrauenswürdigen
@@ -87,7 +81,7 @@ Das OTA-Update-Passwort ist getrennt vom Web-UI-Passwort.
 - Bei Bedarf nach Fernzugriff: VPN (WireGuard, Tailscale, OpenVPN) oder
   Home Assistant sicheren Fernzugriff verwenden
 
-### 6. Nur offizielle Firmware verwenden
+### 5. Nur offizielle Firmware verwenden
 
 - **Aktion**: Ausschließlich Firmware aus offiziellen GitHub-Releases flashen
 - **Warum**: Inoffizielle Firmware könnte Hintertüren oder unsichere
@@ -97,7 +91,7 @@ Das OTA-Update-Passwort ist getrennt vom Web-UI-Passwort.
   - Release-Tag mit der erwarteten Version vergleichen
   - Bei Bedarf selbst aus dem Quellcode bauen
 
-### 7. Backup vor OTA-Update
+### 6. Backup vor OTA-Update
 
 - **Aktion**: Screenshot oder Export der aktuellen Konfiguration vor dem
   Firmware-Update speichern
@@ -110,15 +104,15 @@ Das OTA-Update-Passwort ist getrennt vom Web-UI-Passwort.
 
 ## Mittel (Empfohlen)
 
-### 8. Relais vor Lastanschluss testen
+### 7. Relais vor Lastanschluss testen
 
 - **Aktion**: Relais-Funktion mit Multimeter prüfen, bevor 230V AC-Pumpen
   angeschlossen werden
 - **Warum**: Ein defektes Relais könnte eine Pumpe permanent eingeschaltet
   lassen, was ein Sicherheitsrisiko darstellt
-- **Vorgehen**: Siehe [Von Null aufgebaut → Relais-Test](/docs/build-from-zero/#schritt-7-relais-test-ohne-last)
+- **Vorgehen**: Siehe [Hardware-Guide → Relais-Test](/docs/hardware-guide/#relais-test)
 
-### 9. Dediziertes Netzwerk-VLAN verwenden
+### 8. Dediziertes Netzwerk-VLAN verwenden
 
 Für fortgeschrittene Aufbauten:
 
@@ -126,9 +120,13 @@ Für fortgeschrittene Aufbauten:
 - Nur erlauben: MQTT-Broker, NTP-Server, Home Assistant
 - Alle eingehenden Verbindungen aus dem Internet blockieren
 
-### 10. Unbenutzte Funktionen deaktivieren
+### 9. Unbenutzte Funktionen deaktivieren
 
-- **Aktion**: Wenn OTA nicht genutzt wird, in der Konfiguration deaktivieren
+- **Aktion**: Wenn OTA nicht genutzt wird:
+  - Ausgehenden HTTPS (Port 443) vom Controller in der Netzwerk-Firewall
+    blockieren, **oder**
+  - Die OTA-Routenregistrierungen in `src/WebPortal.cpp` (Zeilen 175–228)
+    entfernen und die Firmware neu bauen
 - **Aktion**: Wenn das Web-Interface nicht benötigt wird, Zugriff über
   Netzwerk-Firewall-Regeln einschränken
 - **Warum**: Weniger Angriffsfläche reduziert Risiken
@@ -161,9 +159,13 @@ Internet
 | Controller | MQTT-Broker | 1883     | TCP       | Erlauben   | MQTT-Kommunikation       |
 | Controller | NTP-Server  | 123      | UDP       | Erlauben   | Zeitsynchronisation      |
 | Controller | Internet    | 80       | TCP       | Blockieren | Kein Webzugriff nötig    |
-| Controller | Internet    | 443      | TCP       | Blockieren | Kein Webzugriff nötig    |
+| Controller | Internet    | 443      | TCP       | Erlauben   | OTA-Update (GitHub)      |
 | Internet   | Controller  | beliebig | beliebig  | Blockieren | Kein eingehender Zugriff |
 | HA-Server  | Controller  | 80       | TCP       | Erlauben   | Web-UI / API             |
+
+> **Hinweis**: Falls OTA-Updates **nicht** genutzt werden, kann Port 443
+> stattdessen blockiert werden. Der Controller verwendet ausgehenden HTTPS
+> nur zum Prüfen und Herunterladen von Firmware-Releases von GitHub.
 
 ---
 
@@ -176,7 +178,6 @@ Internet
 | WLAN-Passwort   | NVS      | Nein (NVS standardmäßig unverschlüsselt) |
 | MQTT-Passwort   | NVS      | Nein                                     |
 | Web-UI-Passwort | NVS      | SHA-256-gehasht                          |
-| OTA-Passwort    | NVS      | SHA-256-gehasht                          |
 
 > **Hinweis**: NVS-Werte werden im Klartext auf dem Flash-Chip gespeichert.
 > Physischer Zugriff auf das Gerät gefährdet alle Zugangsdaten.
@@ -199,8 +200,7 @@ Für erweiterte Sicherheit die ESP32-Flash-Verschlüsselung aktivieren:
 
 ## Verwandte Dokumente
 
-- [Von Null aufgebaut](/docs/build-from-zero/) — Komplette Bauanleitung
-- [Elektrische Sicherheit](/docs/electrical-safety/) — Sicherheitsinformationen
-- [Sicherheitsmodell](/docs/safety-model/) — System-Sicherheitsarchitektur
-- [Produktions-Checkliste](/docs/production-checklist/) — Prüfungen vor Inbetriebnahme
-- [Fehlerbehebung](/docs/troubleshooting/) — Häufige Probleme und Lösungen
+- [Hardware-Guide](/docs/hardware-guide/) — Bau- und Verdrahtungsanleitung
+- [Software-Guide](/docs/software-guide/) — Ersteinrichtung und Konfiguration
+- [MQTT-Konfiguration](/docs/mqtt-configuration/) — MQTT-Broker-Einrichtung
+- [Fehlerbehebungs-Matrix](/docs/troubleshooting-matrix/) — Häufige Probleme und Lösungen

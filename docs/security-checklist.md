@@ -40,16 +40,10 @@ connecting the controller to any network.
   - Minimum 8 characters
   - Mix of uppercase, lowercase, digits, and special characters
   - Not a reused password from other services
+- **Note**: This same password protects the OTA update endpoints — there is
+  no separate OTA password.
 
-### 2. Change OTA Update Password
-
-The OTA update password is separate from the web UI password.
-
-- **Default**: Same as web UI password
-- **Action**: Web UI → Security & Update → OTA Password
-- **Why**: Prevents unauthorized firmware uploads
-
-### 3. Use MQTT Authentication
+### 2. Use MQTT Authentication
 
 - **Action**: Configure MQTT username and password in controller settings
 - **Why**: Unauthenticated MQTT allows anyone on the network to publish
@@ -57,14 +51,14 @@ The OTA update password is separate from the web UI password.
 - **Recommended**: Create a dedicated MQTT user for the controller with
   minimal permissions
 
-### 4. Keep MQTT Broker Internal
+### 3. Keep MQTT Broker Internal
 
 - **Action**: Bind MQTT broker to local network interface only
 - **Why**: A publicly accessible MQTT broker can be discovered and abused
 - **Mosquitto configuration**:
 
   ```ini
-  listener 1883 192.168.1.0/24
+  listener 1883 192.168.1.10
   allow_anonymous false
   password_file /etc/mosquitto/passwd
   ```
@@ -75,7 +69,7 @@ The OTA update password is separate from the web UI password.
 
 ## High (Strongly Recommended)
 
-### 5. Web Interface Only in LAN
+### 4. Web Interface Only in LAN
 
 - The web interface listens on all interfaces by default
 - **Action**: Ensure the controller is on a trusted local network
@@ -83,7 +77,7 @@ The OTA update password is separate from the web UI password.
 - If remote access is needed, use a VPN (WireGuard, Tailscale, OpenVPN)
   or Home Assistant's secure remote access
 
-### 6. Use Official Firmware Only
+### 5. Use Official Firmware Only
 
 - **Action**: Only flash firmware from official GitHub Releases
 - **Why**: Unofficial firmware could contain backdoors or unsafe modifications
@@ -92,7 +86,7 @@ The OTA update password is separate from the web UI password.
   - Check the release tag matches the expected version
   - Build from source yourself if you want full control
 
-### 7. Backup Before OTA Update
+### 6. Backup Before OTA Update
 
 - **Action**: Save a screenshot or export of current configuration before
   updating firmware
@@ -104,15 +98,15 @@ The OTA update password is separate from the web UI password.
 
 ## Medium (Recommended)
 
-### 8. Test Relays Before Connecting Load
+### 7. Test Relays Before Connecting Load
 
 - **Action**: Verify relay operation with a multimeter before connecting
   230V AC pumps
 - **Why**: A malfunctioning relay could leave a pump permanently on,
   creating a safety hazard
-- **Procedure**: See [Build from Zero → Relay Test](docs/build-from-zero/#step-7-relay-test-no-load)
+- **Procedure**: See [Hardware Guide → Relay Testing](/docs/hardware-guide/#relay-testing)
 
-### 9. Use a Dedicated Network VLAN
+### 8. Use a Dedicated Network VLAN
 
 For advanced setups:
 
@@ -120,9 +114,13 @@ For advanced setups:
 - Allow only: MQTT broker, NTP server, Home Assistant
 - Block all inbound connections from the internet
 
-### 10. Disable Unused Features
+### 9. Disable Unused Features
 
-- **Action**: If you don't use OTA, disable it in configuration
+- **Action**: If you don't use OTA updates:
+  - Block outbound HTTPS (port 443) from the controller at your network
+    firewall, **or**
+  - Remove the OTA route registrations in `src/WebPortal.cpp` (lines 175–228)
+    and rebuild the firmware
 - **Action**: If you don't need the web interface, restrict access via
   network firewall rules
 - **Why**: Reducing attack surface reduces risk
@@ -155,9 +153,13 @@ Internet
 | Controller | MQTT Broker | 1883 | TCP      | Allow  | MQTT communication   |
 | Controller | NTP Server  | 123  | UDP      | Allow  | Time sync            |
 | Controller | Internet    | 80   | TCP      | Block  | No web access needed |
-| Controller | Internet    | 443  | TCP      | Block  | No web access needed |
+| Controller | Internet    | 443  | TCP      | Allow  | OTA update (GitHub)  |
 | Internet   | Controller  | any  | any      | Block  | No inbound access    |
 | HA Server  | Controller  | 80   | TCP      | Allow  | Web UI / API         |
+
+> **Note**: If you do **not** use OTA updates, port 443 can be blocked instead.
+> The controller only uses HTTPS egress to check for and download firmware
+> releases from GitHub.
 
 ---
 
@@ -170,7 +172,6 @@ Internet
 | WiFi password   | NVS     | No (ESP32 NVS is not encrypted by default) |
 | MQTT password   | NVS     | No                                         |
 | Web UI password | NVS     | SHA-256 hashed                             |
-| OTA password    | NVS     | SHA-256 hashed                             |
 
 > **Note**: NVS values are stored in plain text on the flash chip.
 > Physical access to the device compromises all credentials.
@@ -192,8 +193,7 @@ For advanced security, enable ESP32 flash encryption:
 
 ## Related Documents
 
-- [Build from Zero](/docs/build-from-zero/) — Complete build guide
-- [Electrical Safety](/docs/electrical-safety/) — Electrical safety
-- [Safety Model](/docs/safety-model/) — System safety architecture
-- [Production Checklist](/docs/production-checklist/) — Pre-deployment checks
-- [Troubleshooting](/docs/troubleshooting/) — Common issues and fixes
+- [Hardware Guide](/docs/hardware-guide/) — Build and wiring instructions
+- [Software Guide](/docs/software-guide/) — First-time setup and configuration
+- [MQTT Configuration](/docs/mqtt-configuration/) — MQTT broker setup
+- [Troubleshooting Matrix](/docs/troubleshooting-matrix/) — Common issues and fixes
