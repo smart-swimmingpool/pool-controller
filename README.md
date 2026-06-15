@@ -12,7 +12,24 @@
 Manage your swimming pool the smart way - enjoy it in a comfortable
 and affordable (less than 100€) way with professional-grade reliability.
 
+> **ESP32-only**: This controller runs on **ESP32** platforms only.
+> ESP8266 is no longer supported.
+
 Discussions: <https://github.com/smart-swimmingpool/smart-swimmingpool.github.io/discussions>
+
+## Quick Start
+
+**New to the project? Start here:**
+
+1. **[Build from Zero](docs/build-from-zero.md)** — Complete step-by-step guide from parts to production
+2. **[Electrical Safety](docs/electrical-safety.md)** — read before connecting mains power
+3. Follow the build guide, then use the **[Production Checklist](docs/production-checklist.md)**
+4. Harden your setup with the **[Security Checklist](docs/security-checklist.md)**
+5. If something goes wrong: **[Troubleshooting](docs/troubleshooting.md)**
+
+> ⚠️ **This project involves 230V AC mains voltage.**
+> Only proceed if you have electronics experience. Read the
+> [Electrical Safety](docs/electrical-safety.md) guide first.
 
 ## Main Features
 
@@ -145,14 +162,31 @@ See [docs/state-persistence.md](docs/state-persistence.md) for details.
 
 ## Guides
 
-- [Users Guide](docs/users-guide.md)
+### Getting Started
+
+- **[Build from Zero](docs/build-from-zero.md)** — Complete step-by-step guide from parts to production
 - [Hardware Guide](docs/hardware-guide.md)
-- [ESP32 Schaltplananalyse & Optimierung (DE)](docs/esp32-schematic-optimization-de.md)
 - [Software Guide](docs/software-guide.md)
+- [Users Guide](docs/users-guide.md)
+- [ESP32 Schaltplananalyse & Optimierung (DE)](docs/esp32-schematic-optimization-de.md)
+
+### Configuration
+
 - [MQTT Configuration Guide](docs/mqtt-configuration.md)
 - [State Persistence & Monitoring](docs/state-persistence.md)
 - [Over-The-Air Updates](docs/ota-updates.md)
 - [Home Assistant Integration](docs/home-assistant/) — MQTT Discovery, Lovelace Dashboard
+
+### Safety & Operations
+
+- [Electrical Safety](docs/electrical-safety.md) — Safety information for mains-voltage wiring
+- [Safety Model](docs/safety-model.md) — System safety architecture
+- [Production Checklist](docs/production-checklist.md) — Pre-deployment verification
+- [Security Checklist](docs/security-checklist.md) — Security hardening
+
+### Troubleshooting
+
+- [Troubleshooting](docs/troubleshooting.md) — Common issues and fixes
 
 ## Development
 
