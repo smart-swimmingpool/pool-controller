@@ -79,7 +79,7 @@ menu:
    - **Optokoppler trennen die Niedervolt- (ESP32) von der Hochvolt-Seite (230V)**.
 
 6. **Platzieren Sie den Controller NICHT in der Nähe von Wasser!**
-   - **Mindestens 1 Meter Abstand** zu Pool, Spritzwasser oder Regen.
+   - **Mindestens 3,5 Meter Abstand** zur Poolkante (gemäß DIN VDE 0100-702).
 
 7. **Verwenden Sie KEINE verlöteten Verbindungen für 230V!**
    - **Nur Schraubklemmen oder Crimp-Verbindungen** für 230V-Kabel.

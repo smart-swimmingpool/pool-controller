@@ -195,7 +195,10 @@ Hier ist ein **Beispiel-Foto** des Aufbaus:
      ```bash
      git clone https://github.com/smart-swimmingpool/pool-controller.git
      ```
-   - Öffne die Datei **`pool-controller.ino`** in der Arduino IDE.
+   - Das Projekt verwendet `src/main.cpp` als Einstiegspunkt (Standard-Arduino-Framework).
+     **Hinweis:** Der Pool Controller ist für PlatformIO organisiert. Falls du die Arduino IDE
+     nutzt, installiere die **PlatformIO-Erweiterung** (empfohlen) oder erstelle eine
+     `.ino`-Datei, die `src/main.cpp` inkludiert.
 
 5. **Board & Port auswählen**
    - Gehe zu **Werkzeuge → Board → ESP32 Arduino → ESP32 Dev Module**.

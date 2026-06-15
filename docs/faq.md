@@ -32,8 +32,11 @@ Falls dein Problem hier nicht aufgelistet ist, erstelle bitte ein [Issue auf Git
 
 #### **Lösungen:**
 1. **Starte im AP-Modus neu:**
-   - Trenne den Controller vom Strom.
-   - Halte den **BOOT-Button** gedrückt, während du den Controller mit Strom versorgst.
+   - Der Controller startet automatisch im AP-Modus, wenn keine WiFi-Zugangsdaten
+     gespeichert sind oder die Verbindung fehlschlägt.
+   - Falls du ihn manuell in den AP-Modus zwingen möchtest, setze die
+     WiFi-Konfiguration zurück: Web-UI → System → Factory Reset (sofern erreichbar)
+     oder flashe die Firmware neu über USB.
    - Verbinde dich mit **`Pool-Controller-Setup`** (offenes Netzwerk).
    - Öffne `http://192.168.4.1` und prüfe die **WiFi-Einstellungen**.
 
@@ -200,7 +203,7 @@ Falls dein Problem hier nicht aufgelistet ist, erstelle bitte ein [Issue auf Git
 1. **Lade die richtige `.bin`-Datei** aus den [Releases](https://github.com/smart-swimmingpool/pool-controller/releases) herunter.
 2. **Führe das Update manuell durch:**
    ```bash
-   esptool.py --chip esp32 --port /dev/ttyUSB0 write_flash 0x1000 pool-controller-v3.3.0.bin
+   esptool.py --chip esp32 --port /dev/ttyUSB0 write_flash 0x10000 pool-controller-v3.3.0.bin
    ```
 3. **Prüfe das OTA-Passwort** im Web-Interface (**Security & Update**).
 
