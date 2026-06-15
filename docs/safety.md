@@ -113,7 +113,7 @@ menu:
 
 #### **🔹 Grundlegende Verdrahtung für Pumpen**
 
-```
+```text
   ── 230V VERSORGUNG ────────────────────────────────────────────────
 
   [Stromnetz]
@@ -168,7 +168,7 @@ menu:
 
 #### **🔹 Stromversorgung**
 
-```
+```text
   ── STROMVERSORGUNG ─────────────────────────────────────────────────
 
   [USB-Netzteil 5V/2A+]       [ESP32 Board]
@@ -188,7 +188,7 @@ menu:
 
 #### **🔹 Sensoren (DS18B20)**
 
-```
+```text
   [ESP32 Board]               [DS18B20 Sensor]
    ┌─────────────┐              ┌───────────┐
    │ 3.3V ───────┼──────────────┤ VDD (rot)  │
@@ -347,7 +347,8 @@ Falls Sie sich **unsicher sind** oder **keine Erfahrung mit 230V-Elektronik habe
    - Ein **Fachmann** kann die Verdrahtung prüfen und sicherstellen, dass alles den **VDE-Bestimmungen** entspricht.
 
 2. **Verwenden Sie fertige Lösungen:**
-   - Es gibt **kommerzielle Pool-Steuerungen** (z. B. von **Hayward, Pentair, oder AstralPool**), die **CE-zertifiziert** sind.
+   - Es gibt **kommerzielle Pool-Steuerungen** (z. B. von **Hayward, Pentair,
+  oder AstralPool**), die **CE-zertifiziert** sind.
 
 3. **Bilden Sie sich weiter:**
    - **Kurse für Elektroinstallation** (z. B. bei der **Handwerkskammer**).

@@ -17,7 +17,10 @@ menu:
 
 ## 🎯 Ziel
 
-Dieser Leitfaden führt dich **Schritt für Schritt** durch den Aufbau und die Inbetriebnahme des **Smart Swimmingpool Controllers** – **ohne Vorkenntnisse in IoT oder Elektronik** (außer Grundlagen wie Lötkenntnisse).
+Dieser Leitfaden führt dich **Schritt für Schritt** durch den Aufbau
+und die Inbetriebnahme des **Smart Swimmingpool Controllers** – **ohne
+Vorkenntnisse in IoT oder Elektronik** (außer Grundlagen wie
+Lötkenntnisse).
 
 **Zeitaufwand:** ~4–6 Stunden (inkl. Teilebeschaffung)
 **Kosten:** ~45–75€ (ohne Pumpen/Pool-Infrastruktur)
@@ -27,6 +30,7 @@ Dieser Leitfaden führt dich **Schritt für Schritt** durch den Aufbau und die I
 ## ⚠️ Wichtige Sicherheitshinweise
 
 > **⚠️ ACHTUNG: Dieses Projekt arbeitet mit 230V Wechselstrom!**
+>
 > - **Nur für Personen mit Grundkenntnissen in Elektronik und Sicherheit!**
 > - **Immer einen FI-Schalter (RCD) mit 30mA Auslösestrom verwenden!**
 > - **Arbeite nur an spannungsfreien Schaltkreisen!**
@@ -56,6 +60,7 @@ Hier ist die **komplette Teileliste** mit direkten Links zu empfohlenen Shops (S
 | **Gesamt** | | | **~45–75€** | | **Ohne Pumpen/Pool-Infrastruktur** |
 
 ### 💡 Tipps zur Teilebeschaffung
+
 - **Alle Teile sind bei Amazon, Reichelt, Conrad oder AliExpress verfügbar.**
 - **ESP32:** Achte auf **"ESP32 DevKit V1"** oder **"NodeMCU-32S"** (nicht ESP32-S2/S3/C3, da nicht kompatibel mit der Firmware).
 - **DS18B20:** Suche nach **"wasserdicht" und "Edelstahl"** für Langlebigkeit.
@@ -66,6 +71,7 @@ Hier ist die **komplette Teileliste** mit direkten Links zu empfohlenen Shops (S
 ## 🛠️ Schritt 2: Hardware aufbauen (Prototyping auf Breadboard)
 
 ### 📌 Benötigte Werkzeuge
+
 - Lötkolben + Lötzinn (falls du ein Perfboard verwendest)
 - Seitenschneider + Abisolierzange
 - Multimeter (für Kontinuitätstests)
@@ -75,7 +81,7 @@ Hier ist die **komplette Teileliste** mit direkten Links zu empfohlenen Shops (S
 
 Hier ist der **komplette Schaltplan** für den Pool Controller:
 
-```
+```text
   ── POWER SUPPLY ──────────────────────────────────────────────────
 
   [USB Netzteil 5V/1A+]       [ESP32 Board]           [Relay-Modul]
@@ -162,6 +168,7 @@ Hier ist ein **Beispiel-Foto** des Aufbaus:
 ## 💻 Schritt 3: Firmware flashen
 
 ### 📌 Voraussetzungen
+
 - **Arduino IDE** oder **PlatformIO** (empfohlen)
 - **USB-Kabel** (für ESP32)
 - **Git** (optional, für manuelle Updates)
@@ -175,9 +182,11 @@ Hier ist ein **Beispiel-Foto** des Aufbaus:
    - Öffne die Arduino IDE.
    - Gehe zu **Datei → Einstellungen**.
    - Füge folgende URL unter **Zusätzliche Board-Verwalter-URLs** hinzu:
-     ```
+
+     ```text
      https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
      ```
+
    - Klicke auf **OK**.
    - Gehe zu **Werkzeuge → Board → Boards-Verwalter**.
    - Suche nach **esp32** und installiere das Paket.
@@ -192,9 +201,11 @@ Hier ist ein **Beispiel-Foto** des Aufbaus:
 
 4. **Projekt herunterladen**
    - Klone das Repository oder lade es als ZIP herunter:
+
      ```bash
      git clone https://github.com/smart-swimmingpool/pool-controller.git
      ```
+
    - Das Projekt verwendet `src/main.cpp` als Einstiegspunkt (Standard-Arduino-Framework).
      **Hinweis:** Der Pool Controller ist für PlatformIO organisiert. Falls du die Arduino IDE
      nutzt, installiere die **PlatformIO-Erweiterung** (empfohlen) oder erstelle eine
@@ -242,9 +253,11 @@ Hier ist ein **Beispiel-Foto** des Aufbaus:
 
 3. **Web-Interface öffnen**
    - Öffne einen Browser und gehe zu:
-     ```
-     http://192.168.4.1
-     ```
+
+   ```text
+   http://192.168.4.1
+   ```
+
    - Du wirst automatisch zum **Setup-Portal** weitergeleitet.
 
 4. **WiFi-Netzwerk auswählen**
@@ -262,6 +275,7 @@ Hier ist ein **Beispiel-Foto** des Aufbaus:
 6. **IP-Adresse finden**
    - Gehe zu deinem **Router** und suche nach dem Gerät **`Pool-Controller`** in der DHCP-Client-Liste.
    - Alternativ: Verwende einen **Netzwerk-Scanner** (z. B. `nmap`):
+
      ```bash
      nmap -p 80 192.168.1.0/24  # Ersetze 192.168.1.0 mit deinem Subnetz
      ```
@@ -273,6 +287,7 @@ Hier ist ein **Beispiel-Foto** des Aufbaus:
 #### Option A: Mosquitto auf Raspberry Pi (empfohlen)
 
 1. **Mosquitto installieren**
+
    ```bash
    sudo apt update
    sudo apt upgrade
@@ -280,6 +295,7 @@ Hier ist ein **Beispiel-Foto** des Aufbaus:
    ```
 
 2. **Mosquitto starten**
+
    ```bash
    sudo systemctl start mosquitto
    sudo systemctl enable mosquitto
@@ -351,12 +367,15 @@ Hier ist ein **Beispiel-Foto** des Aufbaus:
 
 3. **MQTT-Broker konfigurieren**
    - Bearbeite die Datei **`/etc/openhab/services/mqtt.cfg`**:
-     ```
-     broker.url=tcp://192.168.1.50:1883
-     broker.user=mqtt_user
-     broker.password=secret
-     ```
+
+   ```ini
+   broker.url=tcp://192.168.1.50:1883
+   broker.user=mqtt_user
+   broker.password=secret
+   ```
+
    - Starte openHAB neu:
+
      ```bash
      sudo systemctl restart openhab
      ```
@@ -380,6 +399,7 @@ Hier ist ein **Beispiel-Foto** des Aufbaus:
      - **Solar-Temperatur** (sollte ähnlich sein).
 
 2. **Häufige Probleme & Lösungen**
+
    | **Problem**                          | **Lösung**                                                                                     |
    |--------------------------------------|-------------------------------------------------------------------------------------------------|
    | Sensor zeigt `-127°C` an              | **Kein Pull-Up-Widerstand** oder **falsche GPIO-Pins** → Prüfe 4.7kΩ-Widerstand und Pin-Belegung. |
@@ -408,6 +428,7 @@ Hier ist ein **Beispiel-Foto** des Aufbaus:
 ✅ **Herzlichen Glückwunsch!** Dein Pool Controller ist jetzt einsatzbereit.
 
 ### 📌 Nächste Schritte
+
 1. **Automatisierung einrichten**
    - Konfiguriere **Regeln** (Auto, Timer, Boost) im Web-Interface.
    - Beispiel:
@@ -444,6 +465,7 @@ Hier ist ein **Beispiel-Foto** des Aufbaus:
 ---
 
 ## 📚 Weitere Ressourcen
+
 - [Hardware Guide](hardware-guide.md) – Detaillierte Schaltpläne & Pin-Belegung
 - [User Guide](users-guide.md) – Bedienung des Web-Interfaces
 - [MQTT Configuration](mqtt-configuration.md) – MQTT-Einrichtung & Home Assistant Integration
