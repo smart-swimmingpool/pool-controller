@@ -123,10 +123,12 @@ Für fortgeschrittene Aufbauten:
 ### 9. Unbenutzte Funktionen deaktivieren
 
 - **Aktion**: Wenn OTA nicht genutzt wird:
-  - Ausgehenden HTTPS (Port 443) vom Controller in der Netzwerk-Firewall
-    blockieren, **oder**
-  - Die OTA-Routenregistrierungen in `src/WebPortal.cpp` (Zeilen 175–228)
-    entfernen und die Firmware neu bauen
+  - **Nur GitHub-OTA deaktivieren**: Ausgehenden HTTPS (Port 443) vom
+    Controller in der Netzwerk-Firewall blockieren
+  - **OTA vollständig deaktivieren (inkl. manuellem Upload)**: Die
+    OTA-Routenregistrierungen in `src/WebPortal.cpp` (Zeilen 175–228)
+    entfernen und die Firmware neu bauen; oder OTA sowohl ein- als auch
+    ausgehend in der Firewall blockieren
 - **Aktion**: Wenn das Web-Interface nicht benötigt wird, Zugriff über
   Netzwerk-Firewall-Regeln einschränken
 - **Warum**: Weniger Angriffsfläche reduziert Risiken
@@ -156,6 +158,7 @@ Internet
 
 | Quelle     | Ziel        | Port     | Protokoll | Aktion     | Zweck                    |
 | ---------- | ----------- | -------- | --------- | ---------- | ------------------------ |
+| Controller | DNS-Server  | 53       | UDP/TCP   | Erlauben   | Namensauflösung          |
 | Controller | MQTT-Broker | 1883     | TCP       | Erlauben   | MQTT-Kommunikation       |
 | Controller | NTP-Server  | 123      | UDP       | Erlauben   | Zeitsynchronisation      |
 | Controller | Internet    | 80       | TCP       | Blockieren | Kein Webzugriff nötig    |

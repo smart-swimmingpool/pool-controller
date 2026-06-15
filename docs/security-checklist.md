@@ -117,10 +117,11 @@ For advanced setups:
 ### 9. Disable Unused Features
 
 - **Action**: If you don't use OTA updates:
-  - Block outbound HTTPS (port 443) from the controller at your network
-    firewall, **or**
-  - Remove the OTA route registrations in `src/WebPortal.cpp` (lines 175–228)
-    and rebuild the firmware
+  - **To disable GitHub-based OTA only**: Block outbound HTTPS (port 443)
+    from the controller at your network firewall
+  - **To fully disable OTA (including manual upload)**: Remove the OTA route
+    registrations in `src/WebPortal.cpp` (lines 175–228) and rebuild the
+    firmware; or block both inbound and outbound OTA at the firewall
 - **Action**: If you don't need the web interface, restrict access via
   network firewall rules
 - **Why**: Reducing attack surface reduces risk
@@ -150,6 +151,7 @@ Internet
 
 | Source     | Destination | Port | Protocol | Action | Purpose              |
 | ---------- | ----------- | ---- | -------- | ------ | -------------------- |
+| Controller | DNS Server  | 53   | UDP/TCP  | Allow  | Name resolution       |
 | Controller | MQTT Broker | 1883 | TCP      | Allow  | MQTT communication   |
 | Controller | NTP Server  | 123  | UDP      | Allow  | Time sync            |
 | Controller | Internet    | 80   | TCP      | Block  | No web access needed |
