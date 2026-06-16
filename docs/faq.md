@@ -1,275 +1,173 @@
 ---
-title: "❓ FAQ: Häufige Probleme & Lösungen"
-summary: "Antworten auf häufig gestellte Fragen und Lösungen für typische Probleme mit dem Smart Swimmingpool Controller"
-date: "2026-06-14"
-lastmod: "2026-06-14"
-draft: false
-toc: true
+title: Frequently Asked Questions (FAQ)
+summary: Troubleshooting guide for common issues with the Smart Swimming Pool Controller. Structured by category for easy navigation.
 type: docs
-featured: true
-tags: ["docs", "faq", "troubleshooting"]
-menu:
-  docs:
-    parent: Pool Controller
-    name: FAQ
-    weight: 50
+weight: 50
 ---
 
-## 🔍 Häufige Probleme & Lösungen
+# ❓ Frequently Asked Questions (FAQ)
 
-Hier findest du **Antworten auf häufig gestellte Fragen** und **Lösungen
-für typische Probleme** mit dem **Smart Swimmingpool Controller**.
-Falls dein Problem hier nicht aufgelistet ist, erstelle bitte ein
-[Issue auf GitHub](https://github.com/smart-swimmingpool/pool-controller/issues)
-oder frage in den [Discussions](https://github.com/smart-swimmingpool/pool-controller/discussions).
+This FAQ covers **common issues** and their solutions for the **Smart Swimming Pool Controller**. 
+If your problem isn't listed here, check the [Discussions](https://github.com/smart-swimmingpool/smart-swimmingpool.github.io/discussions) or open a new issue on GitHub.
 
 ---
 
-## 📡 **WiFi & Netzwerk**
+## 🚨 Safety & Warnings
 
-### ❌ **Controller verbindet sich nicht mit WiFi**
+### ⚠️ Is this project safe for beginners?
+**No.** This project involves **230V AC mains voltage**, which can be **deadly** if mishandled.
+- **Only proceed if you have basic electronics knowledge** (e.g., understanding of voltage, current, and safety precautions).
+- **Always use a Residual Current Device (RCD/FI circuit breaker)** for the pump circuit.
+- **Disconnect power before working on the circuit.**
+- **If in doubt, consult a qualified electrician.**
+- **This project is NOT certified (no CE/UL mark). For personal use only!**
 
-#### **Symptome:**
-
-- Status-LED blinkt **langsam (1x pro Sekunde)** oder **bleibt im AP-Modus (schnelles Blinken)**.
-- Web-Interface nicht über lokale IP erreichbar.
-
-#### **Lösungen:**
-
-1. **Starte im AP-Modus neu:**
-   - Der Controller startet automatisch im AP-Modus, wenn keine WiFi-Zugangsdaten
-     gespeichert sind oder die Verbindung fehlschlägt.
-   - Falls du ihn manuell in den AP-Modus zwingen möchtest, setze die
-     WiFi-Konfiguration zurück: Web-UI → System → Factory Reset (sofern erreichbar)
-     oder flashe die Firmware neu über USB.
-   - Verbinde dich mit **`Pool-Controller-Setup`** (offenes Netzwerk).
-   - Öffne `http://192.168.4.1` und prüfe die **WiFi-Einstellungen**.
-
-2. **Prüfe die WiFi-Signalstärke:**
-   - Gehe zum **Dashboard**-Tab im Web-Interface.
-   - Prüfe den **RSSI-Wert** (dB).
-     - **> -70 dB:** Gute Verbindung.
-     - **-70 bis -80 dB:** Akzeptabel, aber möglicherweise instabil.
-     - **< -80 dB:** Schlechte Verbindung – Controller näher zum Router platzieren.
-
-3. **Manuelle IP-Adresse zuweisen (falls DHCP fehlschlägt):**
-   - Gehe zu **WiFi Setup** → **Static IP**.
-   - Trage eine **freie IP-Adresse** in deinem Netzwerk ein (z. B. `192.168.1.200`).
+### ⚠️ What safety precautions should I take?
+1. **Use an RCD (FI circuit breaker)** for the pump circuit.
+2. **Keep low-voltage (sensor) wiring separate from mains wiring.**
+3. **Use insulated tools and wear safety glasses.**
+4. **Never work on live circuits.**
+5. **Test connections with a multimeter before powering on.**
 
 ---
 
-### ❌ **Controller verliert WiFi-Verbindung**
+## 🔌 Hardware Issues
 
-#### **Symptome:**
+### 🔹 My DS18B20 sensor is not detected (shows -127°C or "Sensor error")
 
-- Controller funktioniert einige Zeit und **verliert dann die Verbindung**.
+#### **Possible Causes & Solutions**
+| **Cause** | **Solution** | **How to Test** |
+|-----------|--------------|-----------------|
+| Missing 4.7kΩ pull-up resistor | Add a **4.7kΩ resistor** between the DATA line and **3.3V**. | Measure resistance between DATA and 3.3V (should be ~4.7kΩ). |
+| Wrong GPIO pin | Check `PIN_DS_SOLAR` (GPIO32) and `PIN_DS_POOL` (GPIO33) in `src/Config.hpp`. | Verify wiring matches the firmware configuration. |
+| Sensor not connected to 3.3V | Ensure **VDD (red wire)** is connected to **3.3V** (not 5V!). | Measure voltage between VDD and GND (should be ~3.3V). |
+| Sensor not connected to GND | Ensure **GND (black wire)** is connected to **GND**. | Measure continuity between sensor GND and ESP32 GND. |
 
-#### **Lösungen:**
-
-1. **Controller näher zum Router platzieren** oder **WiFi-Repeater** verwenden.
-2. **Konfiguriere statische IP** für den Controller im Router.
-3. **Verwende ein stabileres Netzteil (5V/2A+)**.
+#### **Debugging Steps**
+1. **Check the serial monitor** (115200 baud) for sensor initialization messages.
+2. **Test with a single sensor** (disconnect one and test the other).
 
 ---
 
-## 🌐 **MQTT & Smart Home Integration**
+### 🔹 My relay module doesn't work
 
-### ❌ **MQTT verbindet sich nicht mit dem Broker**
+#### **Possible Causes & Solutions**
+| **Cause** | **Solution** | **How to Test** |
+|-----------|--------------|-----------------|
+| Relay module not powered | Ensure **VCC** is connected to **5V** and **GND** to **GND**. | Measure voltage between VCC and GND (should be ~5V). |
+| Wrong logic level (active-low) | Use an **active-high relay module** or modify firmware. | Check if relay LED lights up when GPIO goes HIGH. |
+| Incorrect GPIO pin | Verify `PIN_RELAY_POOL` (GPIO25) and `PIN_RELAY_SOLAR` (GPIO26). | Check wiring matches firmware configuration. |
 
-#### **Symptome:**
+---
 
-- Status-LED leuchtet **dauerhaft**, aber MQTT-Geräte werden **nicht in Home Assistant/openHAB angezeigt**.
+## 💻 Software & Firmware Issues
 
-#### **Lösungen:**
+### 🔹 How do I update the firmware?
 
-1. **Prüfe die MQTT-Einstellungen:**
-   - **MQTT Host:** `IP deines MQTT-Brokers` (z. B. `192.168.1.50`).
-   - **MQTT Port:** `1883`.
-   - **MQTT Username/Password:** Falls aktiviert.
+#### **Option A: Web Interface (OTA)**
+1. Open **Web Dashboard** (`http://<controller-ip>/`).
+2. Go to **Security & Update** > **OTA Firmware Update**.
+3. Select the `.bin` file and click **Update**.
 
-2. **Teste MQTT manuell:**
+#### **Option B: Arduino IDE/PlatformIO**
+1. Open `pool-controller.ino` in Arduino IDE or PlatformIO.
+2. Click **Upload** (→).
 
+---
+
+### 🔹 My controller doesn't connect to WiFi
+
+#### **Debugging Steps**
+1. **LED Status Codes**:
+   - **Rapid blink (5 Hz)**: AP mode (no WiFi configured).
+   - **Slow blink (1 Hz)**: WiFi connecting.
+   - **Solid on**: Fully connected.
+
+2. **Reconnect via AP Mode**:
+   - Connect to `Pool-Controller-Setup` (open network).
+   - Open `http://192.168.4.1` and reconfigure WiFi.
+
+---
+
+### 🔹 My controller doesn't connect to MQTT
+
+#### **Debugging Steps**
+1. Verify **MQTT Host/IP** and **Port** in Web Dashboard.
+2. Test MQTT manually:
    ```bash
-   mosquitto_pub -h 192.168.1.50 -t "test" -m "hello" -u mqtt_user -P secret
+   mosquitto_sub -h <broker-ip> -t "#" -v
    ```
 
-3. **Prüfe MQTT-Discovery in Home Assistant:**
-   - Aktiviere **MQTT Discovery** in Home Assistant.
-   - Lösche alte Homie-Nachrichten vom Broker:
-
-     ```bash
-     mosquitto_pub -h 192.168.1.50 -t "homie" -n -r
-     ```
-
 ---
 
-### ❌ **Home Assistant erkennt den Controller nicht**
+### 🔹 Home Assistant doesn't discover my controller
 
-#### **Symptome:**
-
-- Controller ist mit MQTT verbunden, aber **keine Geräte werden in Home Assistant angezeigt**.
-
-#### **Lösungen:**
-
-1. **Aktualisiere auf Firmware v3.3.0+** (Homie wird nicht mehr unterstützt).
-2. **Lösche alte Homie-Nachrichten** vom Broker (siehe oben).
-3. **Aktiviere Discovery in Home Assistant:**
-   - Gehe zu **Einstellungen → Geräte & Dienste → MQTT**.
-   - Aktiviere **Discovery**.
-
----
-
-## 🌡️ **Sensoren (DS18B20)**
-
-### ❌ **Sensor zeigt `-127°C` an**
-
-#### **Symptome:**
-
-- Sensor wird im **Web-Interface** oder **MQTT** mit `-127°C` angezeigt.
-
-#### **Lösungen:**
-
-1. **Füge einen 4.7kΩ-Widerstand zwischen DATA und 3.3V hinzu** (Pull-Up).
-2. **Prüfe die GPIO-Pins** in `Config.hpp` (Standard: GPIO32/33).
-3. **Teste den Sensor mit einem einfachen Arduino-Sketch.**
-
----
-
-### ❌ **Sensor zeigt `85°C` oder andere unplausible Werte an**
-
-#### **Symptome:**
-
-- Sensor zeigt **konstant 85°C** oder **sehr hohe Werte** an.
-
-#### **Lösungen:**
-
-1. **Prüfe auf Kurzschlüsse** zwischen DATA und VDD.
-2. **Teste mit einem anderen Sensor.**
-3. **Verwende kürzere Kabel** (max. 30m mit Pull-Up).
-
----
-
-### ❌ **Sensor wird nicht erkannt**
-
-#### **Symptome:**
-
-- Im **Web-Interface** oder **Seriellen Logs** wird **"Sensor not found"** angezeigt.
-
-#### **Lösungen:**
-
-1. **Prüfe die Serielle Ausgabe** (115200 Baud) auf Fehlermeldungen.
-2. **Prüfe die Verkabelung:**
-   - **VDD (rot)** → **3.3V**.
-   - **GND (schwarz)** → **GND**.
-   - **DATA (gelb/weiß)** → **GPIO32/33** + **4.7kΩ zu 3.3V**.
-
----
-
-## 🔌 **Relay-Modul & Pumpen**
-
-### ❌ **Relay klickt nicht**
-
-#### **Symptome:**
-
-- Relay schaltet **nicht** (kein Klick-Geräusch) beim Aktivieren über das Web-Interface.
-
-#### **Lösungen:**
-
-1. **Prüfe die Logik des Relay-Moduls:**
-   - **Aktiv-High:** GPIO **HIGH (3.3V)** → Relay **EIN**.
-   - **Aktiv-Low:** GPIO **LOW (0V)** → Relay **EIN**.
-   - Teste mit einem einfachen Arduino-Sketch.
-
-2. **Prüfe die Stromversorgung:**
-   - **VCC** → **5V** (vom ESP32 VIN oder externem Netzteil).
-   - **GND** → **GND** (gemeinsam mit ESP32).
-
----
-
-### ❌ **Relay klickt, aber Pumpe läuft nicht**
-
-#### **Symptome:**
-
-- Relay **klickt**, aber die **Pumpe startet nicht**.
-
-#### **Lösungen:**
-
-1. **Prüfe die 230V-Verdrahtung:**
-   - **ACHTUNG: Nur für Fachleute!**
-   - **COM** → **Phase (L)** der Pumpe.
-   - **NO** → **Pumpe**.
-   - **Nullleiter (N)** → **Direkt zur Pumpe** (ohne Relay!).
-
-2. **Teste die Pumpe direkt** (über eine Steckdose).
-
----
-
-### ❌ **ESP32 startet neu beim Relay-Schalten**
-
-#### **Symptome:**
-
-- Der **ESP32 startet neu**, wenn das Relay schaltet.
-
-#### **Lösungen:**
-
-1. **Verwende ein stärkeres Netzteil (5V/2A+)**.
-2. **Füge einen 100µF-Kondensator** zwischen **VIN und GND** hinzu.
-
----
-
-## 🔄 **Firmware & Updates**
-
-### ❌ **Firmware-Update schlägt fehl (OTA)**
-
-#### **Symptome:**
-
-- OTA-Update **bricht ab** oder **startet nicht**.
-
-#### **Lösungen:**
-
-1. **Lade die richtige `.bin`-Datei** aus den
-   [Releases](https://github.com/smart-swimmingpool/pool-controller/releases) herunter.
-2. **Führe das Update manuell durch:**
-
+#### **Solution**
+1. **Upgrade to v3.3.0+** (Homie support removed).
+2. **Clear retained MQTT messages**:
    ```bash
-   esptool.py --chip esp32 --port /dev/ttyUSB0 write_flash 0x10000 pool-controller-v3.3.0.bin
+   mosquitto_pub -h <broker> -t "homeassistant" -n -r
    ```
-
-3. **Prüfe das OTA-Passwort** im Web-Interface (**Security & Update**).
-
----
-
-## 🔋 **Stromversorgung**
-
-### ❌ **ESP32 startet nicht oder startet neu**
-
-#### **Symptome:**
-
-- ESP32 **startet nicht** oder **startet neu** (Brownout).
-
-#### **Lösungen:**
-
-1. **Verwende ein stabileres Netzteil (5V/2A+)**.
-2. **Füge einen 100µF-Kondensator** zwischen **VIN und GND** hinzu.
-3. **Prüfe die Spannung** (sollte stabil bei 5V liegen).
+3. **Enable MQTT Discovery** in Home Assistant.
 
 ---
 
-## 📞 **Hilfe & Support**
+## 🌐 Integration Guides
 
-Falls dein Problem hier nicht aufgelistet ist:
+### 🔹 How do I set up Mosquitto on Raspberry Pi?
 
-1. **GitHub Discussions:** [smart-swimmingpool/pool-controller/discussions](https://github.com/smart-swimmingpool/pool-controller/discussions)
-2. **Issue erstellen:** [smart-swimmingpool/pool-controller/issues](https://github.com/smart-swimmingpool/pool-controller/issues)
-   - **Bitte gib folgende Informationen an:**
-     - Firmware-Version (z. B. v3.3.0).
-     - Hardware (ESP32-Modell, Relay-Modul, Sensoren).
-     - Fehlerbeschreibung (Was passiert? Was hast du bereits ausprobiert?).
-     - Serielle Logs (falls verfügbar).
+```bash
+sudo apt-get update && sudo apt-get upgrade
+sudo apt-get install mosquitto mosquitto-clients
+sudo systemctl start mosquitto
+sudo systemctl enable mosquitto
+```
 
 ---
 
-**Viel Erfolg bei der Fehlerbehebung!** 🛠️
+### 🔹 How do I integrate with Node-RED?
 
-*Falls du eine Lösung für ein Problem findest, das hier nicht aufgelistet
-ist, erstelle bitte einen **Pull Request**, um diese FAQ zu erweitern!*
+1. Install Node-RED:
+   ```bash
+   npm install -g node-red
+   node-red
+   ```
+2. Install MQTT nodes:
+   - **Menu > Manage palette > Install > node-red-node-mqtt**
+
+---
+
+## 🔄 Operation & Usage
+
+### 🔹 How do I change the operation mode?
+
+#### **Via Web Dashboard**
+1. Go to **Configuration** tab.
+2. Select **Auto**, **Manual**, **Timer**, or **Boost**.
+
+#### **Via MQTT**
+```bash
+mosquitto_pub -h <broker-ip> -t "homeassistant/select/pool-controller/mode/set" -m "auto"
+```
+
+---
+
+## 📚 Additional Resources
+
+- [Hardware Guide](hardware-guide.md)
+- [MQTT Configuration](mqtt-configuration.md)
+- [Home Assistant Integration](https://github.com/smart-swimmingpool/pool-controller/tree/main/docs/home-assistant)
+- [openHAB Configuration](https://github.com/smart-swimmingpool/openhab-config)
+- [Grafana Dashboard](https://github.com/smart-swimmingpool/grafana-dashboard)
+
+---
+
+## 🤝 Still Need Help?
+
+1. **Search [Discussions](https://github.com/smart-swimmingpool/smart-swimmingpool.github.io/discussions)**.
+2. **Open a [new issue](https://github.com/smart-swimmingpool/pool-controller/issues/new)**.
+
+---
+
+## 📄 License
+This FAQ is part of the **Smart Swimming Pool** project, licensed under the **MIT License**.
