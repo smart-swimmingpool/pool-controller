@@ -228,7 +228,7 @@ a different module — active-high modules are easier to work with.
 {{< figure
   library="true"
   src="../pool-controller_breadboard.png"
-  title="Pool Controller breadboard prototype with ESP32, DS18B20 sensors, pull-up resistors, and relay module"
+  title="Breadboard prototype with ESP32, DS18B20 sensors, 4.7kΩ pull-up resistors, and 2-channel relay module"
   lightbox="true" >}}
 
 > 💡 **Tip**: Use different colored jumper wires for clarity — e.g., red for
