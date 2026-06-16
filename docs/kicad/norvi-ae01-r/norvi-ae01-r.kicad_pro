@@ -1,0 +1,53 @@
+{
+  "board": {
+    "design_settings": { "defaults": {}, "rules": {} },
+    "layer_presets": [],
+    "meta": { "version": 1 },
+    "stackup": {}
+  },
+  "boards": [],
+  "cvpcb": { "equivalence_files": [] },
+  "erc": {
+    "erc_exclusions": [],
+    "meta": { "version": 1 },
+    "pin_map": []
+  },
+  "libraries": {
+    "pinned_footprint_libs": [],
+    "pinned_symbol_libs": []
+  },
+  "meta": { "filename": "norvi-ae01-r.kicad_pro", "version": 1 },
+  "net_settings": {
+    "classes": [],
+    "meta": { "version": 1 },
+    "net_colors": null
+  },
+  "pcbnew": {
+    "last_paths": {},
+    "page_layout_descr_file": ""
+  },
+  "project": { "name": "Pool Controller — NORVI AE01-R", "uuid": "e07b38c4-27e9-4f6c-a707-259b2b186b8e" },
+  "schematic": {
+    "drawing": {
+      "default_line_width": 0,
+      "default_text_size": 1.27,
+      "field_names": [],
+      "intersheets_ref_owners": [],
+      "intersheets_ref_prefix": "",
+      "page_layout_descr_file": "",
+      "plot_directory": "",
+      "sheet": { "page_number": 1, "page_count": 1 }
+    },
+    "meta": { "version": 1 },
+    "net_bus_group_colors": {},
+    "net_colors": null,
+    "page_layout_descr_file": "",
+    "plot_params": {},
+    "title_block": {
+      "company": "Smart Swimmingpool",
+      "date": "2026-06-16",
+      "rev": "1.0",
+      "title": "Pool Controller — NORVI AE01-R"
+    }
+  }
+}

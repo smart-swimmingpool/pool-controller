@@ -1,0 +1,1268 @@
+(kicad_sch
+	(version 20250114)
+	(generator "eeschema")
+	(generator_version "9.0")
+	(uuid "5b98835d-bb6d-42d8-b1f5-6544d6b77257")
+	(paper "A4")
+	(title_block
+		(title "Pool Controller — NORVI AE01-R Schematic")
+		(date "2026-06-16")
+		(rev "1.0")
+		(company "Smart Swimmingpool")
+	)
+	(lib_symbols
+		(symbol "NORVI_AE01R"
+			(pin_names
+				(offset 1.016)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "U"
+				(at 0 -90.0 0)
+				(effects
+					(font
+						(size 1.778 1.778)
+					)
+				)
+			)
+			(property "Value" "NORVI_AE01R"
+				(at 0 90.0 0)
+				(effects
+					(font
+						(size 1.778 1.778)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.016 1.016)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.016 1.016)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "NORVI IIOT-AE01-R Industrial Controller"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "NORVI_AE01R_0_1"
+				(rectangle
+					(start -20.0 -85.0)
+					(end 20.0 85.0)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "NORVI_AE01R_1_1"
+				(pin power_in line
+					(at -20 70 180)
+					(length 5.08)
+					(name "24V_IN"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin power_in line
+					(at -20 60 180)
+					(length 5.08)
+					(name "GND"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin bidirectional line
+					(at -20 35 180)
+					(length 5.08)
+					(name "GPIO25_DAT"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin output line
+					(at -20 15 180)
+					(length 5.08)
+					(name "GPIO14_R0"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "4"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin output line
+					(at -20 5 180)
+					(length 5.08)
+					(name "GPIO12_R1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "5"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin output line
+					(at -20 -10 180)
+					(length 5.08)
+					(name "GPIO27_LED"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "6"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin bidirectional line
+					(at -20 -30 180)
+					(length 5.08)
+					(name "GPIO16_SDA"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "7"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin bidirectional line
+					(at -20 -40 180)
+					(length 5.08)
+					(name "GPIO17_SCL"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "8"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin input line
+					(at -20 -60 180)
+					(length 5.08)
+					(name "GPIO32_BTN"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "9"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin bidirectional line
+					(at -20 -75 180)
+					(length 5.08)
+					(name "GPIO5_ALT"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "10"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+		)
+		(symbol "DS18B20"
+			(pin_names
+				(offset 1.016)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "U"
+				(at 0 -20.0 0)
+				(effects
+					(font
+						(size 1.778 1.778)
+					)
+				)
+			)
+			(property "Value" "DS18B20"
+				(at 0 20.0 0)
+				(effects
+					(font
+						(size 1.778 1.778)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.016 1.016)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.016 1.016)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "Digital Temperature Sensor"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "DS18B20_0_1"
+				(rectangle
+					(start -10.0 -15.0)
+					(end 10.0 15.0)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "DS18B20_1_1"
+				(pin power_in line
+					(at 20 15 0)
+					(length 5.08)
+					(name "VDD"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin bidirectional line
+					(at 20 0 0)
+					(length 5.08)
+					(name "DATA"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin power_in line
+					(at 20 -15 0)
+					(length 5.08)
+					(name "GND"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+		)
+		(symbol "R_4K7"
+			(pin_names
+				(offset 1.016)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "R"
+				(at 0 -10.0 0)
+				(effects
+					(font
+						(size 1.778 1.778)
+					)
+				)
+			)
+			(property "Value" "R_4K7"
+				(at 0 10.0 0)
+				(effects
+					(font
+						(size 1.778 1.778)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.016 1.016)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.016 1.016)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "Resistor 4.7kΩ"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "R_4K7_0_1"
+				(rectangle
+					(start -10.0 -5.0)
+					(end 10.0 5.0)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "R_4K7_1_1"
+				(pin passive line
+					(at -10 0 180)
+					(length 5.08)
+					(name "~"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 10 0 0)
+					(length 5.08)
+					(name "~"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+		)
+		(symbol "R_330"
+			(pin_names
+				(offset 1.016)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "R"
+				(at 0 -10.0 0)
+				(effects
+					(font
+						(size 1.778 1.778)
+					)
+				)
+			)
+			(property "Value" "R_330"
+				(at 0 10.0 0)
+				(effects
+					(font
+						(size 1.778 1.778)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.016 1.016)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.016 1.016)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "Resistor 330Ω"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "R_330_0_1"
+				(rectangle
+					(start -10.0 -5.0)
+					(end 10.0 5.0)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "R_330_1_1"
+				(pin passive line
+					(at -10 0 180)
+					(length 5.08)
+					(name "~"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 10 0 0)
+					(length 5.08)
+					(name "~"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+		)
+		(symbol "LED"
+			(pin_names
+				(offset 1.016)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "D"
+				(at 0 -12.5 0)
+				(effects
+					(font
+						(size 1.778 1.778)
+					)
+				)
+			)
+			(property "Value" "LED"
+				(at 0 12.5 0)
+				(effects
+					(font
+						(size 1.778 1.778)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.016 1.016)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.016 1.016)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "Light Emitting Diode"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "LED_0_1"
+				(rectangle
+					(start -10.0 -7.5)
+					(end 10.0 7.5)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "LED_1_1"
+				(pin passive line
+					(at -10 5 180)
+					(length 5.08)
+					(name "A"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -10 -5 180)
+					(length 5.08)
+					(name "C"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "NORVI_AE01R")
+		(at 100 75 0)
+		(uuid "0596e046-668c-4e00-9fcc-3d60d18bebd4")
+		(property "Reference" "U1"
+			(at 100 80 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "NORVI AE01-R"
+			(at 100 70 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(instances
+			(project "Pool Controller — NORVI AE01-R Schematic"
+				(path "/5b98835d-bb6d-42d8-b1f5-6544d6b77257"
+					(reference "U1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "DS18B20")
+		(at 15 105 0)
+		(uuid "040afdb3-d42b-4095-86c2-f1710152280e")
+		(property "Reference" "U2"
+			(at 15 110 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "DS18B20 Solar"
+			(at 15 100 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(instances
+			(project "Pool Controller — NORVI AE01-R Schematic"
+				(path "/5b98835d-bb6d-42d8-b1f5-6544d6b77257"
+					(reference "U2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "DS18B20")
+		(at 15 80 0)
+		(uuid "06652a70-d9f6-405c-a01c-bd0d47e81e09")
+		(property "Reference" "U3"
+			(at 15 85 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "DS18B20 Pool"
+			(at 15 75 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(instances
+			(project "Pool Controller — NORVI AE01-R Schematic"
+				(path "/5b98835d-bb6d-42d8-b1f5-6544d6b77257"
+					(reference "U3")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "R_4K7")
+		(at 50 92 0)
+		(uuid "91aeb48a-9171-488f-9533-5188c3fee2d1")
+		(property "Reference" "R1"
+			(at 50 97 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "4.7kΩ"
+			(at 50 87 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(instances
+			(project "Pool Controller — NORVI AE01-R Schematic"
+				(path "/5b98835d-bb6d-42d8-b1f5-6544d6b77257"
+					(reference "R1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "R_330")
+		(at 130 30 0)
+		(uuid "e85cdc62-519a-4cc9-8736-c221887e002b")
+		(property "Reference" "R2"
+			(at 130 35 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "330Ω"
+			(at 130 25 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(instances
+			(project "Pool Controller — NORVI AE01-R Schematic"
+				(path "/5b98835d-bb6d-42d8-b1f5-6544d6b77257"
+					(reference "R2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "LED")
+		(at 150 30 0)
+		(uuid "e7391291-0bc9-4e54-a402-86206eed6e44")
+		(property "Reference" "D1"
+			(at 150 35 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "Status LED"
+			(at 150 25 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(instances
+			(project "Pool Controller — NORVI AE01-R Schematic"
+				(path "/5b98835d-bb6d-42d8-b1f5-6544d6b77257"
+					(reference "D1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire
+		(pts
+			(xy 5 150)
+			(xy 80 150)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "95b41344-0b80-4f35-8961-432316b9714e")
+	)
+	(wire
+		(pts
+			(xy 5 15)
+			(xy 160 15)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6effb5bc-620b-4603-9d8a-80ea25b9b1cb")
+	)
+	(wire
+		(pts
+			(xy 50 130)
+			(xy 80 130)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c1dc5c80-7892-42a7-979c-49b82c607e40")
+	)
+	(wire
+		(pts
+			(xy 33 110)
+			(xy 33 150)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "1e180682-a7c9-4cdd-b00a-a82e445e730c")
+	)
+	(wire
+		(pts
+			(xy 33 100)
+			(xy 33 15)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "9113f742-6e7e-473f-9875-982191f75755")
+	)
+	(wire
+		(pts
+			(xy 33 105)
+			(xy 50 105)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "4a6f0fc8-5c15-4e31-93de-f54ab06b4e8b")
+	)
+	(wire
+		(pts
+			(xy 65 105)
+			(xy 80 105)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "438f6e2b-b8b7-4348-85ae-9d5bbfb8c6cd")
+	)
+	(wire
+		(pts
+			(xy 80 105)
+			(xy 80 75)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "221d1314-27f8-4cb3-84fc-bab16fbf559a")
+	)
+	(wire
+		(pts
+			(xy 50 97)
+			(xy 50 130)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6d8ac620-ddde-440d-b8d8-a58a6448dac9")
+	)
+	(wire
+		(pts
+			(xy 33 85)
+			(xy 33 150)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "87fa1579-aedd-42c6-b394-1ce4c04ab538")
+	)
+	(wire
+		(pts
+			(xy 33 75)
+			(xy 33 15)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d47630ed-7785-4e02-8ec6-afa4ce257fe0")
+	)
+	(wire
+		(pts
+			(xy 33 80)
+			(xy 50 80)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "8f5c1b07-9222-4db4-9e16-a6e3f16ab7f6")
+	)
+	(wire
+		(pts
+			(xy 50 80)
+			(xy 50 105)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ea159be1-3726-4f18-b575-0cbb8d4cb31f")
+	)
+	(wire
+		(pts
+			(xy 80 60)
+			(xy 120 60)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "29f9be32-4f69-44f3-a846-e71451da50c5")
+	)
+	(wire
+		(pts
+			(xy 80 50)
+			(xy 120 50)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "35f8a66e-3181-4e65-91c1-4f358dee0e19")
+	)
+	(wire
+		(pts
+			(xy 120 35)
+			(xy 130 35)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "966707fb-1891-4237-a617-6ed7f87ba6ba")
+	)
+	(wire
+		(pts
+			(xy 145 35)
+			(xy 150 35)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "5b7ed36a-b1b8-4a30-8997-55628ef60ab4")
+	)
+	(wire
+		(pts
+			(xy 150 25)
+			(xy 150 15)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d5332ef6-7e1a-4900-a018-4ed8a8d77418")
+	)
+	(wire
+		(pts
+			(xy 130 25)
+			(xy 130 15)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "a6243bfb-22c7-4c17-817c-cc2a8f41f108")
+	)
+	(junction
+		(at 33 150)
+		(diameter 0.8128)
+		(color 0 0 0 0)
+		(uuid "739f8e55-cf9c-4e37-9bef-65669f4320b3")
+	)
+	(junction
+		(at 33 15)
+		(diameter 0.8128)
+		(color 0 0 0 0)
+		(uuid "fa70a2fe-e496-4da1-b83f-f88d21e10881")
+	)
+	(junction
+		(at 50 130)
+		(diameter 0.8128)
+		(color 0 0 0 0)
+		(uuid "bfa95441-e807-4dea-9bb7-42cbb8e5ccf4")
+	)
+	(junction
+		(at 33 150)
+		(diameter 0.8128)
+		(color 0 0 0 0)
+		(uuid "6d03f007-ae6d-4d41-9351-402d62458c2b")
+	)
+	(junction
+		(at 33 15)
+		(diameter 0.8128)
+		(color 0 0 0 0)
+		(uuid "c233fb78-f469-4426-8c8a-7596aaceb097")
+	)
+	(junction
+		(at 50 80)
+		(diameter 0.8128)
+		(color 0 0 0 0)
+		(uuid "b6026f78-fd61-4ef2-83ed-8f83eb12bfb9")
+	)
+	(junction
+		(at 150 15)
+		(diameter 0.8128)
+		(color 0 0 0 0)
+		(uuid "ab89db32-7662-4682-b732-5971aebdb2a9")
+	)
+	(junction
+		(at 130 15)
+		(diameter 0.8128)
+		(color 0 0 0 0)
+		(uuid "ab2b3f40-91f6-4528-afc4-61961ad27fa9")
+	)
+	(label "GPIO25 (DATA)"
+		(at 82 105 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "dffdcb26-3792-4cbd-99df-5e4acefb2aae")
+	)
+	(label "GPIO14 (R0)"
+		(at 82 60 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "b0abc561-fd8b-4ce8-a4f0-c41a5ad52e7e")
+	)
+	(label "GPIO12 (R1)"
+		(at 82 50 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "3b9984ca-d749-4aa1-bc13-c8c96bad1038")
+	)
+	(label "GPIO27 (LED)"
+		(at 82 35 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "8dcb01e7-048a-42d4-9ff3-f9fbf55a07cf")
+	)
+	(global_label "+24V"
+		(at 5 150 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "ba763b47-4a37-4b13-a186-fd683b2cdab9")
+	)
+	(global_label "GND"
+		(at 5 15 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "47e6c88e-d4f6-4dde-9942-d0f4f21795ab")
+	)
+	(global_label "+3.3V"
+		(at 50 130 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "78c8ce74-2245-4a00-a04f-66f8d21a1f48")
+	)
+	(text "DS18B20 Solar"
+		(at 15 120 0)
+		(effects
+			(font
+				(size 1.5 1.5)
+			)
+		)
+		(uuid "4dea1c75-1b4d-47a8-b4d9-80962a688168")
+	)
+	(text "DS18B20 Pool"
+		(at 15 95 0)
+		(effects
+			(font
+				(size 1.5 1.5)
+			)
+		)
+		(uuid "4fc22e44-c665-4904-89c0-ddbf9435f299")
+	)
+	(text "Shared 4.7kΩ pull-up"
+		(at 45 115 0)
+		(effects
+			(font
+				(size 1.0 1.0)
+			)
+		)
+		(uuid "bfb53487-4cd5-459e-9ff4-0be927cebfdd")
+	)
+	(text "NORVI AE01-R"
+		(at 100 100 0)
+		(effects
+			(font
+				(size 1.5 1.5)
+			)
+		)
+		(uuid "84ac88d3-f6eb-4308-9358-8153ecfd57da")
+	)
+	(text "Status LED"
+		(at 145 45 0)
+		(effects
+			(font
+				(size 1.0 1.0)
+			)
+		)
+		(uuid "0c5f4a29-6a14-4e23-befe-9f4635ae21f6")
+	)
+	(text "330Ω"
+		(at 130 20 0)
+		(effects
+			(font
+				(size 1.0 1.0)
+			)
+		)
+		(uuid "8b58e0dd-ac40-4e70-ae0f-b0c20842573c")
+	)
+	(text "Built-in Relays:"
+		(at 85 65 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "16c4b7d0-bb41-4b96-b312-53cd34fbc284")
+	)
+	(text "R0 (GPIO14) → Pool Pump"
+		(at 85 60 0)
+		(effects
+			(font
+				(size 1.0 1.0)
+			)
+		)
+		(uuid "22c5d5fa-07bb-46bb-9cda-de2402f4ab19")
+	)
+	(text "R1 (GPIO12) → Solar Pump"
+		(at 85 50 0)
+		(effects
+			(font
+				(size 1.0 1.0)
+			)
+		)
+		(uuid "f49d01dc-247e-421d-9163-cd7588a73165")
+	)
+	(sheet_instances
+		(path "/"
+			(page "1")
+		)
+	)
+	(embedded_fonts no)
+)

@@ -1,0 +1,1194 @@
+(kicad_sch
+	(version 20250114)
+	(generator "eeschema")
+	(generator_version "9.0")
+	(uuid "b07f4bc8-e580-4e63-8087-63790b11583c")
+	(paper "A4")
+	(title_block
+		(title "Pool Controller — ESP32 Dev Board Schematic")
+		(date "2026-06-16")
+		(rev "1.0")
+		(company "Smart Swimmingpool")
+	)
+	(lib_symbols
+		(symbol "ESP32_DEV_BOARD"
+			(pin_names
+				(offset 1.016)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "U"
+				(at 0 -85.0 0)
+				(effects
+					(font
+						(size 1.778 1.778)
+					)
+				)
+			)
+			(property "Value" "ESP32_DEV_BOARD"
+				(at 0 85.0 0)
+				(effects
+					(font
+						(size 1.778 1.778)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.016 1.016)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.016 1.016)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "ESP32 Development Board"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "ESP32_DEV_BOARD_0_1"
+				(rectangle
+					(start -20.0 -80.0)
+					(end 20.0 80.0)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "ESP32_DEV_BOARD_1_1"
+				(pin power_in line
+					(at -20 70 180)
+					(length 5.08)
+					(name "3V3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin power_in line
+					(at -20 60 180)
+					(length 5.08)
+					(name "GND"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin bidirectional line
+					(at -20 30 180)
+					(length 5.08)
+					(name "GPIO32"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin bidirectional line
+					(at -20 20 180)
+					(length 5.08)
+					(name "GPIO33"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "4"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin output line
+					(at -20 -20 180)
+					(length 5.08)
+					(name "GPIO25"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "5"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin output line
+					(at -20 -30 180)
+					(length 5.08)
+					(name "GPIO26"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "6"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin output line
+					(at -20 -50 180)
+					(length 5.08)
+					(name "GPIO2_LED"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "7"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin power_in line
+					(at -20 -70 180)
+					(length 5.08)
+					(name "VIN_5V"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "8"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+		)
+		(symbol "DS18B20"
+			(pin_names
+				(offset 1.016)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "U"
+				(at 0 -20.0 0)
+				(effects
+					(font
+						(size 1.778 1.778)
+					)
+				)
+			)
+			(property "Value" "DS18B20"
+				(at 0 20.0 0)
+				(effects
+					(font
+						(size 1.778 1.778)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.016 1.016)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.016 1.016)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "Digital Temperature Sensor"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "DS18B20_0_1"
+				(rectangle
+					(start -10.0 -15.0)
+					(end 10.0 15.0)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "DS18B20_1_1"
+				(pin power_in line
+					(at 20 15 0)
+					(length 5.08)
+					(name "VDD"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin bidirectional line
+					(at 20 0 0)
+					(length 5.08)
+					(name "DATA"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin power_in line
+					(at 20 -15 0)
+					(length 5.08)
+					(name "GND"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+		)
+		(symbol "RELAY_2CH"
+			(pin_names
+				(offset 1.016)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "U"
+				(at 0 -25.0 0)
+				(effects
+					(font
+						(size 1.778 1.778)
+					)
+				)
+			)
+			(property "Value" "RELAY_2CH"
+				(at 0 25.0 0)
+				(effects
+					(font
+						(size 1.778 1.778)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.016 1.016)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.016 1.016)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "2-Channel Relay Module (5V, Optocoupler)"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "RELAY_2CH_0_1"
+				(rectangle
+					(start -20.0 -20.0)
+					(end 20.0 20.0)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "RELAY_2CH_1_1"
+				(pin input line
+					(at -20 20 180)
+					(length 5.08)
+					(name "IN1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin input line
+					(at -20 10 180)
+					(length 5.08)
+					(name "IN2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin power_in line
+					(at -20 -5 180)
+					(length 5.08)
+					(name "GND"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin power_in line
+					(at -20 -15 180)
+					(length 5.08)
+					(name "VCC"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "4"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 20 20 0)
+					(length 5.08)
+					(name "COM1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "5"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 20 12 0)
+					(length 5.08)
+					(name "NO1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "6"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 20 -5 0)
+					(length 5.08)
+					(name "COM2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "7"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 20 -13 0)
+					(length 5.08)
+					(name "NO2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "8"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+		)
+		(symbol "R_4K7"
+			(pin_names
+				(offset 1.016)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "R"
+				(at 0 -10.0 0)
+				(effects
+					(font
+						(size 1.778 1.778)
+					)
+				)
+			)
+			(property "Value" "R_4K7"
+				(at 0 10.0 0)
+				(effects
+					(font
+						(size 1.778 1.778)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.016 1.016)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.016 1.016)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "Resistor 4.7kΩ"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "R_4K7_0_1"
+				(rectangle
+					(start -10.0 -5.0)
+					(end 10.0 5.0)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "R_4K7_1_1"
+				(pin passive line
+					(at -10 0 180)
+					(length 5.08)
+					(name "~"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 10 0 0)
+					(length 5.08)
+					(name "~"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "ESP32_DEV_BOARD")
+		(at 100 75 0)
+		(uuid "f6c3f516-15fe-4cdb-ade0-a4b035e9ebd4")
+		(property "Reference" "U1"
+			(at 100 80 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "ESP32 Dev Board"
+			(at 100 70 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(instances
+			(project "Pool Controller — ESP32 Dev Board Schematic"
+				(path "/b07f4bc8-e580-4e63-8087-63790b11583c"
+					(reference "U1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "DS18B20")
+		(at 20 110 0)
+		(uuid "54f71006-3332-43c5-be17-d777ea842460")
+		(property "Reference" "U2"
+			(at 20 115 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "DS18B20 Solar"
+			(at 20 105 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(instances
+			(project "Pool Controller — ESP32 Dev Board Schematic"
+				(path "/b07f4bc8-e580-4e63-8087-63790b11583c"
+					(reference "U2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "DS18B20")
+		(at 20 40 0)
+		(uuid "4e02ddc0-9cbb-4ee3-bd44-ff4071974ce6")
+		(property "Reference" "U3"
+			(at 20 45 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "DS18B20 Pool"
+			(at 20 35 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(instances
+			(project "Pool Controller — ESP32 Dev Board Schematic"
+				(path "/b07f4bc8-e580-4e63-8087-63790b11583c"
+					(reference "U3")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "R_4K7")
+		(at 55 110 0)
+		(uuid "48a64650-67ef-4f6d-89c5-6097ade10513")
+		(property "Reference" "R1"
+			(at 55 115 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "4.7kΩ"
+			(at 55 105 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(instances
+			(project "Pool Controller — ESP32 Dev Board Schematic"
+				(path "/b07f4bc8-e580-4e63-8087-63790b11583c"
+					(reference "R1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "R_4K7")
+		(at 55 40 0)
+		(uuid "bec46141-134d-40c2-90e6-05c7ba39ca4f")
+		(property "Reference" "R2"
+			(at 55 45 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "4.7kΩ"
+			(at 55 35 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(instances
+			(project "Pool Controller — ESP32 Dev Board Schematic"
+				(path "/b07f4bc8-e580-4e63-8087-63790b11583c"
+					(reference "R2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "RELAY_2CH")
+		(at 160 60 0)
+		(uuid "5660cc37-d49c-4c1d-90a0-a18a5a790f9f")
+		(property "Reference" "K1"
+			(at 160 65 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "2-Ch Relay Module"
+			(at 160 55 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(instances
+			(project "Pool Controller — ESP32 Dev Board Schematic"
+				(path "/b07f4bc8-e580-4e63-8087-63790b11583c"
+					(reference "K1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire
+		(pts
+			(xy 5 145)
+			(xy 80 145)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "29b2ff9b-cc70-4746-93f2-b7975c22e8c3")
+	)
+	(wire
+		(pts
+			(xy 5 15)
+			(xy 160 15)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "0b29f321-6a15-4ba4-a534-03d2e636870f")
+	)
+	(wire
+		(pts
+			(xy 130 85)
+			(xy 155 85)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b3fee142-057c-407c-938a-3a0236c57df6")
+	)
+	(wire
+		(pts
+			(xy 38 115)
+			(xy 38 145)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e8e9c62c-6739-4c34-a406-10bcce68c5c7")
+	)
+	(wire
+		(pts
+			(xy 38 105)
+			(xy 38 15)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b12687a0-c9f8-41ae-a31a-37ebb37169f4")
+	)
+	(wire
+		(pts
+			(xy 38 110)
+			(xy 55 110)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "095889eb-8c10-460d-abd6-14a51da33fde")
+	)
+	(wire
+		(pts
+			(xy 70 110)
+			(xy 80 110)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "870092e8-c2b7-472f-8b41-1f928fd9ea4b")
+	)
+	(wire
+		(pts
+			(xy 80 110)
+			(xy 80 75)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "00daa298-6c3c-42c6-8a7d-556ff937eb6f")
+	)
+	(wire
+		(pts
+			(xy 55 115)
+			(xy 55 145)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "60bb7b54-4bb5-4df3-a4b7-805f94048491")
+	)
+	(wire
+		(pts
+			(xy 38 45)
+			(xy 38 15)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "2a5c5f0d-575e-4cde-8d6a-478c05ad9d5e")
+	)
+	(wire
+		(pts
+			(xy 38 35)
+			(xy 38 145)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "31997547-56bd-4762-b06a-ae852e211c57")
+	)
+	(wire
+		(pts
+			(xy 38 40)
+			(xy 55 40)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "76734013-19b5-48de-8b93-1c62f2cb756f")
+	)
+	(wire
+		(pts
+			(xy 70 40)
+			(xy 80 40)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "1d58c13f-b2a5-4b6a-a36b-f166377602d7")
+	)
+	(wire
+		(pts
+			(xy 80 40)
+			(xy 80 63)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "cb80b74a-6985-465c-a602-2b0804a18664")
+	)
+	(wire
+		(pts
+			(xy 55 35)
+			(xy 55 145)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ab2d9532-b83a-40b5-9b80-2f84d1076b61")
+	)
+	(wire
+		(pts
+			(xy 120 80)
+			(xy 145 80)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b3cba2ad-069a-4a59-9d12-4a08644217ed")
+	)
+	(wire
+		(pts
+			(xy 120 70)
+			(xy 145 70)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "8f7af4b7-c1ae-4436-9229-e8e439a939dc")
+	)
+	(wire
+		(pts
+			(xy 145 55)
+			(xy 145 15)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "807d7d35-55ca-4f5f-ba3e-57514ed095cf")
+	)
+	(junction
+		(at 38 145)
+		(diameter 0.8128)
+		(color 0 0 0 0)
+		(uuid "f46034e3-238d-4577-8885-ef83c2544d7c")
+	)
+	(junction
+		(at 38 15)
+		(diameter 0.8128)
+		(color 0 0 0 0)
+		(uuid "cd89b386-aed8-4429-93cb-eabff805ad5d")
+	)
+	(junction
+		(at 55 145)
+		(diameter 0.8128)
+		(color 0 0 0 0)
+		(uuid "08f9a8cf-f719-4f3c-acc9-fcf877cc9135")
+	)
+	(junction
+		(at 38 15)
+		(diameter 0.8128)
+		(color 0 0 0 0)
+		(uuid "4151e632-25a8-49c2-afd4-74525041f798")
+	)
+	(junction
+		(at 38 145)
+		(diameter 0.8128)
+		(color 0 0 0 0)
+		(uuid "5d23a94e-501f-43a3-a36e-1d41847217d9")
+	)
+	(junction
+		(at 55 145)
+		(diameter 0.8128)
+		(color 0 0 0 0)
+		(uuid "3bb6079a-80b8-467a-9d62-b2e2c3e72a66")
+	)
+	(junction
+		(at 145 15)
+		(diameter 0.8128)
+		(color 0 0 0 0)
+		(uuid "fc470a5f-aaa9-4628-ba9a-cc8c2d3bfaf5")
+	)
+	(label "GPIO32"
+		(at 82 110 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "bf79629a-81ce-4cfb-b10a-db9de22af0ee")
+	)
+	(label "GPIO33"
+		(at 82 40 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "fb88ce88-e225-48b4-b9ce-381b95af879b")
+	)
+	(label "GPIO25"
+		(at 82 80 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "9742b213-0bb0-47ba-93c5-bd71bddc2a05")
+	)
+	(label "GPIO26"
+		(at 82 70 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "b93ec154-7837-4c48-a555-3a2cf2cb109e")
+	)
+	(global_label "+3.3V"
+		(at 5 145 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "ec0408bd-4398-44d8-a15e-92fc078203b9")
+	)
+	(global_label "+5V"
+		(at 130 85 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "82ef5da3-f5ae-46f0-9e4c-2d0e68dbcb6a")
+	)
+	(global_label "GND"
+		(at 5 15 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "8705dde3-36eb-4944-9d2b-532085a996db")
+	)
+	(text "DS18B20 Solar"
+		(at 20 125 0)
+		(effects
+			(font
+				(size 1.5 1.5)
+			)
+		)
+		(uuid "5076f89b-b464-480c-8a24-992f645f334a")
+	)
+	(text "DS18B20 Pool"
+		(at 20 55 0)
+		(effects
+			(font
+				(size 1.5 1.5)
+			)
+		)
+		(uuid "c79ccfd2-5b27-4f63-879f-fa0c895e87c4")
+	)
+	(text "4.7kΩ pull-up to 3V3"
+		(at 50 125 0)
+		(effects
+			(font
+				(size 1.0 1.0)
+			)
+		)
+		(uuid "7c41b45c-3f9d-4884-bf78-67845ee5c645")
+	)
+	(text "4.7kΩ pull-up to 3V3"
+		(at 50 55 0)
+		(effects
+			(font
+				(size 1.0 1.0)
+			)
+		)
+		(uuid "5249a74a-1033-4420-9556-e9a109b64d62")
+	)
+	(text "ESP32 Dev Board"
+		(at 100 100 0)
+		(effects
+			(font
+				(size 1.5 1.5)
+			)
+		)
+		(uuid "15909955-c2c5-4f70-bfe2-a50e66068ad2")
+	)
+	(text "2-Ch Relay Module"
+		(at 160 85 0)
+		(effects
+			(font
+				(size 1.5 1.5)
+			)
+		)
+		(uuid "b36a7b72-75d5-441e-866d-724a5db8500c")
+	)
+	(sheet_instances
+		(path "/"
+			(page "1")
+		)
+	)
+	(embedded_fonts no)
+)
