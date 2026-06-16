@@ -26,7 +26,7 @@
     "last_paths": {},
     "page_layout_descr_file": ""
   },
-  "project": { "name": "Pool Controller — ESP32 Dev Board", "uuid": "3fa0c186-31b5-4769-a039-b9c5b38d7a62" },
+  "project": { "name": "Pool Controller — ESP32 Dev Board", "uuid": "2c5a4816-d559-499d-be37-865967151850" },
   "schematic": {
     "drawing": {
       "default_line_width": 0,
