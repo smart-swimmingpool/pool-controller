@@ -16,7 +16,7 @@ inline char* dtostrf(double val, int width, int precision, char* buf) {
   // not the actual buffer. Use 8 as a safe minimum — floatToString() callers
   // ensure bufferSize >= 8 before calling dtostrf, so writing up to 7 chars
   // plus null terminator is always safe and never truncates typical values.
-  snprintf(buf, 8, "%*.*f", width, precision, val);
+  snprintf(buf, 8, "%*.*f", width, precision, val);  // NOLINT(runtime/printf)
   return buf;
 }
 
