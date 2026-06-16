@@ -138,8 +138,8 @@ NORVI_PINS = [
 ]
 
 LED_PINS = [
-    (Q("A"), "1", -10,  5, 180, "passive"),
-    (Q("C"), "2", -10, -5, 180, "passive"),
+    (Q("A"), "1", -10, 0, 180, "passive"),
+    (Q("C"), "2",  10, 0,   0, "passive"),
 ]
 
 # ─── Schematic builder ───────────────────────────────────────────────────
@@ -487,74 +487,66 @@ def build_variant1(out_dir):
     sch.add_part("DS18B20", "DS18B20 Solar", "U2", 20, 110)
     sch.add_part("DS18B20", "DS18B20 Pool", "U3", 20, 40)
 
-    # Pull-up resistors
-    sch.add_part("R_4K7", "4.7kΩ", "R1", 55, 110)
-    sch.add_part("R_4K7", "4.7kΩ", "R2", 55, 40)
+    # Pull-up resistors — vertical (rot=90) so Pin1 is on the data line and Pin2 goes to +3.3V
+    # R1 at (60, 100) rot=90: Pin1=(60,110) data side, Pin2=(60,90) VDD side
+    sch.add_part("R_4K7", "4.7kΩ", "R1", 60, 100, 90)
+    # R2 at (60, 30) rot=90: Pin1=(60,40) data side, Pin2=(60,20) VDD side
+    sch.add_part("R_4K7", "4.7kΩ", "R2", 60, 30, 90)
 
     # Relay module on right
     sch.add_part("RELAY_2CH", "2-Ch Relay Module", "K1", 160, 60)
 
     # ═══ WIRING ═══
+    # Absolute pin coordinates (y_abs = y_inst − py_pin; x_abs = x_inst + px_pin):
+    #   U1 (100,75): 3V3=(80,5) GND=(80,15) GPIO32=(80,45) GPIO33=(80,55)
+    #                GPIO25=(80,95) GPIO26=(80,105) VIN_5V=(80,145)
+    #   U2 (20,110): VDD=(40,95) DATA=(40,110) GND=(40,125)
+    #   U3 (20,40):  VDD=(40,25) DATA=(40,40)  GND=(40,55)
+    #   R1 (60,100) rot=90: Pin1=(60,110) Pin2=(60,90)
+    #   R2 (60,30)  rot=90: Pin1=(60,40)  Pin2=(60,20)
+    #   K1 (160,60): IN1=(140,40) IN2=(140,50) GND=(140,65) VCC=(140,75)
 
-    # 3.3V rail
-    sch.wire(5, 145, 80, 145)
-    sch.power("+3.3V", 5, 145)
+    # ── Power symbols on each supply pin ──
+    sch.power("+3.3V", 80, 5)       # U1 3V3 pin
+    sch.gnd(80, 15)                 # U1 GND pin
+    sch.power("+5V", 80, 145)       # U1 VIN_5V for relay module
 
-    # GND rail
-    sch.wire(5, 15, 160, 15)
-    # GND label is placed below the rail
+    sch.power("+3.3V", 40, 95)      # U2 Solar VDD
+    sch.gnd(40, 125)                # U2 Solar GND
+    sch.power("+3.3V", 40, 25)      # U3 Pool VDD
+    sch.gnd(40, 55)                 # U3 Pool GND
 
-    # 5V rail for relay
-    sch.wire(130, 85, 155, 85)
-    sch.power("+5V", 130, 85)
+    sch.power("+3.3V", 60, 90)      # R1 Pin2 (pull-up VDD)
+    sch.power("+3.3V", 60, 20)      # R2 Pin2 (pull-up VDD)
 
-    # Solar sensor VDD and GND
-    sch.wire(38, 115, 38, 145)  # VDD to 3.3V
-    sch.junction(38, 145)
-    sch.wire(38, 105, 38, 15)   # GND to GND
-    sch.junction(38, 15)
+    sch.gnd(140, 65)                # K1 GND
+    sch.power("+5V", 140, 75)       # K1 VCC
 
-    # Solar DATA -> R1 -> GPIO32
-    sch.wire(38, 110, 55, 110)   # sensor DATA to R1 left
-    sch.wire(70, 110, 80, 110)   # R1 right to vertical
-    sch.wire(80, 110, 80, 75)    # vertical down to ESP32 GPIO32
-    sch.wire(55, 115, 55, 145)   # R1 pull-up to 3.3V
-    sch.junction(55, 145)
+    # ── Solar data: U2 DATA (40,110) → R1 Pin1 (60,110) → net label "GPIO32" ──
+    sch.wire(40, 110, 65, 110)
+    sch.junction(60, 110)           # junction at R1 Pin1 on the data wire
+    sch.label("GPIO32", 65, 110, 0)
+    sch.label("GPIO32", 80, 45, 0)  # same net label at ESP32 GPIO32 pin
 
-    # Pool sensor VDD and GND
-    sch.wire(38, 45, 38, 15)     # GND to GND
-    sch.junction(38, 15)
-    sch.wire(38, 35, 38, 145)    # VDD to 3.3V
-    sch.junction(38, 145)
+    # ── Pool data: U3 DATA (40,40) → R2 Pin1 (60,40) → net label "GPIO33" ──
+    sch.wire(40, 40, 65, 40)
+    sch.junction(60, 40)            # junction at R2 Pin1 on the data wire
+    sch.label("GPIO33", 65, 40, 0)
+    sch.label("GPIO33", 80, 55, 0)  # same net label at ESP32 GPIO33 pin
 
-    # Pool DATA -> R2 -> GPIO33
-    sch.wire(38, 40, 55, 40)     # sensor DATA to R2 left
-    sch.wire(70, 40, 80, 40)     # R2 right to vertical
-    sch.wire(80, 40, 80, 63)     # vertical up to ESP32 GPIO33
-    sch.wire(55, 35, 55, 145)    # R2 pull-up to 3.3V
-    sch.junction(55, 145)
-
-    # Relay connections
-    sch.wire(120, 80, 145, 80)   # GPIO25 to IN1
-    sch.wire(120, 70, 145, 70)   # GPIO26 to IN2
-    sch.wire(145, 55, 145, 15)   # Relay GND to GND rail
-    sch.junction(145, 15)
-
-    # GND symbol at bottom of GND rail
-    sch.gnd(5, 15)
+    # ── Relay control via matching net labels ──
+    sch.label("GPIO25", 80, 95, 0)      # at ESP32 GPIO25 pin
+    sch.label("GPIO25", 140, 40, 180)   # at K1 IN1 pin
+    sch.label("GPIO26", 80, 105, 0)     # at ESP32 GPIO26 pin
+    sch.label("GPIO26", 140, 50, 180)   # at K1 IN2 pin
 
     # ═══ LABELS ═══
     sch.text("DS18B20 Solar", 20, 125, 1.5)
     sch.text("DS18B20 Pool", 20, 55, 1.5)
-    sch.text("4.7kΩ pull-up to 3V3", 50, 125, 1.0)
-    sch.text("4.7kΩ pull-up to 3V3", 50, 55, 1.0)
+    sch.text("4.7kΩ pull-up to 3V3", 62, 105, 1.0)
+    sch.text("4.7kΩ pull-up to 3V3", 62, 35, 1.0)
     sch.text("ESP32 Dev Board", 100, 100, 1.5)
     sch.text("2-Ch Relay Module", 160, 85, 1.5)
-
-    sch.label("GPIO32", 82, 110, 0)
-    sch.label("GPIO33", 82, 40, 0)
-    sch.label("GPIO25", 82, 80, 0)
-    sch.label("GPIO26", 82, 70, 0)
 
     sch_path = os.path.join(out_dir, "esp32-dev-board.kicad_sch")
     sch.save(sch_path)
@@ -591,71 +583,63 @@ def build_variant2(out_dir):
     sch.add_part("NORVI_AE01R", "NORVI AE01-R", "U1", 100, 75)
     sch.add_part("DS18B20", "DS18B20 Solar", "U2", 15, 105)
     sch.add_part("DS18B20", "DS18B20 Pool", "U3", 15, 80)
-    sch.add_part("R_4K7", "4.7kΩ", "R1", 50, 92)
+    # R1 horizontal at (65, 90): Pin1=(55,90) data-bus side, Pin2=(75,90) → +3.3V
+    sch.add_part("R_4K7", "4.7kΩ", "R1", 65, 90)
     sch.add_part("R_330", "330Ω", "R2", 130, 30)
     sch.add_part("LED", "Status LED", "D1", 150, 30)
 
     # ═══ WIRING ═══
+    # Absolute pin coordinates (y_abs = y_inst − py_pin):
+    #   U1 (100,75): 24V_IN=(80,5) GND=(80,15) GPIO25_DAT=(80,40)
+    #                GPIO14_R0=(80,60) GPIO12_R1=(80,70) GPIO27_LED=(80,85)
+    #   U2 (15,105): VDD=(35,90)  DATA=(35,105) GND=(35,120)
+    #   U3 (15,80):  VDD=(35,65)  DATA=(35,80)  GND=(35,95)
+    #   R1 (65,90):  Pin1=(55,90) Pin2=(75,90)
+    #   R2 (130,30): Pin1=(120,30) Pin2=(140,30)
+    #   D1 (150,30): A=(140,30) C=(160,30)
 
-    # 24V power rail
-    sch.wire(5, 150, 80, 150)
-    sch.power("+24V", 5, 150)
+    # ── Power symbols ──
+    sch.power("+24V", 80, 5)        # U1 24V_IN
+    sch.gnd(80, 15)                 # U1 GND
+    sch.power("+3.3V", 35, 90)      # U2 Solar VDD
+    sch.gnd(35, 120)                # U2 Solar GND
+    sch.power("+3.3V", 35, 65)      # U3 Pool VDD
+    sch.gnd(35, 95)                 # U3 Pool GND
+    sch.power("+3.3V", 75, 90)      # R1 Pin2 (pull-up VDD)
+    sch.gnd(160, 30)                # D1 Cathode → GND
 
-    # GND rail
-    sch.wire(5, 15, 160, 15)
-    sch.gnd(5, 15)
-
-    # 3.3V rail (from NORVI internal regulator)
-    sch.wire(50, 130, 80, 130)
-    sch.power("+3.3V", 50, 130)
-
-    # Solar sensor (VDD → 3.3V, NOT 24V — DS18B20 max is 5.5V)
-    sch.wire(33, 110, 33, 130)  # VDD to 3.3V
-    sch.junction(33, 130)
-    sch.wire(33, 100, 33, 15)   # GND
-    sch.junction(33, 15)
-    sch.wire(33, 105, 50, 105)  # DATA to shared bus
-    sch.wire(65, 105, 80, 105)  # bus to vertical
-    sch.wire(80, 105, 80, 75)   # vertical to NORVI GPIO25
-    sch.wire(50, 97, 50, 130)   # R1 pull-up to 3.3V
-    sch.junction(50, 130)
-
-    # Pool sensor (VDD → 3.3V, NOT 24V)
-    sch.wire(33, 85, 33, 130)   # VDD to 3.3V
-    sch.junction(33, 130)
-    sch.wire(33, 75, 33, 15)    # GND
-    sch.junction(33, 15)
-    sch.wire(33, 80, 50, 80)    # DATA to shared bus
-    sch.wire(50, 80, 50, 105)   # join with solar DATA at R1 left
+    # ── Shared 1-Wire data bus at x=50 ──
+    # Vertical bus connecting NORVI GPIO25 (80,40) ↔ Pool DATA (35,80) ↔ Solar DATA (35,105)
+    sch.wire(50, 40, 50, 105)       # vertical data bus
+    sch.wire(50, 40, 80, 40)        # bus → NORVI GPIO25_DAT
+    sch.wire(35, 105, 50, 105)      # U2 Solar DATA → bus
+    sch.wire(35, 80, 50, 80)        # U3 Pool DATA → bus
     sch.junction(50, 80)
+    sch.junction(50, 105)
 
-    # Built-in relays
-    sch.wire(80, 60, 120, 60)   # GPIO14 to R0
-    sch.wire(80, 50, 120, 50)   # GPIO12 to R1
+    # R1 pull-up: short wire from bus at (50,90) to R1 Pin1 (55,90)
+    sch.wire(50, 90, 55, 90)
+    sch.junction(50, 90)            # junction on vertical data bus
 
-    # Status LED circuit
-    sch.wire(120, 35, 130, 35)  # GPIO27 to R2
-    sch.wire(145, 35, 150, 35)  # R2 to LED
-    sch.wire(150, 25, 150, 15)  # LED to GND
-    sch.junction(150, 15)
-    sch.wire(130, 25, 130, 15)  # R2 GND
-    sch.junction(130, 15)
+    # ── Relay net labels (built-in relays, no external component) ──
+    sch.label("GPIO14_R0", 80, 60, 0)    # Pool Pump relay output
+    sch.label("GPIO12_R1", 80, 70, 0)    # Solar Pump relay output
+
+    # ── Status LED circuit ──
+    # GPIO27_LED (80,85) → R2 Pin1 (120,30) via net label → R2 Pin2 (140,30) → D1 A (140,30) → D1 C (160,30) → GND
+    sch.label("GPIO27_LED", 80, 85, 0)      # at NORVI GPIO27 pin
+    sch.label("GPIO27_LED", 120, 30, 180)   # at R2 Pin1 (label text goes left)
 
     # ═══ LABELS ═══
     sch.text("DS18B20 Solar", 15, 120, 1.5)
     sch.text("DS18B20 Pool", 15, 95, 1.5)
-    sch.text("Shared 4.7kΩ pull-up", 45, 115, 1.0)
+    sch.text("Shared 4.7kΩ pull-up", 55, 85, 1.0)
     sch.text("NORVI AE01-R", 100, 100, 1.5)
     sch.text("Status LED", 145, 45, 1.0)
     sch.text("330Ω", 130, 20, 1.0)
     sch.text("Built-in Relays:", 85, 65, 1.27)
     sch.text("R0 (GPIO14) → Pool Pump", 85, 60, 1.0)
-    sch.text("R1 (GPIO12) → Solar Pump", 85, 50, 1.0)
-
-    sch.label("GPIO25 (DATA)", 82, 105, 0)
-    sch.label("GPIO14 (R0)", 82, 60, 0)
-    sch.label("GPIO12 (R1)", 82, 50, 0)
-    sch.label("GPIO27 (LED)", 82, 35, 0)
+    sch.text("R1 (GPIO12) → Solar Pump", 85, 70, 1.0)
 
     sch_path = os.path.join(out_dir, "norvi-ae01-r.kicad_sch")
     sch.save(sch_path)
