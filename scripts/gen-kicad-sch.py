@@ -138,6 +138,7 @@ NORVI_PINS = [
 ]
 
 LED_PINS = [
+    # Horizontal orientation: anode (A) exits left at x=−10, cathode (C) exits right at x=+10
     (Q("A"), "1", -10, 0, 180, "passive"),
     (Q("C"), "2",  10, 0,   0, "passive"),
 ]
@@ -487,7 +488,8 @@ def build_variant1(out_dir):
     sch.add_part("DS18B20", "DS18B20 Solar", "U2", 20, 110)
     sch.add_part("DS18B20", "DS18B20 Pool", "U3", 20, 40)
 
-    # Pull-up resistors — vertical (rot=90) so Pin1 is on the data line and Pin2 goes to +3.3V
+    # Pull-up resistors — vertical (rot=90) so Pin1 is on the data line and Pin2 goes to +3.3V.
+    # For rot=90 with RES_PINS at py=±10: y_abs = y_inst ∓ 10 → Pin1=(xi, yi+10) / Pin2=(xi, yi−10).
     # R1 at (60, 100) rot=90: Pin1=(60,110) data side, Pin2=(60,90) VDD side
     sch.add_part("R_4K7", "4.7kΩ", "R1", 60, 100, 90)
     # R2 at (60, 30) rot=90: Pin1=(60,40) data side, Pin2=(60,20) VDD side
@@ -583,7 +585,7 @@ def build_variant2(out_dir):
     sch.add_part("NORVI_AE01R", "NORVI AE01-R", "U1", 100, 75)
     sch.add_part("DS18B20", "DS18B20 Solar", "U2", 15, 105)
     sch.add_part("DS18B20", "DS18B20 Pool", "U3", 15, 80)
-    # R1 horizontal at (65, 90): Pin1=(55,90) data-bus side, Pin2=(75,90) → +3.3V
+    # R1 horizontal (rot=0) at (65, 90): x_abs = x_inst ∓ 10 → Pin1=(55,90) data-bus, Pin2=(75,90) +3.3V
     sch.add_part("R_4K7", "4.7kΩ", "R1", 65, 90)
     sch.add_part("R_330", "330Ω", "R2", 130, 30)
     sch.add_part("LED", "Status LED", "D1", 150, 30)
