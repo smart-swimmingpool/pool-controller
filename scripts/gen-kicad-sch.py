@@ -609,9 +609,9 @@ def build_variant2(out_dir):
     sch.wire(50, 130, 80, 130)
     sch.power("+3.3V", 50, 130)
 
-    # Solar sensor
-    sch.wire(33, 110, 33, 150)  # VDD to 24V
-    sch.junction(33, 150)
+    # Solar sensor (VDD → 3.3V, NOT 24V — DS18B20 max is 5.5V)
+    sch.wire(33, 110, 33, 130)  # VDD to 3.3V
+    sch.junction(33, 130)
     sch.wire(33, 100, 33, 15)   # GND
     sch.junction(33, 15)
     sch.wire(33, 105, 50, 105)  # DATA to shared bus
@@ -620,9 +620,9 @@ def build_variant2(out_dir):
     sch.wire(50, 97, 50, 130)   # R1 pull-up to 3.3V
     sch.junction(50, 130)
 
-    # Pool sensor
-    sch.wire(33, 85, 33, 150)   # VDD to 24V
-    sch.junction(33, 150)
+    # Pool sensor (VDD → 3.3V, NOT 24V)
+    sch.wire(33, 85, 33, 130)   # VDD to 3.3V
+    sch.junction(33, 130)
     sch.wire(33, 75, 33, 15)    # GND
     sch.junction(33, 15)
     sch.wire(33, 80, 50, 80)    # DATA to shared bus
