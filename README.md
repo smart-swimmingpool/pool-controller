@@ -10,6 +10,7 @@
 ---
 
 > **⚠️ WARNING: This project involves 230V AC mains voltage!**
+>
 > - **Only proceed if you have basic electronics knowledge.**
 > - **Always use a Residual Current Device (RCD/FI circuit breaker) for the pump circuit.**
 > - **Disconnect power before working on the circuit.**
@@ -21,7 +22,9 @@
 
 ## 🏊 The MQTT-enabled Smart Swimming Pool Controller 🎛️
 
-Manage your swimming pool the smart way - enjoy it in a **comfortable and affordable (less than 100€)** way with **professional-grade reliability**.
+Manage your swimming pool the smart way - enjoy it in a
+**comfortable and affordable (less than 100€)** way with
+**professional-grade reliability**.
 
 🔗 **Discussions:** [GitHub Discussions](https://github.com/smart-swimmingpool/smart-swimmingpool.github.io/discussions)
 
@@ -30,6 +33,7 @@ Manage your swimming pool the smart way - enjoy it in a **comfortable and afford
 ## 🚀 Quick Start
 
 **New to the project?** Start here:
+
 - [📖 **Quick Start Guide**](docs/quick-start.md) – Step-by-step setup for beginners (recommended!)
 - [❓ **Frequently Asked Questions (FAQ)**](docs/faq.md) – Troubleshooting common issues
 
@@ -46,7 +50,8 @@ Manage your swimming pool the smart way - enjoy it in a **comfortable and afford
 
 ### 🌐 MQTT Integration
 
-- ✅ **[Home Assistant MQTT Discovery](https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery)** – Native HA integration (v3.3.0+)
+- ✅ **[Home Assistant MQTT Discovery](https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery)** –
+  Native HA integration (v3.3.0+)
 - ✅ **Independent of specific smart home servers**
   - ✅ [Home Assistant](https://www.home-assistant.io/) via MQTT Discovery
   - ✅ [openHAB](https://www.openhab.org) via MQTT (manual configuration required)
@@ -98,32 +103,39 @@ Manage your swimming pool the smart way - enjoy it in a **comfortable and afford
 
 ## 📚 Documentation
 
-| **Guide** | **Description** | **For** |
-|-----------|-----------------|---------|
-| [Quick Start Guide](docs/quick-start.md) | Step-by-step setup for beginners | 🆕 **New users** |
-| [FAQ](docs/faq.md) | Troubleshooting common issues | ❓ **All users** |
-| [Users Guide](docs/users-guide.md) | Web dashboard, operation modes, MQTT | 🎛️ **Intermediate users** |
-| [Hardware Guide](docs/hardware-guide.md) | Assembly, wiring, parts list | 🔧 **Builders** |
-| [MQTT Configuration](docs/mqtt-configuration.md) | Home Assistant Discovery, entity reference | 🌐 **Smart home integrators** |
-| [State Persistence](docs/state-persistence.md) | How settings are saved across reboots | 💾 **Advanced users** |
-| [OTA Updates](docs/ota-updates.md) | Remote firmware updates | 📡 **Developers** |
-| [ESP32 Schematic Optimization (DE)](docs/esp32-schematic-optimization-de.md) | Pin assignment and optimization | 🔌 **Hardware experts** |
+| **Guide**                                                                    | **Description**                            | **For**                       |
+| ---------------------------------------------------------------------------- | ------------------------------------------ | ----------------------------- |
+| [Quick Start Guide](docs/quick-start.md)                                     | Step-by-step setup for beginners           | 🆕 **New users**              |
+| [FAQ](docs/faq.md)                                                           | Troubleshooting common issues              | ❓ **All users**              |
+| [Users Guide](docs/users-guide.md)                                           | Web dashboard, operation modes, MQTT       | 🎛️ **Intermediate users**     |
+| [Hardware Guide](docs/hardware-guide.md)                                     | Assembly, wiring, parts list               | 🔧 **Builders**               |
+| [MQTT Configuration](docs/mqtt-configuration.md)                             | Home Assistant Discovery, entity reference | 🌐 **Smart home integrators** |
+| [State Persistence](docs/state-persistence.md)                               | How settings are saved across reboots      | 💾 **Advanced users**         |
+| [OTA Updates](docs/ota-updates.md)                                           | Remote firmware updates                    | 📡 **Developers**             |
+| [ESP32 Schematic Optimization (DE)](docs/esp32-schematic-optimization-de.md) | Pin assignment and optimization            | 🔌 **Hardware experts**       |
 
 ---
 
 ## 📦 Recent Updates (v3.3.0)
 
 ### 🔄 ESP8266 Support Removed
+
 - Codebase is now **ESP32-only** — cleaner, faster, more reliable
 - Removed all `#ifdef ESP8266` conditional compilation
 - Platform: esp32dev (ESP32 DevKit V1)
 
 ### 🛡️ Phase 3 — Proactive Resilience
-- **P7: Fast Sensor Recovery** — DallasTemperatureNode polls every 5s (instead of 300s) when sensor reads NaN
-- **P8: Boot-Loop Detection** — NVS-based boot counter, Safe Mode after 4 consecutive short boots (<5 min), all relays forced OFF
-- **P9: Configurable Fallback Times** — ConfigManager settings `time-loss-green-hours` and `time-loss-red-hours` replace hardcoded NTP thresholds
+
+- **P7: Fast Sensor Recovery** — DallasTemperatureNode polls every 5s
+  (instead of 300s) when sensor reads NaN
+- **P8: Boot-Loop Detection** — NVS-based boot counter, Safe Mode after 4
+  consecutive short boots (<5 min), all relays forced OFF
+- **P9: Configurable Fallback Times** — ConfigManager settings
+  `time-loss-green-hours` and `time-loss-red-hours` replace hardcoded NTP
+  thresholds
 
 ### 🐛 v3.1.0 (Previous Release)
+
 - **Critical Bug Fixes**
   - Fixed critical logging bug (vsnprintf buffer initialization)
   - Fixed millis() overflow for reliable operation beyond 49.7 days
@@ -157,13 +169,17 @@ See [CHANGELOG.md](CHANGELOG.md) for complete details.
 ## 🔧 Configuration
 
 ### MQTT Protocol Selection
+
 Configure your preferred MQTT protocol in the device settings:
+
 - `mqtt-protocol = "homeassistant"` - Home Assistant native discovery **(only option in v3.3.0+)**
 
 See [docs/mqtt-configuration.md](docs/mqtt-configuration.md) for setup details.
 
 ### State Persistence
+
 All controller states are automatically saved and restored:
+
 - Operation modes and settings
 - Temperature thresholds
 - Timer configurations
@@ -182,7 +198,9 @@ We welcome contributions! Before submitting a pull request, please:
 3. **Test your changes**: `make build` (builds for ESP32)
 4. **Check for issues**: See [`.github/QUICK_REFERENCE.md`](.github/QUICK_REFERENCE.md) for common fixes
 
-All code must pass the same Super-Linter checks run in CI (cpplint for C/C++, EditorConfig, and Markdown/YAML/JSON validation) before merge.
+All code must pass the same Super-Linter checks run in CI
+(cpplint for C/C++, EditorConfig, and Markdown/YAML/JSON validation) before
+merge.
 
 ---
 
@@ -210,6 +228,7 @@ All code must pass the same Super-Linter checks run in CI (cpplint for C/C++, Ed
 ## 📢 Support
 
 If you encounter issues:
+
 1. Check the **[FAQ](docs/faq.md)** for common problems.
 2. Search the **[Discussions](https://github.com/smart-swimmingpool/smart-swimmingpool.github.io/discussions)**.
 3. Open a **[new issue](https://github.com/smart-swimmingpool/pool-controller/issues/new)** with:

@@ -5,17 +5,19 @@ type: docs
 weight: 50
 ---
 
-# ❓ Frequently Asked Questions (FAQ)
-
-This FAQ covers **common issues** and their solutions for the **Smart Swimming Pool Controller**. 
-If your problem isn't listed here, check the [Discussions](https://github.com/smart-swimmingpool/smart-swimmingpool.github.io/discussions) or open a new issue on GitHub.
+This FAQ covers **common issues** and their solutions for the **Smart Swimming Pool Controller**.
+If your problem isn't listed here, check the
+[Discussions](https://github.com/smart-swimmingpool/smart-swimmingpool.github.io/discussions)
+or open a new issue on GitHub.
 
 ---
 
 ## 🚨 Safety & Warnings
 
 ### ⚠️ Is this project safe for beginners?
+
 **No.** This project involves **230V AC mains voltage**, which can be **deadly** if mishandled.
+
 - **Only proceed if you have basic electronics knowledge** (e.g., understanding of voltage, current, and safety precautions).
 - **Always use a Residual Current Device (RCD/FI circuit breaker)** for the pump circuit.
 - **Disconnect power before working on the circuit.**
@@ -23,6 +25,7 @@ If your problem isn't listed here, check the [Discussions](https://github.com/sm
 - **This project is NOT certified (no CE/UL mark). For personal use only!**
 
 ### ⚠️ What safety precautions should I take?
+
 1. **Use an RCD (FI circuit breaker)** for the pump circuit.
 2. **Keep low-voltage (sensor) wiring separate from mains wiring.**
 3. **Use insulated tools and wear safety glasses.**
@@ -36,14 +39,16 @@ If your problem isn't listed here, check the [Discussions](https://github.com/sm
 ### 🔹 My DS18B20 sensor is not detected (shows -127°C or "Sensor error")
 
 #### **Possible Causes & Solutions**
-| **Cause** | **Solution** | **How to Test** |
-|-----------|--------------|-----------------|
-| Missing 4.7kΩ pull-up resistor | Add a **4.7kΩ resistor** between the DATA line and **3.3V**. | Measure resistance between DATA and 3.3V (should be ~4.7kΩ). |
-| Wrong GPIO pin | Check `PIN_DS_SOLAR` (GPIO32) and `PIN_DS_POOL` (GPIO33) in `src/Config.hpp`. | Verify wiring matches the firmware configuration. |
-| Sensor not connected to 3.3V | Ensure **VDD (red wire)** is connected to **3.3V** (not 5V!). | Measure voltage between VDD and GND (should be ~3.3V). |
-| Sensor not connected to GND | Ensure **GND (black wire)** is connected to **GND**. | Measure continuity between sensor GND and ESP32 GND. |
+
+| **Cause**                      | **Solution**                                                                  | **How to Test**                                              |
+| ------------------------------ | ----------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Missing 4.7kΩ pull-up resistor | Add a **4.7kΩ resistor** between the DATA line and **3.3V**.                  | Measure resistance between DATA and 3.3V (should be ~4.7kΩ). |
+| Wrong GPIO pin                 | Check `PIN_DS_SOLAR` (GPIO32) and `PIN_DS_POOL` (GPIO33) in `src/Config.hpp`. | Verify wiring matches the firmware configuration.            |
+| Sensor not connected to 3.3V   | Ensure **VDD (red wire)** is connected to **3.3V** (not 5V!).                 | Measure voltage between VDD and GND (should be ~3.3V).       |
+| Sensor not connected to GND    | Ensure **GND (black wire)** is connected to **GND**.                          | Measure continuity between sensor GND and ESP32 GND.         |
 
 #### **Debugging Steps**
+
 1. **Check the serial monitor** (115200 baud) for sensor initialization messages.
 2. **Test with a single sensor** (disconnect one and test the other).
 
@@ -52,11 +57,12 @@ If your problem isn't listed here, check the [Discussions](https://github.com/sm
 ### 🔹 My relay module doesn't work
 
 #### **Possible Causes & Solutions**
-| **Cause** | **Solution** | **How to Test** |
-|-----------|--------------|-----------------|
-| Relay module not powered | Ensure **VCC** is connected to **5V** and **GND** to **GND**. | Measure voltage between VCC and GND (should be ~5V). |
-| Wrong logic level (active-low) | Use an **active-high relay module** or modify firmware. | Check if relay LED lights up when GPIO goes HIGH. |
-| Incorrect GPIO pin | Verify `PIN_RELAY_POOL` (GPIO25) and `PIN_RELAY_SOLAR` (GPIO26). | Check wiring matches firmware configuration. |
+
+| **Cause**                      | **Solution**                                                     | **How to Test**                                      |
+| ------------------------------ | ---------------------------------------------------------------- | ---------------------------------------------------- |
+| Relay module not powered       | Ensure **VCC** is connected to **5V** and **GND** to **GND**.    | Measure voltage between VCC and GND (should be ~5V). |
+| Wrong logic level (active-low) | Ensure the relay module is **active-low trigger compatible** (firmware output is active-low). | Check whether the relay clicks/energizes when GPIO goes LOW (LED behavior can vary by module). |
+| Incorrect GPIO pin             | Verify `PIN_RELAY_POOL` (GPIO25) and `PIN_RELAY_SOLAR` (GPIO26). | Check wiring matches firmware configuration.         |
 
 ---
 
@@ -65,20 +71,25 @@ If your problem isn't listed here, check the [Discussions](https://github.com/sm
 ### 🔹 How do I update the firmware?
 
 #### **Option A: Web Interface (OTA)**
+
 1. Open **Web Dashboard** (`http://<controller-ip>/`).
 2. Go to **Security & Update** > **OTA Firmware Update**.
 3. Select the `.bin` file and click **Update**.
 
-#### **Option B: Arduino IDE/PlatformIO**
-1. Open `pool-controller.ino` in Arduino IDE or PlatformIO.
-2. Click **Upload** (→).
+#### **Option B: PlatformIO**
+
+1. Open the `pool-controller` folder in VS Code with PlatformIO.
+2. Select the `esp32dev` environment.
+3. Run `pio run -e esp32dev -t upload`.
 
 ---
 
 ### 🔹 My controller doesn't connect to WiFi
 
 #### **Debugging Steps**
+
 1. **LED Status Codes**:
+
    - **Rapid blink (5 Hz)**: AP mode (no WiFi configured).
    - **Slow blink (1 Hz)**: WiFi connecting.
    - **Solid on**: Fully connected.
@@ -92,8 +103,10 @@ If your problem isn't listed here, check the [Discussions](https://github.com/sm
 ### 🔹 My controller doesn't connect to MQTT
 
 #### **Debugging Steps**
+
 1. Verify **MQTT Host/IP** and **Port** in Web Dashboard.
 2. Test MQTT manually:
+
    ```bash
    mosquitto_sub -h <broker-ip> -t "#" -v
    ```
@@ -103,11 +116,14 @@ If your problem isn't listed here, check the [Discussions](https://github.com/sm
 ### 🔹 Home Assistant doesn't discover my controller
 
 #### **Solution**
+
 1. **Upgrade to v3.3.0+** (Homie support removed).
 2. **Clear retained MQTT messages**:
+
    ```bash
    mosquitto_pub -h <broker> -t "homeassistant" -n -r
    ```
+
 3. **Enable MQTT Discovery** in Home Assistant.
 
 ---
@@ -128,10 +144,12 @@ sudo systemctl enable mosquitto
 ### 🔹 How do I integrate with Node-RED?
 
 1. Install Node-RED:
+
    ```bash
    npm install -g node-red
    node-red
    ```
+
 2. Install MQTT nodes:
    - **Menu > Manage palette > Install > node-red-node-mqtt**
 
@@ -142,10 +160,12 @@ sudo systemctl enable mosquitto
 ### 🔹 How do I change the operation mode?
 
 #### **Via Web Dashboard**
+
 1. Go to **Configuration** tab.
 2. Select **Auto**, **Manual**, **Timer**, or **Boost**.
 
 #### **Via MQTT**
+
 ```bash
 mosquitto_pub -h <broker-ip> -t "homeassistant/select/pool-controller/mode/set" -m "auto"
 ```
@@ -170,4 +190,5 @@ mosquitto_pub -h <broker-ip> -t "homeassistant/select/pool-controller/mode/set" 
 ---
 
 ## 📄 License
+
 This FAQ is part of the **Smart Swimming Pool** project, licensed under the **MIT License**.
