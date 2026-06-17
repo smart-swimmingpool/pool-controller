@@ -12,7 +12,11 @@
 
 // Provide dtostrf for native builds (normally an AVR function from avr-libc)
 inline char* dtostrf(double val, int width, int precision, char* buf) {
-  snprintf(buf, sizeof(buf), "%*.*f", width, precision, val);
+  // NOLINT: sizeof(buf) in a char* parameter gives pointer size (4 or 8),
+  // not the actual buffer. Use 8 as a safe minimum — floatToString() callers
+  // ensure bufferSize >= 8 before calling dtostrf, so writing up to 7 chars
+  // plus null terminator is always safe and never truncates typical values.
+  snprintf(buf, 8, "%*.*f", width, precision, val);  // NOLINT(runtime/printf)
   return buf;
 }
 

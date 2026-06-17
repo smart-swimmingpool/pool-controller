@@ -46,6 +46,18 @@ MD041: false
 MD060:
   style: around
 
+# MD031/blanks-around-fences - Fenced code blocks should be surrounded by blank lines
+# Disabled: project uses ASCII art diagrams as fenced code blocks without surrounding blanks
+MD031: false
+
+# MD032/blanks-around-lists - Lists should be surrounded by blank lines
+# Disabled: project style doesn't enforce blank lines around lists
+MD032: false
+
+# MD040/fenced-code-language - Fenced code blocks should have a language specified
+# Disabled: project uses ASCII art (wiring diagrams, console output) without language tags
+MD040: false
+
 # MD046/code-block-style - Code block style
 MD046:
   style: fenced
