@@ -6,6 +6,7 @@ class WiFiClientSecure : public WiFiClient {
 public:
     WiFiClientSecure() {}
     void setCACert(const char *) {}
+    void setCACertBundle(const uint8_t *) {}
     void setCertificate(const char *) {}
     void setPrivateKey(const char *) {}
     void setPreSharedKey(const char *, const char *) {}
