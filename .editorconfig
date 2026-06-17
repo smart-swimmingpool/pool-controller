@@ -27,6 +27,12 @@ indent_size = 2
 [Makefile]
 indent_style = tab
 
+# KiCad 9.0 schematic files use tabs as native S-expression format
+[*.kicad_sch]
+indent_style = tab
+indent_size = unset
+trim_trailing_whitespace = false
+
 # Markdown/AsciiDoc: natural indentation varies (list bullets at 0, 2, 4;
 # ordered-list sub-items at 3+, continuation at 4+), so indent_size is
 # deliberately not enforced to avoid false positives.

@@ -396,5 +396,6 @@ pio run -e norvi_ae01_r -t uploadfs
 
 - [NORVI IIOT-AE01-R Datasheet](https://norvi.io/docs/norvi-iiot-ae01-r-datasheet/)
 - [NORVI IIOT-AE01-R User Guide](https://norvi.io/docs/norvi-iiot-ae01-r-user-guide/)
+- [KiCad Schematic: NORVI AE01-R](kicad/norvi-ae01-r/norvi-ae01-r-schematic.pdf) — KiCad 9.0 schematic PDF export
 - [Main Hardware Guide](hardware-guide.md)
 - [Config.hpp pin source](https://github.com/smart-swimmingpool/pool-controller/blob/main/src/Config.hpp)

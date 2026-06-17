@@ -101,8 +101,8 @@ jobs:
             for (const line of lines) {
               if (line.startsWith('DA:')) lineFound++;
               if (line.startsWith('DA:') && !line.endsWith(',0')) lineHit++;
-              if (line.startsWith('BRDA:') && line.split(',').length >= 5) {
-                const val = line.split(',')[4];
+              if (line.startsWith('BRDA:') && line.split(',').length >= 4) {
+                const val = line.split(',')[3];
                 if (val !== '-') { branchFound++; if (val !== '0') branchHit++; }
               }
             }

@@ -483,6 +483,8 @@ dem Standard für IoT-Statusanzeigen.
 ## Referenzen
 
 - Fritzing-Quelldatei: [pool-controller.fzz](https://github.com/smart-swimmingpool/pool-controller/raw/main/docs/pool-controller.fzz)
+- [KiCad-Schaltplan: ESP32 Dev Board](kicad/esp32-dev-board/esp32-dev-board-schematic.pdf) — KiCad-9.0-PDF-Export
+- [KiCad-Schaltplan: NORVI AE01-R](kicad/norvi-ae01-r/norvi-ae01-r-schematic.pdf) — KiCad-9.0-PDF-Export
 - [NORVI AE01-R Konfigurationsanleitung](norvi-ae01-r.de.md) — Industrie-ESP32-Controller Pinbelegung & Verdrahtung
 - [ESP32 Schaltplananalyse und Optimierung](esp32-schematic-optimization.de.md)
 - [ESP32 Komplett-Schaltplan](esp32-complete-wiring-schematic.de.md)

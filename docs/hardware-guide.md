@@ -181,7 +181,6 @@ to activate (close) the relay. If your relay module switches with LOW instead
 (active-low), look for a **jumper** on the module to change the mode, or choose
 a different module — active-high modules are easier to work with.
 
-
 **Load wiring (230V side):**
 
 ```
@@ -229,7 +228,7 @@ a different module — active-high modules are easier to work with.
 {{< figure
   library="true"
   src="../pool-controller_breadboard.png"
-  title="Pool Controller breadboard prototype with ESP32, two DS18B20 temperature sensors, 4.7kΩ pull-up resistors, and 2-channel relay module"
+  title="Breadboard prototype with ESP32, DS18B20 sensors, 4.7kΩ pull-up resistors, and 2-channel relay module"
   lightbox="true" >}}
 
 > 💡 **Tip**: Use different colored jumper wires for clarity — e.g., red for
@@ -461,6 +460,8 @@ IoT device status indication. The LED is updated once per control loop cycle.
 ## References
 
 - Fritzing source file: [pool-controller.fzz](https://github.com/smart-swimmingpool/pool-controller/raw/main/docs/pool-controller.fzz)
+- [KiCad Schematic: ESP32 Dev Board](kicad/esp32-dev-board/esp32-dev-board-schematic.pdf) — KiCad 9.0 PDF export
+- [KiCad Schematic: NORVI AE01-R](kicad/norvi-ae01-r/norvi-ae01-r-schematic.pdf) — KiCad 9.0 PDF export
 - [NORVI AE01-R Configuration Guide](norvi-ae01-r.md) — industrial ESP32 controller pin mapping & wiring
 - [ESP32 Schematic Optimization (DE)](esp32-schematic-optimization.md)
 - [ESP32 Complete Wiring Schematic (DE)](esp32-complete-wiring-schematic.md)

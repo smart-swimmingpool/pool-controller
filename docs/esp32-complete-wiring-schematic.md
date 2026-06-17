@@ -115,3 +115,4 @@ v
   manufacturing tips, troubleshooting
 - Pin background and optimization:
   [ESP32 Schematic Optimization](esp32-schematic-optimization.md)
+- [KiCad Schematic: ESP32 Dev Board](kicad/esp32-dev-board/esp32-dev-board-schematic.pdf) — KiCad 9.0 schematic PDF export
