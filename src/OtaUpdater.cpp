@@ -25,15 +25,28 @@ namespace PoolController {
 extern const uint8_t x509_crt_bundle_start[] asm("_binary_x509_crt_bundle_start");
 #endif
 
-// Configure TLS trust for a WiFiClientSecure connection to GitHub.
-// On ESP32: uses the built-in system certificate bundle (covers all major CA chains).
-// On other platforms (e.g. native test builds): falls back to insecure mode with a warning.
+/**
+ * @brief Configure TLS trust for a WiFiClientSecure connection to GitHub.
+ *
+ * On ESP32: attaches the Arduino-ESP32 built-in system certificate bundle
+ * (x509_crt_bundle, ~130 root CAs) which covers all CA chains used by
+ * api.github.com and GitHub CDN/release download hosts (DigiCert, Sectigo,
+ * ISRG/Let's Encrypt). This satisfies R1 and R2 from github-ca-chain.spec.md.
+ *
+ * On non-ESP32 builds (e.g. native unit-test hosts): no system bundle is
+ * available, so TLS validation is disabled with a warning log. This satisfies
+ * R3 (compile-time fallback). This branch is never executed on production
+ * hardware; all production targets are ESP32.
+ *
+ * @param client  WiFiClientSecure to configure before calling http.begin().
+ */
 static void configureClientTLS(WiFiClientSecure &client) {
 #ifdef ARDUINO_ARCH_ESP32
   client.setCACertBundle(x509_crt_bundle_start);
 #else
-  // Non-ESP32 builds (e.g. native tests): no system bundle available
-  Serial.println("OTA WARNING: TLS certificate validation disabled (CA bundle not available)");
+  // Non-ESP32 builds (e.g. native tests): no system bundle available.
+  // Never reached on production ESP32 hardware.
+  Serial.println("OTA WARNING: TLS cert validation disabled (no CA bundle on this platform)");
   client.setInsecure();
 #endif
 }
