@@ -22,6 +22,10 @@ namespace PoolController {
 // This avoids pinning a single root that may not match the CDN's certificate chain.
 #ifdef ARDUINO_ARCH_ESP32
 #include <esp_crt_bundle.h>
+// On ESP32, the Arduino-ESP32 build system generates the symbol
+// `x509_crt_bundle_start` from esp_crt_bundle.c and embeds the binary
+// CA bundle in read-only flash memory.  It is provided at link time by
+// the WiFiClientSecure library and must NOT be freed or modified.
 extern const uint8_t x509_crt_bundle_start[] asm("_binary_x509_crt_bundle_start");
 #endif
 
