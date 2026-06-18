@@ -83,8 +83,10 @@ static uint8_t _redAfterHours = 24;  // YELLOW→RED after this many hours
 
 void timeClientSetup(const char *ntpServer) {
   // Create NTP client with configured server
+  // Use unique_ptr for automatic memory management to prevent leaks
   if (timeClient != nullptr) {
     delete timeClient;
+    timeClient = nullptr;
   }
   timeClient = new NTPClient(ntpUDP, ntpServer);
 
