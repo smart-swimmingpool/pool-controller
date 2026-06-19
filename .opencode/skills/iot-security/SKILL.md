@@ -124,7 +124,7 @@ secureClient_->setPrivateKey(clientKey);
 
 ```cpp
 // Hardcoded default hash for "admin" — no salt!
-static constexpr const char* kDefaultPasswordHash = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918";
+static constexpr const char* kDefaultPasswordHash = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918"; // gitleaks:allow
 ```
 
 The default password hash is for "admin" (SHA256). On first login, user should change it. Consider:
