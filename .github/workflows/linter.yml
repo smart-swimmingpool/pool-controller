@@ -76,7 +76,7 @@ jobs:
 
           # Markdown specific settings - increase line length to 150
           MARKDOWN_LINE_LENGTH: 150
-          MARKDOWN_LINT_CONFIG_FILE: .markdownlint.json
+          MARKDOWNLINT_CONFIG_FILE: .markdownlint.yaml
 
           # Don't treat warnings as errors
           WARNINGS_AS_ERRORS: false
