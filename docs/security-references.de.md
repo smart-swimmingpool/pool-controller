@@ -12,6 +12,7 @@ wurden während der umfassenden IoT-Sicherheitsanalyse am 2025-01-15 zusammenges
   Umfassendes IoT-Sicherheitsframework, das Gerätesicherheit, Netzwerksicherheit und Datenschutz abdeckt.
 
 - **[OWASP Secure Coding Practices Quick Reference Guide](https://owasp.org/www-project-secure-coding-practices-quick-reference-guide/)
+
 **
   Allgemeine Richtlinien für sicheres Codieren, anwendbar auf eingebettete Systeme und IoT-Geräte.
 
@@ -21,10 +22,12 @@ wurden während der umfassenden IoT-Sicherheitsanalyse am 2025-01-15 zusammenges
 ### Webanwendungssicherheit
 
 - **[OWASP CSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)
+
 **
   Umfassender Leitfaden zu CSRF-Schutzstrategien, einschließlich Token-basierter Ansätze und SameSite-Cookie-Attribute.
 
 - **[OWASP Session Management Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html)
+
 **
   Best Practices für sicheres Session-Management, einschließlich Timeout-Handling und Cookie-Sicherheit.
 
@@ -42,24 +45,29 @@ wurden während der umfassenden IoT-Sicherheitsanalyse am 2025-01-15 zusammenges
   Vollständiger Leitfaden zur Implementierung von Secure Boot auf ESP32, einschließlich Schlüsselgenerierung und eFuse-Konfiguration.
 
 - **[ESP32 Flash-Verschlüsselung](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/flash-encryption.html)
+
 **
   Detaillierte Dokumentation zur Flash-Verschlüsselungskonfiguration und -implementierung.
 
-- **[ESP32 eFuse-Referenz](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/efuse.html)**
+- **[ESP32 eFuse-Referenz](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/efuse.html)
+**
   Referenzdokumentation für eFuse-Brennen und Konfigurationsoptionen.
 
 - **[ESP32 Speichertypen](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/memory-types.html)**
   Verständnis der ESP32-Speicherarchitektur und verschiedener Speichertypen (DRAM, IRAM, etc.).
 
 - **[ESP32 Speicherverwaltung](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/memory-management.html)
+
 **
   Speicherzuweisungsstrategien und Best Practices für die ESP32-Entwicklung.
 
 - **[ESP32 Heap-Fragmentierung](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/heap-fragmentation.html)
+
 **
   Verständnis und Vermeidung von Heap-Fragmentierung in ESP32-Anwendungen.
 
 - **[ESP-IDF Speicher-Debugging](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/debugging/memory-leaks.html)
+
 **
   Tools und Techniken zum Erkennen und Debuggen von Speicherlecks in ESP32-Anwendungen.
 
@@ -84,10 +92,12 @@ wurden während der umfassenden IoT-Sicherheitsanalyse am 2025-01-15 zusammenges
 ### ESP32-Speicherverwaltung
 
 - **[ESP32 Speicheroptimierungsleitfaden](https://github.com/espressif/esp-idf/blob/master/docs/en/api-guides/memory-types.rst)
+
 **
   Offizielle Speicheroptimierungsstrategien für die ESP32-Entwicklung.
 
 - **[Heap-Nutzungsüberwachung](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/heap_debug.html)
+
 **
   ESP32 Heap-Debugging-Funktionen und Verwendungsbeispiele.
 
@@ -102,13 +112,16 @@ wurden während der umfassenden IoT-Sicherheitsanalyse am 2025-01-15 zusammenges
 - **[ArduinoJson Assistant](https://arduinojson.org/v6/assistant/)**
   Online-Tool zur Berechnung der benötigten Puffergrößen für JSON-Dokumente.
 
-- **[Vermeiden von String in Arduino](https://hackingmajenkoblog.wordpress.com/2016/02/04/the-evils-of-arduino-strings/)**
+- **[Vermeiden von String in Arduino](https://hackingmajenkoblog.wordpress.com/2016/02/04/the-evils-of-arduino-strings/)
+**
   Warum und wie man die String-Klasse in Arduino für besseres Speichermanagement vermeidet.
 
-- **[Statische vs Dynamische Zuweisung](https://embeddedartistry.com/blog/2017/02/22/always-use-the-right-sized-integer/)**
+- **[Statische vs Dynamische Zuweisung](https://embeddedartistry.com/blog/2017/02/22/always-use-the-right-sized-integer/)
+**
   Wahl der richtigen Zuweisungsstrategie für eingebettete Systeme.
 
 - **[Google C++ Style Guide - Speicherverwaltung](https://google.github.io/styleguide/cppguide.html#Ownership_and_Smart_Pointers)
+
 **
   Richtlinien für die Verwendung von Smart Pointern und Speicherverwaltung.
 

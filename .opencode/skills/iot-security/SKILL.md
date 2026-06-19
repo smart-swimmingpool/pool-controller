@@ -1,6 +1,11 @@
 ---
 name: iot-security
-description: "IoT security checks for the ESP32 pool-controller — Secure Boot, Flash Encryption, TLS, WPS, secrets management, network security, and 24/7 operational security. Use when asked to audit security, fix vulnerabilities, implement secure communication, or harden the device firmware. 🇩🇪 Deutsche Trigger: IoT Sicherheit, Secure Boot, Flash Verschlüsselung, TLS, WPS, Credentials, Passwörter, Netzwerksicherheit, Härtung, Verwundbarkeiten."
+description: "IoT security checks for the ESP32 pool-controller - Secure Boot, Flash
+  Encryption, TLS, WPS, secrets management, network security, and 24/7 operational
+  security. Use when asked to audit security, fix vulnerabilities, implement secure
+  communication, or harden the device firmware. 🇩🇪 Deutsche Trigger: IoT Sicherheit,
+  Secure Boot, Flash Verschlüsselung, TLS, WPS, Credentials, Passwörter,
+  Netzwerksicherheit, Härtung, Verwundbarkeiten."
 keywords:
   - iot sicherheit
   - iot security
@@ -24,9 +29,13 @@ keywords:
 
 # IoT Security — Pool Controller
 
-Security audit and hardening for the ESP32 pool-controller. This device controls 230V pool pumps — security failures can cause physical damage or create network entry points.
+Security audit and hardening for the ESP32 pool-controller. This device controls
+230V pool pumps - security failures can cause physical damage or create network
+entry points.
 
-> **🔍 Code Search**: Use `semble search "setInsecure"` or `semble search "password"` to find security-sensitive code. `semble find-related` helps trace credential flow across components. See `Agents.md` §7 for full `semble` usage.
+> **🔍 Code Search**: Use `semble search "setInsecure"` or `semble search "password"`
+> to find security-sensitive code. `semble find-related` helps trace credential
+> flow across components. See `Agents.md` §7 for full `semble` usage.
 
 ## Threat Model
 
@@ -68,7 +77,8 @@ espsecure.py generate_signing_key secure_boot_signing_key.pem
 espefuse.py --port /dev/ttyUSB0 burn_key BLOCK_KEY0 flash_encryption_key.bin
 ```
 
-**Current status**: Both are future work. The device currently stores WiFi passwords in plaintext on LittleFS (`/config.json`, gitignored in `.gitignore:114`).
+**Current status**: Both are future work. The device currently stores WiFi passwords
+in plaintext on LittleFS (`/config.json`, gitignored in `.gitignore:114`).
 
 ## 2. TLS for MQTT
 
@@ -188,7 +198,8 @@ build_flags =
   -D CONFIG_CONSOLE_UART_NONE=1     ; Disable serial console (or use custom UART)
 ```
 
-**Current state**: Serial console is enabled at 115200 baud, which provides full system access. For production, consider disabling or restricting serial output.
+**Current state**: Serial console is enabled at 115200 baud, which provides full
+system access. For production, consider disabling or restricting serial output.
 
 ## 8. Secure Coding Patterns for This Project
 
@@ -259,22 +270,29 @@ The pool controller should be on an isolated IoT VLAN with:
 
 ### Security Standards & Guidelines
 
-- **[OWASP IoT Security Guidance](https://owasp.org/www-project-internet-of-things/)** -
+- **[OWASP IoT Security Guidance](https://owasp.org/www-project-internet-of-things/)**
+
   Comprehensive IoT security framework
-- **[OWASP CSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)** -
+- **[OWASP CSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)**
+
   CSRF protection strategies
-- **[OWASP Secure Coding Practices](https://owasp.org/www-project-secure-coding-practices-quick-reference-guide/)** -
+- **[OWASP Secure Coding Practices](https://owasp.org/www-project-secure-coding-practices-quick-reference-guide/)**
+
   General secure coding guidelines
 
 ### ESP32 Specific Security
 
-- **[ESP32 Security Features](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/index.html)** -
+- **[ESP32 Security Features](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/index.html)**
+
   Official Espressif security documentation
-- **[ESP32 Secure Boot](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/secure-boot.html)** -
+- **[ESP32 Secure Boot](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/secure-boot.html)**
+
   Secure boot implementation guide
-- **[ESP32 Flash Encryption](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/flash-encryption.html)** -
+- **[ESP32 Flash Encryption](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/flash-encryption.html)**
+
   Flash encryption configuration
-- **[ESP32 eFuse Reference](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/efuse.html)** -
+- **[ESP32 eFuse Reference](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/efuse.html)**
+
   eFuse burning and configuration
 
 ### Network Security

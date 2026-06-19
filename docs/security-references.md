@@ -13,6 +13,7 @@ comprehensive IoT security analysis performed on 2025-01-15.
 
 - **[OWASP Secure Coding Practices Quick Reference Guide](https://owasp.org/www-project-secure-coding-practices-quick-reference-guide/)
 
+
 **
 
 
@@ -26,6 +27,7 @@ comprehensive IoT security analysis performed on 2025-01-15.
 
 - **[OWASP CSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)
 
+
 **
 
 
@@ -33,6 +35,7 @@ comprehensive IoT security analysis performed on 2025-01-15.
   approaches and SameSite cookie attributes.
 
 - **[OWASP Session Management Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html)
+
 
 **
 
@@ -68,17 +71,20 @@ comprehensive IoT security analysis performed on 2025-01-15.
 
 - **[ESP32 Memory Management](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/memory-management.html)
 
+
 **
 
   Memory allocation strategies and best practices for ESP32 development.
 
 - **[ESP32 Heap Fragmentation](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/heap-fragmentation.html)
 
+
 **
 
   Understanding and preventing heap fragmentation in ESP32 applications.
 
 - **[ESP-IDF Memory Debugging](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/debugging/memory-leaks.html)
+
 
 **
 
@@ -107,11 +113,13 @@ comprehensive IoT security analysis performed on 2025-01-15.
 
 - **[ESP32 Memory Optimization Guide](https://github.com/espressif/esp-idf/blob/master/docs/en/api-guides/memory-types.rst)
 
+
 **
 
   Official memory optimization strategies for ESP32 development.
 
 - **[Heap Usage Monitoring](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/heap_debug.html)
+
 
 **
 
@@ -135,6 +143,7 @@ comprehensive IoT security analysis performed on 2025-01-15.
   Choosing the right allocation strategy for embedded systems.
 
 - **[Google C++ Style Guide - Memory Management](https://google.github.io/styleguide/cppguide.html#Ownership_and_Smart_Pointers)
+
 
 **
 
