@@ -766,3 +766,39 @@ shellcheck scripts/*.sh .github/scripts/*.sh
 # Geänderte Markdown-Dateien checken:
 markdownlint $(git diff --name-only --diff-filter=AM HEAD~1 | grep '\.md$')
 ```
+
+---
+
+## 📚 References & Best Practices
+
+### Code Quality Standards
+- **[Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html)** - Industry-standard C++ coding conventions
+- **[LLVM Coding Standards](https://llvm.org/docs/CodingStandards.html)** - Modern C++ best practices
+- **[clang-format Documentation](https://clang.llvm.org/docs/ClangFormat.html)** - Code formatting configuration and styles
+- **[EditorConfig](https://editorconfig.org/)** - Consistent coding styles across editors
+
+### Linting & Static Analysis
+- **[cpplint](https://github.com/cpplint/cpplint)** - Google's C++ linter
+- **[Super-Linter](https://github.com/github/super-linter)** - Multi-language linting framework
+- **[CodeQL](https://codeql.github.com/)** - Semantic code analysis for security vulnerabilities
+- **[clang-tidy](https://clang.llvm.org/extra/clang-tidy/)** - Clang-based static analysis
+
+### Formatting Tools
+- **[Prettier](https://prettier.io/)** - Opinionated code formatter (for YAML, JSON, Markdown)
+- **[Black](https://github.com/psf/black)** - Python code formatter
+- **[ESLint](https://eslint.org/)** - JavaScript/TypeScript linting
+- **[YAML Lint](https://github.com/adrienverge/yamllint)** - YAML file validation
+
+### CI/CD Quality Gates
+- **[GitHub Actions Documentation](https://docs.github.com/en/actions)** - Workflow configuration and best practices
+- **[PlatformIO CI](https://docs.platformio.org/en/latest/integration/ci/github-actions.html)** - PlatformIO integration with GitHub Actions
+- **[Quality Gates Pattern](https://martinfowler.com/articles/continuousIntegration.html#QualityGates)** - CI quality gate strategies
+
+### Practical Implementation Guides
+- **[Setting up Super-Linter](https://github.com/github/super-linter/blob/main/README.md)** - Configuration and customization
+- **[clang-format Configuration](https://clang.llvm.org/docs/ClangFormatStyleOptions.html)** - Style option reference
+- **[EditorConfig Properties](https://editorconfig.org/#file-format-details)** - Available configuration options
+
+---
+
+**🔍 Analysis Note**: This skill was enhanced during the comprehensive IoT security and code quality analysis performed by Vibe Code on 2025-01-15. See [PR #112](https://github.com/smart-swimmingpool/pool-controller/pull/112) for implementation details and quality improvement examples.

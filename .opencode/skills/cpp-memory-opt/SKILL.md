@@ -137,3 +137,33 @@ if (millis() - lastFragCheck > 60000) {  // Every 60s
         100 - (heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT) * 100 / ESP.getFreeHeap()));
 }
 ```
+
+---
+
+## 📚 References & Best Practices
+
+### ESP32 Memory Management
+- **[ESP32 Memory Types](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/memory-types.html)** - Official Espressif memory architecture documentation
+- **[ESP32 Memory Allocation](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/memory-management.html)** - Memory allocation strategies and best practices
+- **[ESP32 Heap Fragmentation](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/heap-fragmentation.html)** - Understanding and preventing heap fragmentation
+- **[ESP-IDF Memory Debugging](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/debugging/memory-leaks.html)** - Tools and techniques for memory leak detection
+
+### Arduino & C++ Memory Optimization
+- **[Arduino String vs char arrays](https://www.arduino.cc/en/Reference/String)** - When to use String vs char arrays
+- **[ArduinoJson Memory Optimization](https://arduinojson.org/v6/how-to/reduce-memory-usage/)** - Reducing memory usage with ArduinoJson
+- **[ArduinoJson Assistant](https://arduinojson.org/v6/assistant/)** - Calculate required buffer sizes
+- **[Google C++ Style Guide - Memory Management](https://google.github.io/styleguide/cppguide.html#Ownership_and_Smart_Pointers)** - Smart pointer usage guidelines
+
+### Memory Analysis Tools
+- **[PlatformIO Memory Analysis](https://docs.platformio.org/en/latest/plus/debug-tools/memcheck.html)** - Memory usage analysis with PlatformIO
+- **[Valgrind for Embedded](https://valgrind.org/)** - Memory leak detection (for native builds)
+- **[Heap Usage Monitoring](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/heap_debug.html)** - ESP32 heap debugging functions
+
+### Practical Implementation Guides
+- **[ESP32 Memory Optimization Guide](https://github.com/espressif/esp-idf/blob/master/docs/en/api-guides/memory-types.rst)** - Official memory optimization strategies
+- **[Avoiding String in Arduino](https://hackingmajenkoblog.wordpress.com/2016/02/04/the-evils-of-arduino-strings/)** - Why and how to avoid String class
+- **[Static vs Dynamic Allocation](https://embeddedartistry.com/blog/2017/02/22/always-use-the-right-sized-integer/)** - Choosing the right allocation strategy
+
+---
+
+**🔍 Analysis Note**: This skill was enhanced during the comprehensive IoT security and memory analysis performed by Vibe Code on 2025-01-15. See [PR #112](https://github.com/smart-swimmingpool/pool-controller/pull/112) for implementation details and memory optimization examples.
