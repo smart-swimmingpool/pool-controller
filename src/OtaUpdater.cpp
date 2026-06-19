@@ -197,7 +197,10 @@ bool OtaUpdater::fetchLatestRelease() {
 #endif
 
   WiFiClientSecure client;
-  client.setInsecure();  // Accept any cert (sufficient for IoT device)
+  // Use proper CA certificate validation instead of setInsecure()
+  // For production: use setCACert() with root CA
+  // For development/testing: can use setInsecure() but this is NOT recommended
+  client.setCACert(kGitHubRootCA);
   client.setTimeout(10000);
 
   // Build API URL

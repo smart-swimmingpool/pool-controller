@@ -10,7 +10,7 @@
 
 // NTP Client
 WiFiUDP ntpUDP;
-NTPClient *timeClient = nullptr;
+std::unique_ptr<NTPClient> timeClient;
 TimeChangeRule CEST = {"CEST", Last, Sun, Mar, 2, 120};  // Central European Summer Time
 TimeChangeRule CET = {"CET ", Last, Sun, Oct, 3, 60};    // Central European Standard Time
 Timezone Europe(CEST, CET);
@@ -82,13 +82,8 @@ static uint8_t _greenMaxHours = 1;   // GREEN→YELLOW after this many hours
 static uint8_t _redAfterHours = 24;  // YELLOW→RED after this many hours
 
 void timeClientSetup(const char *ntpServer) {
-  // Create NTP client with configured server
-  // Use unique_ptr for automatic memory management to prevent leaks
-  if (timeClient != nullptr) {
-    delete timeClient;
-    timeClient = nullptr;
-  }
-  timeClient = new NTPClient(ntpUDP, ntpServer);
+  // Create NTP client with configured server using unique_ptr for automatic memory management
+  timeClient = std::make_unique<NTPClient>(ntpUDP, ntpServer);
 
   // initialize NTP Client
   timeClient->begin();

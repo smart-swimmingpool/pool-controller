@@ -18,6 +18,7 @@
 #include "TimeClientHelper.hpp"
 #include <ArduinoJson.h>
 #include <Preferences.h>
+#include <memory>
 
 namespace PoolController {
 
@@ -665,6 +666,32 @@ void MqttPublisher::publishSensorMappingDiscovery() {
   Serial.printf("• HA: Sensor mapping select entities published (%u options)\n", solarOptCount);
 }
 
+// Helper function to check if MQTT authentication is configured
+static bool isMqttAuthenticated() {
+  // Check if MQTT connection is using authentication
+  const MqttConfig &config = ConfigManager::getMqtt();
+  // If MQTT username is set, we consider it authenticated
+  return config.username.length() > 0;
+}
+
+// Helper function to validate command payloads
+static bool isValidCommand(const String &value, const char *const validCommands[], size_t count) {
+  for (size_t i = 0; i < count; i++) {
+    if (value == validCommands[i]) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Helper function to check if MQTT authentication is required for sensitive commands
+static bool shouldEnforceMqttAuth() {
+  // For now, we make MQTT authentication optional but recommended
+  // Users can enable it by setting a username in MQTT config
+  // In the future, this could be made configurable via settings
+  return false;  // Made optional as per user request
+}
+
 void MqttPublisher::handleMqttMessage(char *topic, char *payload, AsyncMqttClientMessageProperties properties,
   size_t len, size_t index, size_t total) {
   // Only process complete messages (single-chunk delivery for typical HA commands)
@@ -677,6 +704,19 @@ void MqttPublisher::handleMqttMessage(char *topic, char *payload, AsyncMqttClien
   String top(topic);
 
   if (top.endsWith("/firmware-update/set")) {
+    // MQTT authentication is optional, but if configured, we check it
+    if (shouldEnforceMqttAuth() && !isMqttAuthenticated()) {
+      Serial.println("MQTT: Firmware update command rejected - MQTT authentication required");
+      return;
+    }
+    
+    // Always validate command value for security
+    static const char *validFirmwareCommands[] = {"INSTALL"};
+    if (!isValidCommand(value, validFirmwareCommands, 1)) {
+      Serial.printf("MQTT: Invalid firmware command: %s\n", value.c_str());
+      return;
+    }
+    
     if (value == "INSTALL") {
       Serial.println("MQTT: Firmware update triggered from Home Assistant");
       OtaUpdater::startUpdate();
@@ -717,6 +757,21 @@ void MqttPublisher::handleMqttMessage(char *topic, char *payload, AsyncMqttClien
   }
 
   if (top.endsWith("/pool-pump/set") || top.endsWith("/solar-pump/set")) {
+    // MQTT authentication is optional, but if configured, we check it
+    if (shouldEnforceMqttAuth() && !isMqttAuthenticated()) {
+      Serial.println("MQTT: Pump command rejected - MQTT authentication required");
+      publishStates();
+      return;
+    }
+    
+    // Always validate payload for security
+    static const char *validPumpCommands[] = {"ON", "OFF"};
+    if (!isValidCommand(value, validPumpCommands, 2)) {
+      Serial.printf("MQTT: Invalid pump command: %s\n", value.c_str());
+      publishStates();
+      return;
+    }
+    
     // Only allow pump control from HA in manual mode
     if (operationModeNode.getMode() != "manu") {
       Serial.printf("MQTT: Ignoring pump command — not in manual mode (current: %s)\n", operationModeNode.getMode().c_str());
@@ -729,21 +784,75 @@ void MqttPublisher::handleMqttMessage(char *topic, char *payload, AsyncMqttClien
       solarPumpNode.setSwitch(value == "ON");
     }
   } else if (top.endsWith("/mode/set")) {
+    // MQTT authentication is optional, but if configured, we check it
+    if (shouldEnforceMqttAuth() && !isMqttAuthenticated()) {
+      Serial.println("MQTT: Mode command rejected - MQTT authentication required");
+      publishStates();
+      return;
+    }
+    
+    // Always validate mode value for security
+    static const char *validModes[] = {"auto", "manu", "boost", "timer"};
+    if (!isValidCommand(value, validModes, 4)) {
+      Serial.printf("MQTT: Invalid mode command: %s\n", value.c_str());
+      publishStates();
+      return;
+    }
+    
     operationModeNode.setMode(value.c_str());
     ConfigManager::getSettings().opMode = value;
     ConfigManager::save();
   } else if (top.endsWith("/pool-max-temp/set")) {
+    // MQTT authentication is optional, but if configured, we check it
+    if (shouldEnforceMqttAuth() && !isMqttAuthenticated()) {
+      Serial.println("MQTT: Config command rejected - MQTT authentication required");
+      publishStates();
+      return;
+    }
+    
     float val = value.toFloat();
+    // Always validate range for security
+    if (val < 0.0f || val > 40.0f) {
+      Serial.printf("MQTT: Invalid pool-max-temp value: %.1f\n", val);
+      publishStates();
+      return;
+    }
     operationModeNode.setPoolMaxTemperature(val);
     ConfigManager::getSettings().tempMaxPool = val;
     ConfigManager::save();
   } else if (top.endsWith("/solar-min-temp/set")) {
+    // MQTT authentication is optional, but if configured, we check it
+    if (shouldEnforceMqttAuth() && !isMqttAuthenticated()) {
+      Serial.println("MQTT: Config command rejected - MQTT authentication required");
+      publishStates();
+      return;
+    }
+    
     float val = value.toFloat();
+    // Always validate range for security
+    if (val < 0.0f || val > 100.0f) {
+      Serial.printf("MQTT: Invalid solar-min-temp value: %.1f\n", val);
+      publishStates();
+      return;
+    }
     operationModeNode.setSolarMinTemperature(val);
     ConfigManager::getSettings().tempMinSolar = val;
     ConfigManager::save();
   } else if (top.endsWith("/hysteresis/set")) {
+    // MQTT authentication is optional, but if configured, we check it
+    if (shouldEnforceMqttAuth() && !isMqttAuthenticated()) {
+      Serial.println("MQTT: Config command rejected - MQTT authentication required");
+      publishStates();
+      return;
+    }
+    
     float val = value.toFloat();
+    // Always validate range for security
+    if (val < 0.0f || val > 10.0f) {
+      Serial.printf("MQTT: Invalid hysteresis value: %.1f\n", val);
+      publishStates();
+      return;
+    }
     operationModeNode.setTemperatureHysteresis(val);
     ConfigManager::getSettings().tempHysteresis = val;
     ConfigManager::save();

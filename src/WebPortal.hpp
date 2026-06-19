@@ -35,6 +35,12 @@ public:
   static bool handleAuthentication();
   /** @brief Generate a new session token and store the start time. */
   static void generateSessionToken();
+  /** @brief Generate a new CSRF token. */
+  static void generateCsrfToken();
+  /** @brief Get the current CSRF token. */
+  static String getCsrfToken();
+  /** @brief Check if login is currently locked out due to too many attempts. */
+  static bool isLoginLockedOut();
   /** @brief Check if the current HTTP request has a valid session token. @return true if authenticated. */
   static bool isClientAuthenticated();
 
@@ -99,9 +105,12 @@ private:
   static bool dnsServerStarted_;
 
   static String activeSessionToken_;
+  static String csrfToken_;
   static uint32_t sessionStartTime_;
+  static uint32_t lastLoginAttemptTime_;
+  static uint8_t loginAttemptCount_;
 
-  static constexpr uint32_t kSessionTimeoutMs = 15 * 60 * 1000;  // 15 mins
+  static constexpr uint32_t kSessionTimeoutMs = 10 * 60 * 1000;  // 10 mins (reduced from 15)
   static constexpr uint16_t kDnsPort = 53;
 
   // ── CSRF Protection ──
@@ -116,6 +125,9 @@ private:
   static String csrfToken_;
   static uint32_t csrfTokenTime_;
   static constexpr uint32_t kCsrfTokenTimeoutMs = 30 * 60 * 1000;  // 30 mins
+
+  static constexpr uint8_t kMaxLoginAttempts = 5;
+  static constexpr uint32_t kLoginLockoutMs = 60 * 1000;  // 1 minute lockout
 };
 
 }  // namespace PoolController

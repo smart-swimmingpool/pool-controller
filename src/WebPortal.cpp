@@ -20,6 +20,8 @@
 #include <LittleFS.h>
 #include <Preferences.h>
 #include <Update.h>
+#include <esp_random.h>
+#include <memory>
 #include "DallasTemperatureNode.hpp"
 #include "ESP32TemperatureNode.hpp"
 #include "RelayModuleNode.hpp"
@@ -30,7 +32,10 @@ WebServer WebPortal::server_(80);
 DNSServer WebPortal::dnsServer_;
 bool WebPortal::dnsServerStarted_ = false;
 String WebPortal::activeSessionToken_ = "";
+String WebPortal::csrfToken_ = "";
 uint32_t WebPortal::sessionStartTime_ = 0;
+uint32_t WebPortal::lastLoginAttemptTime_ = 0;
+uint8_t WebPortal::loginAttemptCount_ = 0;
 constexpr uint32_t WebPortal::kSessionTimeoutMs;
 constexpr uint16_t WebPortal::kDnsPort;
 
@@ -127,9 +132,34 @@ void WebPortal::loop() {
   }
 }
 
+static String generateSecureToken(size_t length) {
+  const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  String token;
+  token.reserve(length);
+  
+  for (size_t i = 0; i < length; i++) {
+    uint8_t randomByte;
+    esp_random(&randomByte, 1);
+    token += charset[randomByte % (sizeof(charset) - 1)];
+  }
+  
+  return token;
+}
+
 void WebPortal::generateSessionToken() {
-  activeSessionToken_ = String(random(100000, 999999));
+  // Generate cryptographically secure session token using ESP32 hardware RNG
+  activeSessionToken_ = generateSecureToken(32);  // 32 characters = 192 bits of entropy
+  csrfToken_ = generateSecureToken(32);  // Generate new CSRF token for the session
   sessionStartTime_ = millis();
+  loginAttemptCount_ = 0;  // Reset login attempts on new session
+}
+
+void WebPortal::generateCsrfToken() {
+  csrfToken_ = generateSecureToken(32);
+}
+
+String WebPortal::getCsrfToken() {
+  return csrfToken_;
 }
 
 bool WebPortal::isClientAuthenticated() {
@@ -454,9 +484,15 @@ void WebPortal::apiGetStatus() {
     doc["effective_runtime"] = (active != nullptr) ? active->getEffectiveRuntimeMinutes() : 0;
   }
 
-  String json;
-  serializeJson(doc, json);
-  server_.send(200, "application/json", json);
+  // Serialize directly to a pre-allocated buffer to minimize String usage
+  // Use a static buffer to avoid heap fragmentation
+  static char jsonBuffer[1024];
+  size_t jsonLength = serializeJson(doc, jsonBuffer, sizeof(jsonBuffer));
+  if (jsonLength > 0) {
+    server_.send(200, "application/json", jsonBuffer);
+  } else {
+    server_.send(500, "text/plain", "JSON serialization error");
+  }
 }
 
 void WebPortal::apiScanWiFi() {
@@ -471,9 +507,14 @@ void WebPortal::apiScanWiFi() {
     obj["secure"] = WiFi.encryptionType(i) != WIFI_AUTH_OPEN;
   }
 
-  String json;
-  serializeJson(doc, json);
-  server_.send(200, "application/json", json);
+  // Serialize directly to buffer to minimize String usage
+  static char jsonBuffer[2048];
+  size_t jsonLength = serializeJson(doc, jsonBuffer, sizeof(jsonBuffer));
+  if (jsonLength > 0) {
+    server_.send(200, "application/json", jsonBuffer);
+  } else {
+    server_.send(500, "text/plain", "JSON serialization error");
+  }
 }
 
 void WebPortal::apiGetConfig() {
@@ -507,9 +548,14 @@ void WebPortal::apiGetConfig() {
   settingsObj["timer_end_hour"] = operationModeNode.getTimerSetting().timerEndHour;
   settingsObj["timer_end_min"] = operationModeNode.getTimerSetting().timerEndMinutes;
 
-  String json;
-  serializeJson(doc, json);
-  server_.send(200, "application/json", json);
+  // Serialize directly to buffer to minimize String usage
+  static char jsonBuffer[1024];
+  size_t jsonLength = serializeJson(doc, jsonBuffer, sizeof(jsonBuffer));
+  if (jsonLength > 0) {
+    server_.send(200, "application/json", jsonBuffer);
+  } else {
+    server_.send(500, "text/plain", "JSON serialization error");
+  }
 }
 
 void WebPortal::apiSaveConfig() {
@@ -521,8 +567,31 @@ void WebPortal::apiSaveConfig() {
   String type = server_.arg("type");
 
   if (type == "wifi") {
-    ConfigManager::getWiFi().ssid = server_.arg("ssid");
-    ConfigManager::getWiFi().password = server_.arg("password");
+    String ssid = server_.arg("ssid");
+    String password = server_.arg("password");
+    
+    // Input validation for SSID
+    if (ssid.length() == 0 || ssid.length() > 32) {
+      server_.send(400, "text/plain", "Invalid SSID length (1-32 characters)");
+      return;
+    }
+    
+    // Input validation for password
+    if (password.length() > 64) {
+      server_.send(400, "text/plain", "Password too long (max 64 characters)");
+      return;
+    }
+    
+    // Basic character validation - SSID should be printable ASCII
+    for (char c : ssid) {
+      if (c < 32 || c > 126) {
+        server_.send(400, "text/plain", "Invalid SSID characters");
+        return;
+      }
+    }
+    
+    ConfigManager::getWiFi().ssid = ssid;
+    ConfigManager::getWiFi().password = password;
     ConfigManager::setConfigured(true);  // P1: Mark device as configured
     ConfigManager::save();
     server_.send(200, "text/plain", "OK");
@@ -608,7 +677,20 @@ void WebPortal::apiSaveConfig() {
     server_.send(200, "text/plain", "OK");
     return;
   } else if (type == "password") {
-    ConfigManager::setAdminPassword(server_.arg("password"));
+    String newPassword = server_.arg("password");
+    
+    // Input validation for password
+    if (newPassword.length() < 8) {
+      server_.send(400, "text/plain", "Password must be at least 8 characters");
+      return;
+    }
+    
+    if (newPassword.length() > 64) {
+      server_.send(400, "text/plain", "Password too long (max 64 characters)");
+      return;
+    }
+    
+    ConfigManager::setAdminPassword(newPassword);
     ConfigManager::save();
     server_.send(200, "text/plain", "OK");
     return;
@@ -663,19 +745,53 @@ void WebPortal::apiTogglePump() {
   server_.send(200, "application/json", json);
 }
 
+bool WebPortal::isLoginLockedOut() {
+  if (loginAttemptCount_ >= kMaxLoginAttempts) {
+    uint32_t now = millis();
+    // Check if lockout period has passed (handle unsigned wrap-around)
+    if (now - lastLoginAttemptTime_ < kLoginLockoutMs && 
+        now >= lastLoginAttemptTime_) {
+      return true;  // Still locked out
+    }
+    // Lockout period has passed, reset counter
+    loginAttemptCount_ = 0;
+  }
+  return false;
+}
+
 void WebPortal::apiLogin() {
+  // Rate limiting check
+  if (isLoginLockedOut()) {
+    uint32_t remaining = kLoginLockoutMs - (millis() - lastLoginAttemptTime_);
+    server_.sendHeader("Retry-After", String(remaining / 1000));
+    server_.send(429, "text/plain", "Too many attempts. Try again later.");
+    return;
+  }
+
   if (!server_.hasArg("password")) {
     server_.send(400, "text/plain", "Password Required");
     return;
   }
 
   String pass = server_.arg("password");
+  
+  // Input validation - limit password length
+  if (pass.length() > 64) {
+    server_.send(400, "text/plain", "Invalid password length");
+    return;
+  }
+  
   if (ConfigManager::verifyAdminPassword(pass)) {
     generateSessionToken();
-    // Use Secure flag for HTTPS, HttpOnly to prevent XSS, SameSite for CSRF protection
-    server_.sendHeader("Set-Cookie", "session=" + activeSessionToken_ + "; Path=/; HttpOnly; SameSite=Lax; Max-Age=900");
+    // Secure cookie with HttpOnly, Secure, SameSite, and shorter expiry
+    server_.sendHeader("Set-Cookie", "session=" + activeSessionToken_ + 
+                       "; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=600");
+    loginAttemptCount_ = 0;  // Reset on successful login
     server_.send(200, "text/plain", "OK");
   } else {
+    // Increment failed attempt counter
+    loginAttemptCount_++;
+    lastLoginAttemptTime_ = millis();
     server_.send(401, "text/plain", "Unauthorized");
   }
 }
