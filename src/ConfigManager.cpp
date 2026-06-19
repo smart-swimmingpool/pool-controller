@@ -20,8 +20,10 @@ String ConfigManager::adminPasswordHash_ = "";
 bool ConfigManager::configured_ = false;
 
 // Default password is "admin" (SHA-256 hash, not a real secret)
-static constexpr const char *kDefaultPasswordHash =
-  "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918";  // NOLINT(whitespace/line_length) gitleaks:allow
+// This hash is intentionally hardcoded for first-time setup
+// gitleaks:allow - known default password hash
+static constexpr const char *kDefaultPasswordHash =  // NOLINT(whitespace/line_length)
+    "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918";
 
 static String hashSha256(const String &input) {
   uint8_t hash[32];

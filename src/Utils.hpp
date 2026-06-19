@@ -70,4 +70,34 @@ inline void intToString(int value, char *buffer, size_t bufferSize) {
   snprintf(buffer, bufferSize, "%d", value);
 }
 
+/**
+ * Safely concatenate strings with reserved capacity to minimize heap fragmentation.
+ * This function helps reduce heap fragmentation by reserving capacity upfront.
+ *
+ * @param result The String to append to (will reserve capacity if needed)
+ * @param toAppend The string to append
+ * @param reserveExtra Extra capacity to reserve beyond current needs
+ * @note Uses reserve() directly since capacity() is protected in Arduino String class
+ */
+inline void safeStringConcat(String &result, const String &toAppend, size_t reserveExtra = 32) {
+  // Reserve additional capacity to minimize reallocations
+  // We can't check current capacity as it's protected, so we always reserve
+  // the total needed size to ensure we don't fragment the heap
+  result.reserve(result.length() + toAppend.length() + reserveExtra);
+  result += toAppend;
+}
+
+/**
+ * Create a String with reserved capacity to minimize heap fragmentation.
+ *
+ * @param initialValue Initial string value
+ * @param reserveSize Capacity to reserve
+ * @return String with reserved capacity
+ */
+inline String createReservedString(const char *initialValue, size_t reserveSize) {
+  String result(initialValue);
+  result.reserve(reserveSize);
+  return result;
+}
+
 }  // namespace Utils

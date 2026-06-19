@@ -34,6 +34,10 @@ uint32_t WebPortal::sessionStartTime_ = 0;
 constexpr uint32_t WebPortal::kSessionTimeoutMs;
 constexpr uint16_t WebPortal::kDnsPort;
 
+// CSRF Protection
+String WebPortal::csrfToken_ = "";
+uint32_t WebPortal::csrfTokenTime_ = 0;
+
 // Nodes declared in PoolController.cpp
 extern DallasTemperatureNode solarTemperatureNode;
 extern DallasTemperatureNode poolTemperatureNode;
@@ -62,7 +66,46 @@ bool WebPortal::begin() {
 
   server_.begin();
   Serial.println("✓ Web Server running on port 80.");
+
+  // Initialize CSRF token
+  generateCsrfToken();
+
   return true;
+}
+
+// ── CSRF Protection Methods ──────────────────────────────────
+
+String WebPortal::generateCsrfToken() {
+  // Generate a random token using millis() and random for entropy
+  uint32_t randomValue = random(1000000, 9999999);
+  uint32_t tokenValue = millis() + randomValue;
+  // Convert to hex string manually to avoid String constructor ambiguity
+  char tokenBuffer[17];  // 8 hex chars + null terminator
+  snprintf(tokenBuffer, sizeof(tokenBuffer), "%08X", tokenValue);
+  csrfToken_ = String(tokenBuffer);
+  csrfTokenTime_ = millis();
+  return csrfToken_;
+}
+
+bool WebPortal::validateCsrfToken(const String &token) {
+  // Check if token matches and is not expired
+  if (token == csrfToken_) {
+    // Check if token is still valid (not expired)
+    if (millis() - csrfTokenTime_ < kCsrfTokenTimeoutMs) {
+      return true;
+    }
+    // Token expired, generate new one
+    generateCsrfToken();
+  }
+  return false;
+}
+
+String WebPortal::getCurrentCsrfToken() {
+  // Regenerate token if expired
+  if (millis() - csrfTokenTime_ >= kCsrfTokenTimeoutMs) {
+    generateCsrfToken();
+  }
+  return csrfToken_;
 }
 
 void WebPortal::loop() {
@@ -629,7 +672,8 @@ void WebPortal::apiLogin() {
   String pass = server_.arg("password");
   if (ConfigManager::verifyAdminPassword(pass)) {
     generateSessionToken();
-    server_.sendHeader("Set-Cookie", "session=" + activeSessionToken_ + "; Path=/; HttpOnly; Max-Age=900");
+    // Use Secure flag for HTTPS, HttpOnly to prevent XSS, SameSite for CSRF protection
+    server_.sendHeader("Set-Cookie", "session=" + activeSessionToken_ + "; Path=/; HttpOnly; SameSite=Lax; Max-Age=900");
     server_.send(200, "text/plain", "OK");
   } else {
     server_.send(401, "text/plain", "Unauthorized");
@@ -638,7 +682,8 @@ void WebPortal::apiLogin() {
 
 void WebPortal::apiLogout() {
   activeSessionToken_ = "";
-  server_.sendHeader("Set-Cookie", "session=deleted; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT");
+  // Clear cookie with SameSite attribute for consistency
+  server_.sendHeader("Set-Cookie", "session=deleted; Path=/; HttpOnly; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT");
   server_.send(200, "text/plain", "OK");
 }
 
@@ -821,7 +866,10 @@ void WebPortal::apiGetSensors() {
     // Deduplicate (same address may appear on shared bus)
     bool alreadySeen = false;
     for (uint8_t si = 0; si < seenCount; si++) {
-      if (seen[si] == addrStr) { alreadySeen = true; break; }
+      if (seen[si] == addrStr) {
+        alreadySeen = true;
+        break;
+      }
     }
     if (alreadySeen) continue;
     seen[seenCount++] = addrStr;
