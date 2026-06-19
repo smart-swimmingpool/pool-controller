@@ -145,7 +145,6 @@ void WebPortal::loop() {
 static String generateSecureToken(size_t length) {
   const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   String token;
-  token.reserve(length);
 
 #if !defined(ESP32) && !defined(ARDUINO_ARCH_ESP32)
   // Seed random for native tests
@@ -160,10 +159,11 @@ static String generateSecureToken(size_t length) {
 #if defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
     // Use ESP32 hardware RNG for cryptographic security
     uint32_t randomValue = esp_random();
-    token += charset[randomValue % (sizeof(charset) - 1)];
+    token.concat(&charset[randomValue % (sizeof(charset) - 1)], 1);
 #else
     // Fallback for native tests - use standard random
-    token += charset[random() % (sizeof(charset) - 1)];
+    // Use concat which is available in the mock String class
+    token.concat(&charset[random() % (sizeof(charset) - 1)], 1);
 #endif
   }
 
@@ -607,7 +607,8 @@ void WebPortal::apiSaveConfig() {
     }
 
     // Basic character validation - SSID should be printable ASCII
-    for (char c : ssid) {
+    for (size_t i = 0; i < ssid.length(); i++) {
+      char c = ssid.charAt(i);
       if (c < 32 || c > 126) {
         server_.send(400, "text/plain", "Invalid SSID characters");
         return;
