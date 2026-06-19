@@ -487,36 +487,4 @@ bool OtaUpdater::hasSufficientSpace(size_t firmwareSize) {
   return true;
 }
 
-bool OtaUpdater::verifyFirmwareSize(HTTPClient &http, size_t expectedSize) {
-  // Get Content-Length header
-  int contentLength = http.getSize();
-  
-  if (contentLength <= 0) {
-    Serial.println("OTA: Cannot determine firmware size from Content-Length");
-    statusMessage_ = "Error: Cannot determine firmware size";
-    return false;
-  }
-  
-  // Allow 10% tolerance for compression or header variations
-  size_t maxExpected = expectedSize + static_cast<size_t>(expectedSize * 0.10);
-  size_t minExpected = expectedSize - static_cast<size_t>(expectedSize * 0.10);
-  
-  if (static_cast<size_t>(contentLength) > maxExpected) {
-    Serial.printf("OTA: Firmware size too large. Expected ~%u bytes, got %d bytes\n", 
-                 expectedSize, contentLength);
-    statusMessage_ = "Error: Firmware size mismatch (too large)";
-    return false;
-  }
-  
-  if (static_cast<size_t>(contentLength) < minExpected && expectedSize > 0) {
-    Serial.printf("OTA: Firmware size too small. Expected ~%u bytes, got %d bytes\n", 
-                 expectedSize, contentLength);
-    statusMessage_ = "Error: Firmware size mismatch (too small)";
-    return false;
-  }
-  
-  Serial.printf("OTA: Firmware size verified: %d bytes\n", contentLength);
-  return true;
-}
-
 }  // namespace PoolController

@@ -9,9 +9,6 @@
 
 #include <Arduino.h>
 
-// Forward declarations for types used in method signatures
-class HTTPClient;
-
 namespace PoolController {
 
 /**
@@ -70,12 +67,6 @@ public:
   /// @param firmwareSize Size of firmware in bytes.
   /// @return true if sufficient space available.
   static bool hasSufficientSpace(size_t firmwareSize);
-
-  /// Verify downloaded firmware size matches expected size.
-  /// @param http HTTPClient with the download.
-  /// @param expectedSize Expected firmware size in bytes.
-  /// @return true if size is valid.
-  static bool verifyFirmwareSize(HTTPClient &http, size_t expectedSize);
 
   /// Get available flash space for OTA updates.
   /// @return Available space in bytes.

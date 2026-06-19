@@ -124,19 +124,19 @@ using namespace PoolController;  // SUMMARY
     passed++;
   }
 
-  // ── Test: Firmware size constants are reasonable ──
+  // ── Test: Space checking constants are reasonable ──
   {
-    test_begin("Security::OTA", "firmware size constants are reasonable");
+    test_begin("Security::OTA", "space checking constants are reasonable");
 
-    // These are defined in downloadAndApply, we'll test the logic
-    const size_t kMaxFirmwareSize = 2 * 1024 * 1024;  // 2MB
-    const size_t kMinFirmwareSize = 50 * 1024;       // 50KB
+    // These are defined in OtaUpdater.hpp
+    const float kSpaceSafetyMargin = 0.15f;  // 15%
+    const size_t kMinFreeSpace = 1024 * 1024;  // 1MB
     
-    ASSERT_GT(kMaxFirmwareSize, kMinFirmwareSize);
-    ASSERT_GT(kMaxFirmwareSize, 0);
-    ASSERT_GT(kMinFirmwareSize, 0);
+    ASSERT_GT(kSpaceSafetyMargin, 0.0f);
+    ASSERT_LT(kSpaceSafetyMargin, 1.0f);
+    ASSERT_GT(kMinFreeSpace, 0);
     
-    test_suite_end("Security::OTA::size-constants", 1, 0);
+    test_suite_end("Security::OTA::space-constants", 1, 0);
     passed++;
   }
 
