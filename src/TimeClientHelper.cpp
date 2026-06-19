@@ -83,7 +83,8 @@ static uint8_t _redAfterHours = 24;  // YELLOW→RED after this many hours
 
 void timeClientSetup(const char *ntpServer) {
   // Create NTP client with configured server using unique_ptr for automatic memory management
-  timeClient = std::make_unique<NTPClient>(ntpUDP, ntpServer);
+  // Note: Using new directly since make_unique may not be available in all C++ versions
+  timeClient.reset(new NTPClient(ntpUDP, ntpServer));
 
   // initialize NTP Client
   timeClient->begin();

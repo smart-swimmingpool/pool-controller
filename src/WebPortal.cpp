@@ -140,9 +140,9 @@ static String generateSecureToken(size_t length) {
   token.reserve(length);
 
   for (size_t i = 0; i < length; i++) {
-    uint8_t randomByte;
-    esp_random(&randomByte, 1);
-    token += charset[randomByte % (sizeof(charset) - 1)];
+    // esp_random() returns uint32_t, use modulo to get index into charset
+    uint32_t randomValue = esp_random();
+    token += charset[randomValue % (sizeof(charset) - 1)];
   }
 
   return token;
