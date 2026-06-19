@@ -7,18 +7,20 @@
  */
 
 #include "MqttPublisher.hpp"
-#include "Version.h"
-#include "NetworkManager.hpp"
-#include "ConfigManager.hpp"
-#include "OtaUpdater.hpp"
-#include "DallasTemperatureNode.hpp"
-#include "ESP32TemperatureNode.hpp"
-#include "RelayModuleNode.hpp"
-#include "OperationModeNode.hpp"
-#include "TimeClientHelper.hpp"
+
 #include <ArduinoJson.h>
 #include <Preferences.h>
 #include <memory>
+
+#include "ConfigManager.hpp"
+#include "DallasTemperatureNode.hpp"
+#include "ESP32TemperatureNode.hpp"
+#include "NetworkManager.hpp"
+#include "OtaUpdater.hpp"
+#include "OperationModeNode.hpp"
+#include "RelayModuleNode.hpp"
+#include "TimeClientHelper.hpp"
+#include "Version.h"
 
 namespace PoolController {
 
@@ -709,14 +711,14 @@ void MqttPublisher::handleMqttMessage(char *topic, char *payload, AsyncMqttClien
       Serial.println("MQTT: Firmware update command rejected - MQTT authentication required");
       return;
     }
-    
+
     // Always validate command value for security
     static const char *validFirmwareCommands[] = {"INSTALL"};
     if (!isValidCommand(value, validFirmwareCommands, 1)) {
       Serial.printf("MQTT: Invalid firmware command: %s\n", value.c_str());
       return;
     }
-    
+
     if (value == "INSTALL") {
       Serial.println("MQTT: Firmware update triggered from Home Assistant");
       OtaUpdater::startUpdate();
@@ -763,7 +765,7 @@ void MqttPublisher::handleMqttMessage(char *topic, char *payload, AsyncMqttClien
       publishStates();
       return;
     }
-    
+
     // Always validate payload for security
     static const char *validPumpCommands[] = {"ON", "OFF"};
     if (!isValidCommand(value, validPumpCommands, 2)) {
@@ -771,7 +773,7 @@ void MqttPublisher::handleMqttMessage(char *topic, char *payload, AsyncMqttClien
       publishStates();
       return;
     }
-    
+
     // Only allow pump control from HA in manual mode
     if (operationModeNode.getMode() != "manu") {
       Serial.printf("MQTT: Ignoring pump command — not in manual mode (current: %s)\n", operationModeNode.getMode().c_str());
@@ -790,7 +792,7 @@ void MqttPublisher::handleMqttMessage(char *topic, char *payload, AsyncMqttClien
       publishStates();
       return;
     }
-    
+
     // Always validate mode value for security
     static const char *validModes[] = {"auto", "manu", "boost", "timer"};
     if (!isValidCommand(value, validModes, 4)) {
@@ -798,7 +800,7 @@ void MqttPublisher::handleMqttMessage(char *topic, char *payload, AsyncMqttClien
       publishStates();
       return;
     }
-    
+
     operationModeNode.setMode(value.c_str());
     ConfigManager::getSettings().opMode = value;
     ConfigManager::save();
@@ -809,7 +811,7 @@ void MqttPublisher::handleMqttMessage(char *topic, char *payload, AsyncMqttClien
       publishStates();
       return;
     }
-    
+
     float val = value.toFloat();
     // Always validate range for security
     if (val < 0.0f || val > 40.0f) {
@@ -827,7 +829,7 @@ void MqttPublisher::handleMqttMessage(char *topic, char *payload, AsyncMqttClien
       publishStates();
       return;
     }
-    
+
     float val = value.toFloat();
     // Always validate range for security
     if (val < 0.0f || val > 100.0f) {
@@ -845,7 +847,7 @@ void MqttPublisher::handleMqttMessage(char *topic, char *payload, AsyncMqttClien
       publishStates();
       return;
     }
-    
+
     float val = value.toFloat();
     // Always validate range for security
     if (val < 0.0f || val > 10.0f) {

@@ -7,24 +7,26 @@
  */
 
 #include "WebPortal.hpp"
-#include "Version.h"
-#include "ConfigManager.hpp"
-#include "NetworkManager.hpp"
-#include "SystemMonitor.hpp"
-#include "DegradationManager.hpp"
-#include "OperationModeNode.hpp"
-#include "PoolController.hpp"
-#include "OtaUpdater.hpp"
-#include "TimeClientHelper.hpp"
+
 #include <ArduinoJson.h>
 #include <LittleFS.h>
 #include <Preferences.h>
 #include <Update.h>
 #include <esp_random.h>
 #include <memory>
+
+#include "ConfigManager.hpp"
+#include "DegradationManager.hpp"
 #include "DallasTemperatureNode.hpp"
 #include "ESP32TemperatureNode.hpp"
+#include "NetworkManager.hpp"
+#include "OtaUpdater.hpp"
+#include "OperationModeNode.hpp"
+#include "PoolController.hpp"
 #include "RelayModuleNode.hpp"
+#include "SystemMonitor.hpp"
+#include "TimeClientHelper.hpp"
+#include "Version.h"
 
 namespace PoolController {
 
@@ -136,13 +138,13 @@ static String generateSecureToken(size_t length) {
   const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   String token;
   token.reserve(length);
-  
+
   for (size_t i = 0; i < length; i++) {
     uint8_t randomByte;
     esp_random(&randomByte, 1);
     token += charset[randomByte % (sizeof(charset) - 1)];
   }
-  
+
   return token;
 }
 
@@ -569,19 +571,19 @@ void WebPortal::apiSaveConfig() {
   if (type == "wifi") {
     String ssid = server_.arg("ssid");
     String password = server_.arg("password");
-    
+
     // Input validation for SSID
     if (ssid.length() == 0 || ssid.length() > 32) {
       server_.send(400, "text/plain", "Invalid SSID length (1-32 characters)");
       return;
     }
-    
+
     // Input validation for password
     if (password.length() > 64) {
       server_.send(400, "text/plain", "Password too long (max 64 characters)");
       return;
     }
-    
+
     // Basic character validation - SSID should be printable ASCII
     for (char c : ssid) {
       if (c < 32 || c > 126) {
@@ -589,7 +591,7 @@ void WebPortal::apiSaveConfig() {
         return;
       }
     }
-    
+
     ConfigManager::getWiFi().ssid = ssid;
     ConfigManager::getWiFi().password = password;
     ConfigManager::setConfigured(true);  // P1: Mark device as configured
@@ -678,18 +680,18 @@ void WebPortal::apiSaveConfig() {
     return;
   } else if (type == "password") {
     String newPassword = server_.arg("password");
-    
+
     // Input validation for password
     if (newPassword.length() < 8) {
       server_.send(400, "text/plain", "Password must be at least 8 characters");
       return;
     }
-    
+
     if (newPassword.length() > 64) {
       server_.send(400, "text/plain", "Password too long (max 64 characters)");
       return;
     }
-    
+
     ConfigManager::setAdminPassword(newPassword);
     ConfigManager::save();
     server_.send(200, "text/plain", "OK");
@@ -749,7 +751,7 @@ bool WebPortal::isLoginLockedOut() {
   if (loginAttemptCount_ >= kMaxLoginAttempts) {
     uint32_t now = millis();
     // Check if lockout period has passed (handle unsigned wrap-around)
-    if (now - lastLoginAttemptTime_ < kLoginLockoutMs && 
+    if (now - lastLoginAttemptTime_ < kLoginLockoutMs &&
         now >= lastLoginAttemptTime_) {
       return true;  // Still locked out
     }
@@ -774,19 +776,20 @@ void WebPortal::apiLogin() {
   }
 
   String pass = server_.arg("password");
-  
+
   // Input validation - limit password length
   if (pass.length() > 64) {
     server_.send(400, "text/plain", "Invalid password length");
     return;
   }
-  
+
   if (ConfigManager::verifyAdminPassword(pass)) {
     generateSessionToken();
     // Secure cookie with HttpOnly, Secure, SameSite, and shorter expiry
-    server_.sendHeader("Set-Cookie", "session=" + activeSessionToken_ + 
-                       "; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=600");
-    loginAttemptCount_ = 0;  // Reset on successful login
+    String cookieHeader = "session=" + activeSessionToken_ +
+                          "; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=600";
+    server_.sendHeader("Set-Cookie", cookieHeader);
+    loginAttemptCount_ = 0; // Reset on successful login
     server_.send(200, "text/plain", "OK");
   } else {
     // Increment failed attempt counter
