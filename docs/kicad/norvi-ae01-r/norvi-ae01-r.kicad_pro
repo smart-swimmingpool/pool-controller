@@ -26,7 +26,7 @@
     "last_paths": {},
     "page_layout_descr_file": ""
   },
-  "project": { "name": "Pool Controller — NORVI AE01-R", "uuid": "382f1f38-73ea-43f7-806b-b2d1099074ef" },
+  "project": { "name": "Pool Controller — NORVI AE01-R", "uuid": "b7b3928e-691f-44c2-aced-72e8355ccb43" },
   "schematic": {
     "drawing": {
       "default_line_width": 0,

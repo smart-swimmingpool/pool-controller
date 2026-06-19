@@ -2,7 +2,7 @@
 	(version 20250114)
 	(generator "eeschema")
 	(generator_version "9.0")
-	(uuid "2303ff27-505a-47e3-9f0f-c8d9297f7678")
+	(uuid "94cf0b8f-9b1e-4452-b93f-953fe02cb95d")
 	(paper "A4")
 	(title_block
 		(title "Pool Controller — NORVI AE01-R Schematic")
@@ -687,7 +687,7 @@
 	(symbol
 		(lib_id "NORVI_AE01R")
 		(at 100 75 0)
-		(uuid "43cb2a1f-074b-48b2-b57c-f451aa42c311")
+		(uuid "5d494605-4f2f-425e-8783-906ce4daac47")
 		(property "Reference" "U1"
 			(at 100 80 0)
 			(effects
@@ -706,7 +706,7 @@
 		)
 		(instances
 			(project "Pool Controller — NORVI AE01-R Schematic"
-				(path "/2303ff27-505a-47e3-9f0f-c8d9297f7678"
+				(path "/94cf0b8f-9b1e-4452-b93f-953fe02cb95d"
 					(reference "U1")
 					(unit 1)
 				)
@@ -716,7 +716,7 @@
 	(symbol
 		(lib_id "DS18B20")
 		(at 15 105 0)
-		(uuid "c90c0c50-e9b7-4258-be9d-c6a55d4aa0b3")
+		(uuid "375456e0-075e-4a9c-b363-2785f26ed43d")
 		(property "Reference" "U2"
 			(at 15 110 0)
 			(effects
@@ -735,7 +735,7 @@
 		)
 		(instances
 			(project "Pool Controller — NORVI AE01-R Schematic"
-				(path "/2303ff27-505a-47e3-9f0f-c8d9297f7678"
+				(path "/94cf0b8f-9b1e-4452-b93f-953fe02cb95d"
 					(reference "U2")
 					(unit 1)
 				)
@@ -745,7 +745,7 @@
 	(symbol
 		(lib_id "DS18B20")
 		(at 15 80 0)
-		(uuid "f38f52c9-c1b2-4304-a43e-5c8943a1983f")
+		(uuid "c8498430-8388-42d4-a9a9-40b30e8dc8be")
 		(property "Reference" "U3"
 			(at 15 85 0)
 			(effects
@@ -764,7 +764,7 @@
 		)
 		(instances
 			(project "Pool Controller — NORVI AE01-R Schematic"
-				(path "/2303ff27-505a-47e3-9f0f-c8d9297f7678"
+				(path "/94cf0b8f-9b1e-4452-b93f-953fe02cb95d"
 					(reference "U3")
 					(unit 1)
 				)
@@ -774,7 +774,7 @@
 	(symbol
 		(lib_id "R_4K7")
 		(at 50 92 0)
-		(uuid "bee0f3b6-dd84-4940-bd32-0bc7769ba23e")
+		(uuid "9bd1c045-3789-49cf-b288-fa6fb61354e0")
 		(property "Reference" "R1"
 			(at 50 97 0)
 			(effects
@@ -793,7 +793,7 @@
 		)
 		(instances
 			(project "Pool Controller — NORVI AE01-R Schematic"
-				(path "/2303ff27-505a-47e3-9f0f-c8d9297f7678"
+				(path "/94cf0b8f-9b1e-4452-b93f-953fe02cb95d"
 					(reference "R1")
 					(unit 1)
 				)
@@ -803,7 +803,7 @@
 	(symbol
 		(lib_id "R_330")
 		(at 130 30 0)
-		(uuid "3b48345d-4444-476b-bdf4-7e3c752fe69a")
+		(uuid "25105cfc-11f2-41cc-afc4-7079d2315e82")
 		(property "Reference" "R2"
 			(at 130 35 0)
 			(effects
@@ -822,7 +822,7 @@
 		)
 		(instances
 			(project "Pool Controller — NORVI AE01-R Schematic"
-				(path "/2303ff27-505a-47e3-9f0f-c8d9297f7678"
+				(path "/94cf0b8f-9b1e-4452-b93f-953fe02cb95d"
 					(reference "R2")
 					(unit 1)
 				)
@@ -832,7 +832,7 @@
 	(symbol
 		(lib_id "LED")
 		(at 150 30 0)
-		(uuid "9ec2069f-cf95-4904-9afb-bd77217c959b")
+		(uuid "f22dfffe-25ec-4306-8898-82ea9d80c627")
 		(property "Reference" "D1"
 			(at 150 35 0)
 			(effects
@@ -851,7 +851,7 @@
 		)
 		(instances
 			(project "Pool Controller — NORVI AE01-R Schematic"
-				(path "/2303ff27-505a-47e3-9f0f-c8d9297f7678"
+				(path "/94cf0b8f-9b1e-4452-b93f-953fe02cb95d"
 					(reference "D1")
 					(unit 1)
 				)
@@ -860,269 +860,369 @@
 	)
 	(wire
 		(pts
-			(xy 5 150)
-			(xy 80 150)
+			(xy 5 5)
+			(xy 80 5)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "398295b4-a358-4692-aac0-fe53b40db9e9")
+		(uuid "48c0e99b-79aa-46e5-ba77-558cb14a92db")
 	)
 	(wire
 		(pts
 			(xy 5 15)
+			(xy 42 15)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "82df7e91-4034-41f4-b0e1-e4fdbe789f21")
+	)
+	(wire
+		(pts
+			(xy 42 15)
+			(xy 80 15)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "efe86bd0-a837-4540-8d39-6e3996792bbf")
+	)
+	(wire
+		(pts
+			(xy 80 15)
+			(xy 140 15)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "8a060c54-7b7f-4c43-a19c-e1a3aba03101")
+	)
+	(wire
+		(pts
+			(xy 140 15)
 			(xy 160 15)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "384a4ea6-bb6b-471f-ab0c-f6b91e4b0d85")
+		(uuid "2c3f9920-8b8b-42d2-8014-4e653677b216")
 	)
 	(wire
 		(pts
-			(xy 50 130)
-			(xy 80 130)
+			(xy 5 92)
+			(xy 32 92)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "4715583b-cef2-4ff2-967e-1e757a294fcb")
+		(uuid "55183bc9-1082-41a8-ab59-03b731e18808")
 	)
 	(wire
 		(pts
-			(xy 33 110)
-			(xy 33 130)
+			(xy 32 92)
+			(xy 40 92)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "a50022df-5c9a-4b5c-ab6f-b2367d156b6f")
+		(uuid "f093406a-387b-4486-bb82-a3c4f3c05794")
 	)
 	(wire
 		(pts
-			(xy 33 100)
-			(xy 33 15)
+			(xy 40 92)
+			(xy 80 92)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "8a8f865e-a463-4078-8008-dae4f616aa9a")
+		(uuid "27abf3c4-788a-4a32-b58f-f85a35a167d4")
 	)
 	(wire
 		(pts
-			(xy 33 105)
-			(xy 50 105)
+			(xy 35 90)
+			(xy 32 90)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "91d4e108-4235-40f8-be41-b370eabded75")
+		(uuid "d35f9d3b-a40f-4ce4-bcfe-24a41ec21ae7")
 	)
 	(wire
 		(pts
-			(xy 65 105)
-			(xy 80 105)
+			(xy 32 90)
+			(xy 32 92)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "92bfbd0a-658c-4a96-8e79-1ddef267bf27")
+		(uuid "92731ed2-de41-4c20-9d51-3c4c234c8bde")
 	)
 	(wire
 		(pts
-			(xy 80 105)
-			(xy 80 75)
+			(xy 35 105)
+			(xy 38 105)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "dca6611b-4443-42fa-a3a0-c481e5774dfe")
+		(uuid "10bd9747-cd02-40d9-b276-768948712d2c")
 	)
 	(wire
 		(pts
-			(xy 50 97)
-			(xy 50 130)
+			(xy 38 105)
+			(xy 38 92)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "f257b855-c834-4fe4-8567-3e41654c9760")
+		(uuid "c866bf9e-4aa3-46c0-8b91-f219e9cefa9d")
 	)
 	(wire
 		(pts
-			(xy 33 85)
-			(xy 33 130)
+			(xy 38 92)
+			(xy 40 92)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "458110cb-4935-4505-87af-bcb33bb1c901")
+		(uuid "c635a4d5-289d-4952-aca2-0ca3cda176c8")
 	)
 	(wire
 		(pts
-			(xy 33 75)
-			(xy 33 15)
+			(xy 60 92)
+			(xy 60 40)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "d8f46c0f-c7e0-4e3f-a66a-fd7461244793")
+		(uuid "56efd093-399a-4993-922e-8cc249eeb68a")
 	)
 	(wire
 		(pts
-			(xy 33 80)
-			(xy 50 80)
+			(xy 60 40)
+			(xy 80 40)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "099fdbb9-533e-48c6-b095-3996c7e871cc")
+		(uuid "697884c1-77da-4bf7-905e-2414645771ce")
 	)
 	(wire
 		(pts
-			(xy 50 80)
-			(xy 50 105)
+			(xy 35 120)
+			(xy 42 120)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "5104d6b1-d563-4103-be8d-8382a7b6668a")
+		(uuid "39bb9001-618a-44ed-afe0-7d2804da0d16")
 	)
 	(wire
 		(pts
-			(xy 80 60)
-			(xy 120 60)
+			(xy 42 120)
+			(xy 42 15)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "d334880a-2069-4870-95bd-a92c028cb7f1")
+		(uuid "20e26609-233a-40b3-bdc0-fe38a374aadb")
 	)
 	(wire
 		(pts
-			(xy 80 50)
-			(xy 120 50)
+			(xy 35 65)
+			(xy 32 65)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "e14e2eef-2183-47e9-8d58-b60872fcc209")
+		(uuid "7b2a010c-0fbc-418c-bc12-7efd9208309c")
 	)
 	(wire
 		(pts
-			(xy 120 35)
-			(xy 130 35)
+			(xy 32 65)
+			(xy 32 92)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "4a501f41-24bd-4c4a-9639-c68b0b7b6fab")
+		(uuid "3fea12a2-9149-43e4-8721-911e5eebf457")
 	)
 	(wire
 		(pts
-			(xy 145 35)
-			(xy 150 35)
+			(xy 35 80)
+			(xy 38 80)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "06411ebb-4730-465d-acfc-205f977cbb66")
+		(uuid "c25102ab-b170-4b75-921b-259fc0f10338")
 	)
 	(wire
 		(pts
-			(xy 150 25)
-			(xy 150 15)
+			(xy 38 80)
+			(xy 38 92)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "6898e34f-4715-4588-b837-23766188ea38")
+		(uuid "afa4ba9b-003c-4dc0-ad79-e4997ce5297f")
 	)
 	(wire
 		(pts
-			(xy 130 25)
-			(xy 130 15)
+			(xy 35 95)
+			(xy 42 95)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "3ef1c2ee-b82b-40c1-9a4f-a07e854a8e78")
+		(uuid "c8a0095d-d19b-4b71-aea3-682b6a0eddf3")
+	)
+	(wire
+		(pts
+			(xy 42 95)
+			(xy 42 15)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e2bdbc51-c43a-49cd-ade1-8dddecda2515")
+	)
+	(wire
+		(pts
+			(xy 80 85)
+			(xy 120 85)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "4988f82f-7450-45a1-8a77-334634043c61")
+	)
+	(wire
+		(pts
+			(xy 120 85)
+			(xy 120 30)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "fd602ad9-3c09-4a1e-9cb7-910e640bf82b")
+	)
+	(wire
+		(pts
+			(xy 140 30)
+			(xy 140 25)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e165b972-1d44-479b-9f01-1582d86b3edc")
+	)
+	(wire
+		(pts
+			(xy 140 35)
+			(xy 140 15)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b110df90-7029-492e-a7f2-cd85d8acbac5")
 	)
 	(junction
-		(at 33 130)
+		(at 80 5)
 		(diameter 0.8128)
 		(color 0 0 0 0)
-		(uuid "8f010fbd-7294-423b-bc6d-d47149ac057e")
+		(uuid "443e82f5-5d14-46ce-b2f0-ed233925952c")
 	)
 	(junction
-		(at 33 15)
+		(at 32 92)
 		(diameter 0.8128)
 		(color 0 0 0 0)
-		(uuid "c697659c-c2a2-4ed9-b27a-5f9569d77930")
+		(uuid "99ab0fc4-866f-42f5-a743-5b2cd84f51f5")
 	)
 	(junction
-		(at 50 130)
+		(at 40 92)
 		(diameter 0.8128)
 		(color 0 0 0 0)
-		(uuid "dab9fc4b-9f20-4031-a98c-855fab3b27d8")
+		(uuid "795259f1-b074-461f-b9ac-8f4a6a1230c3")
 	)
 	(junction
-		(at 33 130)
+		(at 38 92)
 		(diameter 0.8128)
 		(color 0 0 0 0)
-		(uuid "d7ec5418-4e87-4b8f-8277-2e1425564171")
+		(uuid "abc47c2f-a275-46ba-ae5c-3503c6cea630")
 	)
 	(junction
-		(at 33 15)
+		(at 40 92)
 		(diameter 0.8128)
 		(color 0 0 0 0)
-		(uuid "228d7d51-4683-4a93-aaa1-8dfc50150ecd")
+		(uuid "affa8a8f-d66a-46a9-a2b1-8e8fd2a38ed0")
 	)
 	(junction
-		(at 50 80)
+		(at 42 15)
 		(diameter 0.8128)
 		(color 0 0 0 0)
-		(uuid "331d9890-85e4-4425-926a-db793cb14005")
+		(uuid "3228f8f6-c90e-40fa-812e-17e103ded91e")
 	)
 	(junction
-		(at 150 15)
+		(at 32 92)
 		(diameter 0.8128)
 		(color 0 0 0 0)
-		(uuid "552c9c83-d9a6-4750-8e50-4df364625ec3")
+		(uuid "7f7926f1-2bfc-449f-8f8d-4f64d5471e74")
 	)
 	(junction
-		(at 130 15)
+		(at 38 92)
 		(diameter 0.8128)
 		(color 0 0 0 0)
-		(uuid "479f064a-f298-40da-b226-0cef1e8bed13")
+		(uuid "0fda2e17-77a4-42d3-a175-91f6ad154c9d")
+	)
+	(junction
+		(at 42 15)
+		(diameter 0.8128)
+		(color 0 0 0 0)
+		(uuid "49ae0518-5870-4d8b-b38e-b328b8ef83da")
+	)
+	(junction
+		(at 140 15)
+		(diameter 0.8128)
+		(color 0 0 0 0)
+		(uuid "41fdd6b0-ff86-44ec-8952-1b2fa10c51bc")
 	)
 	(label "GPIO25 (DATA)"
-		(at 82 105 0)
+		(at 82 40 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 		)
-		(uuid "9f75ecce-6ef0-48eb-b4f6-5bd32844f673")
+		(uuid "04dd8b32-1973-413e-a0ca-d0e4bbacca78")
 	)
 	(label "GPIO14 (R0)"
 		(at 82 60 0)
@@ -1131,34 +1231,34 @@
 				(size 1.27 1.27)
 			)
 		)
-		(uuid "cd4249de-0bda-4702-b7b3-f4be5e245b2f")
+		(uuid "28b3bc5b-339b-49c1-9437-e959dd4922f0")
 	)
 	(label "GPIO12 (R1)"
-		(at 82 50 0)
+		(at 82 70 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 		)
-		(uuid "6f6c0077-cc2d-4a6f-92ed-180ef34b2f66")
+		(uuid "8a094f8e-5760-420d-8849-be3bf1dec7cb")
 	)
 	(label "GPIO27 (LED)"
-		(at 82 35 0)
+		(at 82 85 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 		)
-		(uuid "98276ac1-8c3b-4fdb-a770-1be679c6e5cf")
+		(uuid "4f724674-dd6a-452e-8d11-142f2f1c370a")
 	)
 	(global_label "+24V"
-		(at 5 150 0)
+		(at 5 5 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 		)
-		(uuid "9d20743a-44d4-4f16-8e9c-567452daea5d")
+		(uuid "9282575b-8b90-4543-b64f-f6b4c1945666")
 	)
 	(global_label "GND"
 		(at 5 15 0)
@@ -1167,43 +1267,43 @@
 				(size 1.27 1.27)
 			)
 		)
-		(uuid "aed7eaf5-8d34-43f9-aa80-4d5536a4a4e0")
+		(uuid "05c19d0d-6f43-4bba-ad62-aa00944af42a")
 	)
 	(global_label "+3.3V"
-		(at 50 130 0)
+		(at 5 92 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 		)
-		(uuid "6be588b6-d8f2-43f9-a4c4-d26077e78205")
+		(uuid "53a8c586-ce9c-47d2-b67b-9d763cb45c23")
 	)
 	(text "DS18B20 Solar"
-		(at 15 120 0)
+		(at 15 133 0)
 		(effects
 			(font
 				(size 1.5 1.5)
 			)
 		)
-		(uuid "f23778d0-5ac1-431e-9d8f-c73c0c4123db")
+		(uuid "b5862ea8-7816-4483-8aef-bd68b53a15dc")
 	)
 	(text "DS18B20 Pool"
-		(at 15 95 0)
+		(at 15 108 0)
 		(effects
 			(font
 				(size 1.5 1.5)
 			)
 		)
-		(uuid "e1de4f43-4425-4591-a4e7-7a5cadc4c702")
+		(uuid "d92c43f0-face-44d4-a316-65611d167187")
 	)
-	(text "Shared 4.7kΩ pull-up"
-		(at 45 115 0)
+	(text "Shared 4.7kΩ pull-up to 3V3"
+		(at 45 107 0)
 		(effects
 			(font
 				(size 1.0 1.0)
 			)
 		)
-		(uuid "801f57a8-a1e6-421a-adeb-3b21d3fb556b")
+		(uuid "b4cdbd85-d8bb-4064-9c37-bf6f44a9db9b")
 	)
 	(text "NORVI AE01-R"
 		(at 100 100 0)
@@ -1212,16 +1312,16 @@
 				(size 1.5 1.5)
 			)
 		)
-		(uuid "09c4f7a5-628a-41b4-866e-2394761f0106")
+		(uuid "1541f5ef-9973-43de-9361-38950a884a88")
 	)
 	(text "Status LED"
-		(at 145 45 0)
+		(at 150 48 0)
 		(effects
 			(font
 				(size 1.0 1.0)
 			)
 		)
-		(uuid "b2fab7da-ff02-4fd8-85d7-e07f625d0f79")
+		(uuid "15ae2633-4340-44de-91a6-f24799004614")
 	)
 	(text "330Ω"
 		(at 130 20 0)
@@ -1230,34 +1330,7 @@
 				(size 1.0 1.0)
 			)
 		)
-		(uuid "94fa0975-5c98-4f45-93c5-fd5c8cc0f1fa")
-	)
-	(text "Built-in Relays:"
-		(at 85 65 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-		)
-		(uuid "574b0be7-01f2-4aba-b80a-49d1b61319cd")
-	)
-	(text "R0 (GPIO14) → Pool Pump"
-		(at 85 60 0)
-		(effects
-			(font
-				(size 1.0 1.0)
-			)
-		)
-		(uuid "b302d369-de92-4637-8581-d1457525505d")
-	)
-	(text "R1 (GPIO12) → Solar Pump"
-		(at 85 50 0)
-		(effects
-			(font
-				(size 1.0 1.0)
-			)
-		)
-		(uuid "ae7cda7f-266c-468c-a1ee-e47ad591cb8a")
+		(uuid "77f3b916-5540-4ce3-8518-0d7802ed227d")
 	)
 	(sheet_instances
 		(path "/"

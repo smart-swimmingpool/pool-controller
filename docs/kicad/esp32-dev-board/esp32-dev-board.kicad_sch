@@ -2,7 +2,7 @@
 	(version 20250114)
 	(generator "eeschema")
 	(generator_version "9.0")
-	(uuid "f9f5d733-f92a-4622-b952-02eca519b51b")
+	(uuid "82c4c713-c6e9-474b-9248-3a3babffddea")
 	(paper "A4")
 	(title_block
 		(title "Pool Controller — ESP32 Dev Board Schematic")
@@ -657,7 +657,7 @@
 	(symbol
 		(lib_id "ESP32_DEV_BOARD")
 		(at 100 75 0)
-		(uuid "664c9443-879a-462e-b064-510a937c92a0")
+		(uuid "32af3369-764f-440c-8ecd-30c9b6c470d9")
 		(property "Reference" "U1"
 			(at 100 80 0)
 			(effects
@@ -676,7 +676,7 @@
 		)
 		(instances
 			(project "Pool Controller — ESP32 Dev Board Schematic"
-				(path "/f9f5d733-f92a-4622-b952-02eca519b51b"
+				(path "/82c4c713-c6e9-474b-9248-3a3babffddea"
 					(reference "U1")
 					(unit 1)
 				)
@@ -686,7 +686,7 @@
 	(symbol
 		(lib_id "DS18B20")
 		(at 20 110 0)
-		(uuid "0c7f9461-1392-4674-897d-d47f61de4bf4")
+		(uuid "c20f18ac-0172-417c-b324-eaf1b5ffd8c7")
 		(property "Reference" "U2"
 			(at 20 115 0)
 			(effects
@@ -705,7 +705,7 @@
 		)
 		(instances
 			(project "Pool Controller — ESP32 Dev Board Schematic"
-				(path "/f9f5d733-f92a-4622-b952-02eca519b51b"
+				(path "/82c4c713-c6e9-474b-9248-3a3babffddea"
 					(reference "U2")
 					(unit 1)
 				)
@@ -715,7 +715,7 @@
 	(symbol
 		(lib_id "DS18B20")
 		(at 20 40 0)
-		(uuid "2b15b588-9351-4cc0-9cb0-fbf6496d94e9")
+		(uuid "95a46afd-0df1-444b-981b-b654fe4f38f1")
 		(property "Reference" "U3"
 			(at 20 45 0)
 			(effects
@@ -734,7 +734,7 @@
 		)
 		(instances
 			(project "Pool Controller — ESP32 Dev Board Schematic"
-				(path "/f9f5d733-f92a-4622-b952-02eca519b51b"
+				(path "/82c4c713-c6e9-474b-9248-3a3babffddea"
 					(reference "U3")
 					(unit 1)
 				)
@@ -744,7 +744,7 @@
 	(symbol
 		(lib_id "R_4K7")
 		(at 55 110 0)
-		(uuid "a9ed304a-f666-42ec-8d1d-97317769fbc2")
+		(uuid "898986ca-4b23-44f9-b779-5244b188eaf0")
 		(property "Reference" "R1"
 			(at 55 115 0)
 			(effects
@@ -763,7 +763,7 @@
 		)
 		(instances
 			(project "Pool Controller — ESP32 Dev Board Schematic"
-				(path "/f9f5d733-f92a-4622-b952-02eca519b51b"
+				(path "/82c4c713-c6e9-474b-9248-3a3babffddea"
 					(reference "R1")
 					(unit 1)
 				)
@@ -773,7 +773,7 @@
 	(symbol
 		(lib_id "R_4K7")
 		(at 55 40 0)
-		(uuid "f5f18b32-79a4-4022-a689-15137c642621")
+		(uuid "422cb710-3406-4d1a-9421-77dffe8a37c4")
 		(property "Reference" "R2"
 			(at 55 45 0)
 			(effects
@@ -792,7 +792,7 @@
 		)
 		(instances
 			(project "Pool Controller — ESP32 Dev Board Schematic"
-				(path "/f9f5d733-f92a-4622-b952-02eca519b51b"
+				(path "/82c4c713-c6e9-474b-9248-3a3babffddea"
 					(reference "R2")
 					(unit 1)
 				)
@@ -802,7 +802,7 @@
 	(symbol
 		(lib_id "RELAY_2CH")
 		(at 160 60 0)
-		(uuid "8859af13-eae7-4fe0-ac7e-5858717b790c")
+		(uuid "214be3de-bdc5-4aa5-94d7-a9195b27bb15")
 		(property "Reference" "K1"
 			(at 160 65 0)
 			(effects
@@ -821,7 +821,7 @@
 		)
 		(instances
 			(project "Pool Controller — ESP32 Dev Board Schematic"
-				(path "/f9f5d733-f92a-4622-b952-02eca519b51b"
+				(path "/82c4c713-c6e9-474b-9248-3a3babffddea"
 					(reference "K1")
 					(unit 1)
 				)
@@ -830,297 +830,483 @@
 	)
 	(wire
 		(pts
-			(xy 5 145)
-			(xy 80 145)
+			(xy 5 5)
+			(xy 37 5)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "0160639f-991d-4a5a-846e-e2ef882b63d0")
+		(uuid "e2a3e765-d085-4420-a57c-3f54977c02cf")
+	)
+	(wire
+		(pts
+			(xy 37 5)
+			(xy 45 5)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "2bb130d0-04ec-4d4e-ba53-837c8c6cf580")
+	)
+	(wire
+		(pts
+			(xy 45 5)
+			(xy 80 5)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "70d06eb0-fd72-4dc3-b2df-2b3c721132ee")
 	)
 	(wire
 		(pts
 			(xy 5 15)
+			(xy 43 15)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "9a4e2cdb-e232-4bed-904c-74b6b05f7d73")
+	)
+	(wire
+		(pts
+			(xy 43 15)
+			(xy 80 15)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "170d7353-a6cc-4e68-96b1-6b1bd809b8bc")
+	)
+	(wire
+		(pts
+			(xy 80 15)
+			(xy 140 15)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d936a244-6f44-431c-ad79-0ed5abf1e142")
+	)
+	(wire
+		(pts
+			(xy 140 15)
 			(xy 160 15)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "68b6434b-3b82-41af-9bf1-65f93c5a813e")
+		(uuid "0a2ba42a-ac48-4fe8-bf9a-6f04ee6bc063")
 	)
 	(wire
 		(pts
-			(xy 130 85)
-			(xy 155 85)
+			(xy 80 145)
+			(xy 140 145)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "829d005c-f87c-45ec-b987-02c7b84c9dbf")
+		(uuid "01c66504-2afc-4dbd-bfec-62a6d57ec0e8")
 	)
 	(wire
 		(pts
-			(xy 38 115)
-			(xy 38 145)
+			(xy 140 145)
+			(xy 155 145)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "ae5e9147-340d-47c2-87b0-1832fc3aec40")
+		(uuid "b9e6de5b-000f-46b9-884a-ffc9bb3c0a66")
 	)
 	(wire
 		(pts
-			(xy 38 105)
-			(xy 38 15)
+			(xy 40 95)
+			(xy 37 95)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "faa37d96-4ffb-4be0-8dd2-9e4c69f4cb8b")
+		(uuid "2c181582-8973-403d-900b-f73a9fa6453e")
 	)
 	(wire
 		(pts
-			(xy 38 110)
-			(xy 55 110)
+			(xy 37 95)
+			(xy 37 5)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "d2a4be54-577b-4425-a0d9-269eb78108c0")
+		(uuid "1fd7366d-d7ac-4a2a-b3ba-8b0df104aa0e")
 	)
 	(wire
 		(pts
-			(xy 70 110)
-			(xy 80 110)
+			(xy 40 110)
+			(xy 45 110)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "3d3ec8fe-d01a-45bb-b966-f100effd9f36")
+		(uuid "3f1aa2a4-714a-4359-9773-4ec4d38ba6e4")
 	)
 	(wire
 		(pts
-			(xy 80 110)
-			(xy 80 75)
+			(xy 65 110)
+			(xy 65 45)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "be00996f-28b8-4bcf-bc26-403f7627e2c8")
+		(uuid "f13ac3d2-9390-4796-a171-56f092ab4a20")
 	)
 	(wire
 		(pts
-			(xy 55 115)
-			(xy 55 145)
+			(xy 65 45)
+			(xy 80 45)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "dfa6e154-e35d-4a6c-91e3-a603ad5d5c6d")
+		(uuid "6c84f948-50c3-4dcc-a743-f89a01083c70")
 	)
 	(wire
 		(pts
-			(xy 38 45)
-			(xy 38 15)
+			(xy 45 110)
+			(xy 45 5)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "7db9c4f4-383d-4c8b-b581-7fd88e6a721e")
+		(uuid "8f2e58c1-65b7-4597-b2b0-2e6ae393bf57")
 	)
 	(wire
 		(pts
-			(xy 38 35)
-			(xy 38 145)
+			(xy 40 125)
+			(xy 43 125)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "2f60dee0-7780-437c-beb7-a2a205947144")
+		(uuid "3db02ace-4978-4b28-ad19-716d8c66404a")
 	)
 	(wire
 		(pts
-			(xy 38 40)
-			(xy 55 40)
+			(xy 43 125)
+			(xy 43 15)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "a87fbe8c-cbe1-4c71-9601-311e52a907ca")
+		(uuid "1a70a9ff-34be-4381-bebc-5e6ec6b4740f")
 	)
 	(wire
 		(pts
-			(xy 70 40)
-			(xy 80 40)
+			(xy 40 25)
+			(xy 37 25)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "a6c61a18-de16-4c7e-823d-7ae548956a8f")
+		(uuid "b3d3759d-2a0c-4801-80e2-ae374ddcb9a1")
 	)
 	(wire
 		(pts
-			(xy 80 40)
-			(xy 80 63)
+			(xy 37 25)
+			(xy 37 5)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "4b0f1937-58e1-48a7-8c1d-bdb46f2715ed")
+		(uuid "47e7db91-03d4-4adc-bf8d-142af502d19b")
 	)
 	(wire
 		(pts
-			(xy 55 35)
-			(xy 55 145)
+			(xy 40 40)
+			(xy 45 40)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "118e6b7b-ae6f-4887-a06e-e74227e281a3")
+		(uuid "077d092e-0f77-423c-96b2-c9da461afb21")
 	)
 	(wire
 		(pts
-			(xy 120 80)
-			(xy 145 80)
+			(xy 65 40)
+			(xy 65 55)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "901b67f3-6c33-4a75-ac7d-a304ece3ad9b")
+		(uuid "95f20eda-9607-408d-9af4-1d1bc56b2c90")
 	)
 	(wire
 		(pts
-			(xy 120 70)
-			(xy 145 70)
+			(xy 65 55)
+			(xy 80 55)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "a657788b-c2aa-4ad7-97a2-e42a93b35331")
+		(uuid "03f3bdb2-bdfa-4b89-8e43-b7705fe02220")
 	)
 	(wire
 		(pts
-			(xy 145 55)
-			(xy 145 15)
+			(xy 45 40)
+			(xy 45 5)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "14ca3b2b-197c-4e59-b22b-75cb1337f90f")
+		(uuid "b39806cb-5a57-40de-9c02-985ab8ba61e5")
+	)
+	(wire
+		(pts
+			(xy 40 55)
+			(xy 43 55)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "a6503d7e-f503-468e-b100-dfe7860dbccc")
+	)
+	(wire
+		(pts
+			(xy 43 55)
+			(xy 43 15)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "8e415609-8729-47c9-959d-efaaf84ef32e")
+	)
+	(wire
+		(pts
+			(xy 140 40)
+			(xy 120 40)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "165718c3-a529-4580-8969-4bf5c1d61c2c")
+	)
+	(wire
+		(pts
+			(xy 120 40)
+			(xy 120 95)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f3621f7f-1b1e-48f0-bf32-c3046ee6e154")
+	)
+	(wire
+		(pts
+			(xy 120 95)
+			(xy 80 95)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "989f901c-d865-41c6-b5b8-32ae6cf14efd")
+	)
+	(wire
+		(pts
+			(xy 140 50)
+			(xy 120 50)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d9625127-292e-47b4-96d7-6ebe934b8bf8")
+	)
+	(wire
+		(pts
+			(xy 120 50)
+			(xy 120 105)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c1e1f418-d489-440c-a5bd-c42655d24763")
+	)
+	(wire
+		(pts
+			(xy 120 105)
+			(xy 80 105)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "33da58a3-1164-435f-9b5b-6dca0a3a07b9")
+	)
+	(wire
+		(pts
+			(xy 140 75)
+			(xy 140 145)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6f10640b-7011-4aa5-bc77-d8ed2a7a3a45")
+	)
+	(wire
+		(pts
+			(xy 140 65)
+			(xy 140 15)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "3f28050b-5f1f-4e19-a669-cace1f3c4cc8")
 	)
 	(junction
-		(at 38 145)
+		(at 80 5)
 		(diameter 0.8128)
 		(color 0 0 0 0)
-		(uuid "4514177d-3c79-4e7a-94c9-23a4b5251abd")
+		(uuid "63ec32fa-db9a-42a6-9bb9-4ac5cb08fec1")
 	)
 	(junction
-		(at 38 15)
+		(at 80 15)
 		(diameter 0.8128)
 		(color 0 0 0 0)
-		(uuid "f65066ac-8bc8-4c87-a2e6-285152296b6b")
+		(uuid "a5ac417b-fd2c-47e4-8554-ab83601a3fc2")
 	)
 	(junction
-		(at 55 145)
+		(at 37 5)
 		(diameter 0.8128)
 		(color 0 0 0 0)
-		(uuid "d22b4b89-3e11-4723-b1b8-8719b7eb357c")
+		(uuid "dda04e0c-de02-45b3-ad3f-61e483a23b52")
 	)
 	(junction
-		(at 38 15)
+		(at 45 110)
 		(diameter 0.8128)
 		(color 0 0 0 0)
-		(uuid "2a40c46a-0ce5-4f15-92e9-9fcfa63cc1b3")
+		(uuid "67a10742-51e6-441b-a6fa-c3c53283e59c")
 	)
 	(junction
-		(at 38 145)
+		(at 45 5)
 		(diameter 0.8128)
 		(color 0 0 0 0)
-		(uuid "b42c2913-6447-4626-9c79-acab4bd4796e")
+		(uuid "c9a1e3a4-e102-49e4-a875-d9c8f3c19489")
 	)
 	(junction
-		(at 55 145)
+		(at 43 15)
 		(diameter 0.8128)
 		(color 0 0 0 0)
-		(uuid "df1ddda1-bda1-4b9c-95a7-3eb9c0d3d5a0")
+		(uuid "d6ada5db-5cbe-4522-ac65-e1b83dabf1c4")
 	)
 	(junction
-		(at 145 15)
+		(at 37 5)
 		(diameter 0.8128)
 		(color 0 0 0 0)
-		(uuid "31d3e5d0-d643-4602-aaf7-0c4a14aea6a8")
+		(uuid "da3978d5-d4ca-48a6-9906-7cc5e20fef6d")
+	)
+	(junction
+		(at 45 40)
+		(diameter 0.8128)
+		(color 0 0 0 0)
+		(uuid "48b7f389-bb25-4186-8219-d6e9ee04b5cf")
+	)
+	(junction
+		(at 45 5)
+		(diameter 0.8128)
+		(color 0 0 0 0)
+		(uuid "a9ba0501-8353-474a-8630-df813b058443")
+	)
+	(junction
+		(at 43 15)
+		(diameter 0.8128)
+		(color 0 0 0 0)
+		(uuid "9dab7342-da1a-4f33-aa04-bdeaeae27d69")
+	)
+	(junction
+		(at 140 145)
+		(diameter 0.8128)
+		(color 0 0 0 0)
+		(uuid "f0d2d905-5cc6-4872-abfc-e8e7f5532c18")
+	)
+	(junction
+		(at 140 15)
+		(diameter 0.8128)
+		(color 0 0 0 0)
+		(uuid "33ce612b-efc1-4976-b718-7a4fada7eec0")
 	)
 	(label "GPIO32"
-		(at 82 110 0)
+		(at 82 45 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 		)
-		(uuid "dfd936a4-c2d2-4527-b100-027f4e66d06c")
+		(uuid "23f97d45-4241-4a29-8950-5a3edefee773")
 	)
 	(label "GPIO33"
-		(at 82 40 0)
+		(at 82 55 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 		)
-		(uuid "7ac9fbbb-b36a-49eb-a9f3-a850c8e2983c")
+		(uuid "ce981b6f-85d5-4480-bc6b-685ff68c1eb2")
 	)
 	(label "GPIO25"
-		(at 82 80 0)
+		(at 82 95 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 		)
-		(uuid "d3155d49-a6d1-4ceb-923c-bdc814915648")
+		(uuid "9ef4e867-9c65-45e4-aa9d-7b9f8c851a09")
 	)
 	(label "GPIO26"
-		(at 82 70 0)
+		(at 82 105 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 		)
-		(uuid "d7962c4c-1e69-472d-abc6-c01b09b2c37d")
+		(uuid "37a34ab9-033f-45e1-a2e4-cae5e94ede88")
 	)
 	(global_label "+3.3V"
-		(at 5 145 0)
+		(at 5 5 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 		)
-		(uuid "d20b3029-f77f-4885-8258-10d8487adc44")
-	)
-	(global_label "+5V"
-		(at 130 85 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-		)
-		(uuid "42334a81-af25-46eb-892c-3c1f92a8a11b")
+		(uuid "fcab51c4-eff0-4c97-9155-6cf0802a7e81")
 	)
 	(global_label "GND"
 		(at 5 15 0)
@@ -1129,25 +1315,34 @@
 				(size 1.27 1.27)
 			)
 		)
-		(uuid "02e24bb4-bd3b-46d4-b9e6-bb4b9143fb06")
+		(uuid "2969e263-cf8a-4d0b-92c4-26ff74d2eb1c")
+	)
+	(global_label "+5V"
+		(at 80 145 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "9985366c-60f0-48d3-8872-beb04fd1f4a5")
 	)
 	(text "DS18B20 Solar"
-		(at 20 125 0)
+		(at 20 138 0)
 		(effects
 			(font
 				(size 1.5 1.5)
 			)
 		)
-		(uuid "ba238c98-10dc-4c28-b957-ef390fcc37f8")
+		(uuid "2216f852-e26b-4636-8f7a-adc75fbbd5be")
 	)
 	(text "DS18B20 Pool"
-		(at 20 55 0)
+		(at 20 68 0)
 		(effects
 			(font
 				(size 1.5 1.5)
 			)
 		)
-		(uuid "f763d85c-3d28-439f-ad2d-bcb37ef5ae0a")
+		(uuid "f5b265ea-40ff-4a8a-89cf-ac539c52d853")
 	)
 	(text "4.7kΩ pull-up to 3V3"
 		(at 50 125 0)
@@ -1156,7 +1351,7 @@
 				(size 1.0 1.0)
 			)
 		)
-		(uuid "9096e20f-ed26-4fdc-aa26-5bd3664d958c")
+		(uuid "f536adc6-7352-4491-831d-3b1e1d257246")
 	)
 	(text "4.7kΩ pull-up to 3V3"
 		(at 50 55 0)
@@ -1165,7 +1360,7 @@
 				(size 1.0 1.0)
 			)
 		)
-		(uuid "4f356d00-e5ec-4f46-b36b-06069c8acfae")
+		(uuid "d658c14e-3cf5-4cd6-b35d-7e5bdc799fcc")
 	)
 	(text "ESP32 Dev Board"
 		(at 100 100 0)
@@ -1174,7 +1369,7 @@
 				(size 1.5 1.5)
 			)
 		)
-		(uuid "534f9cd9-1389-48ca-9d85-5a5f79ce0d74")
+		(uuid "a40fa993-2d77-4b89-b471-63c6ff149887")
 	)
 	(text "2-Ch Relay Module"
 		(at 160 85 0)
@@ -1183,7 +1378,7 @@
 				(size 1.5 1.5)
 			)
 		)
-		(uuid "a3441bb5-b856-43cd-9d3e-451dd98f2e3f")
+		(uuid "607ee373-0f2b-4943-bf7d-b9a2b3468f26")
 	)
 	(sheet_instances
 		(path "/"
