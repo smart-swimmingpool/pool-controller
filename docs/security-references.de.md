@@ -42,7 +42,8 @@ wurden während der umfassenden IoT-Sicherheitsanalyse am 2025-01-15 zusammenges
   Offizielle Espressif-Sicherheitsdokumentation, die alle Sicherheitsaspekte der ESP32-Plattform abdeckt.
 
 - **[ESP32 Secure Boot](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/secure-boot.html)**
-  Vollständiger Leitfaden zur Implementierung von Secure Boot auf ESP32, einschließlich Schlüsselgenerierung und eFuse-Konfiguration.
+  Vollständiger Leitfaden zur Implementierung von Secure Boot auf ESP32, einschließlich Schlüsselgenerierung und
+eFuse-Konfiguration.
 
 - **[ESP32 Flash-Verschlüsselung](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/flash-encryption.html)
 
@@ -82,7 +83,8 @@ wurden während der umfassenden IoT-Sicherheitsanalyse am 2025-01-15 zusammenges
 ## 🌐 Netzwerksicherheit
 
 - **[IETF RFC 8520 - Manufacturer Usage Description (MUD)](https://datatracker.ietf.org/doc/html/rfc8520)**
-  Standard für Manufacturer Usage Description, um Netzwerkgeräten zu ermöglichen, ihr beabsichtigtes Netzwerkverhalten zu signalisieren.
+  Standard für Manufacturer Usage Description, um Netzwerkgeräten zu ermöglichen, ihr beabsichtigtes Netzwerkverhalten
+zu signalisieren.
 
 - **[NIST SP 800-213: IoT Device Cybersecurity Guidance](https://csrc.nist.gov/publications/detail/sp/800-213/final)**
   NIST Special Publication mit Leitlinien zur Cybersicherheit für IoT-Geräte.
@@ -130,7 +132,8 @@ wurden während der umfassenden IoT-Sicherheitsanalyse am 2025-01-15 zusammenges
 ### Statische Analyse & Linting
 
 - **[Gitleaks](https://github.com/gitleaks/gitleaks)**
-  Schnelles und effizientes Erkennen von Geheimnissen in Git-Repositories. Wird in diesem Projekt zum Erkennen von hartcodierten Anmeldedaten und sensiblen Daten verwendet.
+  Schnelles und effizientes Erkennen von Geheimnissen in Git-Repositories. Wird in diesem Projekt zum Erkennen von
+hartcodierten Anmeldedaten und sensiblen Daten verwendet.
 
 - **[CodeQL](https://codeql.github.com/)**
   Semantische Code-Analyse-Engine zum Auffinden von Sicherheitslücken. In GitHub Actions CI integriert.
@@ -147,7 +150,8 @@ wurden während der umfassenden IoT-Sicherheitsanalyse am 2025-01-15 zusammenges
 ### Formatierungstools
 
 - **[clang-format](https://clang.llvm.org/docs/ClangFormat.html)**
-  Code-Formatierungstool mit konfigurierbaren Stilen. Wird in diesem Projekt mit benutzerdefinierter Konfiguration verwendet.
+  Code-Formatierungstool mit konfigurierbaren Stilen. Wird in diesem Projekt mit benutzerdefinierter Konfiguration
+verwendet.
 
 - **[Prettier](https://prettier.io/)**
   Meinungsstarkes Code-Formatierungstool für YAML-, JSON- und Markdown-Dateien.
