@@ -9,6 +9,9 @@
 
 #include <Arduino.h>
 
+// Forward declarations for types used in method signatures
+class HTTPClient;
+
 namespace PoolController {
 
 /**
