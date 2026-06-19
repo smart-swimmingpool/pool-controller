@@ -75,8 +75,10 @@ jobs:
           CPP_FILE_EXTENSIONS: "cpp,hpp,h"
 
           # Markdown specific settings - increase line length to 150
-          MARKDOWN_LINE_LENGTH: 150
+          MARKDOWN_LINT_LINE_LENGTH: 150
+          MARKDOWNLINT_LINE_LENGTH: 150
           MARKDOWNLINT_CONFIG_FILE: .markdownlint.yaml
+          MARKDOWNLINT_OPTIONS: "--config .markdownlint.yaml"
 
           # Don't treat warnings as errors
           WARNINGS_AS_ERRORS: false
