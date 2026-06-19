@@ -258,30 +258,53 @@ The pool controller should be on an isolated IoT VLAN with:
 ## 📚 References & Best Practices
 
 ### Security Standards & Guidelines
-- **[OWASP IoT Security Guidance](https://owasp.org/www-project-internet-of-things/)** - Comprehensive IoT security framework
-- **[OWASP CSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)** - CSRF protection strategies
-- **[OWASP Secure Coding Practices](https://owasp.org/www-project-secure-coding-practices-quick-reference-guide/)** - General secure coding guidelines
+
+- **[OWASP IoT Security Guidance](https://owasp.org/www-project-internet-of-things/)** -
+  Comprehensive IoT security framework
+- **[OWASP CSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)** -
+  CSRF protection strategies
+- **[OWASP Secure Coding Practices](https://owasp.org/www-project-secure-coding-practices-quick-reference-guide/)** -
+  General secure coding guidelines
 
 ### ESP32 Specific Security
-- **[ESP32 Security Features](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/index.html)** - Official Espressif security documentation
-- **[ESP32 Secure Boot](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/secure-boot.html)** - Secure boot implementation guide
-- **[ESP32 Flash Encryption](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/flash-encryption.html)** - Flash encryption configuration
-- **[ESP32 eFuse Reference](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/efuse.html)** - eFuse burning and configuration
+
+- **[ESP32 Security Features](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/index.html)** -
+  Official Espressif security documentation
+- **[ESP32 Secure Boot](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/secure-boot.html)** -
+  Secure boot implementation guide
+- **[ESP32 Flash Encryption](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/flash-encryption.html)** -
+  Flash encryption configuration
+- **[ESP32 eFuse Reference](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/efuse.html)** -
+  eFuse burning and configuration
 
 ### Network Security
-- **[NIST IoT Device Cybersecurity Guidance](https://www.nist.gov/iot)** - NIST recommendations for IoT device security
-- **[IETF RFC 8520](https://datatracker.ietf.org/doc/html/rfc8520)** - Manufacturer Usage Description (MUD) for IoT devices
+
+- **[NIST IoT Device Cybersecurity Guidance](https://www.nist.gov/iot)** -
+  NIST recommendations for IoT device security
+- **[IETF RFC 8520](https://datatracker.ietf.org/doc/html/rfc8520)** -
+  Manufacturer Usage Description (MUD) for IoT devices
 
 ### Practical Implementation Guides
-- **[ESP32 HTTPS Server](https://github.com/espressif/esp-idf/tree/master/examples/protocols/https_server)** - HTTPS implementation example
-- **[ESP32 TLS Client](https://github.com/espressif/esp-idf/tree/master/examples/protocols/https_request)** - Secure client connections
-- **[mbedTLS Documentation](https://github.com/Mbed-TLS/mbedtls)** - TLS/SSL library used by ESP32
+
+- **[ESP32 HTTPS Server](https://github.com/espressif/esp-idf/tree/master/examples/protocols/https_server)** -
+  HTTPS implementation example
+- **[ESP32 TLS Client](https://github.com/espressif/esp-idf/tree/master/examples/protocols/https_request)** -
+  Secure client connections
+- **[mbedTLS Documentation](https://github.com/Mbed-TLS/mbedtls)** -
+  TLS/SSL library used by ESP32
 
 ### Tools & Scanners
-- **[Gitleaks](https://github.com/gitleaks/gitleaks)** - Secret detection in git repositories
-- **[CodeQL](https://codeql.github.com/)** - Static analysis for security vulnerabilities
-- **[Super-Linter](https://github.com/github/super-linter)** - Multi-language linting with security checks
+
+- **[Gitleaks](https://github.com/gitleaks/gitleaks)** -
+  Secret detection in git repositories
+- **[CodeQL](https://codeql.github.com/)** -
+  Static analysis for security vulnerabilities
+- **[Super-Linter](https://github.com/github/super-linter)** -
+  Multi-language linting with security checks
 
 ---
 
-**🔍 Analysis Note**: This skill was enhanced during the comprehensive IoT security analysis performed by Vibe Code on 2025-01-15. See [PR #112](https://github.com/smart-swimmingpool/pool-controller/pull/112) for implementation details.
+**🔍 Analysis Note**: This skill was enhanced during the comprehensive IoT security
+analysis performed by Vibe Code on 2025-01-15. See
+[PR #112](https://github.com/smart-swimmingpool/pool-controller/pull/112)
+for implementation details.

@@ -1,6 +1,8 @@
 # Security References & Best Practices
 
-This document contains security references, best practices, and implementation guidelines for the Pool Controller project. These references were compiled during the comprehensive IoT security analysis performed on 2025-01-15.
+This document contains security references, best practices, and implementation
+guidelines for the Pool Controller project. These references were compiled during the
+comprehensive IoT security analysis performed on 2025-01-15.
 
 ## 📚 Security Standards & Guidelines
 
@@ -9,19 +11,34 @@ This document contains security references, best practices, and implementation g
 - **[OWASP IoT Security Guidance](https://owasp.org/www-project-internet-of-things/)**
   Comprehensive IoT security framework covering device security, network security, and data protection.
 
-- **[OWASP Secure Coding Practices Quick Reference Guide](https://owasp.org/www-project-secure-coding-practices-quick-reference-guide/)**
-  General secure coding guidelines applicable to embedded systems and IoT devices.
+- **[OWASP Secure Coding Practices Quick Reference Guide](https://owasp.org/www-project-secure-coding-practices-quick-reference-guide/)
+
+**
+
+
+  General secure coding guidelines applicable to embedded systems and IoT
+  devices.
 
 - **[NIST IoT Device Cybersecurity Guidance](https://www.nist.gov/iot)**
   NIST recommendations for IoT device security, including risk management and security controls.
 
 ### Web Application Security
 
-- **[OWASP CSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)**
-  Comprehensive guide to CSRF protection strategies, including token-based approaches and SameSite cookie attributes.
+- **[OWASP CSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)
 
-- **[OWASP Session Management Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html)**
-  Best practices for secure session management, including timeout handling and cookie security.
+**
+
+
+  Comprehensive guide to CSRF protection strategies, including token-based
+  approaches and SameSite cookie attributes.
+
+- **[OWASP Session Management Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html)
+
+**
+
+
+  Best practices for secure session management, including timeout handling and
+  cookie security.
 
 - **[OWASP Authentication Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html)**
   Guidelines for secure authentication implementation, password storage, and credential management.
@@ -36,23 +53,37 @@ This document contains security references, best practices, and implementation g
 - **[ESP32 Secure Boot](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/secure-boot.html)**
   Complete guide to implementing Secure Boot on ESP32, including key generation and eFuse configuration.
 
-- **[ESP32 Flash Encryption](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/flash-encryption.html)**
+- **[ESP32 Flash Encryption](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/flash-encryption.html)
+**
+
   Detailed documentation on flash encryption configuration and implementation.
 
-- **[ESP32 eFuse Reference](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/efuse.html)**
+- **[ESP32 eFuse Reference](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/efuse.html)
+**
+
   Reference documentation for eFuse burning and configuration options.
 
 - **[ESP32 Memory Types](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/memory-types.html)**
   Understanding ESP32 memory architecture and different memory types (DRAM, IRAM, etc.).
 
-- **[ESP32 Memory Management](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/memory-management.html)**
+- **[ESP32 Memory Management](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/memory-management.html)
+
+**
+
   Memory allocation strategies and best practices for ESP32 development.
 
-- **[ESP32 Heap Fragmentation](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/heap-fragmentation.html)**
+- **[ESP32 Heap Fragmentation](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/heap-fragmentation.html)
+
+**
+
   Understanding and preventing heap fragmentation in ESP32 applications.
 
-- **[ESP-IDF Memory Debugging](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/debugging/memory-leaks.html)**
-  Tools and techniques for detecting and debugging memory leaks in ESP32 applications.
+- **[ESP-IDF Memory Debugging](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/debugging/memory-leaks.html)
+
+**
+
+  Tools and techniques for detecting and debugging memory leaks in ESP32
+  applications.
 
 ### Practical Implementation Examples
 
@@ -74,10 +105,16 @@ This document contains security references, best practices, and implementation g
 
 ### ESP32 Memory Management
 
-- **[ESP32 Memory Optimization Guide](https://github.com/espressif/esp-idf/blob/master/docs/en/api-guides/memory-types.rst)**
+- **[ESP32 Memory Optimization Guide](https://github.com/espressif/esp-idf/blob/master/docs/en/api-guides/memory-types.rst)
+
+**
+
   Official memory optimization strategies for ESP32 development.
 
-- **[Heap Usage Monitoring](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/heap_debug.html)**
+- **[Heap Usage Monitoring](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/heap_debug.html)
+
+**
+
   ESP32 heap debugging functions and usage examples.
 
 ### Arduino & C++ Optimization
@@ -97,7 +134,10 @@ This document contains security references, best practices, and implementation g
 - **[Static vs Dynamic Allocation](https://embeddedartistry.com/blog/2017/02/22/always-use-the-right-sized-integer/)**
   Choosing the right allocation strategy for embedded systems.
 
-- **[Google C++ Style Guide - Memory Management](https://google.github.io/styleguide/cppguide.html#Ownership_and_Smart_Pointers)**
+- **[Google C++ Style Guide - Memory Management](https://google.github.io/styleguide/cppguide.html#Ownership_and_Smart_Pointers)
+
+**
+
   Smart pointer usage guidelines and memory management best practices.
 
 ## 🛡️ Security Tools & Scanners
@@ -105,7 +145,8 @@ This document contains security references, best practices, and implementation g
 ### Static Analysis & Linting
 
 - **[Gitleaks](https://github.com/gitleaks/gitleaks)**
-  Fast and efficient secret detection in git repositories. Used in this project for detecting hardcoded credentials and sensitive data.
+  Fast and efficient secret detection in git repositories. Used in this project
+  for detecting hardcoded credentials and sensitive data.
 
 - **[CodeQL](https://codeql.github.com/)**
   Semantic code analysis engine for finding security vulnerabilities. Integrated into GitHub Actions CI.
@@ -166,7 +207,8 @@ This document contains security references, best practices, and implementation g
 
 ### Security Improvements (PR #112)
 
-The following security improvements were implemented in [PR #112](https://github.com/smart-swimmingpool/pool-controller/pull/112):
+The following security improvements were implemented in
+[PR #112](https://github.com/smart-swimmingpool/pool-controller/pull/112):
 
 1. **CSRF Protection**
    - Token generation and validation system
@@ -246,4 +288,5 @@ Use this checklist when performing security audits:
 
 **📅 Last Updated**: 2025-01-15  
 **🔍 Analysis Performed By**: Vibe Code - IoT Security Expert Mode  
-**📝 Related PR**: [#112 - IoT Security & Memory Optimization Analysis](https://github.com/smart-swimmingpool/pool-controller/pull/112)
+**📝 Related PR**:
+[#112 - IoT Security & Memory Optimization Analysis](https://github.com/smart-swimmingpool/pool-controller/pull/112)
