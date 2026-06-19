@@ -12,8 +12,15 @@
 #include <LittleFS.h>
 #include <Preferences.h>
 #include <Update.h>
-#include <esp_random.h>
 #include <memory>
+
+// ESP32 specific headers
+#if defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
+#include <esp_random.h>
+#else
+#include <cstdlib> // for random() in native tests
+#include <ctime>   // for time() in native tests
+#endif
 
 #include "ConfigManager.hpp"
 #include "DegradationManager.hpp"
@@ -134,15 +141,30 @@ void WebPortal::loop() {
   }
 }
 
+// Generate secure random token - uses ESP32 hardware RNG when available
 static String generateSecureToken(size_t length) {
   const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   String token;
   token.reserve(length);
 
+#if !defined(ESP32) && !defined(ARDUINO_ARCH_ESP32)
+  // Seed random for native tests
+  static bool seeded = false;
+  if (!seeded) {
+    srandom(time(nullptr));
+    seeded = true;
+  }
+#endif
+
   for (size_t i = 0; i < length; i++) {
-    // esp_random() returns uint32_t, use modulo to get index into charset
+#if defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
+    // Use ESP32 hardware RNG for cryptographic security
     uint32_t randomValue = esp_random();
     token += charset[randomValue % (sizeof(charset) - 1)];
+#else
+    // Fallback for native tests - use standard random
+    token += charset[random() % (sizeof(charset) - 1)];
+#endif
   }
 
   return token;
