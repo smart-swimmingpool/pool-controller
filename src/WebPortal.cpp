@@ -159,11 +159,12 @@ static String generateSecureToken(size_t length) {
 #if defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
     // Use ESP32 hardware RNG for cryptographic security
     uint32_t randomValue = esp_random();
-    token.concat(&charset[randomValue % (sizeof(charset) - 1)], 1);
+    token += charset[randomValue % (sizeof(charset) - 1)];
 #else
     // Fallback for native tests - use standard random
-    // Use concat which is available in the mock String class
-    token.concat(&charset[random() % (sizeof(charset) - 1)], 1);
+    // Use String constructor with single char and then append
+    char c = charset[random() % (sizeof(charset) - 1)];
+    token = token + String(c);
 #endif
   }
 
