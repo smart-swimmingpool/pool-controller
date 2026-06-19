@@ -195,7 +195,9 @@ verwendet.
 
 ### Sicherheitsverbesserungen (PR #112)
 
-Die folgenden Sicherheitsverbesserungen wurden in [PR #112](https://github.com/smart-swimmingpool/pool-controller/pull/112) implementiert:
+Die folgenden Sicherheitsverbesserungen wurden in
+[PR #112](https://github.com/smart-swimmingpool/pool-controller/pull/112)
+implementiert:
 
 1. **CSRF-Schutz**
    - Token-Generierung und -Validierungssystem
