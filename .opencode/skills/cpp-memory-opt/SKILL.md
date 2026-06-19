@@ -21,7 +21,9 @@ keywords:
 
 Optimizing memory for the ESP32-based pool-controller firmware (PlatformIO, Arduino framework, C++17).
 
-> **🔍 Code Search**: Use `semble search "String concat in loop"` or `semble search "StaticJsonDocument"` to find memory-heavy patterns. See `Agents.md` §7 for full `semble` usage.
+> **🔍 Code Search**: Use `semble search "String concat in loop"` or
+> `semble search "StaticJsonDocument"` to find memory-heavy patterns. See `Agents.md`
+> §7 for full `semble` usage.
 
 ## Key Constraints
 
