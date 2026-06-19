@@ -197,10 +197,15 @@ bool OtaUpdater::fetchLatestRelease() {
 #endif
 
   WiFiClientSecure client;
-  // Use proper CA certificate validation instead of setInsecure()
-  // For production: use setCACert() with root CA
-  // For development/testing: can use setInsecure() but this is NOT recommended
+  // Use ESP32's built-in CA bundle which includes ~130 root CAs
+  // This covers GitHub's CDN which may use various CA chains (Let's Encrypt, Sectigo, etc.)
+  // Per openspec/specs/github-ca-chain.spec.md requirement R2
+#if defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
+  client.setCACertBundle(x509_crt_bundle);
+#else
+  // Fallback for non-ESP32 platforms - use single root CA
   client.setCACert(kGitHubRootCA);
+#endif
   client.setTimeout(10000);
 
   // Build API URL
@@ -300,7 +305,15 @@ bool OtaUpdater::isNewerVersion(const String &current, const String &latest) {
 
 bool OtaUpdater::downloadAndApply(const String &url) {
   WiFiClientSecure client;
+  // Use ESP32's built-in CA bundle which includes ~130 root CAs
+  // This covers GitHub's CDN which may use various CA chains (Let's Encrypt, Sectigo, etc.)
+  // Per openspec/specs/github-ca-chain.spec.md requirement R2
+#if defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
+  client.setCACertBundle(x509_crt_bundle);
+#else
+  // Fallback for non-ESP32 platforms - use single root CA
   client.setCACert(kGitHubRootCA);
+#endif
   client.setTimeout(10000);
 
   HTTPClient http;

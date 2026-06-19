@@ -533,9 +533,16 @@ void WebPortal::apiScanWiFi() {
   }
 
   // Serialize directly to buffer to minimize String usage
-  static char jsonBuffer[2048];
+  // Increased buffer size to handle environments with many visible APs or long SSIDs
+  // Per P2 review: avoid truncating WiFi scan JSON responses
+  static char jsonBuffer[4096];
   size_t jsonLength = serializeJson(doc, jsonBuffer, sizeof(jsonBuffer));
   if (jsonLength > 0) {
+    // Check if serialization was truncated
+    if (jsonLength >= sizeof(jsonBuffer) - 1) {
+      server_.send(500, "text/plain", "JSON buffer overflow");
+      return;
+    }
     server_.send(200, "application/json", jsonBuffer);
   } else {
     server_.send(500, "text/plain", "JSON serialization error");
@@ -574,9 +581,16 @@ void WebPortal::apiGetConfig() {
   settingsObj["timer_end_min"] = operationModeNode.getTimerSetting().timerEndMinutes;
 
   // Serialize directly to buffer to minimize String usage
-  static char jsonBuffer[1024];
+  // Increased buffer size to handle long MQTT host/user and NTP server values
+  // Per P2 review: check config JSON serialization for truncation
+  static char jsonBuffer[2048];
   size_t jsonLength = serializeJson(doc, jsonBuffer, sizeof(jsonBuffer));
   if (jsonLength > 0) {
+    // Check if serialization was truncated
+    if (jsonLength >= sizeof(jsonBuffer) - 1) {
+      server_.send(500, "text/plain", "JSON buffer overflow");
+      return;
+    }
     server_.send(200, "application/json", jsonBuffer);
   } else {
     server_.send(500, "text/plain", "JSON serialization error");
@@ -801,17 +815,18 @@ void WebPortal::apiLogin() {
 
   String pass = server_.arg("password");
 
-  // Input validation - limit password length
-  if (pass.length() > 64) {
-    server_.send(400, "text/plain", "Invalid password length");
-    return;
-  }
+  // Input validation - limit password length for NEW passwords only
+  // Existing passwords (stored as SHA-256 hash) may be longer than 64 chars
+  // and should still be allowed to authenticate (P2 review fix)
+  // Only enforce max length when setting new passwords via apiSaveConfig
 
   if (ConfigManager::verifyAdminPassword(pass)) {
     generateSessionToken();
-    // Secure cookie with HttpOnly, Secure, SameSite, and shorter expiry
+    // Cookie with HttpOnly, SameSite, and shorter expiry
+    // Note: Secure attribute removed because device serves UI on HTTP (port 80)
+    // Adding Secure would prevent browsers from sending cookie back over http://
     String cookieHeader = "session=" + activeSessionToken_ +
-                          "; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=600";
+                          "; Path=/; HttpOnly; SameSite=Strict; Max-Age=600";
     server_.sendHeader("Set-Cookie", cookieHeader);
     loginAttemptCount_ = 0; // Reset on successful login
     server_.send(200, "text/plain", "OK");
