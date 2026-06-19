@@ -41,6 +41,10 @@ public:
   static void handleMqttMessage(
     char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total);
 
+  // ── Command validation (public for testing) ──
+  /** @brief Validate a command against a whitelist. */
+  static bool isValidCommand(const String &value, const char *const validCommands[], size_t count);
+
 private:
   static void publishTextDiscovery(const char *objectId, const char *name, const char *icon = nullptr, const char *entityCategory = nullptr);
   static void publishSensorDiscovery(const char *objectId, const char *name, const char *deviceClass = nullptr,

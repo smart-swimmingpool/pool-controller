@@ -61,6 +61,23 @@ public:
   /// Start the OTA download + flash. Returns true if started.
   static bool startUpdate();
 
+  // ── Space and Size Verification ──
+
+  /// Check if there's sufficient flash space for OTA update.
+  /// @param firmwareSize Size of firmware in bytes.
+  /// @return true if sufficient space available.
+  static bool hasSufficientSpace(size_t firmwareSize);
+
+  /// Verify downloaded firmware size matches expected size.
+  /// @param http HTTPClient with the download.
+  /// @param expectedSize Expected firmware size in bytes.
+  /// @return true if size is valid.
+  static bool verifyFirmwareSize(HTTPClient &http, size_t expectedSize);
+
+  /// Get available flash space for OTA updates.
+  /// @return Available space in bytes.
+  static size_t getAvailableFlashSpace();
+
 private:
   // ── GitHub API ──
   static bool fetchLatestRelease();
@@ -88,6 +105,8 @@ private:
 
   static constexpr unsigned long kCheckIntervalMs = 6UL * 3600UL * 1000UL;  // 6 hours
   static constexpr int kOtaBufferSize = 4096;
+  static constexpr float kSpaceSafetyMargin = 0.15f;  // 15% safety margin for OTA
+  static constexpr size_t kMinFreeSpace = 1024 * 1024;  // 1MB minimum free space
 };
 
 }  // namespace PoolController

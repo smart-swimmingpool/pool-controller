@@ -166,6 +166,22 @@ bool OtaUpdater::startUpdate() {
     return false;
   }
 
+  // Check available flash space before starting OTA
+  // We need to estimate the firmware size from the URL or use a default
+  // For GitHub releases, we can try to get the size from the API response
+  // For now, we'll use a conservative estimate based on typical firmware size
+  // In a real implementation, we would have the actual size from the API
+  
+  // Try to extract expected size from download URL if available
+  // For GitHub, we don't have the size in the URL, so we use a default estimate
+  // Typical Pool Controller firmware is ~400-600KB
+  const size_t estimatedFirmwareSize = 600 * 1024;  // 600KB estimate
+  
+  if (!hasSufficientSpace(estimatedFirmwareSize)) {
+    Serial.println("OTA: Cannot start update: insufficient flash space");
+    return false;
+  }
+
   // Config persists in NVS — survives OTA natively, no backup needed
   updateInProgress_ = true;
   // Don't clear updateAvailable_ yet — preserved so UI can retry on failure (P2 review fix)
@@ -349,6 +365,32 @@ bool OtaUpdater::downloadAndApply(const String &url) {
     return false;
   }
 
+  // Verify firmware size is reasonable (prevents integer overflow and bad downloads)
+  // Typical firmware sizes: 200KB - 2MB
+  const size_t kMaxFirmwareSize = 2 * 1024 * 1024;  // 2MB maximum
+  const size_t kMinFirmwareSize = 50 * 1024;       // 50KB minimum
+  
+  if (static_cast<size_t>(totalSize) > kMaxFirmwareSize) {
+    Serial.printf("OTA: Firmware too large: %d bytes (max %u)\n", totalSize, kMaxFirmwareSize);
+    statusMessage_ = "Error: Firmware too large";
+    http.end();
+    return false;
+  }
+  
+  if (static_cast<size_t>(totalSize) < kMinFirmwareSize) {
+    Serial.printf("OTA: Firmware too small: %d bytes (min %u)\n", totalSize, kMinFirmwareSize);
+    statusMessage_ = "Error: Firmware too small";
+    http.end();
+    return false;
+  }
+
+  // Verify we have sufficient space for this specific firmware size
+  if (!hasSufficientSpace(static_cast<size_t>(totalSize))) {
+    Serial.println("OTA: Insufficient space for this firmware");
+    http.end();
+    return false;
+  }
+
   Serial.printf("OTA: Download size: %d bytes\n", totalSize);
 
   if (!Update.begin(totalSize)) {
@@ -407,6 +449,74 @@ bool OtaUpdater::downloadAndApply(const String &url) {
   delay(1000);
   ESP.restart();
   return true;  // Never actually reached
+}
+
+// ── Space and Size Verification ──
+
+size_t OtaUpdater::getAvailableFlashSpace() {
+#if defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
+  // On ESP32, get free sketch space
+  return ESP.getFreeSketchSpace();
+#elif defined(ESP8266)
+  // On ESP8266, use the Update library's available space
+  return ESP.getFreeSketchSpace();
+#else
+  // For native tests or other platforms, return a large value
+  return 4UL * 1024 * 1024;  // 4MB (typical ESP32 flash size)
+#endif
+}
+
+bool OtaUpdater::hasSufficientSpace(size_t firmwareSize) {
+  size_t availableSpace = getAvailableFlashSpace();
+  
+  // Calculate required space: firmware size + safety margin
+  size_t requiredSpace = firmwareSize + static_cast<size_t>(firmwareSize * kSpaceSafetyMargin);
+  
+  // Also ensure we have at least minimum free space
+  requiredSpace = std::max(requiredSpace, kMinFreeSpace);
+  
+  if (availableSpace < requiredSpace) {
+    Serial.printf("OTA: Insufficient flash space. Need %u bytes, have %u bytes\n", 
+                 requiredSpace, availableSpace);
+    statusMessage_ = "Error: Insufficient flash space";
+    return false;
+  }
+  
+  Serial.printf("OTA: Sufficient space available (%u bytes free, %u bytes required)\n", 
+               availableSpace, requiredSpace);
+  return true;
+}
+
+bool OtaUpdater::verifyFirmwareSize(HTTPClient &http, size_t expectedSize) {
+  // Get Content-Length header
+  int contentLength = http.getSize();
+  
+  if (contentLength <= 0) {
+    Serial.println("OTA: Cannot determine firmware size from Content-Length");
+    statusMessage_ = "Error: Cannot determine firmware size";
+    return false;
+  }
+  
+  // Allow 10% tolerance for compression or header variations
+  size_t maxExpected = expectedSize + static_cast<size_t>(expectedSize * 0.10);
+  size_t minExpected = expectedSize - static_cast<size_t>(expectedSize * 0.10);
+  
+  if (static_cast<size_t>(contentLength) > maxExpected) {
+    Serial.printf("OTA: Firmware size too large. Expected ~%u bytes, got %d bytes\n", 
+                 expectedSize, contentLength);
+    statusMessage_ = "Error: Firmware size mismatch (too large)";
+    return false;
+  }
+  
+  if (static_cast<size_t>(contentLength) < minExpected && expectedSize > 0) {
+    Serial.printf("OTA: Firmware size too small. Expected ~%u bytes, got %d bytes\n", 
+                 expectedSize, contentLength);
+    statusMessage_ = "Error: Firmware size mismatch (too small)";
+    return false;
+  }
+  
+  Serial.printf("OTA: Firmware size verified: %d bytes\n", contentLength);
+  return true;
 }
 
 }  // namespace PoolController

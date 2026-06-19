@@ -43,6 +43,19 @@ public:
   static bool isLoginLockedOut();
   /** @brief Check if the current HTTP request has a valid session token. @return true if authenticated. */
   static bool isClientAuthenticated();
+  
+  // ── Rate limiting helpers (public for testing) ──
+  /** @brief Reset login attempt counter. */
+  static void resetLoginAttempts() { loginAttemptCount_ = 0; }
+  /** @brief Increment login attempt counter. */
+  static void incrementLoginAttempts() { 
+    loginAttemptCount_++; 
+    lastLoginAttemptTime_ = millis(); 
+  }
+  /** @brief Get maximum login attempts before lockout. */
+  static uint8_t getMaxLoginAttempts() { return kMaxLoginAttempts; }
+  /** @brief Get login lockout duration in milliseconds. */
+  static uint32_t getLoginLockoutMs() { return kLoginLockoutMs; }
 
 private:
   /** @brief Register all HTTP routes, handlers, and static asset paths. */

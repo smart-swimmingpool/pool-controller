@@ -60,6 +60,7 @@ set(TEST_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_config_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_webportal_json.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mqttpublisher.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_security.cpp
 )
 
 add_executable(test_runner
