@@ -1,6 +1,8 @@
 # Sicherheitsreferenzen & Best Practices
 
-Dieses Dokument enthält Sicherheitsreferenzen, Best Practices und Implementierungsrichtlinien für das Pool Controller Projekt. Diese Referenzen wurden während der umfassenden IoT-Sicherheitsanalyse am 2025-01-15 zusammengestellt.
+Dieses Dokument enthält Sicherheitsreferenzen, Best Practices und
+Implementierungsrichtlinien für das Pool Controller Projekt. Diese Referenzen
+wurden während der umfassenden IoT-Sicherheitsanalyse am 2025-01-15 zusammengestellt.
 
 ## 📚 Sicherheitsstandards & Richtlinien
 
@@ -9,7 +11,8 @@ Dieses Dokument enthält Sicherheitsreferenzen, Best Practices und Implementieru
 - **[OWASP IoT Security Guidance](https://owasp.org/www-project-internet-of-things/)**
   Umfassendes IoT-Sicherheitsframework, das Gerätesicherheit, Netzwerksicherheit und Datenschutz abdeckt.
 
-- **[OWASP Secure Coding Practices Quick Reference Guide](https://owasp.org/www-project-secure-coding-practices-quick-reference-guide/)**
+- **[OWASP Secure Coding Practices Quick Reference Guide](https://owasp.org/www-project-secure-coding-practices-quick-reference-guide/)
+**
   Allgemeine Richtlinien für sicheres Codieren, anwendbar auf eingebettete Systeme und IoT-Geräte.
 
 - **[NIST IoT Device Cybersecurity Guidance](https://www.nist.gov/iot)**
@@ -17,10 +20,12 @@ Dieses Dokument enthält Sicherheitsreferenzen, Best Practices und Implementieru
 
 ### Webanwendungssicherheit
 
-- **[OWASP CSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)**
+- **[OWASP CSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)
+**
   Umfassender Leitfaden zu CSRF-Schutzstrategien, einschließlich Token-basierter Ansätze und SameSite-Cookie-Attribute.
 
-- **[OWASP Session Management Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html)**
+- **[OWASP Session Management Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html)
+**
   Best Practices für sicheres Session-Management, einschließlich Timeout-Handling und Cookie-Sicherheit.
 
 - **[OWASP Authentication Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html)**
@@ -36,7 +41,8 @@ Dieses Dokument enthält Sicherheitsreferenzen, Best Practices und Implementieru
 - **[ESP32 Secure Boot](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/secure-boot.html)**
   Vollständiger Leitfaden zur Implementierung von Secure Boot auf ESP32, einschließlich Schlüsselgenerierung und eFuse-Konfiguration.
 
-- **[ESP32 Flash-Verschlüsselung](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/flash-encryption.html)**
+- **[ESP32 Flash-Verschlüsselung](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/flash-encryption.html)
+**
   Detaillierte Dokumentation zur Flash-Verschlüsselungskonfiguration und -implementierung.
 
 - **[ESP32 eFuse-Referenz](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/efuse.html)**
@@ -45,13 +51,16 @@ Dieses Dokument enthält Sicherheitsreferenzen, Best Practices und Implementieru
 - **[ESP32 Speichertypen](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/memory-types.html)**
   Verständnis der ESP32-Speicherarchitektur und verschiedener Speichertypen (DRAM, IRAM, etc.).
 
-- **[ESP32 Speicherverwaltung](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/memory-management.html)**
+- **[ESP32 Speicherverwaltung](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/memory-management.html)
+**
   Speicherzuweisungsstrategien und Best Practices für die ESP32-Entwicklung.
 
-- **[ESP32 Heap-Fragmentierung](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/heap-fragmentation.html)**
+- **[ESP32 Heap-Fragmentierung](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/heap-fragmentation.html)
+**
   Verständnis und Vermeidung von Heap-Fragmentierung in ESP32-Anwendungen.
 
-- **[ESP-IDF Speicher-Debugging](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/debugging/memory-leaks.html)**
+- **[ESP-IDF Speicher-Debugging](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/debugging/memory-leaks.html)
+**
   Tools und Techniken zum Erkennen und Debuggen von Speicherlecks in ESP32-Anwendungen.
 
 ### Praktische Implementierungsbeispiele
@@ -74,10 +83,12 @@ Dieses Dokument enthält Sicherheitsreferenzen, Best Practices und Implementieru
 
 ### ESP32-Speicherverwaltung
 
-- **[ESP32 Speicheroptimierungsleitfaden](https://github.com/espressif/esp-idf/blob/master/docs/en/api-guides/memory-types.rst)**
+- **[ESP32 Speicheroptimierungsleitfaden](https://github.com/espressif/esp-idf/blob/master/docs/en/api-guides/memory-types.rst)
+**
   Offizielle Speicheroptimierungsstrategien für die ESP32-Entwicklung.
 
-- **[Heap-Nutzungsüberwachung](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/heap_debug.html)**
+- **[Heap-Nutzungsüberwachung](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/heap_debug.html)
+**
   ESP32 Heap-Debugging-Funktionen und Verwendungsbeispiele.
 
 ### Arduino & C++ Optimierung
@@ -97,7 +108,8 @@ Dieses Dokument enthält Sicherheitsreferenzen, Best Practices und Implementieru
 - **[Statische vs Dynamische Zuweisung](https://embeddedartistry.com/blog/2017/02/22/always-use-the-right-sized-integer/)**
   Wahl der richtigen Zuweisungsstrategie für eingebettete Systeme.
 
-- **[Google C++ Style Guide - Speicherverwaltung](https://google.github.io/styleguide/cppguide.html#Ownership_and_Smart_Pointers)**
+- **[Google C++ Style Guide - Speicherverwaltung](https://google.github.io/styleguide/cppguide.html#Ownership_and_Smart_Pointers)
+**
   Richtlinien für die Verwendung von Smart Pointern und Speicherverwaltung.
 
 ## 🛡️ Sicherheitstools & Scanner
