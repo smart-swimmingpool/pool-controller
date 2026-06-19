@@ -197,11 +197,18 @@ bool OtaUpdater::fetchLatestRelease() {
 #endif
 
   WiFiClientSecure client;
-  // Use ESP32's built-in CA bundle which includes ~130 root CAs
+  // Use CA certificate validation for GitHub TLS
+  // Try to use ESP32's built-in CA bundle if available (includes ~130 root CAs)
   // This covers GitHub's CDN which may use various CA chains (Let's Encrypt, Sectigo, etc.)
   // Per openspec/specs/github-ca-chain.spec.md requirement R2
 #if defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
-  client.setCACertBundle(x509_crt_bundle);
+  // Check if x509_crt_bundle and setCACertBundle are available (ESP32 Arduino core >= 2.0.0)
+  #if defined(x509_crt_bundle) && defined(ESP32_WiFiClientSecure_setCACertBundle)
+    client.setCACertBundle(x509_crt_bundle);
+  #else
+    // Fallback to single root CA for older ESP32 cores
+    client.setCACert(kGitHubRootCA);
+  #endif
 #else
   // Fallback for non-ESP32 platforms - use single root CA
   client.setCACert(kGitHubRootCA);
@@ -305,11 +312,18 @@ bool OtaUpdater::isNewerVersion(const String &current, const String &latest) {
 
 bool OtaUpdater::downloadAndApply(const String &url) {
   WiFiClientSecure client;
-  // Use ESP32's built-in CA bundle which includes ~130 root CAs
+  // Use CA certificate validation for GitHub TLS
+  // Try to use ESP32's built-in CA bundle if available (includes ~130 root CAs)
   // This covers GitHub's CDN which may use various CA chains (Let's Encrypt, Sectigo, etc.)
   // Per openspec/specs/github-ca-chain.spec.md requirement R2
 #if defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
-  client.setCACertBundle(x509_crt_bundle);
+  // Check if x509_crt_bundle and setCACertBundle are available (ESP32 Arduino core >= 2.0.0)
+  #if defined(x509_crt_bundle) && defined(ESP32_WiFiClientSecure_setCACertBundle)
+    client.setCACertBundle(x509_crt_bundle);
+  #else
+    // Fallback to single root CA for older ESP32 cores
+    client.setCACert(kGitHubRootCA);
+  #endif
 #else
   // Fallback for non-ESP32 platforms - use single root CA
   client.setCACert(kGitHubRootCA);
