@@ -676,8 +676,8 @@ static bool isMqttAuthenticated() {
   return config.username.length() > 0;
 }
 
-// Helper function to validate command payloads
-static bool isValidCommand(const String &value, const char *const validCommands[], size_t count) {
+// Command validation - public static method for testing
+bool MqttPublisher::isValidCommand(const String &value, const char *const validCommands[], size_t count) {
   for (size_t i = 0; i < count; i++) {
     if (value == validCommands[i]) {
       return true;
@@ -714,7 +714,7 @@ void MqttPublisher::handleMqttMessage(char *topic, char *payload, AsyncMqttClien
 
     // Always validate command value for security
     static const char *validFirmwareCommands[] = {"INSTALL"};
-    if (!isValidCommand(value, validFirmwareCommands, 1)) {
+    if (!MqttPublisher::isValidCommand(value, validFirmwareCommands, 1)) {
       Serial.printf("MQTT: Invalid firmware command: %s\n", value.c_str());
       return;
     }
@@ -768,7 +768,7 @@ void MqttPublisher::handleMqttMessage(char *topic, char *payload, AsyncMqttClien
 
     // Always validate payload for security
     static const char *validPumpCommands[] = {"ON", "OFF"};
-    if (!isValidCommand(value, validPumpCommands, 2)) {
+    if (!MqttPublisher::isValidCommand(value, validPumpCommands, 2)) {
       Serial.printf("MQTT: Invalid pump command: %s\n", value.c_str());
       publishStates();
       return;
@@ -795,7 +795,7 @@ void MqttPublisher::handleMqttMessage(char *topic, char *payload, AsyncMqttClien
 
     // Always validate mode value for security
     static const char *validModes[] = {"auto", "manu", "boost", "timer"};
-    if (!isValidCommand(value, validModes, 4)) {
+    if (!MqttPublisher::isValidCommand(value, validModes, 4)) {
       Serial.printf("MQTT: Invalid mode command: %s\n", value.c_str());
       publishStates();
       return;

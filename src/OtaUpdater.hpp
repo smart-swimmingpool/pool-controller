@@ -96,8 +96,12 @@ private:
   static int progress_;
   static String statusMessage_;
   static unsigned long lastCheckTime_;
+  static unsigned long lastClockSyncFailTime_;
+  static uint8_t clockSyncFailCount_;
 
   static constexpr unsigned long kCheckIntervalMs = 6UL * 3600UL * 1000UL;  // 6 hours
+  static constexpr unsigned long kClockSyncBackoffMs = 5UL * 60UL * 1000UL;  // 5 minutes backoff
+  static constexpr uint8_t kMaxClockSyncRetries = 3;
   static constexpr int kOtaBufferSize = 4096;
   static constexpr float kSpaceSafetyMargin = 0.15f;  // 15% safety margin for OTA
   static constexpr size_t kMinFreeSpace = 1024 * 1024;  // 1MB minimum free space

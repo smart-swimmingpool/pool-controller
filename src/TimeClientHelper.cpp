@@ -5,8 +5,10 @@
  * @brief NTP client, timezone database, daylight-saving switching, and time estimation.
  */
 
-#include "TimeClientHelper.hpp"
+#include <sys/time.h>  // For settimeofday
+
 #include "NetworkManager.hpp"
+#include "TimeClientHelper.hpp"
 
 // NTP Client
 WiFiUDP ntpUDP;
@@ -132,6 +134,24 @@ time_t getUtcTime() {
   // No valid time available at all
   _timeSyncValid = false;
   return 0;
+}
+
+// Set the ESP32 system clock from NTP time
+// This is required for TLS certificate validation which checks system time
+// Uses settimeofday to set the system clock (POSIX API available on ESP32)
+void syncSystemClock() {
+  time_t ntpTime = getUtcTime();
+  if (ntpTime >= MIN_VALID_TIME) {
+    // Set system clock using settimeofday
+    // ESP32 supports settimeofday from <sys/time.h>
+    struct timeval tv;
+    tv.tv_sec = ntpTime;
+    tv.tv_usec = 0;
+    settimeofday(&tv, nullptr);
+    Serial.printf("Time: System clock set to %ld\n", ntpTime);
+  } else {
+    Serial.println("Time: Cannot set system clock - NTP time not valid");
+  }
 }
 
 bool isTimeSyncValid() {

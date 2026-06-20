@@ -13,3 +13,6 @@ inline int hour(time_t t) { return 14; }
 inline int minute(time_t t) { return 30; }
 inline int second(time_t t) { return 0; }
 inline int weekday(time_t t) { return 6; }
+
+// Stub for syncSystemClock (used by OtaUpdater.cpp in native tests)
+void syncSystemClock();

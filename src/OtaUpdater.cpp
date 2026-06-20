@@ -7,13 +7,16 @@
 
 #include "OtaUpdater.hpp"
 #include "Version.h"
-#include "ConfigManager.hpp"
-#include "NetworkManager.hpp"
 
 #include <ArduinoJson.h>
 #include <HTTPClient.h>
-#include <WiFiClientSecure.h>
 #include <Update.h>
+#include <WiFiClientSecure.h>
+#include <time.h>
+
+#include "ConfigManager.hpp"
+#include "NetworkManager.hpp"
+#include "TimeClientHelper.hpp"
 
 namespace PoolController {
 
@@ -65,6 +68,8 @@ bool OtaUpdater::updateInProgress_ = false;
 int OtaUpdater::progress_ = 0;
 String OtaUpdater::statusMessage_;
 unsigned long OtaUpdater::lastCheckTime_ = 0;
+unsigned long OtaUpdater::lastClockSyncFailTime_ = 0;
+uint8_t OtaUpdater::clockSyncFailCount_ = 0;
 
 // ── Public API ──
 
@@ -77,10 +82,47 @@ void OtaUpdater::loop() {
   // Periodic check when WiFi is connected and no update is in progress
   if (NetworkManager::isWiFiConnected() && !updateInProgress_) {
     unsigned long now = millis();
-    // Handle wrap-around
+
+    // Check if we're in clock sync backoff period
+    if (clockSyncFailCount_ > 0) {
+      // Handle unsigned wrap-around for backoff timer
+      if (now - lastClockSyncFailTime_ >= kClockSyncBackoffMs || now < lastClockSyncFailTime_) {
+        // Backoff period expired, reset counter
+        clockSyncFailCount_ = 0;
+      } else {
+        // Still in backoff period, skip this check
+        return;
+      }
+    }
+
+    // Handle wrap-around for main check timer
     if (now - lastCheckTime_ >= kCheckIntervalMs || lastCheckTime_ == 0) {
       lastCheckTime_ = now;
-      checkForUpdate();
+      bool checkSuccess = checkForUpdate();
+      // Only reset retry timer for TLS/time failures, not for successful checks
+      // checkForUpdate() returns true if update available, false if up-to-date or failed
+      // We want to retry immediately only on TLS/time failures, not on successful checks
+      if (!checkSuccess) {
+        // Check if this was a TLS/time failure by checking if we have a valid time
+        // If time is still not set, it's likely a TLS failure and we should retry
+        time_t currentTime = time(nullptr);
+        if (currentTime < 100000) {  // Time not set - likely TLS failure
+          // Increment failure counter for backoff
+          clockSyncFailCount_++;
+          lastClockSyncFailTime_ = now;
+
+          // If we haven't exceeded max retries, reset timer for immediate retry
+          // Otherwise, wait for backoff period
+          if (clockSyncFailCount_ < kMaxClockSyncRetries) {
+            lastCheckTime_ = 0;  // Retry immediately
+          }
+          // Otherwise, backoff timer will prevent retry until period expires
+        }
+        // Otherwise, it was a successful check (up-to-date) - keep the timer
+      } else {
+        // Successful check - reset backoff counter
+        clockSyncFailCount_ = 0;
+      }
     }
   }
 }
@@ -171,12 +213,12 @@ bool OtaUpdater::startUpdate() {
   // For GitHub releases, we can try to get the size from the API response
   // For now, we'll use a conservative estimate based on typical firmware size
   // In a real implementation, we would have the actual size from the API
-  
+
   // Try to extract expected size from download URL if available
   // For GitHub, we don't have the size in the URL, so we use a default estimate
   // Typical Pool Controller firmware is ~400-600KB
   const size_t estimatedFirmwareSize = 600 * 1024;  // 600KB estimate
-  
+
   if (!hasSufficientSpace(estimatedFirmwareSize)) {
     Serial.println("OTA: Cannot start update: insufficient flash space");
     return false;
@@ -211,6 +253,28 @@ bool OtaUpdater::fetchLatestRelease() {
   statusMessage_ = "GITHUB_REPO not defined";
   return false;
 #endif
+
+  // Sync time before TLS verification to ensure certificate validity checks pass
+  // GitHub's TLS certificates require valid system time (P2 review fix)
+  // Only sync if time is not already set (time(0) > 100000 means year 2000+)
+  time_t now = time(nullptr);
+  if (now < 100000) {  // Time not set yet
+    Serial.println("OTA: Syncing time before GitHub TLS verification...");
+    // Ensure NTP client is set up
+    timeClientSetup(ConfigManager::getNtp().server.c_str());
+    // Sync system clock from NTP (sets settimeofday for mbedTLS)
+    syncSystemClock();
+    // Wait for sync to complete
+    delay(2000);
+    now = time(nullptr);
+    if (now < 100000) {
+      Serial.println("OTA: Time sync failed, TLS verification may fail");
+      // Continue anyway - the TLS verification might still work
+      // if the device has a valid time from a previous sync
+    } else {
+      Serial.printf("OTA: Time synced: %ld\n", now);
+    }
+  }
 
   WiFiClientSecure client;
   // Use CA certificate validation for GitHub TLS
@@ -369,14 +433,14 @@ bool OtaUpdater::downloadAndApply(const String &url) {
   // Typical firmware sizes: 200KB - 2MB
   const size_t kMaxFirmwareSize = 2 * 1024 * 1024;  // 2MB maximum
   const size_t kMinFirmwareSize = 50 * 1024;       // 50KB minimum
-  
+
   if (static_cast<size_t>(totalSize) > kMaxFirmwareSize) {
     Serial.printf("OTA: Firmware too large: %d bytes (max %u)\n", totalSize, kMaxFirmwareSize);
     statusMessage_ = "Error: Firmware too large";
     http.end();
     return false;
   }
-  
+
   if (static_cast<size_t>(totalSize) < kMinFirmwareSize) {
     Serial.printf("OTA: Firmware too small: %d bytes (min %u)\n", totalSize, kMinFirmwareSize);
     statusMessage_ = "Error: Firmware too small";
@@ -468,21 +532,21 @@ size_t OtaUpdater::getAvailableFlashSpace() {
 
 bool OtaUpdater::hasSufficientSpace(size_t firmwareSize) {
   size_t availableSpace = getAvailableFlashSpace();
-  
+
   // Calculate required space: firmware size + safety margin
   size_t requiredSpace = firmwareSize + static_cast<size_t>(firmwareSize * kSpaceSafetyMargin);
-  
+
   // Also ensure we have at least minimum free space
   requiredSpace = std::max(requiredSpace, kMinFreeSpace);
-  
+
   if (availableSpace < requiredSpace) {
-    Serial.printf("OTA: Insufficient flash space. Need %u bytes, have %u bytes\n", 
+    Serial.printf("OTA: Insufficient flash space. Need %u bytes, have %u bytes\n",
                  requiredSpace, availableSpace);
     statusMessage_ = "Error: Insufficient flash space";
     return false;
   }
-  
-  Serial.printf("OTA: Sufficient space available (%u bytes free, %u bytes required)\n", 
+
+  Serial.printf("OTA: Sufficient space available (%u bytes free, %u bytes required)\n",
                availableSpace, requiredSpace);
   return true;
 }

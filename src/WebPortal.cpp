@@ -8,11 +8,12 @@
 
 #include "WebPortal.hpp"
 
+#include <memory>
+
 #include <ArduinoJson.h>
 #include <LittleFS.h>
 #include <Preferences.h>
 #include <Update.h>
-#include <memory>
 
 // ESP32 specific headers
 #if defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
@@ -621,14 +622,9 @@ void WebPortal::apiSaveConfig() {
       return;
     }
 
-    // Basic character validation - SSID should be printable ASCII
-    for (size_t i = 0; i < ssid.length(); i++) {
-      char c = ssid.charAt(i);
-      if (c < 32 || c > 126) {
-        server_.send(400, "text/plain", "Invalid SSID characters");
-        return;
-      }
-    }
+    // SSIDs are limited by byte length (32 bytes), not by character set
+    // Allow any byte values including UTF-8/non-ASCII characters
+    // The ESP32 WiFi stack handles the actual validation
 
     ConfigManager::getWiFi().ssid = ssid;
     ConfigManager::getWiFi().password = password;
@@ -719,9 +715,9 @@ void WebPortal::apiSaveConfig() {
   } else if (type == "password") {
     String newPassword = server_.arg("password");
 
-    // Input validation for password
-    if (newPassword.length() < 8) {
-      server_.send(400, "text/plain", "Password must be at least 8 characters");
+    // Input validation for password - align with UI (min 4 chars)
+    if (newPassword.length() < 4) {
+      server_.send(400, "text/plain", "Password must be at least 4 characters");
       return;
     }
 

@@ -43,6 +43,7 @@ extern std::unique_ptr<NTPClient> timeClient;
 enum class TimeDegradation : uint8_t { GREEN = 0, YELLOW = 1, RED = 2 };
 
 void timeClientSetup(const char *ntpServer);
+void syncSystemClock();
 int getTzCount();
 time_t getUtcTime();
 time_t getTimeFor(int index, TimeChangeRule **tcr);

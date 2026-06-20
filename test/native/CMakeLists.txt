@@ -42,6 +42,7 @@ set(SERVICE_SOURCES
   ${PROJ_ROOT}/src/DegradationManager.cpp
   ${PROJ_ROOT}/src/SystemMonitor.cpp
   ${PROJ_ROOT}/src/OtaUpdater.cpp
+  ${PROJ_ROOT}/src/TimeClientHelper.cpp
 )
 
 # Mock sources (compiled once)
