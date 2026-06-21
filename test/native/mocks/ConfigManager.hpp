@@ -46,8 +46,7 @@ public:
   static bool load() { return true; }
   static bool save() { return true; }
   static void reset() {
-    // gitleaks:allow - known default admin password hash
-    _adminPasswordHash = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918";  // SHA-256("admin")
+    _adminPasswordHash = F("8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918");  // SHA-256("admin") // gitleaks:allow
     _configured = false;
   }
   static void logOtaTransition() {}
@@ -84,7 +83,7 @@ private:
     // For testing purposes, we'll use a simple hash
     // In production, this would be SHA-256
     if (password == "admin") {
-      return "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918";
+      return "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918";  // gitleaks:allow
     }
     // Simple hash for other passwords
     uint32_t hash = 0;

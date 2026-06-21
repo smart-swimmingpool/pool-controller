@@ -1,10 +1,8 @@
-# Gitleaks configuration for pool-controller
 [extend]
 useDefault = true
 
-# Allow known secrets project-wide
-[[rules.allowlist]]
-description = "Known good values across the project"
+# Global allowlist — applies to ALL rules (including built-in generic-api-key)
+[allowlist]
 paths = [
   "src/ConfigManager.cpp",
   "test/native/mocks/ConfigManager.hpp",
