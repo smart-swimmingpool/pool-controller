@@ -640,10 +640,9 @@ void WebPortal::apiSaveConfig() {
     ConfigManager::getMqtt().host = server_.arg("host");
     ConfigManager::getMqtt().port = server_.arg("port").toInt();
     ConfigManager::getMqtt().username = server_.arg("username");
-    // Preserve existing password if field is left blank (P2 review fix)
-    if (server_.arg("password").length() > 0) {
-      ConfigManager::getMqtt().password = server_.arg("password");
-    }
+    // Always update password (even blank) to allow clearing stale passwords
+    // This allows switching to a username-only/no-password broker
+    ConfigManager::getMqtt().password = server_.arg("password");
     ConfigManager::save();
 
     // Disconnect MQTT to reconnect immediately with new config

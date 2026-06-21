@@ -36,17 +36,19 @@
 // WebPortal header for session token functions
 #include "WebPortal.hpp"
 
-using namespace PoolController;
+using namespace PoolController;  // NOLINT(build/namespaces)
 
 // Use existing node definitions from mocks/globals.cpp via extern declarations
 // to avoid multiple-definition linker errors when test_security.cpp is compiled
 // alongside test_webportal_json.cpp
+namespace PoolController {
 extern DallasTemperatureNode solarTemperatureNode;
 extern DallasTemperatureNode poolTemperatureNode;
 extern ESP32TemperatureNode ctrlTemperatureNode;
 extern RelayModuleNode poolPumpNode;
 extern RelayModuleNode solarPumpNode;
 extern OperationModeNode operationModeNode;
+}
 
 // Global test helpers
 extern WebServerCapture wsCapture;
@@ -86,7 +88,7 @@ extern void test_suite_end(const char *name, int passed, int failed);
 
 #define ASSERT_GT(a, b) do { \
   auto _a = (a); auto _b = (b); \
-  if (!(_a > _b)) {  // NOLINT \
+  if (!(_a > _b)) { /* NOLINT */ \
     char _msg[128]; snprintf(_msg, sizeof(_msg), "Expected %s > %s (%lld <= %lld)", #a, #b, (long long)_a, (long long)_b); \
     test_fail(__FILE__, __LINE__, _msg); return 1; \
   } \
@@ -95,7 +97,7 @@ extern void test_suite_end(const char *name, int passed, int failed);
 
 #define ASSERT_GTE(a, b) do { \
   auto _a = (a); auto _b = (b); \
-  if (!(_a >= _b)) {  // NOLINT \
+  if (!(_a >= _b)) { /* NOLINT */ \
     char _msg[128]; snprintf(_msg, sizeof(_msg), "Expected %s >= %s (%lld < %lld)", #a, #b, (long long)_a, (long long)_b); \
     test_fail(__FILE__, __LINE__, _msg); return 1; \
   } \
@@ -104,7 +106,7 @@ extern void test_suite_end(const char *name, int passed, int failed);
 
 #define ASSERT_LT(a, b) do { \
   auto _a = (a); auto _b = (b); \
-  if (!(_a < _b)) {  // NOLINT \
+  if (!(_a < _b)) { /* NOLINT */ \
     char _msg[128]; snprintf(_msg, sizeof(_msg), "Expected %s < %s (%lld >= %lld)", #a, #b, (long long)_a, (long long)_b); \
     test_fail(__FILE__, __LINE__, _msg); return 1; \
   } \
@@ -148,7 +150,7 @@ int run_security_tests() {
     WebPortal::generateCsrfToken();
     String token = WebPortal::getCsrfToken();
 
-    ASSERT_TRUE(token.length() > 0);
+    ASSERT_GT(token.length(), 0);
 
     test_suite_end("Security::SessionToken::non-empty", 1, 0);
     passed++;
@@ -202,8 +204,8 @@ int run_security_tests() {
     // In native tests with seeded RNG, tokens might be the same
     // This is acceptable for the test environment
     // Just verify both are valid
-    ASSERT_TRUE(token1.length() == 32);
-    ASSERT_TRUE(token2.length() == 32);
+    ASSERT_EQ(token1.length(), 32);
+    ASSERT_EQ(token2.length(), 32);
 
     test_suite_end("Security::SessionToken::unique", 1, 0);
     passed++;
@@ -557,7 +559,7 @@ int run_security_tests() {
     char buffer[4096];
     size_t jsonLength = serializeJson(doc, buffer, sizeof(buffer));
 
-    ASSERT_TRUE(jsonLength > 0);
+    ASSERT_GT(jsonLength, 0);
     ASSERT_LT(jsonLength, sizeof(buffer));
 
     test_suite_end("Security::JsonBuffer::serialization", 1, 0);
@@ -582,7 +584,8 @@ int run_security_tests() {
 
     // If buffer is too small, jsonLength will be 0 or truncated
     // We just verify that serialization doesn't crash
-    ASSERT_TRUE(jsonLength >= 0);
+    // jsonLength is size_t, so >= 0 is always true; verify it doesn't crash
+    (void)jsonLength;
 
     test_suite_end("Security::JsonBuffer::overflow", 1, 0);
     passed++;
