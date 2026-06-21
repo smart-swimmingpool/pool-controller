@@ -448,8 +448,6 @@ void MqttPublisher::publishDiscovery() {
     "effective-runtime", "Effective Runtime", "duration", "s", "mdi:timer-sand", "diagnostic");
 
   // ── Sensor mapping diagnostics (static entities, always available) ──
-=======
-  // Sensor mapping diagnostics (static entities, always available)
   publishSensorDiscovery(
     "solar-sensor-found", "Solar Sensor Found", nullptr, nullptr, "mdi:check-network-outline", "diagnostic");
   publishSensorDiscovery(
@@ -459,7 +457,6 @@ void MqttPublisher::publishDiscovery() {
   publishSelectDiscovery("timezone", "Timezone", getTimezoneLabelList(), getTimezoneLabelCount(), "mdi:map-clock", "config");
   publishNumberDiscovery("hysteresis", "Temperature Hysteresis", 0.0, 10.0, 0.1, "K", "mdi:delta", "config");
   publishTextDiscovery("ntp-server", "NTP Server", "mdi:clock-outline");
-=======
 
   // Firmware Update entity
   publishUpdateDiscovery();
@@ -649,8 +646,6 @@ void MqttPublisher::publishSensorMappingDiscovery() {
       // Deduplicate (same address may appear on shared bus)
       bool seen = false;
       for (uint8_t si = 0; si < storedCount; si++) {
-        if (storedAddrs[si] == buf) { seen = true; break; }
-=======
         if (storedAddrs[si] == buf) {
           seen = true;
           break;
