@@ -64,20 +64,40 @@ python3 -m venv /tmp/lint-venv && /tmp/lint-venv/bin/pip install cpplint
 
 ### Gate 3 — EditorConfig Compliance
 
+**Wichtig:** CI prüft per `editorconfig-checker` **alle** Dateien im Repository (`.editorconfig` Rule `[*]`).
+Daher müssen lokale Checks ebenfalls alle Dateitypen abdecken — nicht nur C++ und Web-UI.
+
+#### Variante A (empfohlen): editorconfig-checker
+
 ```bash
-# Check auf Tabs, Trailing Whitespace, fehlende Final Newline
+# Einmalig installieren:
+sudo npm install -g editorconfig-checker
+
+# Prüft alle Dateien gegen .editorconfig:
+editorconfig-checker -exclude '.git|.pio|.vscode|.platformio|build|lib|node_modules'
+```
+
+#### Variante B: Manuelle Checks (alle git-getrackten Textdateien)
+
+```bash
+# Alle git-getrackten Dateien als Grundlage
+FILES=$(git ls-files '*.cpp' '*.hpp' '*.h' '*.html' '*.js' '*.css' \
+  '*.ini' '*.yml' '*.yaml' '*.json' '*.md' '*.cfg' '*.txt' '*.sh' 'Makefile' \
+  '.editorconfig' '.gitignore' '.prettierrc' 'CPPLINT.cfg')
+
 # Keine Tabs:
-find src data/web -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.html" -o -name "*.js" -o -name "*.css" \) \
-  -exec grep -l $'\t' {} \; | grep . && echo "TABS GEFUNDEN!" || echo "✓ Keine Tabs"
+echo "$FILES" | tr ' ' '\n' | xargs grep -l $'\t' 2>/dev/null \
+  | grep . && echo "✗ TABS GEFUNDEN!" || echo "✓ Keine Tabs"
 
 # Kein Trailing Whitespace:
-find src data/web -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.html" -o -name "*.js" -o -name "*.css" \) \
-  -exec grep -l '[[:space:]]$' {} \; | grep . && echo "TRAILING WHITESPACE GEFUNDEN!" || echo "✓ Kein Trailing Whitespace"
+echo "$FILES" | tr ' ' '\n' | xargs grep -l '[[:space:]]$' 2>/dev/null \
+  | grep . && echo "✗ TRAILING WHITESPACE!" || echo "✓ Kein Trailing Whitespace"
 
-# Final Newline (via EditorConfig checker oder manuelle Prüfung):
-for f in $(find src data/web -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.html" -o -name "*.js" -o -name "*.css" \)); do
+# Final Newline:
+echo "$FILES" | tr ' ' '\n' | while IFS= read -r f; do
+  [ -f "$f" ] || continue
   last=$(tail -c 1 "$f")
-  [ -z "$last" ] && echo "✓ $f" || echo "✗ KEINE FINAL NEWLINE: $f"
+  [ -z "$last" ] || echo "✗ KEINE FINAL NEWLINE: $f"
 done | grep "✗" || echo "✓ Alle Dateien haben Final Newline"
 ```
 
@@ -130,7 +150,12 @@ docker run --rm --platform linux/arm64 -v $(pwd):/work -w /work ubuntu:22.04 \
   src/*.cpp src/*.hpp src/Nodes/*.cpp src/Nodes/*.hpp
 
 # 3. EditorConfig
-find src -type f \( -name "*.cpp" -o -name "*.hpp" \) -exec grep -l '[[:space:]]$' {} \; | grep . && echo "TRAILING WHITESPACE!"
+editorconfig-checker -exclude '.git|.pio|.vscode|.platformio|build|lib|node_modules'
+# Fallback: git-getrackte Textdateien manuell prüfen
+FILES=$(git ls-files '*.cpp' '*.hpp' '*.h' '*.html' '*.js' '*.css' \
+  '*.ini' '*.yml' '*.yaml' '*.json' '*.md' '*.cfg' '*.txt' '*.sh' 'Makefile')
+echo "$FILES" | tr ' ' '\n' | xargs grep -l '[[:space:]]$' 2>/dev/null \
+  | grep . && echo "TRAILING WHITESPACE!"
 
 # 4. Static Analysis (→ PlatformIO Check für Details)
 pio check --environment esp32dev --skip-packages --severity medium
@@ -237,17 +262,20 @@ docker run --rm --platform linux/arm64 -v $(pwd):/work -w /work ubuntu:22.04 \
 - **No trailing whitespace**
 - **Final newline** at end of every file
 
-**Auto-fix**:
+**Auto-fix** (alle git-getrackten Textdateien):
 
 ```bash
-# Remove tabs (C++)
-find src -type f \( -name "*.cpp" -o -name "*.hpp" \) -exec sed -i 's/\t/  /g' {} \;
+# Alle relevanten Dateien finden
+FILES=$(git ls-files '*.cpp' '*.hpp' '*.h' '*.html' '*.js' '*.css' \
+  '*.ini' '*.yml' '*.yaml' '*.json' '*.md' '*.cfg' '*.txt' '*.sh' 'Makefile' \
+  '.editorconfig' '.gitignore' 'CPPLINT.cfg')
 
-# Remove trailing whitespace (C++)
-find src -type f \( -name "*.cpp" -o -name "*.hpp" \) -exec sed -i 's/[[:space:]]*$//' {} \;
+# Remove tabs → spaces (Vorsicht: Makefile erlaubt Tabs!)
+echo "$FILES" | tr ' ' '\n' | grep -v '^Makefile$' | \
+  xargs sed -i 's/\t/  /g' 2>/dev/null || true
 
-# Remove trailing whitespace (Web UI)
-find data/web -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" \) -exec sed -i 's/[[:space:]]*$//' {} \;
+# Remove trailing whitespace
+echo "$FILES" | tr ' ' '\n' | xargs sed -i 's/[[:space:]]*$//' 2>/dev/null || true
 ```
 
 ### 3. Cpplint Include Order
@@ -687,6 +715,10 @@ ln -s ../../scripts/pre-commit.sh .git/hooks/pre-commit
 
 The hook runs clang-format on staged `.cpp`/`.hpp` files before each commit.
 
+> **Tipp:** EditorConfig-Verstöße (Tabs, Trailing Whitespace) erkennt man am besten mit
+> `editorconfig-checker -exclude '.git|.pio|.vscode|.platformio|build|lib|node_modules'`
+> vor dem Commit — das prüft **alle** Dateitypen, inkl. `platformio.ini`.
+
 ---
 
 ## Full CI Simulation (ARM64)
@@ -734,3 +766,63 @@ shellcheck scripts/*.sh .github/scripts/*.sh
 # Geänderte Markdown-Dateien checken:
 markdownlint $(git diff --name-only --diff-filter=AM HEAD~1 | grep '\.md$')
 ```
+
+---
+
+## 📚 References & Best Practices
+
+### Code Quality Standards
+
+- **[Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html)** -
+  Industry-standard C++ coding conventions
+- **[LLVM Coding Standards](https://llvm.org/docs/CodingStandards.html)** -
+  Modern C++ best practices
+- **[clang-format Documentation](https://clang.llvm.org/docs/ClangFormat.html)** -
+  Code formatting configuration and styles
+- **[EditorConfig](https://editorconfig.org/)** -
+  Consistent coding styles across editors
+
+### Linting & Static Analysis
+
+- **[cpplint](https://github.com/cpplint/cpplint)** - Google's C++ linter
+- **[Super-Linter](https://github.com/github/super-linter)** -
+  Multi-language linting framework
+- **[CodeQL](https://codeql.github.com/)** -
+  Semantic code analysis for security vulnerabilities
+- **[clang-tidy](https://clang.llvm.org/extra/clang-tidy/)** -
+  Clang-based static analysis
+
+### Formatting Tools
+
+- **[Prettier](https://prettier.io/)** -
+  Opinionated code formatter (for YAML, JSON, Markdown)
+- **[Black](https://github.com/psf/black)** - Python code formatter
+- **[ESLint](https://eslint.org/)** -
+  JavaScript/TypeScript linting
+- **[YAML Lint](https://github.com/adrienverge/yamllint)** -
+  YAML file validation
+
+### CI/CD Quality Gates
+
+- **[GitHub Actions Documentation](https://docs.github.com/en/actions)** -
+  Workflow configuration and best practices
+- **[PlatformIO CI](https://docs.platformio.org/en/latest/integration/ci/github-actions.html)** -
+  PlatformIO integration with GitHub Actions
+- **[Quality Gates Pattern](https://martinfowler.com/articles/continuousIntegration.html#QualityGates)** -
+  CI quality gate strategies
+
+### Practical Implementation Guides
+
+- **[Setting up Super-Linter](https://github.com/github/super-linter/blob/main/README.md)** -
+  Configuration and customization
+- **[clang-format Configuration](https://clang.llvm.org/docs/ClangFormatStyleOptions.html)** -
+  Style option reference
+- **[EditorConfig Properties](https://editorconfig.org/#file-format-details)** -
+  Available configuration options
+
+---
+
+**🔍 Analysis Note**: This skill was enhanced during the comprehensive IoT security
+and code quality analysis performed by Vibe Code on 2025-01-15. See
+[PR #112](https://github.com/smart-swimmingpool/pool-controller/pull/112)
+for implementation details and quality improvement examples.

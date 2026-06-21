@@ -114,4 +114,5 @@ v
   [Hardware-Anleitung](hardware-guide.de.md) — Schritt-für-Schritt,
   Fertigungstipps, Fehlersuche
 - Pin-Hintergrund und Optimierung:
-  [ESP32 Schaltplananalyse und Optimierung](esp32-schematic-optimization-de.md)
+  [ESP32 Schaltplananalyse und Optimierung](esp32-schematic-optimization.de.md)
+- [KiCad-Schaltplan: ESP32 Dev Board](kicad/esp32-dev-board/esp32-dev-board-schematic.pdf) — KiCad-9.0-Schaltplan als PDF-Export

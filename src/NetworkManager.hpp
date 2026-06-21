@@ -67,6 +67,7 @@ private:
   static MqttMessageCallback mqttCallback_;
 
   static bool apModeActive_;
+  static bool mdnsRunning_;
   static uint32_t lastWiFiRetryTime_;
   static uint32_t lastMqttRetryTime_;
   static uint32_t connectionStartTime_;

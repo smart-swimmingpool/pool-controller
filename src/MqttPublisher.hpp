@@ -38,22 +38,21 @@ public:
    * @param index   Chunk index (0 for single-chunk messages).
    * @param total   Total payload size across all chunks.
    */
-  static void handleMqttMessage(char *topic, char *payload, AsyncMqttClientMessageProperties properties,
-    size_t len, size_t index, size_t total);
+  static void handleMqttMessage(
+    char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total);
 
 private:
-  static void publishTextDiscovery(const char *objectId, const char *name, const char *icon = nullptr);
+  static void publishTextDiscovery(const char *objectId, const char *name, const char *icon = nullptr, const char *entityCategory = nullptr);
   static void publishSensorDiscovery(const char *objectId, const char *name, const char *deviceClass = nullptr,
     const char *unit = nullptr, const char *icon = nullptr, const char *entityCategory = nullptr);
-  static void publishSwitchDiscovery(const char *objectId, const char *name, const char *icon = nullptr,
-    const char *entityCategory = nullptr);
-  static void publishSelectDiscovery(
-    const char *objectId, const char *name, const char *const *options, size_t optionCount, const char *icon = nullptr,
-    const char *entityCategory = nullptr);
+  static void publishSwitchDiscovery(
+    const char *objectId, const char *name, const char *icon = nullptr, const char *entityCategory = nullptr);
+  static void publishSelectDiscovery(const char *objectId, const char *name, const char *const *options, size_t optionCount,
+    const char *icon = nullptr, const char *entityCategory = nullptr);
   static void publishNumberDiscovery(const char *objectId, const char *name, double minVal, double maxVal, double step,
     const char *unit = nullptr, const char *icon = nullptr, const char *entityCategory = nullptr);
-  static void publishTimeDiscovery(const char *objectId, const char *name, const char *icon = nullptr,
-    const char *entityCategory = nullptr);
+  static void publishTimeDiscovery(
+    const char *objectId, const char *name, const char *icon = nullptr, const char *entityCategory = nullptr);
   static void publishUpdateDiscovery();
   static void publishClimateDiscovery();
   /** @brief Publish select-entity discovery for sensor-to-role mapping (detected addresses as options). */

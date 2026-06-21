@@ -9,13 +9,37 @@ end_of_line = lf
 insert_final_newline = true
 trim_trailing_whitespace = true
 indent_style = space
-indent_size = 2
 charset = utf-8
+
+# C/C++ source
+[*.{cpp,hpp,h,ino}]
+indent_size = 2
+
+# Structured data files
+[*.{json,yml,yaml,js,ts,css}]
+indent_size = 2
+
+# Shell scripts
+[*.sh]
+indent_size = 2
 
 # Makefiles require tabs
 [Makefile]
 indent_style = tab
 
+# KiCad 9.0 schematic files use tabs as native S-expression format
+[*.kicad_sch]
+indent_style = tab
+indent_size = unset
+trim_trailing_whitespace = false
+
+# Markdown/AsciiDoc: natural indentation varies (list bullets at 0, 2, 4;
+# ordered-list sub-items at 3+, continuation at 4+), so indent_size is
+# deliberately not enforced to avoid false positives.
 [*.{md,adoc}]
 indent_style = space
 trim_trailing_whitespace = false
+
+
+[*.md]
+indent_size = unset

@@ -42,12 +42,12 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Run Super-Linter
-        uses: super-linter/super-linter@v8.6.0
+        uses: super-linter/super-linter@v8.7.0
         env:
           VALIDATE_ALL_CODEBASE: false
 
@@ -73,6 +73,12 @@ jobs:
 
           # C/C++ specific settings
           CPP_FILE_EXTENSIONS: "cpp,hpp,h"
+
+          # Markdown specific settings - increase line length to 150
+          MARKDOWN_LINT_LINE_LENGTH: 150
+          MARKDOWNLINT_LINE_LENGTH: 150
+          MARKDOWNLINT_CONFIG_FILE: .markdownlint.yml
+          MARKDOWNLINT_OPTIONS: "--config .markdownlint.yml"
 
           # Don't treat warnings as errors
           WARNINGS_AS_ERRORS: false

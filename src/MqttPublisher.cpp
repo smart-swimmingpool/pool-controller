@@ -189,7 +189,8 @@ void MqttPublisher::publishNumberDiscovery(
   NetworkManager::publish(configTopic.c_str(), payload.c_str(), true);
 }
 
-void MqttPublisher::publishTextDiscovery(const char *objectId, const char *name, const char *icon) {
+void MqttPublisher::publishTextDiscovery(const char *objectId, const char *name, const char *icon,
+  const char *entityCategory) {
   String configTopic = getBaseTopic("text", objectId) + "/config";
 
   JsonDocument doc;
@@ -198,7 +199,9 @@ void MqttPublisher::publishTextDiscovery(const char *objectId, const char *name,
   doc["state_topic"] = getBaseTopic("text", objectId) + "/state";
   doc["command_topic"] = getBaseTopic("text", objectId) + "/set";
   doc["availability_topic"] = "homeassistant/sensor/pool-controller/availability";
-  doc["entity_category"] = "config";
+
+  if (entityCategory)
+    doc["entity_category"] = entityCategory;
 
   if (icon)
     doc["icon"] = icon;
@@ -299,6 +302,9 @@ void MqttPublisher::publishClimateDiscovery() {
   doc["max_temp"] = 40.0;
   doc["temp_step"] = 0.5;
 
+  // Entity category (Configuration)
+  doc["entity_category"] = "config";
+
   // Device block
   JsonObject deviceObj = doc["device"].to<JsonObject>();
   deviceObj["identifiers"][0] = deviceId_;
@@ -392,20 +398,19 @@ void MqttPublisher::publishDiscovery() {
 
   Serial.println("Publishing HA Discovery Payloads...");
 
-  // ── Diagnostics (entity_category: "diagnostic") ──
-  // Temperatures
-  publishSensorDiscovery("pool-temp", "Pool Temperature", "temperature", "°C", "mdi:pool", "diagnostic");
-  publishSensorDiscovery("solar-temp", "Solar Temperature", "temperature", "°C", "mdi:solar-power", "diagnostic");
-  publishSensorDiscovery("controller-temp", "Controller Temperature", "temperature", "°C", "mdi:thermometer", "diagnostic");
+  // ── Primary Sensors (no entity_category — shown on device front page) ──
+  publishSensorDiscovery("pool-temp", "Pool Temperature", "temperature", "°C", "mdi:pool");
+  publishSensorDiscovery("solar-temp", "Solar Temperature", "temperature", "°C", "mdi:solar-power");
 
-  // System diagnostics
+  // ── Diagnostics (entity_category: "diagnostic") ──
+  publishSensorDiscovery("controller-temp", "Controller Temperature", "temperature", "°C", "mdi:thermometer", "diagnostic");
   publishSensorDiscovery("heap", "Free Heap Space", nullptr, "B", "mdi:memory", "diagnostic");
   publishSensorDiscovery("max-alloc", "Max Alloc Block", nullptr, "B", "mdi:memory", "diagnostic");
   publishSensorDiscovery("rssi", "WiFi Signal Strength", nullptr, "dBm", "mdi:wifi", "diagnostic");
   publishSensorDiscovery("uptime", "System Uptime", "duration", "s", "mdi:clock-outline", "diagnostic");
   publishSensorDiscovery("local-time", "Local Time", nullptr, nullptr, "mdi:clock", "diagnostic");
 
-  // ── Controls (no entity_category — shown on device page) ──
+  // ── Controls (no entity_category — shown on device front page) ──
   // Relays (Switches)
   publishSwitchDiscovery("pool-pump", "Pool Pump", "mdi:pump");
   publishSwitchDiscovery("solar-pump", "Solar Pump", "mdi:solar-panel");
@@ -414,25 +419,37 @@ void MqttPublisher::publishDiscovery() {
   const char *modeOpts[] = {"auto", "manu", "boost", "timer"};
   publishSelectDiscovery("mode", "Operation Mode", modeOpts, 4, "mdi:sync");
 
+  // ── Configuration (entity_category: "config") ──
   // Parameter Numbers
-  publishNumberDiscovery("pool-max-temp", "Max. Pool Temp", 0.0, 40.0, 0.1, "°C", "mdi:thermometer-chevron-up");
-  publishNumberDiscovery("solar-min-temp", "Min. Solar Temp", 0.0, 100.0, 0.1, "°C", "mdi:thermometer-chevron-down");
-
-  // Timer as Time entities (HH:MM:SS format)
-  publishTimeDiscovery("timer-start", "Timer Start", "mdi:clock-start");
-  publishTimeDiscovery("timer-end", "Timer End", "mdi:clock-end");
+  publishNumberDiscovery("pool-max-temp", "Max. Pool Temp", 0.0, 40.0, 0.1, "°C", "mdi:thermometer-chevron-up", "config");
+  publishNumberDiscovery("solar-min-temp", "Min. Solar Temp", 0.0, 100.0, 0.1, "°C", "mdi:thermometer-chevron-down", "config");
+  publishNumberDiscovery("hysteresis", "Temperature Hysteresis", 0.0, 10.0, 0.1, "K", "mdi:delta", "config");
 
   // Temperature-based circulation parameters
   publishNumberDiscovery(
-    "temp-circ-threshold", "Circ. Temp Threshold", 0.0, 40.0, 0.5, "°C", "mdi:thermometer-auto");
+    "temp-circ-threshold", "Circ. Temp Threshold", 0.0, 40.0, 0.5, "°C", "mdi:thermometer-auto", "config");
   publishNumberDiscovery(
-    "temp-circ-factor", "Circ. Temp Factor", 0.0, 120.0, 5.0, "min/°C", "mdi:plus-minus");
+    "temp-circ-factor", "Circ. Temp Factor", 0.0, 120.0, 5.0, "min/°C", "mdi:plus-minus", "config");
   publishNumberDiscovery(
-    "temp-circ-max-runtime", "Circ. Max Runtime", 60.0, 1440.0, 15.0, "min", "mdi:timer-outline");
+    "temp-circ-max-runtime", "Circ. Max Runtime", 60.0, 1440.0, 15.0, "min", "mdi:timer-outline", "config");
+
+  // Timer as Time entities (HH:MM:SS format)
+  publishTimeDiscovery("timer-start", "Timer Start", "mdi:clock-start", "config");
+  publishTimeDiscovery("timer-end", "Timer End", "mdi:clock-end", "config");
+
+  // Select Timezone
+  publishSelectDiscovery("timezone", "Timezone", getTimezoneLabelList(), getTimezoneLabelCount(), "mdi:map-clock", "config");
+
+  // Text entities
+  publishTextDiscovery("ntp-server", "NTP Server", "mdi:clock-outline", "config");
+
+  // Runtime diagnostics
   publishSensorDiscovery(
     "effective-runtime", "Effective Runtime", "duration", "s", "mdi:timer-sand", "diagnostic");
 
   // ── Sensor mapping diagnostics (static entities, always available) ──
+=======
+  // Sensor mapping diagnostics (static entities, always available)
   publishSensorDiscovery(
     "solar-sensor-found", "Solar Sensor Found", nullptr, nullptr, "mdi:check-network-outline", "diagnostic");
   publishSensorDiscovery(
@@ -442,6 +459,7 @@ void MqttPublisher::publishDiscovery() {
   publishSelectDiscovery("timezone", "Timezone", getTimezoneLabelList(), getTimezoneLabelCount(), "mdi:map-clock", "config");
   publishNumberDiscovery("hysteresis", "Temperature Hysteresis", 0.0, 10.0, 0.1, "K", "mdi:delta", "config");
   publishTextDiscovery("ntp-server", "NTP Server", "mdi:clock-outline");
+=======
 
   // Firmware Update entity
   publishUpdateDiscovery();
@@ -632,6 +650,11 @@ void MqttPublisher::publishSensorMappingDiscovery() {
       bool seen = false;
       for (uint8_t si = 0; si < storedCount; si++) {
         if (storedAddrs[si] == buf) { seen = true; break; }
+=======
+        if (storedAddrs[si] == buf) {
+          seen = true;
+          break;
+        }
       }
       if (seen) continue;
 

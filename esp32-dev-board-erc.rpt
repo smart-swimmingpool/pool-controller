@@ -1,0 +1,313 @@
+ERC report (2026-06-16T12:18:23+0200, Encoding UTF8)
+
+***** Sheet /
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(5.00 mm, 15.00 mm): Horizontal Wire, length 155.00 mm
+[global_label_dangling]: Global label not connected anywhere else in the schematic
+    ; warning
+    @(5.00 mm, 15.00 mm): Global Label 'GND'
+[lib_symbol_issues]: The current configuration does not include the symbol library ''
+    ; warning
+    @(20.00 mm, 40.00 mm): Symbol U3 [DS18B20]
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(40.00 mm, 25.00 mm): Symbol U3 Pin 1 [VDD, Power input, Line]
+[pin_not_connected]: Pin not connected
+    ; error
+    @(40.00 mm, 25.00 mm): Symbol U3 Pin 1 [VDD, Power input, Line]
+[power_pin_not_driven]: Input Power pin not driven by any Output Power pins
+    ; error
+    @(40.00 mm, 25.00 mm): Symbol U3 Pin 1 [VDD, Power input, Line]
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(38.00 mm, 35.00 mm): Vertical Wire, length 110.00 mm
+[unconnected_wire_endpoint]: Unconnected wire endpoint
+    ; warning
+    @(38.00 mm, 35.00 mm): Vertical Wire, length 110.00 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(38.00 mm, 40.00 mm): Horizontal Wire, length 17.00 mm
+[unconnected_wire_endpoint]: Unconnected wire endpoint
+    ; warning
+    @(38.00 mm, 40.00 mm): Horizontal Wire, length 17.00 mm
+[wire_dangling]: Wires not connected to anything
+    ; error
+    @(38.00 mm, 40.00 mm): Horizontal Wire, length 17.00 mm
+[pin_not_connected]: Pin not connected
+    ; error
+    @(40.00 mm, 40.00 mm): Symbol U3 Pin 2 [DATA, Bidirectional, Line]
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(38.00 mm, 45.00 mm): Vertical Wire, length 30.00 mm
+[unconnected_wire_endpoint]: Unconnected wire endpoint
+    ; warning
+    @(38.00 mm, 45.00 mm): Vertical Wire, length 30.00 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(45.00 mm, 40.00 mm): Symbol R2 Pin 1 [Passive, Line]
+[pin_not_connected]: Pin not connected
+    ; error
+    @(45.00 mm, 40.00 mm): Symbol R2 Pin 1 [Passive, Line]
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(55.00 mm, 35.00 mm): Vertical Wire, length 110.00 mm
+[unconnected_wire_endpoint]: Unconnected wire endpoint
+    ; warning
+    @(55.00 mm, 35.00 mm): Vertical Wire, length 110.00 mm
+[pin_not_connected]: Pin not connected
+    ; error
+    @(40.00 mm, 55.00 mm): Symbol U3 Pin 3 [GND, Power input, Line]
+[power_pin_not_driven]: Input Power pin not driven by any Output Power pins
+    ; error
+    @(40.00 mm, 55.00 mm): Symbol U3 Pin 3 [GND, Power input, Line]
+[pin_not_connected]: Pin not connected
+    ; error
+    @(65.00 mm, 40.00 mm): Symbol R2 Pin 2 [Passive, Line]
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(80.00 mm, 5.00 mm): Symbol U1 Pin 1 [3V3, Power input, Line]
+[pin_not_connected]: Pin not connected
+    ; error
+    @(80.00 mm, 5.00 mm): Symbol U1 Pin 1 [3V3, Power input, Line]
+[power_pin_not_driven]: Input Power pin not driven by any Output Power pins
+    ; error
+    @(80.00 mm, 5.00 mm): Symbol U1 Pin 1 [3V3, Power input, Line]
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(70.00 mm, 40.00 mm): Horizontal Wire, length 10.00 mm
+[unconnected_wire_endpoint]: Unconnected wire endpoint
+    ; warning
+    @(70.00 mm, 40.00 mm): Horizontal Wire, length 10.00 mm
+[wire_dangling]: Wires not connected to anything
+    ; error
+    @(70.00 mm, 40.00 mm): Horizontal Wire, length 10.00 mm
+    @(80.00 mm, 40.00 mm): Vertical Wire, length 23.00 mm
+[pin_not_connected]: Pin not connected
+    ; error
+    @(80.00 mm, 15.00 mm): Symbol U1 Pin 2 [GND, Power input, Line]
+[power_pin_not_driven]: Input Power pin not driven by any Output Power pins
+    ; error
+    @(80.00 mm, 15.00 mm): Symbol U1 Pin 2 [GND, Power input, Line]
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(80.00 mm, 40.00 mm): Vertical Wire, length 23.00 mm
+[label_dangling]: Label not connected to anything
+    ; error
+    @(82.00 mm, 40.00 mm): Label 'GPIO33'
+[pin_not_connected]: Pin not connected
+    ; error
+    @(80.00 mm, 45.00 mm): Symbol U1 Pin 3 [GPIO32, Bidirectional, Line]
+[pin_not_connected]: Pin not connected
+    ; error
+    @(80.00 mm, 55.00 mm): Symbol U1 Pin 4 [GPIO33, Bidirectional, Line]
+[unconnected_wire_endpoint]: Unconnected wire endpoint
+    ; warning
+    @(80.00 mm, 40.00 mm): Vertical Wire, length 23.00 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(40.00 mm, 95.00 mm): Symbol U2 Pin 1 [VDD, Power input, Line]
+[pin_not_connected]: Pin not connected
+    ; error
+    @(40.00 mm, 95.00 mm): Symbol U2 Pin 1 [VDD, Power input, Line]
+[power_pin_not_driven]: Input Power pin not driven by any Output Power pins
+    ; error
+    @(40.00 mm, 95.00 mm): Symbol U2 Pin 1 [VDD, Power input, Line]
+[label_dangling]: Label not connected to anything
+    ; error
+    @(82.00 mm, 70.00 mm): Label 'GPIO26'
+[unconnected_wire_endpoint]: Unconnected wire endpoint
+    ; warning
+    @(80.00 mm, 110.00 mm): Vertical Wire, length 35.00 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(38.00 mm, 105.00 mm): Vertical Wire, length 90.00 mm
+[unconnected_wire_endpoint]: Unconnected wire endpoint
+    ; warning
+    @(38.00 mm, 105.00 mm): Vertical Wire, length 90.00 mm
+[wire_dangling]: Wires not connected to anything
+    ; error
+    @(38.00 mm, 105.00 mm): Vertical Wire, length 90.00 mm
+    @(38.00 mm, 45.00 mm): Vertical Wire, length 30.00 mm
+[lib_symbol_issues]: The current configuration does not include the symbol library ''
+    ; warning
+    @(20.00 mm, 110.00 mm): Symbol U2 [DS18B20]
+[label_dangling]: Label not connected to anything
+    ; error
+    @(82.00 mm, 80.00 mm): Label 'GPIO25'
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(38.00 mm, 110.00 mm): Horizontal Wire, length 17.00 mm
+[unconnected_wire_endpoint]: Unconnected wire endpoint
+    ; warning
+    @(38.00 mm, 110.00 mm): Horizontal Wire, length 17.00 mm
+[wire_dangling]: Wires not connected to anything
+    ; error
+    @(38.00 mm, 110.00 mm): Horizontal Wire, length 17.00 mm
+[pin_not_connected]: Pin not connected
+    ; error
+    @(40.00 mm, 110.00 mm): Symbol U2 Pin 2 [DATA, Bidirectional, Line]
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(45.00 mm, 110.00 mm): Symbol R1 Pin 1 [Passive, Line]
+[pin_not_connected]: Pin not connected
+    ; error
+    @(45.00 mm, 110.00 mm): Symbol R1 Pin 1 [Passive, Line]
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(38.00 mm, 115.00 mm): Vertical Wire, length 30.00 mm
+[unconnected_wire_endpoint]: Unconnected wire endpoint
+    ; warning
+    @(38.00 mm, 115.00 mm): Vertical Wire, length 30.00 mm
+[wire_dangling]: Wires not connected to anything
+    ; error
+    @(38.00 mm, 115.00 mm): Vertical Wire, length 30.00 mm
+    @(38.00 mm, 35.00 mm): Vertical Wire, length 110.00 mm
+[lib_symbol_issues]: The current configuration does not include the symbol library ''
+    ; warning
+    @(55.00 mm, 110.00 mm): Symbol R1 [R_4K7]
+[unconnected_wire_endpoint]: Unconnected wire endpoint
+    ; warning
+    @(38.00 mm, 110.00 mm): Horizontal Wire, length 17.00 mm
+[pin_not_connected]: Pin not connected
+    ; error
+    @(80.00 mm, 95.00 mm): Symbol U1 Pin 5 [GPIO25, Output, Line]
+[lib_symbol_issues]: The current configuration does not include the symbol library ''
+    ; warning
+    @(100.00 mm, 75.00 mm): Symbol U1 [ESP32_DEV_BOARD]
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(55.00 mm, 115.00 mm): Vertical Wire, length 30.00 mm
+[unconnected_wire_endpoint]: Unconnected wire endpoint
+    ; warning
+    @(55.00 mm, 115.00 mm): Vertical Wire, length 30.00 mm
+[wire_dangling]: Wires not connected to anything
+    ; error
+    @(55.00 mm, 115.00 mm): Vertical Wire, length 30.00 mm
+    @(55.00 mm, 35.00 mm): Vertical Wire, length 110.00 mm
+[pin_not_connected]: Pin not connected
+    ; error
+    @(65.00 mm, 110.00 mm): Symbol R1 Pin 2 [Passive, Line]
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(70.00 mm, 110.00 mm): Horizontal Wire, length 10.00 mm
+[unconnected_wire_endpoint]: Unconnected wire endpoint
+    ; warning
+    @(70.00 mm, 110.00 mm): Horizontal Wire, length 10.00 mm
+[wire_dangling]: Wires not connected to anything
+    ; error
+    @(70.00 mm, 110.00 mm): Horizontal Wire, length 10.00 mm
+    @(80.00 mm, 110.00 mm): Vertical Wire, length 35.00 mm
+[pin_not_connected]: Pin not connected
+    ; error
+    @(40.00 mm, 125.00 mm): Symbol U2 Pin 3 [GND, Power input, Line]
+[power_pin_not_driven]: Input Power pin not driven by any Output Power pins
+    ; error
+    @(40.00 mm, 125.00 mm): Symbol U2 Pin 3 [GND, Power input, Line]
+[pin_not_connected]: Pin not connected
+    ; error
+    @(80.00 mm, 105.00 mm): Symbol U1 Pin 6 [GPIO26, Output, Line]
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(80.00 mm, 110.00 mm): Vertical Wire, length 35.00 mm
+[label_dangling]: Label not connected to anything
+    ; error
+    @(82.00 mm, 110.00 mm): Label 'GPIO32'
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(120.00 mm, 70.00 mm): Horizontal Wire, length 25.00 mm
+[unconnected_wire_endpoint]: Unconnected wire endpoint
+    ; warning
+    @(120.00 mm, 70.00 mm): Horizontal Wire, length 25.00 mm
+[wire_dangling]: Wires not connected to anything
+    ; error
+    @(120.00 mm, 70.00 mm): Horizontal Wire, length 25.00 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(120.00 mm, 80.00 mm): Horizontal Wire, length 25.00 mm
+[unconnected_wire_endpoint]: Unconnected wire endpoint
+    ; warning
+    @(120.00 mm, 80.00 mm): Horizontal Wire, length 25.00 mm
+[wire_dangling]: Wires not connected to anything
+    ; error
+    @(120.00 mm, 80.00 mm): Horizontal Wire, length 25.00 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(5.00 mm, 145.00 mm): Horizontal Wire, length 75.00 mm
+[global_label_dangling]: Global label not connected anywhere else in the schematic
+    ; warning
+    @(5.00 mm, 145.00 mm): Global Label '+3.3V'
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(140.00 mm, 40.00 mm): Symbol K1 Pin 1 [IN1, Input, Line]
+[pin_not_connected]: Pin not connected
+    ; error
+    @(140.00 mm, 40.00 mm): Symbol K1 Pin 1 [IN1, Input, Line]
+[pin_not_driven]: Input pin not driven by any Output pins
+    ; error
+    @(140.00 mm, 40.00 mm): Symbol K1 Pin 1 [IN1, Input, Line]
+[pin_not_connected]: Pin not connected
+    ; error
+    @(80.00 mm, 125.00 mm): Symbol U1 Pin 7 [GPIO2_LED, Output, Line]
+[pin_not_connected]: Pin not connected
+    ; error
+    @(140.00 mm, 50.00 mm): Symbol K1 Pin 2 [IN2, Input, Line]
+[pin_not_driven]: Input pin not driven by any Output pins
+    ; error
+    @(140.00 mm, 50.00 mm): Symbol K1 Pin 2 [IN2, Input, Line]
+[pin_not_connected]: Pin not connected
+    ; error
+    @(140.00 mm, 65.00 mm): Symbol K1 Pin 3 [GND, Power input, Line]
+[power_pin_not_driven]: Input Power pin not driven by any Output Power pins
+    ; error
+    @(140.00 mm, 65.00 mm): Symbol K1 Pin 3 [GND, Power input, Line]
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(145.00 mm, 55.00 mm): Vertical Wire, length 40.00 mm
+[unconnected_wire_endpoint]: Unconnected wire endpoint
+    ; warning
+    @(145.00 mm, 55.00 mm): Vertical Wire, length 40.00 mm
+[wire_dangling]: Wires not connected to anything
+    ; error
+    @(145.00 mm, 55.00 mm): Vertical Wire, length 40.00 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(130.00 mm, 85.00 mm): Horizontal Wire, length 25.00 mm
+[global_label_dangling]: Global label not connected anywhere else in the schematic
+    ; warning
+    @(130.00 mm, 85.00 mm): Global Label '+5V'
+[pin_not_connected]: Pin not connected
+    ; error
+    @(140.00 mm, 75.00 mm): Symbol K1 Pin 4 [VCC, Power input, Line]
+[power_pin_not_driven]: Input Power pin not driven by any Output Power pins
+    ; error
+    @(140.00 mm, 75.00 mm): Symbol K1 Pin 4 [VCC, Power input, Line]
+[unconnected_wire_endpoint]: Unconnected wire endpoint
+    ; warning
+    @(5.00 mm, 15.00 mm): Horizontal Wire, length 155.00 mm
+[unconnected_wire_endpoint]: Unconnected wire endpoint
+    ; warning
+    @(120.00 mm, 70.00 mm): Horizontal Wire, length 25.00 mm
+[unconnected_wire_endpoint]: Unconnected wire endpoint
+    ; warning
+    @(120.00 mm, 80.00 mm): Horizontal Wire, length 25.00 mm
+[lib_symbol_issues]: The current configuration does not include the symbol library ''
+    ; warning
+    @(160.00 mm, 60.00 mm): Symbol K1 [RELAY_2CH]
+[unconnected_wire_endpoint]: Unconnected wire endpoint
+    ; warning
+    @(130.00 mm, 85.00 mm): Horizontal Wire, length 25.00 mm
+[pin_not_connected]: Pin not connected
+    ; error
+    @(180.00 mm, 40.00 mm): Symbol K1 Pin 5 [COM1, Passive, Line]
+[pin_not_connected]: Pin not connected
+    ; error
+    @(180.00 mm, 48.00 mm): Symbol K1 Pin 6 [NO1, Passive, Line]
+[pin_not_connected]: Pin not connected
+    ; error
+    @(180.00 mm, 65.00 mm): Symbol K1 Pin 7 [COM2, Passive, Line]
+[pin_not_connected]: Pin not connected
+    ; error
+    @(180.00 mm, 73.00 mm): Symbol K1 Pin 8 [NO2, Passive, Line]
+
+ ** ERC messages: 101  Errors 49  Warnings 52

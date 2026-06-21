@@ -62,7 +62,7 @@ uint16_t calculateEffectiveEndMinutes(uint16_t baseStartMinutes, uint16_t baseEn
   if (baseEndMinutes >= baseStartMinutes) {
     baseRuntime = baseEndMinutes - baseStartMinutes;
   } else {
-    baseRuntime = (1440 - baseStartMinutes) + baseEndMinutes; // Midnight crossing
+    baseRuntime = (1440 - baseStartMinutes) + baseEndMinutes;  // Midnight crossing
   }
 
   if (baseRuntime == 0) {
@@ -84,9 +84,8 @@ uint16_t calculateEffectiveEndMinutes(uint16_t baseStartMinutes, uint16_t baseEn
   // Calculate new end minutes (add runtime to start, can wrap past midnight)
   uint16_t extended = baseStartMinutes + totalRuntime;
 
-  Serial.printf("  → TempCirc: %.1f°C, base=%umin, extra=%umin, total=%umin, end=%02d:%02d\n",
-    poolTemp, baseRuntime, extra, totalRuntime,
-    (extended / 60) % 24, extended % 60);
+  Serial.printf("  → TempCirc: %.1f°C, base=%umin, extra=%umin, total=%umin, end=%02d:%02d\n", poolTemp, baseRuntime, extra,
+    totalRuntime, (extended / 60) % 24, extended % 60);
 
   return extended;
 }

@@ -51,10 +51,16 @@ private:
   static void handleNotFound();
 
   // ── Static Asset Handlers (LittleFS-served web assets with PROGMEM fallback) ──
-  /** @brief Serve style.css (LittleFS → PROGMEM fallback). */
+  /** @brief Serve style.css (LittleFS). */
   static void handleStyleCss();
-  /** @brief Serve app.js (LittleFS → PROGMEM fallback). */
+  /** @brief Serve app.js (LittleFS). */
   static void handleAppJs();
+  /** @brief Serve manifest.json for PWA (LittleFS). */
+  static void handleManifestJson();
+  /** @brief Serve sw.js service worker for PWA (LittleFS). */
+  static void handleSwJs();
+  /** @brief Serve icon.svg for PWA (LittleFS). */
+  static void handleIconSvg();
 
   // ── REST API Handlers ──
   /** @brief GET /api/status — return JSON with all telemetry data. */
@@ -97,6 +103,19 @@ private:
 
   static constexpr uint32_t kSessionTimeoutMs = 15 * 60 * 1000;  // 15 mins
   static constexpr uint16_t kDnsPort = 53;
+
+  // ── CSRF Protection ──
+  /** @brief Generate a CSRF token for form protection. */
+  static String generateCsrfToken();
+  /** @brief Validate a CSRF token from request. @return true if valid. */
+  static bool validateCsrfToken(const String &token);
+  /** @brief Get the current CSRF token. */
+  static String getCurrentCsrfToken();
+
+private:
+  static String csrfToken_;
+  static uint32_t csrfTokenTime_;
+  static constexpr uint32_t kCsrfTokenTimeoutMs = 30 * 60 * 1000;  // 30 mins
 };
 
 }  // namespace PoolController

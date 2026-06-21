@@ -161,4 +161,4 @@ Robustheit).
 - Ausführliche Aufbauanleitung mit Schritt-für-Schritt-Anleitung und
   Fertigungstipps: [Hardware-Anleitung](hardware-guide.de.md)
 - Kompletter Verdrahtungsplan mit RTC-Modul:
-  [ESP32 Komplett-Schaltplan](esp32-complete-wiring-schematic-de.md)
+  [ESP32 Komplett-Schaltplan](esp32-complete-wiring-schematic.de.md)

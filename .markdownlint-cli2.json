@@ -1,0 +1,10 @@
+{
+  "configs": {
+    "default": true
+  },
+  "MD013": {
+    "line_length": 150,
+    "heading_line_length": 150,
+    "code_block_line_length": 150
+  }
+}

@@ -5,7 +5,20 @@
  * @brief Utility functions: measurement timing, float/int-to-string conversion.
  */
 
+#pragma once
+
 #include <cstdio>
+#include <cstdint>
+
+// Provide dtostrf for native builds (normally an AVR function from avr-libc)
+inline char* dtostrf(double val, int width, int precision, char* buf) {
+  // NOLINT: sizeof(buf) in a char* parameter gives pointer size (4 or 8),
+  // not the actual buffer. Use 8 as a safe minimum — floatToString() callers
+  // ensure bufferSize >= 8 before calling dtostrf, so writing up to 7 chars
+  // plus null terminator is always safe and never truncates typical values.
+  snprintf(buf, 8, "%*.*f", width, precision, val);  // NOLINT(runtime/printf)
+  return buf;
+}
 
 namespace Utils {
 
@@ -55,6 +68,36 @@ inline void floatToString(float value, char *buffer, size_t bufferSize, int deci
  */
 inline void intToString(int value, char *buffer, size_t bufferSize) {
   snprintf(buffer, bufferSize, "%d", value);
+}
+
+/**
+ * Safely concatenate strings with reserved capacity to minimize heap fragmentation.
+ * This function helps reduce heap fragmentation by reserving capacity upfront.
+ *
+ * @param result The String to append to (will reserve capacity if needed)
+ * @param toAppend The string to append
+ * @param reserveExtra Extra capacity to reserve beyond current needs
+ * @note Uses reserve() directly since capacity() is protected in Arduino String class
+ */
+inline void safeStringConcat(String &result, const String &toAppend, size_t reserveExtra = 32) {
+  // Reserve additional capacity to minimize reallocations
+  // We can't check current capacity as it's protected, so we always reserve
+  // the total needed size to ensure we don't fragment the heap
+  result.reserve(result.length() + toAppend.length() + reserveExtra);
+  result += toAppend;
+}
+
+/**
+ * Create a String with reserved capacity to minimize heap fragmentation.
+ *
+ * @param initialValue Initial string value
+ * @param reserveSize Capacity to reserve
+ * @return String with reserved capacity
+ */
+inline String createReservedString(const char *initialValue, size_t reserveSize) {
+  String result(initialValue);
+  result.reserve(reserveSize);
+  return result;
 }
 
 }  // namespace Utils

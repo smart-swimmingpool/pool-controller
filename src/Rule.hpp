@@ -69,7 +69,7 @@ public:
   uint16_t getEffectiveRuntimeMinutes() const {
     TimerSetting ts = getTimerSetting();
     uint16_t baseStart = ts.timerStartHour * 60 + ts.timerStartMinutes;
-    uint16_t baseEnd   = ts.timerEndHour * 60 + ts.timerEndMinutes;
+    uint16_t baseEnd = ts.timerEndHour * 60 + ts.timerEndMinutes;
 
     // Base runtime (handles midnight crossing)
     uint16_t baseRuntime;
@@ -161,17 +161,20 @@ protected:
 
     // Step 2: Check if we're within the extended window
     if (_activeEndMinutes > 0) {
+      // Normalize extended end to 0-1439 for comparison with nowMinutes
+      uint16_t normalizedEnd = _activeEndMinutes % 1440;
+
       bool inExtendedWindow;
       if (crossesMidnight) {
         // Extended window with midnight crossing
-        inExtendedWindow = (nowMinutes >= baseStartMinutes || nowMinutes <= _activeEndMinutes);
+        inExtendedWindow = (nowMinutes >= baseStartMinutes || nowMinutes <= normalizedEnd);
       } else {
-        inExtendedWindow = (nowMinutes < _activeEndMinutes);
+        inExtendedWindow = (nowMinutes < normalizedEnd);
       }
 
       if (inExtendedWindow) {
-        Serial.printf("  checkPoolPumpTimer = true (extended to %02d:%02d)\n",
-          (uint8_t)(_activeEndMinutes / 60), (uint8_t)(_activeEndMinutes % 60));
+        Serial.printf(
+          "  checkPoolPumpTimer = true (extended to %02d:%02d)\n", (uint8_t)(normalizedEnd / 60), (uint8_t)(normalizedEnd % 60));
         return true;
       }
 

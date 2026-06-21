@@ -10,28 +10,25 @@ function switchTab(tabName) {
     tab.style.display = 'block';
   }
 
-  // Close settings menu if open
-  const menu = document.getElementById('settingsMenu');
-  if (menu) menu.style.display = 'none';
+  // Update bottom tab bar active state.
+  // Tabs under "More" (wifi, mqtt, system, about) keep "more" highlighted.
+  const moreTabs = ['wifi', 'mqtt', 'system', 'about'];
+  const barTab = moreTabs.includes(tabName) ? 'more' : tabName;
+  document.querySelectorAll('.tab-bar-item').forEach(item => {
+    item.classList.toggle('active', item.dataset.tab === barTab);
+  });
+
+  // Close more menu if open
+  const moreMenu = document.getElementById('moreMenu');
+  if (moreMenu) moreMenu.style.display = 'none';
 }
 
-function toggleSettingsMenu() {
-  const menu = document.getElementById('settingsMenu');
+function toggleMoreMenu() {
+  const menu = document.getElementById('moreMenu');
   if (menu) {
-    menu.style.display = menu.style.display === 'none' || menu.style.display === '' ? 'block' : 'none';
+    menu.style.display = menu.style.display === 'none' || menu.style.display === '' ? 'flex' : 'none';
   }
 }
-
-// Close settings menu when clicking outside
-document.addEventListener('click', function(event) {
-  const menu = document.getElementById('settingsMenu');
-  const cog = document.querySelector('.cogwheel');
-  if (menu && menu.style.display === 'block') {
-    if (!menu.contains(event.target) && !cog.contains(event.target)) {
-      menu.style.display = 'none';
-    }
-  }
-});
 
 // ── Telemetry ──
 
@@ -49,6 +46,14 @@ async function loadTelemetry() {
     }
     if (data.solar_temp != null) {
       document.getElementById('solarTemp').textContent = data.solar_temp.toFixed(1) + ' °C';
+    }
+
+    // Thresholds (von apiGetStatus, damit sie ohne Auth funktionieren)
+    if (data.temp_max_pool != null) {
+      document.getElementById('poolThreshold').textContent = 'max ' + data.temp_max_pool.toFixed(1) + '°C';
+    }
+    if (data.temp_min_solar != null) {
+      document.getElementById('solarThreshold').textContent = 'min ' + data.temp_min_solar.toFixed(1) + '°C';
     }
 
     // Pumpen
@@ -77,7 +82,8 @@ async function loadTelemetry() {
     // Firmware-Version
     if (data.fw_version) {
       document.getElementById('fwCurrentVersion').textContent = data.fw_version;
-      document.getElementById('fwVersionDisplay').textContent = data.fw_version;
+      const aboutVer = document.getElementById('fwVersionDisplayAbout');
+      if (aboutVer) aboutVer.textContent = data.fw_version;
     }
 
     // Lokale Uhrzeit
@@ -120,6 +126,25 @@ async function loadTelemetry() {
     // AP-Mode: WiFi-Tab anzeigen
     if (data.ap_mode) {
       switchTab('wifi');
+    }
+
+    // About Tab – system info
+    if (data.uptime != null) {
+      const aboutUptime = document.getElementById('aboutUptime');
+      if (aboutUptime) {
+        const d = Math.floor(data.uptime / 86400);
+        const h = Math.floor((data.uptime % 86400) / 3600);
+        const m = Math.floor((data.uptime % 3600) / 60);
+        aboutUptime.textContent = d + 'd ' + h + 'h ' + m + 'm';
+      }
+    }
+    if (data.free_heap != null) {
+      const aboutHeap = document.getElementById('aboutHeap');
+      if (aboutHeap) aboutHeap.textContent = (data.free_heap / 1024).toFixed(0) + ' KB';
+    }
+    if (data.local_ip) {
+      const aboutIP = document.getElementById('aboutIP');
+      if (aboutIP) aboutIP.textContent = data.local_ip;
     }
   } catch (e) {
     console.error('[pool] loadTelemetry error:', e);
@@ -717,7 +742,7 @@ async function saveSensorMapping() {
   btn.textContent = '⏳ Saving...';
 
   const body = 'solar_addr=' + encodeURIComponent(pendingMapping.solar || '') +
-               '&pool_addr=' + encodeURIComponent(pendingMapping.pool || '');
+    '&pool_addr=' + encodeURIComponent(pendingMapping.pool || '');
 
   try {
     const res = await fetch('/api/sensors/map', {
