@@ -1,26 +1,19 @@
 # Gitleaks configuration for pool-controller
-# Extends default rules with project-specific allowlists
-
 [extend]
 useDefault = true
 
-# Global allowlist — applies to ALL rules (including built-in generic-api-key)
-[allowlist]
+# Allow known secrets project-wide
+[[rules.allowlist]]
 description = "Known good values across the project"
 paths = [
-  # Default admin password hash ("admin" → SHA-256)
   "src/ConfigManager.cpp",
   "test/native/mocks/ConfigManager.hpp",
   "test/native/mocks/ConfigManager.cpp",
   "docs/security-fixes-v3.2.1.md",
-  # Firmware version strings
   "src/Version.h",
 ]
 regexes = [
-  # SHA-256("admin") = 8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918
   "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918",
-  # Firmware version pattern
   "FW_VERSION",
-  # GitHub repository references
   "smart-swimmingpool/pool-controller",
 ]

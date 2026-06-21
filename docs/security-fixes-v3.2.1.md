@@ -565,7 +565,7 @@ if (jsonLength > 0) {
 - SHA-256 hash prevents password exposure in source code
 
 **Security Note**:
-- Default password hash: `8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918`
+- Default password hash: `8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918` (SHA-256 of "admin")
 - This is the SHA-256 hash of "admin"
 - Users **MUST** change this password via Web UI → Security & Update → Change Password
 - Gitleaks exception added: `// NOLINT gitleaks:allow`

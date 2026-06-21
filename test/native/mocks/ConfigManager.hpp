@@ -46,6 +46,7 @@ public:
   static bool load() { return true; }
   static bool save() { return true; }
   static void reset() {
+    // gitleaks:allow - known default admin password hash
     _adminPasswordHash = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918";  // SHA-256("admin")
     _configured = false;
   }
