@@ -34,6 +34,10 @@ uint32_t WebPortal::sessionStartTime_ = 0;
 constexpr uint32_t WebPortal::kSessionTimeoutMs;
 constexpr uint16_t WebPortal::kDnsPort;
 
+// CSRF Protection
+String WebPortal::csrfToken_ = "";
+uint32_t WebPortal::csrfTokenTime_ = 0;
+
 // Nodes declared in PoolController.cpp
 extern DallasTemperatureNode solarTemperatureNode;
 extern DallasTemperatureNode poolTemperatureNode;
@@ -62,7 +66,46 @@ bool WebPortal::begin() {
 
   server_.begin();
   Serial.println("✓ Web Server running on port 80.");
+
+  // Initialize CSRF token
+  generateCsrfToken();
+
   return true;
+}
+
+// ── CSRF Protection Methods ──────────────────────────────────
+
+String WebPortal::generateCsrfToken() {
+  // Generate a random token using millis() and random for entropy
+  uint32_t randomValue = random(1000000, 9999999);
+  uint32_t tokenValue = millis() + randomValue;
+  // Convert to hex string manually to avoid String constructor ambiguity
+  char tokenBuffer[17];  // 8 hex chars + null terminator
+  snprintf(tokenBuffer, sizeof(tokenBuffer), "%08X", tokenValue);
+  csrfToken_ = String(tokenBuffer);
+  csrfTokenTime_ = millis();
+  return csrfToken_;
+}
+
+bool WebPortal::validateCsrfToken(const String &token) {
+  // Check if token matches and is not expired
+  if (token == csrfToken_) {
+    // Check if token is still valid (not expired)
+    if (millis() - csrfTokenTime_ < kCsrfTokenTimeoutMs) {
+      return true;
+    }
+    // Token expired, generate new one
+    generateCsrfToken();
+  }
+  return false;
+}
+
+String WebPortal::getCurrentCsrfToken() {
+  // Regenerate token if expired
+  if (millis() - csrfTokenTime_ >= kCsrfTokenTimeoutMs) {
+    generateCsrfToken();
+  }
+  return csrfToken_;
 }
 
 void WebPortal::loop() {
@@ -127,6 +170,9 @@ void WebPortal::setupRoutes() {
   // Static web assets (no authentication required)
   server_.on("/style.css", HTTP_GET, handleStyleCss);
   server_.on("/app.js", HTTP_GET, handleAppJs);
+  server_.on("/manifest.json", HTTP_GET, handleManifestJson);
+  server_.on("/sw.js", HTTP_GET, handleSwJs);
+  server_.on("/icon.svg", HTTP_GET, handleIconSvg);
 
   // API Handlers (some password protected)
   server_.on("/api/status", HTTP_GET, apiGetStatus);
@@ -184,6 +230,16 @@ void WebPortal::setupRoutes() {
     if (!handleAuthentication())
       return;
     apiUpdateInstall();
+  });
+
+  // Sensor mapping endpoints
+  server_.on("/api/sensors", HTTP_GET, []() {
+    if (!handleAuthentication()) return;
+    apiGetSensors();
+  });
+  server_.on("/api/sensors/map", HTTP_POST, []() {
+    if (!handleAuthentication()) return;
+    apiSaveSensorMapping();
   });
 
   // OTA Firmware handling (manual upload via web form)
@@ -276,6 +332,36 @@ void WebPortal::handleAppJs() {
   server_.send(404, "text/plain", "Not Found");
 }
 
+void WebPortal::handleManifestJson() {
+  File f = LittleFS.open("/web/manifest.json", "r");
+  if (f) {
+    server_.streamFile(f, "application/manifest+json");
+    f.close();
+    return;
+  }
+  server_.send(404, "text/plain", "Not Found");
+}
+
+void WebPortal::handleSwJs() {
+  File f = LittleFS.open("/web/sw.js", "r");
+  if (f) {
+    server_.streamFile(f, "application/javascript");
+    f.close();
+    return;
+  }
+  server_.send(404, "text/plain", "Not Found");
+}
+
+void WebPortal::handleIconSvg() {
+  File f = LittleFS.open("/web/icon.svg", "r");
+  if (f) {
+    server_.streamFile(f, "image/svg+xml");
+    f.close();
+    return;
+  }
+  server_.send(404, "text/plain", "Not Found");
+}
+
 // Minimal inline login — no PROGMEM CSS framework, just a functional form
 void WebPortal::handleLogin() {
   String html = R"HTML(
@@ -350,13 +436,17 @@ void WebPortal::apiGetStatus() {
   TimeChangeRule *tcr;
   time_t localTime = getTimeFor(ConfigManager::getSettings().timezoneIndex, &tcr);
   char timeBuf[64];
-  snprintf(timeBuf, sizeof(timeBuf), "%04d-%02d-%02d %02d:%02d:%02d",
-    year(localTime), month(localTime), day(localTime),
+  snprintf(timeBuf, sizeof(timeBuf), "%04d-%02d-%02d %02d:%02d:%02d", year(localTime), month(localTime), day(localTime),
     hour(localTime), minute(localTime), second(localTime));
   doc["local_time"] = timeBuf;
   doc["local_time_epoch"] = static_cast<long>(localTime);
   doc["timezone_name"] = getTimeInfoFor(ConfigManager::getSettings().timezoneIndex);
   doc["time_degradation"] = static_cast<int>(getTimeDegradation());
+
+  // Thresholds — also in apiGetConfig, but duplicated here so the dashboard
+  // can show them without authentication (apiGetStatus is unauthenticated).
+  doc["temp_max_pool"] = ConfigManager::getSettings().tempMaxPool;
+  doc["temp_min_solar"] = ConfigManager::getSettings().tempMinSolar;
 
   // Effective runtime (temperature-based circulation) — actual minutes, not end-of-day
   {
@@ -582,7 +672,8 @@ void WebPortal::apiLogin() {
   String pass = server_.arg("password");
   if (ConfigManager::verifyAdminPassword(pass)) {
     generateSessionToken();
-    server_.sendHeader("Set-Cookie", "session=" + activeSessionToken_ + "; Path=/; HttpOnly; Max-Age=900");
+    // Use Secure flag for HTTPS, HttpOnly to prevent XSS, SameSite for CSRF protection
+    server_.sendHeader("Set-Cookie", "session=" + activeSessionToken_ + "; Path=/; HttpOnly; SameSite=Lax; Max-Age=900");
     server_.send(200, "text/plain", "OK");
   } else {
     server_.send(401, "text/plain", "Unauthorized");
@@ -591,7 +682,8 @@ void WebPortal::apiLogin() {
 
 void WebPortal::apiLogout() {
   activeSessionToken_ = "";
-  server_.sendHeader("Set-Cookie", "session=deleted; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT");
+  // Clear cookie with SameSite attribute for consistency
+  server_.sendHeader("Set-Cookie", "session=deleted; Path=/; HttpOnly; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT");
   server_.send(200, "text/plain", "OK");
 }
 
@@ -685,6 +777,178 @@ void WebPortal::apiUpdateInstall() {
 
   OtaUpdater::startUpdate();
   // If we return here, the update failed (success reboots)
+}
+
+// ── Sensor mapping helpers ─────────────────────────────────────────────
+
+/**
+ * @brief Parse a 16-character hex string into an 8-byte DeviceAddress.
+ * @param hex  Hex string like "28AABBCCDDEEFF11" (case-insensitive).
+ * @param addr Output buffer for the 8-byte address.
+ * @return true on success, false if the string is malformed.
+ */
+static bool hexStringToAddress(const String &hex, uint8_t addr[8]) {
+  if (hex.length() != 16) return false;
+  for (uint8_t i = 0; i < 8; i++) {
+    char byteStr[3] = {hex[i * 2], hex[i * 2 + 1], '\0'};
+    char *end = nullptr;
+    unsigned long val = strtoul(byteStr, &end, 16);
+    if (end != byteStr + 2) return false;
+    addr[i] = static_cast<uint8_t>(val);
+  }
+  return true;
+}
+
+/**
+ * @brief Save a sensor-to-role address mapping to NVS.
+ *
+ * Stores the 8-byte ROM addresses for solar and pool sensors in the
+ * `ds18b20` Preferences namespace, making them persist across reboots.
+ *
+ * @param solarAddr  Solar sensor address (or nullptr / all-zero to clear).
+ * @param poolAddr   Pool sensor address (or nullptr / all-zero to clear).
+ */
+static void saveSensorMappingNvs(const uint8_t solarAddr[8], const uint8_t poolAddr[8]) {
+  Preferences prefs;
+  prefs.begin("ds18b20", false);  // read-write
+  prefs.putBytes("solar_adr", solarAddr, 8);
+  prefs.putBytes("pool_adr", poolAddr, 8);
+  prefs.end();
+
+  char buf[17];
+  snprintf(buf, sizeof(buf), "%02X%02X%02X%02X%02X%02X%02X%02X",
+    solarAddr[0], solarAddr[1], solarAddr[2], solarAddr[3],
+    solarAddr[4], solarAddr[5], solarAddr[6], solarAddr[7]);
+  Serial.printf("• Sensor mapping saved via WebUI — Solar [%s]", buf);
+  snprintf(buf, sizeof(buf), "%02X%02X%02X%02X%02X%02X%02X%02X",
+    poolAddr[0], poolAddr[1], poolAddr[2], poolAddr[3],
+    poolAddr[4], poolAddr[5], poolAddr[6], poolAddr[7]);
+  Serial.printf(", Pool [%s]\n", buf);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Sensor REST API handlers
+// ═══════════════════════════════════════════════════════════════════════
+
+void WebPortal::apiGetSensors() {
+  JsonDocument doc;
+
+  // ── Detected devices ────────────────────────────────────────────────
+  // Collect unique addresses from both temperature node buses.
+  // In shared-bus mode (NORVI) this produces one list; in dual-bus mode
+  // devices from both segments are merged.
+  JsonArray detected = doc["detected"].to<JsonArray>();
+  uint8_t maxDevices = max(solarTemperatureNode.getDeviceCount(), poolTemperatureNode.getDeviceCount());
+
+  // Dedup with a fixed-size array (practical max ~20 DS18B20 per bus)
+  static constexpr uint8_t kMaxDevices = 20;
+  String seen[kMaxDevices];
+  uint8_t seenCount = 0;
+
+  for (uint8_t i = 0; i < maxDevices && seenCount < kMaxDevices; i++) {
+    DeviceAddress addr;
+    float temp = NAN;
+
+    // Try solar node first, fall back to pool node
+    if (i < solarTemperatureNode.getDeviceCount() && solarTemperatureNode.getDetectedDeviceAddress(i, addr)) {
+      temp = solarTemperatureNode.getDetectedDeviceTemperature(i);
+    } else if (i < poolTemperatureNode.getDeviceCount() && poolTemperatureNode.getDetectedDeviceAddress(i, addr)) {
+      temp = poolTemperatureNode.getDetectedDeviceTemperature(i);
+    } else {
+      continue;
+    }
+
+    // Format address as hex string
+    char addrStr[17];
+    snprintf(addrStr, sizeof(addrStr), "%02X%02X%02X%02X%02X%02X%02X%02X",
+      addr[0], addr[1], addr[2], addr[3], addr[4], addr[5], addr[6], addr[7]);
+
+    // Deduplicate (same address may appear on shared bus)
+    bool alreadySeen = false;
+    for (uint8_t si = 0; si < seenCount; si++) {
+      if (seen[si] == addrStr) {
+        alreadySeen = true;
+        break;
+      }
+    }
+    if (alreadySeen) continue;
+    seen[seenCount++] = addrStr;
+
+    JsonObject dev = detected.add<JsonObject>();
+    dev["address"] = addrStr;
+    if (!isnan(temp)) dev["temperature"] = temp;
+  }
+
+  // ── Current role mapping ────────────────────────────────────────────
+  JsonObject mapping = doc["mapping"].to<JsonObject>();
+
+  if (solarTemperatureNode.hasAddressFilter()) {
+    char buf[17];
+    solarTemperatureNode.getDeviceAddressString(buf, sizeof(buf));
+    mapping["solar"] = buf;
+  } else {
+    mapping["solar"] = nullptr;
+  }
+
+  if (poolTemperatureNode.hasAddressFilter()) {
+    char buf[17];
+    poolTemperatureNode.getDeviceAddressString(buf, sizeof(buf));
+    mapping["pool"] = buf;
+  } else {
+    mapping["pool"] = nullptr;
+  }
+
+  // Also include whether the address is currently found on the bus
+  mapping["solar_found"] = solarTemperatureNode.isSensorFound();
+  mapping["pool_found"] = poolTemperatureNode.isSensorFound();
+
+  // Sensor node names for display
+  mapping["solar_name"] = "Solar Temperature";
+  mapping["pool_name"] = "Pool Temperature";
+
+  String json;
+  serializeJson(doc, json);
+  server_.send(200, "application/json", json);
+}
+
+void WebPortal::apiSaveSensorMapping() {
+  uint8_t solarAddr[8] = {0};
+  uint8_t poolAddr[8] = {0};
+  bool hasSolar = false, hasPool = false;
+
+  if (server_.hasArg("solar_addr") && server_.arg("solar_addr").length() > 0) {
+    if (!hexStringToAddress(server_.arg("solar_addr"), solarAddr)) {
+      server_.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Invalid solar address format\"}");
+      return;
+    }
+    hasSolar = true;
+  }
+
+  if (server_.hasArg("pool_addr") && server_.arg("pool_addr").length() > 0) {
+    if (!hexStringToAddress(server_.arg("pool_addr"), poolAddr)) {
+      server_.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Invalid pool address format\"}");
+      return;
+    }
+    hasPool = true;
+  }
+
+  if (!hasSolar && !hasPool) {
+    server_.send(400, "application/json", "{\"status\":\"error\",\"message\":\"At least one sensor address required\"}");
+    return;
+  }
+
+  // Save to NVS (persistent across reboots)
+  saveSensorMappingNvs(solarAddr, poolAddr);
+
+  // Apply to running instances immediately
+  if (hasSolar) {
+    solarTemperatureNode.setAddressFilter(solarAddr);
+  }
+  if (hasPool) {
+    poolTemperatureNode.setAddressFilter(poolAddr);
+  }
+
+  server_.send(200, "application/json", "{\"status\":\"ok\",\"message\":\"Sensor mapping saved. Reboot to apply.\"}");
 }
 
 }  // namespace PoolController

@@ -181,7 +181,6 @@ to activate (close) the relay. If your relay module switches with LOW instead
 (active-low), look for a **jumper** on the module to change the mode, or choose
 a different module — active-high modules are easier to work with.
 
-
 **Load wiring (230V side):**
 
 ```
@@ -229,7 +228,7 @@ a different module — active-high modules are easier to work with.
 {{< figure
   library="true"
   src="../pool-controller_breadboard.png"
-  title="Pool Controller breadboard prototype with ESP32, two DS18B20 temperature sensors, 4.7kΩ pull-up resistors, and 2-channel relay module"
+  title="Breadboard prototype with ESP32, DS18B20 sensors, 4.7kΩ pull-up resistors, and 2-channel relay module"
   lightbox="true" >}}
 
 > 💡 **Tip**: Use different colored jumper wires for clarity — e.g., red for
@@ -319,6 +318,12 @@ Once you've verified the circuit on a breadboard, build the permanent version:
 control panel, use a **DIN-rail 5V PSU** (e.g., Mean Well HDR-15-5). It's
 clean, reliable, and can power both the ESP32 and the relay module without
 issue.
+
+> **Alternative — Industrial controller:** The [NORVI IIOT-AE01-R](norvi-ae01-r.md)
+> is an ESP32-based industrial controller with **built-in relays, 24V DC supply,
+> DIN-rail mount, and CE certification**. If you already have a 230V AC → 24V DC
+> power supply, no additional 5V PSU is needed. See the
+> [NORVI AE01-R Configuration Guide](norvi-ae01-r.md) for details.
 
 ---
 
@@ -420,7 +425,7 @@ constexpr uint8_t PIN_RELAY_SOLAR{19};  // was 26
 | Relay Solar | **GPIO26** | GPIO19 | Same as above |
 
 The optimization is analyzed in detail in the
-[ESP32 Schematic Optimization](esp32-schematic-optimization-de.md) document
+[ESP32 Schematic Optimization](esp32-schematic-optimization.md) document
 (German).
 
 ---
@@ -455,8 +460,11 @@ IoT device status indication. The LED is updated once per control loop cycle.
 ## References
 
 - Fritzing source file: [pool-controller.fzz](https://github.com/smart-swimmingpool/pool-controller/raw/main/docs/pool-controller.fzz)
-- [ESP32 Schematic Optimization (DE)](esp32-schematic-optimization-de.md)
-- [ESP32 Complete Wiring Schematic (DE)](esp32-complete-wiring-schematic-de.md)
+- [KiCad Schematic: ESP32 Dev Board](kicad/esp32-dev-board/esp32-dev-board-schematic.pdf) — KiCad 9.0 PDF export
+- [KiCad Schematic: NORVI AE01-R](kicad/norvi-ae01-r/norvi-ae01-r-schematic.pdf) — KiCad 9.0 PDF export
+- [NORVI AE01-R Configuration Guide](norvi-ae01-r.md) — industrial ESP32 controller pin mapping & wiring
+- [ESP32 Schematic Optimization (DE)](esp32-schematic-optimization.md)
+- [ESP32 Complete Wiring Schematic (DE)](esp32-complete-wiring-schematic.md)
 - [DS18B20 Datasheet](https://www.analog.com/media/en/technical-documentation/data-sheets/DS18B20.pdf)
 - [ESP32 Pin Reference](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/gpio.html)
 - [Config.hpp pin source](https://github.com/smart-swimmingpool/pool-controller/blob/main/src/Config.hpp)

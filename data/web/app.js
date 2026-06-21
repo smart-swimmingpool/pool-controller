@@ -10,28 +10,25 @@ function switchTab(tabName) {
     tab.style.display = 'block';
   }
 
-  // Close settings menu if open
-  const menu = document.getElementById('settingsMenu');
-  if (menu) menu.style.display = 'none';
+  // Update bottom tab bar active state.
+  // Tabs under "More" (wifi, mqtt, system, about) keep "more" highlighted.
+  const moreTabs = ['wifi', 'mqtt', 'system', 'about'];
+  const barTab = moreTabs.includes(tabName) ? 'more' : tabName;
+  document.querySelectorAll('.tab-bar-item').forEach(item => {
+    item.classList.toggle('active', item.dataset.tab === barTab);
+  });
+
+  // Close more menu if open
+  const moreMenu = document.getElementById('moreMenu');
+  if (moreMenu) moreMenu.style.display = 'none';
 }
 
-function toggleSettingsMenu() {
-  const menu = document.getElementById('settingsMenu');
+function toggleMoreMenu() {
+  const menu = document.getElementById('moreMenu');
   if (menu) {
-    menu.style.display = menu.style.display === 'none' || menu.style.display === '' ? 'block' : 'none';
+    menu.style.display = menu.style.display === 'none' || menu.style.display === '' ? 'flex' : 'none';
   }
 }
-
-// Close settings menu when clicking outside
-document.addEventListener('click', function(event) {
-  const menu = document.getElementById('settingsMenu');
-  const cog = document.querySelector('.cogwheel');
-  if (menu && menu.style.display === 'block') {
-    if (!menu.contains(event.target) && !cog.contains(event.target)) {
-      menu.style.display = 'none';
-    }
-  }
-});
 
 // ── Telemetry ──
 
@@ -49,6 +46,14 @@ async function loadTelemetry() {
     }
     if (data.solar_temp != null) {
       document.getElementById('solarTemp').textContent = data.solar_temp.toFixed(1) + ' °C';
+    }
+
+    // Thresholds (von apiGetStatus, damit sie ohne Auth funktionieren)
+    if (data.temp_max_pool != null) {
+      document.getElementById('poolThreshold').textContent = 'max ' + data.temp_max_pool.toFixed(1) + '°C';
+    }
+    if (data.temp_min_solar != null) {
+      document.getElementById('solarThreshold').textContent = 'min ' + data.temp_min_solar.toFixed(1) + '°C';
     }
 
     // Pumpen
@@ -77,7 +82,8 @@ async function loadTelemetry() {
     // Firmware-Version
     if (data.fw_version) {
       document.getElementById('fwCurrentVersion').textContent = data.fw_version;
-      document.getElementById('fwVersionDisplay').textContent = data.fw_version;
+      const aboutVer = document.getElementById('fwVersionDisplayAbout');
+      if (aboutVer) aboutVer.textContent = data.fw_version;
     }
 
     // Lokale Uhrzeit
@@ -120,6 +126,25 @@ async function loadTelemetry() {
     // AP-Mode: WiFi-Tab anzeigen
     if (data.ap_mode) {
       switchTab('wifi');
+    }
+
+    // About Tab – system info
+    if (data.uptime != null) {
+      const aboutUptime = document.getElementById('aboutUptime');
+      if (aboutUptime) {
+        const d = Math.floor(data.uptime / 86400);
+        const h = Math.floor((data.uptime % 86400) / 3600);
+        const m = Math.floor((data.uptime % 3600) / 60);
+        aboutUptime.textContent = d + 'd ' + h + 'h ' + m + 'm';
+      }
+    }
+    if (data.free_heap != null) {
+      const aboutHeap = document.getElementById('aboutHeap');
+      if (aboutHeap) aboutHeap.textContent = (data.free_heap / 1024).toFixed(0) + ' KB';
+    }
+    if (data.local_ip) {
+      const aboutIP = document.getElementById('aboutIP');
+      if (aboutIP) aboutIP.textContent = data.local_ip;
     }
   } catch (e) {
     console.error('[pool] loadTelemetry error:', e);
@@ -602,6 +627,154 @@ async function pollUpdateProgress() {
   }, 1000);
 }
 
+// ── Sensor Mapping ──
+
+// Pending assignment: { solar: "28FF..."|null, pool: "28FF..."|null }
+let pendingMapping = { solar: null, pool: null };
+// Last loaded mapping for change detection
+let loadedMapping = { solar: null, pool: null };
+
+async function loadSensors() {
+  try {
+    const res = await fetch('/api/sensors');
+    const data = await res.json();
+
+    const solarAddr = data.mapping.solar || null;
+    const poolAddr = data.mapping.pool || null;
+
+    // Seed pending + loaded on first load
+    if (loadedMapping.solar === null) {
+      loadedMapping.solar = solarAddr;
+      loadedMapping.pool = poolAddr;
+      pendingMapping.solar = solarAddr;
+      pendingMapping.pool = poolAddr;
+    }
+
+    // ── Build sensor list header ──
+    const devices = data.detected || [];
+    const list = document.getElementById('sensorList');
+    if (devices.length === 0) {
+      list.innerHTML = '<div style="padding: 1rem; text-align: center; color: var(--text-muted); font-size: 0.85rem;">⚠ No DS18B20 sensors detected on the bus.<br>Check wiring and pull-up resistor.</div>';
+    } else {
+      list.innerHTML = '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">' +
+        '<span style="font-size: 0.85rem; color: var(--text-muted);">' + devices.length + ' sensor(s) found on bus</span>' +
+        '<button class="btn" onclick="loadSensors()" style="font-size: 0.75rem; padding: 0.25rem 0.6rem;">🔄 Refresh</button>' +
+        '</div>' +
+        '<div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.75rem; line-height: 1.5;">' +
+        devices.map(d => '<span style="font-family: monospace; background: rgba(255,255,255,0.05); padding: 0.1rem 0.4rem; border-radius: 3px;">' + d.address + '</span>').join(' ') +
+        '</div>';
+    }
+
+    // ── Build solar radio group ──
+    buildRadioGroup('solarRadioGroup', devices, solarAddr, poolAddr, 'solar');
+
+    // ── Build pool radio group ──
+    buildRadioGroup('poolRadioGroup', devices, solarAddr, poolAddr, 'pool');
+
+    updateSensorSaveBar();
+  } catch (e) {
+    document.getElementById('sensorList').innerHTML =
+      '<div style="padding: 1rem; text-align: center; color: var(--danger); font-size: 0.85rem;">Failed to load sensors: ' + e.message + '</div>';
+  }
+}
+
+function buildRadioGroup(containerId, devices, solarAddr, poolAddr, role) {
+  const container = document.getElementById(containerId);
+  const otherRole = (role === 'solar') ? 'pool' : 'solar';
+  const otherAddr = (role === 'solar') ? poolAddr : solarAddr;
+  const currentAddr = (role === 'solar') ? pendingMapping.solar : pendingMapping.pool;
+
+  let html = '';
+
+  // "Not configured" option
+  const noCfgChecked = (currentAddr === null) ? 'checked' : '';
+  html += '<label style="display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.75rem; border-radius: 8px; border: 1px solid var(--panel-border); background: var(--panel-bg); cursor: pointer;">';
+  html += '  <input type="radio" name="' + role + 'Sensor" value="" ' + noCfgChecked + ' onchange="selectSensor(\'' + role + '\', null)" style="accent-color: ' + (role === 'solar' ? 'var(--accent-solar)' : '#00b4d8') + ';">';
+  html += '  <div style="flex: 1;">';
+  html += '    <div style="font-size: 0.85rem; color: var(--text-muted);">— Not configured</div>';
+  html += '  </div>';
+  html += '</label>';
+
+  // One radio per detected sensor
+  devices.forEach(dev => {
+    const addr = dev.address;
+    const temp = dev.temperature != null ? dev.temperature.toFixed(1) + ' °C' : '--.- °C';
+    const isAssignedToOther = (addr === otherAddr);
+    const isCurrent = (addr === currentAddr);
+    const checked = isCurrent ? 'checked' : '';
+    const disabled = isAssignedToOther ? 'disabled' : '';
+    const disabledNote = isAssignedToOther ? ' (already assigned to ' + otherRole + ')' : '';
+
+    html += '<label style="display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.75rem; border-radius: 8px; border: 1px solid var(--panel-border); background: ' + (isCurrent ? 'rgba(0,229,255,0.08)' : 'var(--panel-bg)') + '; cursor: ' + (disabled ? 'not-allowed' : 'pointer') + '; opacity: ' + (disabled ? '0.5' : '1') + ';">';
+    html += '  <input type="radio" name="' + role + 'Sensor" value="' + addr + '" ' + checked + ' ' + disabled + ' onchange="selectSensor(\'' + role + '\',\'' + addr + '\')" style="accent-color: ' + (role === 'solar' ? 'var(--accent-solar)' : '#00b4d8') + ';">';
+    html += '  <div style="flex: 1; min-width: 0;">';
+    html += '    <div style="font-family: monospace; font-size: 0.85rem;">' + addr + '</div>';
+    html += '    <div style="font-size: 0.7rem; color: var(--text-muted);">' + temp + disabledNote + '</div>';
+    html += '  </div>';
+    html += '</label>';
+  });
+
+  container.innerHTML = html;
+}
+
+function selectSensor(role, address) {
+  // If selecting the same address for both roles, deselect the other role
+  const otherRole = (role === 'solar') ? 'pool' : 'solar';
+  if (address !== null && pendingMapping[otherRole] === address) {
+    pendingMapping[otherRole] = null;
+  }
+  pendingMapping[role] = address;
+
+  // Re-render both radio groups so the other role reflects the updated disabled state
+  loadSensors();
+}
+
+function updateSensorSaveBar() {
+  const bar = document.getElementById('sensorSaveBar');
+  const hasChanges = (pendingMapping.solar !== loadedMapping.solar) || (pendingMapping.pool !== loadedMapping.pool);
+  bar.style.display = hasChanges ? 'block' : 'none';
+}
+
+async function saveSensorMapping() {
+  const btn = document.getElementById('btnSaveMapping');
+  const feedback = document.getElementById('sensorFeedback');
+  btn.disabled = true;
+  btn.textContent = '⏳ Saving...';
+
+  const body = 'solar_addr=' + encodeURIComponent(pendingMapping.solar || '') +
+    '&pool_addr=' + encodeURIComponent(pendingMapping.pool || '');
+
+  try {
+    const res = await fetch('/api/sensors/map', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body
+    });
+    const data = await res.json();
+    if (res.status === 200) {
+      feedback.style.display = 'block';
+      feedback.style.background = 'rgba(34, 197, 94, 0.15)';
+      feedback.style.color = '#22c55e';
+      feedback.textContent = '✓ Mapping saved! Rebooting in 3 seconds...';
+      setTimeout(() => window.location.reload(), 3500);
+    } else {
+      feedback.style.display = 'block';
+      feedback.style.background = 'rgba(239, 68, 68, 0.15)';
+      feedback.style.color = '#ef4444';
+      feedback.textContent = '✖ ' + (data.message || 'Failed to save mapping');
+      btn.disabled = false;
+      btn.textContent = '💾 Save Mapping & Reboot';
+    }
+  } catch (e) {
+    feedback.style.display = 'block';
+    feedback.style.background = 'rgba(239, 68, 68, 0.15)';
+    feedback.style.color = '#ef4444';
+    feedback.textContent = '✖ Network error: ' + e.message;
+    btn.disabled = false;
+    btn.textContent = '💾 Save Mapping & Reboot';
+  }
+}
+
 // ── Init ──
 
 setInterval(loadTelemetry, 2000);
@@ -609,4 +782,5 @@ setInterval(loadTelemetry, 2000);
 window.onload = function() {
   loadTelemetry();
   loadConfig();
+  loadSensors();
 };

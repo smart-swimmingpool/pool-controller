@@ -17,6 +17,7 @@
 #include "OperationModeNode.hpp"
 #include "TimeClientHelper.hpp"
 #include <ArduinoJson.h>
+#include <Preferences.h>
 
 namespace PoolController {
 
@@ -188,7 +189,8 @@ void MqttPublisher::publishNumberDiscovery(
   NetworkManager::publish(configTopic.c_str(), payload.c_str(), true);
 }
 
-void MqttPublisher::publishTextDiscovery(const char *objectId, const char *name, const char *icon) {
+void MqttPublisher::publishTextDiscovery(const char *objectId, const char *name, const char *icon,
+  const char *entityCategory) {
   String configTopic = getBaseTopic("text", objectId) + "/config";
 
   JsonDocument doc;
@@ -197,7 +199,9 @@ void MqttPublisher::publishTextDiscovery(const char *objectId, const char *name,
   doc["state_topic"] = getBaseTopic("text", objectId) + "/state";
   doc["command_topic"] = getBaseTopic("text", objectId) + "/set";
   doc["availability_topic"] = "homeassistant/sensor/pool-controller/availability";
-  doc["entity_category"] = "config";
+
+  if (entityCategory)
+    doc["entity_category"] = entityCategory;
 
   if (icon)
     doc["icon"] = icon;
@@ -298,6 +302,9 @@ void MqttPublisher::publishClimateDiscovery() {
   doc["max_temp"] = 40.0;
   doc["temp_step"] = 0.5;
 
+  // Entity category (Configuration)
+  doc["entity_category"] = "config";
+
   // Device block
   JsonObject deviceObj = doc["device"].to<JsonObject>();
   deviceObj["identifiers"][0] = deviceId_;
@@ -391,20 +398,19 @@ void MqttPublisher::publishDiscovery() {
 
   Serial.println("Publishing HA Discovery Payloads...");
 
-  // ── Diagnostics (entity_category: "diagnostic") ──
-  // Temperatures
-  publishSensorDiscovery("pool-temp", "Pool Temperature", "temperature", "°C", "mdi:pool", "diagnostic");
-  publishSensorDiscovery("solar-temp", "Solar Temperature", "temperature", "°C", "mdi:solar-power", "diagnostic");
-  publishSensorDiscovery("controller-temp", "Controller Temperature", "temperature", "°C", "mdi:thermometer", "diagnostic");
+  // ── Primary Sensors (no entity_category — shown on device front page) ──
+  publishSensorDiscovery("pool-temp", "Pool Temperature", "temperature", "°C", "mdi:pool");
+  publishSensorDiscovery("solar-temp", "Solar Temperature", "temperature", "°C", "mdi:solar-power");
 
-  // System diagnostics
+  // ── Diagnostics (entity_category: "diagnostic") ──
+  publishSensorDiscovery("controller-temp", "Controller Temperature", "temperature", "°C", "mdi:thermometer", "diagnostic");
   publishSensorDiscovery("heap", "Free Heap Space", nullptr, "B", "mdi:memory", "diagnostic");
   publishSensorDiscovery("max-alloc", "Max Alloc Block", nullptr, "B", "mdi:memory", "diagnostic");
   publishSensorDiscovery("rssi", "WiFi Signal Strength", nullptr, "dBm", "mdi:wifi", "diagnostic");
   publishSensorDiscovery("uptime", "System Uptime", "duration", "s", "mdi:clock-outline", "diagnostic");
   publishSensorDiscovery("local-time", "Local Time", nullptr, nullptr, "mdi:clock", "diagnostic");
 
-  // ── Controls (no entity_category — shown on device page) ──
+  // ── Controls (no entity_category — shown on device front page) ──
   // Relays (Switches)
   publishSwitchDiscovery("pool-pump", "Pool Pump", "mdi:pump");
   publishSwitchDiscovery("solar-pump", "Solar Pump", "mdi:solar-panel");
@@ -413,13 +419,11 @@ void MqttPublisher::publishDiscovery() {
   const char *modeOpts[] = {"auto", "manu", "boost", "timer"};
   publishSelectDiscovery("mode", "Operation Mode", modeOpts, 4, "mdi:sync");
 
+  // ── Configuration (entity_category: "config") ──
   // Parameter Numbers
-  publishNumberDiscovery("pool-max-temp", "Max. Pool Temp", 0.0, 40.0, 0.1, "°C", "mdi:thermometer-chevron-up");
-  publishNumberDiscovery("solar-min-temp", "Min. Solar Temp", 0.0, 100.0, 0.1, "°C", "mdi:thermometer-chevron-down");
-
-  // Timer as Time entities (HH:MM:SS format)
-  publishTimeDiscovery("timer-start", "Timer Start", "mdi:clock-start");
-  publishTimeDiscovery("timer-end", "Timer End", "mdi:clock-end");
+  publishNumberDiscovery("pool-max-temp", "Max. Pool Temp", 0.0, 40.0, 0.1, "°C", "mdi:thermometer-chevron-up", "config");
+  publishNumberDiscovery("solar-min-temp", "Min. Solar Temp", 0.0, 100.0, 0.1, "°C", "mdi:thermometer-chevron-down", "config");
+  publishNumberDiscovery("hysteresis", "Temperature Hysteresis", 0.0, 10.0, 0.1, "K", "mdi:delta", "config");
 
   // Temperature-based circulation parameters (entity_category: "config")
   publishNumberDiscovery(
@@ -428,19 +432,35 @@ void MqttPublisher::publishDiscovery() {
     "temp-circ-factor", "Circ. Temp Factor", 0.0, 120.0, 5.0, "min/°C", "mdi:plus-minus", "config");
   publishNumberDiscovery(
     "temp-circ-max-runtime", "Circ. Max Runtime", 60.0, 1440.0, 15.0, "min", "mdi:timer-outline", "config");
+
+  // Timer as Time entities (HH:MM:SS format)
+  publishTimeDiscovery("timer-start", "Timer Start", "mdi:clock-start", "config");
+  publishTimeDiscovery("timer-end", "Timer End", "mdi:clock-end", "config");
+
+  // Select Timezone
+  publishSelectDiscovery("timezone", "Timezone", getTimezoneLabelList(), getTimezoneLabelCount(), "mdi:map-clock", "config");
+
+  // Text entities
+  publishTextDiscovery("ntp-server", "NTP Server", "mdi:clock-outline", "config");
+
+  // Runtime diagnostics
   publishSensorDiscovery(
     "effective-runtime", "Effective Runtime", "duration", "s", "mdi:timer-sand", "diagnostic");
 
-  // ── Configuration (entity_category: "config") ──
-  publishSelectDiscovery("timezone", "Timezone", getTimezoneLabelList(), getTimezoneLabelCount(), "mdi:map-clock", "config");
-  publishNumberDiscovery("hysteresis", "Temperature Hysteresis", 0.0, 10.0, 0.1, "K", "mdi:delta", "config");
-  publishTextDiscovery("ntp-server", "NTP Server", "mdi:clock-outline");
+  // Sensor mapping diagnostics (static entities, always available)
+  publishSensorDiscovery(
+    "solar-sensor-found", "Solar Sensor Found", nullptr, nullptr, "mdi:check-network-outline", "diagnostic");
+  publishSensorDiscovery(
+    "pool-sensor-found", "Pool Sensor Found", nullptr, nullptr, "mdi:check-network-outline", "diagnostic");
 
   // Firmware Update entity
   publishUpdateDiscovery();
 
   // Climate thermostat entity (additional — existing entities stay)
   publishClimateDiscovery();
+
+  // Sensor mapping select entities (config-category, needs fresh sensor data)
+  publishSensorMappingDiscovery();
 
   // Subscribe to command topics
   NetworkManager::subscribe("homeassistant/switch/pool-controller/pool-pump/set");
@@ -460,6 +480,8 @@ void MqttPublisher::publishDiscovery() {
   NetworkManager::subscribe("homeassistant/select/pool-controller/timezone/set");
   NetworkManager::subscribe("homeassistant/text/pool-controller/ntp-server/set");
   NetworkManager::subscribe("homeassistant/update/pool-controller/firmware-update/set");
+
+  // Sensor mapping commands (subscriptions added by publishSensorMappingDiscovery)
 
   // Climate thermostat commands
   NetworkManager::subscribe("homeassistant/climate/pool-controller/thermostat/mode/set");
@@ -561,6 +583,86 @@ void MqttPublisher::publishStates() {
     getTimeInfoFor(ConfigManager::getSettings().timezoneIndex).c_str(), true);
   NetworkManager::publish(
     (getBaseTopic("text", "ntp-server") + "/state").c_str(), ConfigManager::getNtp().server.c_str(), true);
+
+  // Sensor mapping states
+  {
+    char addrBuf[17];
+    if (solarTemperatureNode.hasAddressFilter()) {
+      solarTemperatureNode.getDeviceAddressString(addrBuf, sizeof(addrBuf));
+      NetworkManager::publish((getBaseTopic("select", "solar-sensor") + "/state").c_str(), addrBuf, true);
+    } else {
+      NetworkManager::publish((getBaseTopic("select", "solar-sensor") + "/state").c_str(), "— Not configured —", true);
+    }
+
+    if (poolTemperatureNode.hasAddressFilter()) {
+      poolTemperatureNode.getDeviceAddressString(addrBuf, sizeof(addrBuf));
+      NetworkManager::publish((getBaseTopic("select", "pool-sensor") + "/state").c_str(), addrBuf, true);
+    } else {
+      NetworkManager::publish((getBaseTopic("select", "pool-sensor") + "/state").c_str(), "— Not configured —", true);
+    }
+    // Sensor-found binary indicators
+    NetworkManager::publish((getBaseTopic("sensor", "solar-sensor-found") + "/state").c_str(),
+      solarTemperatureNode.isSensorFound() ? "Found" : "Missing", true);
+    NetworkManager::publish((getBaseTopic("sensor", "pool-sensor-found") + "/state").c_str(),
+      poolTemperatureNode.isSensorFound() ? "Found" : "Missing", true);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Sensor mapping select-entity discovery (published after bus scan)
+// ═══════════════════════════════════════════════════════════════════════
+
+void MqttPublisher::publishSensorMappingDiscovery() {
+  // Collect unique detected addresses
+  uint8_t maxDev = max(solarTemperatureNode.getDeviceCount(), poolTemperatureNode.getDeviceCount());
+  if (maxDev == 0) return;
+
+  // Options: hex addresses only (no temperature — temps are volatile and would
+  // cause state/option mismatches when NaN). Users identify sensors via the
+  // sensor.solar_sensor_found / sensor.pool_sensor_found diagnostic entities.
+  static constexpr uint8_t kMaxOpts = 21;
+  const char *solarOpts[kMaxOpts];
+  uint8_t solarOptCount = 0;
+
+  const char *kNotCfg = "— Not configured —";
+  solarOpts[solarOptCount++] = kNotCfg;
+
+  String storedAddrs[kMaxOpts];
+  uint8_t storedCount = 0;
+
+  for (uint8_t i = 0; i < maxDev && storedCount < kMaxOpts - 1; i++) {
+    DeviceAddress addr;
+    if (solarTemperatureNode.getDetectedDeviceAddress(i, addr) ||
+        poolTemperatureNode.getDetectedDeviceAddress(i, addr)) {
+      char buf[17];
+      snprintf(buf, sizeof(buf), "%02X%02X%02X%02X%02X%02X%02X%02X",
+        addr[0], addr[1], addr[2], addr[3], addr[4], addr[5], addr[6], addr[7]);
+
+      // Deduplicate (same address may appear on shared bus)
+      bool seen = false;
+      for (uint8_t si = 0; si < storedCount; si++) {
+        if (storedAddrs[si] == buf) {
+          seen = true;
+          break;
+        }
+      }
+      if (seen) continue;
+
+      storedAddrs[storedCount] = buf;
+      solarOpts[solarOptCount++] = storedAddrs[storedCount].c_str();
+      storedCount++;
+    }
+  }
+
+  // Publish both select entities with the same option list
+  publishSelectDiscovery("solar-sensor", "Solar Sensor", solarOpts, solarOptCount, "mdi:solar-panel", "config");
+  publishSelectDiscovery("pool-sensor", "Pool Sensor", solarOpts, solarOptCount, "mdi:pool", "config");
+
+  // Subscribe to command topics
+  NetworkManager::subscribe("homeassistant/select/pool-controller/solar-sensor/set");
+  NetworkManager::subscribe("homeassistant/select/pool-controller/pool-sensor/set");
+
+  Serial.printf("• HA: Sensor mapping select entities published (%u options)\n", solarOptCount);
 }
 
 void MqttPublisher::handleMqttMessage(char *topic, char *payload, AsyncMqttClientMessageProperties properties,
@@ -699,6 +801,43 @@ void MqttPublisher::handleMqttMessage(char *topic, char *payload, AsyncMqttClien
       ConfigManager::save();
       // Restart NTP client with new server immediately
       timeClientSetup(ConfigManager::getNtp().server.c_str());
+    }
+  } else if (top.endsWith("/solar-sensor/set") || top.endsWith("/pool-sensor/set")) {
+    // Handle select entity: value is hex address or "— Not configured —"
+    uint8_t addr[8] = {0};
+    bool hasAddr = (value.length() >= 16);
+
+    if (hasAddr) {
+      // Extract address from first 16 hex chars of the option value
+      for (uint8_t i = 0; i < 8; i++) {
+        char byteStr[3] = {value[i * 2], value[i * 2 + 1], '\0'};
+        char *end = nullptr;
+        unsigned long val = strtoul(byteStr, &end, 16);
+        if (end != byteStr + 2) {
+          Serial.printf("MQTT: Invalid hex in sensor selection — ignoring\n");
+          publishStates();
+          return;
+        }
+        addr[i] = static_cast<uint8_t>(val);
+      }
+    }
+
+    // Save to NVS
+    {
+      Preferences prefs;
+      prefs.begin("ds18b20", false);
+      if (top.endsWith("/solar-sensor/set")) {
+        prefs.putBytes("solar_adr", addr, 8);
+        if (hasAddr) solarTemperatureNode.setAddressFilter(addr);
+        else solarTemperatureNode.clearAddressFilter();
+        Serial.printf("MQTT: Solar sensor %s via HA\n", hasAddr ? "assigned" : "cleared");
+      } else {
+        prefs.putBytes("pool_adr", addr, 8);
+        if (hasAddr) poolTemperatureNode.setAddressFilter(addr);
+        else poolTemperatureNode.clearAddressFilter();
+        Serial.printf("MQTT: Pool sensor %s via HA\n", hasAddr ? "assigned" : "cleared");
+      }
+      prefs.end();
     }
   }
 

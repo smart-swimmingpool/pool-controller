@@ -116,9 +116,9 @@ private:
 
   /// Safe-Mode Doppel-Blink (siehe computeDesiredState)
   static constexpr uint32_t T_SAFE_CYCLE{1200};
-  static constexpr uint32_t T_SAFE_PHASE1_END{200};   // ON 0–200ms
-  static constexpr uint32_t T_SAFE_PHASE2_END{400};   // OFF 200–400ms
-  static constexpr uint32_t T_SAFE_PHASE3_END{600};   // ON 400–600ms
+  static constexpr uint32_t T_SAFE_PHASE1_END{200};  // ON 0–200ms
+  static constexpr uint32_t T_SAFE_PHASE2_END{400};  // OFF 200–400ms
+  static constexpr uint32_t T_SAFE_PHASE3_END{600};  // ON 400–600ms
   // rest 600–1200ms = OFF
 };
 

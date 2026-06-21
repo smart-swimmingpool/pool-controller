@@ -64,7 +64,7 @@ management dashboard. It runs in two modes:
 | `GET /`                  | Cookie | Dashboard SPA (Single Page Application)                    |
 | `GET /login`             | Cookie | Login page                                                 |
 | `POST /api/login`        | -      | Issue session cookie (SHA-256 password check)              |
-| `GET /api/status`        | ❌ No  | Live telemetry (temperatures, pump states, heap, RSSI)     |
+| `GET /api/status`        | ❌ No  | Live telemetry (temperatures, pump states, heap, RSSI, temperature thresholds)     |
 | `GET /api/scan`          | Yes    | Scan nearby WiFi networks                                  |
 | `GET /api/config`        | Yes    | Read current configuration                                 |
 | `POST /api/config`       | Yes    | Save configuration (`type=settings\|wifi\|mqtt\|password`) |
@@ -99,6 +99,10 @@ curl -b "session=$SESSION" -X POST \
 - In **STA mode**, a cookie-based session is required (15 minute timeout)
 - Default password is `admin`
 - Password is stored as SHA-256 hash in `/config.json`
+- The dashboard always shows live temperatures and threshold values even after
+  session expiry, because `/api/status` (unauthenticated) now includes
+  `temp_max_pool` and `temp_min_solar`. Configuration writes still require
+  a valid session.
 
 ## Configuration Persistence
 

@@ -45,11 +45,11 @@ jobs:
 
     strategy:
       matrix:
-        environment: [esp32dev]
+        environment: [esp32dev, norvi_ae01_r]
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Cache PlatformIO
         uses: actions/cache@v5

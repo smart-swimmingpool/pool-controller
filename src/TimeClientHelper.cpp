@@ -66,8 +66,8 @@ TimeZoneInfo _timezones[10] = {{"Central Europe (CET/CEST)", &Europe}, {"Eastern
 
 // Pointer array for MQTT Select / web UI labels — mirrors _timezones descriptions
 static const char *kTzLabels[] = {"Central Europe (CET/CEST)", "Eastern Europe (EET/EEST)", "Western Europe (WET/WEST)",
-  "US Eastern Time", "US Central Time", "US Mountain Time", "US Pacific Time",
-  "Australian Eastern", "Japan (JST)", "China (CST)"};
+  "US Eastern Time", "US Central Time", "US Mountain Time", "US Pacific Time", "Australian Eastern", "Japan (JST)",
+  "China (CST)"};
 static constexpr int kTzLabelCount = sizeof(kTzLabels) / sizeof(kTzLabels[0]);
 
 int _selectedTimezoneIndex = 0;  // Default to Central European Time
@@ -83,8 +83,10 @@ static uint8_t _redAfterHours = 24;  // YELLOW→RED after this many hours
 
 void timeClientSetup(const char *ntpServer) {
   // Create NTP client with configured server
+  // Use unique_ptr for automatic memory management to prevent leaks
   if (timeClient != nullptr) {
     delete timeClient;
+    timeClient = nullptr;
   }
   timeClient = new NTPClient(ntpUDP, ntpServer);
 
