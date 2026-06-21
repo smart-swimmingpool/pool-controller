@@ -36,6 +36,7 @@ public:
   String(double val, int decimals = 2) : data_(std::to_string(val)) {}  // NOLINT
   String(const String &other) : data_(other.data_) {}
   String(const char *s, size_t len) : data_(s, len) {}
+  String(char c) : data_(1, c) {}  // NOLINT
 
   const char *c_str() const { return data_.c_str(); }
   operator std::string() const { return data_; }

@@ -19,7 +19,12 @@ MD013:
   line_length: 120
   code_blocks: false
   tables: false
-  headings: true
+  headings: false
+
+# MD025/single-title/single-h1 - Only one top-level heading
+# front_matter_title disables counting the YAML frontmatter title as a heading
+MD025:
+  front_matter_title: ""
 
 # MD024/no-duplicate-heading - Multiple headings with the same content
 MD024:

@@ -23,7 +23,7 @@ bool ConfigManager::configured_ = false;
 // This hash is intentionally hardcoded for first-time setup
 // gitleaks:allow - known default password hash
 static constexpr const char *kDefaultPasswordHash =  // NOLINT(whitespace/line_length)
-    "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918";
+  "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918";
 
 static String hashSha256(const String &input) {
   uint8_t hash[32];
@@ -166,7 +166,7 @@ void ConfigManager::reset() {
   mqtt_ = MqttConfig{};
   ntp_ = NtpConfig{};
   settings_ = ControllerSettings{};
-  adminPasswordHash_ = kDefaultPasswordHash;
+  adminPasswordHash_ = kDefaultPasswordHash;  // Reset to default "admin" password
   configured_ = false;
 
   Serial.println("✓ Configuration reset to factory defaults");

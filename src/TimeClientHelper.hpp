@@ -16,6 +16,7 @@
 #include "Timezone.h"
 #include <WiFiUdp.h>
 #include <NTPClient.h>
+#include <memory>
 
 struct TimeZoneInfo {
   char description[40];  // friendly name, e.g. "Central Europe (CET/CEST)"
@@ -24,6 +25,9 @@ struct TimeZoneInfo {
 
 // Minimum valid time for time sync validation (2020-01-01 00:00:00 UTC)
 constexpr time_t MIN_VALID_TIME = 1577836800;
+
+// External declaration for NTP client (defined in .cpp)
+extern std::unique_ptr<NTPClient> timeClient;
 
 /**
  * Time degradation levels for the configurable three-stage model:
@@ -39,6 +43,7 @@ constexpr time_t MIN_VALID_TIME = 1577836800;
 enum class TimeDegradation : uint8_t { GREEN = 0, YELLOW = 1, RED = 2 };
 
 void timeClientSetup(const char *ntpServer);
+void syncSystemClock();
 int getTzCount();
 time_t getUtcTime();
 time_t getTimeFor(int index, TimeChangeRule **tcr);

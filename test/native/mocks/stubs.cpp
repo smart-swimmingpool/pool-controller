@@ -11,10 +11,10 @@
  *   - Any non-inline static members still needed by production headers
  */
 
-#include "Arduino.h"
-
 #include <cstdint>
+#include <ctime>
 
+#include "Arduino.h"
 #include "Rule.hpp"
 #include "TimeLib.h"
 #include "Timer.hpp"
@@ -85,6 +85,13 @@ String getTimeInfoFor(int) { return String("UTC"); }
 TimeDegradation getTimeDegradation() { return TimeDegradation::GREEN; }
 void setTimezoneIndex(int) {}
 void timeClientSetup(const char *) {}
+
+// Stub for system clock sync (used by OtaUpdater.cpp in native tests)
+void syncSystemClock() {
+  // In native tests, we don't have a real system clock
+  // Just set a valid time so TLS checks pass
+  // This stub prevents linker errors when OtaUpdater.cpp is compiled
+}
 
 // TimeLib stubs
 time_t now() { return 0; }

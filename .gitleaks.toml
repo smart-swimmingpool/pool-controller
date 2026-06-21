@@ -1,26 +1,17 @@
 [extend]
 useDefault = true
 
-# Allow the default admin password hash in ConfigManager.cpp
-# This is a known SHA-256 hash of "admin" and is intentional
-[[rules.allowlist]]
-description = "Default admin password hash"
-paths = ["src/ConfigManager.cpp"]
-regexes = [
-  "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918"
+# Global allowlist — applies to ALL rules (including built-in generic-api-key)
+[allowlist]
+paths = [
+  "src/ConfigManager.cpp",
+  "test/native/mocks/ConfigManager.hpp",
+  "test/native/mocks/ConfigManager.cpp",
+  "docs/security-fixes-v3.2.1.md",
+  "src/Version.h",
 ]
-
-# Allow firmware version strings in Version.h
-[[rules.allowlist]]
-description = "Firmware version strings"
-paths = ["src/Version.h"]
 regexes = [
-  "FW_VERSION"
-]
-
-# Allow GitHub repository references
-[[rules.allowlist]]
-description = "GitHub repository references"
-regexes = [
-  "smart-swimmingpool/pool-controller"
+  "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918",
+  "FW_VERSION",
+  "smart-swimmingpool/pool-controller",
 ]

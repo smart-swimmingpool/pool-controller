@@ -5,12 +5,14 @@
  * @brief NTP client, timezone database, daylight-saving switching, and time estimation.
  */
 
-#include "TimeClientHelper.hpp"
+#include <sys/time.h>  // For settimeofday
+
 #include "NetworkManager.hpp"
+#include "TimeClientHelper.hpp"
 
 // NTP Client
 WiFiUDP ntpUDP;
-NTPClient *timeClient = nullptr;
+std::unique_ptr<NTPClient> timeClient;
 TimeChangeRule CEST = {"CEST", Last, Sun, Mar, 2, 120};  // Central European Summer Time
 TimeChangeRule CET = {"CET ", Last, Sun, Oct, 3, 60};    // Central European Standard Time
 Timezone Europe(CEST, CET);
@@ -82,13 +84,9 @@ static uint8_t _greenMaxHours = 1;   // GREEN→YELLOW after this many hours
 static uint8_t _redAfterHours = 24;  // YELLOW→RED after this many hours
 
 void timeClientSetup(const char *ntpServer) {
-  // Create NTP client with configured server
-  // Use unique_ptr for automatic memory management to prevent leaks
-  if (timeClient != nullptr) {
-    delete timeClient;
-    timeClient = nullptr;
-  }
-  timeClient = new NTPClient(ntpUDP, ntpServer);
+  // Create NTP client with configured server using unique_ptr for automatic memory management
+  // Note: Using new directly since make_unique may not be available in all C++ versions
+  timeClient.reset(new NTPClient(ntpUDP, ntpServer));
 
   // initialize NTP Client
   timeClient->begin();
@@ -136,6 +134,24 @@ time_t getUtcTime() {
   // No valid time available at all
   _timeSyncValid = false;
   return 0;
+}
+
+// Set the ESP32 system clock from NTP time
+// This is required for TLS certificate validation which checks system time
+// Uses settimeofday to set the system clock (POSIX API available on ESP32)
+void syncSystemClock() {
+  time_t ntpTime = getUtcTime();
+  if (ntpTime >= MIN_VALID_TIME) {
+    // Set system clock using settimeofday
+    // ESP32 supports settimeofday from <sys/time.h>
+    struct timeval tv;
+    tv.tv_sec = ntpTime;
+    tv.tv_usec = 0;
+    settimeofday(&tv, nullptr);
+    Serial.printf("Time: System clock set to %ld\n", ntpTime);
+  } else {
+    Serial.println("Time: Cannot set system clock - NTP time not valid");
+  }
 }
 
 bool isTimeSyncValid() {

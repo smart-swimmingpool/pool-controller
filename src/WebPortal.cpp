@@ -7,22 +7,34 @@
  */
 
 #include "WebPortal.hpp"
-#include "Version.h"
-#include "ConfigManager.hpp"
-#include "NetworkManager.hpp"
-#include "SystemMonitor.hpp"
-#include "DegradationManager.hpp"
-#include "OperationModeNode.hpp"
-#include "PoolController.hpp"
-#include "OtaUpdater.hpp"
-#include "TimeClientHelper.hpp"
+
+#include <memory>
+
 #include <ArduinoJson.h>
 #include <LittleFS.h>
 #include <Preferences.h>
 #include <Update.h>
+
+// ESP32 specific headers
+#if defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
+#include <esp_random.h>
+#else
+#include <cstdlib> // for random() in native tests
+#include <ctime>   // for time() in native tests
+#endif
+
+#include "ConfigManager.hpp"
+#include "DegradationManager.hpp"
 #include "DallasTemperatureNode.hpp"
 #include "ESP32TemperatureNode.hpp"
+#include "NetworkManager.hpp"
+#include "OtaUpdater.hpp"
+#include "OperationModeNode.hpp"
+#include "PoolController.hpp"
 #include "RelayModuleNode.hpp"
+#include "SystemMonitor.hpp"
+#include "TimeClientHelper.hpp"
+#include "Version.h"
 
 namespace PoolController {
 
@@ -30,13 +42,12 @@ WebServer WebPortal::server_(80);
 DNSServer WebPortal::dnsServer_;
 bool WebPortal::dnsServerStarted_ = false;
 String WebPortal::activeSessionToken_ = "";
+String WebPortal::csrfToken_ = "";
 uint32_t WebPortal::sessionStartTime_ = 0;
+uint32_t WebPortal::lastLoginAttemptTime_ = 0;
+uint8_t WebPortal::loginAttemptCount_ = 0;
 constexpr uint32_t WebPortal::kSessionTimeoutMs;
 constexpr uint16_t WebPortal::kDnsPort;
-
-// CSRF Protection
-String WebPortal::csrfToken_ = "";
-uint32_t WebPortal::csrfTokenTime_ = 0;
 
 // Nodes declared in PoolController.cpp
 extern DallasTemperatureNode solarTemperatureNode;
@@ -73,41 +84,6 @@ bool WebPortal::begin() {
   return true;
 }
 
-// ── CSRF Protection Methods ──────────────────────────────────
-
-String WebPortal::generateCsrfToken() {
-  // Generate a random token using millis() and random for entropy
-  uint32_t randomValue = random(1000000, 9999999);
-  uint32_t tokenValue = millis() + randomValue;
-  // Convert to hex string manually to avoid String constructor ambiguity
-  char tokenBuffer[17];  // 8 hex chars + null terminator
-  snprintf(tokenBuffer, sizeof(tokenBuffer), "%08X", tokenValue);
-  csrfToken_ = String(tokenBuffer);
-  csrfTokenTime_ = millis();
-  return csrfToken_;
-}
-
-bool WebPortal::validateCsrfToken(const String &token) {
-  // Check if token matches and is not expired
-  if (token == csrfToken_) {
-    // Check if token is still valid (not expired)
-    if (millis() - csrfTokenTime_ < kCsrfTokenTimeoutMs) {
-      return true;
-    }
-    // Token expired, generate new one
-    generateCsrfToken();
-  }
-  return false;
-}
-
-String WebPortal::getCurrentCsrfToken() {
-  // Regenerate token if expired
-  if (millis() - csrfTokenTime_ >= kCsrfTokenTimeoutMs) {
-    generateCsrfToken();
-  }
-  return csrfToken_;
-}
-
 void WebPortal::loop() {
   if (NetworkManager::isApMode()) {
     if (!dnsServerStarted_) {
@@ -127,9 +103,50 @@ void WebPortal::loop() {
   }
 }
 
+// Generate secure random token - uses ESP32 hardware RNG when available
+static String generateSecureToken(size_t length) {
+  const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  String token;
+
+#if !defined(ESP32) && !defined(ARDUINO_ARCH_ESP32)
+  // Seed random for native tests
+  static bool seeded = false;
+  if (!seeded) {
+    srandom(time(nullptr));
+    seeded = true;
+  }
+#endif
+
+  for (size_t i = 0; i < length; i++) {
+#if defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
+    // Use ESP32 hardware RNG for cryptographic security
+    uint32_t randomValue = esp_random();
+    token += charset[randomValue % (sizeof(charset) - 1)];
+#else
+    // Fallback for native tests - use standard random
+    // Use String constructor with single char and then append
+    char c = charset[random() % (sizeof(charset) - 1)];
+    token = token + String(c);
+#endif
+  }
+
+  return token;
+}
+
 void WebPortal::generateSessionToken() {
-  activeSessionToken_ = String(random(100000, 999999));
+  // Generate cryptographically secure session token using ESP32 hardware RNG
+  activeSessionToken_ = generateSecureToken(32);  // 32 characters = 192 bits of entropy
+  csrfToken_ = generateSecureToken(32);  // Generate new CSRF token for the session
   sessionStartTime_ = millis();
+  loginAttemptCount_ = 0;  // Reset login attempts on new session
+}
+
+void WebPortal::generateCsrfToken() {
+  csrfToken_ = generateSecureToken(32);
+}
+
+String WebPortal::getCsrfToken() {
+  return csrfToken_;
 }
 
 bool WebPortal::isClientAuthenticated() {
@@ -454,9 +471,15 @@ void WebPortal::apiGetStatus() {
     doc["effective_runtime"] = (active != nullptr) ? active->getEffectiveRuntimeMinutes() : 0;
   }
 
-  String json;
-  serializeJson(doc, json);
-  server_.send(200, "application/json", json);
+  // Serialize directly to a pre-allocated buffer to minimize String usage
+  // Use a static buffer to avoid heap fragmentation
+  static char jsonBuffer[1024];
+  size_t jsonLength = serializeJson(doc, jsonBuffer, sizeof(jsonBuffer));
+  if (jsonLength > 0) {
+    server_.send(200, "application/json", jsonBuffer);
+  } else {
+    server_.send(500, "text/plain", "JSON serialization error");
+  }
 }
 
 void WebPortal::apiScanWiFi() {
@@ -471,9 +494,21 @@ void WebPortal::apiScanWiFi() {
     obj["secure"] = WiFi.encryptionType(i) != WIFI_AUTH_OPEN;
   }
 
-  String json;
-  serializeJson(doc, json);
-  server_.send(200, "application/json", json);
+  // Serialize directly to buffer to minimize String usage
+  // Increased buffer size to handle environments with many visible APs or long SSIDs
+  // Per P2 review: avoid truncating WiFi scan JSON responses
+  static char jsonBuffer[4096];
+  size_t jsonLength = serializeJson(doc, jsonBuffer, sizeof(jsonBuffer));
+  if (jsonLength > 0) {
+    // Check if serialization was truncated
+    if (jsonLength >= sizeof(jsonBuffer) - 1) {
+      server_.send(500, "text/plain", "JSON buffer overflow");
+      return;
+    }
+    server_.send(200, "application/json", jsonBuffer);
+  } else {
+    server_.send(500, "text/plain", "JSON serialization error");
+  }
 }
 
 void WebPortal::apiGetConfig() {
@@ -507,9 +542,21 @@ void WebPortal::apiGetConfig() {
   settingsObj["timer_end_hour"] = operationModeNode.getTimerSetting().timerEndHour;
   settingsObj["timer_end_min"] = operationModeNode.getTimerSetting().timerEndMinutes;
 
-  String json;
-  serializeJson(doc, json);
-  server_.send(200, "application/json", json);
+  // Serialize directly to buffer to minimize String usage
+  // Increased buffer size to handle long MQTT host/user and NTP server values
+  // Per P2 review: check config JSON serialization for truncation
+  static char jsonBuffer[2048];
+  size_t jsonLength = serializeJson(doc, jsonBuffer, sizeof(jsonBuffer));
+  if (jsonLength > 0) {
+    // Check if serialization was truncated
+    if (jsonLength >= sizeof(jsonBuffer) - 1) {
+      server_.send(500, "text/plain", "JSON buffer overflow");
+      return;
+    }
+    server_.send(200, "application/json", jsonBuffer);
+  } else {
+    server_.send(500, "text/plain", "JSON serialization error");
+  }
 }
 
 void WebPortal::apiSaveConfig() {
@@ -521,8 +568,27 @@ void WebPortal::apiSaveConfig() {
   String type = server_.arg("type");
 
   if (type == "wifi") {
-    ConfigManager::getWiFi().ssid = server_.arg("ssid");
-    ConfigManager::getWiFi().password = server_.arg("password");
+    String ssid = server_.arg("ssid");
+    String password = server_.arg("password");
+
+    // Input validation for SSID
+    if (ssid.length() == 0 || ssid.length() > 32) {
+      server_.send(400, "text/plain", "Invalid SSID length (1-32 characters)");
+      return;
+    }
+
+    // Input validation for password
+    if (password.length() > 64) {
+      server_.send(400, "text/plain", "Password too long (max 64 characters)");
+      return;
+    }
+
+    // SSIDs are limited by byte length (32 bytes), not by character set
+    // Allow any byte values including UTF-8/non-ASCII characters
+    // The ESP32 WiFi stack handles the actual validation
+
+    ConfigManager::getWiFi().ssid = ssid;
+    ConfigManager::getWiFi().password = password;
     ConfigManager::setConfigured(true);  // P1: Mark device as configured
     ConfigManager::save();
     server_.send(200, "text/plain", "OK");
@@ -535,10 +601,9 @@ void WebPortal::apiSaveConfig() {
     ConfigManager::getMqtt().host = server_.arg("host");
     ConfigManager::getMqtt().port = server_.arg("port").toInt();
     ConfigManager::getMqtt().username = server_.arg("username");
-    // Preserve existing password if field is left blank (P2 review fix)
-    if (server_.arg("password").length() > 0) {
-      ConfigManager::getMqtt().password = server_.arg("password");
-    }
+    // Always update password (even blank) to allow clearing stale passwords
+    // This allows switching to a username-only/no-password broker
+    ConfigManager::getMqtt().password = server_.arg("password");
     ConfigManager::save();
 
     // Disconnect MQTT to reconnect immediately with new config
@@ -608,7 +673,20 @@ void WebPortal::apiSaveConfig() {
     server_.send(200, "text/plain", "OK");
     return;
   } else if (type == "password") {
-    ConfigManager::setAdminPassword(server_.arg("password"));
+    String newPassword = server_.arg("password");
+
+    // Input validation for password - align with UI (min 4 chars)
+    if (newPassword.length() < 4) {
+      server_.send(400, "text/plain", "Password must be at least 4 characters");
+      return;
+    }
+
+    if (newPassword.length() > 64) {
+      server_.send(400, "text/plain", "Password too long (max 64 characters)");
+      return;
+    }
+
+    ConfigManager::setAdminPassword(newPassword);
     ConfigManager::save();
     server_.send(200, "text/plain", "OK");
     return;
@@ -663,19 +741,55 @@ void WebPortal::apiTogglePump() {
   server_.send(200, "application/json", json);
 }
 
+bool WebPortal::isLoginLockedOut() {
+  if (loginAttemptCount_ >= kMaxLoginAttempts) {
+    uint32_t now = millis();
+    // Check if lockout period has passed (handle unsigned wrap-around)
+    if (now - lastLoginAttemptTime_ < kLoginLockoutMs &&
+        now >= lastLoginAttemptTime_) {
+      return true;  // Still locked out
+    }
+    // Lockout period has passed, reset counter
+    loginAttemptCount_ = 0;
+  }
+  return false;
+}
+
 void WebPortal::apiLogin() {
+  // Rate limiting check
+  if (isLoginLockedOut()) {
+    uint32_t remaining = kLoginLockoutMs - (millis() - lastLoginAttemptTime_);
+    server_.sendHeader("Retry-After", String(remaining / 1000));
+    server_.send(429, "text/plain", "Too many attempts. Try again later.");
+    return;
+  }
+
   if (!server_.hasArg("password")) {
     server_.send(400, "text/plain", "Password Required");
     return;
   }
 
   String pass = server_.arg("password");
+
+  // Input validation - limit password length for NEW passwords only
+  // Existing passwords (stored as SHA-256 hash) may be longer than 64 chars
+  // and should still be allowed to authenticate (P2 review fix)
+  // Only enforce max length when setting new passwords via apiSaveConfig
+
   if (ConfigManager::verifyAdminPassword(pass)) {
     generateSessionToken();
-    // Use Secure flag for HTTPS, HttpOnly to prevent XSS, SameSite for CSRF protection
-    server_.sendHeader("Set-Cookie", "session=" + activeSessionToken_ + "; Path=/; HttpOnly; SameSite=Lax; Max-Age=900");
+    // Cookie with HttpOnly, SameSite, and shorter expiry
+    // Note: Secure attribute removed because device serves UI on HTTP (port 80)
+    // Adding Secure would prevent browsers from sending cookie back over http://
+    String cookieHeader = "session=" + activeSessionToken_ +
+                          "; Path=/; HttpOnly; SameSite=Strict; Max-Age=600";
+    server_.sendHeader("Set-Cookie", cookieHeader);
+    loginAttemptCount_ = 0; // Reset on successful login
     server_.send(200, "text/plain", "OK");
   } else {
+    // Increment failed attempt counter
+    loginAttemptCount_++;
+    lastLoginAttemptTime_ = millis();
     server_.send(401, "text/plain", "Unauthorized");
   }
 }
