@@ -49,10 +49,6 @@ uint8_t WebPortal::loginAttemptCount_ = 0;
 constexpr uint32_t WebPortal::kSessionTimeoutMs;
 constexpr uint16_t WebPortal::kDnsPort;
 
-// CSRF Protection
-String WebPortal::csrfToken_ = "";
-uint32_t WebPortal::csrfTokenTime_ = 0;
-
 // Nodes declared in PoolController.cpp
 extern DallasTemperatureNode solarTemperatureNode;
 extern DallasTemperatureNode poolTemperatureNode;
@@ -86,41 +82,6 @@ bool WebPortal::begin() {
   generateCsrfToken();
 
   return true;
-}
-
-// ── CSRF Protection Methods ──────────────────────────────────
-
-String WebPortal::generateCsrfToken() {
-  // Generate a random token using millis() and random for entropy
-  uint32_t randomValue = random(1000000, 9999999);
-  uint32_t tokenValue = millis() + randomValue;
-  // Convert to hex string manually to avoid String constructor ambiguity
-  char tokenBuffer[17];  // 8 hex chars + null terminator
-  snprintf(tokenBuffer, sizeof(tokenBuffer), "%08X", tokenValue);
-  csrfToken_ = String(tokenBuffer);
-  csrfTokenTime_ = millis();
-  return csrfToken_;
-}
-
-bool WebPortal::validateCsrfToken(const String &token) {
-  // Check if token matches and is not expired
-  if (token == csrfToken_) {
-    // Check if token is still valid (not expired)
-    if (millis() - csrfTokenTime_ < kCsrfTokenTimeoutMs) {
-      return true;
-    }
-    // Token expired, generate new one
-    generateCsrfToken();
-  }
-  return false;
-}
-
-String WebPortal::getCurrentCsrfToken() {
-  // Regenerate token if expired
-  if (millis() - csrfTokenTime_ >= kCsrfTokenTimeoutMs) {
-    generateCsrfToken();
-  }
-  return csrfToken_;
 }
 
 void WebPortal::loop() {

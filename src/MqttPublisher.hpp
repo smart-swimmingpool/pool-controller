@@ -46,7 +46,9 @@ public:
   static bool isValidCommand(const String &value, const char *const validCommands[], size_t count);
 
 private:
-  static void publishTextDiscovery(const char *objectId, const char *name, const char *icon = nullptr, const char *entityCategory = nullptr);
+  static void publishTextDiscovery(const char *objectId, const char *name,
+                                    const char *icon = nullptr,
+                                    const char *entityCategory = nullptr);
   static void publishSensorDiscovery(const char *objectId, const char *name, const char *deviceClass = nullptr,
     const char *unit = nullptr, const char *icon = nullptr, const char *entityCategory = nullptr);
   static void publishSwitchDiscovery(
