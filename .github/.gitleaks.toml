@@ -11,6 +11,7 @@ description = "Default admin password hash"
 paths = [
   "src/ConfigManager.cpp",
   "test/native/mocks/ConfigManager.hpp",
+  "test/native/mocks/ConfigManager.cpp",
   "docs/security-fixes-v3.2.1.md"
 ]
 regexes = [
