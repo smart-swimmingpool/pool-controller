@@ -1,6 +1,7 @@
 ---
 title: Security Fixes v3.2.1
-summary: Comprehensive documentation of security vulnerabilities and memory leaks fixed in Pool Controller v3.2.1 — TLS validation, session management, input validation, MQTT security, and memory management improvements
+summary: Comprehensive documentation of security vulnerabilities and memory leaks fixed in Pool Controller v3.2.1 — TLS
+validation, session management, input validation, MQTT security, and memory management improvements
 date: "2026-06-19"
 lastmod: "2026-06-19"
 draft: false
@@ -16,7 +17,9 @@ menu:
 
 # Security Fixes v3.2.1
 
-This document provides comprehensive documentation of all security vulnerabilities and memory leaks identified and fixed in Pool Controller v3.2.1. All changes have been validated through CI/CD pipeline and address critical, high, and medium priority issues.
+This document provides comprehensive documentation of all security vulnerabilities and memory leaks identified and
+fixed in Pool Controller v3.2.1. All changes have been validated through CI/CD pipeline and address critical, high, and
+medium priority issues.
 
 > **⚠️ IMPORTANT**: Users running v3.2.0 or earlier **must** update to v3.2.1 to address these security issues.
 
@@ -108,14 +111,15 @@ In addition to the security fixes listed below, v3.2.1 includes new OTA safety f
 
 **File**: `src/OtaUpdater.cpp`
 
-**Vulnerability**: The OTA updater was using `setInsecure()` which completely disables TLS/SSL certificate validation, making the device vulnerable to man-in-the-middle attacks during firmware updates.
+**Vulnerability**: The OTA updater was using `setInsecure()` which completely disables TLS/SSL certificate validation,
+making the device vulnerable to man-in-the-middle attacks during firmware updates.
 
-**Impact**: 
+**Impact**:
 - Attackers on the same network could intercept and modify firmware updates
 - Malicious firmware could be installed without user knowledge
 - Complete compromise of device security
 
-**Fix**: 
+**Fix**:
 ```cpp
 // OLD (VULNERABLE):
 client.setInsecure();
@@ -140,9 +144,10 @@ client.setInsecure();
 - Falls back to single root CA (`kGitHubRootCA`) for older ESP32 cores
 - Validates GitHub's TLS certificates properly
 - Compatible with GitHub's CDN which may use various CA chains (Let's Encrypt, Sectigo, etc.)
-- Addresses [openspec/specs/github-ca-chain.spec.md requirement R2](https://github.com/openspec/specs/blob/main/openspec/specs/github-ca-chain.spec.md)
+- Addresses [openspec/specs/github-ca-chain.spec.md requirement
+R2](https://github.com/openspec/specs/blob/main/openspec/specs/github-ca-chain.spec.md)
 
-**Verification**: 
+**Verification**:
 - ✅ Compiles with ESP32 Arduino core >= 2.0.0
 - ✅ Compiles with older ESP32 cores
 - ✅ TLS handshake succeeds with GitHub
@@ -154,14 +159,15 @@ client.setInsecure();
 
 **File**: `src/TimeClientHelper.cpp`, `src/TimeClientHelper.hpp`
 
-**Vulnerability**: The NTP client was allocated as a raw pointer without proper cleanup, causing memory leaks on each reconnection or restart.
+**Vulnerability**: The NTP client was allocated as a raw pointer without proper cleanup, causing memory leaks on each
+reconnection or restart.
 
 **Impact**:
 - Gradual memory consumption over time
 - Potential device instability or crashes
 - Reduced available heap for other operations
 
-**Fix**: 
+**Fix**:
 ```cpp
 // OLD (LEAKING):
 NTPClient *timeClient = nullptr;
@@ -200,21 +206,22 @@ void timeClientSetup(const char *ntpServer) {
 
 **File**: `src/WebPortal.cpp`, `src/WebPortal.hpp`
 
-**Vulnerability**: Session tokens were generated using a predictable random number generator, making them vulnerable to brute-force attacks.
+**Vulnerability**: Session tokens were generated using a predictable random number generator, making them vulnerable to
+brute-force attacks.
 
 **Impact**:
 - Attackers could predict valid session tokens
 - Unauthorized access to authenticated sessions
 - Potential session hijacking
 
-**Fix**: 
+**Fix**:
 ```cpp
 // OLD (PREDICTABLE):
 static String generateSecureToken(size_t length) {
   const char charset[] = "abcdefghijklmnopqrstuvwxyz...";
   String token;
   token.reserve(length);
-  
+
   for (size_t i = 0; i < length; i++) {
     uint8_t randomByte;
     esp_random(&randomByte, 1);
@@ -273,14 +280,15 @@ static String generateSecureToken(size_t length) {
 
 **File**: `src/WebPortal.cpp`
 
-**Vulnerability**: No validation of SSID and password input, allowing malformed or malicious input that could cause buffer overflows or other issues.
+**Vulnerability**: No validation of SSID and password input, allowing malformed or malicious input that could cause
+buffer overflows or other issues.
 
 **Impact**:
 - Buffer overflow vulnerabilities
 - Device instability or crashes
 - Potential code execution
 
-**Fix**: 
+**Fix**:
 ```cpp
 // Input validation for SSID
 if (ssid.length() == 0 || ssid.length() > 32) {
@@ -329,7 +337,7 @@ for (size_t i = 0; i < ssid.length(); i++) {
 - Device control by unauthorized users
 - Potential security bypass
 
-**Fix**: 
+**Fix**:
 ```cpp
 // Always validate command value for security
 static const char *validFirmwareCommands[] = {"INSTALL"};
@@ -384,14 +392,15 @@ if (val < 0.0f || val > 40.0f) {
 
 **File**: `src/WebPortal.cpp`
 
-**Vulnerability**: Excessive use of `String` class with `+=` operator and `reserve()` caused memory fragmentation on ESP32's limited heap.
+**Vulnerability**: Excessive use of `String` class with `+=` operator and `reserve()` caused memory fragmentation on
+ESP32's limited heap.
 
 **Impact**:
 - Memory fragmentation over time
 - Reduced available heap
 - Potential device instability
 
-**Fix**: 
+**Fix**:
 ```cpp
 // OLD (FRAGMENTING):
 String jsonString;
@@ -441,7 +450,7 @@ if (jsonLength > 0) {
 - Credential stuffing attacks
 - Increased attack surface
 
-**Fix**: 
+**Fix**:
 ```cpp
 // In WebPortal.hpp
 static constexpr uint32_t kMaxLoginAttempts = 5;
@@ -492,14 +501,15 @@ lastLoginAttemptTime_ = millis();
 
 **File**: `src/WebPortal.cpp`
 
-**Vulnerability**: JSON buffers were too small, causing truncation of responses in environments with many WiFi networks or long configuration values.
+**Vulnerability**: JSON buffers were too small, causing truncation of responses in environments with many WiFi networks
+or long configuration values.
 
 **Impact**:
 - Incomplete JSON responses
 - Malformed data
 - Potential parsing errors on client side
 
-**Fix**: 
+**Fix**:
 ```cpp
 // WiFi scan buffer increased from 2048 to 4096
 static char jsonBuffer[4096];
@@ -692,11 +702,14 @@ New test cases added for:
 
 ## Known Limitations
 
-1. **No HTTPS Support**: The web interface runs on HTTP only. For secure remote access, use a VPN or reverse proxy with HTTPS.
+1. **No HTTPS Support**: The web interface runs on HTTP only. For secure remote access, use a VPN or reverse proxy with
+HTTPS.
 
-2. **NVS Storage**: WiFi and MQTT passwords are stored in plain text in NVS. Enable flash encryption for production deployments.
+2. **NVS Storage**: WiFi and MQTT passwords are stored in plain text in NVS. Enable flash encryption for production
+deployments.
 
-3. **ESP32 Core Compatibility**: Full CA bundle support requires ESP32 Arduino core >= 2.0.0. Older cores fall back to single CA certificate.
+3. **ESP32 Core Compatibility**: Full CA bundle support requires ESP32 Arduino core >= 2.0.0. Older cores fall back to
+single CA certificate.
 
 4. **Memory Constraints**: ESP32 has limited heap. Avoid adding memory-intensive features without testing.
 
@@ -738,10 +751,13 @@ New test cases added for:
 
 For questions or issues related to these security fixes:
 
-- **Security Issues**: Open a confidential issue at [GitHub Security](https://github.com/smart-swimmingpool/pool-controller/security)
+- **Security Issues**: Open a confidential issue at [GitHub
+Security](https://github.com/smart-swimmingpool/pool-controller/security)
 - **General Issues**: Open an issue at [GitHub Issues](https://github.com/smart-swimmingpool/pool-controller/issues)
-- **Discussions**: Join the discussion at [GitHub Discussions](https://github.com/smart-swimmingpool/smart-swimmingpool.github.io/discussions)
+- **Discussions**: Join the discussion at [GitHub
+Discussions](https://github.com/smart-swimmingpool/smart-swimmingpool.github.io/discussions)
 
 ---
 
-> **⚠️ DISCLAIMER**: While these fixes address identified vulnerabilities, no system can be 100% secure. Users are responsible for their own security configurations and should follow best practices for IoT device security.
+> **⚠️ DISCLAIMER**: While these fixes address identified vulnerabilities, no system can be 100% secure. Users are
+responsible for their own security configurations and should follow best practices for IoT device security.

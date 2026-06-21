@@ -45,7 +45,7 @@ public:
   static bool begin() { return true; }
   static bool load() { return true; }
   static bool save() { return true; }
-  static void reset() { 
+  static void reset() {
     _adminPasswordHash = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918";  // SHA-256("admin")
     _configured = false;
   }
@@ -63,11 +63,11 @@ public:
     String inputHash = hashPassword(password);
     return inputHash == _adminPasswordHash;
   }
-  
+
   static void setAdminPassword(const String &newPassword) {
     _adminPasswordHash = hashPassword(newPassword);
   }
-  
+
   static String getAdminPasswordHash() { return _adminPasswordHash; }
 
 private:
@@ -77,7 +77,7 @@ private:
   static NtpConfig _ntp;
   static String _adminPasswordHash;
   static bool _configured;
-  
+
   // Simple hash function for mock (not cryptographic, just for testing)
   static String hashPassword(const String &password) {
     // For testing purposes, we'll use a simple hash

@@ -1,6 +1,7 @@
 ---
 title: Tasmota OTA Update Verification Review
-summary: Analysis of Tasmota's OTA update verification approach and recommendations for Pool Controller adaptation - TLS validation, fingerprint verification, version checking, and security best practices
+summary: Analysis of Tasmota's OTA update verification approach and recommendations for Pool Controller adaptation -
+TLS validation, fingerprint verification, version checking, and security best practices
 date: "2026-06-19"
 lastmod: "2026-06-19"
 draft: false
@@ -16,11 +17,13 @@ menu:
 
 # Tasmota OTA Update Verification Review
 
-This document provides a comprehensive analysis of Tasmota's OTA (Over-The-Air) update verification approach and evaluates which aspects could be beneficial to adapt for the Pool Controller project.
+This document provides a comprehensive analysis of Tasmota's OTA (Over-The-Air) update verification approach and
+evaluates which aspects could be beneficial to adapt for the Pool Controller project.
 
 ## Executive Summary
 
-Tasmota employs a **multi-layered security approach** for OTA updates that balances security with usability. Their system includes:
+Tasmota employs a **multi-layered security approach** for OTA updates that balances security with usability. Their
+system includes:
 
 1. **TLS/SSL Certificate Validation** - Proper CA validation with fallback mechanisms
 2. **Firmware Fingerprint Verification** - SHA-256 fingerprint validation for server identity
@@ -29,7 +32,9 @@ Tasmota employs a **multi-layered security approach** for OTA updates that balan
 5. **User-Configurable OTA Sources** - Flexible update URLs with security options
 6. **Compressed Firmware Support** - .gz binaries for smaller footprint
 
-**Recommendation for Pool Controller**: Adopt Tasmota's **TLS validation approach** and **version checking**, but our current implementation already addresses the critical security issues. The main improvement would be adding **firmware signature verification** for local uploads.
+**Recommendation for Pool Controller**: Adopt Tasmota's **TLS validation approach** and **version checking**, but our
+current implementation already addresses the critical security issues. The main improvement would be adding **firmware
+signature verification** for local uploads.
 
 ---
 
@@ -80,7 +85,7 @@ WiFiClientSecure client;
 #ifdef USE_HTTPS
   // Set CA certificate for validation
   client.setCACert(ca_cert);
-  
+
   // Optional: Set client certificate for mutual TLS
   #ifdef USE_CLIENT_CERT
   client.setCertificate(client_cert);
@@ -133,17 +138,18 @@ if (tls_mode == TLS_MODE_FINGERPRINT) {
 
 **Example Usage**:
 ```bash
-# Set MQTT server fingerprint
+## Set MQTT server fingerprint
 MqttFingerprint A1:B2:C3:D4:E5:F6:G7:H8:I9:J0:K1:L2:M3:N4:O5:P6:Q7:R8:S9:T0
 
-# Or for OTA server (conceptually similar)
-# OtaFingerprint would be needed
+## Or for OTA server (conceptually similar)
+## OtaFingerprint would be needed
 ```
 
 **Comparison with Pool Controller**:
 - **Pool Controller**: Uses CA bundle validation (more flexible)
 - **Tasmota**: Offers both CA and fingerprint validation
-- **Recommendation**: Consider adding fingerprint validation as an option for users who want to pin specific GitHub CDN certificates
+- **Recommendation**: Consider adding fingerprint validation as an option for users who want to pin specific GitHub CDN
+certificates
 
 ### 2.3 Version Compatibility Checking
 
@@ -167,13 +173,13 @@ bool checkVersionCompatibility(const String& current, const String& target) {
   // Parse version strings
   uint32_t currentVersion = parseVersion(current);
   uint32_t targetVersion = parseVersion(target);
-  
+
   // Check if direct upgrade is allowed
   if (!isDirectUpgradeAllowed(currentVersion, targetVersion)) {
     // Need intermediate step
     return false;
   }
-  
+
   return true;
 }
 ```
@@ -181,7 +187,8 @@ bool checkVersionCompatibility(const String& current, const String& target) {
 **Comparison with Pool Controller**:
 - **Pool Controller**: Has `isNewerVersion()` check but no migration path enforcement
 - **Tasmota**: Enforces strict version compatibility
-- **Recommendation**: For Pool Controller, the simpler approach is sufficient since we don't have breaking changes between minor versions
+- **Recommendation**: For Pool Controller, the simpler approach is sufficient since we don't have breaking changes
+between minor versions
 
 ### 2.4 Firmware Signature Verification
 
@@ -312,16 +319,16 @@ bool checkVersionCompatibility(const String& current, const String& target) {
 bool OtaUpdater::hasSufficientSpace(size_t firmwareSize) {
   // Get available flash space
   uint32_t freeSpace = ESP.getFreeSketchSpace();
-  
+
   // Need at least firmwareSize + safety margin (10%)
   uint32_t requiredSpace = firmwareSize + (firmwareSize / 10);
-  
+
   if (freeSpace < requiredSpace) {
-    Serial.printf("OTA: Insufficient space. Need %u bytes, have %u bytes\n", 
+    Serial.printf("OTA: Insufficient space. Need %u bytes, have %u bytes\n",
                  requiredSpace, freeSpace);
     return false;
   }
-  
+
   return true;
 }
 ```
@@ -341,18 +348,18 @@ bool OtaUpdater::hasSufficientSpace(size_t firmwareSize) {
 bool OtaUpdater::verifyFirmwareSize(HTTPClient& http, size_t expectedSize) {
   // Get Content-Length header
   size_t contentLength = http.getSize();
-  
+
   if (contentLength == 0) {
     Serial.println("OTA: Cannot determine firmware size");
     return false;
   }
-  
+
   if (contentLength > expectedSize * 1.1) {  // Allow 10% tolerance
-    Serial.printf("OTA: Firmware size mismatch. Expected ~%u, got %u\n", 
+    Serial.printf("OTA: Firmware size mismatch. Expected ~%u, got %u\n",
                  expectedSize, contentLength);
     return false;
   }
-  
+
   return true;
 }
 ```
@@ -375,21 +382,21 @@ bool OtaUpdater::verifyServerCertificate(WiFiClientSecure& client) {
   if (ConfigManager::getOtaConfig().useFingerprint) {
     // Verify fingerprint
     const char* expectedFingerprint = ConfigManager::getOtaConfig().fingerprint.c_str();
-    
+
     if (!client.verify(expectedFingerprint, client.getServerCert())) {
       Serial.println("OTA: Server certificate fingerprint mismatch!");
       return false;
     }
   }
   // else: CA validation already done by setCACert()
-  
+
   return true;
 }
 ```
 
 **User Interface**:
 ```bash
-# Via Web UI or MQTT:
+## Via Web UI or MQTT:
 OtaFingerprint A1:B2:C3:D4:E5:F6:G7:H8:I9:J0:K1:L2:M3:N4:O5:P6:Q7:R8:S9:T0
 OtaUseFingerprint 1  # Enable fingerprint verification
 ```
@@ -403,7 +410,7 @@ OtaUseFingerprint 1  # Enable fingerprint verification
 
 bool OtaUpdater::downloadAndApply(const String& url) {
   String localUrl = url;
-  
+
   // Check if .gz file
   if (url.endsWith(".gz")) {
     // Download compressed file
@@ -441,7 +448,7 @@ bool verifyFirmwareSignature(const uint8_t* firmware, size_t size) {
   // Calculate SHA-256 hash of firmware
   uint8_t calculatedHash[32];
   sha256(firmware, size, calculatedHash);
-  
+
   // Verify signature using embedded public key
   return ecdsa_verify(calculatedHash, signature, public_key);
 }
@@ -478,17 +485,20 @@ bool OtaUpdater::needsMinimalFirmware(size_t firmwareSize) {
 ## 6. Implementation Roadmap
 
 ### Phase 1: Critical Security (Already Done ✅)
+
 - [x] TLS certificate validation (replaced `setInsecure()`)
 - [x] Proper CA bundle support
 - [x] Fallback to single CA for older cores
 
 ### Phase 2: Recommended Improvements (Next Steps)
+
 - [ ] Add space checking before OTA
 - [ ] Add firmware size verification
 - [ ] Add fingerprint verification option
 - [ ] Add compression support (.gz)
 
 ### Phase 3: Advanced Features (Future)
+
 - [ ] Firmware signature verification
 - [ ] Minimal firmware support
 - [ ] Rollback protection
@@ -501,15 +511,15 @@ bool OtaUpdater::needsMinimalFirmware(size_t firmwareSize) {
 
 **Security Settings**:
 ```bash
-# Always use HTTPS OTA URLs
+## Always use HTTPS OTA URLs
 OtaUrl https://github.com/smart-swimmingpool/pool-controller/releases/latest/download/firmware.bin
 
-# Enable TLS (already default)
-# Use CA validation (already default)
+## Enable TLS (already default)
+## Use CA validation (already default)
 
-# For advanced users: Enable fingerprint verification (future)
-# OtaFingerprint <GitHub-CDN-fingerprint>
-# OtaUseFingerprint 1
+## For advanced users: Enable fingerprint verification (future)
+## OtaFingerprint <GitHub-CDN-fingerprint>
+## OtaUseFingerprint 1
 ```
 
 **Network Recommendations**:
@@ -523,7 +533,7 @@ OtaUrl https://github.com/smart-swimmingpool/pool-controller/releases/latest/dow
 
 **Build Configuration**:
 ```ini
-# In platformio.ini
+## In platformio.ini
 [env:esp32dev]
 build_flags =
   -DUSE_HTTPS=1
@@ -577,7 +587,8 @@ Based on this review, the following recommendations have been **IMPLEMENTED** in
 
 ### Final Recommendation
 
-The OTA system now includes **space checking and size verification** as recommended from the Tasmota review. The implementation is **secure and production-ready** for the Pool Controller use case.
+The OTA system now includes **space checking and size verification** as recommended from the Tasmota review. The
+implementation is **secure and production-ready** for the Pool Controller use case.
 
 **Current Status**:
 - ✅ TLS certificate validation (already implemented)
@@ -612,7 +623,8 @@ The Pool Controller OTA system now matches or exceeds Tasmota's safety features 
 | Compression | ✅ .gz | ❌ No | **Tasmota better** |
 | Minimal Firmware | ✅ Yes | ❌ No | **Tasmota better** |
 
-**Note**: Pool Controller v3.2.1 now includes space checking and size verification, matching or exceeding Tasmota's safety features for our use case.
+**Note**: Pool Controller v3.2.1 now includes space checking and size verification, matching or exceeding Tasmota's
+safety features for our use case.
 
 ## Appendix C: References
 
@@ -624,4 +636,5 @@ The Pool Controller OTA system now matches or exceeds Tasmota's safety features 
 
 ---
 
-> **📝 Note**: This review was conducted on 2026-06-19 based on Tasmota v15.3.0 documentation and Pool Controller v3.2.1 codebase.
+> **📝 Note**: This review was conducted on 2026-06-19 based on Tasmota v15.3.0 documentation and Pool Controller v3.2.1
+codebase.
