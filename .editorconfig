@@ -11,9 +11,10 @@ trim_trailing_whitespace = true
 indent_style = space
 charset = utf-8
 
-# C/C++ source — project uses 4-space indentation
+# C/C++ source — no indent_size enforcement (project uses 4-space for body,
+# 2-space for constructor init lists and continuation lines)
 [*.{cpp,hpp,h,ino}]
-indent_size = 4
+indent_size = unset
 
 # Structured data files
 [*.{json,yml,yaml,js,ts,css}]
