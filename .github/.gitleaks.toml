@@ -1,11 +1,18 @@
+# Gitleaks configuration for pool-controller
+# Extends default rules with project-specific allowlists
+
 [extend]
 useDefault = true
 
-# Allow the default admin password hash in ConfigManager.cpp
+# Allow the default admin password hash
 # This is a known SHA-256 hash of "admin" and is intentional
 [[rules.allowlist]]
 description = "Default admin password hash"
-paths = ["src/ConfigManager.cpp"]
+paths = [
+  "src/ConfigManager.cpp",
+  "test/native/mocks/ConfigManager.hpp",
+  "docs/security-fixes-v3.2.1.md"
+]
 regexes = [
   "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918"
 ]

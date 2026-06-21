@@ -12,7 +12,8 @@ GitHub shows CONFLICTING but `git rebase main` says "up to date" — this is a s
 2. **test-and-coverage**: ❌ Compilation error in `test_security.cpp`
 
 **Test Compilation Root Cause**: The `// NOLINT \` construct in `ASSERT_GT`/`ASSERT_GTE`/`ASSERT_LT` macros.
-Backslash-newline splicing happens BEFORE comment processing (C++ phases 2→3), so `// NOLINT \` makes the rest of the macro body a comment. This leaves the `if` body unclosed.
+Backslash-newline splicing happens BEFORE comment processing (C++ phases 2→3), so `// NOLINT \` makes
+the rest of the macro body a comment, leaving the `if` body unclosed.
 
 **Codex Reviews**: 15 reviews, all COMMENTED. Most are boilerplate (no actual suggestions).
 One substantive P2 comment: "Allow clearing MQTT passwords" — still unresolved.
