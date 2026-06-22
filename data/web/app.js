@@ -448,16 +448,30 @@ async function saveTimeSettings() {
 // ── Save Password ──
 
 async function savePassword() {
-  const pass = document.getElementById('adminPass').value;
-  if (!pass || pass.length < 4) { alert('Password must be at least 4 characters.'); return; }
+  const currentPass = document.getElementById('currentPass').value;
+  const newPass = document.getElementById('adminPass').value;
+  const confirmPass = document.getElementById('adminPassConfirm').value;
+
+  if (!currentPass) { alert('Please enter your current password.'); return; }
+  if (!newPass || newPass.length < 4) { alert('New password must be at least 4 characters.'); return; }
+  if (newPass !== confirmPass) { alert('New password and confirmation do not match.'); return; }
+
   const res = await fetch('/api/config', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: 'type=password&password=' + encodeURIComponent(pass)
+    body: 'type=password'
+      + '&current_password=' + encodeURIComponent(currentPass)
+      + '&password=' + encodeURIComponent(newPass)
+      + '&password_confirm=' + encodeURIComponent(confirmPass)
   });
   if (res.status === 200) {
-    alert('Admin Password updated!');
+    alert('✓ Admin Password updated!');
+    document.getElementById('currentPass').value = '';
     document.getElementById('adminPass').value = '';
+    document.getElementById('adminPassConfirm').value = '';
+  } else {
+    const msg = await res.text();
+    alert('✖ ' + (msg || 'Failed to update password'));
   }
 }
 

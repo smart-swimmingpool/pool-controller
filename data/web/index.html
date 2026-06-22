@@ -380,8 +380,16 @@
 
   <h2>Security Settings</h2>
   <div class="input-group">
+    <label for="currentPass">Current Password</label>
+    <input type="password" id="currentPass" placeholder="Enter current password">
+  </div>
+  <div class="input-group">
     <label for="adminPass">New Admin Password</label>
-    <input type="password" id="adminPass" placeholder="Enter new panel password">
+    <input type="password" id="adminPass" placeholder="Enter new password (min 4 chars)">
+  </div>
+  <div class="input-group">
+    <label for="adminPassConfirm">Confirm New Password</label>
+    <input type="password" id="adminPassConfirm" placeholder="Confirm new password">
   </div>
   <button class="btn btn-primary" onclick="savePassword()" style="margin-bottom: 2rem;">Update Security Password</button>
 
