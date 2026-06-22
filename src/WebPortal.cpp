@@ -673,16 +673,30 @@ void WebPortal::apiSaveConfig() {
     server_.send(200, "text/plain", "OK");
     return;
   } else if (type == "password") {
+    String currentPassword = server_.arg("current_password");
     String newPassword = server_.arg("password");
+    String confirmPassword = server_.arg("password_confirm");
 
-    // Input validation for password - align with UI (min 4 chars)
+    // Verify current password
+    if (!ConfigManager::verifyAdminPassword(currentPassword)) {
+      server_.send(403, "text/plain", "Current password is incorrect");
+      return;
+    }
+
+    // Input validation for new password - align with UI (min 4 chars)
     if (newPassword.length() < 4) {
-      server_.send(400, "text/plain", "Password must be at least 4 characters");
+      server_.send(400, "text/plain", "New password must be at least 4 characters");
       return;
     }
 
     if (newPassword.length() > 64) {
-      server_.send(400, "text/plain", "Password too long (max 64 characters)");
+      server_.send(400, "text/plain", "New password too long (max 64 characters)");
+      return;
+    }
+
+    // Verify confirmation matches
+    if (newPassword != confirmPassword) {
+      server_.send(400, "text/plain", "New password and confirmation do not match");
       return;
     }
 

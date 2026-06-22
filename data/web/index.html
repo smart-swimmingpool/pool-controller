@@ -49,31 +49,22 @@
   </button>
 </nav>
 
-<!-- Settings-Dropdown-Menü -->
-<div id="settingsMenu" style="display: none; position: fixed; top: 60px; right: 20px; background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 12px; padding: 0.5rem; z-index: 1001; min-width: 180px; box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
-  <div onclick="switchTab('wifi')" style="padding: 0.75rem; cursor: pointer; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">📶 WiFi</div>
-  <div onclick="switchTab('mqtt')" style="padding: 0.75rem; cursor: pointer; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">🔌 MQTT</div>
-  <div onclick="switchTab('pool')" style="padding: 0.75rem; cursor: pointer; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">🌊 Pool</div>
-  <div onclick="switchTab('time')" style="padding: 0.75rem; cursor: pointer; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">🕐 Zeit</div>
-  <div onclick="switchTab('sensors')" style="padding: 0.75rem; cursor: pointer; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">🔬 Sensors</div>
-  <div onclick="switchTab('system')" style="padding: 0.75rem; cursor: pointer; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">🔒 System</div>
-=======
 <!-- More-Menü (Bottom Sheet) -->
 <div id="moreMenu" class="more-sheet" style="display: none;">
   <div class="more-sheet-overlay" onclick="toggleMoreMenu()"></div>
   <div class="more-sheet-panel">
     <div class="more-sheet-handle"></div>
-    <div class="more-sheet-item" onclick="switchTab('wifi'); toggleMoreMenu();">
+    <div class="more-sheet-item" onclick="switchTab('wifi')">
       <span class="more-sheet-icon">📶</span> WiFi
     </div>
-    <div class="more-sheet-item" onclick="switchTab('mqtt'); toggleMoreMenu();">
+    <div class="more-sheet-item" onclick="switchTab('mqtt')">
       <span class="more-sheet-icon">🔌</span> MQTT
     </div>
-    <div class="more-sheet-item" onclick="switchTab('system'); toggleMoreMenu();">
+    <div class="more-sheet-item" onclick="switchTab('system')">
       <span class="more-sheet-icon">🔒</span> System
     </div>
     <div class="more-sheet-divider"></div>
-    <div class="more-sheet-item" onclick="switchTab('about'); toggleMoreMenu();">
+    <div class="more-sheet-item" onclick="switchTab('about')">
       <span class="more-sheet-icon">ℹ️</span> About
     </div>
   </div>
@@ -345,7 +336,6 @@
 <!-- Sensors Tab (DS18B20 Mapping) -->
 <div id="tab-sensors" class="tab-content glass-card" style="display: none;">
   <div style="margin-bottom: 0.75rem;"><a href="#" onclick="switchTab('dashboard'); return false;" style="color: var(--accent-solar); text-decoration: none; font-size: 0.85rem;">← Dashboard</a></div>
-=======
 
   <h2>🔬 Temperature Sensor Mapping</h2>
   <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
@@ -390,8 +380,16 @@
 
   <h2>Security Settings</h2>
   <div class="input-group">
+    <label for="currentPass">Current Password</label>
+    <input type="password" id="currentPass" placeholder="Enter current password">
+  </div>
+  <div class="input-group">
     <label for="adminPass">New Admin Password</label>
-    <input type="password" id="adminPass" placeholder="Enter new panel password">
+    <input type="password" id="adminPass" placeholder="Enter new password (min 4 chars)">
+  </div>
+  <div class="input-group">
+    <label for="adminPassConfirm">Confirm New Password</label>
+    <input type="password" id="adminPassConfirm" placeholder="Confirm new password">
   </div>
   <button class="btn btn-primary" onclick="savePassword()" style="margin-bottom: 2rem;">Update Security Password</button>
 
