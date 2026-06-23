@@ -1,8 +1,9 @@
-name: Alert `website` repository on `main` push
+name: Alert `website` repository on `main` or `master` push
 on:
   push:
     branches:
       - main
+      - master
     # Only trigger when doc-related files change — avoids unnecessary website rebuilds
     paths:
       - docs/**
