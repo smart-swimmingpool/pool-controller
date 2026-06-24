@@ -14,7 +14,7 @@ ENABLE:
   - MARKDOWN
   - YAML
 
-# Disable all other linters
+# Disable all other linters (none specifically disabled for pool-controller)
 DISABLE:
   - ALL
 
