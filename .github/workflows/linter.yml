@@ -16,8 +16,9 @@ name: Lint Code Base
 #############################
 on:
   push:
-    branches-ignore:
-      - "main"
+    branches:
+      - main
+      - master
   pull_request:
 
 # Cancel in-progress runs for the same workflow+ref when new commits are pushed
