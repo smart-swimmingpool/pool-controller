@@ -48,6 +48,6 @@ jobs:
         with:
 
       - name: Run MegaLinter
-        uses: oxsecurity/megalinter@v7.12.0
+        uses: oxsecurity/megalinter@v7.11.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
