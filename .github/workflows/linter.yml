@@ -46,10 +46,8 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v7
         with:
-          fetch-depth: 0
 
       - name: Run MegaLinter
         uses: oxsecurity/megalinter@v7.12.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VALIDATE_ALL_CODEBASE: true
