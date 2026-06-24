@@ -18,16 +18,14 @@ ENABLE:
 DISABLE:
   - ALL
 
-# Re-enable the ones we want (ENABLE takes precedence over DISABLE)
-# This is the MegaLinter way to select specific linters
-
 # Filter patterns - exclude build artifacts and dependencies
-FILTER_REGEX_EXCLUDE:
-  - .*/(\.pio|\.vscode|\.platformio|build|\.git|node_modules)/.*
-  - .*/lib/.*
-  - .*/data/.*
-  - .*\.min\.(js|css)
-  - .*/test/.*
+# Must be a string, not a list
+FILTER_REGEX_EXCLUDE: |
+  .*/(\.pio|\.vscode|\.platformio|build|\.git|node_modules)/.*
+  .*/lib/.*
+  .*/data/.*
+  .*\.min\.(js|css)
+  .*/test/.*
 
 # C++ specific settings
 CPP_FILE_EXTENSIONS: "cpp,hpp,h,c"
