@@ -5,8 +5,8 @@ on: [push, pull_request]
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v7
       - uses: oxsecurity/megalinter@v7.7.0
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
