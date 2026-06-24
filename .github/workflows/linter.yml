@@ -32,9 +32,10 @@ permissions:
 # Set the Job #
 ###############
 jobs:
-  super-linter:
-    name: Super-Linter
+  mega-linter:
+    name: MegaLinter
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     permissions:
       contents: read
@@ -46,42 +47,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Run Super-Linter
-        uses: super-linter/super-linter@v8.7.0
+      - name: Run MegaLinter
+        uses: oxsecurity/megalinter@v7
         env:
           VALIDATE_ALL_CODEBASE: false
-
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-          # PlatformIO Project Optimizations
-          # Exclude build artifacts and dependencies
-          FILTER_REGEX_EXCLUDE: .*/(\.pio|\.vscode|\.platformio|build|lib)/.*
-
-          # Enable only relevant linters for PlatformIO project
-          # When using selective validation, all other linters are disabled automatically
-          # Note: VALIDATE_CLANG_FORMAT not listed - disabled due to version incompatibility
-          # cpplint (via VALIDATE_CPP) provides C++ style checking instead
-          VALIDATE_CPP: true
-          VALIDATE_MARKDOWN: true
-          VALIDATE_YAML: true
-          VALIDATE_JSON: true
-          VALIDATE_GITHUB_ACTIONS: true
-          VALIDATE_EDITORCONFIG: true
-          VALIDATE_GITLEAKS: true
-          VALIDATE_BASH: true
-
-          # C/C++ specific settings
-          CPP_FILE_EXTENSIONS: "cpp,hpp,h"
-
-          # Markdown specific settings - increase line length to 150
-          MARKDOWN_LINT_LINE_LENGTH: 150
-          MARKDOWNLINT_LINE_LENGTH: 150
-          MARKDOWNLINT_CONFIG_FILE: .markdownlint.yml
-          MARKDOWNLINT_OPTIONS: "--config .markdownlint.yml"
-
-          # Don't treat warnings as errors
+          MEGALINTER_CONFIG: .megalinter.yml
+          PARALLEL: false
           WARNINGS_AS_ERRORS: false
-
-          # Logging
           LOG_LEVEL: NOTICE

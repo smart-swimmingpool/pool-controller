@@ -1,0 +1,52 @@
+# MegaLinter Configuration for Smart Swimmingpool Pool Controller
+# Replaces Super-Linter with equivalent rules
+# https://megalinter.io/latest/configuration/
+
+---
+# Enable only the linters that were enabled in Super-Linter
+ENABLE:
+  - BASH
+  - CPP
+  - EDITORCONFIG
+  - GITHUB_ACTIONS
+  - GITLEAKS
+  - JSON
+  - MARKDOWN
+  - YAML
+
+# Disable all other linters
+DISABLE:
+  - ALL
+
+# Re-enable the ones we want (ENABLE takes precedence over DISABLE)
+# This is the MegaLinter way to select specific linters
+
+# Filter patterns - exclude build artifacts and dependencies
+FILTER_REGEX_EXCLUDE:
+  - .*/(\.pio|\.vscode|\.platformio|build|\.git|node_modules)/.*
+  - .*/lib/.*
+  - .*/data/.*
+  - .*\.min\.(js|css)
+  - .*/test/.*
+
+# C++ specific settings
+CPP_FILE_EXTENSIONS: "cpp,hpp,h,c"
+
+# Markdown specific settings - line length 150
+MARKDOWN_LINT_LINE_LENGTH: 150
+
+# Use custom configuration files
+MARKDOWNLINT_CONFIG_FILE: .markdownlint.yml
+YAMLLINT_CONFIG_FILE: .yamllint.yml
+
+# Don't treat warnings as errors
+WARNINGS_AS_ERRORS: false
+
+# Only lint changed files in PR mode
+VALIDATE_ALL_CODEBASE: false
+
+# Logging
+LOG_LEVEL: NOTICE
+
+# Parallel execution
+PARALLEL: false
