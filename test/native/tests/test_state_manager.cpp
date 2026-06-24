@@ -17,33 +17,42 @@ extern void test_pass(const char *file, int line);
 extern void test_fail(const char *file, int line, const char *msg);
 extern void test_suite_end(const char *name, int passed, int failed);
 
-#define ASSERT_TRUE(cond) do { \
-  if (!(cond)) { \
-    test_fail(__FILE__, __LINE__, "Expected true: " #cond); \
-    return 1; \
-  } \
-  test_pass(__FILE__, __LINE__); \
-} while (0)
+#define ASSERT_TRUE(cond)                                     \
+  do {                                                        \
+    if (!(cond)) {                                            \
+      test_fail(__FILE__, __LINE__, "Expected true: " #cond); \
+      return 1;                                               \
+    }                                                         \
+    test_pass(__FILE__, __LINE__);                            \
+  } while (0)
 
 #define ASSERT_FALSE(cond) ASSERT_TRUE(!(cond))
 
-#define ASSERT_EQ(a, b) do { \
-  auto _a = (a); auto _b = (b); \
-  if (_a != _b) { \
-    char _msg[256]; snprintf(_msg, sizeof(_msg), "Expected %s == %s: got %lld vs %lld", #a, #b, (long long)_a, (long long)_b); \
-    test_fail(__FILE__, __LINE__, _msg); return 1; \
-  } \
-  test_pass(__FILE__, __LINE__); \
-} while (0)
+#define ASSERT_EQ(a, b)                                                                                          \
+  do {                                                                                                           \
+    auto _a = (a);                                                                                               \
+    auto _b = (b);                                                                                               \
+    if (_a != _b) {                                                                                              \
+      char _msg[256];                                                                                            \
+      snprintf(_msg, sizeof(_msg), "Expected %s == %s: got %lld vs %lld", #a, #b, (long long)_a, (long long)_b); \
+      test_fail(__FILE__, __LINE__, _msg);                                                                       \
+      return 1;                                                                                                  \
+    }                                                                                                            \
+    test_pass(__FILE__, __LINE__);                                                                               \
+  } while (0)
 
-#define ASSERT_STREQ(a, b) do { \
-  const char *_a = (a); const char *_b = (b); \
-  if (strcmp(_a, _b) != 0) { \
-    char _msg[256]; snprintf(_msg, sizeof(_msg), "Expected '%s' == '%s': got '%s' vs '%s'", #a, #b, _a, _b); \
-    test_fail(__FILE__, __LINE__, _msg); return 1; \
-  } \
-  test_pass(__FILE__, __LINE__); \
-} while (0)
+#define ASSERT_STREQ(a, b)                                                                     \
+  do {                                                                                         \
+    const char *_a = (a);                                                                      \
+    const char *_b = (b);                                                                      \
+    if (strcmp(_a, _b) != 0) {                                                                 \
+      char _msg[256];                                                                          \
+      snprintf(_msg, sizeof(_msg), "Expected '%s' == '%s': got '%s' vs '%s'", #a, #b, _a, _b); \
+      test_fail(__FILE__, __LINE__, _msg);                                                     \
+      return 1;                                                                                \
+    }                                                                                          \
+    test_pass(__FILE__, __LINE__);                                                             \
+  } while (0)
 
 int run_state_manager_tests() {
   int passed = 0, failed = 0;

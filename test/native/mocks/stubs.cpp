@@ -32,32 +32,59 @@ enum class TimeDegradation : uint8_t { GREEN = 0, YELLOW = 1, RED = 2 };
 //  of getCurrentDateTime, getStartTime, getEndTime, calculateEffectiveEndMinutes)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-bool isTimeSyncValid() { return true; }
+bool isTimeSyncValid() {
+  return true;
+}
 
 // TimeClientHelper stubs
-int getTzCount() { return 1; }
-int getTimezoneLabelCount() { return 0; }
+int getTzCount() {
+  return 1;
+}
+int getTimezoneLabelCount() {
+  return 0;
+}
 const char *const *getTimezoneLabelList() {
   static const char *labels[] = {"UTC", "Europe/Berlin", nullptr};
   return labels;
 }
-int getTimezoneIndexFromLabel(const String &) { return 0; }
-String getFormattedTime(time_t) { return String("12:00"); }
-time_t getUtcTime() { return 0; }
-int getTimezoneIndex() { return 0; }
-time_t getLastValidSyncTime() { return 0; }
-bool forceNtpUpdate() { return true; }
-void setTimeDegradationGreenHours(uint8_t) {}
-uint8_t getTimeDegradationGreenHours() { return 1; }
-void setTimeDegradationRedHours(uint8_t) {}
-uint8_t getTimeDegradationRedHours() { return 24; }
-
-time_t getTimeFor(int tzIndex, TimeChangeRule **tcr) {
-  if (tcr) *tcr = nullptr;
+int getTimezoneIndexFromLabel(const String &) {
   return 0;
 }
-String getTimeInfoFor(int) { return String("UTC"); }
-TimeDegradation getTimeDegradation() { return TimeDegradation::GREEN; }
+String getFormattedTime(time_t) {
+  return String("12:00");
+}
+time_t getUtcTime() {
+  return 0;
+}
+int getTimezoneIndex() {
+  return 0;
+}
+time_t getLastValidSyncTime() {
+  return 0;
+}
+bool forceNtpUpdate() {
+  return true;
+}
+void setTimeDegradationGreenHours(uint8_t) {}
+uint8_t getTimeDegradationGreenHours() {
+  return 1;
+}
+void setTimeDegradationRedHours(uint8_t) {}
+uint8_t getTimeDegradationRedHours() {
+  return 24;
+}
+
+time_t getTimeFor(int tzIndex, TimeChangeRule **tcr) {
+  if (tcr)
+    *tcr = nullptr;
+  return 0;
+}
+String getTimeInfoFor(int) {
+  return String("UTC");
+}
+TimeDegradation getTimeDegradation() {
+  return TimeDegradation::GREEN;
+}
 void setTimezoneIndex(int) {}
 void timeClientSetup(const char *) {}
 
@@ -69,17 +96,30 @@ void syncSystemClock() {
 }
 
 // TimeLib stubs
-time_t now() { return 0; }
+time_t now() {
+  return 0;
+}
 void setTime(time_t) {}
 void setTime(int, int, int, int, int, int) {}
-time_t makeTime(const tmElements_t &) { return 0; }
+time_t makeTime(const tmElements_t &) {
+  return 0;
+}
 void breakTime(time_t, tmElements_t &) {}
-int dayStr(int) { return 0; }
-int monthStr(int) { return 0; }
-time_t previousMidnight(time_t t) { (void)t; return 0; }
+int dayStr(int) {
+  return 0;
+}
+int monthStr(int) {
+  return 0;
+}
+time_t previousMidnight(time_t t) {
+  (void)t;
+  return 0;
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ESP32 hardware stubs
 // ═══════════════════════════════════════════════════════════════════════════════
 
-uint8_t temprature_sens_read() { return 25; }
+uint8_t temprature_sens_read() {
+  return 25;
+}

@@ -37,7 +37,8 @@ public:
     prefs.begin("pool-controller", true);
     float value = prefs.getFloat(key, defaultValue);
     prefs.end();
-    if (isnan(value) || value < -1000.0f || value > 1000.0f) return defaultValue;
+    if (isnan(value) || value < -1000.0f || value > 1000.0f)
+      return defaultValue;
     return value;
   }
 
@@ -54,7 +55,8 @@ public:
     prefs.begin("pool-controller", true);
     int value = prefs.getInt(key, defaultValue);
     prefs.end();
-    if (value < -10000 || value > 10000) return defaultValue;
+    if (value < -10000 || value > 10000)
+      return defaultValue;
     return value;
   }
 
@@ -82,4 +84,4 @@ public:
   }
 };
 
-} // namespace PoolController
+}  // namespace PoolController

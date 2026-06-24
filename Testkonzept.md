@@ -215,7 +215,7 @@ Fehlend: ~4.531 Zeilen
 | P4: HW-nahe Module | OLED, Buttons, Dallas, ESP, PoolController | ~400 Z. Testcode | ~2.000 | +11 % → ~88 % |
 | P5: Integration | Querschnitt | ~200 Z. Testcode | — | Absicherung |
 
-**Realistisches Ziel nach P1+P2+P3: ~77 % Line Coverage**
+### Realistisches Ziel nach P1+P2+P3: ~77 % Line Coverage
 
 **Ziel von 80 % erreichbar mit:** P1 + P2 + P3 + Teilen von P4 (insb. ConfigManager, RelayModuleNode, DallasTemperatureNode).
 
@@ -266,7 +266,8 @@ set(PRODUCTION_SOURCES
 )
 ```
 
-**Wrapper-Ansatz beibehalten:** Für WebPortal und MqttPublisher, die direkt Node-Header inkludieren (Mock-Layout weicht ab). Andere Module können direkt aus `src/` kompiliert werden.
+**Wrapper-Ansatz beibehalten:** Für WebPortal und MqttPublisher, die direkt Node-Header
+inkludieren (Mock-Layout weicht ab). Andere Module können direkt aus `src/` kompiliert werden.
 
 ### 5.2 Umgang mit Hardware-Abhängigkeiten
 
