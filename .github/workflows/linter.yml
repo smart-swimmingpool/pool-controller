@@ -52,4 +52,4 @@ jobs:
         uses: oxsecurity/megalinter@v7
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ENABLE: BASH,CPP,EDITORCONFIG,GITHUB_ACTIONS,GITLEAKS,JSON,MARKDOWN,YAML
+          VALIDATE_ALL_CODEBASE: true
