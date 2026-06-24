@@ -1,0 +1,50 @@
+# MegaLinter Configuration for pool-controller
+# See https://megalinter.io/7.1.0/configuration/
+---
+APPLY_FIXES: none
+DEFAULT_BRANCH: main
+
+# Only enable linters relevant to this project (matching old SuperLinter config)
+ENABLE:
+  - ACTION
+  - BASH
+  - C
+  - CPP
+  - EDITORCONFIG
+  - JSON
+  - MAKEFILE
+  - MARKDOWN
+  - SPELL
+  - YAML
+
+# Disable specific linters that produce noise
+DISABLE:
+  - COPYPASTE
+  - CSS
+  - HTML
+  - JAVASCRIPT
+  - PYTHON
+  - REPOSITORY
+  - TYPESCRIPT
+
+DISABLE_LINTERS:
+  - MARKDOWN_MARKDOWN_LINK_CHECK
+  - MARKDOWN_MARKDOWN_TABLE_FORMATTER
+  - SPELL_CSPELL
+  - JSON_PRETTIER
+  - YAML_PRETTIER
+  - YAML_V8R
+
+# C/C++ specific settings
+C_CPPLINT_FILTER_REGEX_EXCLUDE: (\.pio|\.vscode|\.platformio|build|lib)/.*
+CPP_CPPLINT_FILTER_REGEX_EXCLUDE: (\.pio|\.vscode|\.platformio|build|lib)/.*
+
+# Markdown settings
+MARKDOWN_MARKDOWNLINT_ARGUMENTS: "--config .markdownlint.yml"
+MARKDOWN_MARKDOWNLINT_FILTER_REGEX_EXCLUDE: (\.pio|\.vscode|\.platformio|build|lib|node_modules)/.*
+
+# EditorConfig settings (exclude third-party libs)
+EDITORCONFIG_EDITORCONFIG_CHECKER_FILTER_REGEX_EXCLUDE: (\.pio|\.vscode|\.platformio|build|lib|node_modules)/.*
+
+# JSON settings
+JSON_JSONLINT_FILTER_REGEX_EXCLUDE: (\.pio|\.vscode|\.platformio|build|lib|node_modules)/.*
