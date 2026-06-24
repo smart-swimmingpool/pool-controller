@@ -1,8 +1,10 @@
 #pragma once
 #include <ctime>
+#include <cstdint>
 
-// TimeDegradation is defined in the production TimeClientHelper.hpp
-// (always included via Timer.hpp → Rule.hpp chain).  Do NOT redefine it here.
+// TimeDegradation is defined in the production TimeClientHelper.hpp.
+// Do NOT redefine here — it's already included via Rule.hpp → Timer.hpp chain.
+// When needed in stubs.cpp, define it directly.
 
 // tm conversion helpers — shadow the declarations in TimeLib.h (mock).
 // These are NOT declared in the production TimeClientHelper.hpp.

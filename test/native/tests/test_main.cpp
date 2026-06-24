@@ -91,6 +91,8 @@ extern int run_config_manager_tests();
 extern int run_webportal_json_tests();
 extern int run_mqttpublisher_tests();
 extern int run_security_tests();
+extern int run_state_manager_tests();
+extern int run_timer_tests();
 
 int main() {
   printf("\n══════════════════════════════════════════════════\n");
@@ -103,6 +105,8 @@ int main() {
   total += run_webportal_json_tests();
   total += run_mqttpublisher_tests();
   total += run_security_tests();
+  total += run_state_manager_tests();
+  total += run_timer_tests();
 
   printf("\n══════════════════════════════════════════════════\n");
   printf("  Results: %d suites passed, %d suites failed\n", g_testsPassed, g_testsFailed);
