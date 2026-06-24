@@ -14,10 +14,6 @@ ENABLE:
   - MARKDOWN
   - YAML
 
-# Disable all other linters (none specifically disabled for pool-controller)
-DISABLE:
-  - ALL
-
 # Filter patterns - exclude build artifacts and dependencies
 # Must be a string, not a list
 FILTER_REGEX_EXCLUDE: |
