@@ -7,6 +7,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: oxsecurity/megalinter@v7.9.0
+      - uses: oxsecurity/megalinter@v7.8.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
