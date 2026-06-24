@@ -50,7 +50,7 @@ jobs:
       - name: Run MegaLinter
         uses: oxsecurity/megalinter@v7
         env:
-          VALIDATE_ALL_CODEBASE: false
+          VALIDATE_ALL_CODEBASE: true
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MEGALINTER_CONFIG: .megalinter.yml

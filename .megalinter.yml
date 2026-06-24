@@ -42,9 +42,6 @@ YAMLLINT_CONFIG_FILE: .yamllint.yml
 # Don't treat warnings as errors
 WARNINGS_AS_ERRORS: false
 
-# Only lint changed files in PR mode
-VALIDATE_ALL_CODEBASE: false
-
 # Logging
 LOG_LEVEL: NOTICE
 
