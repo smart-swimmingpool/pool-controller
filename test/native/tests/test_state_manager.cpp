@@ -10,7 +10,7 @@
 #include "Arduino.h"
 #include "StateManager.hpp"
 
-using namespace PoolController;
+using namespace PoolController;  // NOLINT(build/namespaces)
 
 extern void test_begin(const char *suite, const char *name);
 extern void test_pass(const char *file, int line);
