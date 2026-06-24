@@ -229,19 +229,19 @@ public:
     return true;
   }
   void end() { started_ = false; }
-  void clear() { data_.clear(); }
-  bool remove(const char *key) { data_.erase(key); return true; }
+  void clear() { s_data.clear(); }
+  bool remove(const char *key) { s_data.erase(key); return true; }
 
   size_t putBytes(const char *key, const void *value, size_t len) {
     if (!started_) return 0;
-    std::string &v = data_[key];
+    std::string &v = s_data[key];
     v.assign((const char*)value, len);
     return len;
   }
 
   size_t getBytes(const char *key, void *buf, size_t maxLen) {
-    if (!started_ || data_.find(key) == data_.end()) return 0;
-    const std::string &v = data_[key];
+    if (!started_ || s_data.find(key) == s_data.end()) return 0;
+    const std::string &v = s_data[key];
     size_t cpy = std::min(maxLen, v.size());
     memcpy(buf, v.data(), cpy);
     return cpy;
@@ -249,24 +249,24 @@ public:
 
   size_t putString(const char *key, const char *val) {
     if (!started_) return 0;
-    data_[key] = val;
+    s_data[key] = val;
     return strlen(val);
   }
 
   String getString(const char *key, const String &defaultVal = "") {
-    if (!started_ || data_.find(key) == data_.end()) return String(defaultVal);
-    return String(data_[key].c_str());
+    if (!started_ || s_data.find(key) == s_data.end()) return String(defaultVal);
+    return String(s_data[key].c_str());
   }
 
   size_t putInt(const char *key, int val) {
     if (!started_) return 0;
-    data_[key] = std::to_string(val);
+    s_data[key] = std::to_string(val);
     return sizeof(int);
   }
 
   int getInt(const char *key, int defaultVal = 0) {
-    if (!started_ || data_.find(key) == data_.end()) return defaultVal;
-    return atoi(data_[key].c_str());
+    if (!started_ || s_data.find(key) == s_data.end()) return defaultVal;
+    return atoi(s_data[key].c_str());
   }
 
   size_t putUInt(const char *key, unsigned int val) {
@@ -279,46 +279,46 @@ public:
 
   size_t putFloat(const char *key, float val) {
     if (!started_) return 0;
-    data_[key] = std::to_string(val);
+    s_data[key] = std::to_string(val);
     return sizeof(float);
   }
 
   float getFloat(const char *key, float defaultVal = 0.0f) {
-    if (!started_ || data_.find(key) == data_.end()) return defaultVal;
-    return atof(data_[key].c_str());
+    if (!started_ || s_data.find(key) == s_data.end()) return defaultVal;
+    return atof(s_data[key].c_str());
   }
 
   size_t putLong(const char *key, long val) {
     if (!started_) return 0;
-    data_[key] = std::to_string(val);
+    s_data[key] = std::to_string(val);
     return sizeof(long);
   }
 
   long getLong(const char *key, long defaultVal = 0) {
-    if (!started_ || data_.find(key) == data_.end()) return defaultVal;
-    return atol(data_[key].c_str());
+    if (!started_ || s_data.find(key) == s_data.end()) return defaultVal;
+    return atol(s_data[key].c_str());
   }
 
   size_t putDouble(const char *key, double val) {
     if (!started_) return 0;
-    data_[key] = std::to_string(val);
+    s_data[key] = std::to_string(val);
     return sizeof(double);
   }
 
   double getDouble(const char *key, double defaultVal = 0.0) {
-    if (!started_ || data_.find(key) == data_.end()) return defaultVal;
-    return atof(data_[key].c_str());
+    if (!started_ || s_data.find(key) == s_data.end()) return defaultVal;
+    return atof(s_data[key].c_str());
   }
 
   size_t putBool(const char *key, bool val) {
     if (!started_) return 0;
-    data_[key] = val ? "1" : "0";
+    s_data[key] = val ? "1" : "0";
     return 1;
   }
 
   bool getBool(const char *key, bool defaultVal = false) {
-    if (!started_ || data_.find(key) == data_.end()) return defaultVal;
-    return data_[key] == "1";
+    if (!started_ || s_data.find(key) == s_data.end()) return defaultVal;
+    return s_data[key] == "1";
   }
 
   size_t putUChar(const char *key, uint8_t val) {
@@ -341,12 +341,12 @@ public:
     return putString(key, val.c_str());
   }
 
-  bool isKey(const char *key) { return data_.find(key) != data_.end(); }
+  bool isKey(const char *key) { return s_data.find(key) != s_data.end(); }
 
 private:
   bool started_;
   std::string namespace_;
-  std::map<std::string, std::string> data_;
+  static std::map<std::string, std::string> s_data;
 };
 
 // ---- LittleFS / FS mock ----
@@ -560,7 +560,10 @@ inline time_t time(time_t *t) {
 }
 
 // ---- misc ----
+// NORVI_AE01_R is defined via -D in CMakeLists.txt
+#ifndef NORVI_AE01_R
 #define NORVI_AE01_R
+#endif
 #define LED_BUILTIN 2
 #define INPUT 0x0
 #define OUTPUT 0x1

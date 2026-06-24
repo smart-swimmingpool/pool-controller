@@ -10,6 +10,7 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fprofile-arcs -ftest-cove
 # PlatformIO compile definitions (normally passed via -D flags)
 add_definitions(-DGITHUB_REPO="smart-swimmingpool/pool-controller")
 add_definitions(-DFW_VERSION="3.3.0")
+add_definitions(-DNORVI_AE01_R)
 
 # Project root
 set(PROJ_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../..")
@@ -23,20 +24,23 @@ include_directories(
 )
 
 # ── Wrappers ──────────────────────────────────────────────────────────────
-# WebPortal and MqttPublisher include node-class headers
-# (DallasTemperatureNode, RelayModuleNode, …) whose mock layout differs from
-# production.  Compiling from wrappers/ avoids GCC's "current-file-directory
-# first" rule for #include "..." so the mock headers take effect.
-file(COPY ${PROJ_ROOT}/src/WebPortal.cpp    DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/wrappers)
+# WebPortal, MqttPublisher, and Timer include class headers whose mock layout
+# differs from production.  Compiling from wrappers/ avoids GCC's
+# "current-file-directory first" rule for #include "..." so the mock headers
+# take effect.
+file(COPY ${PROJ_ROOT}/src/WebPortal.cpp     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/wrappers)
 file(COPY ${PROJ_ROOT}/src/MqttPublisher.cpp DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/wrappers)
+file(COPY ${PROJ_ROOT}/src/Timer.cpp         DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/wrappers)
 
 set(WRAPPER_SOURCES
   ${CMAKE_CURRENT_BINARY_DIR}/wrappers/WebPortal.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/wrappers/MqttPublisher.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/wrappers/Timer.cpp
 )
 
-# Service classes (all static methods, no instance-layout concerns) compile
-# from src/ directly.
+# ── Service classes ───────────────────────────────────────────────────────
+# Compiled from src/ directly (their own headers are in src/, so they find
+# the production header first — only Arduino-level mocks are needed).
 set(SERVICE_SOURCES
   ${PROJ_ROOT}/src/StateManager.cpp
   ${PROJ_ROOT}/src/DegradationManager.cpp
@@ -61,6 +65,8 @@ set(TEST_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_webportal_json.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mqttpublisher.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_security.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_state_manager.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_timer.cpp
 )
 
 add_executable(test_runner
@@ -73,6 +79,7 @@ add_executable(test_runner
 target_include_directories(test_runner PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/mocks
   ${PROJ_ROOT}/src
+  ${CMAKE_CURRENT_BINARY_DIR}/wrappers
 )
 
 # Link gcov

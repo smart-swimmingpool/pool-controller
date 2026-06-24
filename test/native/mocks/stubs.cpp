@@ -15,49 +15,24 @@
 #include <ctime>
 
 #include "Arduino.h"
-#include "Rule.hpp"
 #include "TimeLib.h"
-#include "Timer.hpp"
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// Time helpers (normally in TimeClientHelper.cpp / Timer.cpp)
+// Local enum definition matching production TimeClientHelper.hpp
+// Defined here to avoid pulling in the production header (which transitively
+// includes Timezone.h / NTPClient.h via Timer.hpp → Rule.hpp chain when
+// compiled from subagent context).
 // ═══════════════════════════════════════════════════════════════════════════════
 
-tm getCurrentDateTime() {
-  tm t = {};
-  t.tm_year = 2024 - 1900;
-  t.tm_mon = 5;
-  t.tm_mday = 15;
-  t.tm_hour = 12;
-  t.tm_min = 0;
-  t.tm_sec = 0;
-  t.tm_wday = 6;
-  return t;
-}
+enum class TimeDegradation : uint8_t { GREEN = 0, YELLOW = 1, RED = 2 };
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Time helpers — only provide stubs for functions NOT in Timer.cpp
+// (Timer.cpp is compiled as a service source and provides real implementations
+//  of getCurrentDateTime, getStartTime, getEndTime, calculateEffectiveEndMinutes)
+// ═══════════════════════════════════════════════════════════════════════════════
 
 bool isTimeSyncValid() { return true; }
-
-tm getStartTime(const tm &baseTime, TimerSetting ts) {
-  tm t = baseTime;
-  t.tm_hour = ts.timerStartHour;
-  t.tm_min = ts.timerStartMinutes;
-  t.tm_sec = 0;
-  return t;
-}
-
-tm getEndTime(const tm &baseTime, TimerSetting ts) {
-  tm t = baseTime;
-  t.tm_hour = ts.timerEndHour;
-  t.tm_min = ts.timerEndMinutes;
-  t.tm_sec = 0;
-  return t;
-}
-
-uint16_t calculateEffectiveEndMinutes(uint16_t baseStartMinutes, uint16_t baseEndMinutes, float poolTemp) {
-  (void)baseStartMinutes;
-  (void)poolTemp;
-  return baseEndMinutes;
-}
 
 // TimeClientHelper stubs
 int getTzCount() { return 1; }
