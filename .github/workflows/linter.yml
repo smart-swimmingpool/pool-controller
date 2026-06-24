@@ -8,5 +8,5 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: oxsecurity/megalinter@v7.7.0
-        env:
+        with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
