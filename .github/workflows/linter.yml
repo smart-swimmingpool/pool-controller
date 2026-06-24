@@ -1,48 +1,16 @@
----
-###########################
-###########################
-## Linter GitHub Actions ##
-###########################
-###########################
-name: Lint Code Base
+name: MegaLinter
 
-#
-# Documentation:
-# https://help.github.com/en/articles/workflow-syntax-for-github-actions
-#
-
-#############################
-# Start the job on all push #
-#############################
 on:
   push:
-    branches:
-      - main
-      - master
+    branches: [main, master]
   pull_request:
+    branches: [main, master]
 
-# Cancel in-progress runs for the same workflow+ref when new commits are pushed
-
-permissions:
-  contents: read
-
-###############
-# Set the Job #
-###############
 jobs:
-  mega-linter:
-    name: MegaLinter
+  build:
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: read
-
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v7
-        with:
-
-      - name: Run MegaLinter
-        uses: oxsecurity/megalinter@v7.11.0
+      - uses: actions/checkout@v7
+      - uses: oxsecurity/megalinter@v7.11.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
