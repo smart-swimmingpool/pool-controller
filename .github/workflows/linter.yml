@@ -51,9 +51,13 @@ jobs:
         uses: oxsecurity/megalinter@v7
         env:
           VALIDATE_ALL_CODEBASE: true
-          DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MEGALINTER_CONFIG: .megalinter.yml
+          ENABLE: BASH,CPP,EDITORCONFIG,GITHUB_ACTIONS,GITLEAKS,JSON,MARKDOWN,YAML
+          FILTER_REGEX_EXCLUDE: ".*\/(\.pio|\.vscode|\.platformio|build|\.git|node_modules)\/.*|.*\/lib\/.*|.*\/data\/.*|.*\.min\.(js|css)|.*\/test\/.*"
+          CPP_FILE_EXTENSIONS: "cpp,hpp,h,c"
+          MARKDOWN_LINT_LINE_LENGTH: 150
+          MARKDOWNLINT_CONFIG_FILE: .markdownlint.yml
+          YAMLLINT_CONFIG_FILE: .yamllint.yml
           PARALLEL: false
           WARNINGS_AS_ERRORS: false
           LOG_LEVEL: NOTICE
