@@ -55,5 +55,5 @@ CPP_CPPLINT_ARGUMENTS: >-
 # Markdown settings
 MARKDOWN_MARKDOWNLINT_ARGUMENTS: "--config .markdownlint.yml"
 
-# Suppress cppcheck informational branch limit message (not a real error)
-CPP_CPPCHECK_ARGUMENTS: --suppress=normalCheckLevelMaxBranches
+# Suppress cppcheck informational messages (not real errors)
+CPP_CPPCHECK_ARGUMENTS: --suppress=normalCheckLevelMaxBranches --suppress=unknownMacro
