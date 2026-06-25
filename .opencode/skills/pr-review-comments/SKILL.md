@@ -278,7 +278,7 @@ priority: P1
 spec: <spec-filename>.spec.md
 ````
 
-#### c) Create GitHub Issue
+### c) Create GitHub Issue
 
 ```bash
 gh issue create \
@@ -299,7 +299,7 @@ gh issue create \
 Originally raised in PR #N review comment."
 ```
 
-#### d) Commit Spec + Marker
+### d) Commit Spec + Marker
 
 ```bash
 git add openspec/
