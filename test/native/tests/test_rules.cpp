@@ -20,24 +20,29 @@ extern void test_pass(const char *file, int line);
 extern void test_fail(const char *file, int line, const char *msg);
 extern void test_suite_end(const char *name, int passed, int failed);
 
-#define ASSERT_TRUE(cond) do { \
-  if (!(cond)) { \
-    test_fail(__FILE__, __LINE__, "Expected true: " #cond); \
-    return 1; \
-  } \
-  test_pass(__FILE__, __LINE__); \
-} while (0)
+#define ASSERT_TRUE(cond)                                     \
+  do {                                                        \
+    if (!(cond)) {                                            \
+      test_fail(__FILE__, __LINE__, "Expected true: " #cond); \
+      return 1;                                               \
+    }                                                         \
+    test_pass(__FILE__, __LINE__);                            \
+  } while (0)
 
 #define ASSERT_FALSE(cond) ASSERT_TRUE(!(cond))
 
-#define ASSERT_EQ(a, b) do { \
-  auto _a = (a); auto _b = (b); \
-  if (_a != _b) { \
-    char _msg[256]; snprintf(_msg, sizeof(_msg), "Expected %s == %s: got %lld vs %lld", #a, #b, (long long)_a, (long long)_b); \
-    test_fail(__FILE__, __LINE__, _msg); return 1; \
-  } \
-  test_pass(__FILE__, __LINE__); \
-} while (0)
+#define ASSERT_EQ(a, b)                                                                                          \
+  do {                                                                                                           \
+    auto _a = (a);                                                                                               \
+    auto _b = (b);                                                                                               \
+    if (_a != _b) {                                                                                              \
+      char _msg[256];                                                                                            \
+      snprintf(_msg, sizeof(_msg), "Expected %s == %s: got %lld vs %lld", #a, #b, (long long)_a, (long long)_b); \
+      test_fail(__FILE__, __LINE__, _msg);                                                                       \
+      return 1;                                                                                                  \
+    }                                                                                                            \
+    test_pass(__FILE__, __LINE__);                                                                               \
+  } while (0)
 
 int run_rule_tests() {
   int passed = 0, failed = 0;
@@ -61,7 +66,8 @@ int run_rule_tests() {
       test_pass(__FILE__, __LINE__);
       passed++;
     } else {
-      char msg[64]; snprintf(msg, sizeof(msg), "Expected 600, got %u", runtime);
+      char msg[64];
+      snprintf(msg, sizeof(msg), "Expected 600, got %u", runtime);
       test_fail(__FILE__, __LINE__, msg);
       failed++;
     }
@@ -86,7 +92,8 @@ int run_rule_tests() {
       test_pass(__FILE__, __LINE__);
       passed++;
     } else {
-      char msg[64]; snprintf(msg, sizeof(msg), "Expected 480, got %u", runtime);
+      char msg[64];
+      snprintf(msg, sizeof(msg), "Expected 480, got %u", runtime);
       test_fail(__FILE__, __LINE__, msg);
       failed++;
     }
@@ -105,7 +112,8 @@ int run_rule_tests() {
       test_pass(__FILE__, __LINE__);
       passed++;
     } else {
-      char msg[64]; snprintf(msg, sizeof(msg), "Expected 600, got %u", runtime);
+      char msg[64];
+      snprintf(msg, sizeof(msg), "Expected 600, got %u", runtime);
       test_fail(__FILE__, __LINE__, msg);
       failed++;
     }
@@ -123,7 +131,8 @@ int run_rule_tests() {
       test_pass(__FILE__, __LINE__);
       passed++;
     } else {
-      char msg[64]; snprintf(msg, sizeof(msg), "Expected 1440, got %u", runtime);
+      char msg[64];
+      snprintf(msg, sizeof(msg), "Expected 1440, got %u", runtime);
       test_fail(__FILE__, __LINE__, msg);
       failed++;
     }
@@ -140,7 +149,8 @@ int run_rule_tests() {
       test_pass(__FILE__, __LINE__);
       passed++;
     } else {
-      char msg[64]; snprintf(msg, sizeof(msg), "Expected 0, got %u", runtime);
+      char msg[64];
+      snprintf(msg, sizeof(msg), "Expected 0, got %u", runtime);
       test_fail(__FILE__, __LINE__, msg);
       failed++;
     }
@@ -157,7 +167,7 @@ int run_rule_tests() {
     ts.timerEndHour = 18;
     ts.timerEndMinutes = 0;
     timer.setTimerSetting(ts);
-    timer.setCustomEndMinutes(20 * 60); // 20:00
+    timer.setCustomEndMinutes(20 * 60);  // 20:00
 
     // Extended: 20:00 - 08:00 = 12h = 720min
     uint16_t runtime = timer.getEffectiveRuntimeMinutes();
@@ -166,7 +176,8 @@ int run_rule_tests() {
       test_pass(__FILE__, __LINE__);
       passed++;
     } else {
-      char msg[64]; snprintf(msg, sizeof(msg), "Expected 720, got %u", runtime);
+      char msg[64];
+      snprintf(msg, sizeof(msg), "Expected 720, got %u", runtime);
       test_fail(__FILE__, __LINE__, msg);
       failed++;
     }

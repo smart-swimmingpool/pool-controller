@@ -30,7 +30,8 @@ DallasTemperatureNode::DallasTemperatureNode(const char *id, const char *name, c
 
 // ── Shared bus constructor ─────────────────────────────────────────────────
 
-DallasTemperatureNode::DallasTemperatureNode(const char *id, const char *name, DallasTemperature *sharedSensor, uint8_t deviceIndex, const int measurementInterval) {
+DallasTemperatureNode::DallasTemperatureNode(
+  const char *id, const char *name, DallasTemperature *sharedSensor, uint8_t deviceIndex, const int measurementInterval) {
   _id = id;
   _name = name;
   _pin = 0;  // not used in shared mode
@@ -66,16 +67,22 @@ void DallasTemperatureNode::getDeviceAddressString(char *buffer, size_t size) co
 }
 
 bool DallasTemperatureNode::getDetectedDeviceAddress(uint8_t index, DeviceAddress addr) const {
-  DallasTemperature *activeSensor = sharedSensor_ ? sharedSensor_ : const_cast<DallasTemperature*>(&sensor);
-  if (index >= numberOfDevices) { return false; }
+  DallasTemperature *activeSensor = sharedSensor_ ? sharedSensor_ : const_cast<DallasTemperature *>(&sensor);
+  if (index >= numberOfDevices) {
+    return false;
+  }
   return activeSensor->getAddress(addr, index);
 }
 
 float DallasTemperatureNode::getDetectedDeviceTemperature(uint8_t index) const {
-  DallasTemperature *activeSensor = sharedSensor_ ? sharedSensor_ : const_cast<DallasTemperature*>(&sensor);
-  if (index >= numberOfDevices) { return NAN; }
+  DallasTemperature *activeSensor = sharedSensor_ ? sharedSensor_ : const_cast<DallasTemperature *>(&sensor);
+  if (index >= numberOfDevices) {
+    return NAN;
+  }
   DeviceAddress addr;
-  if (!activeSensor->getAddress(addr, index)) { return NAN; }
+  if (!activeSensor->getAddress(addr, index)) {
+    return NAN;
+  }
   return activeSensor->getTempC(addr);
 }
 
@@ -127,7 +134,8 @@ void DallasTemperatureNode::begin() {
       }
       if (!found) {
         Serial.printf("  ✖ %s: address filter not found! "
-          "Falling back to device index %d\n", _id, deviceIndex_);
+                      "Falling back to device index %d\n",
+          _id, deviceIndex_);
         if (activeSensor->getAddress(deviceAddress_, deviceIndex_)) {
           _sensorFound = true;
         }
@@ -139,7 +147,9 @@ void DallasTemperatureNode::begin() {
         char adr[18];
         address2String(deviceAddress_, adr, sizeof(adr));
         Serial.printf("  ◦ %s: no filter → device %d [%s]", _id, deviceIndex_, adr);
-        if (sharedSensor_) { Serial.print(" (shared bus)"); }
+        if (sharedSensor_) {
+          Serial.print(" (shared bus)");
+        }
         Serial.println();
       }
     }

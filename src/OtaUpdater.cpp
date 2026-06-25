@@ -282,13 +282,13 @@ bool OtaUpdater::fetchLatestRelease() {
   // This covers GitHub's CDN which may use various CA chains (Let's Encrypt, Sectigo, etc.)
   // Per openspec/specs/github-ca-chain.spec.md requirement R2
 #if defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
-  // Check if x509_crt_bundle and setCACertBundle are available (ESP32 Arduino core >= 2.0.0)
-  #if defined(x509_crt_bundle) && defined(ESP32_WiFiClientSecure_setCACertBundle)
-    client.setCACertBundle(x509_crt_bundle);
-  #else
-    // Fallback to single root CA for older ESP32 cores
-    client.setCACert(kGitHubRootCA);
-  #endif
+// Check if x509_crt_bundle and setCACertBundle are available (ESP32 Arduino core >= 2.0.0)
+#if defined(x509_crt_bundle) && defined(ESP32_WiFiClientSecure_setCACertBundle)
+  client.setCACertBundle(x509_crt_bundle);
+#else
+  // Fallback to single root CA for older ESP32 cores
+  client.setCACert(kGitHubRootCA);
+#endif
 #else
   // Fallback for non-ESP32 platforms - use single root CA
   client.setCACert(kGitHubRootCA);
@@ -397,13 +397,13 @@ bool OtaUpdater::downloadAndApply(const String &url) {
   // This covers GitHub's CDN which may use various CA chains (Let's Encrypt, Sectigo, etc.)
   // Per openspec/specs/github-ca-chain.spec.md requirement R2
 #if defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
-  // Check if x509_crt_bundle and setCACertBundle are available (ESP32 Arduino core >= 2.0.0)
-  #if defined(x509_crt_bundle) && defined(ESP32_WiFiClientSecure_setCACertBundle)
-    client.setCACertBundle(x509_crt_bundle);
-  #else
-    // Fallback to single root CA for older ESP32 cores
-    client.setCACert(kGitHubRootCA);
-  #endif
+// Check if x509_crt_bundle and setCACertBundle are available (ESP32 Arduino core >= 2.0.0)
+#if defined(x509_crt_bundle) && defined(ESP32_WiFiClientSecure_setCACertBundle)
+  client.setCACertBundle(x509_crt_bundle);
+#else
+  // Fallback to single root CA for older ESP32 cores
+  client.setCACert(kGitHubRootCA);
+#endif
 #else
   // Fallback for non-ESP32 platforms - use single root CA
   client.setCACert(kGitHubRootCA);
@@ -432,7 +432,7 @@ bool OtaUpdater::downloadAndApply(const String &url) {
   // Verify firmware size is reasonable (prevents integer overflow and bad downloads)
   // Typical firmware sizes: 200KB - 2MB
   const size_t kMaxFirmwareSize = 2 * 1024 * 1024;  // 2MB maximum
-  const size_t kMinFirmwareSize = 50 * 1024;       // 50KB minimum
+  const size_t kMinFirmwareSize = 50 * 1024;        // 50KB minimum
 
   if (static_cast<size_t>(totalSize) > kMaxFirmwareSize) {
     Serial.printf("OTA: Firmware too large: %d bytes (max %u)\n", totalSize, kMaxFirmwareSize);
@@ -540,14 +540,12 @@ bool OtaUpdater::hasSufficientSpace(size_t firmwareSize) {
   requiredSpace = std::max(requiredSpace, kMinFreeSpace);
 
   if (availableSpace < requiredSpace) {
-    Serial.printf("OTA: Insufficient flash space. Need %u bytes, have %u bytes\n",
-                 requiredSpace, availableSpace);
+    Serial.printf("OTA: Insufficient flash space. Need %u bytes, have %u bytes\n", requiredSpace, availableSpace);
     statusMessage_ = "Error: Insufficient flash space";
     return false;
   }
 
-  Serial.printf("OTA: Sufficient space available (%u bytes free, %u bytes required)\n",
-               availableSpace, requiredSpace);
+  Serial.printf("OTA: Sufficient space available (%u bytes free, %u bytes required)\n", availableSpace, requiredSpace);
   return true;
 }
 

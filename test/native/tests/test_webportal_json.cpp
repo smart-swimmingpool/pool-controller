@@ -43,26 +43,33 @@ extern void test_pass(const char *file, int line);
 extern void test_fail(const char *file, int line, const char *msg);
 extern void test_suite_end(const char *name, int passed, int failed);
 
-#define ASSERT_TRUE(cond) do { \
-  if (!(cond)) { \
-    test_fail(__FILE__, __LINE__, "Expected true: " #cond); \
-    return 1; \
-  } \
-  test_pass(__FILE__, __LINE__); \
-} while (0)
+#define ASSERT_TRUE(cond)                                     \
+  do {                                                        \
+    if (!(cond)) {                                            \
+      test_fail(__FILE__, __LINE__, "Expected true: " #cond); \
+      return 1;                                               \
+    }                                                         \
+    test_pass(__FILE__, __LINE__);                            \
+  } while (0)
 
-#define ASSERT_STREQ(a, b) do { \
-  const char *_a = (a); const char *_b = (b); \
-  if (strcmp(_a, _b) != 0) { \
-    char _msg[256]; snprintf(_msg, sizeof(_msg), "Expected '%s' == '%s': got '%s' vs '%s'", #a, #b, _a, _b); \
-    test_fail(__FILE__, __LINE__, _msg); return 1; \
-  } \
-  test_pass(__FILE__, __LINE__); \
-} while (0)
+#define ASSERT_STREQ(a, b)                                                                     \
+  do {                                                                                         \
+    const char *_a = (a);                                                                      \
+    const char *_b = (b);                                                                      \
+    if (strcmp(_a, _b) != 0) {                                                                 \
+      char _msg[256];                                                                          \
+      snprintf(_msg, sizeof(_msg), "Expected '%s' == '%s': got '%s' vs '%s'", #a, #b, _a, _b); \
+      test_fail(__FILE__, __LINE__, _msg);                                                     \
+      return 1;                                                                                \
+    }                                                                                          \
+    test_pass(__FILE__, __LINE__);                                                             \
+  } while (0)
 
-#define ASSERT_GT(a, b) do { \
-  auto _a = (a); auto _b = (b); \
-  if (!(_a > _b)) {  // NOLINT \
+#define ASSERT_GT(a, b) \
+  do {                  \
+    auto _a = (a);      \
+    auto _b = (b);      \
+    if (!(_a > _b)) {  // NOLINT \
     char _msg[128]; snprintf(_msg, sizeof(_msg), "Expected %s > %s (%lld <= %lld)", #a, #b, (long long)_a, (long long)_b); \
     test_fail(__FILE__, __LINE__, _msg); return 1; \
   } \
@@ -135,18 +142,9 @@ int run_webportal_json_tests() {
     int errs = 0;
 
     // Check that all required keys are present
-    const char *requiredKeys[] = {
-      "pool_temp", "solar_temp", "ctrl_temp",
-      "pool_pump", "solar_pump",
-      "op_mode",
-      "uptime", "free_heap", "max_alloc",
-      "rssi", "wifi_connected", "mqtt_connected",
-      "local_ip", "fw_version",
-      "local_time", "local_time_epoch",
-      "timezone_name", "time_degradation",
-      "temp_max_pool", "temp_min_solar",
-      "effective_runtime", "ap_mode"
-    };
+    const char *requiredKeys[] = {"pool_temp", "solar_temp", "ctrl_temp", "pool_pump", "solar_pump", "op_mode", "uptime",
+      "free_heap", "max_alloc", "rssi", "wifi_connected", "mqtt_connected", "local_ip", "fw_version", "local_time",
+      "local_time_epoch", "timezone_name", "time_degradation", "temp_max_pool", "temp_min_solar", "effective_runtime", "ap_mode"};
 
     for (auto key : requiredKeys) {
       if (!doc.containsKey(key)) {
@@ -157,20 +155,21 @@ int run_webportal_json_tests() {
       }
     }
 
-    if (errs == 0) test_pass(__FILE__, __LINE__);
+    if (errs == 0)
+      test_pass(__FILE__, __LINE__);
     passed += (errs == 0) ? 1 : 0;
     failed += errs;
 
     // Verify field types
     ASSERT_TRUE(doc["pool_temp"].is<float>());
     ASSERT_TRUE(doc["pool_pump"].is<bool>());
-    ASSERT_TRUE(doc["op_mode"].is<const char*>());
+    ASSERT_TRUE(doc["op_mode"].is<const char *>());
     ASSERT_TRUE(doc["uptime"].is<unsigned long>());
     ASSERT_TRUE(doc["free_heap"].is<unsigned long>());
     ASSERT_TRUE(doc["rssi"].is<int>());
     ASSERT_TRUE(doc["wifi_connected"].is<bool>());
-    ASSERT_TRUE(doc["local_ip"].is<const char*>());
-    ASSERT_TRUE(doc["fw_version"].is<const char*>());
+    ASSERT_TRUE(doc["local_ip"].is<const char *>());
+    ASSERT_TRUE(doc["fw_version"].is<const char *>());
     ASSERT_TRUE(doc["ap_mode"].is<bool>());
 
     test_suite_end("WebPortal::apiGetStatus", errs == 0 ? 2 : 0, errs);
@@ -242,18 +241,18 @@ int run_webportal_json_tests() {
     ASSERT_TRUE(doc.containsKey("ntp"));
 
     // Verify wifi section
-    ASSERT_TRUE(doc["wifi"]["ssid"].is<const char*>());
+    ASSERT_TRUE(doc["wifi"]["ssid"].is<const char *>());
 
     // Verify mqtt section
     ASSERT_TRUE(doc["mqtt"]["port"].is<int>());
 
     // Verify settings section
-    ASSERT_TRUE(doc["settings"]["op_mode"].is<const char*>());
+    ASSERT_TRUE(doc["settings"]["op_mode"].is<const char *>());
     ASSERT_TRUE(doc["settings"]["temp_max_pool"].is<float>());
     ASSERT_TRUE(doc["settings"]["temp_circ_factor"].is<int>());
 
     // Verify ntp section
-    ASSERT_TRUE(doc["ntp"]["server"].is<const char*>());
+    ASSERT_TRUE(doc["ntp"]["server"].is<const char *>());
 
     test_suite_end("WebPortal::apiGetConfig", 1, 0);
     passed++;

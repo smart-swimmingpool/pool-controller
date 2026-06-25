@@ -48,7 +48,7 @@ extern ESP32TemperatureNode ctrlTemperatureNode;
 extern RelayModuleNode poolPumpNode;
 extern RelayModuleNode solarPumpNode;
 extern OperationModeNode operationModeNode;
-}
+}  // namespace PoolController
 
 // Global test helpers
 extern WebServerCapture wsCapture;
@@ -58,63 +58,84 @@ extern void test_pass(const char *file, int line);
 extern void test_fail(const char *file, int line, const char *msg);
 extern void test_suite_end(const char *name, int passed, int failed);
 
-#define ASSERT_TRUE(cond) do { \
-  if (!(cond)) { \
-    test_fail(__FILE__, __LINE__, "Expected true: " #cond); \
-    return 1; \
-  } \
-  test_pass(__FILE__, __LINE__); \
-} while (0)
+#define ASSERT_TRUE(cond)                                     \
+  do {                                                        \
+    if (!(cond)) {                                            \
+      test_fail(__FILE__, __LINE__, "Expected true: " #cond); \
+      return 1;                                               \
+    }                                                         \
+    test_pass(__FILE__, __LINE__);                            \
+  } while (0)
 
 #define ASSERT_FALSE(cond) ASSERT_TRUE(!(cond))
 
-#define ASSERT_EQ(a, b) do { \
-  auto _a = (a); auto _b = (b); \
-  if (_a != _b) { \
-    char _msg[256]; snprintf(_msg, sizeof(_msg), "Expected %s == %s: got %lld vs %lld", #a, #b, (long long)_a, (long long)_b); \
-    test_fail(__FILE__, __LINE__, _msg); return 1; \
-  } \
-  test_pass(__FILE__, __LINE__); \
-} while (0)
+#define ASSERT_EQ(a, b)                                                                                          \
+  do {                                                                                                           \
+    auto _a = (a);                                                                                               \
+    auto _b = (b);                                                                                               \
+    if (_a != _b) {                                                                                              \
+      char _msg[256];                                                                                            \
+      snprintf(_msg, sizeof(_msg), "Expected %s == %s: got %lld vs %lld", #a, #b, (long long)_a, (long long)_b); \
+      test_fail(__FILE__, __LINE__, _msg);                                                                       \
+      return 1;                                                                                                  \
+    }                                                                                                            \
+    test_pass(__FILE__, __LINE__);                                                                               \
+  } while (0)
 
-#define ASSERT_STREQ(a, b) do { \
-  const char *_a = (a); const char *_b = (b); \
-  if (strcmp(_a, _b) != 0) { \
-    char _msg[256]; snprintf(_msg, sizeof(_msg), "Expected '%s' == '%s': got '%s' vs '%s'", #a, #b, _a, _b); \
-    test_fail(__FILE__, __LINE__, _msg); return 1; \
-  } \
-  test_pass(__FILE__, __LINE__); \
-} while (0)
+#define ASSERT_STREQ(a, b)                                                                     \
+  do {                                                                                         \
+    const char *_a = (a);                                                                      \
+    const char *_b = (b);                                                                      \
+    if (strcmp(_a, _b) != 0) {                                                                 \
+      char _msg[256];                                                                          \
+      snprintf(_msg, sizeof(_msg), "Expected '%s' == '%s': got '%s' vs '%s'", #a, #b, _a, _b); \
+      test_fail(__FILE__, __LINE__, _msg);                                                     \
+      return 1;                                                                                \
+    }                                                                                          \
+    test_pass(__FILE__, __LINE__);                                                             \
+  } while (0)
 
-#define ASSERT_GT(a, b) do { \
-  auto _a = (a); auto _b = (b); \
-  if (!(_a > _b)) { /* NOLINT */ \
-    char _msg[128]; snprintf(_msg, sizeof(_msg), "Expected %s > %s (%lld <= %lld)", #a, #b, (long long)_a, (long long)_b); \
-    test_fail(__FILE__, __LINE__, _msg); return 1; \
-  } \
-  test_pass(__FILE__, __LINE__); \
-} while (0)
+#define ASSERT_GT(a, b)                                                                                      \
+  do {                                                                                                       \
+    auto _a = (a);                                                                                           \
+    auto _b = (b);                                                                                           \
+    if (!(_a > _b)) { /* NOLINT */                                                                           \
+      char _msg[128];                                                                                        \
+      snprintf(_msg, sizeof(_msg), "Expected %s > %s (%lld <= %lld)", #a, #b, (long long)_a, (long long)_b); \
+      test_fail(__FILE__, __LINE__, _msg);                                                                   \
+      return 1;                                                                                              \
+    }                                                                                                        \
+    test_pass(__FILE__, __LINE__);                                                                           \
+  } while (0)
 
-#define ASSERT_GTE(a, b) do { \
-  auto _a = (a); auto _b = (b); \
-  if (!(_a >= _b)) { /* NOLINT */ \
-    char _msg[128]; snprintf(_msg, sizeof(_msg), "Expected %s >= %s (%lld < %lld)", #a, #b, (long long)_a, (long long)_b); \
-    test_fail(__FILE__, __LINE__, _msg); return 1; \
-  } \
-  test_pass(__FILE__, __LINE__); \
-} while (0)
+#define ASSERT_GTE(a, b)                                                                                     \
+  do {                                                                                                       \
+    auto _a = (a);                                                                                           \
+    auto _b = (b);                                                                                           \
+    if (!(_a >= _b)) { /* NOLINT */                                                                          \
+      char _msg[128];                                                                                        \
+      snprintf(_msg, sizeof(_msg), "Expected %s >= %s (%lld < %lld)", #a, #b, (long long)_a, (long long)_b); \
+      test_fail(__FILE__, __LINE__, _msg);                                                                   \
+      return 1;                                                                                              \
+    }                                                                                                        \
+    test_pass(__FILE__, __LINE__);                                                                           \
+  } while (0)
 
-#define ASSERT_LT(a, b) do { \
-  auto _a = (a); auto _b = (b); \
-  if (!(_a < _b)) { /* NOLINT */ \
-    char _msg[128]; snprintf(_msg, sizeof(_msg), "Expected %s < %s (%lld >= %lld)", #a, #b, (long long)_a, (long long)_b); \
-    test_fail(__FILE__, __LINE__, _msg); return 1; \
-  } \
-  test_pass(__FILE__, __LINE__); \
-} while (0)
+#define ASSERT_LT(a, b)                                                                                      \
+  do {                                                                                                       \
+    auto _a = (a);                                                                                           \
+    auto _b = (b);                                                                                           \
+    if (!(_a < _b)) { /* NOLINT */                                                                           \
+      char _msg[128];                                                                                        \
+      snprintf(_msg, sizeof(_msg), "Expected %s < %s (%lld >= %lld)", #a, #b, (long long)_a, (long long)_b); \
+      test_fail(__FILE__, __LINE__, _msg);                                                                   \
+      return 1;                                                                                              \
+    }                                                                                                        \
+    test_pass(__FILE__, __LINE__);                                                                           \
+  } while (0)
 
 // Helper function to check if a string contains only printable ASCII
-bool isPrintableAscii(const std::string& str) {
+bool isPrintableAscii(const std::string &str) {
   for (char c : str) {
     if (c < 32 || c > 126) {
       return false;
@@ -124,7 +145,7 @@ bool isPrintableAscii(const std::string& str) {
 }
 
 // Helper function to check if a string is alphanumeric
-bool isAlphanumeric(const std::string& str) {
+bool isAlphanumeric(const std::string &str) {
   for (char c : str) {
     if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9'))) {
       return false;
@@ -373,9 +394,9 @@ int run_security_tests() {
   {
     test_begin("Security::MqttValidation", "accept valid mode commands");
 
-    const char* validModes[] = {"auto", "manu", "boost", "timer"};
+    const char *validModes[] = {"auto", "manu", "boost", "timer"};
 
-    for (const char* mode : validModes) {
+    for (const char *mode : validModes) {
       bool isValid = MqttPublisher::isValidCommand(String(mode), validModes, 4);
       ASSERT_TRUE(isValid);
     }
@@ -388,7 +409,7 @@ int run_security_tests() {
   {
     test_begin("Security::MqttValidation", "reject invalid mode commands");
 
-    const char* validModes[] = {"auto", "manu", "boost", "timer"};
+    const char *validModes[] = {"auto", "manu", "boost", "timer"};
 
     bool isValid = MqttPublisher::isValidCommand(String("invalid_mode"), validModes, 4);
     ASSERT_FALSE(isValid);
@@ -401,9 +422,9 @@ int run_security_tests() {
   {
     test_begin("Security::MqttValidation", "accept valid pump commands");
 
-    const char* validPumpCommands[] = {"ON", "OFF"};
+    const char *validPumpCommands[] = {"ON", "OFF"};
 
-    for (const char* cmd : validPumpCommands) {
+    for (const char *cmd : validPumpCommands) {
       bool isValid = MqttPublisher::isValidCommand(String(cmd), validPumpCommands, 2);
       ASSERT_TRUE(isValid);
     }
@@ -416,7 +437,7 @@ int run_security_tests() {
   {
     test_begin("Security::MqttValidation", "reject invalid pump commands");
 
-    const char* validPumpCommands[] = {"ON", "OFF"};
+    const char *validPumpCommands[] = {"ON", "OFF"};
 
     bool isValid = MqttPublisher::isValidCommand(String("TOGGLE"), validPumpCommands, 2);
     ASSERT_FALSE(isValid);
@@ -662,8 +683,7 @@ int run_security_tests() {
     String token = WebPortal::getCsrfToken();
 
     // Build expected cookie header (without Secure)
-    String expectedCookie = "session=" + token +
-                           "; Path=/; HttpOnly; SameSite=Strict; Max-Age=600";
+    String expectedCookie = "session=" + token + "; Path=/; HttpOnly; SameSite=Strict; Max-Age=600";
 
     // Verify it doesn't contain "Secure"
     bool hasSecure = expectedCookie.indexOf("Secure") != -1;
@@ -774,7 +794,7 @@ int run_security_tests() {
     test_begin("Security::OTA", "space checking constants are reasonable");
 
     // These are defined in OtaUpdater.hpp
-    const float kSpaceSafetyMargin = 0.15f;  // 15%
+    const float kSpaceSafetyMargin = 0.15f;    // 15%
     const size_t kMinFreeSpace = 1024 * 1024;  // 1MB
 
     ASSERT_GT(kSpaceSafetyMargin, 0.0f);

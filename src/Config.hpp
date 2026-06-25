@@ -83,7 +83,7 @@ constexpr std::uint8_t PIN_RELAY_SOLAR{12};
 /** @brief Status LED — external LED via transistor output 0.1 (open-collector, 100 mA max). */
 constexpr std::uint8_t PIN_LED_STATUS{27};
 /** @brief Optional warning LED — not used on NORVI. */
-constexpr std::int8_t  PIN_LED_WARN{-1};
+constexpr std::int8_t PIN_LED_WARN{-1};
 
 // ── NORVI-specific peripheral pins ─────────────────────────────────────────
 

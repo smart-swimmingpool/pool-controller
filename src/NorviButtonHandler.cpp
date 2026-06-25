@@ -23,7 +23,7 @@ namespace PoolController {
 // ── Static members ─────────────────────────────────────────────────────────
 
 NorviButtonHandler::Button NorviButtonHandler::currentButton_ = Button::NONE;
-NorviButtonHandler::Button NorviButtonHandler::stableButton_  = Button::NONE;
+NorviButtonHandler::Button NorviButtonHandler::stableButton_ = Button::NONE;
 uint32_t NorviButtonHandler::lastChangeMs_ = 0;
 uint32_t NorviButtonHandler::lastSampleMs_ = 0;
 uint16_t NorviButtonHandler::lastRaw_ = 0;
@@ -86,20 +86,25 @@ void NorviButtonHandler::loop() {
   }
 
   // ── Long-press detection (fire once after LONG_PRESS_MS) ─────────────
-  if (currentButton_ != Button::NONE && pressStartMs_ > 0 &&
-      (now - pressStartMs_ >= LONG_PRESS_MS)) {
+  if (currentButton_ != Button::NONE && pressStartMs_ > 0 && (now - pressStartMs_ >= LONG_PRESS_MS)) {
     pressStartMs_ = 0;  // Prevent re-firing
 
     // Fire long-press callbacks; skip short-press if callback consumed it
     switch (currentButton_) {
     case Button::ONE:
-      if (cbButton1Long_ && cbButton1Long_()) { return; }
+      if (cbButton1Long_ && cbButton1Long_()) {
+        return;
+      }
       break;
     case Button::TWO:
-      if (cbButton2Long_ && cbButton2Long_()) { return; }
+      if (cbButton2Long_ && cbButton2Long_()) {
+        return;
+      }
       break;
     case Button::THREE:
-      if (cbButton3Long_ && cbButton3Long_()) { return; }
+      if (cbButton3Long_ && cbButton3Long_()) {
+        return;
+      }
       break;
     default:
       break;
@@ -114,13 +119,16 @@ void NorviButtonHandler::loop() {
     // Fire callback on press (not release)
     switch (stableButton_) {
     case Button::ONE:
-      if (cbButton1_) cbButton1_();
+      if (cbButton1_)
+        cbButton1_();
       break;
     case Button::TWO:
-      if (cbButton2_) cbButton2_();
+      if (cbButton2_)
+        cbButton2_();
       break;
     case Button::THREE:
-      if (cbButton3_) cbButton3_();
+      if (cbButton3_)
+        cbButton3_();
       break;
     default:
       break;

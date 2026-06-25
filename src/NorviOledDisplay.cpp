@@ -85,58 +85,44 @@ static void dspCursor(int16_t x, int16_t y) {
 
 /// Fill rect with burn-in offset.
 static void dspFillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) {
-  display.fillRect(
-    x + NorviOledDisplay::getBurnInDx(),
-    y + NorviOledDisplay::getBurnInDy(),
-    w, h, color);
+  display.fillRect(x + NorviOledDisplay::getBurnInDx(), y + NorviOledDisplay::getBurnInDy(), w, h, color);
 }
 
 /// Draw filled triangle with burn-in offset.
-static void dspFillTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
-                            int16_t x2, int16_t y2, uint16_t color) {
-  display.fillTriangle(
-    x0 + NorviOledDisplay::getBurnInDx(), y0 + NorviOledDisplay::getBurnInDy(),
-    x1 + NorviOledDisplay::getBurnInDx(), y1 + NorviOledDisplay::getBurnInDy(),
-    x2 + NorviOledDisplay::getBurnInDx(), y2 + NorviOledDisplay::getBurnInDy(),
-    color);
+static void dspFillTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color) {
+  display.fillTriangle(x0 + NorviOledDisplay::getBurnInDx(), y0 + NorviOledDisplay::getBurnInDy(),
+    x1 + NorviOledDisplay::getBurnInDx(), y1 + NorviOledDisplay::getBurnInDy(), x2 + NorviOledDisplay::getBurnInDx(),
+    y2 + NorviOledDisplay::getBurnInDy(), color);
 }
 
 /// Draw circle with burn-in offset.
 static void dspDrawCircle(int16_t x, int16_t y, int16_t r, uint16_t color) {
-  display.drawCircle(x + NorviOledDisplay::getBurnInDx(),
-                     y + NorviOledDisplay::getBurnInDy(), r, color);
+  display.drawCircle(x + NorviOledDisplay::getBurnInDx(), y + NorviOledDisplay::getBurnInDy(), r, color);
 }
 
 /// Horizontal line with burn-in offset.
 static void dspHLine(int16_t x, int16_t y, int16_t w, uint16_t color) {
-  display.drawFastHLine(x + NorviOledDisplay::getBurnInDx(),
-                        y + NorviOledDisplay::getBurnInDy(), w, color);
+  display.drawFastHLine(x + NorviOledDisplay::getBurnInDx(), y + NorviOledDisplay::getBurnInDy(), w, color);
 }
 
 /// Vertical line with burn-in offset.
 static void dspVLine(int16_t x, int16_t y, int16_t h, uint16_t color) {
-  display.drawFastVLine(x + NorviOledDisplay::getBurnInDx(),
-                        y + NorviOledDisplay::getBurnInDy(), h, color);
+  display.drawFastVLine(x + NorviOledDisplay::getBurnInDx(), y + NorviOledDisplay::getBurnInDy(), h, color);
 }
 
 /// Rounded rect with burn-in offset.
-static void dspRoundRect(int16_t x, int16_t y, int16_t w, int16_t h,
-                         int16_t r, uint16_t color) {
-  display.drawRoundRect(x + NorviOledDisplay::getBurnInDx(),
-                        y + NorviOledDisplay::getBurnInDy(), w, h, r, color);
+static void dspRoundRect(int16_t x, int16_t y, int16_t w, int16_t h, int16_t r, uint16_t color) {
+  display.drawRoundRect(x + NorviOledDisplay::getBurnInDx(), y + NorviOledDisplay::getBurnInDy(), w, h, r, color);
 }
 
 /// Fill rounded rect with burn-in offset.
-static void dspFillRoundRect(int16_t x, int16_t y, int16_t w, int16_t h,
-                             int16_t r, uint16_t color) {
-  display.fillRoundRect(x + NorviOledDisplay::getBurnInDx(),
-                        y + NorviOledDisplay::getBurnInDy(), w, h, r, color);
+static void dspFillRoundRect(int16_t x, int16_t y, int16_t w, int16_t h, int16_t r, uint16_t color) {
+  display.fillRoundRect(x + NorviOledDisplay::getBurnInDx(), y + NorviOledDisplay::getBurnInDy(), w, h, r, color);
 }
 
 /// Fill circle with burn-in offset.
 static void dspFillCircle(int16_t x, int16_t y, int16_t r, uint16_t color) {
-  display.fillCircle(x + NorviOledDisplay::getBurnInDx(),
-                     y + NorviOledDisplay::getBurnInDy(), r, color);
+  display.fillCircle(x + NorviOledDisplay::getBurnInDx(), y + NorviOledDisplay::getBurnInDy(), r, color);
 }
 
 /**
@@ -220,9 +206,7 @@ void NorviOledDisplay::loop() {
   const uint32_t now = millis();
 
   // ── Auto-return to MAIN after idle timeout ──────────────────────────
-  if (currentPage_ != Page::MAIN &&
-      !isSetupActive() &&
-      (now - lastButtonPressMs_ >= AUTO_RETURN_MS)) {
+  if (currentPage_ != Page::MAIN && !isSetupActive() && (now - lastButtonPressMs_ >= AUTO_RETURN_MS)) {
     currentPage_ = Page::MAIN;
     forceRedraw_ = true;
   }
@@ -366,8 +350,8 @@ void NorviOledDisplay::drawPage() {
 static void drawButtonHints() {
   dspVLine(125, 14, 34, SSD1306_WHITE);
 
-  const auto page    = NorviOledDisplay::getCurrentPage();
-  const bool setup   = NorviOledDisplay::isSetupActive();
+  const auto page = NorviOledDisplay::getCurrentPage();
+  const bool setup = NorviOledDisplay::isSetupActive();
   const bool selSens = NorviOledDisplay::isSelectSensorStep();
   const bool selRole = NorviOledDisplay::isSelectRoleStep();
 
@@ -692,8 +676,7 @@ void NorviOledDisplay::drawWiFiSetupPage() {
   for (uint8_t y = 0; y < qr.size; y++) {
     for (uint8_t x = 0; x < qr.size; x++) {
       if (qrcode_getModule(&qr, x, y)) {
-        dspFillRect(qrX + x * QR_SCALE, qrY + y * QR_SCALE,
-                    QR_SCALE, QR_SCALE, SSD1306_WHITE);
+        dspFillRect(qrX + x * QR_SCALE, qrY + y * QR_SCALE, QR_SCALE, QR_SCALE, SSD1306_WHITE);
       }
     }
   }
@@ -803,7 +786,7 @@ void NorviOledDisplay::drawSensorSetupPage() {
     display.print(F("Assign as:"));
 
     const char *solarTxt = "  Solar  ";
-    const char *poolTxt  = "  Pool   ";
+    const char *poolTxt = "  Pool   ";
 
     if (setupRoleIsSolar_) {
       dspInvertedText(8, 34, solarTxt);
@@ -889,9 +872,9 @@ void NorviOledDisplay::drawFooter() {
 
 void NorviOledDisplay::formatUptime(uint32_t ms, char *buffer, size_t size) {
   const uint32_t totalSeconds = ms / 1000;
-  const uint32_t days  = totalSeconds / 86400;
+  const uint32_t days = totalSeconds / 86400;
   const uint32_t hours = (totalSeconds % 86400) / 3600;
-  const uint32_t mins  = (totalSeconds % 3600) / 60;
+  const uint32_t mins = (totalSeconds % 3600) / 60;
 
   if (days > 0) {
     snprintf(buffer, size, "%ud %uh %um", days, hours, mins);
@@ -957,8 +940,12 @@ void NorviOledDisplay::getMapping(uint8_t solarAddr[8], uint8_t poolAddr[8]) {
 
 void NorviOledDisplay::setupSelectPrevious() {
   uint8_t devCount = solarTemperatureNode.getDeviceCount();
-  if (devCount > 2) { devCount = 2; }
-  if (devCount == 0) { return; }
+  if (devCount > 2) {
+    devCount = 2;
+  }
+  if (devCount == 0) {
+    return;
+  }
   if (setupSelectedDev_ == 0) {
     setupSelectedDev_ = devCount - 1;
   } else {
@@ -969,8 +956,12 @@ void NorviOledDisplay::setupSelectPrevious() {
 
 void NorviOledDisplay::setupSelectNext() {
   uint8_t devCount = solarTemperatureNode.getDeviceCount();
-  if (devCount > 2) { devCount = 2; }
-  if (devCount == 0) { return; }
+  if (devCount > 2) {
+    devCount = 2;
+  }
+  if (devCount == 0) {
+    return;
+  }
   setupSelectedDev_ = (setupSelectedDev_ + 1) % devCount;
   forceRedraw_ = true;
 }
@@ -1012,7 +1003,9 @@ bool NorviOledDisplay::setupApplyAssignment() {
 
 bool NorviOledDisplay::isAddressZero(const uint8_t addr[8]) {
   for (uint8_t i = 0; i < 8; i++) {
-    if (addr[i] != 0) { return false; }
+    if (addr[i] != 0) {
+      return false;
+    }
   }
   return true;
 }
