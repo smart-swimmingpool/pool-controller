@@ -11,7 +11,7 @@
 #include <cstdint>
 
 // Provide dtostrf for native builds (normally an AVR function from avr-libc)
-inline char* dtostrf(double val, int width, int precision, char* buf) {
+inline char *dtostrf(double val, int width, int precision, char *buf) {
   // NOLINT: sizeof(buf) in a char* parameter gives pointer size (4 or 8),
   // not the actual buffer. Use 8 as a safe minimum — floatToString() callers
   // ensure bufferSize >= 8 before calling dtostrf, so writing up to 7 chars

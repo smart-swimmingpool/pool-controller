@@ -1,5 +1,5 @@
 # MegaLinter Configuration for pool-controller
-# See https://megalinter.io/7.1.0/configuration/
+# See https://megalinter.io/9.5.0/configuration/
 ---
 APPLY_FIXES: none
 DEFAULT_BRANCH: main
@@ -35,24 +35,25 @@ DISABLE_LINTERS:
   - YAML_PRETTIER
   - YAML_V8R
   - MAKEFILE_CHECKMAKE
+  # lychee produces too many false-positive broken link errors in CI
+  - SPELL_LYCHEE
+  # zizmor is a new linter in v9.5.0 requiring commit-hash-pinned actions
+  - ACTION_ZIZMOR
+
+# Exclude third-party and generated files from all applicable linters
+FILTER_REGEX_EXCLUDE: (\.pio|\.vscode|\.platformio|build|lib|test/native/(build|mocks)|node_modules)/.*
 
 # C/C++ cpplint settings
 # Use filters matching SuperLinter defaults to avoid flagging pre-existing code
 C_CPPLINT_ARGUMENTS: >-
   --linelength=130
   --filter=-legal/copyright,-build/include_subdir,-runtime/int,-whitespace/indent,-readability/casting,-build/header_guard,-runtime/threadsafety,-whitespace/line_length,-runtime/string,-runtime/printf,-runtime/references,-readability/todo,-readability/namespace,-build/c++11,-whitespace/newline,-build/namespaces
-C_CPPLINT_FILTER_REGEX_EXCLUDE: (\.pio|\.vscode|\.platformio|build|lib|test/native/mocks)/.*
 CPP_CPPLINT_ARGUMENTS: >-
   --linelength=130
   --filter=-legal/copyright,-build/include_subdir,-runtime/int,-whitespace/indent,-readability/casting,-build/header_guard,-runtime/threadsafety,-whitespace/line_length,-runtime/string,-runtime/printf,-runtime/references,-readability/todo,-readability/namespace,-build/c++11,-whitespace/newline,-build/namespaces
-CPP_CPPLINT_FILTER_REGEX_EXCLUDE: (\.pio|\.vscode|\.platformio|build|lib|test/native/mocks)/.*
 
 # Markdown settings
 MARKDOWN_MARKDOWNLINT_ARGUMENTS: "--config .markdownlint.yml"
-MARKDOWN_MARKDOWNLINT_FILTER_REGEX_EXCLUDE: (\.pio|\.vscode|\.platformio|build|lib|node_modules)/.*
 
-# EditorConfig settings (exclude third-party libs)
-EDITORCONFIG_EDITORCONFIG_CHECKER_FILTER_REGEX_EXCLUDE: (\.pio|\.vscode|\.platformio|build|lib|node_modules)/.*
-
-# JSON settings
-JSON_JSONLINT_FILTER_REGEX_EXCLUDE: (\.pio|\.vscode|\.platformio|build|lib|node_modules)/.*
+# Suppress cppcheck informational messages (not real errors)
+CPP_CPPCHECK_ARGUMENTS: --suppress=normalCheckLevelMaxBranches --suppress=unknownMacro

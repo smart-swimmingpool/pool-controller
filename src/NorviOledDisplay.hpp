@@ -40,22 +40,22 @@ class NorviOledDisplay {
 public:
   /** @brief Display page identifiers. */
   enum class Page : std::uint8_t {
-    MAIN = 0,       ///< Pool/Solar temps, operation mode, pump status
-    NETWORK,        ///< WiFi SSID, IP, MQTT state
-    SYSTEM,         ///< Uptime, free heap, firmware version
-    QRCODE,         ///< QR code link to web interface
-    WIFI_SETUP,     ///< Captive portal QR for first-time WiFi config
-    SENSOR_SETUP,   ///< Address mapping wizard (two-step)
-    COUNT           ///< Number of pages (sentinel)
+    MAIN = 0,      ///< Pool/Solar temps, operation mode, pump status
+    NETWORK,       ///< WiFi SSID, IP, MQTT state
+    SYSTEM,        ///< Uptime, free heap, firmware version
+    QRCODE,        ///< QR code link to web interface
+    WIFI_SETUP,    ///< Captive portal QR for first-time WiFi config
+    SENSOR_SETUP,  ///< Address mapping wizard (two-step)
+    COUNT          ///< Number of pages (sentinel)
   };
 
   // ── Sensor setup wizard states ───────────────────────────────────────
 
   /** @brief Sub-states for the sensor setup wizard. */
   enum class SetupStep : std::uint8_t {
-    IDLE,            ///< On SENSOR_SETUP page but not in active assignment
-    SELECT_SENSOR,   ///< S1/S2 picks a sensor, S3 confirms
-    SELECT_ROLE,     ///< S1/S2 picks Solar or Pool, S3 assigns
+    IDLE,           ///< On SENSOR_SETUP page but not in active assignment
+    SELECT_SENSOR,  ///< S1/S2 picks a sensor, S3 confirms
+    SELECT_ROLE,    ///< S1/S2 picks Solar or Pool, S3 assigns
   };
 
   // ── Public API ───────────────────────────────────────────────────────
@@ -109,8 +109,8 @@ public:
 
   // ── Setup-step queries (for button wiring) ───────────────────────────
 
-  static bool isSelectSensorStep()  { return setupStep_ == SetupStep::SELECT_SENSOR; }
-  static bool isSelectRoleStep()    { return setupStep_ == SetupStep::SELECT_ROLE; }
+  static bool isSelectSensorStep() { return setupStep_ == SetupStep::SELECT_SENSOR; }
+  static bool isSelectRoleStep() { return setupStep_ == SetupStep::SELECT_ROLE; }
 
   /** @brief Move sensor selection up (previous sensor). */
   static void setupSelectPrevious();
@@ -192,8 +192,8 @@ private:
   static constexpr uint32_t AUTO_RETURN_MS{60000};
 
   // ── Burn-in mitigation ───────────────────────────────────────────────
-  static int8_t burnInDx_;          ///< Current horizontal shift (px)
-  static int8_t burnInDy_;          ///< Current vertical shift (px)
+  static int8_t burnInDx_;  ///< Current horizontal shift (px)
+  static int8_t burnInDy_;  ///< Current vertical shift (px)
   static uint32_t lastBurnInShiftMs_;
   static constexpr uint32_t BURN_IN_CYCLE_MS{120000};  ///< Shift every 2 min
 
@@ -204,10 +204,10 @@ private:
   static bool setupPoolDone_;
   static uint8_t setupSolarAddr_[8];
   static uint8_t setupPoolAddr_[8];
-  static bool setupRoleIsSolar_;   ///< true = Solar, false = Pool (in SELECT_ROLE)
+  static bool setupRoleIsSolar_;  ///< true = Solar, false = Pool (in SELECT_ROLE)
 
   // ── First-boot flow tracking ─────────────────────────────────────────
-  static bool firstBootDone_;      ///< True after initial setup flow completed
+  static bool firstBootDone_;  ///< True after initial setup flow completed
 };
 
 }  // namespace PoolController

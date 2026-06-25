@@ -45,9 +45,8 @@ bool NetworkManager::begin() {
     // Publish online to LWT topic immediately (async, non-blocking)
     mqttClient_.publish("homeassistant/sensor/pool-controller/availability", 1, true, "online");
   });
-  mqttClient_.onDisconnect([](AsyncMqttClientDisconnectReason reason) {
-    Serial.printf("✖ MQTT disconnected, reason=%d\n", static_cast<int>(reason));
-  });
+  mqttClient_.onDisconnect(
+    [](AsyncMqttClientDisconnectReason reason) { Serial.printf("✖ MQTT disconnected, reason=%d\n", static_cast<int>(reason)); });
 
   if (ConfigManager::getWiFi().ssid.length() == 0) {
     Serial.println("⚠ No WiFi SSID configured! Starting AP mode.");
@@ -103,16 +102,29 @@ void NetworkManager::loop() {
       wl_status_t status = WiFi.status();
       const char *statusStr = "";
       switch (status) {
-      case WL_IDLE_STATUS:     statusStr = "IDLE"; break;
-      case WL_NO_SSID_AVAIL:   statusStr = "NO_SSID_AVAIL"; break;
-      case WL_SCAN_COMPLETED:  statusStr = "SCAN_COMPLETED"; break;
-      case WL_CONNECT_FAILED:  statusStr = "CONNECT_FAILED"; break;
-      case WL_CONNECTION_LOST: statusStr = "CONNECTION_LOST"; break;
-      case WL_DISCONNECTED:    statusStr = "DISCONNECTED"; break;
-      default:                 statusStr = "UNKNOWN"; break;
+      case WL_IDLE_STATUS:
+        statusStr = "IDLE";
+        break;
+      case WL_NO_SSID_AVAIL:
+        statusStr = "NO_SSID_AVAIL";
+        break;
+      case WL_SCAN_COMPLETED:
+        statusStr = "SCAN_COMPLETED";
+        break;
+      case WL_CONNECT_FAILED:
+        statusStr = "CONNECT_FAILED";
+        break;
+      case WL_CONNECTION_LOST:
+        statusStr = "CONNECTION_LOST";
+        break;
+      case WL_DISCONNECTED:
+        statusStr = "DISCONNECTED";
+        break;
+      default:
+        statusStr = "UNKNOWN";
+        break;
       }
-      Serial.printf("🔄 WiFi retry... status=%s (%d), elapsed=%ums\n",
-        statusStr, status, now - connectionStartTime_);
+      Serial.printf("🔄 WiFi retry... status=%s (%d), elapsed=%ums\n", statusStr, status, now - connectionStartTime_);
       connectWiFi();
     }
     return;
@@ -222,9 +234,8 @@ void NetworkManager::disconnectMqtt() {
 void NetworkManager::handleWiFiEvent(WiFiEvent_t event) {
   switch (event) {
   case ARDUINO_EVENT_WIFI_STA_GOT_IP:
-    Serial.printf(
-      "✓ WiFi connected! SSID: \"%s\", IP: %s, RSSI: %d dBm, Channel: %d\n",
-      WiFi.SSID().c_str(), WiFi.localIP().toString().c_str(), WiFi.RSSI(), WiFi.channel());
+    Serial.printf("✓ WiFi connected! SSID: \"%s\", IP: %s, RSSI: %d dBm, Channel: %d\n", WiFi.SSID().c_str(),
+      WiFi.localIP().toString().c_str(), WiFi.RSSI(), WiFi.channel());
     apModeActive_ = false;
     // Start mDNS responder so the device is reachable as pool-controller.local
     if (MDNS.begin("pool-controller")) {

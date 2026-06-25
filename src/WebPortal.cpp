@@ -19,8 +19,8 @@
 #if defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
 #include <esp_random.h>
 #else
-#include <cstdlib> // for random() in native tests
-#include <ctime>   // for time() in native tests
+#include <cstdlib>  // for random() in native tests
+#include <ctime>    // for time() in native tests
 #endif
 
 #include "ConfigManager.hpp"
@@ -136,7 +136,7 @@ static String generateSecureToken(size_t length) {
 void WebPortal::generateSessionToken() {
   // Generate cryptographically secure session token using ESP32 hardware RNG
   activeSessionToken_ = generateSecureToken(32);  // 32 characters = 192 bits of entropy
-  csrfToken_ = generateSecureToken(32);  // Generate new CSRF token for the session
+  csrfToken_ = generateSecureToken(32);           // Generate new CSRF token for the session
   sessionStartTime_ = millis();
   loginAttemptCount_ = 0;  // Reset login attempts on new session
 }
@@ -251,11 +251,13 @@ void WebPortal::setupRoutes() {
 
   // Sensor mapping endpoints
   server_.on("/api/sensors", HTTP_GET, []() {
-    if (!handleAuthentication()) return;
+    if (!handleAuthentication())
+      return;
     apiGetSensors();
   });
   server_.on("/api/sensors/map", HTTP_POST, []() {
-    if (!handleAuthentication()) return;
+    if (!handleAuthentication())
+      return;
     apiSaveSensorMapping();
   });
 
@@ -759,8 +761,7 @@ bool WebPortal::isLoginLockedOut() {
   if (loginAttemptCount_ >= kMaxLoginAttempts) {
     uint32_t now = millis();
     // Check if lockout period has passed (handle unsigned wrap-around)
-    if (now - lastLoginAttemptTime_ < kLoginLockoutMs &&
-        now >= lastLoginAttemptTime_) {
+    if (now - lastLoginAttemptTime_ < kLoginLockoutMs && now >= lastLoginAttemptTime_) {
       return true;  // Still locked out
     }
     // Lockout period has passed, reset counter
@@ -795,10 +796,9 @@ void WebPortal::apiLogin() {
     // Cookie with HttpOnly, SameSite, and shorter expiry
     // Note: Secure attribute removed because device serves UI on HTTP (port 80)
     // Adding Secure would prevent browsers from sending cookie back over http://
-    String cookieHeader = "session=" + activeSessionToken_ +
-                          "; Path=/; HttpOnly; SameSite=Strict; Max-Age=600";
+    String cookieHeader = "session=" + activeSessionToken_ + "; Path=/; HttpOnly; SameSite=Strict; Max-Age=600";
     server_.sendHeader("Set-Cookie", cookieHeader);
-    loginAttemptCount_ = 0; // Reset on successful login
+    loginAttemptCount_ = 0;  // Reset on successful login
     server_.send(200, "text/plain", "OK");
   } else {
     // Increment failed attempt counter
@@ -916,12 +916,14 @@ void WebPortal::apiUpdateInstall() {
  * @return true on success, false if the string is malformed.
  */
 static bool hexStringToAddress(const String &hex, uint8_t addr[8]) {
-  if (hex.length() != 16) return false;
+  if (hex.length() != 16)
+    return false;
   for (uint8_t i = 0; i < 8; i++) {
     char byteStr[3] = {hex[i * 2], hex[i * 2 + 1], '\0'};
     char *end = nullptr;
     unsigned long val = strtoul(byteStr, &end, 16);
-    if (end != byteStr + 2) return false;
+    if (end != byteStr + 2)
+      return false;
     addr[i] = static_cast<uint8_t>(val);
   }
   return true;
@@ -944,13 +946,11 @@ static void saveSensorMappingNvs(const uint8_t solarAddr[8], const uint8_t poolA
   prefs.end();
 
   char buf[17];
-  snprintf(buf, sizeof(buf), "%02X%02X%02X%02X%02X%02X%02X%02X",
-    solarAddr[0], solarAddr[1], solarAddr[2], solarAddr[3],
+  snprintf(buf, sizeof(buf), "%02X%02X%02X%02X%02X%02X%02X%02X", solarAddr[0], solarAddr[1], solarAddr[2], solarAddr[3],
     solarAddr[4], solarAddr[5], solarAddr[6], solarAddr[7]);
   Serial.printf("• Sensor mapping saved via WebUI — Solar [%s]", buf);
-  snprintf(buf, sizeof(buf), "%02X%02X%02X%02X%02X%02X%02X%02X",
-    poolAddr[0], poolAddr[1], poolAddr[2], poolAddr[3],
-    poolAddr[4], poolAddr[5], poolAddr[6], poolAddr[7]);
+  snprintf(buf, sizeof(buf), "%02X%02X%02X%02X%02X%02X%02X%02X", poolAddr[0], poolAddr[1], poolAddr[2], poolAddr[3], poolAddr[4],
+    poolAddr[5], poolAddr[6], poolAddr[7]);
   Serial.printf(", Pool [%s]\n", buf);
 }
 
@@ -988,8 +988,8 @@ void WebPortal::apiGetSensors() {
 
     // Format address as hex string
     char addrStr[17];
-    snprintf(addrStr, sizeof(addrStr), "%02X%02X%02X%02X%02X%02X%02X%02X",
-      addr[0], addr[1], addr[2], addr[3], addr[4], addr[5], addr[6], addr[7]);
+    snprintf(addrStr, sizeof(addrStr), "%02X%02X%02X%02X%02X%02X%02X%02X", addr[0], addr[1], addr[2], addr[3], addr[4], addr[5],
+      addr[6], addr[7]);
 
     // Deduplicate (same address may appear on shared bus)
     bool alreadySeen = false;
@@ -999,12 +999,14 @@ void WebPortal::apiGetSensors() {
         break;
       }
     }
-    if (alreadySeen) continue;
+    if (alreadySeen)
+      continue;
     seen[seenCount++] = addrStr;
 
     JsonObject dev = detected.add<JsonObject>();
     dev["address"] = addrStr;
-    if (!isnan(temp)) dev["temperature"] = temp;
+    if (!isnan(temp))
+      dev["temperature"] = temp;
   }
 
   // ── Current role mapping ────────────────────────────────────────────

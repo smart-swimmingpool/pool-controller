@@ -69,14 +69,17 @@ static PoolControllerContext *Self = nullptr;
 
 /** @brief Check if an 8-byte address is all zeros. */
 static bool isAddressZero(const uint8_t addr[8]) {
-  for (uint8_t i = 0; i < 8; i++) { if (addr[i] != 0) { return false; } }
+  for (uint8_t i = 0; i < 8; i++) {
+    if (addr[i] != 0) {
+      return false;
+    }
+  }
   return true;
 }
 
 /** @brief Format an 8-byte address into a hex string buffer (17 chars). */
 static void addressToString(const uint8_t addr[8], char *buf, size_t size) {
-  snprintf(buf, size, "%02X%02X%02X%02X%02X%02X%02X%02X",
-    addr[0], addr[1], addr[2], addr[3], addr[4], addr[5], addr[6], addr[7]);
+  snprintf(buf, size, "%02X%02X%02X%02X%02X%02X%02X%02X", addr[0], addr[1], addr[2], addr[3], addr[4], addr[5], addr[6], addr[7]);
 }
 
 /**
@@ -113,8 +116,7 @@ static void loadSensorAddressMapping() {
     Serial.printf("• Sensor mapping: Pool address loaded [%s]\n", buf);
   }
 
-  if ((slen == 8 && !isAddressZero(solarAddr)) ||
-      (plen == 8 && !isAddressZero(poolAddr))) {
+  if ((slen == 8 && !isAddressZero(solarAddr)) || (plen == 8 && !isAddressZero(poolAddr))) {
     Serial.println("• Sensor mapping: address filters applied (one or both sensors)");
   } else {
     Serial.println("• Sensor mapping: no addresses configured — using default device indices");
@@ -410,11 +412,9 @@ auto PoolControllerContext::setup() -> void {
   if (solarTemperatureNode.hasAddressFilter() || poolTemperatureNode.hasAddressFilter()) {
     char buf[17];
     solarTemperatureNode.getDeviceAddressString(buf, sizeof(buf));
-    Serial.printf("  ◦ Solar node → device [%s] (status: %s)\n",
-      buf, solarTemperatureNode.isSensorFound() ? "✓" : "✖");
+    Serial.printf("  ◦ Solar node → device [%s] (status: %s)\n", buf, solarTemperatureNode.isSensorFound() ? "✓" : "✖");
     poolTemperatureNode.getDeviceAddressString(buf, sizeof(buf));
-    Serial.printf("  ◦ Pool node  → device [%s] (status: %s)\n",
-      buf, poolTemperatureNode.isSensorFound() ? "✓" : "✖");
+    Serial.printf("  ◦ Pool node  → device [%s] (status: %s)\n", buf, poolTemperatureNode.isSensorFound() ? "✓" : "✖");
   }
 
   OperationModeNode::suppressPersist(false);

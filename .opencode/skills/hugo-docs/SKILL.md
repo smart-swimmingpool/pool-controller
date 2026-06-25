@@ -207,10 +207,10 @@ The `website` repo then rebuilds the Hugo site, which pulls the latest
 
 After pushing to `main`:
 
-1. Go to: https://github.com/smart-swimmingpool/pool-controller/actions
+1. Go to: <https://github.com/smart-swimmingpool/pool-controller/actions>
 2. Check the **"Alert `website` repository on `main` push"** workflow run
 3. Wait ~2-3 minutes for the website build
-4. Verify at: https://www.smart-swimmingpool.com
+4. Verify at: <https://www.smart-swimmingpool.com>
 
 ### Troubleshooting
 

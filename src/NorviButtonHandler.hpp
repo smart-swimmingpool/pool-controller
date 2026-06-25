@@ -45,9 +45,9 @@ public:
   /** @brief Identifiers for the three front-panel buttons. */
   enum class Button : std::uint8_t {
     NONE = 0,
-    ONE,    ///< Left / top button
-    TWO,    ///< Middle button
-    THREE   ///< Right / bottom button
+    ONE,   ///< Left / top button
+    TWO,   ///< Middle button
+    THREE  ///< Right / bottom button
   };
 
   using ButtonCallback = std::function<void()>;

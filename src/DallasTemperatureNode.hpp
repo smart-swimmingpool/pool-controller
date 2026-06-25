@@ -51,8 +51,7 @@ public:
    * respective device address from the conversion result. Requires a prior
    * call to sharedSensor->begin() before calling node.begin().
    */
-  DallasTemperatureNode(
-    const char *id, const char *name, DallasTemperature *sharedSensor, uint8_t deviceIndex,
+  DallasTemperatureNode(const char *id, const char *name, DallasTemperature *sharedSensor, uint8_t deviceIndex,
     const int measurementInterval = MEASUREMENT_INTERVAL);
 
   /** @brief Get the node identifier. */
@@ -119,14 +118,14 @@ private:
   DallasTemperature sensor;
 
   // Address filter (persistent mapping across reboots)
-  bool hasFilter_ = false;         ///< Whether an address filter is configured
-  DeviceAddress filterAddr_{};     ///< Address to match during begin()
+  bool hasFilter_ = false;      ///< Whether an address filter is configured
+  DeviceAddress filterAddr_{};  ///< Address to match during begin()
 
   // Shared bus members (only used in shared mode)
   DallasTemperature *sharedSensor_ = nullptr;  ///< External shared sensor (shared mode only)
-  uint8_t deviceIndex_ = 0;                     ///< Device index on the shared bus
-  bool isBusMaster_ = false;                    ///< True if this node drives requestTemperatures()
-  DeviceAddress deviceAddress_{};               ///< Cached device address for shared bus reads
+  uint8_t deviceIndex_ = 0;                    ///< Device index on the shared bus
+  bool isBusMaster_ = false;                   ///< True if this node drives requestTemperatures()
+  DeviceAddress deviceAddress_{};              ///< Cached device address for shared bus reads
 
   uint8_t numberOfDevices;
 

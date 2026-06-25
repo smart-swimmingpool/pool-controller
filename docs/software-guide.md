@@ -162,9 +162,9 @@ If you need to clear retained MQTT messages:
 mosquitto_pub -h hostname -t "homeassistant/sensor/pool-controller/pool-temp/state" -n -r
 ```
 
-## Configuration Persistence
+## MQTT Discovery Configuration Persistence
 
-Configuration is persisted in two independent storage systems, ensuring all
+Discovery configuration is persisted in two independent storage systems, ensuring all
 settings survive reboots and power failures:
 
 ### 1. ConfigManager — Device Settings (LittleFS)

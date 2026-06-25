@@ -117,7 +117,9 @@ The controller publishes these discovery configs:
 1. **Truncated JSON payload** — The serialization buffer must be **≥25% larger** than the actual JSON output. If HA doesn't show entities, check buffer sizes in `MqttPublisher.cpp`. See `Agents.md` §21 and the `cpp-memory-opt` skill.
 2. **Device ID mismatch** — `deviceId_` is generated once. Verify it's consistent across reboots.
 3. **Discovery retained flag** — HA Discovery messages should be published with `retained=true`.
-4. **`device_class: 'measurement'` / `expected SensorDeviceClass` errors** — These come from **stale retained MQTT messages of the old Homie framework** (Vorgänger-Firmware). The old Homie auto-discovery published sensor entities with `device_class: "measurement"`, which is not a valid `SensorDeviceClass` in newer Home Assistant versions. The current firmware uses correct component types (`number` for parameters, `sensor` only for actual sensors) and valid device classes (`temperature` or none). Fix: delete retained messages or delete the old device entry in HA (→ device registry).
+4. **`device_class: 'measurement'` / `expected SensorDeviceClass` errors** — These come from **stale retained MQTT messages of the old Homie framework** (Vorgänger-Firmware). The old Homie auto-discovery published sensor entities with `device_class: "measurement"`, which is not a valid `SensorDeviceClass` in newer Home Assistant versions.
+   The current firmware uses correct component types (`number` for parameters, `sensor` only for actual sensors) and valid device classes (`temperature` or none).
+   Fix: delete retained messages or delete the old device entry in HA (→ device registry).
 5. **Device disappears after cleanup / no new entities appear** — Discovery messages are only published **on boot / MQTT connect**. After deleting the old MQTT device in HA, a reboot of the ESP32 is required to re-publish discovery. Use `pio run --target upload` or power-cycle the device.
 
 **Manual verification**:
