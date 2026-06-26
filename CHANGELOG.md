@@ -2,6 +2,50 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.0.0](https://github.com/smart-swimmingpool/pool-controller/compare/v3.3.0...v4.0.0) (2026-06-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* The Homie MQTT protocol has been removed entirely. The controller now exclusively uses Home Assistant MQTT Discovery.
+
+### Features
+
+* add Home Assistant climate/thermostat MQTT entity ([d5daeb9](https://github.com/smart-swimmingpool/pool-controller/commit/d5daeb9f7f4dcad2fb2573404db898bd765bb743))
+* add mDNS responder for pool-controller.local discovery ([#95](https://github.com/smart-swimmingpool/pool-controller/issues/95)) ([b1252e7](https://github.com/smart-swimmingpool/pool-controller/commit/b1252e724750c0fa2cfaac1a25f66cc69dce9ba2))
+* convert WebUI to Progressive Web App (PWA) ([b2f05d1](https://github.com/smart-swimmingpool/pool-controller/commit/b2f05d132902474539d9e92bf4d3029e42e73eda))
+* **docs:** add KiCad 9.0 schematic generator and PDF exports ([#104](https://github.com/smart-swimmingpool/pool-controller/issues/104)) ([ff46191](https://github.com/smart-swimmingpool/pool-controller/commit/ff46191ddf8a77bf70babaede6aab5f7a07e1feb))
+* **docs:** Add Quick Start Guide, FAQ, and Safety Warnings ([#107](https://github.com/smart-swimmingpool/pool-controller/issues/107)) ([b0152e1](https://github.com/smart-swimmingpool/pool-controller/commit/b0152e1fc735dd44811d43082a439513ba065fac))
+* **mqtt:** set HA entity_category for all discovery entities ([375f40f](https://github.com/smart-swimmingpool/pool-controller/commit/375f40fe7d8fd8c9daa4c2b02fa5572ff6ea127a))
+* NORVI AE01-R hardware support with OLED display ([#117](https://github.com/smart-swimmingpool/pool-controller/issues/117)) ([964a1bd](https://github.com/smart-swimmingpool/pool-controller/commit/964a1bdc746f80b196f6e48d944a3e7575046a82))
+* **norvi:** add OLED display with 4 info pages, button navigation, and QR code ([34681e2](https://github.com/smart-swimmingpool/pool-controller/commit/34681e23be3a3eccf483a77d42e1d6e92a84f286))
+* OLED Menu-Navigation, Sensor-Mapping in WebUI+HA, mDNS ([f72bbe2](https://github.com/smart-swimmingpool/pool-controller/commit/f72bbe2c7622259a1592afe66d52fa17f5e94fa5))
+* optimierte Pin-Belegung (GPIO32/33/25/26) + Status-LED mit Homie-Blinkcodes ([c6ef387](https://github.com/smart-swimmingpool/pool-controller/commit/c6ef387ee16d64f1be46933f2d5b1b2d4116b7d1))
+* temperature-based circulation time with continuous extension ([b16a9d0](https://github.com/smart-swimmingpool/pool-controller/commit/b16a9d04251b28f5a5ebf0e2907b64bdaae4ca3d))
+* **ui:** add About section in More bottom sheet ([5919624](https://github.com/smart-swimmingpool/pool-controller/commit/59196247d43e934cb7b8ea60f642ed57f86320bb))
+* **ui:** iOS-style bottom tab bar with glassmorphism ([38eec43](https://github.com/smart-swimmingpool/pool-controller/commit/38eec4356f103e2711a2fa0165a09ba23fe43013))
+* **web:** add temperature-based circulation parameters to Web UI ([963bcde](https://github.com/smart-swimmingpool/pool-controller/commit/963bcde09209ebabb8f0c42bb17d1fe3491e77cc))
+* **web:** format effective runtime as duration in WebUI and HA ([b460b4f](https://github.com/smart-swimmingpool/pool-controller/commit/b460b4f5fea1bc054123adfd166d26f109309965))
+
+
+### Bug Fixes
+
+* add native test infrastructure with ASan and coverage reporting ([#98](https://github.com/smart-swimmingpool/pool-controller/issues/98)) ([1421a39](https://github.com/smart-swimmingpool/pool-controller/commit/1421a399b006d374d3e792495be230f1e73b02aa))
+* docs synced de/en ([909304d](https://github.com/smart-swimmingpool/pool-controller/commit/909304d27c94429fd9031a9f20a4c8ef6939d67c))
+* **ha:** select-Entity-Status ohne Temperatur publishen ([e6f32d7](https://github.com/smart-swimmingpool/pool-controller/commit/e6f32d70847f71d84468a25caf0756b1a72d0e59))
+* **ha:** Sensor-Mapping Discovery bei jedem MQTT-Reconnect publishen ([1ab82d9](https://github.com/smart-swimmingpool/pool-controller/commit/1ab82d99c806b2b8f7923b26e0c33a6fe6696708))
+* **mqtt:** prevent dangling pointer and duplicate callback on reconnect ([25090d7](https://github.com/smart-swimmingpool/pool-controller/commit/25090d772cbe6c58cba178e87a4e16bf318648e6))
+* restore telemetry updates and HA entity visibility ([716dfe6](https://github.com/smart-swimmingpool/pool-controller/commit/716dfe66a49507b6a0cb33b904c28bfb6101e171))
+* review findings for temperature-based circulation ([8784f25](https://github.com/smart-swimmingpool/pool-controller/commit/8784f2506e5b0798759c76631a1703773c479efc))
+* **ui:** display dashboard thresholds without-auth via /api/status, 4-across mode cards ([e68d4bf](https://github.com/smart-swimmingpool/pool-controller/commit/e68d4bfb268f6ab02ac15ce3186ecbe51ffc05ed))
+* **web:** clarify that timer start/end also applies in Auto mode ([5985a00](https://github.com/smart-swimmingpool/pool-controller/commit/5985a008e3a6168fa9b291c5210b3224eb2dd014))
+* **web:** remove leftover merge conflict markers in index.html ([#118](https://github.com/smart-swimmingpool/pool-controller/issues/118)) ([907b676](https://github.com/smart-swimmingpool/pool-controller/commit/907b67695357724857c8a73b54bd228dbf5d4459))
+
+
+### Miscellaneous Chores
+
+* remove deprecated Homie references across codebase ([1df0705](https://github.com/smart-swimmingpool/pool-controller/commit/1df070560d0441c365ecd11ef86649976468a8b3))
+
 ## [3.3.0](https://github.com/smart-swimmingpool/pool-controller/compare/v3.2.0...v3.3.0) (2026-06-06)
 
 ### Features
