@@ -83,5 +83,7 @@ jobs:
             echo "Error: firmware binary not found at ${BIN}"
             exit 1
           fi
+          ASSET="firmware-${{ matrix.environment }}.bin"
+          cp "${BIN}" "/tmp/${ASSET}"
           gh release upload "${{ needs.release-please.outputs.tag_name }}" \
-            "${BIN}#firmware-${{ matrix.environment }}.bin"
+            "/tmp/${ASSET}"
