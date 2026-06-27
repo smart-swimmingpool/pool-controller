@@ -8,6 +8,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include <ArduinoJson.h>
 #include <AsyncMqttClient.h>
 
 namespace PoolController {
@@ -64,7 +65,7 @@ private:
   static void publishSensorMappingDiscovery();
 
   static String getBaseTopic(const char *component, const char *objectId);
-  static String getDeviceJson();
+  static void addDeviceInfo(JsonDocument &doc);
   static void publishUpdateState();
   static void publishClimateState();
 
