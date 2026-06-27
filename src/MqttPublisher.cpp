@@ -442,11 +442,6 @@ void MqttPublisher::publishDiscovery() {
   publishSensorDiscovery("solar-sensor-found", "Solar Sensor Found", nullptr, nullptr, "mdi:check-network-outline", "diagnostic");
   publishSensorDiscovery("pool-sensor-found", "Pool Sensor Found", nullptr, nullptr, "mdi:check-network-outline", "diagnostic");
 
-  // ── Configuration (entity_category: "config") ──
-  publishSelectDiscovery("timezone", "Timezone", getTimezoneLabelList(), getTimezoneLabelCount(), "mdi:map-clock", "config");
-  publishNumberDiscovery("hysteresis", "Temperature Hysteresis", 0.0, 10.0, 0.1, "K", "mdi:delta", "config");
-  publishTextDiscovery("ntp-server", "NTP Server", "mdi:clock-outline");
-
   // Firmware Update entity
   publishUpdateDiscovery();
 
