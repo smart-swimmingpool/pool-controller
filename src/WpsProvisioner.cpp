@@ -68,7 +68,7 @@ auto startWps() -> bool {
     return false;
   }
 
-#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(6, 0, 0)
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
   const esp_err_t startErr = esp_wifi_wps_start();
 #else
   const esp_err_t startErr = esp_wifi_wps_start(0);
