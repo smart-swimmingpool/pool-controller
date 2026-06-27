@@ -48,11 +48,14 @@ void MqttPublisher::begin() {
   NetworkManager::setMqttCallback(handleMqttMessage);
 }
 
-String MqttPublisher::getDeviceJson() {
-  // Common device block to consolidate all entities in HA (F5 Fix)
-  return String("{\"identifiers\":[\"") + deviceId_ +
-    "\"],\"name\":\"Pool Controller\",\"manufacturer\":\"smart-swimmingpool\",\"model\":\"Pool Controller\",\"sw_version\":\"" +
-    FW_VERSION + "\"}";
+void MqttPublisher::addDeviceInfo(JsonDocument &doc) {
+  // Common device block to consolidate all entities in HA
+  JsonObject deviceObj = doc["device"].to<JsonObject>();
+  deviceObj["identifiers"][0] = deviceId_;
+  deviceObj["name"] = "Pool Controller";
+  deviceObj["manufacturer"] = "smart-swimmingpool";
+  deviceObj["model"] = "Pool Controller";
+  deviceObj["sw_version"] = FW_VERSION;
 }
 
 String MqttPublisher::getBaseTopic(const char *component, const char *objectId) {
@@ -80,12 +83,7 @@ void MqttPublisher::publishSensorDiscovery(const char *objectId, const char *nam
     doc["entity_category"] = entityCategory;
 
   // Embedded device block - manually add device info
-  JsonObject deviceObj = doc["device"].to<JsonObject>();
-  deviceObj["identifiers"][0] = deviceId_;
-  deviceObj["name"] = "Pool Controller";
-  deviceObj["manufacturer"] = "smart-swimmingpool";
-  deviceObj["model"] = "Pool Controller";
-  deviceObj["sw_version"] = FW_VERSION;
+  addDeviceInfo(doc);
 
   String payload;
   serializeJson(doc, payload);
@@ -109,12 +107,7 @@ void MqttPublisher::publishSwitchDiscovery(const char *objectId, const char *nam
   if (entityCategory)
     doc["entity_category"] = entityCategory;
   // Embedded device block - manually add device info
-  JsonObject deviceObj = doc["device"].to<JsonObject>();
-  deviceObj["identifiers"][0] = deviceId_;
-  deviceObj["name"] = "Pool Controller";
-  deviceObj["manufacturer"] = "smart-swimmingpool";
-  deviceObj["model"] = "Pool Controller";
-  deviceObj["sw_version"] = FW_VERSION;
+  addDeviceInfo(doc);
 
   String payload;
   serializeJson(doc, payload);
@@ -142,12 +135,7 @@ void MqttPublisher::publishSelectDiscovery(const char *objectId, const char *nam
   if (entityCategory)
     doc["entity_category"] = entityCategory;
   // Embedded device block - manually add device info
-  JsonObject deviceObj = doc["device"].to<JsonObject>();
-  deviceObj["identifiers"][0] = deviceId_;
-  deviceObj["name"] = "Pool Controller";
-  deviceObj["manufacturer"] = "smart-swimmingpool";
-  deviceObj["model"] = "Pool Controller";
-  deviceObj["sw_version"] = FW_VERSION;
+  addDeviceInfo(doc);
 
   String payload;
   serializeJson(doc, payload);
@@ -176,12 +164,7 @@ void MqttPublisher::publishNumberDiscovery(const char *objectId, const char *nam
   if (entityCategory)
     doc["entity_category"] = entityCategory;
   // Embedded device block - manually add device info
-  JsonObject deviceObj = doc["device"].to<JsonObject>();
-  deviceObj["identifiers"][0] = deviceId_;
-  deviceObj["name"] = "Pool Controller";
-  deviceObj["manufacturer"] = "smart-swimmingpool";
-  deviceObj["model"] = "Pool Controller";
-  deviceObj["sw_version"] = FW_VERSION;
+  addDeviceInfo(doc);
 
   String payload;
   serializeJson(doc, payload);
@@ -203,12 +186,7 @@ void MqttPublisher::publishTextDiscovery(const char *objectId, const char *name,
 
   if (icon)
     doc["icon"] = icon;
-  JsonObject deviceObj = doc["device"].to<JsonObject>();
-  deviceObj["identifiers"][0] = deviceId_;
-  deviceObj["name"] = "Pool Controller";
-  deviceObj["manufacturer"] = "smart-swimmingpool";
-  deviceObj["model"] = "Pool Controller";
-  deviceObj["sw_version"] = FW_VERSION;
+  addDeviceInfo(doc);
 
   String payload;
   serializeJson(doc, payload);
@@ -229,12 +207,7 @@ void MqttPublisher::publishTimeDiscovery(const char *objectId, const char *name,
     doc["icon"] = icon;
   if (entityCategory)
     doc["entity_category"] = entityCategory;
-  JsonObject deviceObj = doc["device"].to<JsonObject>();
-  deviceObj["identifiers"][0] = deviceId_;
-  deviceObj["name"] = "Pool Controller";
-  deviceObj["manufacturer"] = "smart-swimmingpool";
-  deviceObj["model"] = "Pool Controller";
-  deviceObj["sw_version"] = FW_VERSION;
+  addDeviceInfo(doc);
 
   String payload;
   serializeJson(doc, payload);
@@ -256,12 +229,7 @@ void MqttPublisher::publishUpdateDiscovery() {
   doc["device_class"] = "firmware";
   doc["entity_category"] = "config";
 
-  JsonObject deviceObj = doc["device"].to<JsonObject>();
-  deviceObj["identifiers"][0] = deviceId_;
-  deviceObj["name"] = "Pool Controller";
-  deviceObj["manufacturer"] = "smart-swimmingpool";
-  deviceObj["model"] = "Pool Controller";
-  deviceObj["sw_version"] = FW_VERSION;
+  addDeviceInfo(doc);
 
   String payload;
   serializeJson(doc, payload);
@@ -303,12 +271,7 @@ void MqttPublisher::publishClimateDiscovery() {
   doc["entity_category"] = "config";
 
   // Device block
-  JsonObject deviceObj = doc["device"].to<JsonObject>();
-  deviceObj["identifiers"][0] = deviceId_;
-  deviceObj["name"] = "Pool Controller";
-  deviceObj["manufacturer"] = "smart-swimmingpool";
-  deviceObj["model"] = "Pool Controller";
-  deviceObj["sw_version"] = FW_VERSION;
+  addDeviceInfo(doc);
 
   String payload;
   serializeJson(doc, payload);
