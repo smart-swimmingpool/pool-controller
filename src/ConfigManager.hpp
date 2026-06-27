@@ -47,21 +47,21 @@ struct ControllerSettings {
 };
 
 /**
- * @brief Manages persistent configuration via LittleFS (config.json).
+ * @brief Manages persistent configuration via NVS (Preferences).
  *
  * Provides access to WiFi, MQTT, NTP, and device settings. Config is
- * loaded on boot from LittleFS and saved on changes. Also manages the
+ * loaded on boot from NVS and saved on changes. Also manages the
  * admin password hash and boot-version tracking for OTA transitions.
  */
 class ConfigManager {
 public:
   ConfigManager() = default;
 
-  /** @brief Initialize ConfigManager and load config from LittleFS. @return true if config loaded. */
+  /** @brief Initialize ConfigManager and load config from NVS. @return true if config loaded. */
   static bool begin();
-  /** @brief (Re)load config from LittleFS. @return true on success. */
+  /** @brief (Re)load config from NVS. @return true on success. */
   static bool load();
-  /** @brief Save config to LittleFS. @return true on success. */
+  /** @brief Save config to NVS. @return true on success. */
   static bool save();
   /** @brief Reset config to factory defaults and save. */
   static void reset();
