@@ -32,10 +32,8 @@ bool NetworkManager::begin() {
   // Check if WPS button is held down at startup
   WpsProvisioner::runIfRequested();
 
-  // Refresh credentials in case WPS saved them
-  if (WpsProvisioner::runIfRequested != nullptr) {
-    ConfigManager::load();
-  }
+  // WPS may have saved new credentials — reload config
+  ConfigManager::load();
 
   WiFi.onEvent(handleWiFiEvent);
 
