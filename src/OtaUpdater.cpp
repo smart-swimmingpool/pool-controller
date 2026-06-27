@@ -333,16 +333,43 @@ bool OtaUpdater::fetchLatestRelease() {
   const char *htmlUrl = doc["html_url"];
   releaseUrl_ = htmlUrl ? String(htmlUrl) : "";
 
-  // Find the firmware binary asset
+  // Determine expected firmware asset name for this board type
+  String expectedAsset;
+#ifdef NORVI_AE01_R
+  expectedAsset = "firmware-norvi_ae01_r.bin";
+#else
+  expectedAsset = "firmware-esp32dev.bin";
+#endif
+
+  // Find the firmware binary asset — prefer board-specific, fall back to generic
   JsonArray assets = doc["assets"].as<JsonArray>();
   downloadUrl_ = "";
   for (JsonObject asset : assets) {
     const char *name = asset["name"];
-    if (name && strstr(name, ".bin") != nullptr) {
+    if (!name) continue;
+    if (strstr(name, ".bin") == nullptr) continue;
+
+    // Board-specific match takes priority
+    if (expectedAsset == String(name)) {
       const char *url = asset["browser_download_url"];
       if (url) {
         downloadUrl_ = String(url);
         break;
+      }
+    }
+  }
+
+  // Fallback: first generic .bin asset
+  if (downloadUrl_.length() == 0) {
+    for (JsonObject asset : assets) {
+      const char *name = asset["name"];
+      if (name && strstr(name, ".bin") != nullptr) {
+        const char *url = asset["browser_download_url"];
+        if (url) {
+          downloadUrl_ = String(url);
+          Serial.println("OTA: Board-specific asset not found, using generic firmware.bin");
+          break;
+        }
       }
     }
   }
