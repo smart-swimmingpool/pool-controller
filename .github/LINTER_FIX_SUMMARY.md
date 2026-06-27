@@ -193,7 +193,7 @@ Siehe [QUICK_REFERENCE.md](QUICK_REFERENCE.md) für Details.
 
 ---
 
-**Status**: ✅ Alle Super-Linter Fehler behoben  
-**Datum**: 2026-02-16  
-**Branch**: copilot/fix-arduino-linter-pipeline  
+**Status**: ✅ Alle Super-Linter Fehler behoben
+**Datum**: 2026-02-16
+**Branch**: copilot/fix-arduino-linter-pipeline
 **Commits**: 3 (Guidelines + Fixes + Quick Reference)

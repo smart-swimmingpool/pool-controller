@@ -275,6 +275,6 @@ Verwenden Sie diese Checkliste bei der Durchführung von Sicherheitsaudits:
 
 ---
 
-**📅 Zuletzt aktualisiert**: 2025-01-15  
-**🔍 Analyse durchgeführt von**: Vibe Code - IoT Security Expert Mode  
+**📅 Zuletzt aktualisiert**: 2025-01-15
+**🔍 Analyse durchgeführt von**: Vibe Code - IoT Security Expert Mode
 **📝 Verwandter PR**: [#112 - IoT Security & Memory Optimization Analysis](https://github.com/smart-swimmingpool/pool-controller/pull/112)
