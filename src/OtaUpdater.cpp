@@ -346,8 +346,10 @@ bool OtaUpdater::fetchLatestRelease() {
   downloadUrl_ = "";
   for (JsonObject asset : assets) {
     const char *name = asset["name"];
-    if (!name) continue;
-    if (strstr(name, ".bin") == nullptr) continue;
+    if (!name)
+      continue;
+    if (strstr(name, ".bin") == nullptr)
+      continue;
 
     // Board-specific match takes priority
     if (expectedAsset == String(name)) {
