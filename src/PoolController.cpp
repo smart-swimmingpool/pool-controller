@@ -251,12 +251,7 @@ auto PoolControllerContext::initializeController() -> void {
   operationModeNode.setSolarMinTemperature(ConfigManager::getSettings().tempMinSolar);
   operationModeNode.setTemperatureHysteresis(ConfigManager::getSettings().tempHysteresis);
 
-  TimerSetting ts = operationModeNode.getTimerSetting();
-  ts.timerStartHour = 10;
-  ts.timerStartMinutes = 30;
-  ts.timerEndHour = 17;
-  ts.timerEndMinutes = 30;
-  operationModeNode.setTimerSetting(ts);
+  // TimerSetting is loaded from NVS by OperationModeNode::begin() — no override needed
 
   operationModeNode.setPoolTemperatureNode(&poolTemperatureNode);
   operationModeNode.setSolarTemperatureNode(&solarTemperatureNode);
