@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.0.1](https://github.com/smart-swimmingpool/pool-controller/compare/v4.0.0...v4.0.1) (2026-06-28)
+
+
+### Bug Fixes
+
+* **ci:** use temp file to avoid gh release upload name collision ([d570745](https://github.com/smart-swimmingpool/pool-controller/commit/d57074557ca2314d99cf6ce8fe188a115848f646))
+* **mqtt:** remove duplicate Home Assistant Discovery entities ([9ef1526](https://github.com/smart-swimmingpool/pool-controller/commit/9ef1526f3550b12cb3826bbb39af8e12823a02e3))
+* **network:** remove always-true WPS function pointer check ([b0a339b](https://github.com/smart-swimmingpool/pool-controller/commit/b0a339bc40e011bd0ba74d6bbf311e9ff70e7d7f))
+* **network:** remove always-true WPS function pointer check ([e9a01bf](https://github.com/smart-swimmingpool/pool-controller/commit/e9a01bfcac79cff3efab83d1c80b920381e6079e))
+* **ota:** select correct firmware binary per board type ([34f93d2](https://github.com/smart-swimmingpool/pool-controller/commit/34f93d26547c37a6d60803427aad330d64b8de6a))
+* **pool-controller:** stop overriding persisted TimerSetting with hardcoded values ([3cfd43f](https://github.com/smart-swimmingpool/pool-controller/commit/3cfd43fbf67e643137710a84d27b333de9e55295))
+* **wps:** correct ESP-IDF version guard for esp_wifi_wps_start API ([ab98105](https://github.com/smart-swimmingpool/pool-controller/commit/ab98105cdd79088f312a577896fe9b3f584af0f4))
+* **wps:** correct ESP-IDF version guard for esp_wifi_wps_start API ([8d92db8](https://github.com/smart-swimmingpool/pool-controller/commit/8d92db896bf92dc92178ed60726722f9682672ca))
+* **wps:** correct ESP-IDF version guard for esp_wifi_wps_start API ([#124](https://github.com/smart-swimmingpool/pool-controller/issues/124)) ([ab98105](https://github.com/smart-swimmingpool/pool-controller/commit/ab98105cdd79088f312a577896fe9b3f584af0f4))
+
 ## [4.0.0](https://github.com/smart-swimmingpool/pool-controller/compare/v3.3.0...v4.0.0) (2026-06-25)
 
 
