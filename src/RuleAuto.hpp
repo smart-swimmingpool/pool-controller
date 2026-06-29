@@ -7,7 +7,7 @@
  * @brief Automatic solar-optimised mode — heats pool when solar temperature permits.
  */
 
-#pragmaonce
+#pragma once
 
 #include "Rule.hpp"
 #include "RelayModuleNode.hpp"
