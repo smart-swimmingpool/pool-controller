@@ -3,6 +3,7 @@
 ---
 APPLY_FIXES: none
 DEFAULT_BRANCH: main
+SECURITY_SUGGESTIONS: false
 
 # Only enable linters relevant to this project (matching old SuperLinter config)
 ENABLE:
