@@ -1,8 +1,10 @@
 // Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
+//
+// SPDX-License-Identifier: MIT
 
 /**
  * @file ConfigManager.cpp
- * @brief Persistent configuration — NVS read/write, JSON parsing, factory reset.
+ * @brief Persistent configuration — NVS (Preferences) read/write and factory reset.
  */
 
 #include "ConfigManager.hpp"

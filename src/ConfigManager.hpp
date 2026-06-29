@@ -1,8 +1,10 @@
 // Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
+//
+// SPDX-License-Identifier: MIT
 
 /**
  * @file ConfigManager.hpp
- * @brief Persistent configuration via LittleFS (JSON) — WiFi, MQTT, NTP, and device settings.
+ * @brief Persistent configuration via NVS (Preferences) — WiFi, MQTT, NTP, and device settings.
  */
 
 #pragma once
