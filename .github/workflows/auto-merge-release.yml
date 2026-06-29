@@ -1,0 +1,45 @@
+---
+##############################
+## Auto-Merge Release PR    ##
+##############################
+##
+## Automatically merges the release-please PR when all CI checks pass.
+## This ensures every conventional commit on main triggers a release
+## immediately — smaller, more frequent releases.
+##
+## How it works:
+##   1. A PR is merged to main (fix:, feat:, etc.)
+##   2. release-please creates/updates the Release PR
+##   3. This workflow enables auto-merge on the Release PR
+##   4. GitHub merges it automatically when all required checks pass
+##   5. The existing Release workflow builds firmware and publishes
+##
+name: Auto-Merge Release PR
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - labeled
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  enable-auto-merge:
+    name: Enable auto-merge for release PR
+    if: startsWith(github.event.pull_request.head.ref, 'release-please--')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enable auto-merge via gh CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr merge "${{ github.event.pull_request.number }}" \
+            --auto --merge \
+            --subject "chore(main): release"
