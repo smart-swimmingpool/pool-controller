@@ -4,7 +4,7 @@
 
 /**
  * @file ConfigManager.cpp
- * @brief Persistent configuration — LittleFS read/write, JSON parsing, factory reset.
+ * @brief Persistent configuration — NVS (Preferences) read/write and factory reset.
  */
 
 #include "ConfigManager.hpp"
