@@ -1,11 +1,13 @@
 // Copyright (c) 2018-2026 Smart Swimming Pool, Stephan Strittmatter
+//
+// SPDX-License-Identifier: MIT
 
 /**
  * @file RuleAuto.hpp
  * @brief Automatic solar-optimised mode — heats pool when solar temperature permits.
  */
 
-#pragma once
+#pragmaonce
 
 #include "Rule.hpp"
 #include "RelayModuleNode.hpp"
