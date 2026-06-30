@@ -1,12 +1,17 @@
 # Home Assistant Lovelace Dashboard (Raw configuration)
-# Layout orientiert sich an der Pool Controller Web UI:
-#   🏠 Dashboard → View "Pool"
-#   🌊 Pool + 🕐 Zeit + 🔒 System → View "Konfiguration"
+# Abgestimmt auf Pool Controller v4.0.x (MQTT Discovery)
+#
+# Zwei Zielgruppen-Views:
+#   🏊 Pool  — Bademeister (tägliche Bedienung)
+#   ⚙ System — IoT-Entwickler (Diagnose & Konfiguration)
 #
 # ⚠️  Entity-IDs können abweichen!
+# HA generiert entity_ids aus dem name-Feld der MQTT Discovery Configs.
+# Die hier verwendeten IDs sind name-basiert (z. B. sensor.*_pool_temperature).
 # Passe die IDs an deine Installation an:
 #   HA → Entwickler-Tools → Entities → nach "pool" filtern
-# Ersetze `pool_controller` / `garten_pool_controller` durch deinen Prefix.
+# Ersetze `pool_controller` durch deinen tatsächlichen Prefix
+# (z. B. `pool_controller_a1b2c3` bei MAC-basierten IDs).
 #
 # Abhängigkeiten:
 #   - button-card (optional, für Mode-Buttons mit aktivem Highlight)
@@ -15,10 +20,10 @@
 
 title: Pool Controller
 views:
-  # ═══════════════════════════════════════════════
-  # View 1: Pool — Dashboard + Steuerung
-  # Entspricht Web UI: 🏠 Dashboard + 🌊 Pool
-  # ═══════════════════════════════════════════════
+
+  # ═══════════════════════════════════════════════════════════════════
+  # View 1: Pool — für den Bademeister (tägliche Bedienung)
+  # ═══════════════════════════════════════════════════════════════════
   - title: Pool
     path: pool
     icon: mdi:pool
@@ -35,7 +40,7 @@ views:
         name: Solar Pump
 
     cards:
-      # ── Temperaturen (wie Web UI Dashboard) ──
+      # ── Temperaturen ──
       - type: horizontal-stack
         cards:
           - type: gauge
@@ -59,8 +64,7 @@ views:
               yellow: 50
               red: 70
 
-      # ── Betriebsart (wie Web UI Mode-Karten) ──
-      # Aktiver Mode wird farbig hervorgehoben (button-card erforderlich)
+      # ── Betriebsart (button-card erforderlich für Highlight) ──
       - type: grid
         title: Operation Mode
         columns: 4
@@ -159,7 +163,7 @@ views:
                 entity_id: select.pool_controller_operation_mode
                 option: manu
 
-      # ── Einstellungen (wie Web UI 🌊 Pool) ──
+      # ── Pool-Einstellungen (Temperatur + Timer + Zirkulation) ──
       - type: entities
         title: Pool Settings
         show_header_toggle: false
@@ -172,10 +176,17 @@ views:
             name: Min. Water Storage Temperature
           - entity: number.pool_controller_temperature_hysteresis
             name: Hysteresis
-          - entity: time.garten_pool_controller_timer_start
+          - entity: time.pool_controller_timer_start
             name: Timer Start
-          - entity: time.garten_pool_controller_timer_end
+          - entity: time.pool_controller_timer_end
             name: Timer End
+          - type: divider
+          - entity: number.pool_controller_circ_temp_threshold
+            name: Circ. Temp Threshold
+          - entity: number.pool_controller_circ_temp_factor
+            name: Circ. Temp Factor
+          - entity: number.pool_controller_circ_max_runtime
+            name: Circ. Max Runtime
 
       # ── Pumpenschalter ──
       - type: entities
@@ -187,7 +198,12 @@ views:
           - entity: switch.pool_controller_solar_pump
             name: Solar Pump
 
-      # ── Temperaturverlauf (24h) ──
+      # ── Klima-Thermostat ──
+      - type: thermostat
+        entity: climate.pool_controller_pool_thermostat
+        name: Pool Thermostat
+
+      # ── Temperaturverlauf & Pumpenzustände (24h) ──
       - type: history-graph
         title: Temperatures & Pump States (24h)
         hours_to_show: 24
@@ -197,41 +213,68 @@ views:
             name: Pool
           - entity: sensor.pool_controller_solar_temperature
             name: Solar Storage Tank
+          - entity: sensor.pool_controller_controller_temperature
+            name: Controller
           - entity: switch.pool_controller_pool_pump
             name: Pool Pump
           - entity: switch.pool_controller_solar_pump
             name: Solar Pump
 
-  # ═══════════════════════════════════════════════
-  # View 2: Konfiguration — Zeit + System
-  # Entspricht Web UI: 🕐 Zeit + 🔒 System
-  # ═══════════════════════════════════════════════
-  - title: Konfiguration
-    path: konfiguration
+  # ═══════════════════════════════════════════════════════════════════
+  # View 2: System — für den IoT-Entwickler (Diagnose & Konfiguration)
+  # ═══════════════════════════════════════════════════════════════════
+  - title: System
+    path: system
     icon: mdi:tune
+
     cards:
-      # ── Zeiteinstellungen (wie Web UI 🕐 Zeit) ──
+      # ── Zeiteinstellungen ──
       - type: entities
         title: Time & NTP
         show_header_toggle: false
         entities:
-          - entity: select.garten_pool_controller_timezone
+          - entity: select.pool_controller_timezone
             name: Timezone
-          - entity: text.garten_pool_controller_ntp_server
+          - entity: text.pool_controller_ntp_server
             name: NTP Server
 
-      # ── System-Info (wie Web UI Dashboard + System-Tab) ──
+      # ── Sensor-Zuordnung (DS18B20) ──
       - type: entities
-        title: System
+        title: Sensor Mapping
         show_header_toggle: false
         entities:
-          - entity: sensor.garten_pool_controller_local_time
+          - entity: select.pool_controller_pool_sensor
+            name: Pool Sensor
+          - entity: select.pool_controller_solar_sensor
+            name: Solar Sensor
+          - entity: sensor.pool_controller_pool_sensor_found
+            name: Pool Sensor Status
+          - entity: sensor.pool_controller_solar_sensor_found
+            name: Solar Sensor Status
+
+      # ── System-Diagnose ──
+      - type: entities
+        title: System Diagnostics
+        show_header_toggle: false
+        entities:
+          - entity: sensor.pool_controller_local_time
             name: Local Time
+          - entity: sensor.pool_controller_controller_temperature
+            name: Controller Temperature
           - entity: sensor.pool_controller_wifi_signal_strength
             name: WiFi Signal
           - entity: sensor.pool_controller_free_heap_space
             name: Free Heap
+          - entity: sensor.pool_controller_max_alloc_block
+            name: Max Alloc Block
           - entity: sensor.pool_controller_system_uptime
             name: Uptime
-          - entity: update.garten_pool_controller_firmware
-            name: Firmware
+          - entity: sensor.pool_controller_effective_runtime
+            name: Effective Runtime
+
+      # ── Firmware ──
+      - type: entities
+        title: Firmware
+        show_header_toggle: false
+        entities:
+          - entity: update.pool_controller_firmware

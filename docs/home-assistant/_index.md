@@ -26,43 +26,50 @@ Assistant automatically.
 
 | Domain | Object ID | Category | Description |
 |--------|-----------|----------|-------------|
-| `sensor` | `pool_temperature` | diagnostic | Pool water temperature |
-| `sensor` | `solar_temperature` | diagnostic | Solar collector temperature |
+| `sensor` | `pool_temperature` | — | Pool water temperature |
+| `sensor` | `solar_temperature` | — | Solar collector temperature |
 | `sensor` | `controller_temperature` | diagnostic | ESP32 chip temperature |
 | `sensor` | `free_heap_space` | diagnostic | Free heap memory |
 | `sensor` | `max_alloc_block` | diagnostic | Largest allocatable block |
-| `sensor` | `wifi_signal_strength` | diagnostic | WiFi RSSI |
+| `sensor` | `wifi_signal_strength` | diagnostic | WiFi signal strength (dBm) |
 | `sensor` | `system_uptime` | diagnostic | Device uptime (duration) |
 | `sensor` | `effective_runtime` | diagnostic | Effective circulation runtime (duration) |
 | `sensor` | `local_time` | diagnostic | Current local time |
+| `sensor` | `pool_sensor_found` | diagnostic | Pool sensor detection status |
+| `sensor` | `solar_sensor_found` | diagnostic | Solar sensor detection status |
 | `select` | `operation_mode` | — | Operating mode (auto/manu/boost/timer) |
+| `select` | `pool_sensor` | config | Pool sensor address mapping |
+| `select` | `solar_sensor` | config | Solar sensor address mapping |
+| `select` | `timezone` | config | Timezone selection |
 | `switch` | `pool_pump` | — | Pool circulation pump |
 | `switch` | `solar_pump` | — | Solar heating pump |
-| `number` | `max_pool_temp` | — | Maximum pool temperature target |
-| `number` | `min_solar_temp` | — | Minimum solar activation temperature |
+| `number` | `max_pool_temp` | config | Maximum pool temperature target |
+| `number` | `min_solar_temp` | config | Minimum solar activation temperature |
 | `number` | `temperature_hysteresis` | config | Temperature hysteresis value |
-| `number` | `temp_circ_threshold` | — | Temperature-based circulation threshold |
-| `number` | `temp_circ_factor` | — | Temperature-based circulation factor |
-| `number` | `temp_circ_max_runtime` | — | Temperature-based circulation max runtime |
-| `time` | `timer_start` | — | Timer start time (HH:MM) |
-| `time` | `timer_end` | — | Timer end time (HH:MM) |
-| `select` | `timezone` | config | Timezone selection |
+| `number` | `circ_temp_threshold` | config | Temperature-based circulation threshold |
+| `number` | `circ_temp_factor` | config | Temperature-based circulation factor |
+| `number` | `circ_max_runtime` | config | Temperature-based circulation max runtime |
+| `time` | `timer_start` | config | Timer start time (HH:MM) |
+| `time` | `timer_end` | config | Timer end time (HH:MM) |
 | `text` | `ntp_server` | config | NTP server address |
-| `update` | `firmware` | — | Firmware update entity |
+| `update` | `firmware` | config | Firmware update entity |
+| `climate` | `pool_thermostat` | config | Pool thermostat (HVAC mode + target temp) |
 
-> **Entity IDs** in HA are generated from the MQTT unique_id. The actual IDs on your system may differ from
-> the examples above (e.g. `sensor.pool_controller_pool_temperature`). Check **Developer Tools → Entities**
-> and filter by "pool" to find your IDs.
+> **Entity IDs** in HA are generated from the MQTT unique_id. The actual IDs on your system will include a
+> device-specific MAC suffix (e.g. `sensor.pool_controller_a1b2c3_pool_temp`). Check **Developer Tools →
+> Entities** and filter by "pool" to find your IDs. Replace `pool_controller` in the dashboard YAML with
+> your actual prefix.
 
 ## Lovelace Dashboard
 
-A pre-built Lovelace dashboard configuration is provided in [`home-assistant-dashboard-pool.yaml`](dashboard.yaml).
+A pre-built Lovelace dashboard configuration is provided in [`dashboard.yaml`](dashboard.yaml).
 
 ### Features
 
-- **Pool view**: Temperature gauges, mode switching, timer, pump control, 24h history
-- **Configuration view**: Timezone, NTP server, system information, firmware updates
-- Active mode highlighting for the operation mode buttons
+Two audience-specific views:
+
+- **🏊 Pool view** — for the pool operator (daily operation): Temperature gauges, mode switching (with active-mode highlighting), timer, pump control, climate thermostat, temperature-based circulation settings, 24h history with controller temperature
+- **⚙ System view** — for the IoT developer (diagnostics & configuration): Timezone & NTP, sensor mapping (DS18B20 address selection), system diagnostics (heap, WiFi, uptime, controller temperature, effective runtime), firmware updates
 
 ### Setup
 
