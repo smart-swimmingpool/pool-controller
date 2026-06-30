@@ -225,15 +225,19 @@ without any manual configuration.
 
 ## OpenHAB Integration
 
-The **Smart Swimmingpool Controller** could be integrated in [openHAB](https://www.openhab.org) since version 2.4.
+Since v3.3.0 the controller uses **Home Assistant MQTT Discovery** exclusively — the former
+Homie protocol support has been removed. openHAB does not support HA Discovery natively,
+so you need to configure the MQTT Things manually.
 
-It is possible to interact with the controller to enable/disable the pump or to switch the current rule.
+All controller entities are published as plain MQTT topics under
+`homeassistant/<component>/pool-controller/<object-id>/`. You can add them in openHAB
+as **MQTT Things** by subscribing to the relevant state/command topics.
 
-Also it is possible to monitor the current values of temperatures or states.
+See the entity reference and topic structure in the
+[MQTT Configuration](../mqtt-configuration) page.
 
-At least the [settings](#settings) could be updated, too.
-
-- TODO: add example of openhab config.
+Ready-to-use openHAB configuration examples are available in the
+[openHAB Configuration Guide](https://github.com/smart-swimmingpool/openhab-config).
 
 ### Device
 

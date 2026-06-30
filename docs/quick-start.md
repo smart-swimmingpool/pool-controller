@@ -325,35 +325,33 @@ A ready-to-use **Lovelace dashboard** is available in the repository:
 #### 1️⃣ Prerequisites
 
 - openHAB installed (see [https://www.openhab.org/](https://www.openhab.org/)).
-- MQTT Binding installed (via **Paper UI > Add-ons > Bindings > MQTT Binding**).
+- MQTT Binding installed (via **Add-ons → Bindings → MQTT Binding**).
 
 #### 2️⃣ Configure MQTT Broker
 
-1. Edit the MQTT configuration file:
+Since v3.3.0 the controller uses **Home Assistant MQTT Discovery** exclusively.
+openHAB does not support HA Discovery natively, so you need to manually add
+the controller as **MQTT Things** using the raw topic structure.
+
+1. Add your MQTT broker in openHAB (openHAB 3+: **Settings → Things → `+` → MQTT Broker**).
+
+2. Create a **New Thing** from the MQTT Binding and subscribe to the topic:
+   `homeassistant/#`
+
+3. Restart openHAB or refresh the MQTT Binding:
 
    ```bash
-   sudo nano /etc/openhab2/services/mqtt.cfg
+   sudo systemctl restart openhab
    ```
 
-2. Add your broker settings:
+#### 3️⃣ Discover & Configure Things
 
-   ```ini
-   mqtt:broker.url=tcp://localhost:1883
-   mqtt:broker.clientId=openhab
-   mqtt:broker.user=your_username
-   mqtt:broker.password=your_password
-   ```
+After the broker is set up, the controller's entities should appear as
+discoverable Things under `homeassistant/#`. If they don't appear automatically,
+you can manually create Things by subscribing to the individual state/command topics.
 
-3. Restart openHAB:
-
-   ```bash
-   sudo systemctl restart openhab2
-   ```
-
-#### 3️⃣ Manually Add Devices
-
-Since **Homie support was removed in v3.3.0**, you need to manually configure the MQTT topics in openHAB.
-See the [openHAB Configuration Guide](https://github.com/smart-swimmingpool/openhab-config) for examples.
+See the [openHAB Configuration Guide](https://github.com/smart-swimmingpool/openhab-config)
+for ready-to-use `.things` and `.items` examples.
 
 ---
 
