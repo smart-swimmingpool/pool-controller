@@ -26,34 +26,34 @@ Assistant automatically.
 
 | Domain | Object ID | Category | Description |
 |--------|-----------|----------|-------------|
-| `sensor` | `pool_temp` | — | Pool water temperature |
-| `sensor` | `solar_temp` | — | Solar collector temperature |
-| `sensor` | `controller_temp` | diagnostic | ESP32 chip temperature |
-| `sensor` | `heap` | diagnostic | Free heap memory |
-| `sensor` | `max_alloc` | diagnostic | Largest allocatable block |
-| `sensor` | `rssi` | diagnostic | WiFi signal strength (dBm) |
-| `sensor` | `uptime` | diagnostic | Device uptime (duration) |
+| `sensor` | `pool_temperature` | — | Pool water temperature |
+| `sensor` | `solar_temperature` | — | Solar collector temperature |
+| `sensor` | `controller_temperature` | diagnostic | ESP32 chip temperature |
+| `sensor` | `free_heap_space` | diagnostic | Free heap memory |
+| `sensor` | `max_alloc_block` | diagnostic | Largest allocatable block |
+| `sensor` | `wifi_signal_strength` | diagnostic | WiFi signal strength (dBm) |
+| `sensor` | `system_uptime` | diagnostic | Device uptime (duration) |
 | `sensor` | `effective_runtime` | diagnostic | Effective circulation runtime (duration) |
 | `sensor` | `local_time` | diagnostic | Current local time |
 | `sensor` | `pool_sensor_found` | diagnostic | Pool sensor detection status |
 | `sensor` | `solar_sensor_found` | diagnostic | Solar sensor detection status |
-| `select` | `mode` | — | Operating mode (auto/manu/boost/timer) |
+| `select` | `operation_mode` | — | Operating mode (auto/manu/boost/timer) |
 | `select` | `pool_sensor` | config | Pool sensor address mapping |
 | `select` | `solar_sensor` | config | Solar sensor address mapping |
 | `select` | `timezone` | config | Timezone selection |
 | `switch` | `pool_pump` | — | Pool circulation pump |
 | `switch` | `solar_pump` | — | Solar heating pump |
-| `number` | `pool_max_temp` | config | Maximum pool temperature target |
-| `number` | `solar_min_temp` | config | Minimum solar activation temperature |
-| `number` | `hysteresis` | config | Temperature hysteresis value |
-| `number` | `temp_circ_threshold` | config | Temperature-based circulation threshold |
-| `number` | `temp_circ_factor` | config | Temperature-based circulation factor |
-| `number` | `temp_circ_max_runtime` | config | Temperature-based circulation max runtime |
+| `number` | `max_pool_temp` | config | Maximum pool temperature target |
+| `number` | `min_solar_temp` | config | Minimum solar activation temperature |
+| `number` | `temperature_hysteresis` | config | Temperature hysteresis value |
+| `number` | `circ_temp_threshold` | config | Temperature-based circulation threshold |
+| `number` | `circ_temp_factor` | config | Temperature-based circulation factor |
+| `number` | `circ_max_runtime` | config | Temperature-based circulation max runtime |
 | `time` | `timer_start` | config | Timer start time (HH:MM) |
 | `time` | `timer_end` | config | Timer end time (HH:MM) |
 | `text` | `ntp_server` | config | NTP server address |
-| `update` | `firmware_update` | config | Firmware update entity |
-| `climate` | `thermostat` | config | Pool thermostat (HVAC mode + target temp) |
+| `update` | `firmware` | config | Firmware update entity |
+| `climate` | `pool_thermostat` | config | Pool thermostat (HVAC mode + target temp) |
 
 > **Entity IDs** in HA are generated from the MQTT unique_id. The actual IDs on your system will include a
 > device-specific MAC suffix (e.g. `sensor.pool_controller_a1b2c3_pool_temp`). Check **Developer Tools →
