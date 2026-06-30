@@ -70,8 +70,8 @@ The controller publishes the following entities via MQTT Discovery, grouped by t
 | Log output                     | `sensor/log`             | `diagnostic`    | `homeassistant/sensor/pool-controller/log/state`             |
 | OTA status                     | `sensor/ota-status`      | `diagnostic`    | `homeassistant/sensor/pool-controller/ota-status/state`      |
 | Effective Runtime              | `sensor/effective-runtime` | `diagnostic`    | `homeassistant/sensor/pool-controller/effective-runtime/state` |
-| Solar Sensor Found             | `sensor/solar-sensor-found` | `diagnostic`  | `homeassistant/sensor/pool-controller/solar-sensor-found/state` |
-| Pool Sensor Found              | `sensor/pool-sensor-found`  | `diagnostic`  | `homeassistant/sensor/pool-controller/pool-sensor-found/state`  |
+| Solar Sensor Found             | `binary_sensor/solar-sensor-found` | `diagnostic`  | `homeassistant/binary_sensor/pool-controller/solar-sensor-found/state` |
+| Pool Sensor Found              | `binary_sensor/pool-sensor-found`  | `diagnostic`  | `homeassistant/binary_sensor/pool-controller/pool-sensor-found/state`  |
 
 ### Controls
 

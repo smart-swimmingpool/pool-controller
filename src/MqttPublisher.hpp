@@ -58,8 +58,8 @@ private:
     const char *payloadOn = "ON", const char *payloadOff = "OFF",
     const char *deviceClass = nullptr, const char *icon = nullptr,
     const char *entityCategory = nullptr);
-  static void publishSwitchDiscovery(
-    const char *objectId, const char *name, const char *icon = nullptr, const char *entityCategory = nullptr);
+  static void publishSwitchDiscovery(const char *objectId, const char *name, const char *icon = nullptr,
+    const char *entityCategory = nullptr, const char *deviceClass = nullptr);
   static void publishSelectDiscovery(const char *objectId, const char *name, const char *const *options, size_t optionCount,
     const char *icon = nullptr, const char *entityCategory = nullptr);
   static void publishNumberDiscovery(const char *objectId, const char *name, double minVal, double maxVal, double step,

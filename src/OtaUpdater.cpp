@@ -541,8 +541,7 @@ bool OtaUpdater::downloadAndApply(const String &url) {
   Serial.println("OTA: Update successful! Rebooting...");
   statusMessage_ = "Update successful! Rebooting...";
   Serial.flush();
-  delay(1000);
-  ESP.restart();
+  NetworkManager::restart();
   return true;  // Never actually reached
 }
 

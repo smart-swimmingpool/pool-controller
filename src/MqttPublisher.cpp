@@ -85,6 +85,8 @@ void MqttPublisher::publishSensorDiscovery(const char *objectId, const char *nam
     doc["entity_category"] = entityCategory;
   if (stateClass)
     doc["state_class"] = stateClass;
+  if (deviceClass && strcmp(deviceClass, "temperature") == 0)
+    doc["suggested_display_precision"] = 1;
 
   // Embedded device block - manually add device info
   addDeviceInfo(doc);
@@ -120,7 +122,7 @@ void MqttPublisher::publishBinarySensorDiscovery(const char *objectId, const cha
   NetworkManager::publish(configTopic.c_str(), payload.c_str(), true);
 }
 
-void MqttPublisher::publishSwitchDiscovery(const char *objectId, const char *name, const char *icon, const char *entityCategory) {
+void MqttPublisher::publishSwitchDiscovery(const char *objectId, const char *name, const char *icon, const char *entityCategory, const char *deviceClass) {
   String configTopic = getBaseTopic("switch", objectId) + "/config";
 
   JsonDocument doc;
@@ -136,6 +138,8 @@ void MqttPublisher::publishSwitchDiscovery(const char *objectId, const char *nam
     doc["icon"] = icon;
   if (entityCategory)
     doc["entity_category"] = entityCategory;
+  if (deviceClass)
+    doc["device_class"] = deviceClass;
   // Embedded device block - manually add device info
   addDeviceInfo(doc);
 
@@ -185,7 +189,7 @@ void MqttPublisher::publishNumberDiscovery(const char *objectId, const char *nam
   doc["min"] = minVal;
   doc["max"] = maxVal;
   doc["step"] = step;
-  doc["mode"] = "box";
+  doc["mode"] = "slider";
 
   if (unit)
     doc["unit_of_measurement"] = unit;
@@ -308,9 +312,8 @@ void MqttPublisher::publishClimateDiscovery() {
   doc["preset_mode_command_topic"] = getBaseTopic("climate", "thermostat") + "/preset/set";
   doc["preset_mode_state_topic"] = getBaseTopic("climate", "thermostat") + "/preset/state";
 
-  // Entity category (Configuration)
-  doc["entity_category"] = "config";
-
+  // No entity_category — shown directly on device dashboard (users expect
+  // a thermostat control on the front page, not hidden in config).
   // Device block
   addDeviceInfo(doc);
 
@@ -347,12 +350,12 @@ void MqttPublisher::publishClimateState() {
   }
   NetworkManager::publish((getBaseTopic("climate", "thermostat") + "/mode/state").c_str(), hvacMode, true);
 
-  // Action: solar pump ON → heating, pool pump ON → idle, both OFF → off
+  // Action: solar pump ON → heating, pool pump ON → circulating, both OFF → off
   const char *action = "off";
   if (solarPumpNode.getSwitch()) {
     action = "heating";
   } else if (poolPumpNode.getSwitch()) {
-    action = "idle";
+    action = "circulating";
   } else {
     action = "off";
   }
@@ -425,8 +428,8 @@ void MqttPublisher::publishDiscovery() {
 
   // ── Controls (no entity_category — shown on device front page) ──
   // Relays (Switches)
-  publishSwitchDiscovery("pool-pump", "Pool Pump", "mdi:pump");
-  publishSwitchDiscovery("solar-pump", "Solar Pump", "mdi:solar-panel");
+  publishSwitchDiscovery("pool-pump", "Pool Pump", "mdi:pump", nullptr, "outlet");
+  publishSwitchDiscovery("solar-pump", "Solar Pump", "mdi:solar-panel", nullptr, "outlet");
 
   // Select Mode
   const char *modeOpts[] = {"auto", "manu", "boost", "timer"};
@@ -434,14 +437,14 @@ void MqttPublisher::publishDiscovery() {
 
   // ── Configuration (entity_category: "config") ──
   // Parameter Numbers
-  publishNumberDiscovery("pool-max-temp", "Max. Pool Temp", 0.0, 40.0, 0.1, "°C", "mdi:thermometer-chevron-up", "config");
-  publishNumberDiscovery("solar-min-temp", "Min. Solar Temp", 0.0, 100.0, 0.1, "°C", "mdi:thermometer-chevron-down", "config");
+  publishNumberDiscovery("pool-max-temp", "Maximum Pool Temperature", 0.0, 40.0, 0.1, "°C", "mdi:thermometer-chevron-up", "config");
+  publishNumberDiscovery("solar-min-temp", "Minimum Solar Temperature", 0.0, 100.0, 0.1, "°C", "mdi:thermometer-chevron-down", "config");
   publishNumberDiscovery("hysteresis", "Temperature Hysteresis", 0.0, 10.0, 0.1, "K", "mdi:delta", "config");
 
   // Temperature-based circulation parameters
-  publishNumberDiscovery("temp-circ-threshold", "Circ. Temp Threshold", 0.0, 40.0, 0.5, "°C", "mdi:thermometer-auto", "config");
-  publishNumberDiscovery("temp-circ-factor", "Circ. Temp Factor", 0.0, 120.0, 5.0, "min/°C", "mdi:plus-minus", "config");
-  publishNumberDiscovery("temp-circ-max-runtime", "Circ. Max Runtime", 60.0, 1440.0, 15.0, "min", "mdi:timer-outline", "config");
+  publishNumberDiscovery("temp-circ-threshold", "Circulation Temperature Threshold", 0.0, 40.0, 0.5, "°C", "mdi:thermometer-auto", "config");
+  publishNumberDiscovery("temp-circ-factor", "Circulation Temperature Factor", 0.0, 120.0, 5.0, "min/°C", "mdi:plus-minus", "config");
+  publishNumberDiscovery("temp-circ-max-runtime", "Circulation Maximum Runtime", 60.0, 1440.0, 15.0, "min", "mdi:timer-outline", "config");
 
   // Timer as Time entities (HH:MM:SS format)
   publishTimeDiscovery("timer-start", "Timer Start", "mdi:clock-start", "config");
@@ -459,6 +462,9 @@ void MqttPublisher::publishDiscovery() {
   // ── Sensor mapping diagnostics (static entities, always available) ──
   publishBinarySensorDiscovery("solar-sensor-found", "Solar Sensor Found", "Found", "Missing", "connectivity", "mdi:check-network-outline", "diagnostic");
   publishBinarySensorDiscovery("pool-sensor-found", "Pool Sensor Found", "Found", "Missing", "connectivity", "mdi:check-network-outline", "diagnostic");
+
+  // MQTT Connection status
+  publishBinarySensorDiscovery("mqtt-status", "MQTT Connected", "ON", "OFF", "connectivity", "mdi:connection", "diagnostic");
 
   // Firmware Update entity
   publishUpdateDiscovery();
@@ -614,6 +620,10 @@ void MqttPublisher::publishStates() {
       solarTemperatureNode.isSensorFound() ? "Found" : "Missing", true);
     NetworkManager::publish((getBaseTopic("binary_sensor", "pool-sensor-found") + "/state").c_str(),
       poolTemperatureNode.isSensorFound() ? "Found" : "Missing", true);
+
+    // MQTT connection status
+    NetworkManager::publish((getBaseTopic("binary_sensor", "mqtt-status") + "/state").c_str(),
+      NetworkManager::isMqttConnected() ? "ON" : "OFF", true);
   }
 }
 

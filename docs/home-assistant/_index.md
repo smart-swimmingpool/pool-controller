@@ -35,8 +35,8 @@ Assistant automatically.
 | `sensor` | `uptime` | diagnostic | Device uptime (duration) |
 | `sensor` | `effective_runtime` | diagnostic | Effective circulation runtime (duration) |
 | `sensor` | `local_time` | diagnostic | Current local time |
-| `sensor` | `pool_sensor_found` | diagnostic | Pool sensor detection status |
-| `sensor` | `solar_sensor_found` | diagnostic | Solar sensor detection status |
+| `binary_sensor` | `pool_sensor_found` | diagnostic | Pool sensor detection status |
+| `binary_sensor` | `solar_sensor_found` | diagnostic | Solar sensor detection status |
 | `select` | `mode` | — | Operating mode (auto/manu/boost/timer) |
 | `select` | `pool_sensor` | config | Pool sensor address mapping |
 | `select` | `solar_sensor` | config | Solar sensor address mapping |
