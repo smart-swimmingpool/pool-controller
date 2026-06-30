@@ -52,7 +52,12 @@ private:
   static void publishTextDiscovery(
     const char *objectId, const char *name, const char *icon = nullptr, const char *entityCategory = nullptr);
   static void publishSensorDiscovery(const char *objectId, const char *name, const char *deviceClass = nullptr,
-    const char *unit = nullptr, const char *icon = nullptr, const char *entityCategory = nullptr);
+    const char *unit = nullptr, const char *icon = nullptr, const char *entityCategory = nullptr,
+    const char *stateClass = nullptr);
+  static void publishBinarySensorDiscovery(const char *objectId, const char *name,
+    const char *payloadOn = "ON", const char *payloadOff = "OFF",
+    const char *deviceClass = nullptr, const char *icon = nullptr,
+    const char *entityCategory = nullptr);
   static void publishSwitchDiscovery(
     const char *objectId, const char *name, const char *icon = nullptr, const char *entityCategory = nullptr);
   static void publishSelectDiscovery(const char *objectId, const char *name, const char *const *options, size_t optionCount,
