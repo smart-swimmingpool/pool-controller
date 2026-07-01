@@ -1,15 +1,13 @@
-# Pool Controller 3.3 | 🏊 Smart Swimming Pool
+# Pool Controller | \ud83c\udfca Smart Swimming Pool
 
 [![Smart Swimmingpool](https://img.shields.io/badge/%F0%9F%8F%8A%20-Smart%20Swimmingpool-blue.svg)](https://github.com/smart-swimmingpool)
 [![PlatformIO CI](https://github.com/smart-swimmingpool/pool-controller/workflows/PlatformIO%20CI/badge.svg)](https://github.com/smart-swimmingpool/pool-controller/actions?query=workflow%3A%22PlatformIO+CI%22)
-[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v1.4%20adopted-ff69b4.svg)](code-of-conduct.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/J3J33A8DT)
 
 ---
 
-> **⚠️ WARNING: This project involves 230V AC mains voltage!**
+> **\u26a0\ufe0f WARNING: This project involves 230V AC mains voltage!**
 >
 > - **Only proceed if you have basic electronics knowledge.**
 > - **Always use a Residual Current Device (RCD/FI circuit breaker) for the pump circuit.**
@@ -20,223 +18,221 @@
 
 ---
 
-## 🏊 The MQTT-enabled Smart Swimming Pool Controller 🎛️
+## \ud83c\udfca Overview
 
-Manage your swimming pool the smart way - enjoy it in a
-**comfortable and affordable (less than 100€)** way with
-**professional-grade reliability**.
+The **Pool Controller** is an **ESP32-based control unit** that automates your swimming pool management. It provides intelligent circulation, solar heating control, and comprehensive monitoring via MQTT integration with Home Assistant and other smart home systems.
 
-🔗 **Discussions:** [GitHub Discussions](https://github.com/smart-swimmingpool/smart-swimmingpool.github.io/discussions)
+**Key Features:**
+- \u2705 Timed circulation for water cleaning
+- \u2705 Solar heating control via additional pump
+- \u2705 Multiple operation modes: Auto, Manual, Boost, Timer
+- \u2705 Temperature-based automation
+- \u2705 Home Assistant MQTT Discovery (v3.3.0+)
+- \u2705 Built-in web interface with REST API
+- \u2705 State persistence across reboots
+- \u2705 System health monitoring with auto-recovery
+- \u2705 OTA firmware updates
+
+**Cost:** ~45\u201375\u20ac (excluding pumps and pool infrastructure)
 
 ---
 
-## 🚀 Quick Start
+## \ud83d\ude80 Quick Start
 
-**New to the project?** Start here:
+**New to the project?** Begin with these resources:
 
-- [📖 **Quick Start Guide**](docs/quick-start.md) – Step-by-step setup for beginners (recommended!)
-- [❓ **Frequently Asked Questions (FAQ)**](docs/faq.md) – Troubleshooting common issues
+- [\ud83d\udcd6 **Quick Start Guide**](docs/quick-start.md) \u2013 Step-by-step setup for beginners
+- [\u2753 **Frequently Asked Questions**](docs/faq.md) \u2013 Troubleshooting common issues
+- [\ud83c\udf10 **MQTT Configuration**](docs/mqtt-configuration.md) \u2013 Home Assistant integration
 
 ---
 
-## ✨ Main Features
+## \ud83d\udcbb Hardware Requirements
 
-### 🏊 Pool Management
+| Component | Qty | Approx. Cost | Notes |
+|-----------|:---:|:------------:|-------|
+| ESP32 Development Board | 1 | 10\u201315\u20ac | 4MB+ flash required |
+| DS18B20 Temperature Sensor (waterproof) | 2 | 8\u201312\u20ac | Pool + solar collector |
+| 2-Channel 5V Relay Module | 1 | 5\u20138\u20ac | With optocoupler isolation |
+| Resistor 4.7k\u03a9 | 2 | < 1\u20ac | Pull-up for OneWire |
+| USB Power Supply 5V/\u22651A | 1 | 5\u201310\u20ac | For ESP32 |
+| **Total** | | **~45\u201375\u20ac** | Without pumps |
 
-- ✅ **Timed circulation** for cleaning
-- ✅ **Solar heating control** via additional pump
-- ✅ **Multiple operation modes**: Auto, Manual, Boost, Timer
-- ✅ **Temperature-based automation** (e.g., disable solar heating if pool is too hot)
+**Recommended Shops:** Amazon, AliExpress, Reichelt, Pollin, Conrad (DE/AT/CH)
 
-### 🌐 MQTT Integration
+---
 
-- ✅ **[Home Assistant MQTT Discovery](https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery)** –
-  Native HA integration (v3.3.0+)
-- ✅ **Independent of specific smart home servers**
-  - ✅ [Home Assistant](https://www.home-assistant.io/) via MQTT Discovery
-  - ✅ [openHAB](https://www.openhab.org) via MQTT (manual configuration required)
+## \ud83d\udce6 Software & Development
 
-### 🛡️ Reliability & 24/7 Operation (v3.3.0)
+### PlatformIO Setup
 
-- ✅ **State Persistence** – All settings survive reboots and power failures
-  - Operation mode, temperatures, timer settings automatically restored
-  - ESP32 NVS storage
-- ✅ **System Health Monitoring** – Continuous health checks
-  - Memory monitoring every 10 seconds
-  - Auto-reboot at critical memory threshold (8KB)
-  - Hardware watchdog timer (30s timeout)
-- ✅ **Memory Optimization** – Efficient resource usage
-  - 90% reduction in heap fragmentation
-  - 2,880-28,800 fewer allocations per day
-  - Fixed millis() overflow for operation beyond 49.7 days
-- ✅ **Automatic Recovery** – Self-healing capabilities
-  - Auto-recovery from memory exhaustion
-  - Watchdog timer prevents system hangs
-  - Sensor auto-recovery with fast re-polling
+```bash
+# Clone the repository
+git clone https://github.com/smart-swimmingpool/pool-controller.git
+cd pool-controller
+
+# Build the firmware (first build downloads dependencies)
+pio run
+
+# Flash to device
+pio run --target upload
+
+# Monitor serial output
+pio run --target monitor
+```
+
+**Platform:** ESP32 DevKit V1 (esp32dev)
+
+### Key Dependencies
+
+- Homie for ESP8266/ESP32 (MQTT framework)
+- OneWire (DS18B20 sensor communication)
+- DallasTemperature (temperature sensor library)
+- ArduinoJson (JSON processing for MQTT)
+- NTPClient (time synchronization)
+- ESPmDNS (mDNS discovery)
+
+---
+
+## \ud83c\udf10 MQTT Integration
+
+### Home Assistant (Recommended)
+
+The Pool Controller supports **native Home Assistant MQTT Discovery** (v3.3.0+). Devices and entities are automatically discovered and added to your Home Assistant instance.
+
+**MQTT Protocol:** `homeassistant` (only option in v3.3.0+)
+
+### Supported Smart Home Systems
+
+| System | Integration Method | Status |
+|--------|-------------------|--------|
+| Home Assistant | MQTT Discovery | \u2705 Native support |
+| openHAB | MQTT Binding | \u2705 Manual configuration |
+| Node-RED | MQTT nodes | \u2705 Works with any MQTT broker |
+| ioBroker | MQTT adapter | \u2705 Works with any MQTT broker |
+
+**MQTT Topics:** See [MQTT Configuration Guide](docs/mqtt-configuration.md) for complete topic reference.
+
+---
+
+## \ud83d\udee1\ufe0f Reliability Features (v3.3.0)
+
+### State Persistence
+All settings survive reboots and power failures:
+- Operation mode, temperatures, timer settings
+- ESP32 NVS storage
+- Automatic restoration on boot
+
+### System Health Monitoring
+- Memory monitoring every 10 seconds
+- Auto-reboot at critical memory threshold (8KB)
+- Hardware watchdog timer (30s timeout)
+- Boot-loop detection with Safe Mode
+
+### Memory Optimization
+- 90% reduction in heap fragmentation
+- 2,880\u201328,800 fewer allocations per day
+- Fixed millis() overflow for operation beyond 49.7 days
+
+---
+
+## \ud83d\udcda Documentation
+
+| Guide | Description | Audience |
+|-------|-------------|----------|
+| [Quick Start Guide](docs/quick-start.md) | Step-by-step setup for beginners | \ud83c\udd95 New users |
+| [FAQ](docs/faq.md) | Troubleshooting common issues | \u2753 All users |
+| [Users Guide](docs/users-guide.md) | Web dashboard, operation modes, MQTT | \ud83c\udf9b\ufe0f Intermediate users |
+| [Hardware Guide](docs/hardware-guide.md) | Assembly, wiring, parts list | \ud83d\udd27 Builders |
+| [MQTT Configuration](docs/mqtt-configuration.md) | Home Assistant Discovery, entity reference | \ud83c\udf10 Smart home integrators |
+| [State Persistence](docs/state-persistence.md) | How settings are saved across reboots | \ud83d\udcbe Advanced users |
+| [OTA Updates](docs/ota-updates.md) | Remote firmware updates | \ud83d\udce1 Developers |
+| [Software Guide](docs/software-guide.md) | Development environment, build process | \ud83d\udd27 Developers |
+| [ESP32 Schematic Optimization](docs/esp32-schematic-optimization.md) | Pin assignment and optimization | \ud83d\udd0c Hardware experts |
+
+---
+
+## \ud83d\udce6 Recent Updates
+
+### v3.3.0 (Current)
+- ESP8266 support removed (ESP32-only)
+- Phase 3: Proactive Resilience
+  - Fast sensor recovery (5s polling on NaN)
   - Boot-loop detection with Safe Mode
-  - NTP graceful degradation (3-stage)
-  - Zero manual intervention required
+  - Configurable fallback times
+- Critical bug fixes (logging, millis() overflow)
+- State persistence across reboots
+- Home Assistant MQTT Discovery support
+- System health monitoring
+- Hardware watchdog timer
 
-### 🌐 Built-in Web Interface
-
-- ✅ **Full Web Dashboard** – Direct device management without Home Assistant
-  - AP Mode: Connects as `Pool-Controller-Setup` WiFi hotspot at `192.168.4.1`
-  - STA Mode: Web server on port 80 at the device's local IP
-  - REST API for programmatic access (`/api/status`, `/api/config`, etc.)
-  - Password-protected with session management (cookie-based, SHA-256)
-  - Tabs: Dashboard, WiFi Setup, MQTT Settings, Configuration, Security & Update
-  - OTA firmware update via web interface
-
-### 🔧 Developer Features
-
-- ✅ **Over-The-Air (OTA) Updates** – Remote firmware updates via WiFi
-  - No physical access required for updates
-  - Password-protected secure updates
-  - mDNS discovery support
-- ✅ Time sync via NTP (configurable server, default: pool.ntp.org)
-- ✅ Configurable timezone with DST support (10 major timezones available)
-- ✅ Logging information via MQTT
-- ✅ Modern libraries (ArduinoJson 7.3.0, NTPClient 3.2.1)
-- ✅ Clean, formatted code following project standards
+**Full Changelog:** [CHANGELOG.md](CHANGELOG.md)
 
 ---
 
-## 📚 Documentation
+## \ud83d\ude80 Planned Features
 
-| **Guide**                                                                    | **Description**                            | **For**                       |
-| ---------------------------------------------------------------------------- | ------------------------------------------ | ----------------------------- |
-| [Quick Start Guide](docs/quick-start.md)                                     | Step-by-step setup for beginners           | 🆕 **New users**              |
-| [FAQ](docs/faq.md)                                                           | Troubleshooting common issues              | ❓ **All users**              |
-| [Users Guide](docs/users-guide.md)                                           | Web dashboard, operation modes, MQTT       | 🎛️ **Intermediate users**     |
-| [Hardware Guide](docs/hardware-guide.md)                                     | Assembly, wiring, parts list               | 🔧 **Builders**               |
-| [MQTT Configuration](docs/mqtt-configuration.md)                             | Home Assistant Discovery, entity reference | 🌐 **Smart home integrators** |
-| [State Persistence](docs/state-persistence.md)                               | How settings are saved across reboots      | 💾 **Advanced users**         |
-| [OTA Updates](docs/ota-updates.md)                                           | Remote firmware updates                    | 📡 **Developers**             |
-| [ESP32 Schematic Optimization (DE)](docs/esp32-schematic-optimization-de.md) | Pin assignment and optimization            | 🔌 **Hardware experts**       |
-
----
-
-## 📦 Recent Updates (v3.3.0)
-
-### 🔄 ESP8266 Support Removed
-
-- Codebase is now **ESP32-only** — cleaner, faster, more reliable
-- Removed all `#ifdef ESP8266` conditional compilation
-- Platform: esp32dev (ESP32 DevKit V1)
-
-### 🛡️ Phase 3 — Proactive Resilience
-
-- **P7: Fast Sensor Recovery** — DallasTemperatureNode polls every 5s
-  (instead of 300s) when sensor reads NaN
-- **P8: Boot-Loop Detection** — NVS-based boot counter, Safe Mode after 4
-  consecutive short boots (<5 min), all relays forced OFF
-- **P9: Configurable Fallback Times** — ConfigManager settings
-  `time-loss-green-hours` and `time-loss-red-hours` replace hardcoded NTP
-  thresholds
-
-### 🐛 v3.1.0 (Previous Release)
-
-- **Critical Bug Fixes**
-  - Fixed critical logging bug (vsnprintf buffer initialization)
-  - Fixed millis() overflow for reliable operation beyond 49.7 days
-  - Added buffer validation and overflow detection
-- **New Features**
-  - State persistence across reboots and power failures
-  - Home Assistant MQTT Discovery support
-  - System health monitoring with auto-reboot
-  - Hardware watchdog timer (ESP32)
-- **Performance Improvements**
-  - Eliminated 10+ String allocations per measurement cycle
-  - Reduced heap fragmentation by ~90%
-  - Optimized memory usage for 24/7 operation
-
-See [CHANGELOG.md](CHANGELOG.md) for complete details.
-
----
-
-## 🚀 Planned Features
-
-- [ ] Configurable NTP Server (currently hardcoded: europe.pool.ntp.org)
+- [ ] Configurable NTP Server
 - [ ] Smart learning: Improved pool pump circulation optimization
 - [ ] Two separate circulation cycles
 - [ ] Temperature-based cleaning circulation time
 - [ ] Improved operation without WiFi connection
-  - Display and button setup interface
-- See also the [issue list](https://github.com/smart-swimmingpool/pool-controller/issues)
+- [ ] Display and button setup interface
+
+**See:** [Issue List](https://github.com/smart-swimmingpool/pool-controller/issues)
 
 ---
 
-## 🔧 Configuration
+## \ud83e\udd1d Contributing
 
-### MQTT Protocol Selection
+We welcome contributions! Please follow these steps:
 
-Configure your preferred MQTT protocol in the device settings:
+1. **Read the guidelines**: [CONTRIBUTING.md](CONTRIBUTING.md)
+2. **Fork the repository** and create a feature branch
+3. **Make your changes** following project standards
+4. **Test thoroughly** and update documentation
+5. **Run quality checks**: `make lint-fix && make lint`
+6. **Submit a Pull Request**
 
-- `mqtt-protocol = "homeassistant"` - Home Assistant native discovery **(only option in v3.3.0+)**
-
-See [docs/mqtt-configuration.md](docs/mqtt-configuration.md) for setup details.
-
-### State Persistence
-
-All controller states are automatically saved and restored:
-
-- Operation modes and settings
-- Temperature thresholds
-- Timer configurations
-- Relay states
-
-See [docs/state-persistence.md](docs/state-persistence.md) for details.
+**Quality Gates:**
+- \u2705 Super-Linter (code quality)
+- \u2705 PlatformIO CI (build verification)
+- \u2705 Manual review by maintainers
 
 ---
 
-## 🤝 Contributing
+## \ud83d\udcdc License
 
-We welcome contributions! Before submitting a pull request, please:
-
-1. **Read the coding guidelines**: [`.github/CODING_GUIDELINES.md`](.github/CODING_GUIDELINES.md)
-2. **Run local linting**: `make lint-fix && make lint`
-3. **Test your changes**: `make build` (builds for ESP32)
-4. **Check for issues**: See [`.github/QUICK_REFERENCE.md`](.github/QUICK_REFERENCE.md) for common fixes
-
-All code must pass the same Super-Linter checks run in CI
-(cpplint for C/C++, EditorConfig, and Markdown/YAML/JSON validation) before
-merge.
+[MIT License](LICENSE) \u2013 Free to use, modify, and share.
 
 ---
 
-## 🙏 Credits
-
-- [Lübbe Onken](http://github.com/luebbe) for `TimeClientHelper`
-- All [contributors](https://github.com/smart-swimmingpool/pool-controller/graphs/contributors) for their valuable input!
-
----
-
-## 📜 License
-
-[MIT License](LICENSE) – Free to use, modify, and share.
-
----
-
-## 🌐 Community
+## \ud83c\udf10 Community & Support
 
 - **Discussions:** [GitHub Discussions](https://github.com/smart-swimmingpool/smart-swimmingpool.github.io/discussions)
+- **Website:** [smart-swimmingpool.com](https://smart-swimmingpool.com)
 - **Home Assistant Community:** [community.home-assistant.io](https://community.home-assistant.io/)
-- **Reddit:** [r/homeassistant](https://www.reddit.com/r/homeassistant/)
+
+**Need Help?**
+1. Check the [FAQ](docs/faq.md)
+2. Search [Discussions](https://github.com/smart-swimmingpool/smart-swimmingpool.github.io/discussions)
+3. Open a [new issue](https://github.com/smart-swimmingpool/pool-controller/issues/new)
 
 ---
 
-## 📢 Support
+## \ud83d\udce2 Project Links
 
-If you encounter issues:
-
-1. Check the **[FAQ](docs/faq.md)** for common problems.
-2. Search the **[Discussions](https://github.com/smart-swimmingpool/smart-swimmingpool.github.io/discussions)**.
-3. Open a **[new issue](https://github.com/smart-swimmingpool/pool-controller/issues/new)** with:
-   - A detailed description of the problem.
-   - Screenshots (e.g., serial monitor output, Web Dashboard).
-   - Your hardware setup (ESP32 model, relay module, sensors).
-   - Firmware version (check Web Dashboard or serial monitor).
+| Module | Description |
+|--------|-------------|
+| [Pool Controller](https://github.com/smart-swimmingpool/pool-controller) | Main control unit (this repository) |
+| [Pool Monitor](https://github.com/smart-swimmingpool/monitor) | Solar-powered wireless temperature display |
+| [Grafana Dashboard](https://github.com/smart-swimmingpool/grafana-dashboard) | Visualization dashboard |
+| [openHAB Config](https://github.com/smart-swimmingpool/openhab-config) | openHAB configuration files |
+| [Water Quality Monitor](https://github.com/smart-swimmingpool/water-quality-monitor) | Water quality monitoring (pH, chlorine) |
+| [Website](https://github.com/smart-swimmingpool/website) | Project documentation website |
 
 ---
 
-[![DIY My Smart Home](https://img.shields.io/badge/DIY%20My%20Smart%20Home-Medium-blue)](https://medium.com/diy-my-smart-home)
+<p align="center">
+  Made with \u2764\ufe0f by the Smart Swimming Pool community
+</p>

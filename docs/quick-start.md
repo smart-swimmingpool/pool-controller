@@ -6,17 +6,16 @@ weight: 10
 ---
 
 **Target audience:** DIY enthusiasts with **basic electronics knowledge** (soldering, GPIO, MQTT).
-**Time required:** ~4–6 hours (including parts sourcing).
-**Cost:** ~45–75€ (excluding pumps and pool infrastructure).
+**Time required:** ~4\u20136 hours (including parts sourcing).
+**Cost:** ~45\u201375\u20ac (excluding pumps and pool infrastructure).
 
-This guide walks you through **every step** to get your Pool Controller up and running,
-from ordering parts to integrating with your smart home.
+This guide walks you through **every step** to get your Pool Controller up and running, from ordering parts to integrating with your smart home.
 
 ---
 
-## ⚠️ Safety First
+## \u26a0\ufe0f Safety First
 
-> **⚠️ WARNING: This project involves 230V AC mains voltage!**
+> **\u26a0\ufe0f WARNING: This project involves 230V AC mains voltage!**
 >
 > - **Only proceed if you have basic electronics knowledge.**
 > - **Always use a Residual Current Device (RCD/FI circuit breaker) for the pump circuit.**
@@ -25,426 +24,590 @@ from ordering parts to integrating with your smart home.
 > - **If in doubt, consult a qualified electrician.**
 > - **This project is NOT certified (no CE/UL mark). For personal use only!**
 
+**Important Safety Resources:**
+- [Electrical Safety Guide](safety.md)
+- [Safety Model](safety-model.md)
+- [Security Checklist](security-checklist.md)
+
 ---
 
-## 📦 Step 1: Order Parts
+## \ud83d\udce6 Step 1: Order Parts
 
-### 🛒 Shopping List (BOM)
+### \ud83d\uded2 Shopping List (BOM)
 
 Use the following table to order all required components.
+
 **Recommended shops:** Amazon, AliExpress, Reichelt, Pollin, Conrad (DE/AT/CH).
 
-| #         | Component                                                                                        | Qty | Approx. Cost | Notes                                             | Recommended Links                                                                                                 |
-| --------- | ------------------------------------------------------------------------------------------------ | :-: | :----------: | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| 1         | ESP32 Development Board (e.g., ESP32 DevKit V1, NodeMCU-32S)                                     |  1  |    10–15€    | **Must have 4MB+ flash**                          | [Amazon DE](https://www.amazon.de/s?k=ESP32+DevKit+V1), [Reichelt](https://www.reichelt.de/)                      |
-| 2         | DS18B20 Temperature Sensor (waterproof, stainless steel, 1m cable)                               |  2  |    8–12€     | One for pool, one for solar collector             | [Amazon DE](https://www.amazon.de/s?k=DS18B20+wasserfest), [AliExpress](https://www.aliexpress.com/)              |
-| 3         | 2-Channel 5V Relay Module (with optocoupler isolation)                                           |  1  |     5–8€     | **Must be active-low trigger!** (relay activates when GPIO signal is LOW) | [Amazon DE](https://www.amazon.de/s?k=2+Channel+5V+Relay+Module), [Reichelt](https://www.reichelt.de/)            |
-| 4         | Resistor 4.7kΩ (¼W, metal film)                                                                  |  2  |     <1€      | Pull-up for OneWire data lines                    | [Reichelt](https://www.reichelt.de/), [Conrad](https://www.conrad.de/)                                            |
-| 5         | Breadboard + jumper wires (for prototyping) **OR** Perfboard + pin headers (for permanent build) |  1  |     3–8€     | Breadboard for testing, perfboard for final build | [Amazon DE](https://www.amazon.de/s?k=breadboard), [Reichelt](https://www.reichelt.de/)                           |
-| 6         | USB Power Supply 5V/≥1A (e.g., phone charger)                                                    |  1  |    5–10€     | Powers ESP32 + relay module                       | Any USB charger                                                                                                   |
-| 7         | Hookup wire (0.14–0.5mm², various colors)                                                        |  —  |     3–5€     | For permanent wiring                              | [Reichelt](https://www.reichelt.de/)                                                                              |
-| 8         | Enclosure (IP54+ for outdoor use)                                                                |  1  |    5–10€     | Optional but recommended                          | [Amazon DE](https://www.amazon.de/s?k=IP54+Gehäuse), [Reichelt](https://www.reichelt.de/)                         |
-| 9         | Screw terminals (2-pin, 5mm pitch)                                                               | 4–6 |     2–3€     | For removable connections                         | [Reichelt](https://www.reichelt.de/)                                                                              |
-| **Total** |                                                                                                  |     | **~45–75€**  | Without pumps/pool infrastructure                 |                                                                                                                   |
+| # | Component | Qty | Approx. Cost | Notes | Recommended Links |
+|---|-----------|:---:|:------------:|-------|------------------|
+| 1 | ESP32 Development Board (e.g., ESP32 DevKit V1, NodeMCU-32S) | 1 | 10\u201315\u20ac | **Must have 4MB+ flash** | [Amazon DE](https://www.amazon.de/s?k=ESP32+DevKit+V1), [Reichelt](https://www.reichelt.de/) |
+| 2 | DS18B20 Temperature Sensor (waterproof, stainless steel, 1m cable) | 2 | 8\u201312\u20ac | One for pool, one for solar collector | [Amazon DE](https://www.amazon.de/s?k=DS18B20+wasserfest), [AliExpress](https://www.aliexpress.com/) |
+| 3 | 2-Channel 5V Relay Module (with optocoupler isolation) | 1 | 5\u20138\u20ac | **Must be active-high trigger!** (relay activates when GPIO signal is HIGH) | [Amazon DE](https://www.amazon.de/s?k=2+Channel+5V+Relay+Module), [Reichelt](https://www.reichelt.de/) |
+| 4 | Resistor 4.7k\u03a9 (\u00bcW, metal film) | 2 | < 1\u20ac | Pull-up for OneWire data lines | [Reichelt](https://www.reichelt.de/), [Conrad](https://www.conrad.de/) |
+| 5 | Breadboard + jumper wires (for prototyping) **OR** Perfboard + pin headers (for permanent build) | 1 | 3\u20138\u20ac | Breadboard for testing, perfboard for final build | [Amazon DE](https://www.amazon.de/s?k=breadboard), [Reichelt](https://www.reichelt.de/) |
+| 6 | USB Power Supply 5V/\u22651A (e.g., phone charger) | 1 | 5\u201310\u20ac | Powers ESP32 + relay module | Any USB charger |
+| 7 | Hookup wire (0.14\u20130.5mm\u00b2, various colors) | \u2014 | 3\u20135\u20ac | For permanent wiring | [Reichelt](https://www.reichelt.de/) |
+| 8 | Enclosure (IP54+ for outdoor use) | 1 | 5\u201310\u20ac | Optional but recommended | [Amazon DE](https://www.amazon.de/s?k=IP54+Geh\u00e4use), [Reichelt](https://www.reichelt.de/) |
+| 9 | Screw terminals (2-pin, 5mm pitch) | 4\u20136 | 2\u20133\u20ac | For removable connections | [Reichelt](https://www.reichelt.de/) |
+| **Total** | | | **~45\u201375\u20ac** | Without pumps/pool infrastructure | |
+
+> **\u2139 Note:** The relay module **must** be **active-high** (relay ON when GPIO = HIGH). Many cheap modules are active-low by default but have a jumper to switch the logic. Verify this before permanent installation!
+
+### \ud83d\udd0c ESP32 Board Selection
+
+**Recommended boards:**
+- **ESP32 DevKit V1** \u2014 Most common, widely available
+- **NodeMCU-32S** \u2014 Similar to DevKit, good compatibility
+- **ESP32-WROOM-32** \u2014 Any board with this module
+
+**Avoid:**
+- ESP32-S2, ESP32-S3, ESP32-C3 \u2014 Different architecture, not currently supported
+- Boards with < 4MB flash \u2014 Insufficient for firmware
+
+**Verification:** Check that your board has the **ESP32-WROOM-32** module and **4MB+ flash memory**.
+
+### \ud83c\udf10 Relay Module Selection
+
+**Critical:** The relay module **must** have **optocoupler isolation** for safety and **active-high logic** for compatibility with the firmware.
+
+**How to verify active-high logic:**
+1. Connect relay VCC to 5V and GND to GND
+2. Connect IN1 to 3.3V (from ESP32)
+3. Measure between COM1 and NO1 \u2014 should show continuity when IN1 = HIGH
+
+**Recommended modules:**
+- **Songle SRD-05VDC-SL-C** \u2014 Active-high, optocoupler isolated
+- **Any module labeled "High Level Trigger" or "Active High"**
+
+> **\u26a0\ufe0f Important:** If your module is active-low, you can either:
+> 1. Find a module with a jumper to switch between active-high/active-low
+> 2. Modify the firmware to invert the relay logic (change `RELAY_ON` from `HIGH` to `LOW` in `Config.hpp`)
 
 ---
 
-## 🔌 Step 2: Assemble Hardware
+## \ud83d\udd0c Step 2: Assemble Hardware
 
-### 📌 Required Tools
+### \ud83d\udccc Required Tools
 
-- Soldering iron (320–350°C for leaded solder)
-- Solder (leaded recommended for beginners)
-- Flux (rosin-core)
-- Wire cutters/strippers
-- Multimeter (for testing continuity)
-- Magnifying glass (for inspecting solder joints)
+| Tool | Purpose | Notes |
+|------|---------|-------|
+| Soldering iron | Soldering components | 320\u2013350\u00b0C for leaded solder |
+| Solder | Electrical connections | Leaded recommended for beginners |
+| Flux | Improve solder flow | Rosin-core flux |
+| Wire cutters/strippers | Cut and strip wires | For hookup wire |
+| Multimeter | Test continuity and voltage | Essential for debugging |
+| Magnifying glass | Inspect solder joints | For quality control |
+| Third hand tool | Hold components | Optional but helpful |
 
----
+### \ud83e\udde9 Option A: Breadboard Prototyping (Recommended for Beginners)
 
-### 🧩 Option A: Breadboard Prototyping (Recommended for Beginners)
+**Best for:** Testing before permanent installation, learning the circuit.
 
-#### 1️⃣ Place Components
-
-- Place the **ESP32** on the breadboard, straddling the center gap.
-- Insert the **4.7kΩ resistors** between the DATA row and 3.3V rail.
-- Connect the **2-channel relay module** (VCC to 5V, GND to GND, IN1 to GPIO25, IN2 to GPIO26).
-
-#### 2️⃣ Connect DS18B20 Sensors
-
-Each DS18B20 has **3 wires** (typical colors for waterproof probes):
-
-- **Red** = VDD (3.3V)
-- **Black** = GND
-- **Yellow/White** = DATA
-
-| Sensor | DATA wire | ESP32 pin |
-| :----: | :-------: | :-------: |
-| Solar sensor | Yellow/White (DATA) | GPIO32 |
-| Pool sensor | Yellow/White (DATA) | GPIO33 |
-
-> **⚠️ CRITICAL:** Each DATA line **must** have a **4.7kΩ pull-up resistor** to 3.3V!
-> Without it, the sensor **will not work**.
+#### Wiring Diagram
 
 ```text
-ESP32 3.3V ——[4.7kΩ]—— DATA (GPIO32) —— DS18B20 Solar
-ESP32 3.3V ——[4.7kΩ]—— DATA (GPIO33) —— DS18B20 Pool
+ESP32 Development Board
+   
+   3.3V [4.7k] GPIO32  DS18B20 Solar (DATA)
+   3.3V [4.7k] GPIO33  DS18B20 Pool (DATA)
+   
+   GPIO25  Relay IN1 (Pool Pump)
+   GPIO26  Relay IN2 (Solar Pump)
+   
+   VIN (5V)  Relay VCC
+   GND  Relay GND
+   GND  DS18B20 GND (both sensors)
+   
+   USB Power (5V)  ESP32 VIN
+   USB Power (GND)  ESP32 GND
 ```
 
-#### 3️⃣ Connect Relay Module
+#### Step-by-Step Assembly
 
-| Relay Terminal | Connect to | ESP32 Pin  |
-| :------------: | ---------- | :--------: |
-|      VCC       | 5V         |    VIN     |
-|      GND       | GND        |    GND     |
-|      IN1       | Relay 1    | **GPIO25** |
-|      IN2       | Relay 2    | **GPIO26** |
+1. **Place ESP32 on breadboard**
+   - Straddle the center gap of the breadboard
+   - Ensure all pins are properly inserted
 
-#### 4️⃣ Power Supply
+2. **Add pull-up resistors**
+   - Insert 4.7k\u0019 resistors between 3.3V rail and GPIO32, GPIO33
+   - These are required for DS18B20 sensor communication
 
-- Connect the **USB power supply** to the ESP32's USB port.
-- The ESP32's **VIN pin** provides 5V to power the relay module.
+3. **Connect DS18B20 sensors**
+   - **Red wire (VDD)** \u2192 3.3V rail
+   - **Black wire (GND)** \u2192 GND rail
+   - **Yellow/White wire (DATA)** \u2192 GPIO32 (Solar) and GPIO33 (Pool)
+   - **Important:** Each sensor needs its own pull-up resistor
 
-#### 5️⃣ Verify Wiring
+4. **Connect relay module**
+   - **VCC** \u2192 5V rail (from USB power)
+   - **GND** \u2192 GND rail
+   - **IN1** \u2192 GPIO25 (Pool pump control)
+   - **IN2** \u2192 GPIO26 (Solar pump control)
 
-- Double-check all connections with a **multimeter** (continuity test).
-- Ensure **no short circuits** between 3.3V/GND or 5V/GND.
+5. **Connect power**
+   - **USB Power 5V** \u2192 ESP32 VIN pin
+   - **USB Power GND** \u2192 ESP32 GND pin
 
-{{< figure
-library="true"
-src="../pool-controller_breadboard.png"
-title="Pool Controller breadboard prototype"
-lightbox="true"
-caption="Example breadboard setup with ESP32, DS18B20 sensors, and relay module."
+6. **Verify connections**
+   - Use multimeter to check continuity
+   - Ensure no short circuits
+   - Verify all connections are secure
 
->}}
+> **\u2139 Tip:** Use different colored jumper wires for different signals to avoid confusion.
+
+### \ud83e\udde9 Option B: Permanent Installation (Perfboard)
+
+**Best for:** Final installation, outdoor use, long-term operation.
+
+#### Recommended Layout
+
+1. **Plan component placement** on perfboard
+2. **Solder ESP32** with pin headers for easy removal
+3. **Solder relay module** with sufficient spacing
+4. **Add screw terminals** for:
+   - Power input (5V/GND)
+   - Sensor connections (DATA/GND for each DS18B20)
+   - Relay outputs (COM/NO/NC for each relay)
+5. **Solder resistors** directly between 3.3V and GPIO pins
+6. **Add test points** for debugging with multimeter
+
+#### Soldering Tips
+
+- **Tin your iron** before starting
+- **Use flux** for better solder flow
+- **Heat both pad and wire** before applying solder
+- **Avoid cold solder joints** \u2014 should be shiny, not dull
+- **Check for bridges** between pins with magnifying glass
+- **Test continuity** with multimeter after soldering
+
+> **\u2139 Tip:** Use **sleeve or heatshrink tubing** on wire connections for insulation and strain relief.
 
 ---
 
-### 🧩 Option B: Permanent Assembly (Perfboard)
+## \u26a1 Step 3: Connect to Pumps and Sensors
 
-#### 1️⃣ Plan Layout
+### \u26a1 Relay Wiring (230V AC)
 
-- Arrange components on the perfboard **before soldering**.
-- Keep **230V relay terminals** at one edge, **sensor connections** at the opposite edge.
+> **\u26a0\ufe0f WARNING: Mains voltage! Disconnect power before wiring!**
 
-#### 2️⃣ Solder Components
+**Relay terminals:**
+- **COM** \u2014 Common (input from mains)
+- **NO** \u2014 Normally Open (output to pump when relay is ON)
+- **NC** \u2014 Normally Closed (output to pump when relay is OFF)
 
-1. Solder **pin headers** for the ESP32 (use a socket, don't solder the ESP32 directly).
-2. Solder the **4.7kΩ resistors** between DATA lines and 3.3V.
-3. Solder **pin headers** for the relay module (use a socket).
-4. Solder **screw terminals** for sensor/power connections.
-
-#### 3️⃣ Wire Routing
-
-- Use **solid core wire** for connections.
-- Keep **data lines short** and separate from power lines.
-- Use **different colors** for clarity (e.g., red = power, black = GND, yellow = data).
-
-#### 4️⃣ Inspect Solder Joints
-
-- Check each joint with a **magnifying glass** or multimeter.
-- A **good joint** is shiny and concave. A **bad joint** is dull or cracked.
-
-#### 5️⃣ Mount in Enclosure
-
-- Use **M2.5/M3 nylon standoffs** to mount the ESP32.
-- Drill holes for **sensor cables** and **relay wires**.
-- Use **cable glands** (PG7/PG9) for water-resistant sealing.
-
----
-
-### 🔌 Connect 230V Load (Pumps)
-
-> **⚠️ WARNING: 230V AC is dangerous! Proceed with caution.**
-
-1. **Disconnect mains power** before wiring.
-2. Connect the pump's **live (L) wire** to the relay's **COM** (common) terminal.
-3. Connect the relay's **NO** (normally open) terminal to the pump.
-4. Connect the pump's **neutral (N) wire** to the neutral bar.
-5. **Always use an RCD (FI circuit breaker)** for the pump circuit.
+**For each pump (Pool and Solar):**
 
 ```text
-L (mains) —— RCD —— MCB —— COM1 (Relay) —— NO1 —— Pool Pump
-                          COM2 (Relay) —— NO2 —— Solar Pump
-N (neutral) ─────────────────────────────── Neutral Bar —— Pump N
+Mains L (Phase) [ Fuse ][ RCD/FI Circuit Breaker ] Relay COM
+Mains N (Neutral)  Relay NO
+Relay NO  Pump L (Phase)
+Relay COM  Mains L (Phase)
 ```
+
+**Important:**
+- Use **RCD/FI circuit breaker** (30mA) for each pump circuit
+- Use **appropriate wire gauge** for pump current (typically 1.5mm\u00b2 for pumps up to 2kW)
+- Keep **low-voltage wiring (ESP32, sensors) physically separate** from mains wiring
+- Use **cable glands** for outdoor installations
+
+### \ud83c\udf21\ufe0f DS18B20 Sensor Installation
+
+**Pool Sensor:**
+- Place sensor in pool water, **away from direct sunlight**
+- Use **waterproof cable gland** for entry into enclosure
+- Ensure sensor is **fully submerged** (at least 10cm below surface)
+- Avoid placing near **pump intakes** or **heaters**
+
+**Solar Collector Sensor:**
+- Place sensor at **highest point** of solar collector
+- Use **heat-resistant cable** if collector gets very hot
+- Ensure good **thermal contact** with collector pipe
+- Protect from **direct weather exposure** if possible
+
+**Cable Routing:**
+- Use **outdoor-rated cable** for external installations
+- Keep cable runs **as short as possible** (DS18B20 works up to ~100m with proper pull-ups)
+- Use **cable ties** for strain relief
+- Avoid **sharp bends** or **pinching** cables
 
 ---
 
-## 💻 Step 3: Flash Firmware
+## \u2601 Step 4: Flash Firmware
 
-### 📥 PlatformIO (Recommended)
+### \ud83d\udcc1 Prerequisites
 
-#### 1️⃣ Install PlatformIO
+1. **Install PlatformIO**
+   - **VS Code Extension:** [PlatformIO IDE](https://platformio.org/install/ide?install=vscode)
+   - **CLI:** `pip install platformio`
 
-- Install **VS Code** from [https://code.visualstudio.com/](https://code.visualstudio.com/).
-- Install the **PlatformIO extension** in VS Code.
+2. **Install USB drivers** (if needed)
+   - **CP210x:** [Silicon Labs Driver](https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers)
+   - **CH340:** [WCH Driver](http://www.wch-ic.com/downloads/CH341SER_ZIP.html)
 
-#### 2️⃣ Download Firmware
-
-1. Clone the repository:
-
+3. **Clone repository**
    ```bash
    git clone https://github.com/smart-swimmingpool/pool-controller.git
    cd pool-controller
    ```
 
-2. Open the **`pool-controller`** folder in VS Code.
+### \u26a1 Connect ESP32 to Computer
 
-#### 3️⃣ Upload Firmware for ESP32 DevKit
+1. Connect ESP32 to computer via **USB cable** (data-capable, not charge-only)
+2. Check that device is detected:
+   - **Windows:** Device Manager \u2192 Ports (COM & LPT)
+   - **Linux:** `ls /dev/tty*` (look for `/dev/ttyUSB0` or similar)
+   - **macOS:** `/dev/cu.*` or `/dev/tty.*`
 
-1. Connect the ESP32 to your computer via **USB**.
-2. In PlatformIO, select the **`esp32dev`** environment.
-3. Run:
+3. **Note the serial port** for the next step
 
-   ```bash
-   pio run -e esp32dev -t upload
-   ```
+### \u26a1 Build and Flash
 
-4. Wait for upload to complete.
-
-#### 4️⃣ Upload Web Interface Files (LittleFS)
-
-1. Before configuring WiFi for the first time, upload the web assets:
-
-   ```bash
-   pio run -e esp32dev -t uploadfs
-   ```
-
-2. Wait for LittleFS upload to complete.
-
----
-
-## 🌐 Step 4: Configure WiFi & MQTT
-
-### 📶 Initial WiFi Setup (AP Mode)
-
-When the controller boots for the first time (or has no WiFi configured), it starts in **Access Point (AP) mode**:
-
-1. **Power on** the controller.
-2. On your phone/laptop, connect to the WiFi network:
-   - **SSID:** `Pool-Controller-Setup` (open network, no password).
-3. Open a browser and go to:
-   - **`http://192.168.4.1`** (the captive portal redirects automatically).
-4. Go to the **WiFi Setup** tab.
-5. **Scan networks**, select yours, and enter the password.
-6. Click **Save** – the controller will reboot and connect to your WiFi.
-
-> **Note:** In AP mode, the web interface has **no password** (intentional for setup).
-> Once connected to your WiFi, a login is required (default password: `admin`).
-
----
-
-### 🔗 MQTT Configuration
-
-1. Find the controller's **IP address** on your network:
-   - Check your router's DHCP client list.
-   - Or use `nmap`:
-
-     ```bash
-     nmap -p 80 192.168.1.0/24  # Scan your subnet for open port 80
-     ```
-
-2. Open a browser and go to `http://<controller-ip>/`.
-3. Log in with the default password: **`admin`**.
-4. Go to the **MQTT Settings** tab.
-5. Configure the following:
-   - **MQTT Hostname/IP:** Your MQTT broker address (e.g., `192.168.1.100` or `localhost` if running on the same device).
-   - **MQTT Port:** `1883` (default).
-   - **MQTT Username/Password:** Optional (if your broker requires authentication).
-6. Click **Save** and **reboot** the controller.
-
----
-
-### 🏠 MQTT Broker Setup (Optional)
-
-If you don't already have an MQTT broker, install **Mosquitto** on a Raspberry Pi or local server:
-
-#### Install Mosquitto on Raspberry Pi
+#### Using PlatformIO CLI:
 
 ```bash
-sudo apt-get update
-sudo apt-get upgrade
-sudo apt-get install mosquitto mosquitto-clients
+# Navigate to project directory
+cd pool-controller
+
+# Build the firmware (downloads dependencies on first run)
+pio run
+
+# Flash to device (replace COM3 with your port)
+pio run --target upload --upload-port COM3
+
+# Monitor serial output
+pio run --target monitor --upload-port COM3
 ```
 
-#### Start Mosquitto
+#### Using PlatformIO VS Code Extension:
 
-```bash
-sudo systemctl start mosquitto
-sudo systemctl enable mosquitto  # Auto-start on boot
+1. Open the project folder in VS Code
+2. Click PlatformIO icon in activity bar
+3. Select your environment (e.g., `esp32dev`)
+4. Click **\u25b6 Build** (checkmark icon)
+5. Click **\u21a9 Upload** (arrow icon)
+6. Click **\u2192 Monitor** (plug icon) to view serial output
+
+### \u2705 Verify Successful Flash
+
+After flashing, you should see in the serial monitor:
+
+```text
+
+
+ [33m20:12:34.567 [0m[32m[I][0m PoolController: Starting up...
+[33m20:12:34.568 [0m[32m[I][0m PoolController: Homie for ESP8266/ESP32 v2.0.0
+[33m20:12:34.569 [0m[32m[I][0m PoolController: Firmware version: 3.3.0
+[33m20:12:34.570 [0m[32m[I][0m PoolController: Connecting to WiFi...
 ```
 
-#### Test MQTT Connection
+If the device **doesn't start** or shows **garbled output**:
+- Check USB cable (try a different one)
+- Check serial port selection
+- Check baud rate (should be 115200)
+- Try pressing **BOOT button** while powering on
 
-```bash
-# Subscribe to all topics (in one terminal)
-mosquitto_sub -h localhost -t "#" -v
+---
 
-# Publish a test message (in another terminal)
-mosquitto_pub -h localhost -t "test" -m "Hello MQTT!"
+## \u2601 Step 5: Initial Configuration
+
+### \u2601 Method A: Web Interface (Recommended)
+
+1. **Wait for WiFi AP mode**
+   - On first boot, the device creates a WiFi hotspot: **`Pool-Controller-Setup`**
+   - Password: **not required** (open network)
+
+2. **Connect to hotspot**
+   - On your phone/computer, connect to `Pool-Controller-Setup`
+   - Open browser to: **`http://192.168.4.1`**
+
+3. **Configure WiFi**
+   - Enter your **WiFi SSID** and **password**
+   - Click **Save & Connect**
+
+4. **Configure MQTT**
+   - Enter your **MQTT broker hostname/IP**
+   - Enter **MQTT port** (default: 1883)
+   - Enter **MQTT username/password** (if required)
+   - Click **Save & Restart**
+
+5. **Device reboots** and connects to your WiFi and MQTT broker
+
+### \u2601 Method B: Serial Monitor
+
+1. **Open serial monitor** (baud rate: 115200)
+2. **Wait for configuration prompts** or send commands:
+
+```text
+# Set WiFi credentials
+AT+WIFI=SSID,password
+
+# Set MQTT broker
+AT+MQTT=broker.example.com,1883
+
+# Set MQTT credentials (if needed)
+AT+MQTTUSER=username,password
+
+# Save and restart
+AT+SAVE
+AT+RESTART
 ```
 
----
-
-## 🏡 Step 5: Integrate with Smart Home
-
-### 📱 Option A: Home Assistant (Recommended)
-
-The Pool Controller **automatically integrates** with Home Assistant via **MQTT Discovery** (v3.3.0+).
-
-#### 1️⃣ Prerequisites
-
-- Home Assistant installed (see [https://www.home-assistant.io/](https://www.home-assistant.io/)).
-- MQTT Broker configured in Home Assistant (see [MQTT Integration](https://www.home-assistant.io/integrations/mqtt/)).
-
-#### 2️⃣ Add MQTT Integration to Home Assistant
-
-1. Open Home Assistant.
-2. Go to **Settings > Devices & Services > Add Integration**.
-3. Search for **MQTT** and add it.
-4. Configure the MQTT broker settings (same as in Step 4).
-
-#### 3️⃣ Discover Devices
-
-1. After rebooting the Pool Controller, Home Assistant will **automatically discover** the device.
-2. Go to **Settings > Devices & Services > MQTT** to see the new device.
-3. All entities (sensors, switches, etc.) will appear under the **Pool Controller** device.
-
-#### 4️⃣ (Optional) Import Lovelace Dashboard
-
-A ready-to-use **Lovelace dashboard** is available in the repository:
-
-- [Home Assistant Dashboard Example](https://github.com/smart-swimmingpool/pool-controller/blob/main/docs/home-assistant-dashboard-pool.yaml)
+> **Note:** Serial commands are only available in **AP mode** (when not connected to WiFi).
 
 ---
 
-### 📱 Option B: openHAB
+## \u2601 Step 6: Connect to Smart Home
 
-#### 1️⃣ Prerequisites
+### \u2601 Home Assistant (Recommended)
 
-- openHAB installed (see [https://www.openhab.org/](https://www.openhab.org/)).
-- MQTT Binding installed (via **Paper UI > Add-ons > Bindings > MQTT Binding**).
+1. **Ensure MQTT broker is running**
+   - Install [Mosquitto Add-on](https://www.home-assistant.io/addons/mosquitto/) or use external broker
 
-#### 2️⃣ Configure MQTT Broker
+2. **Enable MQTT Discovery**
+   - In Home Assistant: **Settings \u2192 Devices & Services \u2192 MQTT**
+   - Ensure **Discovery** is enabled
 
-1. Edit the MQTT configuration file:
+3. **Pool Controller auto-discovers**
+   - After connecting to MQTT, devices appear automatically in Home Assistant
+   - Go to: **Settings \u2192 Devices & Services**
+   - Look for **Pool Controller** devices
 
-   ```bash
-   sudo nano /etc/openhab2/services/mqtt.cfg
-   ```
+4. **Add to Dashboard**
+   - Create a new dashboard or add entities to existing one
+   - Recommended entities:
+     - Temperature sensors (Pool, Solar)
+     - Switches (Pool Pump, Solar Pump)
+     - Select (Operation Mode)
+     - Number (Temperature thresholds)
 
-2. Add your broker settings:
+**Complete MQTT Guide:** [MQTT Configuration](mqtt-configuration.md)
 
-   ```ini
-   mqtt:broker.url=tcp://localhost:1883
-   mqtt:broker.clientId=openhab
-   mqtt:broker.user=your_username
-   mqtt:broker.password=your_password
-   ```
+### \u2601 openHAB
 
-3. Restart openHAB:
+1. **Install MQTT Binding**
+   - In Paper UI: **Add-ons \u2192 Bindings \u2192 MQTT Binding**
 
-   ```bash
-   sudo systemctl restart openhab2
-   ```
+2. **Configure MQTT Broker**
+   - Edit `services/mqtt.cfg` with your broker settings
 
-#### 3️⃣ Manually Add Devices
+3. **Add Pool Controller Items**
+   - See [openHAB Configuration](https://github.com/smart-swimmingpool/openhab-config) for example items and sitemaps
 
-Since **Homie support was removed in v3.3.0**, you need to manually configure the MQTT topics in openHAB.
-See the [openHAB Configuration Guide](https://github.com/smart-swimmingpool/openhab-config) for examples.
+### \u2601 Node-RED
 
----
-
-## 🔍 Step 6: Test & Troubleshoot
-
-### ✅ Verify Sensors
-
-1. Open the **Web Dashboard** (`http://<controller-ip>/`).
-2. Go to the **Dashboard** tab.
-3. Check the **Solar Temperature** and **Pool Temperature** values.
-   - If you see `-127°C` or `Sensor error`:
-     - Verify the **4.7kΩ pull-up resistor** is connected.
-     - Check **VDD (3.3V)** and **GND** connections.
-     - Ensure the **DATA pin** matches the firmware configuration (GPIO32/33).
-
-### ✅ Test Relays
-
-1. In the **Web Dashboard**, go to the **Configuration** tab.
-2. Set the **Operation Mode** to **Manual**.
-3. Turn on the **Pool Pump** and **Solar Pump** switches.
-   - The relay should **click**, and the pump should start.
-   - If the relay doesn't click:
-     - Verify the **relay module is powered (5V)**.
-     - Check the **logic level** (active-low expected).
-     - Ensure the **relay switches** when GPIO goes LOW (LED behavior may vary by module design).
-
-### ✅ Check LED Status Codes
-
-The **built-in LED** on the ESP32 indicates the system state:
-
-| LED Pattern                         | System State                   | What to Do                                             |
-| ----------------------------------- | ------------------------------ | ------------------------------------------------------ |
-| **Rapid blink (5 Hz)**              | AP Mode (no WiFi configured)   | Connect to `Pool-Controller-Setup` and configure WiFi. |
-| **Slow blink (1 Hz)**               | WiFi connecting                | Wait for connection (5–20 seconds).                    |
-| **Mostly on, brief blink every 2s** | WiFi OK, MQTT disconnected     | Check MQTT broker address/network.                     |
-| **Solid on**                        | Fully connected (WiFi + MQTT)  | Everything is working!                                 |
-| **Very fast blink (10 Hz)**         | OTA Update in progress         | Do not power off!                                      |
-| **Double blink**                    | Safe Mode (boot-loop detected) | Check serial log for errors.                           |
-
-### 🐞 Common Issues & Fixes
-
-| **Problem**                                  | **Cause**                  | **Solution**                                               |
-| -------------------------------------------- | -------------------------- | ---------------------------------------------------------- |
-| **Sensor error (-127°C)**                    | Missing pull-up resistor   | Add 4.7kΩ between DATA and 3.3V.                           |
-| **Sensor error**                             | Wrong GPIO pin             | Check `PIN_DS_SOLAR`/`PIN_DS_POOL` in `src/Config.hpp`.    |
-| **Relay doesn't click**                      | Wrong logic level          | Use an active-low trigger relay module (firmware expects active-low signals). |
-| **Relay clicks but pump doesn't run**        | 230V wiring issue          | Check COM/NO terminals and pump connection.                |
-| **ESP32 won't boot (brownout)**              | Insufficient power         | Use 5V/≥1A power supply.                                   |
-| **ESP32 resets when relay switches**         | Voltage spike              | Add flyback diode or use module with built-in protection.  |
-| **Sensor readings jump when relay switches** | Electrical noise           | Route sensor wires away from relay/power wires.            |
-| **MQTT connection fails**                    | Wrong broker settings      | Verify MQTT host/IP/port in Web UI.                        |
-| **Home Assistant doesn't discover device**   | MQTT Discovery not working | Delete old retained messages and reboot controller.        |
+1. **Install Node-RED**
+2. **Add MQTT Input Nodes** for Pool Controller topics
+3. **Add Dashboard Nodes** for visualization
+4. **Deploy flow**
 
 ---
 
-## 🎉 Step 7: Next Steps
+## \u2705 Step 7: Test and Verify
 
-### 📌 Recommended Next Steps
+### \u2705 Check Basic Functionality
 
-1. **Calibrate sensors** (compare with a reference thermometer).
-2. **Set up automation rules** in Home Assistant/openHAB (e.g., "Turn on pump if temperature > 25°C").
-3. **Add Grafana dashboards** for long-term data visualization (see [Grafana Dashboard Guide](https://github.com/smart-swimmingpool/grafana-dashboard)).
-4. **Explore advanced features** (e.g., OTA updates, custom MQTT topics).
+1. **Verify WiFi connection**
+   - Check serial monitor for: `WiFi connected, IP: 192.168.x.x`
+   - Or check your router's client list
 
-### 🔗 Useful Links
+2. **Verify MQTT connection**
+   - Check serial monitor for: `MQTT connected`
+   - Subscribe to `#` topic with MQTT client to see all messages
 
-- [Hardware Guide](hardware-guide.md) (detailed wiring diagrams)
-- [MQTT Configuration](mqtt-configuration.md) (advanced MQTT setup)
-- [Home Assistant Integration](https://github.com/smart-swimmingpool/pool-controller/tree/main/docs/home-assistant)
-- [openHAB Configuration](https://github.com/smart-swimmingpool/openhab-config)
-- [Grafana Dashboard](https://github.com/smart-swimmingpool/grafana-dashboard)
+3. **Verify temperature readings**
+   - Check serial monitor for temperature updates
+   - Or check MQTT topics: `smart-swimmingpool/pool-controller/temperature/pool`
+
+4. **Test relay control**
+   - Use Home Assistant/openHAB to turn pumps on/off
+   - Listen for relay clicking sounds
+   - Verify pumps start/stop
+
+### \u2705 Troubleshooting
+
+| Issue | Possible Cause | Solution |
+|-------|---------------|----------|
+| Device doesn't start | Power issue | Check USB cable, power supply, connections |
+| No WiFi connection | Wrong credentials | Reconfigure via AP mode or serial |
+| No MQTT connection | Wrong broker settings | Verify broker IP/port, check firewall |
+| No temperature readings | Sensor wiring issue | Check DS18B20 connections, pull-up resistors |
+| Relays don't switch | Wiring issue | Check relay connections, verify active-high logic |
+| Pumps don't start | Mains wiring issue | Check relay wiring, RCD, pump power |
+
+**Complete Troubleshooting:** [FAQ](faq.md) and [Troubleshooting Guide](troubleshooting.md)
 
 ---
 
-## 📝 Changelog
+## \ud83c\udf00 Step 8: Final Installation
 
-- **2026-06-16:** Initial Quick Start Guide created (based on community feedback).
+### \ud83c\udf00 Enclosure
+
+1. **Choose enclosure**
+   - **IP54+ rating** for outdoor use
+   - **Sufficient size** for ESP32, relay module, and wiring
+   - **Ventilation** for heat dissipation (if not waterproof)
+
+2. **Mount components**
+   - Use **standoffs** for ESP32 and relay module
+   - Use **cable glands** for external connections
+   - Keep **mains wiring separate** from low-voltage wiring
+
+3. **Label connections**
+   - Label all screw terminals
+   - Create a **wiring diagram** for future reference
+
+### \ud83c\udf00 Power Supply
+
+1. **Choose power supply**
+   - **USB phone charger** (5V/\u22651A) for indoor use
+   - **Outdoor-rated power supply** for external installation
+   - **USB power bank** for temporary setup
+
+2. **Power protection**
+   - Use **surge protector** for outdoor installations
+   - Consider **UPS** for power failure protection
+
+### \ud83c\udf00 Location
+
+1. **Indoor installation** (recommended)
+   - Protect from weather
+   - Easy access for maintenance
+   - Within WiFi range
+
+2. **Outdoor installation**
+   - Use **IP65+ enclosure**
+   - Use **outdoor-rated cable**
+   - Protect from **direct sunlight** and **rain**
+   - Ensure **adequate ventilation**
 
 ---
 
-## 🤝 Contributing
+## \ud83d\udc89 Next Steps
 
-Found an issue or have a suggestion? Open an issue or PR on GitHub:
+Now that your Pool Controller is up and running, explore these advanced features:
 
-- [Pool Controller Repository](https://github.com/smart-swimmingpool/pool-controller)
+### \u26a1 Automation
+
+- **Set up automation rules** in Home Assistant/openHAB
+- **Temperature-based control:** Turn on solar heating when pool is cold
+- **Time-based control:** Run circulation pump during off-peak hours
+- **Weather-based control:** Disable solar heating on cloudy days
+
+**Example Home Assistant Automation:**
+```yaml
+automation:
+  - alias: "Enable solar heating when pool is cold"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.pool_controller_pool_temp
+        below: 25
+    condition:
+      - condition: state
+        entity_id: switch.pool_controller_solar_pump
+        state: "off"
+      - condition: numeric_state
+        entity_id: sensor.pool_controller_solar_temp
+        above: 30
+    action:
+      - service: switch.turn_on
+        entity_id: switch.pool_controller_solar_pump
+```
+
+### \u26a1 Monitoring
+
+- **Set up Grafana dashboard** for historical data
+- **Configure alerts** for abnormal conditions
+- **Monitor energy usage** of pumps
+
+**Grafana Dashboard:** [smart-swimmingpool/grafana-dashboard](https://github.com/smart-swimmingpool/grafana-dashboard)
+
+### \u26a1 Advanced Configuration
+
+- **Adjust temperature thresholds** for your climate
+- **Configure circulation schedules** based on pool usage
+- **Set up multiple operation modes** (Auto, Manual, Boost, Timer)
+- **Enable state persistence** for power failure recovery
+
+**Complete Configuration Guide:** [Users Guide](users-guide.md)
 
 ---
 
-## 📄 License
+## \ud83d\ude4f Tips for Success
 
-This guide is part of the **Smart Swimming Pool** project, licensed under the
-**MIT License**. See
-[LICENSE](https://github.com/smart-swimmingpool/pool-controller/blob/main/LICENSE)
-for details.
+### \u26a1 Best Practices
+
+1. **Start with breadboard prototyping** before permanent installation
+2. **Test each component individually** before connecting everything
+3. **Use multimeter** to verify all connections before powering on
+4. **Label all wires** for easy troubleshooting
+5. **Keep a wiring diagram** for future reference
+6. **Test in AP mode first** before configuring WiFi/MQTT
+7. **Monitor serial output** during initial setup
+
+### \u26a1 Common Pitfalls
+
+1. **Active-low vs active-high relays** \u2014 Verify your relay logic!
+2. **Missing pull-up resistors** \u2014 DS18B20 sensors won't work without them
+3. **Insufficient power supply** \u2014 Use 5V/\u22651A for ESP32 + relay
+4. **WiFi range issues** \u2014 Ensure good signal at installation location
+5. **MQTT broker not running** \u2014 Verify broker is accessible from ESP32
+6. **Mains wiring errors** \u2014 Always use RCD and verify with electrician
+
+### \u26a1 Maintenance
+
+1. **Regularly check connections** for corrosion or loose wires
+2. **Clean DS18B20 sensors** periodically (especially pool sensor)
+3. **Update firmware** when new versions are released
+4. **Monitor system health** via MQTT or web interface
+5. **Backup configuration** before making changes
+
+---
+
+## \ud83d\udce2 Need Help?
+
+If you encounter issues:
+
+1. **Check this guide again** \u2014 Most issues are covered above
+2. **Read the [FAQ](faq.md)** \u2014 Common problems and solutions
+3. **Search [GitHub Discussions](https://github.com/smart-swimmingpool/smart-swimmingpool.github.io/discussions)** \u2014 Community support
+4. **Open a [GitHub Issue](https://github.com/smart-swimmingpool/pool-controller/issues/new)** \u2014 Include:
+   - Detailed description of the problem
+   - Screenshots (serial monitor, web interface)
+   - Your hardware setup (ESP32 model, relay module, sensors)
+   - Firmware version (from web interface or serial monitor)
+   - Steps to reproduce the issue
+
+---
+
+## \ud83d\udcbb Additional Resources
+
+### \u26a1 Documentation
+
+- [Hardware Guide](hardware-guide.md) \u2014 Detailed assembly instructions
+- [Users Guide](users-guide.md) \u2014 Operation modes and web interface
+- [MQTT Configuration](mqtt-configuration.md) \u2014 Complete topic reference
+- [State Persistence](state-persistence.md) \u2014 Settings survival across reboots
+- [OTA Updates](ota-updates.md) \u2014 Remote firmware updates
+- [Software Guide](software-guide.md) \u2014 Development and build process
+
+### \u26a1 External Resources
+
+- [PlatformIO Documentation](https://docs.platformio.org/) \u2014 Build system
+- [ESP32 Datasheet](https://www.espressif.com/en/products/socs/esp32) \u2014 Microcontroller
+- [DS18B20 Datasheet](https://datasheets.maximintegrated.com/en/ds/DS18B20.pdf) \u2014 Temperature sensor
+- [MQTT Protocol](https://mqtt.org/) \u2014 Message Queuing Telemetry Transport
+- [Home Assistant MQTT Discovery](https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery) \u2014 Smart home integration
+- [Electrical Safety](https://www.electricalsafetyfirst.org.uk/) \u2014 General safety guidelines
+
+### \u26a1 Community
+
+- [GitHub Discussions](https://github.com/smart-swimmingpool/smart-swimmingpool.github.io/discussions) \u2014 Ask questions, share ideas
+- [Home Assistant Community](https://community.home-assistant.io/) \u2014 Smart home discussions
+- [Reddit r/homeassistant](https://www.reddit.com/r/homeassistant/) \u2014 Home automation community
+
+---
+
+<p align="center">
+  \u2705 Congratulations! You now have a smart swimming pool! \u2705\n  \n  Made with \u2764\ufe0f by the Smart Swimming Pool community
+</p>
