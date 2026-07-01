@@ -40,7 +40,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
       - name: Enable auto-merge via gh CLI
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
