@@ -37,7 +37,7 @@ Manage your swimming pool in a smart way to enjoy it comfortably and affordably 
 - [x] [Home Assistant MQTT Discovery](https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery) - Native HA integration
 - [x] Independent of specific smarthome servers
   - [x] [Home Assistant](https://home-assistant.io) via native MQTT Discovery
-  - [x] [openHAB](https://www.openhab.org) via MQTT
+  - [x] [openHAB](https://www.openhab.org) via MQTT (manual configuration required)
 - [x] Timesync via NTP (europe.pool.ntp.org)
 - [x] Logging of system events and diagnostics
 
