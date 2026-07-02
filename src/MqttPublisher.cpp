@@ -627,13 +627,11 @@ void MqttPublisher::publishStates() {
     // Sensor-found binary indicators (binary_sensor → "Found"/"Missing" payload)
     NetworkManager::publish((getBaseTopic("binary_sensor", "solar-sensor-found") + "/state").c_str(),
       solarTemperatureNode.isSensorFound() ? "Found" : "Missing", true);
-    NetworkManager::publish(
-      (getBaseTopic("binary_sensor", "pool-sensor-found") + "/state").c_str(),
+    NetworkManager::publish((getBaseTopic("binary_sensor", "pool-sensor-found") + "/state").c_str(),
       poolTemperatureNode.isSensorFound() ? "Found" : "Missing", true);
 
     // MQTT connection status
-    NetworkManager::publish(
-      (getBaseTopic("binary_sensor", "mqtt-status") + "/state").c_str(),
+    NetworkManager::publish((getBaseTopic("binary_sensor", "mqtt-status") + "/state").c_str(),
       NetworkManager::isMqttConnected() ? "ON" : "OFF", true);
   }
 }
