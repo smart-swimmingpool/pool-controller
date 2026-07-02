@@ -121,8 +121,8 @@ void MqttPublisher::publishBinarySensorDiscovery(const char *objectId, const cha
   NetworkManager::publish(configTopic.c_str(), payload.c_str(), true);
 }
 
-void MqttPublisher::publishSwitchDiscovery(const char *objectId, const char *name, const char *icon,
-    const char *entityCategory, const char *deviceClass) {
+void MqttPublisher::publishSwitchDiscovery(const char *objectId, const char *name, const char *icon, const char *entityCategory,
+    const char *deviceClass) {
   String configTopic = getBaseTopic("switch", objectId) + "/config";
 
   JsonDocument doc;
@@ -419,8 +419,8 @@ void MqttPublisher::publishDiscovery() {
   publishSensorDiscovery("solar-temp", "Solar Temperature", "temperature", "°C", "mdi:solar-power", nullptr, "measurement");
 
   // ── Diagnostics (entity_category: "diagnostic") ──
-  publishSensorDiscovery("controller-temp", "Controller Temperature", "temperature",
-    "°C", "mdi:thermometer", "diagnostic", "measurement");
+  publishSensorDiscovery("controller-temp", "Controller Temperature", "temperature", "°C", "mdi:thermometer",
+    "diagnostic", "measurement");
   publishSensorDiscovery("heap", "Free Heap Space", nullptr, "B", "mdi:memory", "diagnostic", "measurement");
   publishSensorDiscovery("max-alloc", "Max Alloc Block", nullptr, "B", "mdi:memory", "diagnostic", "measurement");
   publishSensorDiscovery("rssi", "WiFi Signal Strength", "signal_strength", "dBm", "mdi:wifi", "diagnostic", "measurement");
@@ -438,45 +438,42 @@ void MqttPublisher::publishDiscovery() {
 
   // ── Configuration (entity_category: "config") ──
   // Parameter Numbers
-  publishNumberDiscovery("pool-max-temp", "Maximum Pool Temperature", 0.0,
-    40.0, 0.1, "°C", "mdi:thermometer-chevron-up", "config");
-  publishNumberDiscovery("solar-min-temp", "Minimum Solar Temperature", 0.0,
-    100.0, 0.1, "°C", "mdi:thermometer-chevron-down", "config");
-  publishNumberDiscovery("hysteresis", "Temperature Hysteresis", 0.0, 10.0,
-    0.1, "K", "mdi:delta", "config");
+  publishNumberDiscovery("pool-max-temp", "Maximum Pool Temperature", 0.0, 40.0, 0.1, "°C",
+    "mdi:thermometer-chevron-up", "config");
+  publishNumberDiscovery("solar-min-temp", "Minimum Solar Temperature", 0.0, 100.0, 0.1, "°C",
+    "mdi:thermometer-chevron-down", "config");
+  publishNumberDiscovery("hysteresis", "Temperature Hysteresis", 0.0, 10.0, 0.1, "K", "mdi:delta", "config");
 
   // Temperature-based circulation parameters
-  publishNumberDiscovery("temp-circ-threshold", "Circulation Temperature Threshold",
-    0.0, 40.0, 0.5, "°C", "mdi:thermometer-auto", "config");
-  publishNumberDiscovery("temp-circ-factor", "Circulation Temperature Factor", 0.0,
-    120.0, 5.0, "min/°C", "mdi:plus-minus", "config");
-  publishNumberDiscovery("temp-circ-max-runtime", "Circulation Maximum Runtime",
-    60.0, 1440.0, 15.0, "min", "mdi:timer-outline", "config");
+  publishNumberDiscovery("temp-circ-threshold", "Circulation Temperature Threshold", 0.0, 40.0, 0.5, "°C",
+    "mdi:thermometer-auto", "config");
+  publishNumberDiscovery("temp-circ-factor", "Circulation Temperature Factor", 0.0, 120.0, 5.0, "min/°C",
+    "mdi:plus-minus", "config");
+  publishNumberDiscovery("temp-circ-max-runtime", "Circulation Maximum Runtime", 60.0, 1440.0, 15.0, "min",
+    "mdi:timer-outline", "config");
 
   // Timer as Time entities (HH:MM:SS format)
   publishTimeDiscovery("timer-start", "Timer Start", "mdi:clock-start", "config");
   publishTimeDiscovery("timer-end", "Timer End", "mdi:clock-end", "config");
 
   // Select Timezone
-  publishSelectDiscovery("timezone", "Timezone", getTimezoneLabelList(),
-    getTimezoneLabelCount(), "mdi:map-clock", "config");
+  publishSelectDiscovery("timezone", "Timezone", getTimezoneLabelList(), getTimezoneLabelCount(), "mdi:map-clock", "config");
 
   // Text entities
   publishTextDiscovery("ntp-server", "NTP Server", "mdi:clock-outline", "config");
 
   // Runtime diagnostics
-  publishSensorDiscovery("effective-runtime", "Effective Runtime", "duration",
-    "s", "mdi:timer-sand", "diagnostic", "measurement");
+  publishSensorDiscovery("effective-runtime", "Effective Runtime", "duration", "s", "mdi:timer-sand",
+    "diagnostic", "measurement");
 
   // ── Sensor mapping diagnostics (static entities, always available) ──
-  publishBinarySensorDiscovery("solar-sensor-found", "Solar Sensor Found", "Found",
-    "Missing", "connectivity", "mdi:check-network-outline", "diagnostic");
-  publishBinarySensorDiscovery("pool-sensor-found", "Pool Sensor Found", "Found",
-    "Missing", "connectivity", "mdi:check-network-outline", "diagnostic");
+  publishBinarySensorDiscovery("solar-sensor-found", "Solar Sensor Found", "Found", "Missing", "connectivity",
+    "mdi:check-network-outline", "diagnostic");
+  publishBinarySensorDiscovery("pool-sensor-found", "Pool Sensor Found", "Found", "Missing", "connectivity",
+    "mdi:check-network-outline", "diagnostic");
 
   // MQTT Connection status
-  publishBinarySensorDiscovery("mqtt-status", "MQTT Connected", "ON", "OFF",
-    "connectivity", "mdi:connection", "diagnostic");
+  publishBinarySensorDiscovery("mqtt-status", "MQTT Connected", "ON", "OFF", "connectivity", "mdi:connection", "diagnostic");
 
   // Firmware Update entity
   publishUpdateDiscovery();
