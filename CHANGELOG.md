@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.0.2](https://github.com/smart-swimmingpool/pool-controller/compare/v4.0.1...v4.0.2) (2026-06-30)
+
+
+### Bug Fixes
+
+* **ci:** suppress cppcheck syntaxError for ESP-IDF version macros ([028e62a](https://github.com/smart-swimmingpool/pool-controller/commit/028e62a1c1de030fbdc07c42f53d1e7e4d18c89f))
+* **config:** correct Doxygen description — uses NVS (Preferences), not LittleFS ([d1e9910](https://github.com/smart-swimmingpool/pool-controller/commit/d1e9910ba2e9327642e78b14e04bb7361cffd05d))
+* correct #pragmaonce to #pragma once in RuleAuto.hpp ([6963f6c](https://github.com/smart-swimmingpool/pool-controller/commit/6963f6cc60f1e59058e5174437f8ee22f226bfe4))
+* **ha:** use name-based entity IDs matching HA generation ([22c56bd](https://github.com/smart-swimmingpool/pool-controller/commit/22c56bd6c5b47562950cd36027929123c95082ac))
+
 ## [4.0.1](https://github.com/smart-swimmingpool/pool-controller/compare/v4.0.0...v4.0.1) (2026-06-28)
 
 

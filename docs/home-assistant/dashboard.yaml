@@ -6,6 +6,8 @@
 #   ⚙ System — IoT-Entwickler (Diagnose & Konfiguration)
 #
 # ⚠️  Entity-IDs können abweichen!
+# HA generiert entity_ids aus dem name-Feld der MQTT Discovery Configs.
+# Die hier verwendeten IDs sind name-basiert (z. B. sensor.*_pool_temperature).
 # Passe die IDs an deine Installation an:
 #   HA → Entwickler-Tools → Entities → nach "pool" filtern
 # Ersetze `pool_controller` durch deinen tatsächlichen Prefix
@@ -30,7 +32,7 @@ views:
         show_name: false
         show_state: true
         show_icon: true
-        entity: select.pool_controller_mode
+        entity: select.pool_controller_operation_mode
         name: Mode
       - entity: switch.pool_controller_pool_pump
         name: Pool Pump
@@ -42,7 +44,7 @@ views:
       - type: horizontal-stack
         cards:
           - type: gauge
-            entity: sensor.pool_controller_pool_temp
+            entity: sensor.pool_controller_pool_temperature
             name: Pool Temperature
             unit: °C
             min: 0
@@ -52,7 +54,7 @@ views:
               yellow: 28
               red: 33
           - type: gauge
-            entity: sensor.pool_controller_solar_temp
+            entity: sensor.pool_controller_solar_temperature
             name: Solar Storage Tank
             unit: °C
             min: 0
@@ -71,7 +73,7 @@ views:
           - type: custom:button-card
             name: Auto
             icon: mdi:robot
-            entity: select.pool_controller_mode
+            entity: select.pool_controller_operation_mode
             state:
               - value: 'auto'
                 styles:
@@ -89,12 +91,12 @@ views:
               action: call-service
               service: select.select_option
               service_data:
-                entity_id: select.pool_controller_mode
+                entity_id: select.pool_controller_operation_mode
                 option: auto
           - type: custom:button-card
             name: Timer
             icon: mdi:timer-outline
-            entity: select.pool_controller_mode
+            entity: select.pool_controller_operation_mode
             state:
               - value: 'timer'
                 styles:
@@ -112,12 +114,12 @@ views:
               action: call-service
               service: select.select_option
               service_data:
-                entity_id: select.pool_controller_mode
+                entity_id: select.pool_controller_operation_mode
                 option: timer
           - type: custom:button-card
             name: Boost
             icon: mdi:rocket-launch
-            entity: select.pool_controller_mode
+            entity: select.pool_controller_operation_mode
             state:
               - value: 'boost'
                 styles:
@@ -135,12 +137,12 @@ views:
               action: call-service
               service: select.select_option
               service_data:
-                entity_id: select.pool_controller_mode
+                entity_id: select.pool_controller_operation_mode
                 option: boost
           - type: custom:button-card
             name: Manual
             icon: mdi:hand-back-right
-            entity: select.pool_controller_mode
+            entity: select.pool_controller_operation_mode
             state:
               - value: 'manu'
                 styles:
@@ -158,7 +160,7 @@ views:
               action: call-service
               service: select.select_option
               service_data:
-                entity_id: select.pool_controller_mode
+                entity_id: select.pool_controller_operation_mode
                 option: manu
 
       # ── Pool-Einstellungen (Temperatur + Timer + Zirkulation) ──
@@ -166,24 +168,24 @@ views:
         title: Pool Settings
         show_header_toggle: false
         entities:
-          - entity: select.pool_controller_mode
+          - entity: select.pool_controller_operation_mode
             name: Current Mode
-          - entity: number.pool_controller_pool_max_temp
+          - entity: number.pool_controller_max_pool_temp
             name: Max. Pool Temperature
-          - entity: number.pool_controller_solar_min_temp
+          - entity: number.pool_controller_min_solar_temp
             name: Min. Water Storage Temperature
-          - entity: number.pool_controller_hysteresis
+          - entity: number.pool_controller_temperature_hysteresis
             name: Hysteresis
           - entity: time.pool_controller_timer_start
             name: Timer Start
           - entity: time.pool_controller_timer_end
             name: Timer End
           - type: divider
-          - entity: number.pool_controller_temp_circ_threshold
+          - entity: number.pool_controller_circ_temp_threshold
             name: Circ. Temp Threshold
-          - entity: number.pool_controller_temp_circ_factor
+          - entity: number.pool_controller_circ_temp_factor
             name: Circ. Temp Factor
-          - entity: number.pool_controller_temp_circ_max_runtime
+          - entity: number.pool_controller_circ_max_runtime
             name: Circ. Max Runtime
 
       # ── Pumpenschalter ──
@@ -198,7 +200,7 @@ views:
 
       # ── Klima-Thermostat ──
       - type: thermostat
-        entity: climate.pool_controller_thermostat
+        entity: climate.pool_controller_pool_thermostat
         name: Pool Thermostat
 
       # ── Temperaturverlauf & Pumpenzustände (24h) ──
@@ -207,11 +209,11 @@ views:
         hours_to_show: 24
         refresh_interval: 30
         entities:
-          - entity: sensor.pool_controller_pool_temp
+          - entity: sensor.pool_controller_pool_temperature
             name: Pool
-          - entity: sensor.pool_controller_solar_temp
+          - entity: sensor.pool_controller_solar_temperature
             name: Solar Storage Tank
-          - entity: sensor.pool_controller_controller_temp
+          - entity: sensor.pool_controller_controller_temperature
             name: Controller
           - entity: switch.pool_controller_pool_pump
             name: Pool Pump
@@ -257,15 +259,15 @@ views:
         entities:
           - entity: sensor.pool_controller_local_time
             name: Local Time
-          - entity: sensor.pool_controller_controller_temp
+          - entity: sensor.pool_controller_controller_temperature
             name: Controller Temperature
-          - entity: sensor.pool_controller_rssi
+          - entity: sensor.pool_controller_wifi_signal_strength
             name: WiFi Signal
-          - entity: sensor.pool_controller_heap
+          - entity: sensor.pool_controller_free_heap_space
             name: Free Heap
-          - entity: sensor.pool_controller_max_alloc
+          - entity: sensor.pool_controller_max_alloc_block
             name: Max Alloc Block
-          - entity: sensor.pool_controller_uptime
+          - entity: sensor.pool_controller_system_uptime
             name: Uptime
           - entity: sensor.pool_controller_effective_runtime
             name: Effective Runtime
@@ -275,4 +277,4 @@ views:
         title: Firmware
         show_header_toggle: false
         entities:
-          - entity: update.pool_controller_firmware_update
+          - entity: update.pool_controller_firmware

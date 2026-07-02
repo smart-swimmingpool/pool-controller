@@ -859,6 +859,24 @@ void NorviOledDisplay::drawFooter() {
     display.print(F("--:--"));
   }
 
+  // Draw WiFi status icon at position 64
+  if (NetworkManager::isWiFiConnected()) {
+    // WiFi connected icon (3 vertical bars with decreasing height)
+    dspFillRect(64, 56, 2, 8, SSD1306_WHITE);
+    dspFillRect(67, 56, 2, 6, SSD1306_WHITE);
+    dspFillRect(70, 56, 2, 4, SSD1306_WHITE);
+    dspFillRect(73, 56, 2, 2, SSD1306_WHITE);
+  } else {
+    // WiFi disconnected icon (X over the WiFi symbol)
+    dspFillRect(64, 56, 2, 8, SSD1306_WHITE);
+    dspFillRect(67, 56, 2, 6, SSD1306_WHITE);
+    dspFillRect(70, 56, 2, 4, SSD1306_WHITE);
+    dspFillRect(73, 56, 2, 2, SSD1306_WHITE);
+    // Draw X
+    dspHLine(64, 60, 10, SSD1306_WHITE);
+    dspVLine(70, 56, 4, SSD1306_WHITE);
+  }
+
   // ── Firmware version ──────────────────────────────────────────────────
   dspCursor(76, 56);
   display.print(F("v" FW_VERSION));
