@@ -447,7 +447,8 @@ void MqttPublisher::publishDiscovery() {
   publishNumberDiscovery(
       "solar-min-temp", "Minimum Solar Temperature", 0.0, 100.0, 0.1, "°C",
       "mdi:thermometer-chevron-down", "config");
-  publishNumberDiscovery("hysteresis", "Temperature Hysteresis", 0.0, 10.0, 0.1, "K", "mdi:delta", "config");
+  publishNumberDiscovery(
+      "hysteresis", "Temperature Hysteresis", 0.0, 10.0, 0.1, "K", "mdi:delta", "config");
 
   // Temperature-based circulation parameters
   publishNumberDiscovery(
