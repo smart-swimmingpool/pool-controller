@@ -485,7 +485,8 @@ void MqttPublisher::publishDiscovery() {
       "mdi:check-network-outline", "diagnostic");
 
   // MQTT Connection status
-  publishBinarySensorDiscovery("mqtt-status", "MQTT Connected", "ON", "OFF", "connectivity", "mdi:connection", "diagnostic");
+  publishBinarySensorDiscovery(
+      "mqtt-status", "MQTT Connected", "ON", "OFF", "connectivity", "mdi:connection", "diagnostic");
 
   // Firmware Update entity
   publishUpdateDiscovery();
