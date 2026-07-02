@@ -466,7 +466,8 @@ void MqttPublisher::publishDiscovery() {
   publishTimeDiscovery("timer-end", "Timer End", "mdi:clock-end", "config");
 
   // Select Timezone
-  publishSelectDiscovery("timezone", "Timezone", getTimezoneLabelList(), getTimezoneLabelCount(), "mdi:map-clock", "config");
+  publishSelectDiscovery(
+      "timezone", "Timezone", getTimezoneLabelList(), getTimezoneLabelCount(), "mdi:map-clock", "config");
 
   // Text entities
   publishTextDiscovery("ntp-server", "NTP Server", "mdi:clock-outline", "config");
