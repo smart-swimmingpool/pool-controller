@@ -30,6 +30,7 @@ public:
 
   static void disconnectMqtt() { _mqttClient.disconnect(); _mqttConnected = false; }
   static void startAPMode() { _apMode = true; }
+  static void restart() { ESP.restart(); }
 
   // Test helpers
   static void setWiFiConnected(bool v) { _wifiConnected = v; }

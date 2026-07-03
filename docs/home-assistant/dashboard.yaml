@@ -247,9 +247,9 @@ views:
             name: Pool Sensor
           - entity: select.pool_controller_solar_sensor
             name: Solar Sensor
-          - entity: sensor.pool_controller_pool_sensor_found
+          - entity: binary_sensor.pool_controller_pool_sensor_found
             name: Pool Sensor Status
-          - entity: sensor.pool_controller_solar_sensor_found
+          - entity: binary_sensor.pool_controller_solar_sensor_found
             name: Solar Sensor Status
 
       # ── System-Diagnose ──

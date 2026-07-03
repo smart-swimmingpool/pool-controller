@@ -362,9 +362,8 @@ auto PoolControllerContext::setup() -> void {
       uint8_t solarAddr[8], poolAddr[8];
       NorviOledDisplay::getMapping(solarAddr, poolAddr);
       saveSensorAddressMapping(solarAddr, poolAddr);
-      Serial.println("→ Sensor mapping saved — rebooting in 1 second...");
-      delay(1000);
-      ESP.restart();
+      Serial.println("→ Sensor mapping saved — rebooting...");
+      NetworkManager::restart();
       return true;
     }
     return false;

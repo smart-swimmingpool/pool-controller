@@ -225,10 +225,29 @@ void NetworkManager::setMqttCallback(MqttMessageCallback callback) {
   mqttClient_.onMessage(callback);
 }
 
+void NetworkManager::publishOffline() {
+  if (mqttClient_.connected()) {
+    // Publish "offline" retained so HA sees the device as unavailable even
+    // when the clean MQTT DISCONNECT suppresses the LWT.
+    mqttClient_.publish("homeassistant/sensor/pool-controller/availability", 1, true, "offline");
+    delay(350);  // Allow the async publish to be sent before disconnect/restart
+  }
+}
+
 void NetworkManager::disconnectMqtt() {
+  publishOffline();
   if (mqttClient_.connected()) {
     mqttClient_.disconnect();
   }
+}
+
+void NetworkManager::restart() {
+  publishOffline();
+  if (mqttClient_.connected()) {
+    mqttClient_.disconnect();
+  }
+  delay(500);
+  ESP.restart();
 }
 
 void NetworkManager::handleWiFiEvent(WiFiEvent_t event) {
