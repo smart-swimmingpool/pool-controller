@@ -33,7 +33,7 @@ jobs:
         with:
           script: |
             const issueTitle = 'PlatformIO Updates Available';
-            const issueBody = 'Es sind Updates für PlatformIO-Abhängigkeiten verfügbar. Bitte überprüfen und aktualisieren.';
+            const issueBody = 'PlatformIO-Abhängigkeiten benötigen Updates. Bitte überprüfen.';
 
             // Überprüfen, ob bereits ein Issue mit diesem Titel existiert
             const existingIssues = await github.rest.issues.listForRepo({

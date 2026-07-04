@@ -69,7 +69,9 @@ jobs:
 
       - name: Run native tests
         working-directory: test/native
-        run: ASAN_OPTIONS="detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1:detect_invalid_pointer_pairs=2" ./build/test_runner
+        env:
+          ASAN_OPTIONS: "detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1:detect_invalid_pointer_pairs=2"
+        run: ./build/test_runner
 
       - name: Generate lcov coverage report
         if: always()
