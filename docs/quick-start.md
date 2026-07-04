@@ -383,14 +383,29 @@ AT+RESTART
 
 ### ☁ openHAB
 
-1. **Install MQTT Binding**
-   - In Paper UI: **Add-ons → Bindings → MQTT Binding**
+Since v3.3.0 the controller uses **Home Assistant MQTT Discovery** exclusively.
+openHAB does not support HA Discovery natively, so you need to manually add
+the controller as **MQTT Things** using the raw topic structure.
 
-2. **Configure MQTT Broker**
-   - Edit `services/mqtt.cfg` with your broker settings
+1. Add your MQTT broker in openHAB (openHAB 3+: **Settings → Things → `+` → MQTT Broker**).
 
-3. **Add Pool Controller Items**
-   - See [openHAB Configuration](https://github.com/smart-swimmingpool/openhab-config) for example items and sitemaps
+2. Create a **New Thing** from the MQTT Binding and subscribe to the topic:
+   `homeassistant/#`
+
+3. Restart openHAB or refresh the MQTT Binding:
+
+   ```bash
+   sudo systemctl restart openhab
+   ```
+
+4. **Discover & Configure Things**
+
+   After the broker is set up, the controller's entities should appear as
+   discoverable Things under `homeassistant/#`. If they don't appear automatically,
+   you can manually create Things by subscribing to the individual state/command topics.
+
+See the [openHAB Configuration Guide](https://github.com/smart-swimmingpool/openhab-config)
+for ready-to-use `.things` and `.items` examples.
 
 ### ☁ Node-RED
 

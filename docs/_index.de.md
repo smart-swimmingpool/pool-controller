@@ -37,7 +37,7 @@ Steuer deinen Swimming-Pool auf smarte Art und Weise, um diesen bequem und güns
 - [x] [Home Assistant MQTT Discovery](https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery) - Native HA-Integration
 - [x] Unabhängig von einzelnen Smarthome-Servern
   - [x] [Home Assistant](https://home-assistant.io) via nativer MQTT Discovery
-  - [x] [openHAB](https://www.openhab.org) via MQTT
+  - [x] [openHAB](https://www.openhab.org) via MQTT (manuelle Konfiguration erforderlich)
 - [x] Automatische Zeitsynchronisierung mit NTP (europe.pool.ntp.org)
 - [x] System-Logging und Diagnose-Ereignisse
 

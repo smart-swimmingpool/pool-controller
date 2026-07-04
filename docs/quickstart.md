@@ -362,17 +362,15 @@ Hier ist ein **Beispiel-Foto** des Aufbaus:
    - Folge der [offiziellen Anleitung](https://www.openhab.org/docs/installation/).
 
 2. **MQTT-Binding installieren**
-   - Gehe zu **Paper UI → Add-ons → Bindings**.
-   - Suche nach **MQTT Binding** und installiere es.
+   - Gehe zu **Add-ons → Bindings → MQTT Binding** und installiere es.
 
 3. **MQTT-Broker konfigurieren**
-   - Bearbeite die Datei **`/etc/openhab/services/mqtt.cfg`**:
+   Seit v3.3.0 verwendet der Controller ausschließlich **Home Assistant MQTT Discovery**.
+   openHAB unterstützt HA Discovery nicht nativ, daher müssen die MQTT-Things manuell
+   konfiguriert werden.
 
-   ```ini
-   broker.url=tcp://192.168.1.50:1883
-   broker.user=mqtt_user
-   broker.password=secret
-   ```
+   - Füge den MQTT-Broker in openHAB hinzu (**Einstellungen → Things → `+` → MQTT Broker**).
+   - Erstelle ein **neues Thing** aus dem MQTT-Binding und abonniere das Topic `homeassistant/#`.
 
    - Starte openHAB neu:
 
@@ -380,8 +378,11 @@ Hier ist ein **Beispiel-Foto** des Aufbaus:
      sudo systemctl restart openhab
      ```
 
-4. **Pool Controller manuell einrichten**
-   - Da der Controller **keine Homie-Unterstützung mehr hat** (ab v3.3.0), musst du die Geräte **manuell** einrichten.
+4. **Pool Controller einrichten**
+   - Nachdem der Broker konfiguriert ist, sollten die Entitäten des Controllers automatisch
+     unter `homeassistant/#` auffindbar sein.
+   - Falls nicht, können die Things manuell erstellt werden, indem die einzelnen
+     State/Command-Topics abonniert werden.
    - **Beispiel-Konfiguration:**
      - [openHAB-Konfiguration für Pool Controller](https://github.com/smart-swimmingpool/openhab-config)
 

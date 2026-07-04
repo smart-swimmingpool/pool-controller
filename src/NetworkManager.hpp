@@ -52,7 +52,11 @@ public:
   static void setMqttCallback(MqttMessageCallback callback);
   /** @brief Switch to access-point mode (captive portal). */
   static void startAPMode();
-  /** @brief Disconnect from the MQTT broker. */
+  /** @brief Publish "offline" on the HA availability topic (retained, QoS 1). */
+  static void publishOffline();
+  /** @brief Publish "offline", disconnect MQTT, then restart ESP. */
+  static void restart();
+  /** @brief Disconnect from the MQTT broker (publishes "offline" first). */
   static void disconnectMqtt();
 
   // Getters for status monitoring

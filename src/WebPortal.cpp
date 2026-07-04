@@ -271,8 +271,7 @@ void WebPortal::setupRoutes() {
         return;
       server_.sendHeader("Connection", "close");
       server_.send(Update.hasError() ? 500 : 200, "text/plain", Update.hasError() ? "FAIL" : "OK");
-      delay(1000);
-      ESP.restart();
+      NetworkManager::restart();
     },
     []() {
       if (!isClientAuthenticated())
@@ -597,9 +596,8 @@ void WebPortal::apiSaveConfig() {
     ConfigManager::save();
     server_.send(200, "text/plain", "OK");
 
-    // Restart soon after saving new WiFi connection setup
-    delay(2000);
-    ESP.restart();
+    // Restart to apply new WiFi connection setup
+    NetworkManager::restart();
     return;
   } else if (type == "mqtt") {
     ConfigManager::getMqtt().host = server_.arg("host");
@@ -819,8 +817,7 @@ void WebPortal::apiLogout() {
 
 void WebPortal::apiRestart() {
   server_.send(200, "text/plain", "OK");
-  delay(1000);
-  ESP.restart();
+  NetworkManager::restart();
 }
 
 void WebPortal::apiFactoryReset() {
@@ -841,8 +838,7 @@ void WebPortal::apiFactoryReset() {
 
   ConfigManager::reset();
   ConfigManager::save();
-  delay(1000);
-  ESP.restart();
+  NetworkManager::restart();
 }
 
 void WebPortal::apiUpdateCheck() {

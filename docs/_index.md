@@ -28,7 +28,15 @@ tags: ["docs", "esp32", "controller", "tutorial"]
 
 The **Pool Controller** is the **central control unit** for your smart swimming pool. Built around an **ESP32 microcontroller**, it provides intelligent automation for pool circulation, solar heating, and comprehensive monitoring.
 
-## \u2728 Key Features
+## Main Features
+- [x] Manage water timed circulation for cleaning
+- [x] Manage water heating by additional pump for solar circuit
+- [x] [Home Assistant MQTT Discovery](https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery) - Native HA integration
+- [x] Independent of specific smarthome servers
+  - [x] [Home Assistant](https://home-assistant.io) via native MQTT Discovery
+  - [x] [openHAB](https://www.openhab.org) via MQTT (manual configuration required)
+- [x] Timesync via NTP (europe.pool.ntp.org)
+- [x] Logging of system events and diagnostics
 
 ### \ud83c\udfca Pool Management
 - **Timed circulation** for automatic water cleaning
