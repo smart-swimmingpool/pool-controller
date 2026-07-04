@@ -12,6 +12,9 @@
 #include <Arduino.h>
 #include "Timer.hpp"
 
+// Uncomment to enable verbose timer debugging (reduces ~50K log lines/day)
+// #define DEBUG_RULE_TIMER
+
 /**
  * @brief Abstract base for operation mode rule implementations.
  *
@@ -110,14 +113,20 @@ protected:
    *         window).
    */
   bool checkPoolPumpTimer(float poolTemp) {
-    Serial.println("↕  checkPoolPumpTimer");
+    #ifdef DEBUG_RULE_TIMER
+Serial.println("↕  checkPoolPumpTimer");
+#endif
 
     tm time = getCurrentDateTime();
 
     // Check if time sync is valid
     if (time.tm_year == -1) {
-      Serial.println("  ⚠ Time sync RED - timer disabled");
-      Serial.println("  Pool pump stays ON for safety & hygiene");
+      #ifdef DEBUG_RULE_TIMER
+Serial.println("  ⚠ Time sync RED - timer disabled");
+#endif
+      #ifdef DEBUG_RULE_TIMER
+Serial.println("  Pool pump stays ON for safety & hygiene");
+#endif
       return true;
     }
 
@@ -127,9 +136,15 @@ protected:
     uint16_t baseStartMinutes = ts.timerStartHour * 60 + ts.timerStartMinutes;
     uint16_t baseEndMinutes = ts.timerEndHour * 60 + ts.timerEndMinutes;
 
-    Serial.printf("  currenttime = %s", asctime(&time));
-    Serial.printf("  startTime   = %s", asctime(&startTime));
-    Serial.printf("  endTime     = %s", asctime(&endTime));
+    #ifdef DEBUG_RULE_TIMER
+Serial.printf("  currenttime = %s", asctime(&time));
+#endif
+    #ifdef DEBUG_RULE_TIMER
+Serial.printf("  startTime   = %s", asctime(&startTime));
+#endif
+    #ifdef DEBUG_RULE_TIMER
+Serial.printf("  endTime     = %s", asctime(&endTime));
+#endif
 
     time_t now = mktime(&time);
     time_t start = mktime(&startTime);
@@ -157,7 +172,9 @@ protected:
         _activeEndMinutes = extendedEnd;
         uint8_t eh = (_activeEndMinutes / 60) % 24;
         uint8_t em = _activeEndMinutes % 60;
-        Serial.printf("  → Temperature extension: end now %02d:%02d\n", eh, em);
+        #ifdef DEBUG_RULE_TIMER
+Serial.printf("  → Temperature extension: end now %02d:%02d\n", eh, em);
+#endif
       }
     }
 
@@ -197,14 +214,20 @@ protected:
 
   /** @brief Standard timer check without temperature extension. */
   bool checkPoolPumpTimer() {
-    Serial.println("↕  checkPoolPumpTimer");
+    #ifdef DEBUG_RULE_TIMER
+Serial.println("↕  checkPoolPumpTimer");
+#endif
 
     tm time = getCurrentDateTime();
 
     // Check if time sync is valid
     if (time.tm_year == -1) {
-      Serial.println("  ⚠ Time sync RED - timer disabled");
-      Serial.println("  Pool pump stays ON for safety & hygiene");
+      #ifdef DEBUG_RULE_TIMER
+Serial.println("  ⚠ Time sync RED - timer disabled");
+#endif
+      #ifdef DEBUG_RULE_TIMER
+Serial.println("  Pool pump stays ON for safety & hygiene");
+#endif
       return true;
     }
 
@@ -213,9 +236,15 @@ protected:
     tm startTime = getStartTime(time, getTimerSetting());
     tm endTime = getEndTime(time, getTimerSetting());
 
-    Serial.printf("  currenttime = %s", asctime(&time));
-    Serial.printf("  startTime   = %s", asctime(&startTime));
-    Serial.printf("  endTime     = %s", asctime(&endTime));
+    #ifdef DEBUG_RULE_TIMER
+Serial.printf("  currenttime = %s", asctime(&time));
+#endif
+    #ifdef DEBUG_RULE_TIMER
+Serial.printf("  startTime   = %s", asctime(&startTime));
+#endif
+    #ifdef DEBUG_RULE_TIMER
+Serial.printf("  endTime     = %s", asctime(&endTime));
+#endif
 
     // Convert tm structs to time_t once to avoid multiple mktime calls
     time_t now = mktime(&time);
@@ -237,7 +266,9 @@ protected:
       retval = (difftime(now, start) >= 0) && (difftime(now, end) <= 0);
     }
 
-    Serial.printf("  checkPoolPumpTimer = %s\n", retval ? "true" : "false");
+    #ifdef DEBUG_RULE_TIMER
+Serial.printf("  checkPoolPumpTimer = %s\n", retval ? "true" : "false");
+#endif
     return retval;
   }
 

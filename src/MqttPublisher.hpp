@@ -70,7 +70,7 @@ private:
   /** @brief Publish select-entity discovery for sensor-to-role mapping (detected addresses as options). */
   static void publishSensorMappingDiscovery();
 
-  static String getBaseTopic(const char *component, const char *objectId);
+  static void getBaseTopic(char *buf, size_t bufSize, const char *component, const char *objectId);
   static void addDeviceInfo(JsonDocument &doc);
   static void publishUpdateState();
   static void publishClimateState();

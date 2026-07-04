@@ -88,7 +88,8 @@ void OtaUpdater::loop() {
     // Check if we're in clock sync backoff period
     if (clockSyncFailCount_ > 0) {
       // Handle unsigned wrap-around for backoff timer
-      if (now - lastClockSyncFailTime_ >= kClockSyncBackoffMs || now < lastClockSyncFailTime_) {
+      // unsigned subtraction handles millis() wrap-around correctly (C++ standard, modulo arithmetic)
+if (now - lastClockSyncFailTime_ >= kClockSyncBackoffMs) {
         // Backoff period expired, reset counter
         clockSyncFailCount_ = 0;
       } else {

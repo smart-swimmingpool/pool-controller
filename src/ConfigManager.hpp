@@ -80,6 +80,12 @@ public:
   static bool isConfigured() { return configured_; }
   static void setConfigured(bool configured) { configured_ = configured; }
 
+  // ── Sensor Address Mapping ──
+  /** @brief Save DS18B20 sensor address mapping to NVS. */
+  static void saveSensorMapping(const uint8_t solarAddr[8], const uint8_t poolAddr[8]);
+  /** @brief Load DS18B20 sensor address mapping from NVS. @return true if both addresses loaded. */
+  static bool loadSensorMapping(uint8_t solarAddr[8], uint8_t poolAddr[8]);
+
   // ── Boot Version Tracking ──
   /// Call once after loading config to log OTA transition status.
   static void logOtaTransition();
