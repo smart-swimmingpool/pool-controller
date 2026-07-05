@@ -123,6 +123,20 @@ async function loadTelemetry() {
       document.getElementById('effectiveRuntimeVal').textContent = h + 'h ' + m + 'm';
     }
 
+    // Circulation Extension (extra minutes beyond base timer)
+    if (data.circulation_extension != null) {
+      const h = Math.floor(data.circulation_extension / 60);
+      const m = data.circulation_extension % 60;
+      const extEl = document.getElementById('circulationExtensionVal');
+      if (data.circulation_extension > 0) {
+        extEl.textContent = '+' + h + 'h ' + m + 'm';
+        extEl.style.color = 'var(--accent-solar)';
+      } else {
+        extEl.textContent = '0 min';
+        extEl.style.color = 'var(--text-muted)';
+      }
+    }
+
     // AP-Mode: WiFi-Tab anzeigen
     if (data.ap_mode) {
       switchTab('wifi');

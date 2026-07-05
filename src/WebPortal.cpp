@@ -472,6 +472,7 @@ void WebPortal::apiGetStatus() {
   {
     Rule *active = operationModeNode.getRule();
     doc["effective_runtime"] = (active != nullptr) ? active->getEffectiveRuntimeMinutes() : 0;
+    doc["circulation_extension"] = (active != nullptr) ? active->getCirculationExtensionMinutes() : 0;
   }
 
   // Serialize directly to a pre-allocated buffer to minimize String usage
