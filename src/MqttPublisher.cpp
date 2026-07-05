@@ -465,6 +465,8 @@ void MqttPublisher::publishDiscovery() {
   // Runtime diagnostics
   publishSensorDiscovery(
     "effective-runtime", "Effective Runtime", "duration", "s", "mdi:timer-sand", "diagnostic", "measurement");
+  publishSensorDiscovery(
+    "circulation-extension", "Circulation Extension", "duration", "s", "mdi:timer-plus", "diagnostic", "measurement");
 
   // ── Sensor mapping diagnostics (static entities, always available) ──
   publishBinarySensorDiscovery(
@@ -604,6 +606,14 @@ void MqttPublisher::publishStates() {
     NetworkManager::publish((getBaseTopic("sensor", "effective-runtime") + "/state").c_str(),
       String(static_cast<uint32_t>(effectiveMin) * 60).c_str(), true);
   }
+  // Circulation extension sensor — extra minutes beyond base timer (in seconds for HA duration)
+  {
+    Rule *active = operationModeNode.getRule();
+    uint16_t extensionMin = (active != nullptr) ? active->getCirculationExtensionMinutes() : 0;
+    NetworkManager::publish((getBaseTopic("sensor", "circulation-extension") + "/state").c_str(),
+      String(static_cast<uint32_t>(extensionMin) * 60).c_str(), true);
+  }
+
   NetworkManager::publish((getBaseTopic("select", "timezone") + "/state").c_str(),
     getTimeInfoFor(ConfigManager::getSettings().timezoneIndex).c_str(), true);
   NetworkManager::publish((getBaseTopic("text", "ntp-server") + "/state").c_str(), ConfigManager::getNtp().server.c_str(), true);
