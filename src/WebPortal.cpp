@@ -472,6 +472,20 @@ void WebPortal::apiGetStatus() {
   {
     Rule *active = operationModeNode.getRule();
     doc["effective_runtime"] = (active != nullptr) ? active->getEffectiveRuntimeMinutes() : 0;
+    doc["circulation_extension"] = (active != nullptr) ? active->getCirculationExtensionMinutes() : 0;
+  }
+
+  // Timer settings for dashboard display
+  {
+    TimerSetting ts = operationModeNode.getTimerSetting();
+    doc["timer_start_h"] = ts.timerStartHour;
+    doc["timer_start_m"] = ts.timerStartMinutes;
+    doc["timer_end_h"] = ts.timerEndHour;
+    doc["timer_end_m"] = ts.timerEndMinutes;
+
+    // Extended end time in minutes since midnight (0 when no extension active)
+    Rule *active = operationModeNode.getRule();
+    doc["timer_extended_end"] = (active != nullptr) ? active->getActiveEndMinutes() : 0;
   }
 
   // Serialize directly to a pre-allocated buffer to minimize String usage
