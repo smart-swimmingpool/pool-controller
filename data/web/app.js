@@ -116,19 +116,33 @@ async function loadTelemetry() {
       document.getElementById('uptimeVal').textContent = h + 'h ' + m + 'm';
     }
 
-    // Effective Runtime (temperature-based circulation) — formatted as duration
-    if (data.effective_runtime != null) {
-      const h = Math.floor(data.effective_runtime / 60);
-      const m = data.effective_runtime % 60;
-      document.getElementById('effectiveRuntimeVal').textContent = h + 'h ' + m + 'm';
-    }
+    // Timer window display (with temperature extension)
+    if (data.timer_start_h != null && data.timer_end_h != null) {
+      const pad2 = (n) => n.toString().padStart(2, '0');
+      const sh = pad2(data.timer_start_h);
+      const sm = pad2(data.timer_start_m);
+      const eh = pad2(data.timer_end_h);
+      const em = pad2(data.timer_end_m);
 
-    // Circulation Extension (extra minutes beyond base timer)
-    if (data.circulation_extension != null) {
-      const h = Math.floor(data.circulation_extension / 60);
-      const m = data.circulation_extension % 60;
-      const extEl = document.getElementById('circulationExtensionVal');
-      extEl.textContent = (data.circulation_extension > 0 ? '+' : '') + h + 'h ' + m + 'm';
+      const extMinutes = data.circulation_extension || 0;
+      const el = document.getElementById('timerDisplayVal');
+
+      if (extMinutes > 0) {
+        // Extended end: timer start + effective runtime
+        const effectiveH = Math.floor(data.effective_runtime / 60);
+        const effectiveM = data.effective_runtime % 60;
+        const extraH = Math.floor(extMinutes / 60);
+        const extraM = extMinutes % 60;
+
+        const extendedTotal = (data.timer_start_h * 60 + data.timer_start_m) + data.effective_runtime;
+        const extHour = Math.floor(extendedTotal / 60) % 24;
+        const extMin = extendedTotal % 60;
+
+        el.innerHTML = sh + ':' + sm + '&rarr;' + pad2(extHour) + ':' + pad2(extMin) +
+          ' <span style="color:var(--accent-solar);font-size:0.65rem;">+' + extraH + 'h' + (extraM > 0 ? extraM + 'm' : '') + '</span>';
+      } else {
+        el.innerHTML = sh + ':' + sm + '&rarr;' + eh + ':' + em;
+      }
     }
 
     // AP-Mode: WiFi-Tab anzeigen
