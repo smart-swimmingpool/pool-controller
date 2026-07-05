@@ -491,6 +491,8 @@ void MqttPublisher::publishDiscovery() {
   // Runtime diagnostics
   publishSensorDiscovery(
     "effective-runtime", "Effective Runtime", "duration", "s", "mdi:timer-sand", "diagnostic", "measurement");
+  publishSensorDiscovery(
+    "circulation-extension", "Circulation Extension", "duration", "s", "mdi:timer-plus", "diagnostic", "measurement");
 
   // ── Sensor mapping diagnostics (static entities, always available) ──
   publishBinarySensorDiscovery(
@@ -685,6 +687,16 @@ void MqttPublisher::publishStates() {
     getBaseTopic(topic, sizeof(topic), "sensor", "effective-runtime");
     strlcat(topic, "/state", sizeof(topic));
     snprintf(valBuf, sizeof(valBuf), "%u", static_cast<uint32_t>(effectiveMin) * 60);
+    NetworkManager::publish(topic, valBuf, true);
+  }
+
+  // Circulation extension sensor — extra minutes beyond base timer (in seconds for HA duration)
+  {
+    Rule *active = operationModeNode.getRule();
+    uint16_t extensionMin = (active != nullptr) ? active->getCirculationExtensionMinutes() : 0;
+    getBaseTopic(topic, sizeof(topic), "sensor", "circulation-extension");
+    strlcat(topic, "/state", sizeof(topic));
+    snprintf(valBuf, sizeof(valBuf), "%u", static_cast<uint32_t>(extensionMin) * 60);
     NetworkManager::publish(topic, valBuf, true);
   }
 

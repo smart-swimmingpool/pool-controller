@@ -97,6 +97,34 @@ public:
     }
   }
 
+  /**
+   * @brief Get the temperature-based circulation extension in minutes.
+   *
+   * Returns how many extra minutes beyond the base timer runtime are active
+   * due to warm water. When no extension is active, returns 0.
+   *
+   * @return Extension in minutes (0-1440).
+   */
+  uint16_t getCirculationExtensionMinutes() const {
+    if (_activeEndMinutes == 0) {
+      return 0;
+    }
+
+    uint16_t total = getEffectiveRuntimeMinutes();
+    TimerSetting ts = getTimerSetting();
+    uint16_t baseStart = ts.timerStartHour * 60 + ts.timerStartMinutes;
+    uint16_t baseEnd = ts.timerEndHour * 60 + ts.timerEndMinutes;
+
+    uint16_t baseRuntime;
+    if (baseEnd >= baseStart) {
+      baseRuntime = baseEnd - baseStart;
+    } else {
+      baseRuntime = (1440 - baseStart) + baseEnd;
+    }
+
+    return (total > baseRuntime) ? (total - baseRuntime) : 0;
+  }
+
 protected:
   static constexpr const char *cIndent = "  ";
 
