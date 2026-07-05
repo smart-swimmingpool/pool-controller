@@ -11,25 +11,25 @@ wurden während der umfassenden IoT-Sicherheitsanalyse am 2025-01-15 zusammenges
 - **[OWASP IoT Security Guidance](https://owasp.org/www-project-internet-of-things/)**
   Umfassendes IoT-Sicherheitsframework, das Gerätesicherheit, Netzwerksicherheit und Datenschutz abdeckt.
 
-- **[OWASP Secure Coding Practices Quick Reference Guide](https://owasp.org/www-project-secure-coding-practices-quick-reference-guide/)
+- \*\*[OWASP Secure Coding Practices Quick Reference Guide](https://owasp.org/www-project-secure-coding-practices-quick-reference-guide/)
 
-**
-  Allgemeine Richtlinien für sicheres Codieren, anwendbar auf eingebettete Systeme und IoT-Geräte.
+\*\*
+Allgemeine Richtlinien für sicheres Codieren, anwendbar auf eingebettete Systeme und IoT-Geräte.
 
 - **[NIST IoT Device Cybersecurity Guidance](https://www.nist.gov/iot)**
   NIST-Empfehlungen für IoT-Gerätesicherheit, einschließlich Risikomanagement und Sicherheitskontrollen.
 
 ### Webanwendungssicherheit
 
-- **[OWASP CSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)
+- \*\*[OWASP CSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)
 
-**
-  Umfassender Leitfaden zu CSRF-Schutzstrategien, einschließlich Token-basierter Ansätze und SameSite-Cookie-Attribute.
+\*\*
+Umfassender Leitfaden zu CSRF-Schutzstrategien, einschließlich Token-basierter Ansätze und SameSite-Cookie-Attribute.
 
-- **[OWASP Session Management Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html)
+- \*\*[OWASP Session Management Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html)
 
-**
-  Best Practices für sicheres Session-Management, einschließlich Timeout-Handling und Cookie-Sicherheit.
+\*\*
+Best Practices für sicheres Session-Management, einschließlich Timeout-Handling und Cookie-Sicherheit.
 
 - **[OWASP Authentication Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html)**
   Richtlinien für sichere Authentifizierungsimplementierung, Passwortspeicherung und Credential-Management.
@@ -43,34 +43,34 @@ wurden während der umfassenden IoT-Sicherheitsanalyse am 2025-01-15 zusammenges
 
 - **[ESP32 Secure Boot](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/secure-boot.html)**
   Vollständiger Leitfaden zur Implementierung von Secure Boot auf ESP32, einschließlich Schlüsselgenerierung und
-eFuse-Konfiguration.
+  eFuse-Konfiguration.
 
-- **[ESP32 Flash-Verschlüsselung](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/flash-encryption.html)
+- \*\*[ESP32 Flash-Verschlüsselung](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/flash-encryption.html)
 
-**
-  Detaillierte Dokumentation zur Flash-Verschlüsselungskonfiguration und -implementierung.
+\*\*
+Detaillierte Dokumentation zur Flash-Verschlüsselungskonfiguration und -implementierung.
 
 - **[ESP32 eFuse-Referenz](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/efuse.html)
-**
+  **
   Referenzdokumentation für eFuse-Brennen und Konfigurationsoptionen.
 
 - **[ESP32 Speichertypen](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/memory-types.html)**
   Verständnis der ESP32-Speicherarchitektur und verschiedener Speichertypen (DRAM, IRAM, etc.).
 
-- **[ESP32 Speicherverwaltung](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/memory-management.html)
+- \*\*[ESP32 Speicherverwaltung](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/memory-management.html)
 
-**
-  Speicherzuweisungsstrategien und Best Practices für die ESP32-Entwicklung.
+\*\*
+Speicherzuweisungsstrategien und Best Practices für die ESP32-Entwicklung.
 
-- **[ESP32 Heap-Fragmentierung](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/heap-fragmentation.html)
+- \*\*[ESP32 Heap-Fragmentierung](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/heap-fragmentation.html)
 
-**
-  Verständnis und Vermeidung von Heap-Fragmentierung in ESP32-Anwendungen.
+\*\*
+Verständnis und Vermeidung von Heap-Fragmentierung in ESP32-Anwendungen.
 
-- **[ESP-IDF Speicher-Debugging](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/debugging/memory-leaks.html)
+- \*\*[ESP-IDF Speicher-Debugging](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/debugging/memory-leaks.html)
 
-**
-  Tools und Techniken zum Erkennen und Debuggen von Speicherlecks in ESP32-Anwendungen.
+\*\*
+Tools und Techniken zum Erkennen und Debuggen von Speicherlecks in ESP32-Anwendungen.
 
 ### Praktische Implementierungsbeispiele
 
@@ -84,7 +84,7 @@ eFuse-Konfiguration.
 
 - **[IETF RFC 8520 - Manufacturer Usage Description (MUD)](https://datatracker.ietf.org/doc/html/rfc8520)**
   Standard für Manufacturer Usage Description, um Netzwerkgeräten zu ermöglichen, ihr beabsichtigtes Netzwerkverhalten
-zu signalisieren.
+  zu signalisieren.
 
 - **[NIST SP 800-213: IoT Device Cybersecurity Guidance](https://csrc.nist.gov/publications/detail/sp/800-213/final)**
   NIST Special Publication mit Leitlinien zur Cybersicherheit für IoT-Geräte.
@@ -93,15 +93,15 @@ zu signalisieren.
 
 ### ESP32-Speicherverwaltung
 
-- **[ESP32 Speicheroptimierungsleitfaden](https://github.com/espressif/esp-idf/blob/master/docs/en/api-guides/memory-types.rst)
+- \*\*[ESP32 Speicheroptimierungsleitfaden](https://github.com/espressif/esp-idf/blob/master/docs/en/api-guides/memory-types.rst)
 
-**
-  Offizielle Speicheroptimierungsstrategien für die ESP32-Entwicklung.
+\*\*
+Offizielle Speicheroptimierungsstrategien für die ESP32-Entwicklung.
 
-- **[Heap-Nutzungsüberwachung](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/heap_debug.html)
+- \*\*[Heap-Nutzungsüberwachung](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/heap_debug.html)
 
-**
-  ESP32 Heap-Debugging-Funktionen und Verwendungsbeispiele.
+\*\*
+ESP32 Heap-Debugging-Funktionen und Verwendungsbeispiele.
 
 ### Arduino & C++ Optimierung
 
@@ -115,17 +115,17 @@ zu signalisieren.
   Online-Tool zur Berechnung der benötigten Puffergrößen für JSON-Dokumente.
 
 - **[Vermeiden von String in Arduino](https://hackingmajenkoblog.wordpress.com/2016/02/04/the-evils-of-arduino-strings/)
-**
+  **
   Warum und wie man die String-Klasse in Arduino für besseres Speichermanagement vermeidet.
 
 - **[Statische vs Dynamische Zuweisung](https://embeddedartistry.com/blog/2017/02/22/always-use-the-right-sized-integer/)
-**
+  **
   Wahl der richtigen Zuweisungsstrategie für eingebettete Systeme.
 
-- **[Google C++ Style Guide - Speicherverwaltung](https://google.github.io/styleguide/cppguide.html#Ownership_and_Smart_Pointers)
+- \*\*[Google C++ Style Guide - Speicherverwaltung](https://google.github.io/styleguide/cppguide.html#Ownership_and_Smart_Pointers)
 
-**
-  Richtlinien für die Verwendung von Smart Pointern und Speicherverwaltung.
+\*\*
+Richtlinien für die Verwendung von Smart Pointern und Speicherverwaltung.
 
 ## 🛡️ Sicherheitstools & Scanner
 
@@ -133,13 +133,13 @@ zu signalisieren.
 
 - **[Gitleaks](https://github.com/gitleaks/gitleaks)**
   Schnelles und effizientes Erkennen von Geheimnissen in Git-Repositories. Wird in diesem Projekt zum Erkennen von
-hartcodierten Anmeldedaten und sensiblen Daten verwendet.
+  hartcodierten Anmeldedaten und sensiblen Daten verwendet.
 
 - **[CodeQL](https://codeql.github.com/)**
   Semantische Code-Analyse-Engine zum Auffinden von Sicherheitslücken. In GitHub Actions CI integriert.
 
-- **[Super-Linter](https://github.com/github/super-linter)**
-  Multi-Sprachen-Linting-Framework, das mehrere Linter kombiniert. Wird in der CI-Pipeline dieses Projekts verwendet.
+- **[MegaLinter](https://megalinter.io/)**
+  Multi-Sprachen-Linting-Framework von OX Security, das mehrere Linter kombiniert. Wird in der CI-Pipeline dieses Projekts verwendet.
 
 - **[cpplint](https://github.com/cpplint/cpplint)**
   Googles C++-Linter zur Durchsetzung von Codierstandards und Erkennung potenzieller Probleme.
@@ -151,7 +151,7 @@ hartcodierten Anmeldedaten und sensiblen Daten verwendet.
 
 - **[clang-format](https://clang.llvm.org/docs/ClangFormat.html)**
   Code-Formatierungstool mit konfigurierbaren Stilen. Wird in diesem Projekt mit benutzerdefinierter Konfiguration
-verwendet.
+  verwendet.
 
 - **[Prettier](https://prettier.io/)**
   Meinungsstarkes Code-Formatierungstool für YAML-, JSON- und Markdown-Dateien.
@@ -174,8 +174,8 @@ verwendet.
 
 ### Linting & Formatierung
 
-- **[Super-Linter einrichten](https://github.com/github/super-linter/blob/main/README.md)**
-  Konfigurations- und Anpassungsleitfaden für Super-Linter.
+- **[MegaLinter Konfiguration](https://megalinter.io/latest/configuration/)**
+  Konfigurations- und Anpassungsleitfaden für MegaLinter.
 
 - **[clang-format Konfiguration](https://clang.llvm.org/docs/ClangFormatStyleOptions.html)**
   Vollständige Referenz für clang-format-Stiloptionen.
@@ -200,16 +200,19 @@ Die folgenden Sicherheitsverbesserungen wurden in
 implementiert:
 
 1. **CSRF-Schutz**
+
    - Token-Generierung und -Validierungssystem
    - SameSite-Cookie-Attribute für XSS/CSRF-Schutz
    - 30-minütige Token-Ablaufzeit mit automatischer Regenerierung
 
 2. **Geheimnisverwaltung**
+
    - Gitleaks-Konfiguration für False Positives
    - Verbesserte Dokumentation für den Standard-Passwort-Hash
    - Bessere Code-Kommentare, die das absichtliche Hardcoding erklären
 
 3. **Speichersicherheit**
+
    - Vermeidung von Dangling Pointern in TimeClientHelper
    - Speichereffiziente Utility-Funktionen in Utils.hpp
    - String-Optimierungs-Utilities

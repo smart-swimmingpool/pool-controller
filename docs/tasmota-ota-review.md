@@ -58,13 +58,13 @@ Custom/Private OTA:
 
 ### 1.2 Update Methods
 
-| Method | Description | Security Level |
-|--------|-------------|---------------|
-| **Web UI - Web Server** | Download from configured OTA URL | Medium (depends on URL) |
-| **Web UI - File Upload** | Manual .bin/.bin.gz file upload | Low (no verification) |
-| **MQTT Command** | `Upgrade 1` via MQTT | Medium (depends on URL) |
-| **Serial Command** | `OtaUrl` + `Upgrade 1` via serial | Medium (depends on URL) |
-| **Console** | Web UI console commands | Medium (depends on URL) |
+| Method                   | Description                       | Security Level          |
+| ------------------------ | --------------------------------- | ----------------------- |
+| **Web UI - Web Server**  | Download from configured OTA URL  | Medium (depends on URL) |
+| **Web UI - File Upload** | Manual .bin/.bin.gz file upload   | Low (no verification)   |
+| **MQTT Command**         | `Upgrade 1` via MQTT              | Medium (depends on URL) |
+| **Serial Command**       | `OtaUrl` + `Upgrade 1` via serial | Medium (depends on URL) |
+| **Console**              | Web UI console commands           | Medium (depends on URL) |
 
 ---
 
@@ -98,12 +98,14 @@ WiFiClientSecure client;
 ```
 
 **Key Features**:
+
 - ✅ Proper CA certificate validation when HTTPS is used
 - ✅ Support for mutual TLS (client certificates)
 - ✅ Configurable via compile-time flags
 - ⚠️ **Limitation**: HTTP OTA URLs have no security
 
 **Comparison with Pool Controller**:
+
 - **Pool Controller v3.2.1**: Uses `setCACertBundle(x509_crt_bundle)` or `setCACert(kGitHubRootCA)`
 - **Similarity**: Both use proper CA validation, no `setInsecure()`
 - **Difference**: Tasmota has compile-time flags for TLS configuration
@@ -131,12 +133,14 @@ if (tls_mode == TLS_MODE_FINGERPRINT) {
 ```
 
 **Implementation Details**:
+
 - Uses `MqttFingerprint` command to set expected SHA-256 fingerprint
 - Fingerprint is 20 bytes (40 hex characters)
 - Verification happens during TLS handshake
 - Can be configured per-server
 
 **Example Usage**:
+
 ```bash
 ## Set MQTT server fingerprint
 MqttFingerprint A1:B2:C3:D4:E5:F6:G7:H8:I9:J0:K1:L2:M3:N4:O5:P6:Q7:R8:S9:T0
@@ -146,10 +150,11 @@ MqttFingerprint A1:B2:C3:D4:E5:F6:G7:H8:I9:J0:K1:L2:M3:N4:O5:P6:Q7:R8:S9:T0
 ```
 
 **Comparison with Pool Controller**:
+
 - **Pool Controller**: Uses CA bundle validation (more flexible)
 - **Tasmota**: Offers both CA and fingerprint validation
 - **Recommendation**: Consider adding fingerprint validation as an option for users who want to pin specific GitHub CDN
-certificates
+  certificates
 
 ### 2.3 Version Compatibility Checking
 
@@ -167,6 +172,7 @@ Key features:
 ```
 
 **Implementation**:
+
 ```cpp
 // From Tasmota's ota.ino
 bool checkVersionCompatibility(const String& current, const String& target) {
@@ -185,24 +191,28 @@ bool checkVersionCompatibility(const String& current, const String& target) {
 ```
 
 **Comparison with Pool Controller**:
+
 - **Pool Controller**: Has `isNewerVersion()` check but no migration path enforcement
 - **Tasmota**: Enforces strict version compatibility
 - **Recommendation**: For Pool Controller, the simpler approach is sufficient since we don't have breaking changes
-between minor versions
+  between minor versions
 
 ### 2.4 Firmware Signature Verification
 
 **Current State**:
+
 - Tasmota **does NOT** verify firmware binary signatures for OTA updates
 - Relies on TLS for download security
 - Local file uploads have no verification
 
 **Comparison with Pool Controller**:
+
 - **Pool Controller**: Same approach - relies on TLS for GitHub downloads
 - **Both**: No binary signature verification
 - **Risk**: Man-in-the-middle could still serve malicious firmware if TLS is compromised
 
 **Recommendation**: This is a known limitation in both projects. For maximum security:
+
 1. Use HTTPS OTA URLs only
 2. Verify TLS certificates properly (✅ already implemented)
 3. Consider adding firmware signature verification for future versions
@@ -248,6 +258,7 @@ between minor versions
 **Purpose**: Allow OTA updates when the new firmware is larger than available flash space.
 
 **Process**:
+
 1. User tries to install large firmware (>500KB)
 2. Tasmota detects insufficient space
 3. Automatically downloads `tasmota-minimal.bin` first
@@ -258,11 +269,13 @@ between minor versions
 8. Reboots into full firmware
 
 **File Naming Convention**:
+
 - Main firmware: `tasmota-sensors.bin`
 - Minimal firmware: `tasmota-minimal.bin`
 - When OTA URL points to `yourbinary.bin`, it looks for `yourbinary-minimal.bin`
 
 **Comparison with Pool Controller**:
+
 - **Pool Controller**: Single-stage update, assumes sufficient space
 - **Tasmota**: Two-stage update for large firmwares
 - **Recommendation**: Pool Controller firmware is smaller (<500KB), so single-stage is sufficient
@@ -273,35 +286,35 @@ between minor versions
 
 ### 4.1 Strengths of Tasmota's Approach
 
-| Security Feature | Implementation | Effectiveness |
-|-----------------|---------------|---------------|
-| **TLS Validation** | Proper CA validation with `setCACert()` | ✅ High |
-| **Version Checking** | Strict migration path enforcement | ✅ High |
-| **Space Checking** | Prevents bricking from insufficient space | ✅ High |
-| **Fingerprint Option** | SHA-256 fingerprint validation | ✅ Medium |
-| **Minimal Firmware** | Enables large firmware updates | ✅ Medium |
-| **Compression** | .gz support reduces download size | ✅ Low |
+| Security Feature       | Implementation                            | Effectiveness |
+| ---------------------- | ----------------------------------------- | ------------- |
+| **TLS Validation**     | Proper CA validation with `setCACert()`   | ✅ High       |
+| **Version Checking**   | Strict migration path enforcement         | ✅ High       |
+| **Space Checking**     | Prevents bricking from insufficient space | ✅ High       |
+| **Fingerprint Option** | SHA-256 fingerprint validation            | ✅ Medium     |
+| **Minimal Firmware**   | Enables large firmware updates            | ✅ Medium     |
+| **Compression**        | .gz support reduces download size         | ✅ Low        |
 
 ### 4.2 Weaknesses and Limitations
 
-| Weakness | Impact | Mitigation |
-|---------|--------|------------|
-| **No binary signing** | MITM could serve malicious firmware | Use HTTPS, verify CA |
-| **HTTP OTA allowed** | No encryption for custom servers | User responsibility |
-| **Fingerprint not default** | Most users use CA validation only | Could make fingerprint default |
-| **No rollback protection** | Downgrades possible | Version checking helps |
+| Weakness                    | Impact                              | Mitigation                     |
+| --------------------------- | ----------------------------------- | ------------------------------ |
+| **No binary signing**       | MITM could serve malicious firmware | Use HTTPS, verify CA           |
+| **HTTP OTA allowed**        | No encryption for custom servers    | User responsibility            |
+| **Fingerprint not default** | Most users use CA validation only   | Could make fingerprint default |
+| **No rollback protection**  | Downgrades possible                 | Version checking helps         |
 
 ### 4.3 Comparison with Pool Controller v3.2.1
 
-| Feature | Tasmota | Pool Controller v3.2.1 | Status |
-|---------|--------|------------------------|--------|
-| TLS CA Validation | ✅ Yes | ✅ Yes | **Equal** |
-| TLS Fingerprint | ✅ Optional | ❌ No | **Tasmota better** |
-| Version Checking | ✅ Strict path | ✅ Basic check | **Tasmota better** |
-| Space Checking | ✅ Yes | ❌ No | **Tasmota better** |
-| Minimal Firmware | ✅ Yes | ❌ No | **Tasmota better** |
-| Compression | ✅ .gz | ❌ No | **Tasmota better** |
-| Binary Signing | ❌ No | ❌ No | **Equal** |
+| Feature           | Tasmota        | Pool Controller v3.2.1 | Status             |
+| ----------------- | -------------- | ---------------------- | ------------------ |
+| TLS CA Validation | ✅ Yes         | ✅ Yes                 | **Equal**          |
+| TLS Fingerprint   | ✅ Optional    | ❌ No                  | **Tasmota better** |
+| Version Checking  | ✅ Strict path | ✅ Basic check         | **Tasmota better** |
+| Space Checking    | ✅ Yes         | ❌ No                  | **Tasmota better** |
+| Minimal Firmware  | ✅ Yes         | ❌ No                  | **Tasmota better** |
+| Compression       | ✅ .gz         | ❌ No                  | **Tasmota better** |
+| Binary Signing    | ❌ No          | ❌ No                  | **Equal**          |
 
 ---
 
@@ -314,6 +327,7 @@ between minor versions
 **Current Issue**: Pool Controller doesn't check available flash space before OTA.
 
 **Recommended Implementation**:
+
 ```cpp
 // In OtaUpdater.cpp
 bool OtaUpdater::hasSufficientSpace(size_t firmwareSize) {
@@ -334,6 +348,7 @@ bool OtaUpdater::hasSufficientSpace(size_t firmwareSize) {
 ```
 
 **Benefits**:
+
 - Prevents bricking from insufficient space
 - Provides clear error message to users
 - Matches Tasmota's safety approach
@@ -343,6 +358,7 @@ bool OtaUpdater::hasSufficientSpace(size_t firmwareSize) {
 **Current Issue**: Downloaded firmware size is not verified against expected size.
 
 **Recommended Implementation**:
+
 ```cpp
 // In OtaUpdater.cpp
 bool OtaUpdater::verifyFirmwareSize(HTTPClient& http, size_t expectedSize) {
@@ -369,6 +385,7 @@ bool OtaUpdater::verifyFirmwareSize(HTTPClient& http, size_t expectedSize) {
 #### 5.2.1 Add Fingerprint Verification Option
 
 **Implementation**:
+
 ```cpp
 // In ConfigManager.hpp
 struct OtaConfig {
@@ -395,6 +412,7 @@ bool OtaUpdater::verifyServerCertificate(WiFiClientSecure& client) {
 ```
 
 **User Interface**:
+
 ```bash
 ## Via Web UI or MQTT:
 OtaFingerprint A1:B2:C3:D4:E5:F6:G7:H8:I9:J0:K1:L2:M3:N4:O5:P6:Q7:R8:S9:T0
@@ -404,6 +422,7 @@ OtaUseFingerprint 1  # Enable fingerprint verification
 #### 5.2.2 Add Compression Support (.gz)
 
 **Implementation**:
+
 ```cpp
 // In OtaUpdater.cpp
 #include <ESP32Gzip.h>  // Or similar library
@@ -424,6 +443,7 @@ bool OtaUpdater::downloadAndApply(const String& url) {
 ```
 
 **Benefits**:
+
 - Smaller download size (30-50% reduction)
 - Faster updates
 - Lower memory usage during download
@@ -433,6 +453,7 @@ bool OtaUpdater::downloadAndApply(const String& url) {
 #### 5.3.1 Firmware Signature Verification
 
 **Implementation Concept**:
+
 ```cpp
 // Would require:
 // 1. Sign firmware binaries during build (CI/CD)
@@ -455,6 +476,7 @@ bool verifyFirmwareSignature(const uint8_t* firmware, size_t size) {
 ```
 
 **Challenges**:
+
 - Requires build system changes
 - Increases firmware size (public key storage)
 - Complex key management
@@ -463,6 +485,7 @@ bool verifyFirmwareSignature(const uint8_t* firmware, size_t size) {
 #### 5.3.2 Minimal Firmware Support
 
 **Implementation**:
+
 ```cpp
 // Would require:
 // 1. Create minimal firmware variant
@@ -476,6 +499,7 @@ bool OtaUpdater::needsMinimalFirmware(size_t firmwareSize) {
 ```
 
 **Consideration**:
+
 - Pool Controller firmware is currently <500KB
 - Most ESP32 devices have 1MB+ flash
 - Not currently necessary, but good for future-proofing
@@ -510,6 +534,7 @@ bool OtaUpdater::needsMinimalFirmware(size_t firmwareSize) {
 ### For Pool Controller Users
 
 **Security Settings**:
+
 ```bash
 ## Always use HTTPS OTA URLs
 OtaUrl https://github.com/smart-swimmingpool/pool-controller/releases/latest/download/firmware.bin
@@ -523,6 +548,7 @@ OtaUrl https://github.com/smart-swimmingpool/pool-controller/releases/latest/dow
 ```
 
 **Network Recommendations**:
+
 1. Use HTTPS OTA URLs only
 2. Keep device on isolated IoT network
 3. Use MQTT authentication
@@ -532,6 +558,7 @@ OtaUrl https://github.com/smart-swimmingpool/pool-controller/releases/latest/dow
 ### For Developers
 
 **Build Configuration**:
+
 ```ini
 ## In platformio.ini
 [env:esp32dev]
@@ -568,18 +595,21 @@ Tasmota's OTA update verification approach is **mature and well-designed**, with
 Based on this review, the following recommendations have been **IMPLEMENTED** in Pool Controller v3.2.1:
 
 ✅ **Space Checking Before OTA** - Added `hasSufficientSpace()` and `getAvailableFlashSpace()` methods
+
 - Checks available flash space using `ESP.getFreeSketchSpace()`
 - Requires 15% safety margin above firmware size
 - Enforces minimum 1MB free space requirement
 - Prevents OTA start if space is insufficient
 
 ✅ **Firmware Size Verification** - Added size validation in `downloadAndApply()`
+
 - Validates Content-Length header from HTTP response
 - Enforces minimum (50KB) and maximum (2MB) firmware size limits
 - Prevents integer overflow attacks
 - Provides clear error messages for size mismatches
 
 ✅ **Documentation** - Comprehensive security documentation created
+
 - `docs/security-fixes-v3.2.1.md` - All security fixes documented
 - `docs/tasmota-ota-review.md` - This analysis and recommendations
 
@@ -591,6 +621,7 @@ The OTA system now includes **space checking and size verification** as recommen
 implementation is **secure and production-ready** for the Pool Controller use case.
 
 **Current Status**:
+
 - ✅ TLS certificate validation (already implemented)
 - ✅ Space checking before OTA (newly implemented)
 - ✅ Firmware size verification (newly implemented)
@@ -603,25 +634,25 @@ The Pool Controller OTA system now matches or exceeds Tasmota's safety features 
 
 ## Appendix A: Tasmota OTA Commands
 
-| Command | Description | Example |
-|---------|-------------|---------|
-| `OtaUrl` | Set OTA server URL | `OtaUrl http://ota.tasmota.com/tasmota/release/` |
-| `Upgrade` | Start OTA upgrade | `Upgrade 1` |
-| `Upload` | Upload firmware file | `Upload 1` (via Web UI) |
-| `Status 2` | Show firmware version | `Status 2` |
+| Command    | Description           | Example                                          |
+| ---------- | --------------------- | ------------------------------------------------ |
+| `OtaUrl`   | Set OTA server URL    | `OtaUrl http://ota.tasmota.com/tasmota/release/` |
+| `Upgrade`  | Start OTA upgrade     | `Upgrade 1`                                      |
+| `Upload`   | Upload firmware file  | `Upload 1` (via Web UI)                          |
+| `Status 2` | Show firmware version | `Status 2`                                       |
 
 ## Appendix B: Version Comparison
 
-| Feature | Tasmota | Pool Controller v3.2.1 | Status |
-|---------|---------|------------------------|--------|
-| TLS Support | ✅ Yes | ✅ Yes | **Equal** |
-| CA Validation | ✅ Yes | ✅ Yes | **Equal** |
-| Fingerprint | ✅ Optional | ❌ No | **Tasmota better** (not needed) |
-| Version Check | ✅ Strict | ✅ Basic | **Tasmota better** |
-| Space Check | ✅ Yes | ✅ **Yes** (NEW) | **Equal** |
-| Size Verification | ❌ No | ✅ **Yes** (NEW) | **Pool Controller better** |
-| Compression | ✅ .gz | ❌ No | **Tasmota better** |
-| Minimal Firmware | ✅ Yes | ❌ No | **Tasmota better** |
+| Feature           | Tasmota     | Pool Controller v3.2.1 | Status                          |
+| ----------------- | ----------- | ---------------------- | ------------------------------- |
+| TLS Support       | ✅ Yes      | ✅ Yes                 | **Equal**                       |
+| CA Validation     | ✅ Yes      | ✅ Yes                 | **Equal**                       |
+| Fingerprint       | ✅ Optional | ❌ No                  | **Tasmota better** (not needed) |
+| Version Check     | ✅ Strict   | ✅ Basic               | **Tasmota better**              |
+| Space Check       | ✅ Yes      | ✅ **Yes** (NEW)       | **Equal**                       |
+| Size Verification | ❌ No       | ✅ **Yes** (NEW)       | **Pool Controller better**      |
+| Compression       | ✅ .gz      | ❌ No                  | **Tasmota better**              |
+| Minimal Firmware  | ✅ Yes      | ❌ No                  | **Tasmota better**              |
 
 **Note**: Pool Controller v3.2.1 now includes space checking and size verification, matching or exceeding Tasmota's
 safety features for our use case.
@@ -637,4 +668,4 @@ safety features for our use case.
 ---
 
 > **📝 Note**: This review was conducted on 2026-06-19 based on Tasmota v15.3.0 documentation and Pool Controller v3.2.1
-codebase.
+> codebase.

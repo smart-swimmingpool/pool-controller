@@ -68,14 +68,14 @@ void MqttPublisher::getBaseTopic(char *buf, size_t bufSize, const char *componen
 // ── Helper to build a topic string into a static buffer and return a const char* ──
 // Used for JSON document field assignment where a char buffer is needed per call.
 namespace {
-  struct TopicBuilder {
-    char buf[128];
-    const char* build(const char *component, const char *objectId, const char *suffix) {
-      snprintf(buf, sizeof(buf), "homeassistant/%s/pool-controller/%s%s", component, objectId, suffix);
-      return buf;
-    }
-  };
-}
+struct TopicBuilder {
+  char buf[128];
+  const char *build(const char *component, const char *objectId, const char *suffix) {
+    snprintf(buf, sizeof(buf), "homeassistant/%s/pool-controller/%s%s", component, objectId, suffix);
+    return buf;
+  }
+};
+}  // namespace
 
 void MqttPublisher::publishSensorDiscovery(const char *objectId, const char *name, const char *deviceClass, const char *unit,
   const char *icon, const char *entityCategory, const char *stateClass) {
@@ -282,9 +282,7 @@ void MqttPublisher::publishUpdateDiscovery() {
 }
 
 void MqttPublisher::publishClimateDiscovery() {
-  TopicBuilder cfgTopic,
-    currentTempTopic, tempCmdTopic, tempStateTopic,
-    modeCmdTopic, modeStateTopic, actionTopic,
+  TopicBuilder cfgTopic, currentTempTopic, tempCmdTopic, tempStateTopic, modeCmdTopic, modeStateTopic, actionTopic,
     presetCmdTopic, presetStateTopic;
 
   JsonDocument doc;

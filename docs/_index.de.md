@@ -48,6 +48,7 @@ Steuer deinen Swimming-Pool auf smarte Art und Weise, um diesen bequem und güns
 ✔️ Home Assistant MQTT Discovery (v3.3.0)
 ✔️ Automatische Update-Prüfung via GitHub Releases (v3.3.0)
 ✔️ Temperaturabhängige Filterlaufzeit (v3.4.0)
+
 - [ ] Konfigurierbarer NTP-Server
 - [ ] Zwei getrennte Zirkulationszyklen (Pool + Solar unabhängig)
 - [ ] Offline-Betriebsmodus (ohne WiFi)

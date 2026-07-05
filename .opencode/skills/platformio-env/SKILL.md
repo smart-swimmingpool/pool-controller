@@ -92,13 +92,13 @@ lib_deps =
 
 **Dependency specification formats**:
 
-| Format | Example | Use Case |
-|--------|---------|----------|
-| `LibName` | `DallasTemperature` | Simplest — takes latest from registry |
-| `owner/LibName` | `paulstoffregen/OneWire` | Registry + specific owner |
-| `LibName @ version` | `NTPClient @ 3.2.1` | Exact version pinning |
-| `LibName >=x.y.z` | `ArduinoJson >=7.0.0` | Minimum version |
-| Git URL + `#tag` | `...#v.1.1.2` | GitHub dependency at specific tag |
+| Format              | Example                  | Use Case                              |
+| ------------------- | ------------------------ | ------------------------------------- |
+| `LibName`           | `DallasTemperature`      | Simplest — takes latest from registry |
+| `owner/LibName`     | `paulstoffregen/OneWire` | Registry + specific owner             |
+| `LibName @ version` | `NTPClient @ 3.2.1`      | Exact version pinning                 |
+| `LibName >=x.y.z`   | `ArduinoJson >=7.0.0`    | Minimum version                       |
+| Git URL + `#tag`    | `...#v.1.1.2`            | GitHub dependency at specific tag     |
 
 ### `[env:esp32dev]` — Build Environment
 

@@ -64,12 +64,12 @@ Der industrielle NORVI AE01-R Controller verfügt über ein **0,96" OLED-Display
 `NORVI_AE01_R` gebaut wurde, zeigt das Display Systeminformationen auf vier
 umschaltbaren Seiten:
 
-| Seite | Anzeige |
-|:-----:|---------|
+| Seite | Anzeige                                                                                                                                                                                        |
+| :---: | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **1** | **Hauptseite** — Pool- und Solar-Wassertemperaturen mit Pumpen-EIN/AUS-Anzeige (gefüllter/leerer Kreis), Betriebsmodus (auto/manu/boost/timer) und Abkürzungshinweise für die drei Fronttasten |
-| **2** | **Netzwerk** — Verbundene WLAN-SSID, IP-Adresse, MQTT- Verbindungsstatus. Im AP-Modus werden Setup-Hotspot-Name und URL angezeigt |
-| **3** | **System** — Betriebszeit (z.B. 3d 12h 30m), aktueller und minimaler freier Heap-Speicher, Firmware-Version |
-| **4** | **QR-Code** — Erzeugt einen scannbaren QR-Code der Web-Dashboard-URL, zum Öffnen auf dem Smartphone ohne IP-Eingabe |
+| **2** | **Netzwerk** — Verbundene WLAN-SSID, IP-Adresse, MQTT- Verbindungsstatus. Im AP-Modus werden Setup-Hotspot-Name und URL angezeigt                                                              |
+| **3** | **System** — Betriebszeit (z.B. 3d 12h 30m), aktueller und minimaler freier Heap-Speicher, Firmware-Version                                                                                    |
+| **4** | **QR-Code** — Erzeugt einen scannbaren QR-Code der Web-Dashboard-URL, zum Öffnen auf dem Smartphone ohne IP-Eingabe                                                                            |
 
 **Fußzeile:** Jede Seite hat eine untere Leiste mit der Ortszeit (HH:MM, mit
 automatischer Sommerzeitumstellung), der Firmware-Version (`vX.Y.Z`) und der
@@ -94,14 +94,14 @@ Der Controller verwendet die **eingebaute LED** zur Signalisierung des aktuellen
 Systemzustands, nach der [Homie Convention](https://homieiot.github.io/) — einem
 Industriestandard für IoT-Statusanzeigen.
 
-| LED-Muster | Wann? | Bedeutung |
-|------------|-------|-----------|
-| **Langsames Blinken** (1x/Sek.) | **WLAN-Verbindung** | Der Controller versucht, sich mit Ihrem Heim-WLAN zu verbinden. Dauert 5–20 Sekunden. |
-| **Meist an, kurzes Ausblinken alle 2s** | **WLAN OK, MQTT verbindet/getrennt** | Netzwerk steht, aber der MQTT-Broker ist noch nicht verbunden. Broker-Adresse oder Netzwerk prüfen. |
-| **Schnelles Blinken** (5x/Sek.) | **AP-Modus / Setup** | Keine WLAN-Zugangsdaten gespeichert. Der Controller hostet ein eigenes `Pool-Controller-Setup`-WLAN. |
-| **Dauerhaft an** | **Voll verbunden** | Alles läuft normal — WLAN + MQTT verbunden. |
-| **Sehr schnelles Blinken** (10x/Sek.) | **OTA-Update läuft** | Firmware wird heruntergeladen und geflasht. Nicht ausschalten! |
-| **Doppelblinken** (zwei Blitze, Pause) | **Safe Mode / Fehler** | Boot-Loop erkannt oder kritische Systemverschlechterung. Relais sind ausgeschaltet. |
+| LED-Muster                              | Wann?                                | Bedeutung                                                                                            |
+| --------------------------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| **Langsames Blinken** (1x/Sek.)         | **WLAN-Verbindung**                  | Der Controller versucht, sich mit Ihrem Heim-WLAN zu verbinden. Dauert 5–20 Sekunden.                |
+| **Meist an, kurzes Ausblinken alle 2s** | **WLAN OK, MQTT verbindet/getrennt** | Netzwerk steht, aber der MQTT-Broker ist noch nicht verbunden. Broker-Adresse oder Netzwerk prüfen.  |
+| **Schnelles Blinken** (5x/Sek.)         | **AP-Modus / Setup**                 | Keine WLAN-Zugangsdaten gespeichert. Der Controller hostet ein eigenes `Pool-Controller-Setup`-WLAN. |
+| **Dauerhaft an**                        | **Voll verbunden**                   | Alles läuft normal — WLAN + MQTT verbunden.                                                          |
+| **Sehr schnelles Blinken** (10x/Sek.)   | **OTA-Update läuft**                 | Firmware wird heruntergeladen und geflasht. Nicht ausschalten!                                       |
+| **Doppelblinken** (zwei Blitze, Pause)  | **Safe Mode / Fehler**               | Boot-Loop erkannt oder kritische Systemverschlechterung. Relais sind ausgeschaltet.                  |
 
 ### Was beim ersten Einschalten zu erwarten ist
 
@@ -135,12 +135,12 @@ mit den folgenden Tabs:
 2. Zum Tab **Konfiguration** navigieren
 3. Einstellungen nach Bedarf anpassen:
 
-    - **Betriebsmodus**: Automatik (Solar), Manuelle Steuerung, Boost-Pumpe, Timer-Zeitplan
-    - **Max. Pool-Temp.**: Zielwassertemperatur (°C)
-    - **Min. Solar-Temp.**: Minimale Solarkollektortemperatur (°C)
-    - **Temperatur-Hysterese**: Schaltdifferenz zur Vermeidung schnellen Toggeln (K)
-    - **Loop-Intervall**: Wie oft der Controller Regeln auswertet (Sekunden)
-    - **Zeitzone**: Auswahl aus 10 unterstützten Zeitzonen mit Sommerzeit
+   - **Betriebsmodus**: Automatik (Solar), Manuelle Steuerung, Boost-Pumpe, Timer-Zeitplan
+   - **Max. Pool-Temp.**: Zielwassertemperatur (°C)
+   - **Min. Solar-Temp.**: Minimale Solarkollektortemperatur (°C)
+   - **Temperatur-Hysterese**: Schaltdifferenz zur Vermeidung schnellen Toggeln (K)
+   - **Loop-Intervall**: Wie oft der Controller Regeln auswertet (Sekunden)
+   - **Zeitzone**: Auswahl aus 10 unterstützten Zeitzonen mit Sommerzeit
 
 4. **Parameter speichern** klicken — Änderungen sind **sofort aktiv** und **überdauern Neustarts**
 5. Wenn MQTT/Home Assistant verbunden ist, werden die neuen Werte automatisch veröffentlicht

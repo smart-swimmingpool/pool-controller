@@ -25,37 +25,37 @@ erscheinen automatisch in Home Assistant.
 
 ### Verf\u00fcgbare Entit\u00e4ten
 
-| Domain | Object ID | Kategorie | Beschreibung |
-|--------|-----------|-----------|-------------|
-| `sensor` | `pool_temperature` | \u2014 | Wassertemperatur Pool |
-| `sensor` | `solar_temperature` | \u2014 | Temperatur Solarkollektor |
-| `sensor` | `controller_temperature` | diagnostic | ESP32-Chip-Temperatur |
-| `sensor` | `free_heap_space` | diagnostic | Freier Heap-Speicher |
-| `sensor` | `max_alloc_block` | diagnostic | Gr\u00f6\u00dfter allozierbarer Block |
-| `sensor` | `wifi_signal_strength` | diagnostic | WiFi-Signalst\u00e4rke (dBm) |
-| `sensor` | `system_uptime` | diagnostic | Betriebszeit (Dauer) |
-| `sensor` | `effective_runtime` | diagnostic | Effektive Filterlaufzeit (Dauer) |
-| `sensor` | `local_time` | diagnostic | Aktuelle Ortszeit |
-| `binary_sensor` | `pool_sensor_found` | diagnostic | Status Pool-Sensor (gefunden/fehlt) |
-| `binary_sensor` | `solar_sensor_found` | diagnostic | Status Solar-Sensor (gefunden/fehlt) |
-| `binary_sensor` | `mqtt_status` | diagnostic | MQTT-Verbindungsstatus |
-| `select` | `mode` | \u2014 | Betriebsart (auto/manu/boost/timer) |
-| `select` | `pool_sensor` | config | Pool-Sensor-Adresszuordnung |
-| `select` | `solar_sensor` | config | Solar-Sensor-Adresszuordnung |
-| `select` | `timezone` | config | Zeitzonenauswahl |
-| `switch` | `pool_pump` | \u2014 | Pool-Umw\u00e4lzpumpe |
-| `switch` | `solar_pump` | \u2014 | Solar-Heizungspumpe |
-| `number` | `pool_max_temp` | config | Zieltemperatur Pool max. |
-| `number` | `solar_min_temp` | config | Minimale Solar-Aktivierungstemperatur |
-| `number` | `hysteresis` | config | Temperaturhysterese |
-| `number` | `temp_circ_threshold` | config | Schwellwert temp. Filterlaufzeit |
-| `number` | `temp_circ_factor` | config | Faktor temp. Filterlaufzeit |
-| `number` | `temp_circ_max_runtime` | config | Maximale Laufzeit temp. Filterlaufzeit |
-| `time` | `timer_start` | config | Timer Startzeit (HH:MM) |
-| `time` | `timer_end` | config | Timer Endzeit (HH:MM) |
-| `text` | `ntp_server` | config | NTP-Server-Adresse |
-| `update` | `firmware` | config | Firmware-Update-Entit\u00e4t |
-| `climate` | `pool_climate` | \u2014 | Pool-Thermostat mit Preset-Modi |
+| Domain          | Object ID                | Kategorie  | Beschreibung                           |
+| --------------- | ------------------------ | ---------- | -------------------------------------- |
+| `sensor`        | `pool_temperature`       | \u2014     | Wassertemperatur Pool                  |
+| `sensor`        | `solar_temperature`      | \u2014     | Temperatur Solarkollektor              |
+| `sensor`        | `controller_temperature` | diagnostic | ESP32-Chip-Temperatur                  |
+| `sensor`        | `free_heap_space`        | diagnostic | Freier Heap-Speicher                   |
+| `sensor`        | `max_alloc_block`        | diagnostic | Gr\u00f6\u00dfter allozierbarer Block  |
+| `sensor`        | `wifi_signal_strength`   | diagnostic | WiFi-Signalst\u00e4rke (dBm)           |
+| `sensor`        | `system_uptime`          | diagnostic | Betriebszeit (Dauer)                   |
+| `sensor`        | `effective_runtime`      | diagnostic | Effektive Filterlaufzeit (Dauer)       |
+| `sensor`        | `local_time`             | diagnostic | Aktuelle Ortszeit                      |
+| `binary_sensor` | `pool_sensor_found`      | diagnostic | Status Pool-Sensor (gefunden/fehlt)    |
+| `binary_sensor` | `solar_sensor_found`     | diagnostic | Status Solar-Sensor (gefunden/fehlt)   |
+| `binary_sensor` | `mqtt_status`            | diagnostic | MQTT-Verbindungsstatus                 |
+| `select`        | `mode`                   | \u2014     | Betriebsart (auto/manu/boost/timer)    |
+| `select`        | `pool_sensor`            | config     | Pool-Sensor-Adresszuordnung            |
+| `select`        | `solar_sensor`           | config     | Solar-Sensor-Adresszuordnung           |
+| `select`        | `timezone`               | config     | Zeitzonenauswahl                       |
+| `switch`        | `pool_pump`              | \u2014     | Pool-Umw\u00e4lzpumpe                  |
+| `switch`        | `solar_pump`             | \u2014     | Solar-Heizungspumpe                    |
+| `number`        | `pool_max_temp`          | config     | Zieltemperatur Pool max.               |
+| `number`        | `solar_min_temp`         | config     | Minimale Solar-Aktivierungstemperatur  |
+| `number`        | `hysteresis`             | config     | Temperaturhysterese                    |
+| `number`        | `temp_circ_threshold`    | config     | Schwellwert temp. Filterlaufzeit       |
+| `number`        | `temp_circ_factor`       | config     | Faktor temp. Filterlaufzeit            |
+| `number`        | `temp_circ_max_runtime`  | config     | Maximale Laufzeit temp. Filterlaufzeit |
+| `time`          | `timer_start`            | config     | Timer Startzeit (HH:MM)                |
+| `time`          | `timer_end`              | config     | Timer Endzeit (HH:MM)                  |
+| `text`          | `ntp_server`             | config     | NTP-Server-Adresse                     |
+| `update`        | `firmware`               | config     | Firmware-Update-Entit\u00e4t           |
+| `climate`       | `pool_climate`           | \u2014     | Pool-Thermostat mit Preset-Modi        |
 
 > **Entity-IDs** in HA werden aus der MQTT unique_id generiert und enthalten einen ger\u00e4tespezifischen
 > MAC-Suffix (z.B. `sensor.pool_controller_a1b2c3_pool_temperature`). Pr\u00fcfe **Entwickler-Tools \u2192 Entit\u00e4ten** und

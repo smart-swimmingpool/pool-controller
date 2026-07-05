@@ -12,11 +12,11 @@ weight: 50
 
 Die Poolpumpe ist der größte Stromverbraucher im Schwimmbad. Gleichzeitig bestimmt sie maßgeblich die Wasserqualität. Die aktuell nötige Umwälzmenge hängt stark von der Wassertemperatur ab:
 
-| Wassertemperatur | Risiko | Empfohlene Umwälzung |
-|---|---|---|
-| **> 26 °C** | Hohes Algenwachstum, Trübung | Maximal (8–12 h/Tag) |
-| **20–26 °C** | Normalbetrieb | Standard (4–8 h/Tag) |
-| **< 20 °C** | Kaum Algenwachstum | Minimal (1–4 h/Tag) |
+| Wassertemperatur | Risiko                       | Empfohlene Umwälzung |
+| ---------------- | ---------------------------- | -------------------- |
+| **> 26 °C**      | Hohes Algenwachstum, Trübung | Maximal (8–12 h/Tag) |
+| **20–26 °C**     | Normalbetrieb                | Standard (4–8 h/Tag) |
+| **< 20 °C**      | Kaum Algenwachstum           | Minimal (1–4 h/Tag)  |
 
 Ein starrer Timer arbeitet entweder **überdimensioniert** (Stromverschwendung bei kühlem Wasser) oder **unterdimensioniert** (schlechte Wasserqualität bei Hitze).
 
@@ -35,18 +35,18 @@ effektiveLaufzeit = min(effektiveLaufzeit, tempCircMaxRuntime)
 
 ### Parameter
 
-| Parameter | Typ | Default | Bereich | Beschreibung |
-|---|---|---|---|---|
-| `tempCircThreshold` | double | 24,0 °C | 0–40 °C | Ab dieser Temperatur wird die Laufzeit verlängert |
-| `tempCircFactor` | uint16_t | 30 min/°C | 0–120 min/°C | Verlängerung **pro °C** über dem Schwellwert |
-| `tempCircMaxRuntime` | uint16_t | 720 min | 60–1440 min | Absolute Obergrenze der Gesamtlaufzeit |
+| Parameter            | Typ      | Default   | Bereich      | Beschreibung                                      |
+| -------------------- | -------- | --------- | ------------ | ------------------------------------------------- |
+| `tempCircThreshold`  | double   | 24,0 °C   | 0–40 °C      | Ab dieser Temperatur wird die Laufzeit verlängert |
+| `tempCircFactor`     | uint16_t | 30 min/°C | 0–120 min/°C | Verlängerung **pro °C** über dem Schwellwert      |
+| `tempCircMaxRuntime` | uint16_t | 720 min   | 60–1440 min  | Absolute Obergrenze der Gesamtlaufzeit            |
 
 ### Berechnete Felder (nicht konfigurierbar)
 
-| Feld | Beschreibung |
-|---|---|
+| Feld               | Beschreibung                                        |
+| ------------------ | --------------------------------------------------- |
 | `effectiveRuntime` | Berechnete Laufzeit in Minuten (für Status/Logging) |
-| `effectiveEndTime` | Resultierende Ausschaltzeit (Uhrzeit) |
+| `effectiveEndTime` | Resultierende Ausschaltzeit (Uhrzeit)               |
 
 ### Verhalten bei Temperaturänderungen während des Laufs
 
@@ -180,29 +180,29 @@ Die 3 Parameter werden im `ControllerSettings`-Struct über NVS gespeichert. Sie
 
 Für jeden Parameter wird ein Number-Entity mit HA Discovery published:
 
-| Entity | Topic-Suffix | Min | Max | Step |
-|---|---|---|---|---|
-| `temp-circ-threshold` | `/number/pool-controller/temp-circ-threshold/…` | 0 | 40 | 0,5 |
-| `temp-circ-factor` | `/number/pool-controller/temp-circ-factor/…` | 0 | 120 | 5 |
-| `temp-circ-max-runtime` | `/number/pool-controller/temp-circ-max-runtime/…` | 60 | 1440 | 15 |
+| Entity                  | Topic-Suffix                                      | Min | Max  | Step |
+| ----------------------- | ------------------------------------------------- | --- | ---- | ---- |
+| `temp-circ-threshold`   | `/number/pool-controller/temp-circ-threshold/…`   | 0   | 40   | 0,5  |
+| `temp-circ-factor`      | `/number/pool-controller/temp-circ-factor/…`      | 0   | 120  | 5    |
+| `temp-circ-max-runtime` | `/number/pool-controller/temp-circ-max-runtime/…` | 60  | 1440 | 15   |
 
 Zusätzlich ein Sensor für die berechnete effektive Laufzeit:
 
-| Entity | Topic-Suffix | Unit |
-|---|---|---|
-| `effective-runtime` | `/sensor/pool-controller/effective-runtime/…` | min |
+| Entity              | Topic-Suffix                                  | Unit |
+| ------------------- | --------------------------------------------- | ---- |
+| `effective-runtime` | `/sensor/pool-controller/effective-runtime/…` | min  |
 
 ## 6. Umsetzungsplan
 
-| Schritt | Datei(en) | Aufwand |
-|---|---|---|
-| 1. Config-Struct erweitern | `ConfigManager.hpp` | ~10 min |
-| 2. Helper-Funktion + Defaults | `Timer.hpp`, `Timer.cpp` | ~15 min |
-| 3. RuleTimer::loop() anpassen | `RuleTimer.cpp` | ~20 min |
-| 4. RuleAuto::loop() anpassen | `RuleAuto.cpp` | ~10 min |
-| 5. MQTT Discovery + Handler | `MqttPublisher.cpp` | ~30 min |
-| 6. Build + Test | — | ~10 min |
-| **Gesamt** | | **~1,5 h** |
+| Schritt                       | Datei(en)                | Aufwand    |
+| ----------------------------- | ------------------------ | ---------- |
+| 1. Config-Struct erweitern    | `ConfigManager.hpp`      | ~10 min    |
+| 2. Helper-Funktion + Defaults | `Timer.hpp`, `Timer.cpp` | ~15 min    |
+| 3. RuleTimer::loop() anpassen | `RuleTimer.cpp`          | ~20 min    |
+| 4. RuleAuto::loop() anpassen  | `RuleAuto.cpp`           | ~10 min    |
+| 5. MQTT Discovery + Handler   | `MqttPublisher.cpp`      | ~30 min    |
+| 6. Build + Test               | —                        | ~10 min    |
+| **Gesamt**                    |                          | **~1,5 h** |
 
 ## 7. Benutzerhandbuch
 
@@ -221,12 +221,12 @@ Fertig — die Pumpe läuft jetzt bei warmem Wasser automatisch länger.
 
 Finde deine Pool-Situation und nutze diese Werte als Ausgangspunkt:
 
-| Pool-Typ | Schwelle | Faktor | Max-Laufzeit | Warum |
-|---|---|---|---|---|
-| ☀️ **Kleiner Aufstellpool** (≤15 m³) | 22 °C | 20 min/°C | 480 min (8 h) | Weniger Volumen, weniger Reserve nötig |
-| 🏊 **Mittlerer Familienpool** (25–50 m³) | 24 °C | 30 min/°C | 720 min (12 h) | Gute Balance aus Wasserqualität und Kosten |
-| 🌴 **Großer Pool / hohe Belastung** (50+ m³) | 22 °C | 40 min/°C | 960 min (16 h) | Mehr Umwälzung für Hygiene nötig |
-| 🌡️ **Beheizter Pool** | 26 °C | 15 min/°C | 600 min (10 h) | Wird ohnehin mehr gefiltert (Heizungspumpe) |
+| Pool-Typ                                     | Schwelle | Faktor    | Max-Laufzeit   | Warum                                       |
+| -------------------------------------------- | -------- | --------- | -------------- | ------------------------------------------- |
+| ☀️ **Kleiner Aufstellpool** (≤15 m³)         | 22 °C    | 20 min/°C | 480 min (8 h)  | Weniger Volumen, weniger Reserve nötig      |
+| 🏊 **Mittlerer Familienpool** (25–50 m³)     | 24 °C    | 30 min/°C | 720 min (12 h) | Gute Balance aus Wasserqualität und Kosten  |
+| 🌴 **Großer Pool / hohe Belastung** (50+ m³) | 22 °C    | 40 min/°C | 960 min (16 h) | Mehr Umwälzung für Hygiene nötig            |
+| 🌡️ **Beheizter Pool**                        | 26 °C    | 15 min/°C | 600 min (10 h) | Wird ohnehin mehr gefiltert (Heizungspumpe) |
 
 Bei solarem Heizen sollte der Schwellwert **mindestens** auf oder über der Solar-Minimumtemperatur liegen, um Überlappungen zu vermeiden.
 
@@ -236,11 +236,11 @@ Bei solarem Heizen sollte der Schwellwert **mindestens** auf oder über der Sola
 
 Öffne das Einstellungsmenü (Zahnrad) → **Pool** → Abschnitt **🌡️ Temperature-Based Circulation**.
 
-| Feld | Beschreibung |
-|---|---|
-| **Circ. Temp Threshold** | Pooltemperatur muss diesen Wert überschreiten, damit die Verlängerung greift. |
-| **Circ. Temp Factor** | Zusätzliche Minuten pro °C über dem Schwellwert. Höher = aggressivere Verlängerung. |
-| **Circ. Max Runtime** | Absolute Obergrenze der täglichen Pumpenlaufzeit (inkl. Verlängerung). |
+| Feld                     | Beschreibung                                                                        |
+| ------------------------ | ----------------------------------------------------------------------------------- |
+| **Circ. Temp Threshold** | Pooltemperatur muss diesen Wert überschreiten, damit die Verlängerung greift.       |
+| **Circ. Temp Factor**    | Zusätzliche Minuten pro °C über dem Schwellwert. Höher = aggressivere Verlängerung. |
+| **Circ. Max Runtime**    | Absolute Obergrenze der täglichen Pumpenlaufzeit (inkl. Verlängerung).              |
 
 Klicke unten **Save Pool Settings**.
 
@@ -252,12 +252,12 @@ Ganz unten auf dem Dashboard zeigt **Circ. Runtime** die aktuell berechnete effe
 
 Nach MQTT-Verbindung erscheinen drei Number-Entities in Home Assistant:
 
-| Entity | Zweck |
-|---|---|
-| `number.pool_controller_temp_circ_threshold` | Schwellwert einstellen |
-| `number.pool_controller_temp_circ_factor` | Verlängerungsfaktor anpassen |
-| `number.pool_controller_temp_circ_max_runtime` | Obergrenze setzen |
-| `sensor.pool_controller_effective_runtime` | Nur-Lesen — zeigt berechnete Laufzeit |
+| Entity                                         | Zweck                                 |
+| ---------------------------------------------- | ------------------------------------- |
+| `number.pool_controller_temp_circ_threshold`   | Schwellwert einstellen                |
+| `number.pool_controller_temp_circ_factor`      | Verlängerungsfaktor anpassen          |
+| `number.pool_controller_temp_circ_max_runtime` | Obergrenze setzen                     |
+| `sensor.pool_controller_effective_runtime`     | Nur-Lesen — zeigt berechnete Laufzeit |
 
 Änderungen wirken sofort — kein Neustart nötig.
 
@@ -305,6 +305,7 @@ Prüfe die Pooltemperatur. Liegt sie über dem Schwellwert und der Faktor ist ho
 > **F: Die Pumpe hat früher ausgeschaltet als erwartet — warum?**
 
 Die Verlängerung gilt nur, während die Pumpe aktiv ist. War sie schon länger an, wurde die Endzeit vielleicht früher verlängert, aber das Wasser ist inzwischen abgekühlt — die `only-extend`-Regel behält den höchsten Wert. Prüfe:
+
 1. Liegt die Pooltemperatur tatsächlich über dem Schwellwert?
 2. Ist das Timer-Fenster konfiguriert? (Die temperatur-basierte Verlängerung schaltet die Pumpe nicht selbst ein.)
 

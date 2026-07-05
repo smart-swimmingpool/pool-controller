@@ -34,18 +34,18 @@ from ordering parts to integrating with your smart home.
 Use the following table to order all required components.
 **Recommended shops:** Amazon, AliExpress, Reichelt, Pollin, Conrad (DE/AT/CH).
 
-| #         | Component                                                                                        | Qty | Approx. Cost | Notes                                             | Recommended Links                                                                                                 |
-| --------- | ------------------------------------------------------------------------------------------------ | :-: | :----------: | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| 1         | ESP32 Development Board (e.g., ESP32 DevKit V1, NodeMCU-32S)                                     |  1  |    10–15€    | **Must have 4MB+ flash**                          | [Amazon DE](https://www.amazon.de/s?k=ESP32+DevKit+V1), [Reichelt](https://www.reichelt.de/)                      |
-| 2         | DS18B20 Temperature Sensor (waterproof, stainless steel, 1m cable)                               |  2  |    8–12€     | One for pool, one for solar collector             | [Amazon DE](https://www.amazon.de/s?k=DS18B20+wasserfest), [AliExpress](https://www.aliexpress.com/)              |
-| 3         | 2-Channel 5V Relay Module (with optocoupler isolation)                                           |  1  |     5–8€     | **Must be active-low trigger!** (relay activates when GPIO signal is LOW) | [Amazon DE](https://www.amazon.de/s?k=2+Channel+5V+Relay+Module), [Reichelt](https://www.reichelt.de/)            |
-| 4         | Resistor 4.7kΩ (¼W, metal film)                                                                  |  2  |     <1€      | Pull-up for OneWire data lines                    | [Reichelt](https://www.reichelt.de/), [Conrad](https://www.conrad.de/)                                            |
-| 5         | Breadboard + jumper wires (for prototyping) **OR** Perfboard + pin headers (for permanent build) |  1  |     3–8€     | Breadboard for testing, perfboard for final build | [Amazon DE](https://www.amazon.de/s?k=breadboard), [Reichelt](https://www.reichelt.de/)                           |
-| 6         | USB Power Supply 5V/≥1A (e.g., phone charger)                                                    |  1  |    5–10€     | Powers ESP32 + relay module                       | Any USB charger                                                                                                   |
-| 7         | Hookup wire (0.14–0.5mm², various colors)                                                        |  —  |     3–5€     | For permanent wiring                              | [Reichelt](https://www.reichelt.de/)                                                                              |
-| 8         | Enclosure (IP54+ for outdoor use)                                                                |  1  |    5–10€     | Optional but recommended                          | [Amazon DE](https://www.amazon.de/s?k=IP54+Gehäuse), [Reichelt](https://www.reichelt.de/)                         |
-| 9         | Screw terminals (2-pin, 5mm pitch)                                                               | 4–6 |     2–3€     | For removable connections                         | [Reichelt](https://www.reichelt.de/)                                                                              |
-| **Total** |                                                                                                  |     | **~45–75€**  | Without pumps/pool infrastructure                 |                                                                                                                   |
+| #         | Component                                                                                        | Qty | Approx. Cost | Notes                                                                     | Recommended Links                                                                                      |
+| --------- | ------------------------------------------------------------------------------------------------ | :-: | :----------: | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| 1         | ESP32 Development Board (e.g., ESP32 DevKit V1, NodeMCU-32S)                                     |  1  |    10–15€    | **Must have 4MB+ flash**                                                  | [Amazon DE](https://www.amazon.de/s?k=ESP32+DevKit+V1), [Reichelt](https://www.reichelt.de/)           |
+| 2         | DS18B20 Temperature Sensor (waterproof, stainless steel, 1m cable)                               |  2  |    8–12€     | One for pool, one for solar collector                                     | [Amazon DE](https://www.amazon.de/s?k=DS18B20+wasserfest), [AliExpress](https://www.aliexpress.com/)   |
+| 3         | 2-Channel 5V Relay Module (with optocoupler isolation)                                           |  1  |     5–8€     | **Must be active-low trigger!** (relay activates when GPIO signal is LOW) | [Amazon DE](https://www.amazon.de/s?k=2+Channel+5V+Relay+Module), [Reichelt](https://www.reichelt.de/) |
+| 4         | Resistor 4.7kΩ (¼W, metal film)                                                                  |  2  |     <1€      | Pull-up for OneWire data lines                                            | [Reichelt](https://www.reichelt.de/), [Conrad](https://www.conrad.de/)                                 |
+| 5         | Breadboard + jumper wires (for prototyping) **OR** Perfboard + pin headers (for permanent build) |  1  |     3–8€     | Breadboard for testing, perfboard for final build                         | [Amazon DE](https://www.amazon.de/s?k=breadboard), [Reichelt](https://www.reichelt.de/)                |
+| 6         | USB Power Supply 5V/≥1A (e.g., phone charger)                                                    |  1  |    5–10€     | Powers ESP32 + relay module                                               | Any USB charger                                                                                        |
+| 7         | Hookup wire (0.14–0.5mm², various colors)                                                        |  —  |     3–5€     | For permanent wiring                                                      | [Reichelt](https://www.reichelt.de/)                                                                   |
+| 8         | Enclosure (IP54+ for outdoor use)                                                                |  1  |    5–10€     | Optional but recommended                                                  | [Amazon DE](https://www.amazon.de/s?k=IP54+Gehäuse), [Reichelt](https://www.reichelt.de/)              |
+| 9         | Screw terminals (2-pin, 5mm pitch)                                                               | 4–6 |     2–3€     | For removable connections                                                 | [Reichelt](https://www.reichelt.de/)                                                                   |
+| **Total** |                                                                                                  |     | **~45–75€**  | Without pumps/pool infrastructure                                         |                                                                                                        |
 
 ---
 
@@ -78,10 +78,10 @@ Each DS18B20 has **3 wires** (typical colors for waterproof probes):
 - **Black** = GND
 - **Yellow/White** = DATA
 
-| Sensor | DATA wire | ESP32 pin |
-| :----: | :-------: | :-------: |
-| Solar sensor | Yellow/White (DATA) | GPIO32 |
-| Pool sensor | Yellow/White (DATA) | GPIO33 |
+|    Sensor    |      DATA wire      | ESP32 pin |
+| :----------: | :-----------------: | :-------: |
+| Solar sensor | Yellow/White (DATA) |  GPIO32   |
+| Pool sensor  | Yellow/White (DATA) |  GPIO33   |
 
 > **⚠️ CRITICAL:** Each DATA line **must** have a **4.7kΩ pull-up resistor** to 3.3V!
 > Without it, the sensor **will not work**.
@@ -117,7 +117,7 @@ title="Pool Controller breadboard prototype"
 lightbox="true"
 caption="Example breadboard setup with ESP32, DS18B20 sensors, and relay module."
 
->}}
+> }}
 
 ---
 
@@ -239,6 +239,7 @@ When the controller boots for the first time (or has no WiFi configured), it sta
 ### 🔗 MQTT Configuration
 
 1. Find the controller's **IP address** on your network:
+
    - Check your router's DHCP client list.
    - Or use `nmap`:
 
@@ -393,17 +394,17 @@ The **built-in LED** on the ESP32 indicates the system state:
 
 ### 🐞 Common Issues & Fixes
 
-| **Problem**                                  | **Cause**                  | **Solution**                                               |
-| -------------------------------------------- | -------------------------- | ---------------------------------------------------------- |
-| **Sensor error (-127°C)**                    | Missing pull-up resistor   | Add 4.7kΩ between DATA and 3.3V.                           |
-| **Sensor error**                             | Wrong GPIO pin             | Check `PIN_DS_SOLAR`/`PIN_DS_POOL` in `src/Config.hpp`.    |
+| **Problem**                                  | **Cause**                  | **Solution**                                                                  |
+| -------------------------------------------- | -------------------------- | ----------------------------------------------------------------------------- |
+| **Sensor error (-127°C)**                    | Missing pull-up resistor   | Add 4.7kΩ between DATA and 3.3V.                                              |
+| **Sensor error**                             | Wrong GPIO pin             | Check `PIN_DS_SOLAR`/`PIN_DS_POOL` in `src/Config.hpp`.                       |
 | **Relay doesn't click**                      | Wrong logic level          | Use an active-low trigger relay module (firmware expects active-low signals). |
-| **Relay clicks but pump doesn't run**        | 230V wiring issue          | Check COM/NO terminals and pump connection.                |
-| **ESP32 won't boot (brownout)**              | Insufficient power         | Use 5V/≥1A power supply.                                   |
-| **ESP32 resets when relay switches**         | Voltage spike              | Add flyback diode or use module with built-in protection.  |
-| **Sensor readings jump when relay switches** | Electrical noise           | Route sensor wires away from relay/power wires.            |
-| **MQTT connection fails**                    | Wrong broker settings      | Verify MQTT host/IP/port in Web UI.                        |
-| **Home Assistant doesn't discover device**   | MQTT Discovery not working | Delete old retained messages and reboot controller.        |
+| **Relay clicks but pump doesn't run**        | 230V wiring issue          | Check COM/NO terminals and pump connection.                                   |
+| **ESP32 won't boot (brownout)**              | Insufficient power         | Use 5V/≥1A power supply.                                                      |
+| **ESP32 resets when relay switches**         | Voltage spike              | Add flyback diode or use module with built-in protection.                     |
+| **Sensor readings jump when relay switches** | Electrical noise           | Route sensor wires away from relay/power wires.                               |
+| **MQTT connection fails**                    | Wrong broker settings      | Verify MQTT host/IP/port in Web UI.                                           |
+| **Home Assistant doesn't discover device**   | MQTT Discovery not working | Delete old retained messages and reboot controller.                           |
 
 ---
 

@@ -48,6 +48,7 @@ Manage your swimming pool in a smart way to enjoy it comfortably and affordably 
 ✔️ Home Assistant MQTT Discovery (v3.3.0)
 ✔️ Automatic update checking from GitHub releases (v3.3.0)
 ✔️ Temperature-based circulation time adjustment (v3.4.0)
+
 - [ ] Configurable NTP server
 - [ ] Dual circulation cycles (pool + solar independent)
 - [ ] Offline operation mode (no WiFi required)

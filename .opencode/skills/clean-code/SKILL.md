@@ -59,14 +59,14 @@ Heap-Allokationen fragmentieren den ESP32-Speicher und führen nach Tagen/Wochen
 
 ### Prüfliste
 
-| Check | Beschreibung | Konsequenz |
-|-------|-------------|------------|
-| `String` im Loop/zyklischen Code | String-Konkatenation in `publishStates()`, `loop()`, `check*()` | **Blocked** — char-Buffer verwenden |
-| `getBaseTopic()` kehrt `String` zurück | Rückgabe als `String` zwingt Caller zur Heap-Allokation | **Blocked** — `void getBaseTopic(char*, size_t, ...)` |
-| `serializeJson(doc, payload)` mit `String payload` | ArduinoJson serialisiert in `String` → Heap | **Blocked** — `serializeJson(doc, payloadBuf, sizeof(payloadBuf))` |
-| `String(poolTemp, 1)` für MQTT-Publish | temporäre String-Objekte im Hot Path | **Blocked** — `snprintf(valBuf, sizeof(valBuf), "%.1f", temp)` |
-| `String` als Funktionsparameter | Kopie bei jedem Aufruf | `const String&` oder `const char*` |
-| `str + str2` Konkatenation | Erzeugt temporäre String-Objekte | char-Array + `strlcat`/`snprintf` |
+| Check                                              | Beschreibung                                                    | Konsequenz                                                         |
+| -------------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `String` im Loop/zyklischen Code                   | String-Konkatenation in `publishStates()`, `loop()`, `check*()` | **Blocked** — char-Buffer verwenden                                |
+| `getBaseTopic()` kehrt `String` zurück             | Rückgabe als `String` zwingt Caller zur Heap-Allokation         | **Blocked** — `void getBaseTopic(char*, size_t, ...)`              |
+| `serializeJson(doc, payload)` mit `String payload` | ArduinoJson serialisiert in `String` → Heap                     | **Blocked** — `serializeJson(doc, payloadBuf, sizeof(payloadBuf))` |
+| `String(poolTemp, 1)` für MQTT-Publish             | temporäre String-Objekte im Hot Path                            | **Blocked** — `snprintf(valBuf, sizeof(valBuf), "%.1f", temp)`     |
+| `String` als Funktionsparameter                    | Kopie bei jedem Aufruf                                          | `const String&` oder `const char*`                                 |
+| `str + str2` Konkatenation                         | Erzeugt temporäre String-Objekte                                | char-Array + `strlcat`/`snprintf`                                  |
 
 ### Beispiel: Gut vs. Schlecht
 
@@ -109,12 +109,12 @@ Duplizierte Logik = duplizierte Bugs. Jede Geschäftslogik existiert genau einma
 
 ### Prüfliste
 
-| Muster | Fundort | Fix |
-|--------|---------|-----|
-| Identische NVS-Zugriffe (`Preferences::begin("ds18b20")`) | PoolController.cpp + WebPortal.cpp + ConfigManager | In ConfigManager zentralisieren |
-| Gleiche Discovery-Payload-Struktur | Alle `publish*Discovery()` Methoden | Template-Methode oder Helper |
-| Wiederholte `getBaseTopic(...) + "/state"` | publishStates() | `TopicBuilder`-Helper (anonymes namespace) |
-| Gleiche Sensor-Mapping-Konvertierung (hexToString/addressToString) | PoolController.cpp + WebPortal.cpp | In ConfigManager oder Utility |
+| Muster                                                             | Fundort                                            | Fix                                        |
+| ------------------------------------------------------------------ | -------------------------------------------------- | ------------------------------------------ |
+| Identische NVS-Zugriffe (`Preferences::begin("ds18b20")`)          | PoolController.cpp + WebPortal.cpp + ConfigManager | In ConfigManager zentralisieren            |
+| Gleiche Discovery-Payload-Struktur                                 | Alle `publish*Discovery()` Methoden                | Template-Methode oder Helper               |
+| Wiederholte `getBaseTopic(...) + "/state"`                         | publishStates()                                    | `TopicBuilder`-Helper (anonymes namespace) |
+| Gleiche Sensor-Mapping-Konvertierung (hexToString/addressToString) | PoolController.cpp + WebPortal.cpp                 | In ConfigManager oder Utility              |
 
 ### Beispiel
 
@@ -138,16 +138,16 @@ sammeln sich an und täuschen Wartende.
 
 ### Prüfliste
 
-| Muster | Beispiel | Konsequenz |
-|--------|----------|------------|
-| Auskommentierter Code | `// int x = 5;` | Entfernen |
-| Redundanter Sicherheitscheck | `|| now < lastClockSyncFailTime_` (unsigned wrap bereits korrekt) | Entfernen |
-| Sinnentleerte Kommentare | `// Loop function` über `void loop()` | Entfernen |
-| `TODO:`/`FIXME:` ohne Issue | `// TODO: fix this` | Issue erstellen oder fixen |
-| Unused includes | `#include <esp_now.h>` (ungenutzt) | Entfernen |
-| Unused Variablen | `uint8_t devCount = getCount();` (nie gelesen) | Entfernen oder `(void)` |
-| Leere catch-Blöcke | `catch (...) {}` | Logging ergänzen oder entfernen |
-| Tote else-Zweige | `if (x) return; else { ... }` | `else` entfernen, `{ ... }` eine Ebene raus |
+| Muster                       | Beispiel                                                                           | Konsequenz                                  |
+| ---------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------- |
+| Auskommentierter Code        | `// int x = 5;`                                                                    | Entfernen                                   |
+| Redundanter Sicherheitscheck | <code>\|\| now &lt; lastClockSyncFailTime\_</code> (unsigned wrap bereits korrekt) | Entfernen                                   |
+| Sinnentleerte Kommentare     | `// Loop function` über `void loop()`                                              | Entfernen                                   |
+| `TODO:`/`FIXME:` ohne Issue  | `// TODO: fix this`                                                                | Issue erstellen oder fixen                  |
+| Unused includes              | `#include <esp_now.h>` (ungenutzt)                                                 | Entfernen                                   |
+| Unused Variablen             | `uint8_t devCount = getCount();` (nie gelesen)                                     | Entfernen oder `(void)`                     |
+| Leere catch-Blöcke           | `catch (...) {}`                                                                   | Logging ergänzen oder entfernen             |
+| Tote else-Zweige             | `if (x) return; else { ... }`                                                      | `else` entfernen, `{ ... }` eine Ebene raus |
 
 ### Beispiel
 
@@ -168,14 +168,14 @@ produzieren Tonnen von Logs, machen wichtige Meldungen unleserbar und bremsen.
 
 ### Prüfliste
 
-| Muster | Bewertung |
-|--------|-----------|
-| `Serial.println()` im 1s-Loop-Takt | `#ifdef DEBUG_xxx` guard oder Rate-Limiting |
-| `Serial.printf()` für jeden Funktionsaufruf | Nur mit DEBUG-Präprozessor-Flag |
-| Produktions-Logs | Immer aktiv (Statusänderungen, Fehler, Config-Änderungen) |
-| Sensor-Rohdaten | Nie aktiv — nur mit DEBUG |
-| Funktions-Eintritt/Austritt | `#ifdef DEBUG_xxx` guard |
-| Persönliche Debug-Ausgaben (`//MM` etc.) | Vor Commit entfernen |
+| Muster                                      | Bewertung                                                 |
+| ------------------------------------------- | --------------------------------------------------------- |
+| `Serial.println()` im 1s-Loop-Takt          | `#ifdef DEBUG_xxx` guard oder Rate-Limiting               |
+| `Serial.printf()` für jeden Funktionsaufruf | Nur mit DEBUG-Präprozessor-Flag                           |
+| Produktions-Logs                            | Immer aktiv (Statusänderungen, Fehler, Config-Änderungen) |
+| Sensor-Rohdaten                             | Nie aktiv — nur mit DEBUG                                 |
+| Funktions-Eintritt/Austritt                 | `#ifdef DEBUG_xxx` guard                                  |
+| Persönliche Debug-Ausgaben (`//MM` etc.)    | Vor Commit entfernen                                      |
 
 ### Konvention
 
@@ -198,12 +198,12 @@ hat, ist kein zuverlässiges System: **Alarmmüdigkeit** zerstört den Wert des 
 
 ### Prüfliste
 
-| Muster | Problem | Fix |
-|--------|---------|-----|
-| Sensor-Status = `false` vor erster Messung | Falscher CRITICAL-Alarm beim Boot | `sensorsEverReported_` Flag |
-| Degradation-Level = CRITICAL bei Startup | Nutzer ignorieren echte Alarme | Default auf NORMAL bis erste Daten |
-| MQTT-Connect in `begin()` | Sendet Discovery bevor System bereit | Discovery erst im ersten `loop()` |
-| Watchdog-Feed nicht in Initialisierung | Bootloop bei langsamer Hardware | `feedWatchdog()` in langen Init-Schleifen |
+| Muster                                     | Problem                              | Fix                                       |
+| ------------------------------------------ | ------------------------------------ | ----------------------------------------- |
+| Sensor-Status = `false` vor erster Messung | Falscher CRITICAL-Alarm beim Boot    | `sensorsEverReported_` Flag               |
+| Degradation-Level = CRITICAL bei Startup   | Nutzer ignorieren echte Alarme       | Default auf NORMAL bis erste Daten        |
+| MQTT-Connect in `begin()`                  | Sendet Discovery bevor System bereit | Discovery erst im ersten `loop()`         |
+| Watchdog-Feed nicht in Initialisierung     | Bootloop bei langsamer Hardware      | `feedWatchdog()` in langen Init-Schleifen |
 
 ### Beispiel
 
@@ -223,26 +223,26 @@ Gleiche Dinge heißen gleich. Unterschiedliche Dinge heißen unterschiedlich.
 
 ### Prüfliste
 
-| Regel | Schlecht | Gut |
-|-------|----------|-----|
-| Gleiche Operation, gleicher Name | `saveSensorAddressMapping()` + `saveSensorMappingNvs()` | `saveSensorMapping()` |
-| Boolean-Frage | `getSwitch()` | `isSwitchOn()` oder `getSwitchState()` |
-| Abkürzungen | `tmp`, `buf`, `cfg` | `temperature`, `buffer`, `config` (wenn Scope > 5 Zeilen) |
-| Prefix-Konsistenz | `_count` vs `count_` vs `mCount` | Projektstandard: `count_` für Member |
-| Enum-Werte | `RED`, `YELLOW`, `GREEN` (degradation) | `TimeDegradation::RED` (scoped) |
-| Einzahl/Mehrzahl | `options[]` (Array) | `option` für Einzel-Item |
-| Getter/Setter | `getMode().c_str()` (String → const char*) | `getModeCStr()` |  |
+| Regel                            | Schlecht                                                | Gut                                                       |
+| -------------------------------- | ------------------------------------------------------- | --------------------------------------------------------- |
+| Gleiche Operation, gleicher Name | `saveSensorAddressMapping()` + `saveSensorMappingNvs()` | `saveSensorMapping()`                                     |
+| Boolean-Frage                    | `getSwitch()`                                           | `isSwitchOn()` oder `getSwitchState()`                    |
+| Abkürzungen                      | `tmp`, `buf`, `cfg`                                     | `temperature`, `buffer`, `config` (wenn Scope > 5 Zeilen) |
+| Prefix-Konsistenz                | `_count` vs `count_` vs `mCount`                        | Projektstandard: `count_` für Member                      |
+| Enum-Werte                       | `RED`, `YELLOW`, `GREEN` (degradation)                  | `TimeDegradation::RED` (scoped)                           |
+| Einzahl/Mehrzahl                 | `options[]` (Array)                                     | `option` für Einzel-Item                                  |
+| Getter/Setter                    | `getMode().c_str()` (String → const char\*)             | `getModeCStr()`                                           |
 
 ### Funktionale Namen
 
-| Pattern | Bedeutung |
-|---------|-----------|
-| `is*()` | Rückgabe `bool` (Frage) |
-| `get*()` | Rückgabe Wert (keine Seiteneffekte) |
-| `set*()` | Setzt Wert |
-| `has*()` | Prüft Existenz |
-| `publish*()` | Sendet MQTT |
-| `begin()`/`end()` | Lebenszyklus |
+| Pattern           | Bedeutung                           |
+| ----------------- | ----------------------------------- |
+| `is*()`           | Rückgabe `bool` (Frage)             |
+| `get*()`          | Rückgabe Wert (keine Seiteneffekte) |
+| `set*()`          | Setzt Wert                          |
+| `has*()`          | Prüft Existenz                      |
+| `publish*()`      | Sendet MQTT                         |
+| `begin()`/`end()` | Lebenszyklus                        |
 
 ---
 
@@ -253,13 +253,13 @@ unbeabsichtigte Mutationen und ermöglicht Compiler-Optimierung.
 
 ### Prüfliste
 
-| Regel | ❌ | ✅ |
-|-------|----|----|
-| Referenz-Parameter | `void foo(String &s)` | `void foo(const String &s)` |
-| Pointer-Parameter (read-only) | `void foo(char *p)` | `void foo(const char *p)` |
-| Member-Funktion (read-only) | `int getValue()` | `int getValue() const` |
-| Lokale Variable (unverändert) | `int val = compute();` | `const int val = compute();` |
-| Array-Parameter | `void foo(uint8_t addr[8])` | `void foo(const uint8_t addr[8])` |
+| Regel                         | ❌                          | ✅                                |
+| ----------------------------- | --------------------------- | --------------------------------- |
+| Referenz-Parameter            | `void foo(String &s)`       | `void foo(const String &s)`       |
+| Pointer-Parameter (read-only) | `void foo(char *p)`         | `void foo(const char *p)`         |
+| Member-Funktion (read-only)   | `int getValue()`            | `int getValue() const`            |
+| Lokale Variable (unverändert) | `int val = compute();`      | `const int val = compute();`      |
+| Array-Parameter               | `void foo(uint8_t addr[8])` | `void foo(const uint8_t addr[8])` |
 
 ### Besondere Fälle für ESP32
 
@@ -280,27 +280,27 @@ unittestbar. Jede neue Klasse sollte ohne Hardware-Init testbar sein.
 
 ### Prüfliste
 
-| Muster | Problem | Lösung |
-|--------|---------|--------|
-| `static` Methoden | Nicht mockbar | Dependency Injection über Interface |
-| Direkter `NetworkManager::publish()`-Aufruf | Kann im Test nicht ersetzt werden | Interface + `MqttClient`-Parameter |
-| `Preferences`-Direktzugriff | Testet NVS statt Logik | ConfigManager als Abstraktion |
-| Globaler Zustand | Tests beeinflussen sich gegenseitig | Klassenzustand pro Instanz |
-| `millis()` / `delay()` im Code | Nicht deterministisch testbar | TimeSource-Interface |
-| Freundliche Funktionen in `.cpp` | Nicht testbar ohne main-Compile | In Header verschieben oder über Klasse testen |
+| Muster                                      | Problem                             | Lösung                                        |
+| ------------------------------------------- | ----------------------------------- | --------------------------------------------- |
+| `static` Methoden                           | Nicht mockbar                       | Dependency Injection über Interface           |
+| Direkter `NetworkManager::publish()`-Aufruf | Kann im Test nicht ersetzt werden   | Interface + `MqttClient`-Parameter            |
+| `Preferences`-Direktzugriff                 | Testet NVS statt Logik              | ConfigManager als Abstraktion                 |
+| Globaler Zustand                            | Tests beeinflussen sich gegenseitig | Klassenzustand pro Instanz                    |
+| `millis()` / `delay()` im Code              | Nicht deterministisch testbar       | TimeSource-Interface                          |
+| Freundliche Funktionen in `.cpp`            | Nicht testbar ohne main-Compile     | In Header verschieben oder über Klasse testen |
 
 ### Testbarkeits-Hierarchie
 
 ```
 Am testbarsten:
   Reine Logik ohne HW: Rule, Timer, DegradationManager (→ native test)
-  
+
 Mäßig testbar:
   ConfigManager (→ Preferences mockbar)
-  
+
 Schwer testbar:
   MqttPublisher (→ NetworkManager::publish static)
-  
+
 Kaum testbar:
   PoolController (→ viele statische Dependencies)
 ```

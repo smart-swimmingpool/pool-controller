@@ -12,11 +12,11 @@ weight: 50
 
 The pool pump is the largest power consumer in a swimming pool. At the same time, it determines water quality. The required circulation volume strongly depends on water temperature:
 
-| Water Temperature | Risk | Recommended Circulation |
-|---|---|---|
-| **> 26 °C** | High algae growth, turbidity | Maximum (8–12 h/day) |
-| **20–26 °C** | Normal operation | Standard (4–8 h/day) |
-| **< 20 °C** | Minimal algae growth | Minimal (1–4 h/day) |
+| Water Temperature | Risk                         | Recommended Circulation |
+| ----------------- | ---------------------------- | ----------------------- |
+| **> 26 °C**       | High algae growth, turbidity | Maximum (8–12 h/day)    |
+| **20–26 °C**      | Normal operation             | Standard (4–8 h/day)    |
+| **< 20 °C**       | Minimal algae growth         | Minimal (1–4 h/day)     |
 
 A fixed timer is either **oversized** (wasting power in cold weather) or **undersized** (poor water quality during heat waves).
 
@@ -35,18 +35,18 @@ effectiveRuntime = min(effectiveRuntime, tempCircMaxRuntime)
 
 ### Parameters
 
-| Parameter | Type | Default | Range | Description |
-|---|---|---|---|---|
-| `tempCircThreshold` | double | 24.0 °C | 0–40 °C | Temperature above which runtime is extended |
-| `tempCircFactor` | uint16_t | 30 min/°C | 0–120 min/°C | Extra minutes **per °C** above threshold |
-| `tempCircMaxRuntime` | uint16_t | 720 min | 60–1440 min | Absolute upper limit for total runtime |
+| Parameter            | Type     | Default   | Range        | Description                                 |
+| -------------------- | -------- | --------- | ------------ | ------------------------------------------- |
+| `tempCircThreshold`  | double   | 24.0 °C   | 0–40 °C      | Temperature above which runtime is extended |
+| `tempCircFactor`     | uint16_t | 30 min/°C | 0–120 min/°C | Extra minutes **per °C** above threshold    |
+| `tempCircMaxRuntime` | uint16_t | 720 min   | 60–1440 min  | Absolute upper limit for total runtime      |
 
 ### Computed Fields (read-only)
 
-| Field | Description |
-|---|---|
+| Field              | Description                                        |
+| ------------------ | -------------------------------------------------- |
 | `effectiveRuntime` | Calculated runtime in minutes (for status/logging) |
-| `effectiveEndTime` | Resulting switch-off time |
+| `effectiveEndTime` | Resulting switch-off time                          |
 
 ### Behavior During Temperature Changes
 
@@ -169,29 +169,29 @@ The 3 parameters are stored in the `ControllerSettings` struct via NVS. They are
 
 Each parameter is published as a Number entity via HA Discovery:
 
-| Entity | Topic Suffix | Min | Max | Step |
-|---|---|---|---|---|
-| `temp-circ-threshold` | `/number/pool-controller/temp-circ-threshold/…` | 0 | 40 | 0.5 |
-| `temp-circ-factor` | `/number/pool-controller/temp-circ-factor/…` | 0 | 120 | 5 |
-| `temp-circ-max-runtime` | `/number/pool-controller/temp-circ-max-runtime/…` | 60 | 1440 | 15 |
+| Entity                  | Topic Suffix                                      | Min | Max  | Step |
+| ----------------------- | ------------------------------------------------- | --- | ---- | ---- |
+| `temp-circ-threshold`   | `/number/pool-controller/temp-circ-threshold/…`   | 0   | 40   | 0.5  |
+| `temp-circ-factor`      | `/number/pool-controller/temp-circ-factor/…`      | 0   | 120  | 5    |
+| `temp-circ-max-runtime` | `/number/pool-controller/temp-circ-max-runtime/…` | 60  | 1440 | 15   |
 
 Plus a sensor for computed effective runtime:
 
-| Entity | Topic Suffix | Unit |
-|---|---|---|
-| `effective-runtime` | `/sensor/pool-controller/effective-runtime/…` | s |
+| Entity              | Topic Suffix                                  | Unit |
+| ------------------- | --------------------------------------------- | ---- |
+| `effective-runtime` | `/sensor/pool-controller/effective-runtime/…` | s    |
 
 ## 6. Implementation Plan
 
-| Step | File(s) | Effort |
-|---|---|---|
-| 1. Extend Config struct | `ConfigManager.hpp` | ~10 min |
-| 2. Helper function + defaults | `Timer.hpp`, `Timer.cpp` | ~15 min |
-| 3. Modify RuleTimer::loop() | `RuleTimer.cpp` | ~20 min |
-| 4. Modify RuleAuto::loop() | `RuleAuto.cpp` | ~10 min |
-| 5. MQTT Discovery + handlers | `MqttPublisher.cpp` | ~30 min |
-| 6. Build + Test | — | ~10 min |
-| **Total** | | **~1.5 h** |
+| Step                          | File(s)                  | Effort     |
+| ----------------------------- | ------------------------ | ---------- |
+| 1. Extend Config struct       | `ConfigManager.hpp`      | ~10 min    |
+| 2. Helper function + defaults | `Timer.hpp`, `Timer.cpp` | ~15 min    |
+| 3. Modify RuleTimer::loop()   | `RuleTimer.cpp`          | ~20 min    |
+| 4. Modify RuleAuto::loop()    | `RuleAuto.cpp`           | ~10 min    |
+| 5. MQTT Discovery + handlers  | `MqttPublisher.cpp`      | ~30 min    |
+| 6. Build + Test               | —                        | ~10 min    |
+| **Total**                     |                          | **~1.5 h** |
 
 ## 7. User Guide
 
@@ -210,12 +210,12 @@ That's it — the pump will now run longer when the water is warm.
 
 Find your setup and use these as a starting point:
 
-| Pool Type | Threshold | Factor | Max Runtime | Why |
-|---|---|---|---|---|
-| ☀️ **Small above-ground** (≤15 m³) | 22 °C | 20 min/°C | 480 min (8 h) | Smaller volume needs less margin |
-| 🏊 **Medium family pool** (25–50 m³) | 24 °C | 30 min/°C | 720 min (12 h) | Good balance of water quality and cost |
-| 🌴 **Large pool / high bather load** (50+ m³) | 22 °C | 40 min/°C | 960 min (16 h) | More circulation needed for hygiene |
-| 🌡️ **Heated pool** | 26 °C | 15 min/°C | 600 min (10 h) | Already filtered more via heating pump |
+| Pool Type                                     | Threshold | Factor    | Max Runtime    | Why                                    |
+| --------------------------------------------- | --------- | --------- | -------------- | -------------------------------------- |
+| ☀️ **Small above-ground** (≤15 m³)            | 22 °C     | 20 min/°C | 480 min (8 h)  | Smaller volume needs less margin       |
+| 🏊 **Medium family pool** (25–50 m³)          | 24 °C     | 30 min/°C | 720 min (12 h) | Good balance of water quality and cost |
+| 🌴 **Large pool / high bather load** (50+ m³) | 22 °C     | 40 min/°C | 960 min (16 h) | More circulation needed for hygiene    |
+| 🌡️ **Heated pool**                            | 26 °C     | 15 min/°C | 600 min (10 h) | Already filtered more via heating pump |
 
 If you have solar heating, keep the threshold at or above your solar minimum temperature to avoid overlap.
 
@@ -225,11 +225,11 @@ If you have solar heating, keep the threshold at or above your solar minimum tem
 
 Open the settings menu (gear icon) → **Pool** → **🌡️ Temperature-Based Circulation** section.
 
-| Field | Description |
-|---|---|
-| **Circ. Temp Threshold** | Pool temperature must exceed this value for extension to apply. |
-| **Circ. Temp Factor** | How many extra minutes per °C above threshold. Higher = more aggressive extension. |
-| **Circ. Max Runtime** | The absolute maximum pump runtime per day, including any extension. |
+| Field                    | Description                                                                        |
+| ------------------------ | ---------------------------------------------------------------------------------- |
+| **Circ. Temp Threshold** | Pool temperature must exceed this value for extension to apply.                    |
+| **Circ. Temp Factor**    | How many extra minutes per °C above threshold. Higher = more aggressive extension. |
+| **Circ. Max Runtime**    | The absolute maximum pump runtime per day, including any extension.                |
 
 Click **Save Pool Settings** at the bottom of the tab.
 
@@ -241,12 +241,12 @@ On the main dashboard, the bottom strip shows **Circ. Runtime** — the currentl
 
 Once connected via MQTT, three Number entities appear in Home Assistant:
 
-| Entity | Purpose |
-|---|---|
-| `number.pool_controller_temp_circ_threshold` | Set the temperature threshold |
-| `number.pool_controller_temp_circ_factor` | Adjust the extension factor |
-| `number.pool_controller_temp_circ_max_runtime` | Set the upper runtime limit |
-| `sensor.pool_controller_effective_runtime` | Read-only — shows computed runtime |
+| Entity                                         | Purpose                            |
+| ---------------------------------------------- | ---------------------------------- |
+| `number.pool_controller_temp_circ_threshold`   | Set the temperature threshold      |
+| `number.pool_controller_temp_circ_factor`      | Adjust the extension factor        |
+| `number.pool_controller_temp_circ_max_runtime` | Set the upper runtime limit        |
+| `sensor.pool_controller_effective_runtime`     | Read-only — shows computed runtime |
 
 You can change values from the Home Assistant UI, automations, or dashboards. Changes take effect immediately — no reboot required.
 
@@ -294,6 +294,7 @@ Check your pool temperature. If it's above the threshold and the factor is high,
 > **Q: The pump stopped earlier than I expected — why?**
 
 The extension only applies while the pump is running. If the pump was already on, the end time may have been extended earlier but then cooled down — the `only-extend` rule preserves the highest end time. Check that:
+
 1. The pool temperature is actually above the threshold
 2. The timer window is configured (temperature extension doesn't activate the pump by itself)
 

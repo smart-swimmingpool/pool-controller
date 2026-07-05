@@ -24,37 +24,37 @@ Assistant automatically.
 
 ### Available Entities
 
-| Domain | Object ID | Category | Description |
-|--------|-----------|----------|-------------|
-| `sensor` | `pool_temperature` | \u2014 | Pool water temperature |
-| `sensor` | `solar_temperature` | \u2014 | Solar collector temperature |
-| `sensor` | `controller_temperature` | diagnostic | ESP32 chip temperature |
-| `sensor` | `free_heap_space` | diagnostic | Free heap memory |
-| `sensor` | `max_alloc_block` | diagnostic | Largest allocatable block |
-| `sensor` | `wifi_signal_strength` | diagnostic | WiFi signal strength (dBm) |
-| `sensor` | `system_uptime` | diagnostic | Device uptime (duration) |
-| `sensor` | `effective_runtime` | diagnostic | Effective circulation runtime (duration) |
-| `sensor` | `local_time` | diagnostic | Current local time |
-| `binary_sensor` | `pool_sensor_found` | diagnostic | Pool sensor detection status |
-| `binary_sensor` | `solar_sensor_found` | diagnostic | Solar sensor detection status |
-| `binary_sensor` | `mqtt_status` | diagnostic | MQTT connection status |
-| `select` | `mode` | \u2014 | Operating mode (auto/manu/boost/timer) |
-| `select` | `pool_sensor` | config | Pool sensor address mapping |
-| `select` | `solar_sensor` | config | Solar sensor address mapping |
-| `select` | `timezone` | config | Timezone selection |
-| `switch` | `pool_pump` | \u2014 | Pool circulation pump |
-| `switch` | `solar_pump` | \u2014 | Solar circulation pump |
-| `number` | `pool_max_temp` | config | Maximum pool temperature (\u00b0C) |
-| `number` | `solar_min_temp` | config | Minimum solar temperature (\u00b0C) |
-| `number` | `hysteresis` | config | Temperature hysteresis (K) |
-| `number` | `temp_circ_threshold` | config | Circulation temperature threshold (\u00b0C) |
-| `number` | `temp_circ_factor` | config | Circulation temperature factor (min/\u00b0C) |
-| `number` | `temp_circ_max_runtime` | config | Circulation maximum runtime (min) |
-| `time` | `timer_start` | config | Timer start time (HH:MM:SS) |
-| `time` | `timer_end` | config | Timer end time (HH:MM:SS) |
-| `text` | `ntp_server` | config | NTP server address |
-| `update` | `firmware` | \u2014 | Firmware update entity |
-| `climate` | `pool_climate` | \u2014 | Pool temperature control with preset modes |
+| Domain          | Object ID                | Category   | Description                                  |
+| --------------- | ------------------------ | ---------- | -------------------------------------------- |
+| `sensor`        | `pool_temperature`       | \u2014     | Pool water temperature                       |
+| `sensor`        | `solar_temperature`      | \u2014     | Solar collector temperature                  |
+| `sensor`        | `controller_temperature` | diagnostic | ESP32 chip temperature                       |
+| `sensor`        | `free_heap_space`        | diagnostic | Free heap memory                             |
+| `sensor`        | `max_alloc_block`        | diagnostic | Largest allocatable block                    |
+| `sensor`        | `wifi_signal_strength`   | diagnostic | WiFi signal strength (dBm)                   |
+| `sensor`        | `system_uptime`          | diagnostic | Device uptime (duration)                     |
+| `sensor`        | `effective_runtime`      | diagnostic | Effective circulation runtime (duration)     |
+| `sensor`        | `local_time`             | diagnostic | Current local time                           |
+| `binary_sensor` | `pool_sensor_found`      | diagnostic | Pool sensor detection status                 |
+| `binary_sensor` | `solar_sensor_found`     | diagnostic | Solar sensor detection status                |
+| `binary_sensor` | `mqtt_status`            | diagnostic | MQTT connection status                       |
+| `select`        | `mode`                   | \u2014     | Operating mode (auto/manu/boost/timer)       |
+| `select`        | `pool_sensor`            | config     | Pool sensor address mapping                  |
+| `select`        | `solar_sensor`           | config     | Solar sensor address mapping                 |
+| `select`        | `timezone`               | config     | Timezone selection                           |
+| `switch`        | `pool_pump`              | \u2014     | Pool circulation pump                        |
+| `switch`        | `solar_pump`             | \u2014     | Solar circulation pump                       |
+| `number`        | `pool_max_temp`          | config     | Maximum pool temperature (\u00b0C)           |
+| `number`        | `solar_min_temp`         | config     | Minimum solar temperature (\u00b0C)          |
+| `number`        | `hysteresis`             | config     | Temperature hysteresis (K)                   |
+| `number`        | `temp_circ_threshold`    | config     | Circulation temperature threshold (\u00b0C)  |
+| `number`        | `temp_circ_factor`       | config     | Circulation temperature factor (min/\u00b0C) |
+| `number`        | `temp_circ_max_runtime`  | config     | Circulation maximum runtime (min)            |
+| `time`          | `timer_start`            | config     | Timer start time (HH:MM:SS)                  |
+| `time`          | `timer_end`              | config     | Timer end time (HH:MM:SS)                    |
+| `text`          | `ntp_server`             | config     | NTP server address                           |
+| `update`        | `firmware`               | \u2014     | Firmware update entity                       |
+| `climate`       | `pool_climate`           | \u2014     | Pool temperature control with preset modes   |
 
 ### Entity Details
 
@@ -141,6 +141,7 @@ This enables long-term statistics and energy monitoring in Home Assistant.
 If you have existing MQTT configurations for `sensor.pool_sensor_found` or `sensor.solar_sensor_found` (which were text sensors with "Found"/"Missing" states), these will be automatically cleaned up on MQTT connect. The new entities use the `binary_sensor` domain with proper device class for better visualization.
 
 Old config topics:
+
 - `homeassistant/sensor/pool-controller/pool-sensor-found/config`
 - `homeassistant/sensor/pool-controller/solar-sensor-found/config`
 
@@ -155,6 +156,7 @@ A ready-to-use Lovelace dashboard YAML is available in [dashboard.yaml](dashboar
 3. Customize cards as needed
 
 The dashboard includes:
+
 - Temperature overview cards
 - Pump control cards
 - Mode selection

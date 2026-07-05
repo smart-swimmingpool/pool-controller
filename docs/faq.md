@@ -58,11 +58,11 @@ or open a new issue on GitHub.
 
 #### **Possible Causes & Solutions**
 
-| **Cause**                      | **Solution**                                                     | **How to Test**                                      |
-| ------------------------------ | ---------------------------------------------------------------- | ---------------------------------------------------- |
-| Relay module not powered       | Ensure **VCC** is connected to **5V** and **GND** to **GND**.    | Measure voltage between VCC and GND (should be ~5V). |
+| **Cause**                      | **Solution**                                                                                  | **How to Test**                                                                                |
+| ------------------------------ | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Relay module not powered       | Ensure **VCC** is connected to **5V** and **GND** to **GND**.                                 | Measure voltage between VCC and GND (should be ~5V).                                           |
 | Wrong logic level (active-low) | Ensure the relay module is **active-low trigger compatible** (firmware output is active-low). | Check whether the relay clicks/energizes when GPIO goes LOW (LED behavior can vary by module). |
-| Incorrect GPIO pin             | Verify `PIN_RELAY_POOL` (GPIO25) and `PIN_RELAY_SOLAR` (GPIO26). | Check wiring matches firmware configuration.         |
+| Incorrect GPIO pin             | Verify `PIN_RELAY_POOL` (GPIO25) and `PIN_RELAY_SOLAR` (GPIO26).                              | Check wiring matches firmware configuration.                                                   |
 
 ---
 

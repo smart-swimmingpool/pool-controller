@@ -240,7 +240,8 @@ bool ConfigManager::loadSensorMapping(uint8_t solarAddr[8], uint8_t poolAddr[8])
 /** @brief Check if an 8-byte address is all zeros. */
 static bool isSensorAddressZero(const uint8_t addr[8]) {
   for (uint8_t i = 0; i < 8; i++) {
-    if (addr[i] != 0) return false;
+    if (addr[i] != 0)
+      return false;
   }
   return true;
 }

@@ -79,11 +79,11 @@ release-please-action@v4
 }
 ```
 
-| Feld | Wert | Bedeutung |
-|------|------|-----------|
-| `release-type` | `simple` | Kein Package-Manager (kein package.json) — Version aus Tags |
-| `extra-files` | `platformio.ini`, `Version.h` | Dateien, die release-please beim Bump aktualisiert |
-| `type: generic` | — | `x-release-please-version`-Annotation in der Datei |
+| Feld            | Wert                          | Bedeutung                                                   |
+| --------------- | ----------------------------- | ----------------------------------------------------------- |
+| `release-type`  | `simple`                      | Kein Package-Manager (kein package.json) — Version aus Tags |
+| `extra-files`   | `platformio.ini`, `Version.h` | Dateien, die release-please beim Bump aktualisiert          |
+| `type: generic` | —                             | `x-release-please-version`-Annotation in der Datei          |
 
 ### `.release-please-manifest.json`
 
@@ -133,14 +133,15 @@ Läuft bei **jedem Push auf main**:
 1. Scannt alle neuen Commits seit dem letzten Release-Tag
 2. Bestimmt die nächste Version basierend auf Conventional Commit Types:
 
-| Commits enthalten | Bump | Beispiel |
-|---|---|---|
-| `feat!` oder `BREAKING CHANGE` | **Major** (X.0.0) | v3.0.0 → v4.0.0 |
-| `feat` (mind. einer) | **Minor** (x.Y.0) | v3.2.0 → v3.3.0 |
-| `fix` (nur, keine `feat`) | **Patch** (x.y.Z) | v3.3.0 → v3.3.1 |
-| Nur `chore`/`docs`/`ci`/`refactor` | **Kein Release** | — |
+| Commits enthalten                  | Bump              | Beispiel        |
+| ---------------------------------- | ----------------- | --------------- |
+| `feat!` oder `BREAKING CHANGE`     | **Major** (X.0.0) | v3.0.0 → v4.0.0 |
+| `feat` (mind. einer)               | **Minor** (x.Y.0) | v3.2.0 → v3.3.0 |
+| `fix` (nur, keine `feat`)          | **Patch** (x.y.Z) | v3.3.0 → v3.3.1 |
+| Nur `chore`/`docs`/`ci`/`refactor` | **Kein Release**  | —               |
 
 3. Erzeugt/aktualisiert einen **Release PR** mit:
+
    - Berechneter nächster Version im Titel (z. B. `chore(main): release 3.3.1`)
    - Automatisch generiertem CHANGELOG-Eintrag
    - Aktualisierten Versionen in `extra-files`
@@ -190,6 +191,7 @@ Der Release PR entsteht automatisch, wenn neue relevante Commits (`feat`/`fix`)
 auf main kommen.
 
 Soll sofort ein Release erzwungen werden:
+
 ```
 git commit --allow-empty -m "fix: trigger immediate patch release"
 git push
@@ -205,6 +207,7 @@ git push
 ### Release-Firmware per OTA installieren
 
 Im WebUI unter **System → Check for Updates**:
+
 - Gerät prüft GitHub Releases auf neue Version
 - Bei neuere Version: **Install Update** klicken
 - Firmware wird direkt vom GitHub Release geladen und geflasht
@@ -217,6 +220,7 @@ Im WebUI unter **System → Check for Updates**:
 seit letztem Release.
 
 **Fix**: Einen `fix:` oder `feat:` Commit auf main bringen:
+
 ```bash
 git commit --allow-empty -m "fix: trigger release"
 git push
@@ -233,6 +237,7 @@ Wenn seit Erstellung des PR nur `chore`-Commits kamen, bleibt der PR unveränder
 
 **Ursache**: Der Merge-Commit des Release PR muss von release-please erkannt werden.
 Mögliche Probleme:
+
 - Merge-Konflikt beim Mergen → manueller Merge statt PR-Merge-Button
 - Branch-Schutzregeln verhindern Auto-Merge
 
@@ -243,6 +248,7 @@ Mögliche Probleme:
 **Ursache**: Meist Compiler-Fehler oder fehlende Dependencies.
 
 **Fix**:
+
 1. Build lokal testen: `pio run --environment esp32dev`
 2. Fehler beheben
 3. Neuen `fix:` Commit auf main → release-please aktualisiert den Release PR
@@ -253,6 +259,7 @@ Mögliche Probleme:
 **Ursache**: `build-firmware` Job war deaktiviert oder fehlgeschlagen.
 
 **Fix**: Manuell nachreichen:
+
 ```bash
 gh release upload v3.x.y .pio/build/esp32dev/firmware.bin#firmware-esp32dev.bin
 ```
@@ -264,6 +271,7 @@ verschoben.
 
 **Fix**: Prüfen, dass genau eine Zeile in `platformio.ini` das `x-release-please-version`
 enthält und die FW_VERSION darauf steht:
+
 ```ini
 '-D FW_VERSION="3.3.0"'  # x-release-please-version
 ```

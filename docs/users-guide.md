@@ -64,12 +64,12 @@ The industrial NORVI AE01-R controller includes a **0.96" OLED display**
 `NORVI_AE01_R` flag, the display shows system information across four
 switchable pages:
 
-| Page | What You See |
-|:----:|--------------|
+| Page  | What You See                                                                                                                                                                           |
+| :---: | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **1** | **Main** — Pool and solar water temperatures with pump ON/OFF indicators (filled/empty circle), operation mode (auto/manu/boost/timer), and shortcut hints for the three front buttons |
-| **2** | **Network** — Connected WiFi SSID, IP address, MQTT connection status. In AP mode it shows the setup hotspot name and URL |
-| **3** | **System** — Uptime (e.g. 3d 12h 30m), current and minimum free heap memory, firmware version |
-| **4** | **QR Code** — Generates a scannable QR code of the web dashboard URL so you can open it on your phone without typing the IP address |
+| **2** | **Network** — Connected WiFi SSID, IP address, MQTT connection status. In AP mode it shows the setup hotspot name and URL                                                              |
+| **3** | **System** — Uptime (e.g. 3d 12h 30m), current and minimum free heap memory, firmware version                                                                                          |
+| **4** | **QR Code** — Generates a scannable QR code of the web dashboard URL so you can open it on your phone without typing the IP address                                                    |
 
 **Footer:** Each page has a bottom bar showing the local time (HH:MM, with
 automatic DST handling), the firmware version (`vX.Y.Z`), and the current page
@@ -91,14 +91,14 @@ The controller uses its **built-in LED** to signal the current system state,
 following the [Homie Convention](https://homieiot.github.io/) — an industry
 standard for IoT device status indication.
 
-| LED Pattern | When? | What it means |
-|-------------|-------|---------------|
-| ![WiFi connecting](led_wifi.gif) **Slow blink** (1x/sec) | **WiFi connecting** | The controller is trying to join your home WiFi network. This should take 5–20 seconds. |
-| ![MQTT connecting](led_mqtt.gif) **Mostly on, brief blip off every 2s** | **WiFi OK, MQTT connecting/disconnected** | Network is up, but the MQTT broker is not yet connected. Check broker address or network. |
-| **Rapid blink** (5x/sec) | **AP Mode / Setup** | No WiFi credentials stored. The controller is hosting its own `Pool-Controller-Setup` WiFi network. |
-| **Solid on** (always on) | **Fully connected** | Everything is running normally — WiFi + MQTT connected. |
-| **Very fast blink** (10x/sec) | **OTA Update in progress** | Firmware is being downloaded and flashed. Do not power off! |
-| **Double blink** (two flashes, pause) | **Safe Mode / Error** | Boot-loop detected or critical system degradation. Relays are forced OFF. |
+| LED Pattern                                                             | When?                                     | What it means                                                                                       |
+| ----------------------------------------------------------------------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| ![WiFi connecting](led_wifi.gif) **Slow blink** (1x/sec)                | **WiFi connecting**                       | The controller is trying to join your home WiFi network. This should take 5–20 seconds.             |
+| ![MQTT connecting](led_mqtt.gif) **Mostly on, brief blip off every 2s** | **WiFi OK, MQTT connecting/disconnected** | Network is up, but the MQTT broker is not yet connected. Check broker address or network.           |
+| **Rapid blink** (5x/sec)                                                | **AP Mode / Setup**                       | No WiFi credentials stored. The controller is hosting its own `Pool-Controller-Setup` WiFi network. |
+| **Solid on** (always on)                                                | **Fully connected**                       | Everything is running normally — WiFi + MQTT connected.                                             |
+| **Very fast blink** (10x/sec)                                           | **OTA Update in progress**                | Firmware is being downloaded and flashed. Do not power off!                                         |
+| **Double blink** (two flashes, pause)                                   | **Safe Mode / Error**                     | Boot-loop detected or critical system degradation. Relays are forced OFF.                           |
 
 ### What to expect at first power-on
 
@@ -130,12 +130,12 @@ The controller provides a modern web dashboard at `http://<controller-ip>/` with
 2. Navigate to the **Configuration** tab
 3. Adjust settings as needed:
 
-    - **Operation Mode**: Automatic (Solar), Manual Control, Boost Pump, Timer Schedule
-    - **Max Pool Temp**: Target water temperature (°C)
-    - **Min Solar Temp**: Minimum solar collector temperature (°C)
-    - **Temperature Hysteresis**: Deadband to prevent rapid toggling (K)
-    - **Loop Interval**: How often the controller evaluates rules (seconds)
-    - **Timezone**: Select from 10 supported timezones with DST handling
+   - **Operation Mode**: Automatic (Solar), Manual Control, Boost Pump, Timer Schedule
+   - **Max Pool Temp**: Target water temperature (°C)
+   - **Min Solar Temp**: Minimum solar collector temperature (°C)
+   - **Temperature Hysteresis**: Deadband to prevent rapid toggling (K)
+   - **Loop Interval**: How often the controller evaluates rules (seconds)
+   - **Timezone**: Select from 10 supported timezones with DST handling
 
 4. Click **Save parameters** — changes are **immediately active** and **persist across reboots**
 5. If MQTT/Home Assistant is connected, the new values are automatically published
