@@ -140,7 +140,7 @@
     </div>
 
     <!-- Telemetrie (klein, ganz unten) -->
-    <div class="telemetry-grid-bottom" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.75rem; font-size: 0.7rem; margin-top: 0.5rem; padding-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.08);">
+    <div class="telemetry-grid-bottom" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; font-size: 0.7rem; margin-top: 0.5rem; padding-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.08);">
       <div style="text-align: center;">
         <label style="color: var(--text-muted); display: block;">Heap</label>
         <div id="heapVal" style="font-weight: 600; margin-top: 0.15rem; color: var(--text-muted);">--- KB</div>
@@ -154,12 +154,8 @@
         <div id="uptimeVal" style="font-weight: 600; margin-top: 0.15rem; color: var(--text-muted);">---</div>
       </div>
       <div style="text-align: center;">
-        <label style="color: var(--text-muted); display: block;">Circ. Runtime</label>
-        <div id="effectiveRuntimeVal" style="font-weight: 600; margin-top: 0.15rem; color: var(--text-muted);">--- min</div>
-      </div>
-      <div style="text-align: center;">
-        <label style="color: var(--text-muted); display: block;">Extension</label>
-        <div id="circulationExtensionVal" style="font-weight: 600; margin-top: 0.15rem; color: var(--text-muted);">--- min</div>
+        <label style="color: var(--text-muted); display: block;">Timer</label>
+        <div id="timerDisplayVal" style="font-weight: 600; margin-top: 0.15rem; color: var(--text-muted); font-variant-numeric: tabular-nums;">--:--&rarr;--:--</div>
       </div>
     </div>
   </div>
