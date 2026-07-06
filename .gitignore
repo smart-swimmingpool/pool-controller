@@ -117,6 +117,10 @@ data/**/config.json
 _codeql_detected_source_root
 logs/
 .cache/
+.slim/
+
+# Build output directories
+build/
 
 # Native test build artifacts
 test/native/build/

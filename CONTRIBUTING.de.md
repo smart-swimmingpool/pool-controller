@@ -130,6 +130,7 @@ git checkout -b feat/ihre-funktions-bezeichnung
 ```
 
 **Branch-Namenskonventionen**:
+
 - `feat/` - Neue Funktionen
 - `fix/` - Bugfixes
 - `docs/` - Dokumentationsupdates
@@ -198,6 +199,7 @@ Siehe [CODING_GUIDELINES.md](.github/CODING_GUIDELINES.md) für detaillierte
 C++-Standards.
 
 **Wichtige Regeln**:
+
 - Maximale Zeilenlänge: **130 Zeichen** (clang-format)
 - Einrückung: **2 Leerzeichen** (keine Tabs)
 - Klammern-Stil: **K&R** (öffnende Klammer auf derselben Zeile)
@@ -314,22 +316,26 @@ Verwenden Sie die GitHub-PR-Vorlage und fügen Sie ein:
 ### Was Reviewer suchen
 
 1. **Code-Qualität**
+
    - Befolgt Codierstandards
    - Sauberer, lesbarer Code
    - Ordentliche Fehlerbehandlung
    - Gute Dokumentation
 
 2. **Funktionalität**
+
    - Funktioniert es wie beabsichtigt?
    - Gibt es Randfälle zu beachten?
    - Ist die Implementierung effizient?
 
 3. **Sicherheit**
+
    - Keine Sicherheitslücken
    - Ordentliche Eingabevalidierung
    - Sichere Standardwerte
 
 4. **Testen**
+
    - Gibt es Tests?
    - Bestehen bestehende Tests noch?
    - Ist der Code testbar?
@@ -422,6 +428,7 @@ Alle Pull Requests müssen die folgenden Qualitätsgates bestehen:
 - **Gitleaks**: Geheimniserkennung
 
 Lokal ausführen:
+
 ```bash
 make lint
 ```
@@ -433,6 +440,7 @@ make lint
   - `norvi_ae01_r` (NORVI Industrie-Controller)
 
 Lokal ausführen:
+
 ```bash
 make build
 ```

@@ -1,6 +1,7 @@
 ---
 name: iot-security
-description: "IoT security checks for the ESP32 pool-controller - Secure Boot, Flash
+description:
+  "IoT security checks for the ESP32 pool-controller - Secure Boot, Flash
   Encryption, TLS, WPS, secrets management, network security, and 24/7 operational
   security. Use when asked to audit security, fix vulnerabilities, implement secure
   communication, or harden the device firmware. 🇩🇪 Deutsche Trigger: IoT Sicherheit,
@@ -273,9 +274,11 @@ The pool controller should be on an isolated IoT VLAN with:
 - **[OWASP IoT Security Guidance](https://owasp.org/www-project-internet-of-things/)**
 
   Comprehensive IoT security framework
+
 - **[OWASP CSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)**
 
   CSRF protection strategies
+
 - **[OWASP Secure Coding Practices](https://owasp.org/www-project-secure-coding-practices-quick-reference-guide/)**
 
   General secure coding guidelines
@@ -285,12 +288,15 @@ The pool controller should be on an isolated IoT VLAN with:
 - **[ESP32 Security Features](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/index.html)**
 
   Official Espressif security documentation
+
 - **[ESP32 Secure Boot](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/secure-boot.html)**
 
   Secure boot implementation guide
+
 - **[ESP32 Flash Encryption](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/flash-encryption.html)**
 
   Flash encryption configuration
+
 - **[ESP32 eFuse Reference](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/efuse.html)**
 
   eFuse burning and configuration
@@ -317,8 +323,8 @@ The pool controller should be on an isolated IoT VLAN with:
   Secret detection in git repositories
 - **[CodeQL](https://codeql.github.com/)** -
   Static analysis for security vulnerabilities
-- **[Super-Linter](https://github.com/github/super-linter)** -
-  Multi-language linting with security checks
+- **[MegaLinter](https://megalinter.io/)** -
+  Multi-language linting with security checks (OX Security)
 
 ---
 

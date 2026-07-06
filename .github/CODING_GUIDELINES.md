@@ -326,16 +326,21 @@ refactor: Improve memory usage in Timer class
 
 - **CHECKOV**: Zu viele False Positives (manuell validiert)
 
-### 7.3 Lokale Super-Linter Ausführung
+### 7.3 Lokale MegaLinter Ausführung
 
 ```bash
-docker run -e RUN_LOCAL=true \
-  -e VALIDATE_EDITORCONFIG=true \
-  -e VALIDATE_CPP=true \
-  -e VALIDATE_MARKDOWN=true \
-  -e VALIDATE_YAML=true \
-  -v $(pwd):/tmp/lint \
-  github/super-linter:v7
+# Via mega-linter-runner (empfohlen)
+npx mega-linter-runner --flavor c_cpp --remove-container
+
+# Oder via Docker direkt (c_cpp flavor)
+docker run --rm -v $(pwd):/tmp/lint:rw \
+  -e MEGALINTER_CONFIG=.mega-linter.yml \
+  ghcr.io/oxsecurity/megalinter-c_cpp:v9
+
+# Oder via Docker (vollständiges Image)
+docker run --rm -v $(pwd):/tmp/lint:rw \
+  -e MEGALINTER_CONFIG=.mega-linter.yml \
+  ghcr.io/oxsecurity/megalinter:v9
 ```
 
 ## 8. Häufige Fehler und Lösungen

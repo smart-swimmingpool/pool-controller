@@ -246,12 +246,13 @@ Wenn der Controller häufig neu startet:
 2. **Speicherleck identifizieren**: Muster erkennen, wann Neustarts auftreten
 3. **Speichernutzung reduzieren**:
 
-    - Messintervalle erhöhen
-    - MQTT-Nachrichtenhäufigkeit reduzieren
-    - Funktionen nach Möglichkeit deaktivieren
+   - Messintervalle erhöhen
+   - MQTT-Nachrichtenhäufigkeit reduzieren
+   - Funktionen nach Möglichkeit deaktivieren
+
 4. **Schwellwert senken**: Kritischen Schwellwert vorübergehend senken, um Neustarts zu verhindern
 
-    (der Controller startet dann trotzdem neu, aber die Betriebszeit kann während der Fehlersuche verlängert werden)
+   (der Controller startet dann trotzdem neu, aber die Betriebszeit kann während der Fehlersuche verlängert werden)
 
 ### Watchdog-Timeouts
 

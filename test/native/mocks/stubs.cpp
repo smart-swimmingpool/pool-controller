@@ -18,6 +18,24 @@
 #include "TimeLib.h"
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// strlcat — provide our own when the host libc does not (e.g. glibc < 2.38).
+// macOS and glibc ≥ 2.38 provide it natively; CMake's CheckSymbolExists sets
+// HAVE_STRLCAT accordingly.
+// ═══════════════════════════════════════════════════════════════════════════════
+#ifndef HAVE_STRLCAT
+#include <cstring>
+extern "C" size_t strlcat(char *dst, const char *src, size_t siz) {
+  size_t dlen = strlen(dst);
+  size_t slen = strlen(src);
+  if (dlen >= siz) return siz + slen;
+  size_t n = siz - dlen - 1;
+  strncat(dst + dlen, src, n);
+  dst[dlen + (n < slen ? n : slen)] = '\0';
+  return dlen + slen;
+}
+#endif
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // Local enum definition matching production TimeClientHelper.hpp
 // Defined here to avoid pulling in the production header (which transitively
 // includes Timezone.h / NTPClient.h via Timer.hpp → Rule.hpp chain when

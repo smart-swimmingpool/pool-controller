@@ -131,27 +131,16 @@ Dann:
 chmod +x .git/hooks/pre-commit
 ```
 
-## Lokale Super-Linter Tests
+## Lokale MegaLinter Tests
 
 ```bash
-# Nur geänderte Dateien testen (schnell)
-docker run --rm \
-  -e RUN_LOCAL=true \
-  -e VALIDATE_CPP=true \
-  -e FILTER_REGEX_INCLUDE=".*src/.*" \
-  -v $(pwd):/tmp/lint \
-  ghcr.io/super-linter/super-linter:v8.3.1
+# MegaLinter (c_cpp flavor)
+npx mega-linter-runner --flavor c_cpp --remove-container
 
-# Alle Linter (vollständig)
-docker run --rm \
-  -e RUN_LOCAL=true \
-  -e VALIDATE_EDITORCONFIG=true \
-  -e VALIDATE_CPP=true \
-  -e VALIDATE_MARKDOWN=true \
-  -e VALIDATE_YAML=true \
-  -e VALIDATE_CHECKOV=false \
-  -v $(pwd):/tmp/lint \
-  ghcr.io/super-linter/super-linter:v8.3.1
+# Oder via Docker direkt:
+docker run --rm -v $(pwd):/tmp/lint:rw \
+  -e MEGALINTER_CONFIG=.mega-linter.yml \
+  ghcr.io/oxsecurity/megalinter-c_cpp:v9
 ```
 
 ## Checkliste

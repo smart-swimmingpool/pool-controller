@@ -92,16 +92,16 @@ static constexpr uint16_t MQTT_DEFAULT_PORT{1883};
 
 ## Tags Used
 
-| Tag | When to use |
-|-----|-------------|
-| `@brief` | **Required** on every documented symbol — one-line summary |
-| `@param` | Every function parameter, unless trivially obvious |
-| `@return` | Every non-void return, unless trivially obvious |
-| `@note` | Important caveats, edge cases, threadsafety |
-| `@see` | Cross-reference to related functions/files |
-| `@warning` | Dangerous behavior, side effects, 230V safety |
-| `@file` | File header only — auto-populated from `\file` |
-| `@author` | Optional — do NOT add; copyright already in file header |
+| Tag        | When to use                                                |
+| ---------- | ---------------------------------------------------------- |
+| `@brief`   | **Required** on every documented symbol — one-line summary |
+| `@param`   | Every function parameter, unless trivially obvious         |
+| `@return`  | Every non-void return, unless trivially obvious            |
+| `@note`    | Important caveats, edge cases, threadsafety                |
+| `@see`     | Cross-reference to related functions/files                 |
+| `@warning` | Dangerous behavior, side effects, 230V safety              |
+| `@file`    | File header only — auto-populated from `\file`             |
+| `@author`  | Optional — do NOT add; copyright already in file header    |
 
 ## PlatformIO Integration
 

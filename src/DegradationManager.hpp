@@ -102,6 +102,7 @@ public:
   static void unforceSafeMode();
 
 private:
+  static bool sensorsEverReported_;
   static DegradationLevel currentLevel_;
   static DegradationLevel previousLevel_;
   static bool poolSensorOk_;

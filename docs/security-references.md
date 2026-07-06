@@ -11,31 +11,31 @@ comprehensive IoT security analysis performed on 2025-01-15.
 - **[OWASP IoT Security Guidance](https://owasp.org/www-project-internet-of-things/)**
   Comprehensive IoT security framework covering device security, network security, and data protection.
 
-- **[OWASP Secure Coding Practices Quick Reference Guide](https://owasp.org/www-project-secure-coding-practices-quick-reference-guide/)
+- \*\*[OWASP Secure Coding Practices Quick Reference Guide](https://owasp.org/www-project-secure-coding-practices-quick-reference-guide/)
 
-**
+\*\*
 
-  General secure coding guidelines applicable to embedded systems and IoT
-  devices.
+General secure coding guidelines applicable to embedded systems and IoT
+devices.
 
 - **[NIST IoT Device Cybersecurity Guidance](https://www.nist.gov/iot)**
   NIST recommendations for IoT device security, including risk management and security controls.
 
 ### Web Application Security
 
-- **[OWASP CSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)
+- \*\*[OWASP CSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)
 
-**
+\*\*
 
-  Comprehensive guide to CSRF protection strategies, including token-based
-  approaches and SameSite cookie attributes.
+Comprehensive guide to CSRF protection strategies, including token-based
+approaches and SameSite cookie attributes.
 
-- **[OWASP Session Management Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html)
+- \*\*[OWASP Session Management Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html)
 
-**
+\*\*
 
-  Best practices for secure session management, including timeout handling and
-  cookie security.
+Best practices for secure session management, including timeout handling and
+cookie security.
 
 - **[OWASP Authentication Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html)**
   Guidelines for secure authentication implementation, password storage, and credential management.
@@ -51,36 +51,36 @@ comprehensive IoT security analysis performed on 2025-01-15.
   Complete guide to implementing Secure Boot on ESP32, including key generation and eFuse configuration.
 
 - **[ESP32 Flash Encryption](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/flash-encryption.html)
-**
+  **
 
   Detailed documentation on flash encryption configuration and implementation.
 
 - **[ESP32 eFuse Reference](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/efuse.html)
-**
+  **
 
   Reference documentation for eFuse burning and configuration options.
 
 - **[ESP32 Memory Types](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/memory-types.html)**
   Understanding ESP32 memory architecture and different memory types (DRAM, IRAM, etc.).
 
-- **[ESP32 Memory Management](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/memory-management.html)
+- \*\*[ESP32 Memory Management](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/memory-management.html)
 
-**
+\*\*
 
-  Memory allocation strategies and best practices for ESP32 development.
+Memory allocation strategies and best practices for ESP32 development.
 
-- **[ESP32 Heap Fragmentation](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/heap-fragmentation.html)
+- \*\*[ESP32 Heap Fragmentation](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/heap-fragmentation.html)
 
-**
+\*\*
 
-  Understanding and preventing heap fragmentation in ESP32 applications.
+Understanding and preventing heap fragmentation in ESP32 applications.
 
-- **[ESP-IDF Memory Debugging](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/debugging/memory-leaks.html)
+- \*\*[ESP-IDF Memory Debugging](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/debugging/memory-leaks.html)
 
-**
+\*\*
 
-  Tools and techniques for detecting and debugging memory leaks in ESP32
-  applications.
+Tools and techniques for detecting and debugging memory leaks in ESP32
+applications.
 
 ### Practical Implementation Examples
 
@@ -102,17 +102,17 @@ comprehensive IoT security analysis performed on 2025-01-15.
 
 ### ESP32 Memory Management
 
-- **[ESP32 Memory Optimization Guide](https://github.com/espressif/esp-idf/blob/master/docs/en/api-guides/memory-types.rst)
+- \*\*[ESP32 Memory Optimization Guide](https://github.com/espressif/esp-idf/blob/master/docs/en/api-guides/memory-types.rst)
 
-**
+\*\*
 
-  Official memory optimization strategies for ESP32 development.
+Official memory optimization strategies for ESP32 development.
 
-- **[Heap Usage Monitoring](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/heap_debug.html)
+- \*\*[Heap Usage Monitoring](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/heap_debug.html)
 
-**
+\*\*
 
-  ESP32 heap debugging functions and usage examples.
+ESP32 heap debugging functions and usage examples.
 
 ### Arduino & C++ Optimization
 
@@ -131,11 +131,11 @@ comprehensive IoT security analysis performed on 2025-01-15.
 - **[Static vs Dynamic Allocation](https://embeddedartistry.com/blog/2017/02/22/always-use-the-right-sized-integer/)**
   Choosing the right allocation strategy for embedded systems.
 
-- **[Google C++ Style Guide - Memory Management](https://google.github.io/styleguide/cppguide.html#Ownership_and_Smart_Pointers)
+- \*\*[Google C++ Style Guide - Memory Management](https://google.github.io/styleguide/cppguide.html#Ownership_and_Smart_Pointers)
 
-**
+\*\*
 
-  Smart pointer usage guidelines and memory management best practices.
+Smart pointer usage guidelines and memory management best practices.
 
 ## 🛡️ Security Tools & Scanners
 
@@ -148,8 +148,8 @@ comprehensive IoT security analysis performed on 2025-01-15.
 - **[CodeQL](https://codeql.github.com/)**
   Semantic code analysis engine for finding security vulnerabilities. Integrated into GitHub Actions CI.
 
-- **[Super-Linter](https://github.com/github/super-linter)**
-  Multi-language linting framework that combines multiple linters. Used in this project's CI pipeline.
+- **[MegaLinter](https://megalinter.io/)**
+  Multi-language linting framework by OX Security. Combines multiple linters. Used in this project's CI pipeline.
 
 - **[cpplint](https://github.com/cpplint/cpplint)**
   Google's C++ linter for enforcing coding style and detecting potential issues.
@@ -183,8 +183,8 @@ comprehensive IoT security analysis performed on 2025-01-15.
 
 ### Linting & Formatting
 
-- **[Setting up Super-Linter](https://github.com/github/super-linter/blob/main/README.md)**
-  Configuration and customization guide for Super-Linter.
+- **[MegaLinter Configuration](https://megalinter.io/latest/configuration/)**
+  Configuration and customization guide for MegaLinter.
 
 - **[clang-format Configuration](https://clang.llvm.org/docs/ClangFormatStyleOptions.html)**
   Complete reference for clang-format style options.
@@ -208,16 +208,19 @@ The following security improvements were implemented in
 [PR #112](https://github.com/smart-swimmingpool/pool-controller/pull/112):
 
 1. **CSRF Protection**
+
    - Token generation and validation system
    - SameSite cookie attributes for XSS/CSRF protection
    - 30-minute token expiration with automatic regeneration
 
 2. **Secret Management**
+
    - Gitleaks configuration for handling false positives
    - Improved documentation for default password hash
    - Better code comments explaining intentional hardcoding
 
 3. **Memory Safety**
+
    - Dangling pointer prevention in TimeClientHelper
    - Memory-efficient utility functions in Utils.hpp
    - String optimization utilities

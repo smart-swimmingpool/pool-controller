@@ -54,12 +54,12 @@ Hardware used per documentation:
 
 ### 3.1 Recommended Pin Assignment
 
-| Function      | Before (ESP32) | Now (ESP32)  | Reason                             |
-| ------------- | -------------- | ------------ | ---------------------------------- |
-| DS18B20 Solar | GPIO15         | GPIO32       | Avoids strapping pins              |
-| DS18B20 Pool  | GPIO16         | GPIO33       | Clean separation of sensor lines   |
-| Relay Pool    | GPIO18         | GPIO25       | Robust output, low conflict risk   |
-| Relay Solar   | GPIO19         | GPIO26       | Robust output, low conflict risk   |
+| Function      | Before (ESP32) | Now (ESP32) | Reason                           |
+| ------------- | -------------- | ----------- | -------------------------------- |
+| DS18B20 Solar | GPIO15         | GPIO32      | Avoids strapping pins            |
+| DS18B20 Pool  | GPIO16         | GPIO33      | Clean separation of sensor lines |
+| Relay Pool    | GPIO18         | GPIO25      | Robust output, low conflict risk |
+| Relay Solar   | GPIO19         | GPIO26      | Robust output, low conflict risk |
 
 Note: For existing installations with old wiring, adjustment of the
 firmware pins and possibly rewiring is required.

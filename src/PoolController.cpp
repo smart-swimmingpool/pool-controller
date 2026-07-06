@@ -136,19 +136,7 @@ static void loadSensorAddressMapping() {
  * @param poolAddr   8-byte ROM address of the pool sensor.
  */
 static void saveSensorAddressMapping(const uint8_t solarAddr[8], const uint8_t poolAddr[8]) {
-  Preferences prefs;
-  prefs.begin("ds18b20", false);  // read-write
-
-  prefs.putBytes("solar_adr", solarAddr, 8);
-  prefs.putBytes("pool_adr", poolAddr, 8);
-
-  prefs.end();
-
-  char buf[17];
-  addressToString(solarAddr, buf, sizeof(buf));
-  Serial.printf("✓ Sensor mapping saved: Solar [%s]", buf);
-  addressToString(poolAddr, buf, sizeof(buf));
-  Serial.printf(", Pool [%s]\n", buf);
+  ConfigManager::saveSensorMapping(solarAddr, poolAddr);
 }
 
 /**

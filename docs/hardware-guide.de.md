@@ -38,19 +38,19 @@ richtig zusammenzubauen.
 
 ## Benötigte Teile (BOM)
 
-| # | Bauteil | Menge | ca. Preis | Hinweise |
-|---|---------|:-----:|:---------:|----------|
-| 1 | ESP32-Entwicklungsboard (z.B. ESP32 DevKit V1, NodeMCU-32S) | 1 | 10–15€ | Mindestens 4MB Flash |
-| 2 | DS18B20-Temperatursensor (wasserfest, Edelstahl, 1m Kabel) | 2 | 8–12€ | Einer für Poolwasser, einer für Solarkollektor |
-| 3 | 2-Kanal-5V-Relaismodul (mit Optokoppler) | 1 | 5–8€ | **Muss** active-high sein (siehe Hinweise) |
-| 4 | Widerstand 4,7kΩ (¼W oder ⅛W, Metall- oder Kohleschicht) | 2 | < 1€ | Pull-up für die OneWire-Datenleitungen |
-| 5 | Breadboard + Jumper-Kabel (zum Testen) **ODER** Lochrasterplatine + Stiftleisten/Schraubklemmen (für Daueraufbau) | 1 | 3–8€ | |
-| 6 | USB-Netzteil 5V/≥1A (z.B. Handy-Ladegerät) | 1 | 5–10€ | Für den ESP32 allein |
-| 7 | Schaltdraht, 0,14–0,5mm², verschiedene Farben | — | 3–5€ | |
-| 8 | Optional: Gehäuse (ABS/PVC-Projektbox, IP54 oder besser) | 1 | 5–10€ | Schutz vor Spritzwasser/Staub |
-| 9 | Optional: Schraubklemmen (2-polig, 5mm Raster) | 4–6 | 2–3€ | Für steckbare Sensor-/Stromanschlüsse |
-| 10 | Optional: DS3231 RTC-Modul | 1 | 3–5€ | Backup-Uhr (nicht nötig bei NTP-Betrieb) |
-| **Gesamt** | | | **~45–75€** | Ohne Gehäuse; deutlich unter 100€ |
+| #          | Bauteil                                                                                                           | Menge |  ca. Preis  | Hinweise                                       |
+| ---------- | ----------------------------------------------------------------------------------------------------------------- | :---: | :---------: | ---------------------------------------------- |
+| 1          | ESP32-Entwicklungsboard (z.B. ESP32 DevKit V1, NodeMCU-32S)                                                       |   1   |   10–15€    | Mindestens 4MB Flash                           |
+| 2          | DS18B20-Temperatursensor (wasserfest, Edelstahl, 1m Kabel)                                                        |   2   |    8–12€    | Einer für Poolwasser, einer für Solarkollektor |
+| 3          | 2-Kanal-5V-Relaismodul (mit Optokoppler)                                                                          |   1   |    5–8€     | **Muss** active-high sein (siehe Hinweise)     |
+| 4          | Widerstand 4,7kΩ (¼W oder ⅛W, Metall- oder Kohleschicht)                                                          |   2   |    < 1€     | Pull-up für die OneWire-Datenleitungen         |
+| 5          | Breadboard + Jumper-Kabel (zum Testen) **ODER** Lochrasterplatine + Stiftleisten/Schraubklemmen (für Daueraufbau) |   1   |    3–8€     |                                                |
+| 6          | USB-Netzteil 5V/≥1A (z.B. Handy-Ladegerät)                                                                        |   1   |    5–10€    | Für den ESP32 allein                           |
+| 7          | Schaltdraht, 0,14–0,5mm², verschiedene Farben                                                                     |   —   |    3–5€     |                                                |
+| 8          | Optional: Gehäuse (ABS/PVC-Projektbox, IP54 oder besser)                                                          |   1   |    5–10€    | Schutz vor Spritzwasser/Staub                  |
+| 9          | Optional: Schraubklemmen (2-polig, 5mm Raster)                                                                    |  4–6  |    2–3€     | Für steckbare Sensor-/Stromanschlüsse          |
+| 10         | Optional: DS3231 RTC-Modul                                                                                        |   1   |    3–5€     | Backup-Uhr (nicht nötig bei NTP-Betrieb)       |
+| **Gesamt** |                                                                                                                   |       | **~45–75€** | Ohne Gehäuse; deutlich unter 100€              |
 
 ### Bezugsquellen
 
@@ -63,6 +63,7 @@ wie:
 - **Amazon** — bequem, aber oft Aufpreis
 
 Suchbegriffe:
+
 - **ESP32**: "ESP32 DevKit V1" oder "ESP32 NodeMCU-32S". Kein ESP32-S2/S3/C3
   kaufen — die Firmware läuft auf dem Standard-ESP32 (Xtensa Dual-Core).
 - **DS18B20**: **Edelstahl, wasserdicht** mit 1m Kabel. Günstige
@@ -80,13 +81,13 @@ ADC2-Probleme vermeidet (Details siehe
 [Alternative Pin-Belegung](#alternative-pin-belegung-original)). Definiert in
 `src/Config.hpp`:
 
-| Konstante | GPIO | Zweck |
-|-----------|:----:|-------|
-| `PIN_DS_SOLAR` | **GPIO32** | DS18B20 Daten — Solarkollektor-Temperatur |
-| `PIN_DS_POOL` | **GPIO33** | DS18B20 Daten — Pool-Wassertemperatur |
-| `PIN_RELAY_POOL` | **GPIO25** | Relais-Ansteuerung — Pool-Umwälzpumpe |
-| `PIN_RELAY_SOLAR` | **GPIO26** | Relais-Ansteuerung — Solar-Heizungspumpe |
-| `PIN_LED_STATUS` | **Eingebaute LED** | Status-LED (Homie-Blink-Codes) |
+| Konstante         |        GPIO        | Zweck                                     |
+| ----------------- | :----------------: | ----------------------------------------- |
+| `PIN_DS_SOLAR`    |     **GPIO32**     | DS18B20 Daten — Solarkollektor-Temperatur |
+| `PIN_DS_POOL`     |     **GPIO33**     | DS18B20 Daten — Pool-Wassertemperatur     |
+| `PIN_RELAY_POOL`  |     **GPIO25**     | Relais-Ansteuerung — Pool-Umwälzpumpe     |
+| `PIN_RELAY_SOLAR` |     **GPIO26**     | Relais-Ansteuerung — Solar-Heizungspumpe  |
+| `PIN_LED_STATUS`  | **Eingebaute LED** | Status-LED (Homie-Blink-Codes)            |
 
 > **Hinweis**: Diese Pins sind auf maximale Kompatibilität ausgelegt. Die
 > ursprüngliche Belegung (GPIO15/16/18/19) funktioniert ebenfalls, aber die
@@ -153,11 +154,11 @@ Der DS18B20 hat drei Adern (bei wasserdichten Fühlern: **rot = VDD**,
 **gelb/weiß = DATA**, **schwarz = GND** — **immer mit Datenblatt deines
 Sensors vergleichen!**):
 
-| DS18B20-Ader | Farbe (typisch) | Anschluss |
-|:------------:|:---------------:|-----------|
-| VDD | **Rot** | ESP32 **3,3V** |
-| GND | **Schwarz** | ESP32 **GND** |
-| DATA | **Gelb/Weiß** | ESP32 **GPIO32** (Solar) oder **GPIO33** (Pool) |
+| DS18B20-Ader | Farbe (typisch) | Anschluss                                       |
+| :----------: | :-------------: | ----------------------------------------------- |
+|     VDD      |     **Rot**     | ESP32 **3,3V**                                  |
+|     GND      |   **Schwarz**   | ESP32 **GND**                                   |
+|     DATA     |  **Gelb/Weiß**  | ESP32 **GPIO32** (Solar) oder **GPIO33** (Pool) |
 
 **Wichtig — den 4,7kΩ-Pull-Up-Widerstand nicht vergessen:**
 
@@ -176,12 +177,12 @@ Metall- oder Kohleschicht).
 
 ### 2. Relaismodul
 
-| Relais-Anschluss | Typische Bezeichnung | Anschluss | Kabelfarbe |
-|:----------------:|:--------------------:|-----------|:----------:|
-| Modul-Versorgung | `VCC` oder `VDD` | **5V** (vom ESP32-VIN oder externem 5V-Netzteil) | **Rot** |
-| Masse | `GND` | **GND** (gemeinsame Masse mit ESP32) | **Schwarz** |
-| Steuereingang 1 | `IN1` oder `D1` | **GPIO25** (Pool-Pumpe) | **Gelb/Blau** |
-| Steuereingang 2 | `IN2` oder `D2` | **GPIO26** (Solar-Pumpe) | **Grün/Blau** |
+| Relais-Anschluss | Typische Bezeichnung | Anschluss                                        |  Kabelfarbe   |
+| :--------------: | :------------------: | ------------------------------------------------ | :-----------: |
+| Modul-Versorgung |   `VCC` oder `VDD`   | **5V** (vom ESP32-VIN oder externem 5V-Netzteil) |    **Rot**    |
+|      Masse       |        `GND`         | **GND** (gemeinsame Masse mit ESP32)             |  **Schwarz**  |
+| Steuereingang 1  |   `IN1` oder `D1`    | **GPIO25** (Pool-Pumpe)                          | **Gelb/Blau** |
+| Steuereingang 2  |   `IN2` oder `D2`    | **GPIO26** (Solar-Pumpe)                         | **Grün/Blau** |
 
 **Wichtig — Logikpegel**: Die Firmware setzt den GPIO-Pin auf **HIGH (3,3V)**
 um das Relais zu aktivieren (active-high). Wenn dein Modul bei LOW schaltet
@@ -207,12 +208,12 @@ zu wechseln. Active-high-Module sind einfacher in der Handhabung.
 
 ### 3. Stromversorgung
 
-| Komponente | Spannung | Quelle | Hinweise |
-|-----------|:--------:|--------|----------|
-| ESP32-Board | **5V** | USB-Ladebuchse (am ESP32) | Versorgt Board + stellt 5V am VIN-Pin bereit |
-| Relaisspulen | **5V** | ESP32-VIN-Pin (gleicher USB-Eingang) | Relaismodul bezieht Strom aus derselben 5V-Versorgung |
-| DS18B20-Sensoren | **3,3V** | ESP32-3V3-Ausgangspin | Beide Sensoren teilen sich 3,3V-Schiene |
-| (Optional) RTC DS3231 | **3,3V** | ESP32-3V3-Ausgangspin | Dieselbe Schiene wie Sensoren |
+| Komponente            | Spannung | Quelle                               | Hinweise                                              |
+| --------------------- | :------: | ------------------------------------ | ----------------------------------------------------- |
+| ESP32-Board           |  **5V**  | USB-Ladebuchse (am ESP32)            | Versorgt Board + stellt 5V am VIN-Pin bereit          |
+| Relaisspulen          |  **5V**  | ESP32-VIN-Pin (gleicher USB-Eingang) | Relaismodul bezieht Strom aus derselben 5V-Versorgung |
+| DS18B20-Sensoren      | **3,3V** | ESP32-3V3-Ausgangspin                | Beide Sensoren teilen sich 3,3V-Schiene               |
+| (Optional) RTC DS3231 | **3,3V** | ESP32-3V3-Ausgangspin                | Dieselbe Schiene wie Sensoren                         |
 
 > **Wichtig**: Der eingebaute 3,3V-Spannungsregler des ESP32 liefert ca. 600mA.
 > Die DS18B20-Sensoren brauchen zusammen < 5mA — völlig unkritisch. Wenn du
@@ -329,11 +330,11 @@ Version:
 
 ## Stromversorgungs-Optionen
 
-| Option | Vorteile | Nachteile |
-|--------|----------|-----------|
-| **USB-Handy-Ladegerät** (5V/1A+) | Günstig, überall verfügbar, sicher | Begrenzter Strom für Zusatzgeräte |
-| **Hutschienen-Netzteil** (Mean Well HDR-15-5 o.ä.) | Professionell, zuverlässig, passt in Verteiler | Etwas teurer (~15€) |
-| **ESP32-VIN via USB** + Relais von derselben 5V | Einfache Verdrahtung | Gesamtstrom muss unter Grenze des ESP32-Boards bleiben |
+| Option                                             | Vorteile                                       | Nachteile                                              |
+| -------------------------------------------------- | ---------------------------------------------- | ------------------------------------------------------ |
+| **USB-Handy-Ladegerät** (5V/1A+)                   | Günstig, überall verfügbar, sicher             | Begrenzter Strom für Zusatzgeräte                      |
+| **Hutschienen-Netzteil** (Mean Well HDR-15-5 o.ä.) | Professionell, zuverlässig, passt in Verteiler | Etwas teurer (~15€)                                    |
+| **ESP32-VIN via USB** + Relais von derselben 5V    | Einfache Verdrahtung                           | Gesamtstrom muss unter Grenze des ESP32-Boards bleiben |
 
 **Empfehlung**: Wenn du einen festen Installationsort in der Nähe deiner
 Pumpensteuerung hast, nimm ein **Hutschienen-5V-Netzteil** (z.B. Mean Well
@@ -354,6 +355,7 @@ problemlos.
 ### 1. Sichtprüfung
 
 Vor dem Anlegen der Spannung:
+
 - Auf **Lötbrücken** zwischen benachbarten Pins prüfen
 - **Polung** aller Komponenten kontrollieren (DS18B20 VDD/GND, Relais VCC/GND)
 - **Keine losen Drahtenden**, die benachbarte Pins kurzschließen
@@ -371,6 +373,7 @@ Vor dem Anlegen der Spannung:
 ### 3. Sensoren prüfen
 
 Serielles Monitor öffnen (115200 Baud):
+
 ```
 Pool Controller v3.3.0
 Starting up...
@@ -383,12 +386,14 @@ Starting up...
 ```
 
 Wenn die Sensoren angeschlossen sind und funktionieren:
+
 ```
 Solar temperature: 25.3°C
 Pool temperature:  22.1°C
 ```
 
 Bei `Sensor error` oder `-127°C`, prüfe:
+
 - [ ] 4,7kΩ-Pull-up-Widerstand auf jeder DATA-Leitung vorhanden?
 - [ ] DS18B20 VDD an 3,3V (nicht 5V)?
 - [ ] DS18B20 GND an gemeinsamer Masse?
@@ -397,6 +402,7 @@ Bei `Sensor error` oder `-127°C`, prüfe:
 ### 4. Relais testen
 
 Über das Web-UI (Reiter Konfiguration) oder per seriellem Befehl:
+
 ```
 Mode: manual
 Pool pump: ON  → Relais klickt hörbar, Pumpe läuft an
@@ -404,6 +410,7 @@ Solar pump: ON → Relais klickt hörbar, Pumpe läuft an
 ```
 
 Wenn das Relais nicht klickt:
+
 - [ ] Ist das Relaismodul mit Strom versorgt (5V zwischen VCC und GND)?
 - [ ] Stimmt der Logikpegel (active-high vs. active-low)?
 - [ ] Leuchtet die LED auf dem Relaismodul, wenn GPIO auf HIGH geht?
@@ -412,16 +419,16 @@ Wenn das Relais nicht klickt:
 
 ## Fehlersuche
 
-| Symptom | Wahrscheinliche Ursache | Lösung |
-|---------|------------------------|--------|
-| "Sensor error" oder `-127°C` | Pull-up-Widerstand fehlt | 4,7kΩ zwischen DATA und 3,3V einlöten |
-| "Sensor error" | Falscher GPIO-Pin | `PIN_DS_SOLAR`/`PIN_DS_POOL` in `src/Config.hpp` prüfen |
-| Unbeständige Messwerte | Wackelkontakt oder Einstreuungen | Lötstellen prüfen, Daten- und Relaisleitungen trennen |
-| Relais schaltet nicht | Falscher Logikpegel | Active-high vs. active-low prüfen; Jumper umstecken |
-| Relais klickt, Pumpe läuft nicht | 230V-Verdrahtungsfehler | COM/NO-Kontakte prüfen, Pumpenanschluss kontrollieren |
-| ESP32 startet nicht (Brownout) | Zu schwache Stromversorgung | 5V/≥1A-Netzteil verwenden; 100µF-Kondensator nahe VIN |
+| Symptom                            | Wahrscheinliche Ursache             | Lösung                                                              |
+| ---------------------------------- | ----------------------------------- | ------------------------------------------------------------------- |
+| "Sensor error" oder `-127°C`       | Pull-up-Widerstand fehlt            | 4,7kΩ zwischen DATA und 3,3V einlöten                               |
+| "Sensor error"                     | Falscher GPIO-Pin                   | `PIN_DS_SOLAR`/`PIN_DS_POOL` in `src/Config.hpp` prüfen             |
+| Unbeständige Messwerte             | Wackelkontakt oder Einstreuungen    | Lötstellen prüfen, Daten- und Relaisleitungen trennen               |
+| Relais schaltet nicht              | Falscher Logikpegel                 | Active-high vs. active-low prüfen; Jumper umstecken                 |
+| Relais klickt, Pumpe läuft nicht   | 230V-Verdrahtungsfehler             | COM/NO-Kontakte prüfen, Pumpenanschluss kontrollieren               |
+| ESP32 startet nicht (Brownout)     | Zu schwache Stromversorgung         | 5V/≥1A-Netzteil verwenden; 100µF-Kondensator nahe VIN               |
 | ESP32 resetet beim Relais-Schalten | Spannungsspitze an der Relais-Spule | Freilaufdiode parallel zur Spule, oder Modul mit eingebautem Schutz |
-| Messwerte springen beim Schalten | Elektrisches Rauschen | Sensorleitungen getrennt von Relais-/Stromkabeln führen |
+| Messwerte springen beim Schalten   | Elektrisches Rauschen               | Sensorleitungen getrennt von Relais-/Stromkabeln führen             |
 
 ---
 
@@ -439,12 +446,12 @@ constexpr uint8_t PIN_RELAY_POOL{18};   // war 25
 constexpr uint8_t PIN_RELAY_SOLAR{19};  // war 26
 ```
 
-| Funktion | Optimiert (Default) | Original-Pin | Grund der Änderung |
-|----------|:-------------------:|:------------:|--------------------|
-| DS18B20 Solar | **GPIO32** | GPIO15 | GPIO15 ist Strapping-Pin — OneWire entfernt Boot-Risiko |
-| DS18B20 Pool | **GPIO33** | GPIO16 | Saubere Trennung vom verbleibenden Strapping-Pin GPIO0 |
-| Relais Pool | **GPIO25** | GPIO18 | ADC2-Pins (18/19) vermieden; GPIO25 ist sauberer Digitalausgang |
-| Relais Solar | **GPIO26** | GPIO19 | Gleicher Grund wie oben |
+| Funktion      | Optimiert (Default) | Original-Pin | Grund der Änderung                                              |
+| ------------- | :-----------------: | :----------: | --------------------------------------------------------------- |
+| DS18B20 Solar |     **GPIO32**      |    GPIO15    | GPIO15 ist Strapping-Pin — OneWire entfernt Boot-Risiko         |
+| DS18B20 Pool  |     **GPIO33**      |    GPIO16    | Saubere Trennung vom verbleibenden Strapping-Pin GPIO0          |
+| Relais Pool   |     **GPIO25**      |    GPIO18    | ADC2-Pins (18/19) vermieden; GPIO25 ist sauberer Digitalausgang |
+| Relais Solar  |     **GPIO26**      |    GPIO19    | Gleicher Grund wie oben                                         |
 
 Die Optimierung ist im Dokument
 [ESP32 Schaltplananalyse und Optimierung](esp32-schematic-optimization.de.md)
@@ -458,14 +465,14 @@ Der Controller nutzt die **eingebaute LED** zur Signalisierung des
 Systemzustands nach der [Homie Convention](https://homieiot.github.io/),
 dem Standard für IoT-Statusanzeigen.
 
-| LED-Muster | Systemzustand | Darstellung |
-|------------|--------------|-------------|
-| **Schnelles Blinken** (100ms an/aus = 5 Hz) | **AP-Modus** — kein WLAN konfiguriert, Setup-Portal aktiv | |
-| **Langsames Blinken** (500ms an/aus = 1 Hz) | **Verbindungsaufbau** — WLAN-Verbindung läuft | ![WLAN-Verbindung](led_wifi.gif) |
-| **Meist an, kurzer Aus-Blinker alle 2s** | **WLAN OK, MQTT getrennt** — Netzwerk aktiv, Broker nicht erreichbar | ![MQTT getrennt](led_mqtt.gif) |
-| **Dauerhaft an** | **Voll verbunden** — WLAN + MQTT betriebsbereit | |
-| **Sehr schnelles Blinken** (50ms an/aus = 10 Hz) | **OTA-Update** — Firmware-Download/-Installation aktiv | |
-| **Doppel-Blink** (200/200/200/600ms) | **Safe-Mode** — Boot-Loop erkannt oder kritische Degradation | |
+| LED-Muster                                       | Systemzustand                                                        | Darstellung                      |
+| ------------------------------------------------ | -------------------------------------------------------------------- | -------------------------------- |
+| **Schnelles Blinken** (100ms an/aus = 5 Hz)      | **AP-Modus** — kein WLAN konfiguriert, Setup-Portal aktiv            |                                  |
+| **Langsames Blinken** (500ms an/aus = 1 Hz)      | **Verbindungsaufbau** — WLAN-Verbindung läuft                        | ![WLAN-Verbindung](led_wifi.gif) |
+| **Meist an, kurzer Aus-Blinker alle 2s**         | **WLAN OK, MQTT getrennt** — Netzwerk aktiv, Broker nicht erreichbar | ![MQTT getrennt](led_mqtt.gif)   |
+| **Dauerhaft an**                                 | **Voll verbunden** — WLAN + MQTT betriebsbereit                      |                                  |
+| **Sehr schnelles Blinken** (50ms an/aus = 10 Hz) | **OTA-Update** — Firmware-Download/-Installation aktiv               |                                  |
+| **Doppel-Blink** (200/200/200/600ms)             | **Safe-Mode** — Boot-Loop erkannt oder kritische Degradation         |                                  |
 
 **Was beim ersten Einschalten passiert:**
 

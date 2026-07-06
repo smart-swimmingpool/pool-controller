@@ -20,7 +20,6 @@
 
 title: Pool Controller
 views:
-
   # ═══════════════════════════════════════════════════════════════════
   # View 1: Pool — für den Bademeister (tägliche Bedienung)
   # ═══════════════════════════════════════════════════════════════════
@@ -75,7 +74,7 @@ views:
             icon: mdi:robot
             entity: select.pool_controller_operation_mode
             state:
-              - value: 'auto'
+              - value: "auto"
                 styles:
                   card:
                     - background-color: rgba(0, 229, 255, 0.15)
@@ -98,7 +97,7 @@ views:
             icon: mdi:timer-outline
             entity: select.pool_controller_operation_mode
             state:
-              - value: 'timer'
+              - value: "timer"
                 styles:
                   card:
                     - background-color: rgba(0, 229, 255, 0.15)
@@ -121,7 +120,7 @@ views:
             icon: mdi:rocket-launch
             entity: select.pool_controller_operation_mode
             state:
-              - value: 'boost'
+              - value: "boost"
                 styles:
                   card:
                     - background-color: rgba(0, 229, 255, 0.15)
@@ -144,7 +143,7 @@ views:
             icon: mdi:hand-back-right
             entity: select.pool_controller_operation_mode
             state:
-              - value: 'manu'
+              - value: "manu"
                 styles:
                   card:
                     - background-color: rgba(0, 229, 255, 0.15)

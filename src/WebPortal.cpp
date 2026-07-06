@@ -951,19 +951,7 @@ static bool hexStringToAddress(const String &hex, uint8_t addr[8]) {
  * @param poolAddr   Pool sensor address (or nullptr / all-zero to clear).
  */
 static void saveSensorMappingNvs(const uint8_t solarAddr[8], const uint8_t poolAddr[8]) {
-  Preferences prefs;
-  prefs.begin("ds18b20", false);  // read-write
-  prefs.putBytes("solar_adr", solarAddr, 8);
-  prefs.putBytes("pool_adr", poolAddr, 8);
-  prefs.end();
-
-  char buf[17];
-  snprintf(buf, sizeof(buf), "%02X%02X%02X%02X%02X%02X%02X%02X", solarAddr[0], solarAddr[1], solarAddr[2], solarAddr[3],
-    solarAddr[4], solarAddr[5], solarAddr[6], solarAddr[7]);
-  Serial.printf("• Sensor mapping saved via WebUI — Solar [%s]", buf);
-  snprintf(buf, sizeof(buf), "%02X%02X%02X%02X%02X%02X%02X%02X", poolAddr[0], poolAddr[1], poolAddr[2], poolAddr[3], poolAddr[4],
-    poolAddr[5], poolAddr[6], poolAddr[7]);
-  Serial.printf(", Pool [%s]\n", buf);
+  ConfigManager::saveSensorMapping(solarAddr, poolAddr);
 }
 
 // ═══════════════════════════════════════════════════════════════════════

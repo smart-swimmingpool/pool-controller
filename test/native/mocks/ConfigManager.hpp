@@ -52,6 +52,10 @@ public:
   }
   static void logOtaTransition() {}
 
+  // ── Sensor Address Mapping ──
+  static void saveSensorMapping(const uint8_t solarAddr[8], const uint8_t poolAddr[8]);
+  static bool loadSensorMapping(uint8_t solarAddr[8], uint8_t poolAddr[8]);
+
   static Settings &getSettings() { return _settings; }
   static WiFiConfig &getWiFi() { return _wifi; }
   static MqttConfig &getMqtt() { return _mqtt; }
@@ -78,6 +82,10 @@ private:
   static NtpConfig _ntp;
   static String _adminPasswordHash;
   static bool _configured;
+
+  static uint8_t _sensorSolarAddr[8];
+  static uint8_t _sensorPoolAddr[8];
+  static bool _sensorMappingValid;
 
   // Simple hash function for mock (not cryptographic, just for testing)
   static String hashPassword(const String &password) {
