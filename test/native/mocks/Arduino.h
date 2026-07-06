@@ -450,6 +450,13 @@ static LittleFSClass LittleFS;
 #define F(x) (x)
 #define snprintf_P snprintf
 #define strlcpy_P strlcpy
+
+// strlcat — BSD/ESP32 extension; only declared here when not provided by libc.
+// CMakeLists.txt's CheckSymbolExists sets HAVE_STRLCAT for glibc ≥ 2.38 / macOS.
+// When not set, stubs.cpp provides the implementation.
+#ifndef HAVE_STRLCAT
+extern "C" size_t strlcat(char *dst, const char *src, size_t siz);
+#endif
 #define strcmp_P strcmp
 #define vsnprintf_P vsnprintf
 #define pgm_read_byte(x) (*(const uint8_t *)(x))
