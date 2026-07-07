@@ -148,6 +148,7 @@ sammeln sich an und täuschen Wartende.
 | Unused Variablen             | `uint8_t devCount = getCount();` (nie gelesen)                                     | Entfernen oder `(void)`                     |
 | Leere catch-Blöcke           | `catch (...) {}`                                                                   | Logging ergänzen oder entfernen             |
 | Tote else-Zweige             | `if (x) return; else { ... }`                                                      | `else` entfernen, `{ ... }` eine Ebene raus |
+| Tote Funktionsparameter (YAGNI) | Konstruktor-/Funktions-Parameter, den kein Caller übergibt → nur Defaultwert existiert | Parameter entfernen; wenn nötig via Setter setzen oder hart codieren |
 
 ### Beispiel
 

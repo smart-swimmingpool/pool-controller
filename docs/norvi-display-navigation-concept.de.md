@@ -1,10 +1,8 @@
 # Bedien- und Navigationskonzept — NORVI IIOT-AE01-R OLED + 3 Tasten
 
-> **Status:** Konzept / RFC (Review v1.1, Juli 2026)  
-> **Ziel:** Verbesserung der UX des 128×64 OLED-Displays mit den drei
-> Fronttasten (S1/S2/S3)  
-> **Behandelt:** Button-Mapping, Bildschirm-Hierarchie, Hints,
-> Wizard-Navigation, Long-Press-Feedback, Sonderfälle
+> **Status:** Konzept / RFC  
+> **Ziel:** Verbesserung der UX des 128×64 OLED-Displays mit den drei Fronttasten (S1/S2/S3)  
+> **Behandelt:** Button-Mapping, Bildschirm-Hierarchie, Hints, Wizard-Navigation, Sonderfälle
 
 ---
 
@@ -15,10 +13,8 @@
   - **S1 (oben)** — ▲
   - **S2 (Mitte)** — ▼
   - **S3 (unten)** — ●
-- **Tasten-Interface:** Resistor-Ladder an GPIO32 (ADC), kein Interrupt
-  — Polling alle 50 ms
-- **Long-Press:** Erkennung nach >2 s, kann Short-Press konsumieren
-  (Callback-Rückgabe `true`)
+- **Tasten-Interface:** Resistor-Ladder an GPIO32 (ADC), kein Interrupt — Polling alle 50 ms
+- **Long-Press:** Erkennung nach >2 s, kann Short-Press konsumieren (Callback-Rückgabe `true`)
 
 ---
 
@@ -28,55 +24,40 @@
 
 | Kontext | S3-Kurz (aktuell) | Problem |
 |---------|-------------------|---------|
-| MAIN | Betriebsmodus cyclen (auto→manu→boost→timer) | Ein Tastendruck ändert unumkehrbar den Betriebsmodus. Ein versehentlicher Druck während des Vorbeiscrollens schaltet von `auto` auf `manu` — die Pumpe läuft dann dauerhaft. |
-| Andere Infoseiten | Betriebsmodus cyclen | Der Nutzer erwartet auf QRCODE keine Modus-Änderung. |
+| MAIN    | Betriebsmodus cyclen (auto→manu→boost→timer) | Ein Tastendruck ändert unumkehrbar den Betriebsmodus. Ein versehentlicher Druck während des Vorbeiscrollens schaltet von `auto` auf `manu` — die Pumpe läuft dann dauerhaft. |
+| Andere Infoseiten | Betriebsmodus cyclen | Der Nutzer erwartet auf PAGE 3 (QRCODE) keine Modus-Änderung. |
 | SENSOR_SETUP | Wizard-Advance | Einziger Kontext, in dem S3 sinnvoll ist. |
 
-**➜ S3 darf auf Infoseiten keine Seiteneffekte haben,
-die den Anlagenbetrieb verändern.**
+**➜ S3 darf auf Infoseiten keine Seiteneffekte haben, die den Anlagenbetrieb verändern.**
 
 ### 2.2 Hint-Labels „nxt" für S1 und S2
 
-Beide Tasten zeigen auf normalen Seiten das Label `nxt`. Damit ist nicht
-ersichtlich, dass S1 **zurück** und S2 **vor** blättert. Der Nutzer muss
-durch Trial & Error herausfinden, welche Taste wohin navigiert.
+Beide Tasten zeigen auf normalen Seiten das Label `nxt`. Damit ist nicht ersichtlich, dass S1 **zurück** und S2 **vor** blättert. Der Nutzer muss durch Trial & Error herausfinden, welche Taste wohin navigiert.
 
 ### 2.3 Fehlende visuelle Hierarchie
 
 - Keine Unterscheidung zwischen „Info-Seiten" und „Interaktions-Seiten"
-- Kein Hinweis, dass man sich auf Seite X von Y befindet (nur eine nackte
-  Zahl rechts unten)
-- Kein „Exit"- oder „Back"-Gefühl — einmal im Sensor-Wizard steckt man fest,
-  bis man entweder fertig ist oder 60 s gewartet hat
+- Kein Hinweis, dass man sich auf Seite X von Y befindet (nur eine nackte Zahl rechts unten)
+- Kein „Exit"- oder „Back"-Gefühl — einmal im Sensor-Wizard steckt man fest, bis man entweder fertig ist oder 60 s gewartet hat
 
 ### 2.4 Long-Press ist unsichtbar
 
-- S3 lang speichert Sensor-Mapping und rebootet — aber der Nutzer sieht das
-  nirgends, solange nicht beide Sensoren zugewiesen sind.
-- Es gibt kein konsistentes Long-Press-Modell, das der Nutzer lernen und
-  erwarten kann.
-- **Keine visuelle Rückmeldung** während des Haltens — der Nutzer weiß nicht,
-  ob der Druck registriert wurde oder wie lange er noch halten muss.
+- S3 lang speichert Sensor-Mapping und rebootet — aber der Nutzer sieht das nirgends, solange nicht beide Sensoren zugewiesen sind.
+- Es gibt kein konsistentes Long-Press-Modell, das der Nutzer lernen und erwarten kann.
 
 ### 2.5 Auto-Return ohne Vorwarnung
 
-- Nach 60 s springt das Display unhinterfragt zurück zu MAIN — das kann
-  mitten im Lesen einer IP-Adresse passieren.
+- Nach 60 s springt das Display unhinterfragt zurück zu MAIN — das kann mitten im Lesen einer IP-Adresse passieren.
 
 ---
 
 ## 3. Design-Prinzipien
 
-1. **Konsistenz:** Jede Taste hat eine gleichbleibende Grundbedeutung
-   (S1=▲=rauf/zurück, S2=▼=runter/vor, S3=●=Aktion/bestätigen).
-2. **Sicherheit:** Keine Taste ändert den Anlagenzustand ohne explizite
-   Bestätigung oder klares Label.
-3. **Sichtbarkeit:** Jede Taste hat ein kontextspezifisches, eindeutiges
-   Hint-Label. Long-Press wird visuell begleitet.
-4. **Minimale Überraschung:** Keine Side-Effects beim Scrollen. Aktionen
-   sind explizit.
-5. **Fat-Finger-freundlich:** Wichtige Aktionen erfordern zwei Schritte
-   oder Long-Press mit Fortschrittsanzeige.
+1. **Konsistenz:** Jede Taste hat eine gleichbleibende Grundbedeutung (S1=▲=rauf/zurück, S2=▼=runter/vor, S3=●=Aktion/bestätigen).
+2. **Sicherheit:** Keine Taste ändert den Anlagenzustand ohne explizite Bestätigung oder klares Label.
+3. **Sichtbarkeit:** Jede Taste hat ein kontextspezifisches, eindeutiges Hint-Label.
+4. **Minimale Überraschung:** Keine Side-Effects beim Scrollen. Aktionen sind explizit.
+5. **Fat-Finger-freundlich:** Wichtige Aktionen erfordern zwei Schritte oder Long-Press.
 
 ---
 
@@ -90,15 +71,14 @@ durch Trial & Error herausfinden, welche Taste wohin navigiert.
 | **S2** | ▼ | Nächste Seite | Nächste Option | — (nicht belegt) |
 | **S3** | ● | Aktion / Enter (siehe Seite) | Bestätigen / Weiter | Kontext-Aktion (speichern, reboot) |
 
-S1 und S2 sind **immer** Navigation — egal ob zwischen Seiten oder
-innerhalb eines Wizards.  
+S1 und S2 sind **immer** Navigation — egal ob zwischen Seiten oder innerhalb eines Wizards.  
 S3 ist **immer** die Aktionstaste — was sie tut, steht im Hint-Label.
 
 ### 4.2 Hint-Labels pro Seite
 
-| Seite | S1 | S2 | S3 | S3-Lang |
-|-------|----|----|----|---------|
-| MAIN | wrap | next | menu | — |
+| Seite | S1-Hint | S2-Hint | S3-Hint | S3-Lang |
+|-------|---------|---------|---------|---------|
+| MAIN | — | next | menu | — |
 | NETWORK | prev | next | — | — |
 | SYSTEM | prev | next | — | — |
 | QRCODE | prev | next | — | — |
@@ -109,30 +89,8 @@ S3 ist **immer** die Aktionstaste — was sie tut, steht im Hint-Label.
 
 **Änderungen:**
 - S1 zeigt `prev` statt `nxt` — eindeutig anders als S2 (`next`)
-- S3 zeigt **nie** `ok` auf Infoseiten, sondern ist entweder leer (keine
-  Aktion) oder zeigt klar, was passiert (`menu`, `setup`, `select`,
-  `assign`)
+- S3 zeigt **nie** `ok` auf Infoseiten, sondern ist entweder leer (keine Aktion) oder zeigt klar, was passiert (`menu`, `setup`, `select`, `assign`)
 - MAIN-Seite: S3 öffnet ein Aktionsmenü statt direkt den Modus zu wechseln
-
-### 4.3 Internationalisierung (i18n)
-
-Die Label sind bewusst kurz (max. 10 Zeichen), damit sie in die 30px
-rechte Spalte passen. Alternativvorschläge pro Sprache:
-
-| EN (Default) | DE | FR | Zweck |
-|-------------|----|----|-------|
-| prev | zurück | préc | Rückwärts |
-| next | vor | suiv | Vorwärts |
-| menu | menü | menu | Aktionen öffnen |
-| setup | einr | conf | Wizard starten |
-| select | wahl | choix | Auswahl bestätigen |
-| assign | setz | attr | Rolle zuweisen |
-| save | spei | save | Speichern |
-
-**Entscheidung:** Vorerst EN (geringster Speicherverbrauch, keine
-zusätzliche Übersetzungslogik). Eine i18n-Erweiterung kann später
-über PROGMEM-String-Tabellen nachgerüstet werden, falls das Display
-auch in nicht-englischen Kontexten eingesetzt wird.
 
 ---
 
@@ -166,12 +124,11 @@ auch in nicht-englischen Kontexten eingesetzt wird.
 │  (erreichbar via S3 auf Seite       │
 │   SENSOR_SETUP)                     │
 │                                     │
-│  Step 1/2: SELECT_SENSOR            │
+│  Step 1: SELECT_SENSOR              │
 │  S1/S2 = up/dn (Sensor wählen)      │
 │  S3    = select (bestätigen)        │
-│  S1 am Ende → cancel               │
 │                                     │
-│  Step 2/2: SELECT_ROLE              │
+│  Step 2: SELECT_ROLE                │
 │  S1/S2 = up/dn (Solar/Pool)         │
 │  S3    = assign (zuweisen)          │
 │                                     │
@@ -194,7 +151,7 @@ auch in nicht-englischen Kontexten eingesetzt wird.
 │ ○ 19.1°C             │ S3 ●│ menu
 │ Solar                │      │
 ├──────────────────────┴──────┤
-│ AUTO  12:30  v2.1.0     1/5│
+│ AUTO  12:30  v2.1.0     1  │
 └─────────────────────────────┘
 ```
 
@@ -212,7 +169,7 @@ auch in nicht-englischen Kontexten eingesetzt wird.
 │ IP: 192.168.1.42     │ S3  │
 │ MQTT: CONNECTED      │      │
 ├──────────────────────┴──────┤
-│ AUTO  12:30  v2.1.0     2/5│
+│ AUTO  12:30  v2.1.0     2  │
 └─────────────────────────────┘
 ```
 
@@ -230,7 +187,7 @@ auch in nicht-englischen Kontexten eingesetzt wird.
 │ FW: v2.1.0           │      │
 │ Min: 98000 B         │      │
 ├──────────────────────┴──────┤
-│ AUTO  12:30  v2.1.0     3/5│
+│ AUTO  12:30  v2.1.0     3  │
 └─────────────────────────────┘
 ```
 
@@ -245,14 +202,13 @@ auch in nicht-englischen Kontexten eingesetzt wird.
 │ │  ██  ██  ██  │     │      │
 │ └──────────────┘     │      │
 ├──────────────────────┴──────┤
-│ AUTO  12:30  v2.1.0     4/5│
+│ AUTO  12:30  v2.1.0     4  │
 └─────────────────────────────┘
 ```
 
 ### 6.5 WIFI_SETUP — Ersteinrichtung
 
-Identisch zu QRCODE im Layout, aber mit zusätzlichem Text zur
-WiFi-Einrichtung.
+Identisch zu QRCODE im Layout, aber mit zusätzlichem Text zur WiFi-Einrichtung.
 
 ### 6.6 Aktionsmenü (auf MAIN via S3)
 
@@ -264,49 +220,45 @@ WiFi-Einrichtung.
 │                      │ S3 ●│ select
 │                      │      │
 ├──────────────────────┴──────┤
-│ AUTO  12:30  v2.1.0     1/5│
+│ AUTO  12:30  v2.1.0     1  │
 └─────────────────────────────┘
 ```
 
 | Menü-Eintrag | S3-Aktion |
 |-------------|-----------|
-| **Mode: auto** | Modus cyclen + zurück zu MAIN |
+| **Mode: auto** | Modus cyclen (auto→manu→boost→timer→auto) + sofort zurück zu MAIN |
 | **Pump: on/off** | Pumpe manuell ein/aus + zurück zu MAIN |
 | **→ Exit menu** | Zurück zu MAIN ohne Änderung |
 
 S1/S2 navigieren zwischen den Menüzeilen. S3 bestätigt die Auswahl.
 
 **Warum ein Menü statt direkter Modus-Cycle?**
-- Der Nutzer muss aktiv ins Menü gehen → kein versehentlicher Modus-Wechsel
-  beim Blättern
+- Der Nutzer muss aktiv ins Menü gehen → kein versehentlicher Modus-Wechsel beim Blättern
 - Das Label `menu` auf S3 ist eindeutig und erwartbar
-- Langfristig können hier weitere Aktionen ergänzt werden (Pumpe togglen,
-  Relais-Status, Neustart)
-- Trade-off: ein Klick mehr für den Modus-Wechsel — gerechtfertigt durch
-  die verhinderte Fehlbedienung
+- Langfristig können hier weitere Aktionen ergänzt werden (Pumpe togglen, Relais-Status, Neustart)
 
 ### 6.7 SENSOR_SETUP — Sensor-Zuordnungswizard
 
-**Step 1/2 — SELECT_SENSOR (mit Schritt-Indikator):**
+**Step 1 — SELECT_SENSOR:**
 
 ```
 ┌──────────────────────┬──────┐
-│ Sensor Setup   [1/2] │      │
+│ Sensor Setup         │      │
 │──────────────────────│ S1 ▲│ up
-│ ▓0: 28FFAABB  SOLAR  │ S2 ▼│ dn
+│ ▓0: 28FFAABB  <-SOLAR│ S2 ▼│ dn
 │   22.5°C        ◄    │ S3 ●│ select
 │ 1: 28FECD12          │      │
 │   19.1°C             │      │
 ├──────────────────────┴──────┤
-│ S1/S2=pick  S3=sel  L=cancel│
+│ S1/S2=pick  S3=select       │
 └─────────────────────────────┘
 ```
 
-**Step 2/2 — SELECT_ROLE:**
+**Step 2 — SELECT_ROLE:**
 
 ```
 ┌──────────────────────┬──────┐
-│ Sensor Setup   [2/2] │      │
+│ Sensor Setup         │      │
 │──────────────────────│ S1 ▲│ up
 │ 0: 28FFAABB  SOLAR   │ S2 ▼│ dn
 │ ┌──────────────────┐ │ S3 ●│ assign
@@ -315,7 +267,7 @@ S1/S2 navigieren zwischen den Menüzeilen. S3 bestätigt die Auswahl.
 │ │   Pool           │ │      │
 │ └──────────────────┘ │      │
 ├──────────────────────┴──────┤
-│ S1/S2=role  S3=save  L=back│
+│ S1/S2=role  S3=assign       │
 └─────────────────────────────┘
 ```
 
@@ -330,7 +282,7 @@ S1/S2 navigieren zwischen den Menüzeilen. S3 bestätigt die Auswahl.
 │                      │ S3  │
 │                      │  lang│ save+reboot
 ├──────────────────────┴──────┤
-│ ▓▓▓▓▓░░░ Hold S3=Save      │
+│ Both set. Hold S3=Save      │
 └─────────────────────────────┘
 ```
 
@@ -338,10 +290,7 @@ S1/S2 navigieren zwischen den Menüzeilen. S3 bestätigt die Auswahl.
 
 ## 7. Hint-Bar-Design (rechte Spalte)
 
-### 7.1 Layout
-
-Die Hint-Bar nutzt die rechten ~30 Pixel (Spalten 98–127). Sie wird auf
-allen Info-Seiten gezeichnet.
+Die Hint-Bar nutzt die rechten ~30 Pixel (Spalten 98–127). Sie wird auf allen Info-Seiten gezeichnet.
 
 ```
 Spalte:  98     108    118    128
@@ -360,215 +309,87 @@ Spalte:  98     108    118    128
          └──────┴──────┴──────┘
 ```
 
-### 7.2 Gestaltungsregeln
-
+**Gestaltungsregeln:**
 - S1 ist oben, S2 mitte, S3 unten — exakt wie die physikalische Anordnung
-- Das Label steht **links** vom Symbol, damit es gelesen wird bevor das
-  Auge zum Symbol wandert
-- Wenn eine Taste keine Aktion hat, wird sie ausgeblendet (kein Text,
-  kein Symbol)
+- Das Label steht **links** vom Symbol, damit es gelesen wird bevor das Auge zum Symbol wandert
+- Wenn eine Taste keine Aktion hat, wird sie ausgeblendet (kein Text, kein Symbol)
 - Symbole: ▲ (S1), ▼ (S2), ● (S3) — auch in der Lücke ohne Text erkennbar
 - Die Farbgebung bleibt monochrom (SSD1306_WHITE)
 
-### 7.3 Kontextsensitivität
-
-Die Hint-Bar zeigt **nur** die aktuell relevanten Aktionen:
-
-| Seite | Sichtbare Hints | Begründung |
-|-------|----------------|-----------|
-| MAIN | S1: wrap, S2: next, S3: menu | S1 springt zur letzten Seite (Wrap-Around) |
-| NETWORK–QRCODE | S1: prev, S2: next | S3 hat keine Funktion auf Info-Seiten |
-| SENSOR_SETUP (aktiv) | S1: up, S2: dn, S3: select/assign | Wizard braucht alle drei |
-| Aktionsmenü | S1: ▲, S2: ▼, S3: select | Menü-Navigation + Bestätigung |
-
-### 7.4 Primary-Action-Hervorhebung
-
-Die primäre Aktion (S3) kann durch einen **invertierten Hintergrund**
-(ein gefülltes Rechteck hinter dem Label) hervorgehoben werden. Das
-entspricht der existierenden `dspInvertedText()`-Funktion und benötigt
-keine zusätzliche Farbe (OLED ist monochrom).
-
 ---
 
-## 8. Long-Press: Visuelles Feedback
+## 8. Sonderfälle & Edge Cases
 
-### 8.1 Problem
+### 8.1 Erster Boot (kein WiFi / keine Sensor-Mapping)
 
-Aktuell gibt es **null visuelle Rückmeldung** beim Long-Press. Der Nutzer
-hält S3 und weiß nicht, ob der Druck ankommt oder wie lange er noch halten
-muss. Das ist besonders kritisch bei der Aktion „save + reboot".
+- Display startet automatisch auf **WIFI_SETUP** oder **SENSOR_SETUP** (bereits implementiert)
+- Button-Verhalten ist identisch zu den normalen Seiten — S1/S2 blättern, S3 hat keine Aktion außer auf SENSOR_SETUP
+- Der Nutzer muss zwingend ins Web-Interface — das Display macht das klar („Scan QR or enter URL")
 
-### 8.2 Vorgeschlagenes Fortschritts-Banner
-
-Statt eines Countdowns (zu viel Text für 128×64) wird ein **horizontaler
-Fortschrittsbalken** unterhalb des Inhaltsbereichs, aber oberhalb des
-Footers eingeblendet:
-
-```
-┌──────────────────────┬──────┐
-│ Sensor Setup         │      │
-│──────────────────────│      │
-│ 0: 28FFAABB  SOLAR   │      │
-│ 1: 28FECD12  POOL    │      │
-│                      │      │
-│ ▓▓▓▓▓░░░░░ save...  │      │   <- Fortschritt (wächst über 2 s)
-├──────────────────────┴──────┤
-│ Hold S3 to save & reboot    │
-└─────────────────────────────┘
-```
-
-**Implementierung:**
-- Balkenlänge wächst von 0 % auf 100 % über 2000 ms (LONG_PRESS_MS)
-- Timer wird in der Display-loop() aktualisiert während der Press aktiv ist
-- Bei Erreichen von 100 % → Aktion auslösen + reboot
-- Bei Loslassen vor 100 % → Balken verschwindet, keine Aktion
-
-**⚠️ I2C-Performance:** Ein voller Display-Redraw über I2C (SSD1306)
-dauert je nach Taktung 30–40 ms. Bei einem ohnehin engen 50-ms-Polling-
-Intervall der Tasten würde ein `forceRedraw` in jeder Loop()-Iteration
-das System ausbremsen oder den Tastendruck unzuverlässig machen.
-
-**Lösung — Partieller Redraw:** Statt `display.display()` (kompletter
-Buffer-Send) wird nur der geänderte Bereich des Fortschrittsbalkens per
-`display.drawFastHLine()` + `display.display()` aktualisiert. Die SSD1306
-erlaubt Page-Mode-Updates, aber der einfachste Weg ist: Buffer lokal
-halten, nur die 2–3 Zeilen des Balkens neu zeichnen und per
-`display.display()` flushen.
-
-**Fallback — Diskrete Schritte:** Falls Partial Redraw zu komplex ist,
-wird der Balken nur in 4–5 diskreten Stufen aktualisiert (alle ~400 ms
-eine Stufe mehr). Das reduziert die I2C-Last von 50 Hz auf ~2,5 Hz und
-ist für den Nutzer kaum wahrnehmbar langsamer.
-
-### 8.3 Alternative: Invertiertes Label
-
-Bei sehr wenig Platz (z. B. im Aktionsmenü) reicht auch ein invertiertes
-S3-Hint-Label, das nach >1 s von `save` zu `SAVE!` wechselt:
-
-| Zeit | S3-Hint | Zustand |
-|------|---------|---------|
-| 0–1 s | save | Normal |
-| 1–2 s | SAVE! | Invertiert (highlighted) |
-| >2 s | Aktion feuert | — |
-
-### 8.4 Konsistentes Long-Press-Modell
-
-Long-Press wird nur für **kritische, bestätigungspflichtige Aktionen**
-genutzt und **immer** mit visuellem Feedback:
-
-- Sensor-Mapping speichern + Reboot
-- Zukünftig: Factory Reset, Safe Mode, Neustart
-
-Auf allen anderen Seiten hat S3-Lang keine Funktion (keine Überraschung).
-
----
-
-## 9. Sonderfälle & Edge Cases
-
-### 9.1 Erster Boot (kein WiFi / keine Sensor-Mapping)
-
-- Display startet automatisch auf **WIFI_SETUP** oder **SENSOR_SETUP**
-  (bereits implementiert)
-- Button-Verhalten ist identisch zu den normalen Seiten — S1/S2 blättern,
-  S3 hat keine Aktion außer auf SENSOR_SETUP
-- Der Nutzer muss zwingend ins Web-Interface — das Display macht das klar
-
-### 9.2 Auto-Return-Timeouts
+### 8.2 Auto-Return-Timeouts
 
 | Zustand | Timeout | Ziel |
 |---------|---------|------|
 | Info-Seite (nicht MAIN) | 60 s | MAIN |
-| Aktionsmenü | 30 s | MAIN (Menü schließt sich) |
-| Sensor-Wizard (SELECT) | 120 s | IDLE + MAIN |
-| Sensor-Wizard (ROLE) | 120 s | IDLE + MAIN |
+| Aktionsmenü | 30 s | MAIN |
+| Sensor-Wizard (SELECT) | 120 s | IDLE+MAIN |
+| Sensor-Wizard (ROLE) | 120 s | IDLE+MAIN |
 
-**Verhalten:**
-- Timeout wird nur **zwischen** Tastendrücken gemessen. Solange der Nutzer
-  aktiv ist, passiert nichts.
-- **Einheitliche Vorwarnung:** In **allen** Zuständen (Info-Seiten,
-  Aktionsmenü, Wizard) wird 5 s vor Auto-Return ein kurzer Hinweis
-  eingeblendet. Der Text ist kontextabhängig:
-  - Info-Seiten: `→ MAIN in 5s` (rechts unten im Footer, blinkend)
-  - Aktionsmenü: `→ MAIN in 5s` (gleiche Stelle)
-  - Wizard: `→ IDLE in 5s` (da Wizard zuerst auf IDLE, dann MAIN)
+- **Neu:** 5 s vor Auto-Return wird der Bildschirm nicht sofort umgeschaltet — stattdessen läuft das Menü einfach aus. Der Timeout wird nur **zwischen** Tastendrücken gemessen. Solange der Nutzer aktiv ist, passiert nichts.
 
-### 9.3 Wizard-Cancel / Rückzug
+### 8.3 Wizard-Cancel / Rückzug
 
-Im Sensor-Wizard gibt es aktuell keinen Weg zurück.
+Im Sensor-Wizard gibt es aktuell keinen Weg zurück, außer abzubrechen (Timeout).  
+**Vorschlag:** S1 auf der ersten Wizard-Stufe (SELECT_SENSOR) zeigt `back`, wenn `setupSelectedDev_ == 0` und der Nutzer nochmal S1 drückt → zurück zu IDLE.  
+(Das erfordert minimale Logik-Änderung in `setupSelectPrevious()`.)
 
-**Vorschlag 1 — S1-Cancel (bevorzugt):**
-Sobald `setupSelectedDev_ == 0` (erste Option in der Liste) wechselt das
-S1-Hint-Label von `up` zu **`back`** und wird **invertiert dargestellt**
-(weisser Text auf schwarzem Grund via `dspInvertedText()`). Ein erneuter
-Druck auf S1 setzt auf IDLE zurück. Dieses Label-Switching macht den
-Ausstieg für den Nutzer offensichtlich — er sieht sofort, dass jetzt eine
-neue Aktion möglich ist.
+### 8.4 Long-Press-Modell
 
-```
-┌──────────────────────┬──────┐
-│ Sensor Setup   [1/2] │      │
-│──────────────────────│ S1 ■│ back   <- invertiertes Label
-│ ▓0: 28FFAABB  SOLAR  │ S2 ▼│ dn
-│   22.5°C        ◄    │ S3 ●│ select
-│ 1: 28FECD12          │      │
-├──────────────────────┴──────┤
-│ S1=back  S2=dn  S3=select  │
-└─────────────────────────────┘
-```
+Long-Press wird nur für **kritische, bestätigungspflichtige Aktionen** genutzt:
+- Sensor-Mapping speichern + Reboot
+- Zukünftig: Factory Reset, Safe Mode
 
-```cpp
-void NorviOledDisplay::setupSelectPrevious() {
-  if (setupSelectedDev_ == 0 && setupStep_ == SetupStep::SELECT_SENSOR) {
-    // Zurück zu IDLE
-    setupStep_ = SetupStep::IDLE;
-    setupSelectedDev_ = 0;
-    forceRedraw_ = true;
-    return;
-  }
-  // ... bestehende Logik ...
-}
-```
+Optimalerweise wird Long-Press auf S3 **auf allen Seiten** konsistent als „erweiterte Aktion" etabliert.
 
-**Vorschlag 2 — S1-Lang-Cancel (Alternative):**
-Falls S1-Kurz immer „vorherige Option" bleiben soll: S1 lang (>2 s) in
-SELECT_SENSOR bricht ab → zurück zu IDLE. Vorteil: kein unbeabsichtigter
-Cancel. Nachteil: inkonsistentes Long-Press-Modell (bisher nur S3).
+### 8.5 QR-Code-Seiten mit vollem Bildschirm
 
-**Entscheidung:** Vorschlag 1 (S1-Kurz mit Label-Wechsel). Der Nutzer
-muss nicht raten — er sieht `back` und weiss, was passiert. Das
-invertierte Label macht es zusätzlich prominent.
+Auf QRCODE und WIFI_SETUP wird die Hint-Bar aktuell ausgeblendet, um Platz für den QR-Code zu schaffen.
+Das ist akzeptabel, da der QR-Code die primäre Interaktion ist und der Nutzer auf diesen Seiten typischerweise nicht navigiert, sondern scannt.
 
-### 9.4 Schritt-Indikator im Wizard
+### 8.6 Horizontaler Text-Scroll bei Überlänge
 
-Der Wizard (SENSOR_SETUP) bekommt einen visuellen Schritt-Indikator:
+Das Display zeigt 128 Pixel Breite. Bei Text Size 1 (6×8 px/Zeichen) passen ca. **21 Zeichen** in eine Zeile.
+Folgende Texte können diese Länge überschreiten und **müssen horizontal scrollen** statt abgeschnitten zu werden:
 
-- **Vorschlag:** `[1/2]` und `[2/2]` rechts neben dem Titel in der
-  Titelzeile
-- **Alternativ:** Drei kleine Punkte `●○○` / `○●○` / `○○●` — aber bei nur
-  2 Schritten unnötig komplex
-- **Umsetzung:** Minimaler Platzbedarf (ca. 25 px in der oberen Zeile)
+| Seite | Text | Maximale Länge | Problem |
+|-------|------|---------------|---------|
+| NETWORK | WiFi SSID | 32 Zeichen | Wird auf 9 Zeichen gekürzt — unbrauchbar |
+| WIFI_SETUP | AP-Name (SoftAP SSID) | 32 Zeichen | Wird auf 14 Zeichen gekürzt |
+| QRCODE | URL (http://192.168.xxx.xxx/) | ~23 Zeichen | Wird auf 20 Zeichen gekürzt |
+| QRCODE (WiFi) | IP-Adresse in Text Size 2 | ~14 Zeichen | Überläuft die 128px (12px/Zeichen) |
 
-**⚠️ Platzbedarf:** Die Titelzeile `Sensor Setup [1/2]` ist mit 18 Zeichen
-(bei 6×8-Pixel-Font = 108 px) sehr knapp bemessen — die Hint-Bar beginnt
-bei Spalte 98 (Breite ~30 px). **Empfehlung:** Der Titel wird zu
-`Setup [1/2]` verkürzt (14 Zeichen ≈ 84 px), was ausreichend Abstand zur
-Hint-Bar lässt. Alternativ kann der Schritt-Indikator in die zweite Zeile
-(rechts neben dem Trennstrich) ausweichen.
+**Scroll-Verhalten:**
+- Text beginnt sichtbar (linksbündig) — 2 s Pause
+- Scrollt mit **25 px/s** nach links, bis das Ende sichtbar ist
+- 1 s Pause am Ende
+- Scrollt mit **50 px/s** zurück zum Start
+- Wiederholt endlos
+- Reset bei Seitenwechsel oder Textänderung
 
-### 9.5 QR-Code-Seiten ohne Hint-Bar
-
-Auf QRCODE und WIFI_SETUP wird die Hint-Bar ausgeblendet, um Platz für
-den QR-Code zu schaffen. Das ist akzeptabel, da der QR-Code die primäre
-Interaktion ist und der Nutzer auf diesen Seiten typischerweise nicht
-navigiert, sondern scannt.
+**Implementierung:**
+- `drawScrollingText(x, y, text, maxWidth)` — freie Hilfsfunktion in `NorviOledDisplay.cpp`
+- Nutzt das Hardware-Clipping des SSD1306: Zeichnen bei negativem `x` blendet den überstehenden Teil automatisch aus
+- Funktioniert nur mit Text Size 1 (für Size 2 müsste der Faktor angepasst werden)
+- Zustandsautomat (Phase 0–3) mit `millis()`-gesteuerter Animation
+- Flash-freundlich: kein `String`, keine dynamische Allokation
 
 ---
 
-## 10. Umsetzungsplan (Code-Änderungen)
+## 9. Umsetzungsplan (Code-Änderungen)
 
-### PR 1: Hint-Labels + Footer (niedriges Risiko)
+### 9.1 Hint-Labels korrigieren
 
-**Dateien:** `NorviOledDisplay.cpp` — `drawButtonHints()`, `drawFooter()`
+**Dateien:** `NorviOledDisplay.cpp` — Funktion `drawButtonHints()`
 
 | Change | Aktuell | Neu |
 |--------|---------|-----|
@@ -576,15 +397,19 @@ navigiert, sondern scannt.
 | S2-Label auf Info-Seiten | `nxt` | `next` |
 | S3 auf MAIN | `ok` | `menu` |
 | S3 auf NETWORK/SYSTEM/QRCODE/WIFI_SETUP | `ok` | leer (ausblenden) |
-| Footer Page-Zahl | `1`–`6` | `1/5`–`5/5` |
 
-### PR 2: Aktionsmenü + Wizard-Verbesserungen (mittleres Risiko)
+### 9.2 S3-Modus-Cycle entfernen, Aktionsmenü einbauen
 
-**Dateien:** `PoolController.cpp`, `NorviOledDisplay.{hpp,cpp}`
+**Datei:** `PoolController.cpp` — Callback S3
 
-1. S3-Callback auf MAIN → setzt `menuActive_`-Flag statt Mode-Cycle
-2. Neue State-Machine in `NorviOledDisplay`:
+Statt direktem Mode-Cycle:
+1. S3 auf MAIN → setzt internen `menuActive_`-Flag
+2. Display zeigt Menü-Overlay (3 Zeilen: Mode, Pump, Exit)
+3. S1/S2 navigieren im Menü
+4. S3 bestätigt Auswahl
+5. S3 (oder Exit) → zurück zu MAIN
 
+Separate kleine State-Machine in `NorviOledDisplay`:
 ```cpp
 enum class MenuItem : uint8_t {
   MODE,
@@ -595,36 +420,61 @@ static MenuItem menuSelection_;
 static bool menuActive_;
 ```
 
-1. Menü-Zeichnung als eigener Draw-Zweig in `drawPage()`
-2. Wizard-Cancel in `setupSelectPrevious()` (siehe 9.3)
-3. Schritt-Indikator `[1/2]` / `[2/2]` im Wizard-Titel
+### 9.3 Wizard-Cancel
 
-### PR 3: Long-Press-Feedback + Auto-Return-Warnung (mittleres Risiko)
+**Datei:** `NorviOledDisplay.cpp` — `setupSelectPrevious()`
 
-**Dateien:** `NorviButtonHandler.cpp`, `NorviOledDisplay.cpp`
-
-1. `NorviButtonHandler` exponiert Long-Press-Fortschritt:
+Wenn `setupSelectedDev_ == 0` und nochmal `previous()` → zurücksetzen auf IDLE.
 
 ```cpp
-// In NorviButtonHandler.hpp
-/** @brief Long-press progress 0.0–1.0, 0 if not pressing. */
-static float getLongPressProgress();
+void NorviOledDisplay::setupSelectPrevious() {
+  if (setupSelectedDev_ == 0 && setupStep_ == SetupStep::SELECT_SENSOR) {
+    // Back to IDLE
+    setupStep_ = SetupStep::IDLE;
+    forceRedraw_ = true;
+    return;
+  }
+  // ... existing logic ...
+}
 ```
 
-1. `NorviOledDisplay::loop()` zeichnet Fortschrittsbalken während
-   Long-Press auf S3 (siehe 8.2)
-2. **I2C-Performance:** Fortschrittsbalken nutzt **partiellen Redraw**
-   (nur die Balken-Pixel via `display.drawFastHLine()` aktualisieren,
-   nicht den gesamten Buffer) oder **diskrete 4–5 Stufen** alle 400 ms
-   (siehe 8.2)
-3. Auto-Return-Countdown: letzte 5 s zeigen `→ MAIN in 5s` im Footer
+### 9.4 Footer-Zeile optimieren
 
-### PR 4 (optional): Hint-Bar-Code aufräumen
+**Datei:** `NorviOledDisplay.cpp` — `drawFooter()`
 
-**Datei:** `NorviOledDisplay.cpp`
+- Page-Zahl rechts: aktuell "1"–"6" statt "1/6"–"6/6" (oder Punkte-Dots)
+- Vorschlag: `◉○○○○○` statt Zahl (füllt weniger Platz und ist intuitiver)
+- Oder Zahl mit Max: `1/6`, `2/6` etc. (max. 4 Zeichen)
 
-Aktuelle `drawButtonHints()` hat 3×3 verschachtelte Cases. Refaktor in
-datengetriebene Schleife:
+### 9.5 Horizontalen Text-Scroll einbauen
+
+**Dateien:** `NorviOledDisplay.cpp` — neue Hilfsfunktion + Änderung in `drawNetworkPage()`, `drawWiFiSetupPage()`, `drawQrCodePage()`
+
+```cpp
+/**
+ * @brief Draw text with horizontal scrolling if it exceeds maxWidth.
+ * Pauses 2s, scrolls left 25 px/s, pauses 1s, rewinds 50 px/s.
+ * Animation resets on page or text change.
+ */
+static void drawScrollingText(int16_t x, int16_t y,
+                               const char *text, int16_t maxWidth);
+
+/// Überladung für PROGMEM-Strings (__FlashStringHelper)
+static void drawScrollingText(int16_t x, int16_t y,
+                               const __FlashStringHelper *text,
+                               int16_t maxWidth);
+```
+
+**Betroffene Aufrufe:**
+| Seite | Alt | Neu |
+|-------|-----|-----|
+| NETWORK, SSID | `ssid.substring(0,9)` | `drawScrollingText(36, 13, WiFi.SSID().c_str(), 92)` |
+| WIFI_SETUP, AP-Name | `apName.substring(0,14)` | `drawScrollingText(24, 12, WiFi.softAPSSID().c_str(), 104)` |
+| QRCODE, URL | `url.substring(0,20)` | `drawScrollingText(0, 0, url.c_str(), 128)` |
+
+### 9.6 Hint-Bar-Code aufräumen
+
+Die aktuelle `drawButtonHints()` hat 3×3 verschachtelte Cases. Besser:
 
 ```cpp
 struct ButtonHint {
@@ -638,52 +488,20 @@ ButtonHint hints[3];
 
 ---
 
-## 11. Review-Entscheidungen (Change-Log)
+## 10. Offene Fragen / Diskussion
 
-| Punkt | Review-Feedback | Entscheidung | Begründung |
-|-------|----------------|-------------|-----------|
-| Long-Press Feedback | Fortschrittsbalken fordern | ✅ **Aufgenommen** (siehe 8.2) | Kritisch für Vertrauen in die Aktion |
-| I2C-Performance | Balken-Update kann Loop blockieren | ✅ **Partial Redraw** oder **5 diskrete Stufen** (siehe 8.2) | 50ms Polling vs. 30-40ms I2C-Transfer |
-| Hint-Bar i18n | Labels internationalisieren? | ⏳ **Vorerst EN**, später erweiterbar | Speicher, kein dringender Bedarf |
-| Wizard Cancel | Explizite Abbruch-Option | ✅ **S1-Cancel mit Label-Wechsel** (siehe 9.3) | Intuitiv + sichtbar (`up`→`back` invertiert) |
-| Auto-Return Warnung | Countdown vor Rückkehr | ✅ **5-s-Hinweis in allen Zuständen** (siehe 9.2) | Verhindert Überraschungen auch im Wizard |
-| Prototyp/Test | Usability-Test empfohlen | ⏳ **Nach PR 2** — vor Merge in main | Risiko niedrig, Änderungen lokal |
-| Schritt-Indikator | Fortschritt im Wizard visualisieren | ✅ **`Setup [1/2]`** (siehe 9.4) | Kürzer, damit nicht in Hint-Bar ragend |
-
----
-
-## 12. Offene Fragen / Diskussion
-
-1. **S3 im Aktionsmenü:** Soll die Modus-Änderung sofort生效 oder erst
-   beim Verlassen des Menüs?
-   - Vote: **Sofort** — das Menü ist nur Auswahl, kein Formular. Nach
-     Auswahl → zurück zu MAIN.
-
-2. **S3-Lang auf Info-Seiten:** Aktuell nur im Sensor-Kontext sinnvoll.
-   Soll S3-Lang auf MAIN einen Factory Reset / Reboot anbieten?
-   - Vote: **Später** — erstmal nur Sensor-Speichern. Long-Press wird
-     als Konzept etabliert, aber nicht überall mit Funktion belegt.
-
-3. **S1 auf MAIN:** Soll S1 von MAIN aus direkt zur letzten Seite
-   springen (wrap) oder deaktiviert sein?
-   - Vote: **Wrap-Around** — S1 springt zur letzten Seite
-     (WIFI_SETUP/QRCODE). Praktisch für die Ersteinrichtung, damit
-     man nicht viermal `next` drücken muss.
-   - Das S1-Hint zeigt `wrap`, das S2-Hint `next`.
-
-4. **Auto-Return-Timeouts:** Sollen die unterschiedlich lang sein je
-   nach Seite?
-   - Vote: **Ja** — Info-Seiten 60 s, Menü 30 s, Wizard 120 s.
-     Unterschiedliche Kontexte brauchen unterschiedliche Bedenkzeit.
-
-5. **Prototyp:** Soll vor der main-Integration ein Prototyp aufgespielt
-   werden?
-   - Vote: **Ja** — PR 2 auf OTA-Kanal `dev` flashen und 1 Woche testen.
-     Gibt Rückmeldung ob Menü-Navigation sich natürlich anfühlt.
+1. **S3 im Aktionsmenü:** Soll die Modus-Änderung sofort生效 oder erst beim Verlassen des Menüs?
+   - Vote: **Sofort** — das Menü ist nur Auswahl, kein Formular. Nach Auswahl → zurück zu MAIN.
+2. **Belegung S3-Lang auf Info-Seiten:** Aktuell nur im Sensor-Kontext sinnvoll. Soll S3-Lang auf MAIN einen Factory Reset / Reboot anbieten?
+   - Vote: **Später** — erstmal nur Sensor-Speichern.
+3. **S1 auf MAIN:** Soll S1 von MAIN aus direkt zur letzten Seite springen (wrap) oder deaktiviert sein?
+   - Vote: **Deaktiviert** — kein Hint, keine Aktion. Der Nutzer kann nur vorwärts.
+4. **Auto-Return-Timeouts:** Sollen die unterschiedlich lang sein je nach Seite?
+   - Vote: **Einheitlich 60 s** — einfacher zu verstehen. Nur Menü und Wizard bekommen eigene Timeouts (30 s / 120 s).
 
 ---
 
-## 13. Visual Summary
+## 11. Visual Summary
 
 ```
 ┌─────────────────────────────────────────────────────┐
@@ -701,22 +519,20 @@ ButtonHint hints[3];
 │  └──────┘     │ (Sensor) │      │ reboot   │        │
 │               └──────────┘      └──────────┘        │
 │                                                       │
-│  Kern-Änderungen:                                     │
-│  - "prev" auf S1 ≠ "next" auf S2                     │
-│  - S3 nie 'ok' auf Info-Seiten                       │
-│  - Aktion in 2 Schritten (S3→menu→Auswahl→S3)        │
-│  - Long-Press mit Fortschrittsbalken                 │
-│  - Wizard-Cancel + Schritt-Indikator                 │
-│  - Auto-Return mit 5s-Vorwarnung                     │
+│   FAQ: "prev" auf S1 ≠ "next" auf S2                 │
+│   → Klare Richtungshinweise, kein "nxt" mehr         │
+│                                                       │
+│   S3 nie 'ok' auf Info-Seiten                         │
+│   → Entweder 'menu' (MAIN) oder leer                 │
+│                                                       │
+│   Aktion erfordert immer zwei Schritte:               │
+│   S3→menu → S1/S2→Auswahl → S3→Bestätigung           │
 └─────────────────────────────────────────────────────┘
 ```
 
 ---
 
-> **Nächste Schritte:**
-> 1. Finales Review des Konzepts
-> 2. **PR 1** — Hint-Labels + Footer (sofort umsetzbar)
-> 3. **PR 2** — Aktionsmenü + Wizard-Cancel (mittelfristig)
-> 4. **PR 3** — Long-Press-Feedback + Auto-Return-Warnung
-> 5. **Optional:** PR 4 — Code-Refaktor Hint-Bar
-> 6. Prototyp-Test auf OTA-Kanal `dev` vor Merge in main
+> **Nächste Schritte:** Review des Konzepts, dann Implementierung in folgenden PRs:
+> 1. Hint-Labels korrigieren + Footer verbessern (niedriges Risiko)
+> 2. S3-Aktionsmenü einbauen (mittleres Risiko, neue State-Machine)
+> 3. Wizard-Cancel + Long-Press-Modell (mittleres Risiko)

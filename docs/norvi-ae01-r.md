@@ -222,6 +222,16 @@ to the default device index.
    The NORVI relays are Normally Open (SPST) — connect your 230V AC
    loads between COM and NO. The relays are rated 5A/250V AC.
 
+   ⚡ Relay polarity: Unlike standard external relay modules (which are
+   typically active-LOW: LOW = ON, HIGH = OFF), the NORVI AE01-R built-in
+   relays are **active-HIGH**: writing `HIGH` to the GPIO pin energizes
+   the relay coil (contact closes), and `LOW` de-energizes it (contact opens).
+
+   The firmware handles this automatically via the `RelayModuleNode` constructor's
+   `activeLow` parameter. On NORVI builds the relays are instantiated with
+   `activeLow = false` (see `PoolController.cpp`). When porting to a different
+   board with built-in relays, verify the relay driver polarity.
+
  ─── STATUS LED (external) ────────────────────────────────────────────
 
    NORVI Transistor Output 0.1 (GPIO27):
@@ -304,8 +314,9 @@ ESP32 are both powered from this single supply.
 | Aspect           | Standard ESP32 Dev Board  | NORVI AE01-R                                      |
 | ---------------- | ------------------------- | ------------------------------------------------- |
 | **Power**        | 5V USB or 5V PSU          | 24V DC (single supply)                            |
-| **Relays**       | External 2-channel module | 6 built-in (we use 2)                             |
-| **Relay power**  | 5V to relay module        | Integrated (24V → relay coils)                    |
+| **Relays**       | External 2-channel module        | 6 built-in (we use 2)                             |
+| **Relay power**  | 5V to relay module             | Integrated (24V → relay coils)                    |
+| **Relay polarity** | Active-LOW (LOW = ON)        | **Active-HIGH** (HIGH = ON)                       |
 | **Sensor pins**  | GPIO32, GPIO33            | GPIO25 (Exp Port), GPIO5 (solder)                 |
 | **Relay pins**   | GPIO25, GPIO26            | GPIO14 (R0), GPIO12 (R1)                          |
 | **Status LED**   | Built-in (GPIO2)          | External via GPIO27 (T0.1)                        |
@@ -342,6 +353,7 @@ This environment:
 - Defines `-D NORVI_AE01_R` to select the alternate pin mapping (shared OneWire bus)
 - Includes `Adafruit SSD1306` and `Adafruit GFX Library` for the OLED
 - Initializes I2C on GPIO16/GPIO17 and the button ADC on GPIO32
+- Instantiates relay nodes with `activeLow = false` for the built-in active-HIGH relays
 
 To also upload the LittleFS filesystem (web UI):
 
