@@ -13,10 +13,12 @@
 #include <Preferences.h>
 
 /**
- * @brief Manages a single relay via a GPIO pin (active-high logic).
+ * @brief Manages a single relay via a GPIO pin.
  *
- * Persists relay state to NVS so it survives reboots. Respects safe mode
- * (boot-loop protection) by refusing ON transitions while in safe mode.
+ * Supports both active-LOW (standard external relay modules) and active-HIGH
+ * (NORVI AE01-R built-in relays) polarity. Persists relay state to NVS so it
+ * survives reboots. Respects safe mode (boot-loop protection) by refusing ON
+ * transitions while in safe mode.
  */
 class RelayModuleNode {
 public:
@@ -25,9 +27,11 @@ public:
    * @param id  Unique node identifier (e.g. "pool-pump").
    * @param name  Human-readable name (e.g. "Pool Pump").
    * @param pin  GPIO pin number for the relay control signal.
+   * @param activeLow  true if relay is active-LOW (LOW = ON),
+   *                   false if active-HIGH (HIGH = ON). Default true.
    * @param measurementInterval  Minimum interval between status logs (seconds).
    */
-  RelayModuleNode(const char *id, const char *name, const uint8_t pin, const int measurementInterval = MEASUREMENT_INTERVAL);
+  RelayModuleNode(const char *id, const char *name, const uint8_t pin, bool activeLow = true, const int measurementInterval = MEASUREMENT_INTERVAL);
   ~RelayModuleNode() = default;
 
   /** @brief Get the node identifier. */
@@ -61,6 +65,7 @@ private:
   const char *_id;
   const char *_name;
   uint8_t _pin;
+  bool _activeLow;
   unsigned long _measurementInterval;
   unsigned long _lastMeasurement;
 

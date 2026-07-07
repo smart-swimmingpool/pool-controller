@@ -57,8 +57,15 @@ DallasTemperatureNode solarTemperatureNode("solar-temp", "Solar Temperature", PI
 DallasTemperatureNode poolTemperatureNode("pool-temp", "Pool Temperature", PIN_DS_POOL, TEMP_READ_INTERVAL);
 #endif
 ESP32TemperatureNode ctrlTemperatureNode("controller-temp", "Controller Temperature", TEMP_READ_INTERVAL);
+#ifdef NORVI_AE01_R
+// NORVI AE01-R uses active-HIGH relays (HIGH = relay ON, LOW = relay OFF)
+RelayModuleNode poolPumpNode("pool-pump", "Pool Pump", PIN_RELAY_POOL, false);
+RelayModuleNode solarPumpNode("solar-pump", "Solar Pump", PIN_RELAY_SOLAR, false);
+#else
+// Standard external relay modules use active-LOW (LOW = relay ON, HIGH = relay OFF)
 RelayModuleNode poolPumpNode("pool-pump", "Pool Pump", PIN_RELAY_POOL);
 RelayModuleNode solarPumpNode("solar-pump", "Solar Pump", PIN_RELAY_SOLAR);
+#endif
 
 OperationModeNode operationModeNode("operation-mode", "Operation Mode");
 
