@@ -306,10 +306,12 @@ void MqttPublisher::publishClimateDiscovery() {
   doc["max_temp"] = 40.0;
   doc["temp_step"] = 0.5;
 
-  // Preset modes (sub-modes: none/manual/schedule/boost)
+  // Preset modes (sub-modes: manual/schedule/boost)
+  // NOTE: "none" is RESERVED by HA MQTT climate schema and must NOT be
+  // in this list — HA rejects the entire discovery config if present.
+  // HA internally sets preset_mode to "none" when no preset is active.
   {
     JsonArray presets = doc["preset_modes"].to<JsonArray>();
-    presets.add("none");
     presets.add("manual");
     presets.add("schedule");
     presets.add("boost");
