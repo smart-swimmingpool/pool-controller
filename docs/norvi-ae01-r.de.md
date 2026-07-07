@@ -222,6 +222,17 @@ kommt zum Einsatz.
    Verbraucher zwischen COM und NO an. Die Relais sind für 5A/250V AC
    ausgelegt.
 
+   ⚡ Relais-Polarität: Im Gegensatz zu externen Relaismodulen (die typischerweise
+   active-LOW sind: LOW = EIN, HIGH = AUS) sind die eingebauten NORVI-Relais
+   **active-HIGH**: `HIGH` auf dem GPIO-Pin erregt die Relaisspule (Schließer
+   schließt), `LOW` entregt sie (Schließer öffnet).
+
+   Die Firmware handhabt dies automatisch über den `activeLow`-Parameter des
+   `RelayModuleNode`-Konstruktors. NORVI-Builds erstellen die Relais-Instanzen
+   mit `activeLow = false` (siehe `PoolController.cpp`). Bei der Portierung auf
+   ein anderes Board mit eingebauten Relais sollte die Relais-Treiber-Polarität
+   geprüft werden.
+
  ─── STATUS-LED (extern) ──────────────────────────────────────────────
 
    NORVI Transistorausgang 0.1 (GPIO27):
@@ -306,8 +317,9 @@ der ESP32 werden gemeinsam aus dieser Spannung versorgt.
 | Aspekt           | Standard ESP32 Dev Board | NORVI AE01-R                                        |
 | ---------------- | ------------------------ | --------------------------------------------------- |
 | **Strom**        | 5V USB oder 5V Netzteil  | 24V DC (eine Versorgung)                            |
-| **Relais**       | Externes 2-Kanal-Modul   | 6 eingebaut (wir nutzen 2)                          |
-| **Relais-Strom** | 5V an Relaismodul        | Integriert (24V → Relaisspulen)                     |
+| **Relais**       | Externes 2-Kanal-Modul        | 6 eingebaut (wir nutzen 2)                          |
+| **Relais-Strom** | 5V an Relaismodul             | Integriert (24V → Relaisspulen)                     |
+| **Relais-Polarität** | Active-LOW (LOW = EIN)   | **Active-HIGH** (HIGH = EIN)                        |
 | **Sensor-Pins**  | GPIO32, GPIO33           | GPIO25 (Exp Port), GPIO5 (löten)                    |
 | **Relais-Pins**  | GPIO25, GPIO26           | GPIO14 (R0), GPIO12 (R1)                            |
 | **Status-LED**   | Eingebaut (GPIO2)        | Extern über GPIO27 (T0.1)                           |
@@ -344,6 +356,7 @@ Diese Umgebung:
 - Definiert `-D NORVI_AE01_R` für die alternative Pinbelegung (Shared OneWire Bus)
 - Bindet `Adafruit SSD1306` und `Adafruit GFX Library` für das OLED ein
 - Initialisiert I2C auf GPIO16/GPIO17 und den Taster-ADC auf GPIO32
+- Erzeugt Relais-Instanzen mit `activeLow = false` für die eingebauten active-HIGH-Relais
 
 Zum Hochladen des LittleFS-Dateisystems (Web-Oberfläche):
 

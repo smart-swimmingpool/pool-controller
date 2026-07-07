@@ -31,7 +31,8 @@ public:
    *                   false if active-HIGH (HIGH = ON). Default true.
    * @param measurementInterval  Minimum interval between status logs (seconds).
    */
-  RelayModuleNode(const char *id, const char *name, const uint8_t pin, bool activeLow = true, const int measurementInterval = MEASUREMENT_INTERVAL);
+  RelayModuleNode(const char *id, const char *name, const uint8_t pin, bool activeLow = true,
+    const int measurementInterval = MEASUREMENT_INTERVAL);
   ~RelayModuleNode() = default;
 
   /** @brief Get the node identifier. */
