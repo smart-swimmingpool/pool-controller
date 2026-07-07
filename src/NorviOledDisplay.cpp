@@ -235,7 +235,8 @@ void NorviOledDisplay::loop() {
 void NorviOledDisplay::previousPage() {
   uint8_t cur = static_cast<uint8_t>(currentPage_);
   if (cur == 0) {
-    currentPage_ = static_cast<Page>(maxNavPage());
+    // Wrap: MAIN → WIFI_SETUP (skip SENSOR_SETUP in backward cycle)
+    currentPage_ = Page::WIFI_SETUP;
   } else {
     currentPage_ = static_cast<Page>(cur - 1);
   }
@@ -353,7 +354,6 @@ static void drawButtonHints() {
   dspVLine(125, 14, 34, SSD1306_WHITE);
 
   const auto page = NorviOledDisplay::getCurrentPage();
-  const bool setup = NorviOledDisplay::isSetupActive();
   const bool selSens = NorviOledDisplay::isSelectSensorStep();
   const bool selRole = NorviOledDisplay::isSelectRoleStep();
 
@@ -362,8 +362,10 @@ static void drawButtonHints() {
   dspCursor(99, 14);
   if (selSens || selRole) {
     display.print(F("up"));
+  } else if (page == NorviOledDisplay::Page::MAIN) {
+    display.print(F("wrap"));
   } else {
-    display.print(F("nxt"));
+    display.print(F("prev"));
   }
 
   // ── S2 hint (middle) ────────────────────────────────────────────────────
@@ -372,23 +374,26 @@ static void drawButtonHints() {
   if (selSens || selRole) {
     display.print(F("dn"));
   } else {
-    display.print(F("nxt"));
+    display.print(F("next"));
   }
 
   // ── S3 hint (bottom) ────────────────────────────────────────────────────
-  dspFillRoundRect(117, 40, 8, 6, 1, SSD1306_WHITE);
-  dspCursor(99, 40);
-  if (setup && page == NorviOledDisplay::Page::SENSOR_SETUP) {
+  if (page == NorviOledDisplay::Page::MAIN) {
+    dspFillRoundRect(117, 40, 8, 6, 1, SSD1306_WHITE);
+    dspCursor(99, 40);
+    display.print(F("menu"));
+  } else if (page == NorviOledDisplay::Page::SENSOR_SETUP) {
+    dspFillRoundRect(117, 40, 8, 6, 1, SSD1306_WHITE);
+    dspCursor(99, 40);
     if (selSens) {
-      display.print(F("ok"));
+      display.print(F("select"));
     } else if (selRole) {
-      display.print(F("set"));
+      display.print(F("assign"));
     } else {
-      display.print(F("ok"));
+      display.print(F("setup"));
     }
-  } else {
-    display.print(F("ok"));
   }
+  // Other info pages: no S3 action — hint is intentionally omitted
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -878,12 +883,18 @@ void NorviOledDisplay::drawFooter() {
   }
 
   // ── Firmware version ──────────────────────────────────────────────────
-  dspCursor(76, 56);
+  dspCursor(68, 56);
   display.print(F("v" FW_VERSION));
 
-  // ── Page number ──────────────────────────────────────────────────────
-  dspCursor(118, 56);
-  display.print(static_cast<uint8_t>(currentPage_) + 1);
+  // ── Page number (X/Y format) ─────────────────────────────────────────
+  dspCursor(110, 56);
+  {
+    uint8_t pageNum = static_cast<uint8_t>(currentPage_) + 1;
+    uint8_t maxPage = static_cast<uint8_t>(Page::SENSOR_SETUP);
+    char buf[8];
+    snprintf(buf, sizeof(buf), "%d/%d", pageNum, maxPage);
+    display.print(buf);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
