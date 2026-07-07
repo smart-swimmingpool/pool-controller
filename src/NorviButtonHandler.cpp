@@ -140,6 +140,21 @@ void NorviButtonHandler::loop() {
 
 // ═══════════════════════════════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════════════════════════════
+
+float NorviButtonHandler::getLongPressProgress() {
+  if (currentButton_ == Button::NONE || pressStartMs_ == 0) {
+    return 0.0f;
+  }
+  uint32_t elapsed = millis() - pressStartMs_;
+  if (elapsed >= LONG_PRESS_MS) {
+    return 1.0f;
+  }
+  return static_cast<float>(elapsed) / static_cast<float>(LONG_PRESS_MS);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+
 NorviButtonHandler::Button NorviButtonHandler::detectButton(uint16_t raw) {
   if (raw >= THRESH_NO_PRESS) {
     return Button::NONE;

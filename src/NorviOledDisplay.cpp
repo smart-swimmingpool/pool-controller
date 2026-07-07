@@ -24,6 +24,7 @@
 #include <qrcode.h>
 
 #include "Config.hpp"
+#include "NorviButtonHandler.hpp"
 #include "Utils.hpp"
 #include "DallasTemperatureNode.hpp"
 #include "RelayModuleNode.hpp"
@@ -47,6 +48,7 @@ extern OperationModeNode operationModeNode;
 // These are called from drawPage() which appears before their definition.
 static void drawDegC(uint8_t textsize);
 static void drawButtonHints();
+static void drawProgressBar();
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Static members
@@ -78,6 +80,10 @@ bool NorviOledDisplay::menuActive_ = false;
 // ── SSD1306 display instance (128×64, I2C, address 0x3C) ─────────────────
 
 static Adafruit_SSD1306 display(128, 64, &Wire, -1);
+
+/// Auto-return warning countdown (ms until return), 0 = no warning active.
+/// Set by loop(), consumed by drawFooter().
+static uint32_t autoReturnWarningMs = 0;
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Coord helpers — apply burn-in offset to all drawing
@@ -222,8 +228,26 @@ void NorviOledDisplay::loop() {
     forceRedraw_ = true;
   }
 
-  // ── Throttle redraw rate ────────────────────────────────────────────
-  if (!forceRedraw_ && (now - lastUpdateMs_ < UPDATE_INTERVAL_MS)) {
+  // ── Long-press progress: accelerate redraw during hold ──────────────
+  float longPressProgress = NorviButtonHandler::getLongPressProgress();
+  bool isLongPressing = (longPressProgress > 0.0f);
+
+  // ── Auto-return warning (5s before) ─────────────────────────────────
+  // Sets file-scope autoReturnWarningMs consumed by drawFooter()
+  if (!menuActive_ && !isSetupActive() && currentPage_ != Page::MAIN) {
+    uint32_t idleMs = now - lastButtonPressMs_;
+    if (idleMs >= AUTO_RETURN_MS - 5000 && idleMs < AUTO_RETURN_MS) {
+      autoReturnWarningMs = AUTO_RETURN_MS - idleMs;  // ms until return
+      forceRedraw_ = true;
+    } else {
+      autoReturnWarningMs = 0;
+    }
+  } else {
+    autoReturnWarningMs = 0;
+  }
+
+  // ── Throttle redraw rate (skip during long-press for smooth bar) ────
+  if (!forceRedraw_ && !isLongPressing && (now - lastUpdateMs_ < UPDATE_INTERVAL_MS)) {
     return;
   }
 
@@ -234,6 +258,7 @@ void NorviOledDisplay::loop() {
   forceRedraw_ = false;
 
   drawPage();
+  drawProgressBar();
   display.display();
 }
 
@@ -519,6 +544,38 @@ void NorviOledDisplay::drawMenuPage() {
   } else {
     dspCursor(4, Y0 + 2 * LH);
     display.print(exitItem);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Long-press progress bar overlay
+// ═══════════════════════════════════════════════════════════════════════════
+
+static void drawProgressBar() {
+  float progress = NorviButtonHandler::getLongPressProgress();
+  if (progress <= 0.0f) {
+    return;
+  }
+
+  // Only show on SENSOR_SETUP page in IDLE state with both sensors done
+  if (NorviOledDisplay::getCurrentPage() != NorviOledDisplay::Page::SENSOR_SETUP
+      || NorviOledDisplay::isSetupActive()) {
+    return;
+  }
+
+  // Bar dimensions (above footer line at y=55)
+  static constexpr uint8_t BAR_X = 4;
+  static constexpr uint8_t BAR_Y = 49;
+  static constexpr uint8_t BAR_W = 120;
+  static constexpr uint8_t BAR_H = 4;
+
+  // Border
+  dspRoundRect(BAR_X, BAR_Y, BAR_W, BAR_H, 1, SSD1306_WHITE);
+
+  // Fill
+  uint8_t fillW = static_cast<uint8_t>((BAR_W - 2) * progress);
+  if (fillW > 0) {
+    dspFillRect(BAR_X + 1, BAR_Y + 1, fillW, BAR_H - 2, SSD1306_WHITE);
   }
 }
 
@@ -1020,14 +1077,29 @@ void NorviOledDisplay::drawFooter() {
   dspCursor(68, 56);
   display.print(F("v" FW_VERSION));
 
-  // ── Page number (X/Y format) ─────────────────────────────────────────
-  dspCursor(110, 56);
+  // ── Auto-return warning (5s window) ──────────────────────────────────
+  // autoReturnWarningMs is set by loop() when idle approaches timeout
   {
-    uint8_t pageNum = static_cast<uint8_t>(currentPage_) + 1;
-    uint8_t maxPage = static_cast<uint8_t>(Page::SENSOR_SETUP);
-    char buf[8];
-    snprintf(buf, sizeof(buf), "%d/%d", pageNum, maxPage);
-    display.print(buf);
+    if (autoReturnWarningMs > 0) {
+      uint8_t secs = (autoReturnWarningMs + 999) / 1000;
+      // Overwrite version and page area with blink warning
+      dspCursor(68, 56);
+      display.print(F("→ MAIN "));
+      display.print(secs);
+      display.print('s');
+    } else {
+      // ── Firmware version ────────────────────────────────────────────
+      dspCursor(68, 56);
+      display.print(F("v" FW_VERSION));
+
+      // ── Page number (X/Y format) ────────────────────────────────────
+      dspCursor(110, 56);
+      uint8_t pageNum = static_cast<uint8_t>(currentPage_) + 1;
+      uint8_t maxPage = static_cast<uint8_t>(Page::SENSOR_SETUP);
+      char buf[8];
+      snprintf(buf, sizeof(buf), "%d/%d", pageNum, maxPage);
+      display.print(buf);
+    }
   }
 }
 
