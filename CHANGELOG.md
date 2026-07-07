@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.1.1](https://github.com/smart-swimmingpool/pool-controller/compare/v4.1.0...v4.1.1) (2026-07-07)
+
+
+### Bug Fixes
+
+* address CodeQL code scanning alerts — thread-safe time functions, path-exclude libdeps, update skills ([6ebbae1](https://github.com/smart-swimmingpool/pool-controller/commit/6ebbae1f487fcd87610931f417ae753a2649addf))
+* address Codex clean-code review findings ([f1d6da2](https://github.com/smart-swimmingpool/pool-controller/commit/f1d6da2afeba26f5f4a874424584b5bc25741ec7))
+* **ci:** filter .pio/libdeps from CodeQL SARIF instead of paths-ignore ([a345790](https://github.com/smart-swimmingpool/pool-controller/commit/a34579099c4df7377929652c62538702351d80ae))
+* **homeassistant:** remove 'none' from preset_modes discovery config ([d05a083](https://github.com/smart-swimmingpool/pool-controller/commit/d05a08352cffb804d3eb1f0d3b8561a42273da57))
+
 ## [4.1.0](https://github.com/smart-swimmingpool/pool-controller/compare/v4.0.2...v4.1.0) (2026-07-07)
 
 
