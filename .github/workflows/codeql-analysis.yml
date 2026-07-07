@@ -40,7 +40,6 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
-          config-file: ./.github/codeql-config.yml
 
       # Build the project using PlatformIO
       - name: Set up Python
@@ -63,5 +62,31 @@ jobs:
       - name: Run PlatformIO
         run: platformio run
 
+      # NOTE: For compiled languages (cpp), `paths-ignore` in a CodeQL config
+      # file does NOT exclude third-party build dependencies — the build
+      # tracer extracts everything the compiler touches (including
+      # .pio/libdeps/), regardless of config-level path filters. See
+      # https://docs.github.com/en/code-security/reference/code-scanning/troubleshoot-analysis-errors/alerts-in-generated-code
+      # The reliable fix is to post-process the SARIF and strip results
+      # under .pio/libdeps/ before uploading.
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
+        with:
+          output: sarif-results
+          upload: never
+
+      - name: Filter out .pio/libdeps alerts from SARIF
+        run: |
+          set -euo pipefail
+          for f in sarif-results/*.sarif; do
+            jq '.runs[].results |= map(select(
+                  (.locations[0].physicalLocation.artifactLocation.uri // "")
+                  | startswith(".pio/libdeps/") | not
+                ))' "$f" > "$f.filtered"
+            mv "$f.filtered" "$f"
+          done
+
+      - name: Upload CodeQL results
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: sarif-results
