@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.1.0](https://github.com/smart-swimmingpool/pool-controller/compare/v4.0.2...v4.1.0) (2026-07-07)
+
+
+### Features
+
+* **ha:** add circulation-extension sensor showing extra minutes beyond base timer ([0270355](https://github.com/smart-swimmingpool/pool-controller/commit/0270355afa48ab645aed4a4fd658858233d8f7cb))
+* **ha:** add circulation-extension sensor showing extra minutes beyond base timer ([9339d25](https://github.com/smart-swimmingpool/pool-controller/commit/9339d25e5f03984da82c8aacd372992d531c43e7))
+* **web-ui:** redesign timer display as intuitive time range instead of abstract minutes ([366d647](https://github.com/smart-swimmingpool/pool-controller/commit/366d64755e845375ae6bd0b7c6bd39d5a4f7b690))
+* **web-ui:** redesign timer display as intuitive time range instead of abstract minutes ([1ced447](https://github.com/smart-swimmingpool/pool-controller/commit/1ced447730549e4a73d077ecda8857de68093a38))
+* **web-ui:** show circulation extension (extra minutes) on dashboard ([69e21bf](https://github.com/smart-swimmingpool/pool-controller/commit/69e21bf1891f9178d4d556edb18d2dabc107f1c6))
+* **web-ui:** show circulation extension (extra minutes) on dashboard ([e7cbc24](https://github.com/smart-swimmingpool/pool-controller/commit/e7cbc24ab9952cdaa3aaa1ee3d90c8495b6f64cf))
+
+
+### Bug Fixes
+
+* **clang-format:** apply clang-format to MqttPublisher.cpp ([8058c1d](https://github.com/smart-swimmingpool/pool-controller/commit/8058c1d5481f1be80564efa62d10fb16cda3a78c))
+* **relay:** avoid int→bool ambiguity in constructor overloads ([fcc616c](https://github.com/smart-swimmingpool/pool-controller/commit/fcc616c96faa733e7fa16548c890994c37047ab0))
+* **relay:** correct relay polarity for NORVI AE01-R active-HIGH relays ([6e92aa0](https://github.com/smart-swimmingpool/pool-controller/commit/6e92aa087e4a192bd3f3bf8cd8b3c42d842e02b6))
+* resolve MegaLinter issues in PR [#139](https://github.com/smart-swimmingpool/pool-controller/issues/139) ([0c3cea8](https://github.com/smart-swimmingpool/pool-controller/commit/0c3cea8b528cca90fbefb282def9ca1dced5f57f))
+* **test:** add missing saveSensorMapping/loadSensorMapping to mock ConfigManager ([00d349b](https://github.com/smart-swimmingpool/pool-controller/commit/00d349bbf706542b3ee14aca8467e102029bcbd3))
+* **test:** add strlcat fallback for native test builds ([c6463fb](https://github.com/smart-swimmingpool/pool-controller/commit/c6463fb101c7bbd9ec6b0305abc212d0eaa30be6))
+* use MegaLinter v9.6.0 (v9.7.0 does not exist as release tag) ([81b679f](https://github.com/smart-swimmingpool/pool-controller/commit/81b679f4de263caa16cc5e5cee9055356190b4fa))
+* **web-ui:** use consistent muted styling for Extension telemetry item ([b0988db](https://github.com/smart-swimmingpool/pool-controller/commit/b0988dbdee031f2be3225e71d4245ee9cca21942))
+* **web-ui:** use consistent muted styling for Extension telemetry item ([6ae6b99](https://github.com/smart-swimmingpool/pool-controller/commit/6ae6b99413e602cad61b708cca743d0892719baa))
+
 ## [4.0.2](https://github.com/smart-swimmingpool/pool-controller/compare/v4.0.1...v4.0.2) (2026-06-30)
 
 ### Bug Fixes
