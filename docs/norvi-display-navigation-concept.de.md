@@ -419,9 +419,26 @@ Footers eingeblendet:
 
 **Implementierung:**
 - Balkenlänge wächst von 0 % auf 100 % über 2000 ms (LONG_PRESS_MS)
-- Timer wird in der Display-loop() aktualisiert (forceRedraw während Press)
+- Timer wird in der Display-loop() aktualisiert während der Press aktiv ist
 - Bei Erreichen von 100 % → Aktion auslösen + reboot
 - Bei Loslassen vor 100 % → Balken verschwindet, keine Aktion
+
+**⚠️ I2C-Performance:** Ein voller Display-Redraw über I2C (SSD1306)
+dauert je nach Taktung 30–40 ms. Bei einem ohnehin engen 50-ms-Polling-
+Intervall der Tasten würde ein `forceRedraw` in jeder Loop()-Iteration
+das System ausbremsen oder den Tastendruck unzuverlässig machen.
+
+**Lösung — Partieller Redraw:** Statt `display.display()` (kompletter
+Buffer-Send) wird nur der geänderte Bereich des Fortschrittsbalkens per
+`display.drawFastHLine()` + `display.display()` aktualisiert. Die SSD1306
+erlaubt Page-Mode-Updates, aber der einfachste Weg ist: Buffer lokal
+halten, nur die 2–3 Zeilen des Balkens neu zeichnen und per
+`display.display()` flushen.
+
+**Fallback — Diskrete Schritte:** Falls Partial Redraw zu komplex ist,
+wird der Balken nur in 4–5 diskreten Stufen aktualisiert (alle ~400 ms
+eine Stufe mehr). Das reduziert die I2C-Last von 50 Hz auf ~2,5 Hz und
+ist für den Nutzer kaum wahrnehmbar langsamer.
 
 ### 8.3 Alternative: Invertiertes Label
 
@@ -468,16 +485,36 @@ Auf allen anderen Seiten hat S3-Lang keine Funktion (keine Überraschung).
 **Verhalten:**
 - Timeout wird nur **zwischen** Tastendrücken gemessen. Solange der Nutzer
   aktiv ist, passiert nichts.
-- 5 s vor Auto-Return wird auf dem Display ein kurzer Hinweis eingeblendet:
-  z. B. `→ MAIN in 5s` rechts unten im Footer (blinkend).
+- **Einheitliche Vorwarnung:** In **allen** Zuständen (Info-Seiten,
+  Aktionsmenü, Wizard) wird 5 s vor Auto-Return ein kurzer Hinweis
+  eingeblendet. Der Text ist kontextabhängig:
+  - Info-Seiten: `→ MAIN in 5s` (rechts unten im Footer, blinkend)
+  - Aktionsmenü: `→ MAIN in 5s` (gleiche Stelle)
+  - Wizard: `→ IDLE in 5s` (da Wizard zuerst auf IDLE, dann MAIN)
 
 ### 9.3 Wizard-Cancel / Rückzug
 
 Im Sensor-Wizard gibt es aktuell keinen Weg zurück.
 
 **Vorschlag 1 — S1-Cancel (bevorzugt):**
-S1 auf der ersten Wizard-Stufe, wenn `setupSelectedDev_ == 0`, zeigt
-`back` und setzt bei nochmaligem Drücken auf IDLE zurück.
+Sobald `setupSelectedDev_ == 0` (erste Option in der Liste) wechselt das
+S1-Hint-Label von `up` zu **`back`** und wird **invertiert dargestellt**
+(weisser Text auf schwarzem Grund via `dspInvertedText()`). Ein erneuter
+Druck auf S1 setzt auf IDLE zurück. Dieses Label-Switching macht den
+Ausstieg für den Nutzer offensichtlich — er sieht sofort, dass jetzt eine
+neue Aktion möglich ist.
+
+```
+┌──────────────────────┬──────┐
+│ Sensor Setup   [1/2] │      │
+│──────────────────────│ S1 ■│ back   <- invertiertes Label
+│ ▓0: 28FFAABB  SOLAR  │ S2 ▼│ dn
+│   22.5°C        ◄    │ S3 ●│ select
+│ 1: 28FECD12          │      │
+├──────────────────────┴──────┤
+│ S1=back  S2=dn  S3=select  │
+└─────────────────────────────┘
+```
 
 ```cpp
 void NorviOledDisplay::setupSelectPrevious() {
@@ -497,8 +534,9 @@ Falls S1-Kurz immer „vorherige Option" bleiben soll: S1 lang (>2 s) in
 SELECT_SENSOR bricht ab → zurück zu IDLE. Vorteil: kein unbeabsichtigter
 Cancel. Nachteil: inkonsistentes Long-Press-Modell (bisher nur S3).
 
-**Entscheidung:** Vorschlag 1 (S1-Kurz am Ende der Liste). Einfach zu
-implementieren, intuitiv („weiter zurück geht nicht → zurück zum Start").
+**Entscheidung:** Vorschlag 1 (S1-Kurz mit Label-Wechsel). Der Nutzer
+muss nicht raten — er sieht `back` und weiss, was passiert. Das
+invertierte Label macht es zusätzlich prominent.
 
 ### 9.4 Schritt-Indikator im Wizard
 
@@ -509,6 +547,13 @@ Der Wizard (SENSOR_SETUP) bekommt einen visuellen Schritt-Indikator:
 - **Alternativ:** Drei kleine Punkte `●○○` / `○●○` / `○○●` — aber bei nur
   2 Schritten unnötig komplex
 - **Umsetzung:** Minimaler Platzbedarf (ca. 25 px in der oberen Zeile)
+
+**⚠️ Platzbedarf:** Die Titelzeile `Sensor Setup [1/2]` ist mit 18 Zeichen
+(bei 6×8-Pixel-Font = 108 px) sehr knapp bemessen — die Hint-Bar beginnt
+bei Spalte 98 (Breite ~30 px). **Empfehlung:** Der Titel wird zu
+`Setup [1/2]` verkürzt (14 Zeichen ≈ 84 px), was ausreichend Abstand zur
+Hint-Bar lässt. Alternativ kann der Schritt-Indikator in die zweite Zeile
+(rechts neben dem Trennstrich) ausweichen.
 
 ### 9.5 QR-Code-Seiten ohne Hint-Bar
 
@@ -568,7 +613,11 @@ static float getLongPressProgress();
 
 1. `NorviOledDisplay::loop()` zeichnet Fortschrittsbalken während
    Long-Press auf S3 (siehe 8.2)
-2. Auto-Return-Countdown: letzte 5 s zeigen `→ MAIN in 5s` im Footer
+2. **I2C-Performance:** Fortschrittsbalken nutzt **partiellen Redraw**
+   (nur die Balken-Pixel via `display.drawFastHLine()` aktualisieren,
+   nicht den gesamten Buffer) oder **diskrete 4–5 Stufen** alle 400 ms
+   (siehe 8.2)
+3. Auto-Return-Countdown: letzte 5 s zeigen `→ MAIN in 5s` im Footer
 
 ### PR 4 (optional): Hint-Bar-Code aufräumen
 
@@ -594,11 +643,12 @@ ButtonHint hints[3];
 | Punkt | Review-Feedback | Entscheidung | Begründung |
 |-------|----------------|-------------|-----------|
 | Long-Press Feedback | Fortschrittsbalken fordern | ✅ **Aufgenommen** (siehe 8.2) | Kritisch für Vertrauen in die Aktion |
+| I2C-Performance | Balken-Update kann Loop blockieren | ✅ **Partial Redraw** oder **5 diskrete Stufen** (siehe 8.2) | 50ms Polling vs. 30-40ms I2C-Transfer |
 | Hint-Bar i18n | Labels internationalisieren? | ⏳ **Vorerst EN**, später erweiterbar | Speicher, kein dringender Bedarf |
-| Wizard Cancel | Explizite Abbruch-Option | ✅ **S1-Cancel** (siehe 9.3) | Intuitiv, einfache Implementierung |
-| Auto-Return Warnung | Countdown vor Rückkehr | ✅ **5-s-Hinweis** (siehe 9.2) | Verhindert Überraschungen |
+| Wizard Cancel | Explizite Abbruch-Option | ✅ **S1-Cancel mit Label-Wechsel** (siehe 9.3) | Intuitiv + sichtbar (`up`→`back` invertiert) |
+| Auto-Return Warnung | Countdown vor Rückkehr | ✅ **5-s-Hinweis in allen Zuständen** (siehe 9.2) | Verhindert Überraschungen auch im Wizard |
 | Prototyp/Test | Usability-Test empfohlen | ⏳ **Nach PR 2** — vor Merge in main | Risiko niedrig, Änderungen lokal |
-| Schritt-Indikator | Fortschritt im Wizard visualisieren | ✅ **`[1/2]`** (siehe 9.4) | Minimaler Platzbedarf |
+| Schritt-Indikator | Fortschritt im Wizard visualisieren | ✅ **`Setup [1/2]`** (siehe 9.4) | Kürzer, damit nicht in Hint-Bar ragend |
 
 ---
 
@@ -618,6 +668,13 @@ ButtonHint hints[3];
    springen (wrap) oder deaktiviert sein?
    - Vote: **Deaktiviert** — kein Hint, keine Aktion. Der Nutzer kann
      nur vorwärts. Der Wrap ist nicht intuitiv.
+   - ⚠️ **Gegenargument aus Review:** Bei der Ersteinrichtung (WiFi-Seite
+     am Ende der Kette) müsste der Nutzer viermal `next` drücken, um
+     zurück zur MAIN zu kommen. Ein Wrap via S1 wäre hier ein schneller
+     Rückwärtssprung. **Offen zur Diskussion.**
+   - Möglicher Kompromiss: S1 zeigt nur dann `wrap` als Hint, wenn der
+     Nutzer nicht auf MAIN gestartet ist (z. B. nach Auto-Return) und
+     zurückblättert.
 
 4. **Auto-Return-Timeouts:** Sollen die unterschiedlich lang sein je
    nach Seite?
