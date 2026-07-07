@@ -170,46 +170,64 @@ Common ESP32 USB-to-UART chips:
 | `No such file or directory`  | USB-to-UART driver missing — install CP210x/CH340 driver                      |
 | Upload fails mid-way         | Lower `upload_speed` in `platformio.ini` (e.g. 115200)                        |
 
-## Deploy — OTA Update
+## Deploy — OTA Update (Web Upload)
 
-For devices already on the network with WiFi configured.
+This project uses **web-based OTA** via the device's REST API (`POST /api/update`).
+ArduinoOTA (`espota.py`) is **not** supported — there is no ArduinoOTA server running on the device.
 
-### 1. Configure OTA in `platformio.ini`
+> **Requirement:** The device must be online with WiFi configured and reachable on the network.
 
-Uncomment and configure these lines in `platformio.ini`:
-
-```ini
-[env:esp32dev]
-upload_protocol = espota
-upload_port = pool-controller.local    ; or IP: 192.168.1.100
-upload_flags =
-  --port=3232
-  --auth=YOUR_OTA_PASSWORD
-```
-
-### 2. Build & OTA flash
+### 1. Build the firmware
 
 ```bash
-./venv/bin/pio run --target upload
+./venv/bin/pio run -e norvi_ae01_r
+# or
+./venv/bin/pio run -e esp32dev
 ```
 
-### 3. OTA + uploadfs (if web files changed)
-
-OTA uploadfs requires building the FS image and uploading it separately:
+### 2. Authenticate & upload in one step
 
 ```bash
-# Build FS image
-./venv/bin/pio run --target buildfs
+# Step A: Login — POST /api/login with admin password → session cookie saved
+curl -c /tmp/ota-cookie.txt \
+  -X POST http://<device-ip>/api/login \
+  -d "password=<admin-password>"
 
-# Upload via espota.py directly
-python -m espota --host pool-controller.local --port 3232 \
-  --auth YOUR_OTA_PASSWORD \
-  --chunk_size 1460 \
-  -f .pio/build/esp32dev/littlefs.bin
+# Step B: Upload firmware — POST multipart to /api/update with cookie
+curl -b /tmp/ota-cookie.txt \
+  -F "firmware=@.pio/build/norvi_ae01_r/firmware.bin" \
+  http://<device-ip>/api/update
 ```
 
-> **Note:** FS upload via OTA is not natively supported by PlatformIO's `uploadfs` target.
-> Use `espota.py` directly (comes with the ESP32 platform package).
+Response `HTTP 200 OK` with body `OK` signals success. The device reboots immediately after a successful upload.
+
+> **Important:** The session cookie expires after 600 seconds (10 minutes). Re-login if the upload fails with a 401.
+
+### 3. One-liner (login + upload)
+
+```bash
+# Build first, then login + upload in sequence
+curl -c /tmp/ota-cookie.txt -s -X POST http://<device-ip>/api/login \
+  -d "password=<admin-password>" && \
+curl -b /tmp/ota-cookie.txt -s -F "firmware=@.pio/build/norvi_ae01_r/firmware.bin" \
+  http://<device-ip>/api/update
+```
+
+### 4. OTA + uploadfs (if web files changed)
+
+The littlefs filesystem (web UI assets) cannot be uploaded via `/api/update`. Only the firmware binary is supported via OTA.
+
+For LittleFS changes, use **serial upload** (see "Serial Flash" section above).
+
+### OTA troubleshooting
+
+| Symptom                              | Fix                                                    |
+| ------------------------------------ | ------------------------------------------------------ |
+| `HTTP 401` on upload                 | Session expired — re-login (cookie valid 10 min)       |
+| `HTTP 429` on login                  | Too many failed attempts — wait for lockout to expire  |
+| `curl: (7) Failed to connect`        | Device unreachable — check WiFi, ping the IP/hostname  |
+| Upload succeeds but device stays off | Wait ~30s for reboot, then check `/api/status` uptime  |
+| Device doesn't boot after OTA        | Serial flash a known-good firmware (see Rollback)      |
 
 ## CI/CD Pipeline (GitHub Actions)
 
