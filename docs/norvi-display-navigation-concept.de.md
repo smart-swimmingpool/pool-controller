@@ -98,7 +98,7 @@ S3 ist **immer** die Aktionstaste — was sie tut, steht im Hint-Label.
 
 | Seite | S1 | S2 | S3 | S3-Lang |
 |-------|----|----|----|---------|
-| MAIN | — | next | menu | — |
+| MAIN | wrap | next | menu | — |
 | NETWORK | prev | next | — | — |
 | SYSTEM | prev | next | — | — |
 | QRCODE | prev | next | — | — |
@@ -376,7 +376,7 @@ Die Hint-Bar zeigt **nur** die aktuell relevanten Aktionen:
 
 | Seite | Sichtbare Hints | Begründung |
 |-------|----------------|-----------|
-| MAIN | S2: next, S3: menu | S1 hat keine Funktion (erste Seite) |
+| MAIN | S1: wrap, S2: next, S3: menu | S1 springt zur letzten Seite (Wrap-Around) |
 | NETWORK–QRCODE | S1: prev, S2: next | S3 hat keine Funktion auf Info-Seiten |
 | SENSOR_SETUP (aktiv) | S1: up, S2: dn, S3: select/assign | Wizard braucht alle drei |
 | Aktionsmenü | S1: ▲, S2: ▼, S3: select | Menü-Navigation + Bestätigung |
@@ -666,15 +666,10 @@ ButtonHint hints[3];
 
 3. **S1 auf MAIN:** Soll S1 von MAIN aus direkt zur letzten Seite
    springen (wrap) oder deaktiviert sein?
-   - Vote: **Deaktiviert** — kein Hint, keine Aktion. Der Nutzer kann
-     nur vorwärts. Der Wrap ist nicht intuitiv.
-   - ⚠️ **Gegenargument aus Review:** Bei der Ersteinrichtung (WiFi-Seite
-     am Ende der Kette) müsste der Nutzer viermal `next` drücken, um
-     zurück zur MAIN zu kommen. Ein Wrap via S1 wäre hier ein schneller
-     Rückwärtssprung. **Offen zur Diskussion.**
-   - Möglicher Kompromiss: S1 zeigt nur dann `wrap` als Hint, wenn der
-     Nutzer nicht auf MAIN gestartet ist (z. B. nach Auto-Return) und
-     zurückblättert.
+   - Vote: **Wrap-Around** — S1 springt zur letzten Seite
+     (WIFI_SETUP/QRCODE). Praktisch für die Ersteinrichtung, damit
+     man nicht viermal `next` drücken muss.
+   - Das S1-Hint zeigt `wrap`, das S2-Hint `next`.
 
 4. **Auto-Return-Timeouts:** Sollen die unterschiedlich lang sein je
    nach Seite?
