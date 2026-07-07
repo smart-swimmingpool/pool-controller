@@ -1,0 +1,7 @@
+# CodeQL configuration for pool-controller
+# Excludes third-party library code under .pio/libdeps/ from analysis.
+# These are platformio-managed dependencies that cannot be modified.
+name: "pool-controller CodeQL config"
+
+paths-ignore:
+  - ".pio/libdeps/**/*"

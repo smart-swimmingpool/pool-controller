@@ -1,7 +1,7 @@
 # Bedien- und Navigationskonzept — NORVI IIOT-AE01-R OLED + 3 Tasten
 
-> **Status:** Konzept / RFC  
-> **Ziel:** Verbesserung der UX des 128×64 OLED-Displays mit den drei Fronttasten (S1/S2/S3)  
+> **Status:** Konzept / RFC
+> **Ziel:** Verbesserung der UX des 128×64 OLED-Displays mit den drei Fronttasten (S1/S2/S3)
 > **Behandelt:** Button-Mapping, Bildschirm-Hierarchie, Hints, Wizard-Navigation, Sonderfälle
 
 ---
@@ -71,7 +71,7 @@ Beide Tasten zeigen auf normalen Seiten das Label `nxt`. Damit ist nicht ersicht
 | **S2** | ▼ | Nächste Seite | Nächste Option | — (nicht belegt) |
 | **S3** | ● | Aktion / Enter (siehe Seite) | Bestätigen / Weiter | Kontext-Aktion (speichern, reboot) |
 
-S1 und S2 sind **immer** Navigation — egal ob zwischen Seiten oder innerhalb eines Wizards.  
+S1 und S2 sind **immer** Navigation — egal ob zwischen Seiten oder innerhalb eines Wizards.
 S3 ist **immer** die Aktionstaste — was sie tut, steht im Hint-Label.
 
 ### 4.2 Hint-Labels pro Seite
@@ -339,8 +339,8 @@ Spalte:  98     108    118    128
 
 ### 8.3 Wizard-Cancel / Rückzug
 
-Im Sensor-Wizard gibt es aktuell keinen Weg zurück, außer abzubrechen (Timeout).  
-**Vorschlag:** S1 auf der ersten Wizard-Stufe (SELECT_SENSOR) zeigt `back`, wenn `setupSelectedDev_ == 0` und der Nutzer nochmal S1 drückt → zurück zu IDLE.  
+Im Sensor-Wizard gibt es aktuell keinen Weg zurück, außer abzubrechen (Timeout).
+**Vorschlag:** S1 auf der ersten Wizard-Stufe (SELECT_SENSOR) zeigt `back`, wenn `setupSelectedDev_ == 0` und der Nutzer nochmal S1 drückt → zurück zu IDLE.
 (Das erfordert minimale Logik-Änderung in `setupSelectPrevious()`.)
 
 ### 8.4 Long-Press-Modell
