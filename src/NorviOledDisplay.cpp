@@ -72,6 +72,9 @@ bool NorviOledDisplay::setupRoleIsSolar_ = true;
 
 bool NorviOledDisplay::firstBootDone_ = false;
 
+NorviOledDisplay::MenuItem NorviOledDisplay::menuSelection_ = MenuItem::MODE;
+bool NorviOledDisplay::menuActive_ = false;
+
 // ── SSD1306 display instance (128×64, I2C, address 0x3C) ─────────────────
 
 static Adafruit_SSD1306 display(128, 64, &Wire, -1);
@@ -207,8 +210,14 @@ void NorviOledDisplay::begin() {
 void NorviOledDisplay::loop() {
   const uint32_t now = millis();
 
-  // ── Auto-return to MAIN after idle timeout ──────────────────────────
-  if (currentPage_ != Page::MAIN && !isSetupActive() && (now - lastButtonPressMs_ >= AUTO_RETURN_MS)) {
+  // ── Auto-return after idle timeout ───────────────────────────────────
+  if (menuActive_ && (now - lastButtonPressMs_ >= 30000)) {
+    // Menu: 30 s idle → close menu
+    menuActive_ = false;
+    forceRedraw_ = true;
+  } else if (!isSetupActive() && currentPage_ != Page::MAIN
+             && (now - lastButtonPressMs_ >= AUTO_RETURN_MS)) {
+    // Info pages (non-MAIN): 60 s idle → MAIN
     currentPage_ = Page::MAIN;
     forceRedraw_ = true;
   }
@@ -298,12 +307,57 @@ void NorviOledDisplay::confirmAction() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// Action menu navigation
+// ═══════════════════════════════════════════════════════════════════════════
+
+void NorviOledDisplay::enterMenu() {
+  menuActive_ = true;
+  menuSelection_ = MenuItem::MODE;
+  forceRedraw_ = true;
+  lastButtonPressMs_ = millis();
+}
+
+void NorviOledDisplay::exitMenu() {
+  menuActive_ = false;
+  forceRedraw_ = true;
+  lastButtonPressMs_ = millis();
+}
+
+void NorviOledDisplay::menuNext() {
+  uint8_t cur = static_cast<uint8_t>(menuSelection_);
+  cur = (cur + 1) % 3;  // MODE → PUMP → EXIT → MODE
+  menuSelection_ = static_cast<MenuItem>(cur);
+  forceRedraw_ = true;
+  lastButtonPressMs_ = millis();
+}
+
+void NorviOledDisplay::menuPrevious() {
+  uint8_t cur = static_cast<uint8_t>(menuSelection_);
+  if (cur == 0) {
+    cur = 2;  // wrap: MODE → EXIT
+  } else {
+    cur--;
+  }
+  menuSelection_ = static_cast<MenuItem>(cur);
+  forceRedraw_ = true;
+  lastButtonPressMs_ = millis();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // drawPage() — Dispatch
 // ═══════════════════════════════════════════════════════════════════════════
 
 void NorviOledDisplay::drawPage() {
   display.clearDisplay();
   display.setTextColor(SSD1306_WHITE);
+
+  // ── Action menu overlay ─────────────────────────────────────────────
+  if (menuActive_) {
+    drawMenuPage();
+    drawButtonHints();
+    drawFooter();
+    return;
+  }
 
   switch (currentPage_) {
   case Page::MAIN:
@@ -353,6 +407,18 @@ void NorviOledDisplay::drawPage() {
 static void drawButtonHints() {
   dspVLine(125, 14, 34, SSD1306_WHITE);
 
+  // Draw button symbols (always present)
+  dspFillTriangle(121, 14, 125, 20, 117, 20, SSD1306_WHITE);  // S1 ▲
+  dspFillTriangle(117, 27, 125, 27, 121, 33, SSD1306_WHITE);   // S2 ▼
+
+  // ── Menu mode hints ───────────────────────────────────────────────────
+  if (NorviOledDisplay::isMenuActive()) {
+    dspFillRoundRect(117, 40, 8, 6, 1, SSD1306_WHITE);
+    dspCursor(99, 40);
+    display.print(F("sel"));
+    return;
+  }
+
   const auto page = NorviOledDisplay::getCurrentPage();
   const bool selSens = NorviOledDisplay::isSelectSensorStep();
   const bool selRole = NorviOledDisplay::isSelectRoleStep();
@@ -377,7 +443,7 @@ static void drawButtonHints() {
     display.print(F("next"));
   }
 
-  // ── S3 hint (bottom) ────────────────────────────────────────────────────
+  // ── S3 label (bottom) ──────────────────────────────────────────────────
   if (page == NorviOledDisplay::Page::MAIN) {
     dspFillRoundRect(117, 40, 8, 6, 1, SSD1306_WHITE);
     dspCursor(80, 40);
@@ -394,6 +460,68 @@ static void drawButtonHints() {
     }
   }
   // Other info pages: no S3 action — hint is intentionally omitted
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Action menu (MAIN → S3)
+// ═══════════════════════════════════════════════════════════════════════════
+//
+//  ┌──────────────────────┬──────┐
+//  │ Menu                 │      │
+//  │──────────────────────│ S1 ▲│
+//  │ ▓ Mode: auto         │ S2 ▼│
+//  │   Pump: off          │ S3 ●│ sel
+//  │   Exit menu          │      │
+//  ├──────────────────────┴──────┤
+//  │ AUTO  12:30  v4.0.2     1/5│
+//  └─────────────────────────────┘
+
+void NorviOledDisplay::drawMenuPage() {
+  display.setTextSize(1);
+
+  // ── Title ──────────────────────────────────────────────────────────────
+  dspCursor(0, 0);
+  display.print(F(" Menu"));
+  dspHLine(0, 9, 128, SSD1306_WHITE);
+
+  // ── Dynamic menu items ─────────────────────────────────────────────────
+  char modeBuf[14];
+  snprintf(modeBuf, sizeof(modeBuf), " Mode: %s",
+           operationModeNode.getMode().c_str());
+
+  char pumpBuf[14];
+  snprintf(pumpBuf, sizeof(pumpBuf), " Pump: %s",
+           poolPumpNode.getSwitch() ? "on " : "off");
+
+  const char *exitItem = "  Exit menu";
+
+  // ── Render items (12 px line height) ──────────────────────────────────
+  static constexpr uint8_t Y0 = 14;
+  static constexpr uint8_t LH = 12;
+
+  // Item 1: Mode
+  if (menuSelection_ == MenuItem::MODE) {
+    dspInvertedText(4, Y0, modeBuf);
+  } else {
+    dspCursor(4, Y0);
+    display.print(modeBuf);
+  }
+
+  // Item 2: Pump
+  if (menuSelection_ == MenuItem::PUMP) {
+    dspInvertedText(4, Y0 + LH, pumpBuf);
+  } else {
+    dspCursor(4, Y0 + LH);
+    display.print(pumpBuf);
+  }
+
+  // Item 3: Exit
+  if (menuSelection_ == MenuItem::EXIT) {
+    dspInvertedText(4, Y0 + 2 * LH, exitItem);
+  } else {
+    dspCursor(4, Y0 + 2 * LH);
+    display.print(exitItem);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -703,7 +831,15 @@ void NorviOledDisplay::drawWiFiSetupPage() {
 void NorviOledDisplay::drawSensorSetupPage() {
   display.setTextSize(1);
   dspCursor(0, 0);
-  display.print(F(" Sensor Setup"));
+  display.print(F(" Setup"));
+  // Step indicator [1/2] or [2/2] when wizard is active
+  if (setupStep_ != SetupStep::IDLE) {
+    char stepBuf[8];
+    uint8_t stepNum = (setupStep_ == SetupStep::SELECT_SENSOR) ? 1 : 2;
+    snprintf(stepBuf, sizeof(stepBuf), " [%d/2]", stepNum);
+    dspCursor(60, 0);
+    display.print(stepBuf);
+  }
   dspHLine(0, 9, 128, SSD1306_WHITE);
 
   const uint8_t devCount = solarTemperatureNode.getDeviceCount();
@@ -970,6 +1106,15 @@ void NorviOledDisplay::getMapping(uint8_t solarAddr[8], uint8_t poolAddr[8]) {
 }
 
 void NorviOledDisplay::setupSelectPrevious() {
+  // ── Cancel: at first item, go back to IDLE ──────────────────────────
+  if (setupStep_ == SetupStep::SELECT_SENSOR && setupSelectedDev_ == 0) {
+    setupStep_ = SetupStep::IDLE;
+    setupSelectedDev_ = 0;
+    forceRedraw_ = true;
+    Serial.println("→ Sensor setup cancelled, back to IDLE");
+    return;
+  }
+
   uint8_t devCount = solarTemperatureNode.getDeviceCount();
   if (devCount > 2) {
     devCount = 2;
