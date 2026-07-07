@@ -172,7 +172,7 @@ static void dspInvertedText(int16_t x, int16_t y, const __FlashStringHelper *tex
 // rewinds at 50 px/s. Animation resets when page or text content changes.
 
 static uint32_t scrollAnimStartMs_ = 0;
-static int8_t scrollPhase_ = 0;      // 0=pause 1=scroll-L 2=pause 3=rewind
+static int8_t scrollPhase_ = 0;  // 0=pause 1=scroll-L 2=pause 3=rewind
 static int16_t scrollOffset_ = 0;
 
 /**
@@ -183,7 +183,8 @@ static int16_t scrollOffset_ = 0;
  * manual clipping.
  */
 static void drawScrollingText(int16_t x, int16_t y, const char *text, int16_t maxWidth) {
-  if (!text || text[0] == '\0') return;
+  if (!text || text[0] == '\0')
+    return;
 
   int16_t x1, y1;
   uint16_t textW, h;
@@ -221,7 +222,10 @@ static void drawScrollingText(int16_t x, int16_t y, const char *text, int16_t ma
   switch (scrollPhase_) {
   case 0:  // Pause at start — full text visible entering from right
     scrollOffset_ = 0;
-    if (elapsed >= 2000) { scrollPhase_ = 1; scrollAnimStartMs_ = now; }
+    if (elapsed >= 2000) {
+      scrollPhase_ = 1;
+      scrollAnimStartMs_ = now;
+    }
     break;
 
   case 1:  // Scroll left at 25 px/s
@@ -234,7 +238,10 @@ static void drawScrollingText(int16_t x, int16_t y, const char *text, int16_t ma
     break;
 
   case 2:  // Pause at end — last characters visible
-    if (elapsed >= 1000) { scrollPhase_ = 3; scrollAnimStartMs_ = now; }
+    if (elapsed >= 1000) {
+      scrollPhase_ = 3;
+      scrollAnimStartMs_ = now;
+    }
     break;
 
   case 3:  // Rewind right at 50 px/s
@@ -316,8 +323,7 @@ void NorviOledDisplay::loop() {
     // Menu: 30 s idle → close menu
     menuActive_ = false;
     forceRedraw_ = true;
-  } else if (!isSetupActive() && currentPage_ != Page::MAIN
-             && (now - lastButtonPressMs_ >= AUTO_RETURN_MS)) {
+  } else if (!isSetupActive() && currentPage_ != Page::MAIN && (now - lastButtonPressMs_ >= AUTO_RETURN_MS)) {
     // Info pages (non-MAIN): 60 s idle → MAIN
     currentPage_ = Page::MAIN;
     forceRedraw_ = true;
@@ -530,7 +536,7 @@ static void drawButtonHints() {
 
   // Draw button symbols (always present)
   dspFillTriangle(121, 14, 125, 20, 117, 20, SSD1306_WHITE);  // S1 ▲
-  dspFillTriangle(117, 27, 125, 27, 121, 33, SSD1306_WHITE);   // S2 ▼
+  dspFillTriangle(117, 27, 125, 27, 121, 33, SSD1306_WHITE);  // S2 ▼
 
   // ── Menu mode hints ───────────────────────────────────────────────────
   if (NorviOledDisplay::isMenuActive()) {
@@ -611,12 +617,10 @@ void NorviOledDisplay::drawMenuPage() {
 
   // ── Dynamic menu items ─────────────────────────────────────────────────
   char modeBuf[14];
-  snprintf(modeBuf, sizeof(modeBuf), " Mode: %s",
-           operationModeNode.getMode().c_str());
+  snprintf(modeBuf, sizeof(modeBuf), " Mode: %s", operationModeNode.getMode().c_str());
 
   char pumpBuf[14];
-  snprintf(pumpBuf, sizeof(pumpBuf), " Pump: %s",
-           poolPumpNode.getSwitch() ? "on " : "off");
+  snprintf(pumpBuf, sizeof(pumpBuf), " Pump: %s", poolPumpNode.getSwitch() ? "on " : "off");
 
   const char *exitItem = "  Exit menu";
 
@@ -660,8 +664,7 @@ static void drawProgressBar() {
   }
 
   // Only show on SENSOR_SETUP page in IDLE state with both sensors done
-  if (NorviOledDisplay::getCurrentPage() != NorviOledDisplay::Page::SENSOR_SETUP
-      || NorviOledDisplay::isSetupActive()) {
+  if (NorviOledDisplay::getCurrentPage() != NorviOledDisplay::Page::SENSOR_SETUP || NorviOledDisplay::isSetupActive()) {
     return;
   }
 

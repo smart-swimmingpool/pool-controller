@@ -243,8 +243,8 @@ private:
   static bool setupRoleIsSolar_;  ///< true = Solar, false = Pool (in SELECT_ROLE)
 
   // ── Action menu state ──────────────────────────────────────────────
-  static bool menuActive_;          ///< True while action menu is shown
-  static MenuItem menuSelection_;   ///< Currently highlighted menu item
+  static bool menuActive_;         ///< True while action menu is shown
+  static MenuItem menuSelection_;  ///< Currently highlighted menu item
 
   // ── First-boot flow tracking ─────────────────────────────────────────
   static bool firstBootDone_;  ///< True after initial setup flow completed
