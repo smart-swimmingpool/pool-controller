@@ -356,6 +356,33 @@ Optimalerweise wird Long-Press auf S3 **auf allen Seiten** konsistent als „erw
 Auf QRCODE und WIFI_SETUP wird die Hint-Bar aktuell ausgeblendet, um Platz für den QR-Code zu schaffen.
 Das ist akzeptabel, da der QR-Code die primäre Interaktion ist und der Nutzer auf diesen Seiten typischerweise nicht navigiert, sondern scannt.
 
+### 8.6 Horizontaler Text-Scroll bei Überlänge
+
+Das Display zeigt 128 Pixel Breite. Bei Text Size 1 (6×8 px/Zeichen) passen ca. **21 Zeichen** in eine Zeile.
+Folgende Texte können diese Länge überschreiten und **müssen horizontal scrollen** statt abgeschnitten zu werden:
+
+| Seite | Text | Maximale Länge | Problem |
+|-------|------|---------------|---------|
+| NETWORK | WiFi SSID | 32 Zeichen | Wird auf 9 Zeichen gekürzt — unbrauchbar |
+| WIFI_SETUP | AP-Name (SoftAP SSID) | 32 Zeichen | Wird auf 14 Zeichen gekürzt |
+| QRCODE | URL (http://192.168.xxx.xxx/) | ~23 Zeichen | Wird auf 20 Zeichen gekürzt |
+| QRCODE (WiFi) | IP-Adresse in Text Size 2 | ~14 Zeichen | Überläuft die 128px (12px/Zeichen) |
+
+**Scroll-Verhalten:**
+- Text beginnt sichtbar (linksbündig) — 2 s Pause
+- Scrollt mit **25 px/s** nach links, bis das Ende sichtbar ist
+- 1 s Pause am Ende
+- Scrollt mit **50 px/s** zurück zum Start
+- Wiederholt endlos
+- Reset bei Seitenwechsel oder Textänderung
+
+**Implementierung:**
+- `drawScrollingText(x, y, text, maxWidth)` — freie Hilfsfunktion in `NorviOledDisplay.cpp`
+- Nutzt das Hardware-Clipping des SSD1306: Zeichnen bei negativem `x` blendet den überstehenden Teil automatisch aus
+- Funktioniert nur mit Text Size 1 (für Size 2 müsste der Faktor angepasst werden)
+- Zustandsautomat (Phase 0–3) mit `millis()`-gesteuerter Animation
+- Flash-freundlich: kein `String`, keine dynamische Allokation
+
 ---
 
 ## 9. Umsetzungsplan (Code-Änderungen)
@@ -419,7 +446,33 @@ void NorviOledDisplay::setupSelectPrevious() {
 - Vorschlag: `◉○○○○○` statt Zahl (füllt weniger Platz und ist intuitiver)
 - Oder Zahl mit Max: `1/6`, `2/6` etc. (max. 4 Zeichen)
 
-### 9.5 Hint-Bar-Code aufräumen
+### 9.5 Horizontalen Text-Scroll einbauen
+
+**Dateien:** `NorviOledDisplay.cpp` — neue Hilfsfunktion + Änderung in `drawNetworkPage()`, `drawWiFiSetupPage()`, `drawQrCodePage()`
+
+```cpp
+/**
+ * @brief Draw text with horizontal scrolling if it exceeds maxWidth.
+ * Pauses 2s, scrolls left 25 px/s, pauses 1s, rewinds 50 px/s.
+ * Animation resets on page or text change.
+ */
+static void drawScrollingText(int16_t x, int16_t y,
+                               const char *text, int16_t maxWidth);
+
+/// Überladung für PROGMEM-Strings (__FlashStringHelper)
+static void drawScrollingText(int16_t x, int16_t y,
+                               const __FlashStringHelper *text,
+                               int16_t maxWidth);
+```
+
+**Betroffene Aufrufe:**
+| Seite | Alt | Neu |
+|-------|-----|-----|
+| NETWORK, SSID | `ssid.substring(0,9)` | `drawScrollingText(36, 13, WiFi.SSID().c_str(), 92)` |
+| WIFI_SETUP, AP-Name | `apName.substring(0,14)` | `drawScrollingText(24, 12, WiFi.softAPSSID().c_str(), 104)` |
+| QRCODE, URL | `url.substring(0,20)` | `drawScrollingText(0, 0, url.c_str(), 128)` |
+
+### 9.6 Hint-Bar-Code aufräumen
 
 Die aktuelle `drawButtonHints()` hat 3×3 verschachtelte Cases. Besser:
 
