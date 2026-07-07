@@ -74,6 +74,13 @@ void NorviButtonHandler::loop() {
   lastRaw_ = analogRead(PIN_BUTTON_ADC);
   Button detected = detectButton(lastRaw_);
 
+  // Add debug logging for ADC changes
+  static uint16_t lastDebugAdc_ = 0xFFFF;
+  if (abs(static_cast<int>(lastRaw_) - static_cast<int>(lastDebugAdc_)) > 50) {
+    Serial.printf("ADC: %u → %d\n", lastDebugAdc_, static_cast<int>(detected));
+    lastDebugAdc_ = lastRaw_;
+  }
+
   // ── Press start tracking ─────────────────────────────────────────────
   if (detected != currentButton_) {
     currentButton_ = detected;

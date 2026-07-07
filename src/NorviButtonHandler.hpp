@@ -159,12 +159,12 @@ private:
   // Adjust if needed based on serial debug output.
 
   static constexpr uint16_t THRESH_BTN1_MIN{200};
-  static constexpr uint16_t THRESH_BTN1_MAX{1200};
-  static constexpr uint16_t THRESH_BTN2_MIN{1400};
-  static constexpr uint16_t THRESH_BTN2_MAX{2500};
-  static constexpr uint16_t THRESH_BTN3_MIN{2700};
-  static constexpr uint16_t THRESH_BTN3_MAX{3700};
-  static constexpr uint16_t THRESH_NO_PRESS{3800};
+  static constexpr uint16_t THRESH_BTN1_MAX{700};
+  static constexpr uint16_t THRESH_BTN2_MIN{800};
+  static constexpr uint16_t THRESH_BTN2_MAX{1300};
+  static constexpr uint16_t THRESH_BTN3_MIN{1400};
+  static constexpr uint16_t THRESH_BTN3_MAX{1900};
+  static constexpr uint16_t THRESH_NO_PRESS{2000};
 };
 
 }  // namespace PoolController

@@ -402,13 +402,14 @@ void NorviOledDisplay::drawPage() {
     break;
   case Page::QRCODE:
     drawQrCodePage();
-    drawButtonHints();
+    if (!NetworkManager::isWiFiConnected()) {
+      drawButtonHints();  // Only on non-connected QR page (hints overlap IP)
+    }
     drawFooter();
     break;
   case Page::WIFI_SETUP:
     drawWiFiSetupPage();
-    // No button hints — full page usage for QR
-    drawFooter();
+    // Full page usage: no hints, no shared footer
     break;
   case Page::SENSOR_SETUP:
     drawSensorSetupPage();
@@ -766,30 +767,39 @@ void NorviOledDisplay::drawQrCodePage() {
   }
   url += '/';
 
-  // Show URL at top
-  dspCursor(0, 0);
-  if (url.length() <= 20) {
-    display.print(url);
+  if (NetworkManager::isWiFiConnected()) {
+    // ── WiFi connected: no QR (too small to scan), show IP prominently ──
+    dspCursor(0, 0);
+    display.print(F("Web Interface:"));
+    dspCursor(0, 12);
+    display.setTextSize(2);
+    dspCursor(4, 24);
+    display.print(WiFi.localIP().toString());
+    display.setTextSize(1);
+    dspCursor(0, 50);
+    display.print(F("Open in your browser"));
   } else {
-    display.print(url.substring(0, 20));
-  }
+    // ── No WiFi: show QR code as large as possible ─────────────────────
+    dspCursor(0, 0);
+    display.print(F("Scan QR or enter URL"));
 
-  // Generate QR code (version 1 = 21×21)
-  static constexpr size_t kQrBufferSize = 75;
-  uint8_t qrData[kQrBufferSize];
-  QRCode qr;
-  qrcode_initText(&qr, qrData, 1, 0, url.c_str());
+    // Generate QR code (version 1 = 21×21)
+    static constexpr size_t kQrBufferSize = 75;
+    uint8_t qrData[kQrBufferSize];
+    QRCode qr;
+    qrcode_initText(&qr, qrData, 1, 0, url.c_str());
 
-  // Draw QR centered, 2px per module
-  static constexpr uint8_t SCALE = 2;
-  const uint8_t qrPx = qr.size * SCALE;
-  const uint8_t xOff = (128 - qrPx) / 2;
-  const uint8_t yOff = 8;
+    // Draw QR centered, max scale that fits (2px per module = 42×42)
+    static constexpr uint8_t SCALE = 2;
+    const uint8_t qrPx = qr.size * SCALE;
+    const uint8_t xOff = (128 - qrPx) / 2;
+    const uint8_t yOff = 10;
 
-  for (uint8_t y = 0; y < qr.size; y++) {
-    for (uint8_t x = 0; x < qr.size; x++) {
-      if (qrcode_getModule(&qr, x, y)) {
-        dspFillRect(xOff + x * SCALE, yOff + y * SCALE, SCALE, SCALE, SSD1306_WHITE);
+    for (uint8_t y = 0; y < qr.size; y++) {
+      for (uint8_t x = 0; x < qr.size; x++) {
+        if (qrcode_getModule(&qr, x, y)) {
+          dspFillRect(xOff + x * SCALE, yOff + y * SCALE, SCALE, SCALE, SSD1306_WHITE);
+        }
       }
     }
   }
@@ -810,70 +820,65 @@ void NorviOledDisplay::drawWiFiSetupPage() {
   display.print(F(" WiFi Setup"));
   dspHLine(0, 9, 128, SSD1306_WHITE);
 
-  // ── Hint text ──────────────────────────────────────────────────────────
-  dspCursor(0, 12);
-  if (NetworkManager::isApMode()) {
-    display.print(F(" Connect to WiFi:"));
-    dspCursor(0, 20);
-    {
-      String apName = WiFi.softAPSSID();
-      if (apName.length() > 15) {
-        apName = apName.substring(0, 15);
-      }
-      display.print(apName);
-    }
-    dspCursor(0, 29);
-    display.print(F(" Open browser to:"));
-    dspCursor(0, 37);
-    display.print(F(" 192.168.4.1"));
-  } else if (NetworkManager::isWiFiConnected()) {
+  if (NetworkManager::isWiFiConnected()) {
+    // ── WiFi already configured: no QR, just info ─────────────────────
     dspCursor(0, 20);
     display.print(F(" WiFi configured!"));
     dspCursor(0, 29);
     display.print(F(" IP: "));
     display.print(WiFi.localIP().toString());
+    dspCursor(0, 46);
+    display.print(F(" Open browser to IP"));
   } else {
-    dspCursor(0, 20);
-    display.print(F(" Connect to WiFi,"));
-    dspCursor(0, 28);
-    display.print(F(" then browse to"));
-    dspCursor(0, 36);
-    display.print(F(" http://this-device/"));
-  }
+    // ── No WiFi / AP mode: maximal QR code ─────────────────────────────
+    String url = "http://";
+    if (NetworkManager::isApMode()) {
+      url += F("192.168.4.1");
+      // Show AP SSID line above QR
+      dspCursor(0, 12);
+      {
+        String apName = WiFi.softAPSSID();
+        if (apName.length() > 14) {
+          apName = apName.substring(0, 14);
+        }
+        display.print(F("AP: "));
+        display.print(apName);
+      }
+    } else {
+      url += F("192.168.4.1");
+      dspCursor(0, 12);
+      display.print(F("Connect to WiFi, then"));
+    }
+    url += '/';
 
-  // ── QR code (compact, top-right area) ─────────────────────────────────
-  String url = "http://";
-  if (NetworkManager::isApMode()) {
-    url += F("192.168.4.1");
-  } else if (NetworkManager::isWiFiConnected()) {
-    url += WiFi.localIP().toString();
-  } else {
-    url += F("192.168.4.1");  // Fallback to AP IP
-  }
-  url += '/';
+    // Generate QR at max usable scale (2px = 42×42)
+    static constexpr size_t kQrBufSize = 75;
+    uint8_t qrBuf[kQrBufSize];
+    QRCode qr;
+    qrcode_initText(&qr, qrBuf, 1, 0, url.c_str());
 
-  // Small QR code (version 1, 1px scale) in top-right corner
-  static constexpr size_t kQrBufSize = 75;
-  uint8_t qrBuf[kQrBufSize];
-  QRCode qr;
-  qrcode_initText(&qr, qrBuf, 1, 0, url.c_str());
+    static constexpr uint8_t QR_SCALE = 2;
+    const uint8_t qrPx = qr.size * QR_SCALE;
+    const uint8_t qrX = (128 - qrPx) / 2;
+    const uint8_t qrY = 20;
 
-  static constexpr uint8_t QR_SCALE = 1;
-  const uint8_t qrPx = qr.size * QR_SCALE;
-  const uint8_t qrX = 128 - qrPx - 2;
-  const uint8_t qrY = 10;
-
-  for (uint8_t y = 0; y < qr.size; y++) {
-    for (uint8_t x = 0; x < qr.size; x++) {
-      if (qrcode_getModule(&qr, x, y)) {
-        dspFillRect(qrX + x * QR_SCALE, qrY + y * QR_SCALE, QR_SCALE, QR_SCALE, SSD1306_WHITE);
+    for (uint8_t y = 0; y < qr.size; y++) {
+      for (uint8_t x = 0; x < qr.size; x++) {
+        if (qrcode_getModule(&qr, x, y)) {
+          dspFillRect(qrX + x * QR_SCALE, qrY + y * QR_SCALE, QR_SCALE, QR_SCALE, SSD1306_WHITE);
+        }
       }
     }
-  }
 
-  // ── Footer hint ────────────────────────────────────────────────────────
-  dspCursor(0, 50);
-  display.print(F("Scan QR or enter URL"));
+    // ── Instruction text below QR ────────────────────────────────────
+    if (NetworkManager::isApMode()) {
+      dspCursor(0, 56);
+      display.print(F("Browse to 192.168.4.1"));
+    } else {
+      dspCursor(0, 56);
+      display.print(F("browse to 192.168.4.1"));
+    }
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
