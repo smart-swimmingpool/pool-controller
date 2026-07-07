@@ -165,6 +165,101 @@ static void dspInvertedText(int16_t x, int16_t y, const __FlashStringHelper *tex
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// Scrolling text helper — auto-scrolls horizontally if text exceeds maxWidth
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// Pauses 2 s at start, scrolls left at 25 px/s, pauses 1 s at end,
+// rewinds at 50 px/s. Animation resets when page or text content changes.
+
+static uint32_t scrollAnimStartMs_ = 0;
+static int8_t scrollPhase_ = 0;      // 0=pause 1=scroll-L 2=pause 3=rewind
+static int16_t scrollOffset_ = 0;
+
+/**
+ * @brief Draw text with horizontal scrolling if it exceeds @p maxWidth.
+ *
+ * The display driver clips at 0..127 automatically, so drawing at
+ * x - offset achieves a hardware-accelerated left scroll without
+ * manual clipping.
+ */
+static void drawScrollingText(int16_t x, int16_t y, const char *text, int16_t maxWidth) {
+  if (!text || text[0] == '\0') return;
+
+  int16_t x1, y1;
+  uint16_t textW, h;
+  display.getTextBounds(text, 0, y, &x1, &y1, &textW, &h);
+
+  if (textW <= (uint16_t)maxWidth) {
+    dspCursor(x, y);
+    display.print(text);
+    return;
+  }
+
+  // State tracking — read current page once
+  static int16_t lastTextW = 0;
+  static NorviOledDisplay::Page scrollPage_ = static_cast<NorviOledDisplay::Page>(0xFF);
+  const auto curPage = NorviOledDisplay::getCurrentPage();
+
+  // Reset animation on page or text width change
+  if (textW != lastTextW) {
+    scrollPhase_ = 0;
+    scrollOffset_ = 0;
+    scrollAnimStartMs_ = millis();
+    lastTextW = textW;
+  } else if (curPage != scrollPage_) {
+    // Re-sync when navigating to a different page mid-scroll
+    scrollPhase_ = 0;
+    scrollOffset_ = 0;
+    scrollAnimStartMs_ = millis();
+    scrollPage_ = curPage;
+  }
+
+  const uint32_t now = millis();
+  const int16_t scrollRange = textW - maxWidth;
+  const uint32_t elapsed = now - scrollAnimStartMs_;
+
+  switch (scrollPhase_) {
+  case 0:  // Pause at start — full text visible entering from right
+    scrollOffset_ = 0;
+    if (elapsed >= 2000) { scrollPhase_ = 1; scrollAnimStartMs_ = now; }
+    break;
+
+  case 1:  // Scroll left at 25 px/s
+    scrollOffset_ = static_cast<int16_t>(elapsed * 25 / 1000);
+    if (scrollOffset_ >= scrollRange) {
+      scrollOffset_ = scrollRange;
+      scrollPhase_ = 2;
+      scrollAnimStartMs_ = now;
+    }
+    break;
+
+  case 2:  // Pause at end — last characters visible
+    if (elapsed >= 1000) { scrollPhase_ = 3; scrollAnimStartMs_ = now; }
+    break;
+
+  case 3:  // Rewind right at 50 px/s
+    scrollOffset_ = scrollRange - static_cast<int16_t>(elapsed * 50 / 1000);
+    if (scrollOffset_ <= 0) {
+      scrollOffset_ = 0;
+      scrollPhase_ = 0;
+      scrollAnimStartMs_ = now;
+    }
+    break;
+  }
+
+  dspCursor(x - scrollOffset_, y);
+  display.print(text);
+}
+
+/// Overload for PROGMEM / Flash strings.
+static void drawScrollingText(int16_t x, int16_t y, const __FlashStringHelper *text, int16_t maxWidth) {
+  char buf[64];
+  strncpy_P(buf, reinterpret_cast<PGM_P>(text), sizeof(buf) - 1);
+  buf[sizeof(buf) - 1] = '\0';
+  drawScrollingText(x, y, buf, maxWidth);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // begin() — Initialization
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -669,18 +764,14 @@ void NorviOledDisplay::drawNetworkPage() {
   display.print(F(" Network Status"));
   dspHLine(0, 9, 128, SSD1306_WHITE);
 
-  // ── WiFi SSID ───────────────────────────────────────────────────────────
+  // ── WiFi SSID (scrolls if too long) ────────────────────────────────────
   dspCursor(0, 13);
   display.print(F("WiFi: "));
   if (NetworkManager::isWiFiConnected()) {
     if (NetworkManager::isApMode()) {
       display.print(F("AP MODE"));
     } else {
-      String ssid = WiFi.SSID();
-      if (ssid.length() > 9) {
-        ssid = ssid.substring(0, 9);
-      }
-      display.print(ssid);
+      drawScrollingText(36, 13, WiFi.SSID().c_str(), 128 - 36);
     }
   } else {
     display.print(F("---"));
@@ -780,8 +871,7 @@ void NorviOledDisplay::drawQrCodePage() {
     display.print(F("Open in your browser"));
   } else {
     // ── No WiFi: show QR code as large as possible ─────────────────────
-    dspCursor(0, 0);
-    display.print(F("Scan QR or enter URL"));
+    drawScrollingText(0, 0, url.c_str(), 128);
 
     // Generate QR code (version 1 = 21×21)
     static constexpr size_t kQrBufferSize = 75;
@@ -834,15 +924,11 @@ void NorviOledDisplay::drawWiFiSetupPage() {
     String url = "http://";
     if (NetworkManager::isApMode()) {
       url += F("192.168.4.1");
-      // Show AP SSID line above QR
+      // Show AP SSID line above QR (scrolls if too long)
       dspCursor(0, 12);
       {
-        String apName = WiFi.softAPSSID();
-        if (apName.length() > 14) {
-          apName = apName.substring(0, 14);
-        }
         display.print(F("AP: "));
-        display.print(apName);
+        drawScrollingText(24, 12, WiFi.softAPSSID().c_str(), 128 - 24);
       }
     } else {
       url += F("192.168.4.1");
