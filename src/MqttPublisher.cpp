@@ -18,6 +18,7 @@
 #include "DallasTemperatureNode.hpp"
 #include "ESP32TemperatureNode.hpp"
 #include "NetworkManager.hpp"
+#include "Nodes.hpp"
 #include "OtaUpdater.hpp"
 #include "OperationModeNode.hpp"
 #include "RelayModuleNode.hpp"
@@ -25,14 +26,6 @@
 #include "Version.h"
 
 namespace PoolController {
-
-// Nodes declared in PoolController.cpp
-extern DallasTemperatureNode solarTemperatureNode;
-extern DallasTemperatureNode poolTemperatureNode;
-extern ESP32TemperatureNode ctrlTemperatureNode;
-extern RelayModuleNode poolPumpNode;
-extern RelayModuleNode solarPumpNode;
-extern OperationModeNode operationModeNode;
 
 String MqttPublisher::deviceId_ = "";
 

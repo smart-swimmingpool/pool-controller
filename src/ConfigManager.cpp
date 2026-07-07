@@ -27,7 +27,7 @@ bool ConfigManager::configured_ = false;
 static constexpr const char *kDefaultPasswordHash =  // NOLINT(whitespace/line_length)
   "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918";
 
-static String hashSha256(const String &input) {
+static void hashSha256(const String &input, char (&output)[65]) {
   uint8_t hash[32];
   mbedtls_md_context_t ctx;
   mbedtls_md_init(&ctx);
@@ -37,12 +37,10 @@ static String hashSha256(const String &input) {
   mbedtls_md_finish(&ctx, hash);
   mbedtls_md_free(&ctx);
 
-  char result[65];
   for (int i = 0; i < 32; i++) {
-    snprintf(result + (i * 2), sizeof(result) - (i * 2), "%02x", hash[i]);
+    snprintf(output + (i * 2), sizeof(output) - (i * 2), "%02x", hash[i]);
   }
-  result[64] = '\0';
-  return String(result);
+  output[64] = '\0';
 }
 
 // ── NVS Key Names ──
@@ -201,11 +199,15 @@ void ConfigManager::logOtaTransition() {
 }
 
 void ConfigManager::setAdminPassword(const String &newPassword) {
-  adminPasswordHash_ = hashSha256(newPassword);
+  char hash[65];
+  hashSha256(newPassword, hash);
+  adminPasswordHash_ = hash;
 }
 
 bool ConfigManager::verifyAdminPassword(const String &password) {
-  return hashSha256(password) == adminPasswordHash_;
+  char hash[65];
+  hashSha256(password, hash);
+  return adminPasswordHash_ == hash;
 }
 
 void ConfigManager::saveSensorMapping(const uint8_t solarAddr[8], const uint8_t poolAddr[8]) {
