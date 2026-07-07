@@ -26,23 +26,13 @@
 #include "Config.hpp"
 #include "NorviButtonHandler.hpp"
 #include "Utils.hpp"
-#include "DallasTemperatureNode.hpp"
-#include "RelayModuleNode.hpp"
-#include "OperationModeNode.hpp"
 #include "NetworkManager.hpp"
+#include "Nodes.hpp"
 #include "SystemMonitor.hpp"
 #include "TimeClientHelper.hpp"
 #include "ConfigManager.hpp"
 
 namespace PoolController {
-
-// ── Forward declarations of global nodes (defined in PoolController.cpp) ───
-
-extern DallasTemperatureNode solarTemperatureNode;
-extern DallasTemperatureNode poolTemperatureNode;
-extern RelayModuleNode poolPumpNode;
-extern RelayModuleNode solarPumpNode;
-extern OperationModeNode operationModeNode;
 
 // ── File-scope helper forward declarations ────────────────────────────
 // These are called from drawPage() which appears before their definition.
@@ -1144,7 +1134,8 @@ void NorviOledDisplay::drawFooter() {
   if (utc >= MIN_VALID_TIME) {
     TimeChangeRule *tcr = nullptr;
     time_t local = getTimeFor(getTimezoneIndex(), &tcr);
-    struct tm *ti = localtime(&local);
+    struct tm ti_val;
+    struct tm *ti = localtime_r(&local, &ti_val);
     char buf[6];
     snprintf(buf, sizeof(buf), "%02d:%02d", ti->tm_hour, ti->tm_min);
     display.print(buf);

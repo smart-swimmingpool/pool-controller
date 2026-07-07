@@ -23,7 +23,8 @@
 tm getCurrentDateTime() {
   TimeChangeRule *tcr = NULL;
   time_t t = getTimeFor(getTimezoneIndex(), &tcr);
-  struct tm timeinfo = *localtime(&t);
+  struct tm timeinfo;
+  localtime_r(&t, &timeinfo);
 
   // Only mark as invalid when time is effectively lost (RED)
   if (getTimeDegradation() == TimeDegradation::RED) {

@@ -30,6 +30,7 @@
 #include "DallasTemperatureNode.hpp"
 #include "ESP32TemperatureNode.hpp"
 #include "NetworkManager.hpp"
+#include "Nodes.hpp"
 #include "OtaUpdater.hpp"
 #include "OperationModeNode.hpp"
 #include "PoolController.hpp"
@@ -50,14 +51,6 @@ uint32_t WebPortal::lastLoginAttemptTime_ = 0;
 uint8_t WebPortal::loginAttemptCount_ = 0;
 constexpr uint32_t WebPortal::kSessionTimeoutMs;
 constexpr uint16_t WebPortal::kDnsPort;
-
-// Nodes declared in PoolController.cpp
-extern DallasTemperatureNode solarTemperatureNode;
-extern DallasTemperatureNode poolTemperatureNode;
-extern ESP32TemperatureNode ctrlTemperatureNode;
-extern RelayModuleNode poolPumpNode;
-extern RelayModuleNode solarPumpNode;
-extern OperationModeNode operationModeNode;
 
 // PROGMEM fallbacks removed — web assets are served from LittleFS only.
 // Run `pio run --target uploadfs` to deploy data/web/ to the device.
@@ -941,19 +934,6 @@ static bool hexStringToAddress(const String &hex, uint8_t addr[8]) {
   return true;
 }
 
-/**
- * @brief Save a sensor-to-role address mapping to NVS.
- *
- * Stores the 8-byte ROM addresses for solar and pool sensors in the
- * `ds18b20` Preferences namespace, making them persist across reboots.
- *
- * @param solarAddr  Solar sensor address (or nullptr / all-zero to clear).
- * @param poolAddr   Pool sensor address (or nullptr / all-zero to clear).
- */
-static void saveSensorMappingNvs(const uint8_t solarAddr[8], const uint8_t poolAddr[8]) {
-  ConfigManager::saveSensorMapping(solarAddr, poolAddr);
-}
-
 // ═══════════════════════════════════════════════════════════════════════
 // Sensor REST API handlers
 // ═══════════════════════════════════════════════════════════════════════
@@ -1068,7 +1048,7 @@ void WebPortal::apiSaveSensorMapping() {
   }
 
   // Save to NVS (persistent across reboots)
-  saveSensorMappingNvs(solarAddr, poolAddr);
+  ConfigManager::saveSensorMapping(solarAddr, poolAddr);
 
   // Apply to running instances immediately
   if (hasSolar) {

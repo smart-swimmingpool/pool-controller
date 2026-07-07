@@ -10,15 +10,11 @@
 
 #include "DegradationManager.hpp"
 #include "NetworkManager.hpp"
+#include "Nodes.hpp"
 #include "SystemMonitor.hpp"
 #include "TimeClientHelper.hpp"  // TimeDegradation, getTimeDegradation
-#include "RelayModuleNode.hpp"
 
 namespace PoolController {
-
-// Nodes declared in PoolController.cpp
-extern RelayModuleNode poolPumpNode;
-extern RelayModuleNode solarPumpNode;
 
 // Static member definitions
 DegradationLevel DegradationManager::currentLevel_ = DegradationLevel::NORMAL;

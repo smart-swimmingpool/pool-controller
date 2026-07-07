@@ -165,13 +165,19 @@ protected:
     uint16_t baseEndMinutes = ts.timerEndHour * 60 + ts.timerEndMinutes;
 
 #ifdef DEBUG_RULE_TIMER
-    Serial.printf("  currenttime = %s", asctime(&time));
+    char timeBuf[26];
+    asctime_r(&time, timeBuf);
+    Serial.printf("  currenttime = %s", timeBuf);
 #endif
 #ifdef DEBUG_RULE_TIMER
-    Serial.printf("  startTime   = %s", asctime(&startTime));
+    char startBuf[26];
+    asctime_r(&startTime, startBuf);
+    Serial.printf("  startTime   = %s", startBuf);
 #endif
 #ifdef DEBUG_RULE_TIMER
-    Serial.printf("  endTime     = %s", asctime(&endTime));
+    char endBuf[26];
+    asctime_r(&endTime, endBuf);
+    Serial.printf("  endTime     = %s", endBuf);
 #endif
 
     time_t now = mktime(&time);
@@ -220,8 +226,10 @@ protected:
       }
 
       if (inExtendedWindow) {
+#ifdef DEBUG_RULE_TIMER
         Serial.printf(
           "  checkPoolPumpTimer = true (extended to %02d:%02d)\n", (uint8_t)(normalizedEnd / 60), (uint8_t)(normalizedEnd % 60));
+#endif
         return true;
       }
 
@@ -231,12 +239,16 @@ protected:
 
     // Step 3: Base timer active (no extension or extension expired)
     if (timerActive) {
+#ifdef DEBUG_RULE_TIMER
       Serial.printf("  checkPoolPumpTimer = true\n");
+#endif
       return true;
     }
 
-    // Timer not active and no extension → pump stays OFF
+// Timer not active and no extension → pump stays OFF
+#ifdef DEBUG_RULE_TIMER
     Serial.printf("  checkPoolPumpTimer = false\n");
+#endif
     return false;
   }
 
@@ -265,13 +277,19 @@ protected:
     tm endTime = getEndTime(time, getTimerSetting());
 
 #ifdef DEBUG_RULE_TIMER
-    Serial.printf("  currenttime = %s", asctime(&time));
+    char timeBuf[26];
+    asctime_r(&time, timeBuf);
+    Serial.printf("  currenttime = %s", timeBuf);
 #endif
 #ifdef DEBUG_RULE_TIMER
-    Serial.printf("  startTime   = %s", asctime(&startTime));
+    char startBuf[26];
+    asctime_r(&startTime, startBuf);
+    Serial.printf("  startTime   = %s", startBuf);
 #endif
 #ifdef DEBUG_RULE_TIMER
-    Serial.printf("  endTime     = %s", asctime(&endTime));
+    char endBuf[26];
+    asctime_r(&endTime, endBuf);
+    Serial.printf("  endTime     = %s", endBuf);
 #endif
 
     // Convert tm structs to time_t once to avoid multiple mktime calls

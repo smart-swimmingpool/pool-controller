@@ -134,19 +134,6 @@ static void loadSensorAddressMapping() {
 }
 
 /**
- * @brief Save DS18B20 sensor address mapping to NVS.
- *
- * Stores the ROM addresses so that after reboot the correct device is
- * identified regardless of bus scan order.
- *
- * @param solarAddr  8-byte ROM address of the solar sensor.
- * @param poolAddr   8-byte ROM address of the pool sensor.
- */
-static void saveSensorAddressMapping(const uint8_t solarAddr[8], const uint8_t poolAddr[8]) {
-  ConfigManager::saveSensorMapping(solarAddr, poolAddr);
-}
-
-/**
  * @brief Construct the singleton context.
  * Stores the instance pointer for internal access. All subsystems are
  * initialized later in setup() and initializeController().
@@ -373,7 +360,7 @@ auto PoolControllerContext::setup() -> void {
     if (NorviOledDisplay::isMappingComplete()) {
       uint8_t solarAddr[8], poolAddr[8];
       NorviOledDisplay::getMapping(solarAddr, poolAddr);
-      saveSensorAddressMapping(solarAddr, poolAddr);
+      ConfigManager::saveSensorMapping(solarAddr, poolAddr);
       Serial.println("→ Sensor mapping saved — rebooting...");
       NetworkManager::restart();
       return true;

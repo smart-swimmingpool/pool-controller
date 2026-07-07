@@ -18,6 +18,7 @@
 #include "DallasTemperatureNode.hpp"
 #include "ESP32TemperatureNode.hpp"
 #include "NetworkManager.hpp"
+#include "Nodes.hpp"
 #include "OtaUpdater.hpp"
 #include "OperationModeNode.hpp"
 #include "RelayModuleNode.hpp"
@@ -25,14 +26,6 @@
 #include "Version.h"
 
 namespace PoolController {
-
-// Nodes declared in PoolController.cpp
-extern DallasTemperatureNode solarTemperatureNode;
-extern DallasTemperatureNode poolTemperatureNode;
-extern ESP32TemperatureNode ctrlTemperatureNode;
-extern RelayModuleNode poolPumpNode;
-extern RelayModuleNode solarPumpNode;
-extern OperationModeNode operationModeNode;
 
 String MqttPublisher::deviceId_ = "";
 
@@ -313,10 +306,12 @@ void MqttPublisher::publishClimateDiscovery() {
   doc["max_temp"] = 40.0;
   doc["temp_step"] = 0.5;
 
-  // Preset modes (sub-modes: none/manual/schedule/boost)
+  // Preset modes (sub-modes: manual/schedule/boost)
+  // NOTE: "none" is RESERVED by HA MQTT climate schema and must NOT be
+  // in this list — HA rejects the entire discovery config if present.
+  // HA internally sets preset_mode to "none" when no preset is active.
   {
     JsonArray presets = doc["preset_modes"].to<JsonArray>();
-    presets.add("none");
     presets.add("manual");
     presets.add("schedule");
     presets.add("boost");
