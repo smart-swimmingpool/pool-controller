@@ -359,7 +359,7 @@ static void drawButtonHints() {
 
   // ── S1 hint (top) ───────────────────────────────────────────────────────
   dspFillTriangle(121, 14, 125, 20, 117, 20, SSD1306_WHITE);
-  dspCursor(99, 14);
+  dspCursor(86, 14);
   if (selSens || selRole) {
     display.print(F("up"));
   } else if (page == NorviOledDisplay::Page::MAIN) {
@@ -370,7 +370,7 @@ static void drawButtonHints() {
 
   // ── S2 hint (middle) ────────────────────────────────────────────────────
   dspFillTriangle(117, 27, 125, 27, 121, 33, SSD1306_WHITE);
-  dspCursor(99, 27);
+  dspCursor(83, 27);
   if (selSens || selRole) {
     display.print(F("dn"));
   } else {
@@ -380,11 +380,11 @@ static void drawButtonHints() {
   // ── S3 hint (bottom) ────────────────────────────────────────────────────
   if (page == NorviOledDisplay::Page::MAIN) {
     dspFillRoundRect(117, 40, 8, 6, 1, SSD1306_WHITE);
-    dspCursor(99, 40);
+    dspCursor(80, 40);
     display.print(F("menu"));
   } else if (page == NorviOledDisplay::Page::SENSOR_SETUP) {
     dspFillRoundRect(117, 40, 8, 6, 1, SSD1306_WHITE);
-    dspCursor(99, 40);
+    dspCursor(80, 40);
     if (selSens) {
       display.print(F("select"));
     } else if (selRole) {
@@ -883,11 +883,11 @@ void NorviOledDisplay::drawFooter() {
   }
 
   // ── Firmware version ──────────────────────────────────────────────────
-  dspCursor(68, 56);
+  dspCursor(78, 56);
   display.print(F("v" FW_VERSION));
 
   // ── Page number (X/Y format) ─────────────────────────────────────────
-  dspCursor(110, 56);
+  dspCursor(112, 56);
   {
     uint8_t pageNum = static_cast<uint8_t>(currentPage_) + 1;
     uint8_t maxPage = static_cast<uint8_t>(Page::SENSOR_SETUP);
