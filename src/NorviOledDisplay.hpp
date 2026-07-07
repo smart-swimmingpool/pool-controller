@@ -60,6 +60,15 @@ public:
     SELECT_ROLE,    ///< S1/S2 picks Solar or Pool, S3 assigns
   };
 
+  // ── Action menu items (MAIN page via S3) ────────────────────────────
+
+  /** @brief Items in the MAIN-page action menu. */
+  enum class MenuItem : std::uint8_t {
+    MODE = 0,  ///< Cycle operation mode
+    PUMP,      ///< Toggle pump on/off
+    EXIT       ///< Return to MAIN
+  };
+
   // ── Public API ───────────────────────────────────────────────────────
 
   /** @brief Initialize the OLED display + splash screen. */
@@ -80,6 +89,26 @@ public:
 
   /** @brief Confirm / action button (S3). */
   static void confirmAction();
+
+  // ── Action menu (MAIN page) ─────────────────────────────────────────
+
+  /** @brief Check if the action menu is active. */
+  static bool isMenuActive() { return menuActive_; }
+
+  /** @brief Get the currently selected menu item. */
+  static MenuItem getMenuSelection() { return menuSelection_; }
+
+  /** @brief Enter the action menu (from MAIN page). */
+  static void enterMenu();
+
+  /** @brief Exit the action menu, return to MAIN. */
+  static void exitMenu();
+
+  /** @brief Move menu selection to next item (down). */
+  static void menuNext();
+
+  /** @brief Move menu selection to previous item (up). */
+  static void menuPrevious();
 
   /** @brief Get the currently active page. */
   static Page getCurrentPage() { return currentPage_; }
@@ -152,6 +181,9 @@ private:
   /** @brief Draw WIFI_SETUP — captive portal info + QR. */
   static void drawWiFiSetupPage();
 
+  /** @brief Draw the action menu overlay (MAIN page). */
+  static void drawMenuPage();
+
   /** @brief Draw SENSOR_SETUP — address mapping wizard. */
   static void drawSensorSetupPage();
 
@@ -207,6 +239,10 @@ private:
   static uint8_t setupSolarAddr_[8];
   static uint8_t setupPoolAddr_[8];
   static bool setupRoleIsSolar_;  ///< true = Solar, false = Pool (in SELECT_ROLE)
+
+  // ── Action menu state ──────────────────────────────────────────────
+  static bool menuActive_;          ///< True while action menu is shown
+  static MenuItem menuSelection_;   ///< Currently highlighted menu item
 
   // ── First-boot flow tracking ─────────────────────────────────────────
   static bool firstBootDone_;  ///< True after initial setup flow completed
