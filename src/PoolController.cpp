@@ -308,7 +308,7 @@ auto PoolControllerContext::setup() -> void {
       NorviOledDisplay::setupSelectPrevious();
       NorviOledDisplay::requestRedraw();
     } else if (NorviOledDisplay::isSelectRoleStep()) {
-      NorviOledDisplay::setupToggleRole();
+      NorviOledDisplay::setupSelectSolar();
       NorviOledDisplay::requestRedraw();
     } else {
       NorviOledDisplay::previousPage();
@@ -322,7 +322,7 @@ auto PoolControllerContext::setup() -> void {
       NorviOledDisplay::setupSelectNext();
       NorviOledDisplay::requestRedraw();
     } else if (NorviOledDisplay::isSelectRoleStep()) {
-      NorviOledDisplay::setupToggleRole();
+      NorviOledDisplay::setupSelectPool();
       NorviOledDisplay::requestRedraw();
     } else {
       NorviOledDisplay::nextPage();

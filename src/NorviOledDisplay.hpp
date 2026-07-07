@@ -147,8 +147,10 @@ public:
   static void setupSelectPrevious();
   /** @brief Move sensor selection down (next sensor). */
   static void setupSelectNext();
-  /** @brief Move role selection (Solar ↔ Pool). */
-  static void setupToggleRole();
+  /** @brief Select Solar role for the chosen sensor (S1). */
+  static void setupSelectSolar();
+  /** @brief Select Pool role for the chosen sensor (S2). */
+  static void setupSelectPool();
 
   /** @brief Assign the selected sensor with the chosen role. */
   static bool setupApplyAssignment();

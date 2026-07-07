@@ -547,8 +547,10 @@ static void drawButtonHints() {
   // ── S1 hint (top) ───────────────────────────────────────────────────────
   dspFillTriangle(121, 14, 125, 20, 117, 20, SSD1306_WHITE);
   dspCursor(86, 14);
-  if (selSens || selRole) {
+  if (selSens) {
     display.print(F("up"));
+  } else if (selRole) {
+    display.print(F("Solar"));
   } else if (page == NorviOledDisplay::Page::MAIN) {
     display.print(F("wrap"));
   } else {
@@ -558,8 +560,10 @@ static void drawButtonHints() {
   // ── S2 hint (middle) ────────────────────────────────────────────────────
   dspFillTriangle(117, 27, 125, 27, 121, 33, SSD1306_WHITE);
   dspCursor(83, 27);
-  if (selSens || selRole) {
+  if (selSens) {
     display.print(F("dn"));
+  } else if (selRole) {
+    display.print(F(" Pool"));
   } else {
     display.print(F("next"));
   }
@@ -861,15 +865,12 @@ void NorviOledDisplay::drawQrCodePage() {
   url += '/';
 
   if (NetworkManager::isWiFiConnected()) {
-    // ── WiFi connected: no QR (too small to scan), show IP prominently ──
+    // ── WiFi connected: show IP prominently (text size 1) ─────────────
     dspCursor(0, 0);
     display.print(F("Web Interface:"));
-    dspCursor(0, 12);
-    display.setTextSize(2);
-    dspCursor(4, 24);
+    dspCursor(0, 14);
     display.print(WiFi.localIP().toString());
-    display.setTextSize(1);
-    dspCursor(0, 50);
+    dspCursor(0, 28);
     display.print(F("Open in your browser"));
   } else {
     // ── No WiFi: show QR code as large as possible ─────────────────────
@@ -1222,12 +1223,14 @@ void NorviOledDisplay::updateBurnInOffset() {
   }
   lastBurnInShiftMs_ = now;
 
-  // Cycle: (0,0) → (2,0) → (2,2) → (0,2) → (0,0)
+  // Cycle: (0,0) → (2,0) → (2,1) → (0,1) → (0,0)
+  // Y-offset is 1 instead of 2 because the 64-pixel height leaves no
+  // room for a 2px downward shift on bottom-aligned content (footer).
   if (burnInDx_ == 0 && burnInDy_ == 0) {
     burnInDx_ = 2;
   } else if (burnInDx_ == 2 && burnInDy_ == 0) {
-    burnInDy_ = 2;
-  } else if (burnInDx_ == 2 && burnInDy_ == 2) {
+    burnInDy_ = 1;
+  } else if (burnInDx_ == 2 && burnInDy_ == 1) {
     burnInDx_ = 0;
   } else {
     burnInDx_ = 0;
@@ -1265,15 +1268,6 @@ void NorviOledDisplay::getMapping(uint8_t solarAddr[8], uint8_t poolAddr[8]) {
 }
 
 void NorviOledDisplay::setupSelectPrevious() {
-  // ── Cancel: at first item, go back to IDLE ──────────────────────────
-  if (setupStep_ == SetupStep::SELECT_SENSOR && setupSelectedDev_ == 0) {
-    setupStep_ = SetupStep::IDLE;
-    setupSelectedDev_ = 0;
-    forceRedraw_ = true;
-    Serial.println("→ Sensor setup cancelled, back to IDLE");
-    return;
-  }
-
   uint8_t devCount = solarTemperatureNode.getDeviceCount();
   if (devCount > 2) {
     devCount = 2;
@@ -1301,8 +1295,13 @@ void NorviOledDisplay::setupSelectNext() {
   forceRedraw_ = true;
 }
 
-void NorviOledDisplay::setupToggleRole() {
-  setupRoleIsSolar_ = !setupRoleIsSolar_;
+void NorviOledDisplay::setupSelectSolar() {
+  setupRoleIsSolar_ = true;
+  forceRedraw_ = true;
+}
+
+void NorviOledDisplay::setupSelectPool() {
+  setupRoleIsSolar_ = false;
   forceRedraw_ = true;
 }
 
