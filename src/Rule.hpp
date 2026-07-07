@@ -226,10 +226,10 @@ protected:
       }
 
       if (inExtendedWindow) {
-        #ifdef DEBUG_RULE_TIMER
+#ifdef DEBUG_RULE_TIMER
         Serial.printf(
           "  checkPoolPumpTimer = true (extended to %02d:%02d)\n", (uint8_t)(normalizedEnd / 60), (uint8_t)(normalizedEnd % 60));
-        #endif
+#endif
         return true;
       }
 
@@ -239,16 +239,16 @@ protected:
 
     // Step 3: Base timer active (no extension or extension expired)
     if (timerActive) {
-      #ifdef DEBUG_RULE_TIMER
+#ifdef DEBUG_RULE_TIMER
       Serial.printf("  checkPoolPumpTimer = true\n");
-      #endif
+#endif
       return true;
     }
 
-    // Timer not active and no extension → pump stays OFF
-    #ifdef DEBUG_RULE_TIMER
+// Timer not active and no extension → pump stays OFF
+#ifdef DEBUG_RULE_TIMER
     Serial.printf("  checkPoolPumpTimer = false\n");
-    #endif
+#endif
     return false;
   }
 
