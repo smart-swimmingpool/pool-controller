@@ -12,11 +12,14 @@
 #include "Utils.hpp"
 #include "DegradationManager.hpp"
 
-RelayModuleNode::RelayModuleNode(const char *id, const char *name, const uint8_t pin, const int measurementInterval) {
+RelayModuleNode::RelayModuleNode(const char *id, const char *name, const uint8_t pin) : RelayModuleNode(id, name, pin, true) {}
+
+RelayModuleNode::RelayModuleNode(const char *id, const char *name, const uint8_t pin, const bool activeLow) {
   _id = id;
   _name = name;
   _pin = pin;
-  _measurementInterval = (measurementInterval > MIN_INTERVAL) ? measurementInterval : MIN_INTERVAL;
+  _activeLow = activeLow;
+  _measurementInterval = MEASUREMENT_INTERVAL;
   _lastMeasurement = 0;
 }
 
@@ -30,8 +33,9 @@ void RelayModuleNode::begin() {
   _currentState = preferences.getBool("switch", false);
   preferences.end();
 
-  // Active-LOW relay: ON = LOW, OFF = HIGH (matching original RelayModule library behavior)
-  digitalWrite(_pin, _currentState ? LOW : HIGH);
+  // Apply polarity: active-LOW  → ON = LOW,  OFF = HIGH
+  //                active-HIGH → ON = HIGH, OFF = LOW
+  digitalWrite(_pin, _currentState == _activeLow ? LOW : HIGH);
 
   Serial.printf("  ◦ Relay restored to state: %s\n", _currentState ? "ON" : "OFF");
 }
@@ -49,8 +53,9 @@ void RelayModuleNode::setSwitch(const bool state) {
     return;
   }
 
-  // Active-LOW relay: ON = LOW, OFF = HIGH
-  digitalWrite(_pin, state ? LOW : HIGH);
+  // Apply polarity: active-LOW  → ON = LOW,  OFF = HIGH
+  //                active-HIGH → ON = HIGH, OFF = LOW
+  digitalWrite(_pin, state == _activeLow ? LOW : HIGH);
   _currentState = state;
 
   // Persist relay state via Preferences (NVS)
