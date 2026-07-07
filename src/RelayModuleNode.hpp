@@ -27,10 +27,8 @@ public:
    * @param id  Unique node identifier (e.g. "pool-pump").
    * @param name  Human-readable name (e.g. "Pool Pump").
    * @param pin  GPIO pin number for the relay control signal.
-   * @param measurementInterval  Minimum interval between status logs (seconds).
    */
-  RelayModuleNode(const char *id, const char *name, const uint8_t pin,
-    const int measurementInterval = MEASUREMENT_INTERVAL);
+  RelayModuleNode(const char *id, const char *name, const uint8_t pin);
 
   /**
    * @brief Construct a relay node with explicit polarity.
@@ -39,10 +37,8 @@ public:
    * @param pin  GPIO pin number for the relay control signal.
    * @param activeLow  true if relay is active-LOW (LOW = ON),
    *                   false if active-HIGH (HIGH = ON).
-   * @param measurementInterval  Minimum interval between status logs (seconds).
    */
-  RelayModuleNode(const char *id, const char *name, const uint8_t pin, bool activeLow,
-    const int measurementInterval = MEASUREMENT_INTERVAL);
+  RelayModuleNode(const char *id, const char *name, const uint8_t pin, bool activeLow);
   ~RelayModuleNode() = default;
 
   /** @brief Get the node identifier. */

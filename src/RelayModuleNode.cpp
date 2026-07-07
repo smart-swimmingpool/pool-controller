@@ -12,16 +12,14 @@
 #include "Utils.hpp"
 #include "DegradationManager.hpp"
 
-RelayModuleNode::RelayModuleNode(const char *id, const char *name, const uint8_t pin, const int measurementInterval)
-  : RelayModuleNode(id, name, pin, true, measurementInterval) {
-}
+RelayModuleNode::RelayModuleNode(const char *id, const char *name, const uint8_t pin) : RelayModuleNode(id, name, pin, true) {}
 
-RelayModuleNode::RelayModuleNode(const char *id, const char *name, const uint8_t pin, const bool activeLow, const int measurementInterval) {
+RelayModuleNode::RelayModuleNode(const char *id, const char *name, const uint8_t pin, const bool activeLow) {
   _id = id;
   _name = name;
   _pin = pin;
   _activeLow = activeLow;
-  _measurementInterval = (measurementInterval > MIN_INTERVAL) ? measurementInterval : MIN_INTERVAL;
+  _measurementInterval = MEASUREMENT_INTERVAL;
   _lastMeasurement = 0;
 }
 
