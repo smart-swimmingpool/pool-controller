@@ -144,6 +144,7 @@ sammeln sich an und täuschen Wartende.
 | Redundanter Sicherheitscheck | <code>\|\| now &lt; lastClockSyncFailTime\_</code> (unsigned wrap bereits korrekt) | Entfernen                                   |
 | Sinnentleerte Kommentare     | `// Loop function` über `void loop()`                                              | Entfernen                                   |
 | `TODO:`/`FIXME:` ohne Issue  | `// TODO: fix this`                                                                | Issue erstellen oder fixen                  |
+| CodeQL `commented-out-code`  | Wird von GitHub Code-Scanning erkannt (Regel `cpp/commented-out-code`)             | Vor Merge prufen und entfernen               |
 | Unused includes              | `#include <esp_now.h>` (ungenutzt)                                                 | Entfernen                                   |
 | Unused Variablen             | `uint8_t devCount = getCount();` (nie gelesen)                                     | Entfernen oder `(void)`                     |
 | Leere catch-Blöcke           | `catch (...) {}`                                                                   | Logging ergänzen oder entfernen             |
@@ -322,6 +323,7 @@ Vor jedem Merge-Request diese 8 Kategorien durchgehen:
 □ K7 — Const:         Alles const was nicht geschrieben wird?
 □ K8 — Testability:   Code testbar? Dependencies sichtbar?
 ```
+□ K9 — CodeQL:        Code-Scanning-Alerts gepruft? Keine neuen Critical/High?
 
 ### Common Quick Fixes
 
@@ -336,6 +338,12 @@ semble search 'Preferences\.begin\("' src/
 semble search "Serial\.\(printf\|println\)" src/ --exclude '*Debug*'
 
 # Dead-Code-Rest: auskommentierte Blöcke
+
+# CodeQL: Offene Alerts auf dem Branch prufen
+gh api "/repos/smart-swimmingpool/pool-controller/code-scanning/alerts?ref=$(git branch --show-current)&state=open" --jq '
+  .[] | select(.most_recent_instance.location.path | startswith("src/")) |
+  {number, rule: .rule.id, severity: .rule.severity, path: .most_recent_instance.location.path, line: .most_recent_instance.location.start_line}
+'
 semble search "(?s)//\n// " src/  # mehrzeilige Kommentare prüfen
 ```
 

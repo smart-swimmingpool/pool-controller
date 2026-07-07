@@ -1144,7 +1144,8 @@ void NorviOledDisplay::drawFooter() {
   if (utc >= MIN_VALID_TIME) {
     TimeChangeRule *tcr = nullptr;
     time_t local = getTimeFor(getTimezoneIndex(), &tcr);
-    struct tm *ti = localtime(&local);
+    struct tm ti_val;
+    struct tm *ti = localtime_r(&local, &ti_val);
     char buf[6];
     snprintf(buf, sizeof(buf), "%02d:%02d", ti->tm_hour, ti->tm_min);
     display.print(buf);

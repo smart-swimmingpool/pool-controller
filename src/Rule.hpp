@@ -165,13 +165,19 @@ protected:
     uint16_t baseEndMinutes = ts.timerEndHour * 60 + ts.timerEndMinutes;
 
 #ifdef DEBUG_RULE_TIMER
-    Serial.printf("  currenttime = %s", asctime(&time));
+    char timeBuf[26];
+    asctime_r(&time, timeBuf);
+    Serial.printf("  currenttime = %s", timeBuf);
 #endif
 #ifdef DEBUG_RULE_TIMER
-    Serial.printf("  startTime   = %s", asctime(&startTime));
+    char startBuf[26];
+    asctime_r(&startTime, startBuf);
+    Serial.printf("  startTime   = %s", startBuf);
 #endif
 #ifdef DEBUG_RULE_TIMER
-    Serial.printf("  endTime     = %s", asctime(&endTime));
+    char endBuf[26];
+    asctime_r(&endTime, endBuf);
+    Serial.printf("  endTime     = %s", endBuf);
 #endif
 
     time_t now = mktime(&time);
@@ -265,13 +271,19 @@ protected:
     tm endTime = getEndTime(time, getTimerSetting());
 
 #ifdef DEBUG_RULE_TIMER
-    Serial.printf("  currenttime = %s", asctime(&time));
+    char timeBuf[26];
+    asctime_r(&time, timeBuf);
+    Serial.printf("  currenttime = %s", timeBuf);
 #endif
 #ifdef DEBUG_RULE_TIMER
-    Serial.printf("  startTime   = %s", asctime(&startTime));
+    char startBuf[26];
+    asctime_r(&startTime, startBuf);
+    Serial.printf("  startTime   = %s", startBuf);
 #endif
 #ifdef DEBUG_RULE_TIMER
-    Serial.printf("  endTime     = %s", asctime(&endTime));
+    char endBuf[26];
+    asctime_r(&endTime, endBuf);
+    Serial.printf("  endTime     = %s", endBuf);
 #endif
 
     // Convert tm structs to time_t once to avoid multiple mktime calls
