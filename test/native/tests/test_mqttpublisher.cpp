@@ -417,5 +417,93 @@ int run_mqttpublisher_tests() {
     test_suite_end("MqttPublisher::no_entity_category", 1, 0);
   }
 
+  // ── Regression: climate preset_modes must NOT include "none" ──
+  // HA MQTT climate schema rejects the *entire* discovery config if "none"
+  // is listed in preset_modes (it's a reserved value HA sets internally
+  // to mean "no preset active"). See fix/codex-review-issues.
+  {
+    test_begin("MqttPublisher::publishClimateDiscovery", "preset_modes must not contain 'none'");
+
+    mqttCapture.clear();
+    MqttPublisher::publishDiscovery();
+
+    bool foundConfig = false;
+    bool containsNone = false;
+    int presetCount = 0;
+
+    for (const auto &msg : mqttCapture.published) {
+      if (msg.topic.find("climate/pool-controller/thermostat/config") == std::string::npos)
+        continue;
+      if (msg.payload.empty())
+        continue;  // retained-clear message
+
+      foundConfig = true;
+      JsonDocument doc;
+      DeserializationError err = deserializeJson(doc, msg.payload);
+      if (err) {
+        test_fail(__FILE__, __LINE__, "Failed to parse climate discovery JSON");
+        break;
+      }
+
+      if (!doc.containsKey("preset_modes")) {
+        test_fail(__FILE__, __LINE__, "climate discovery missing 'preset_modes'");
+        break;
+      }
+
+      JsonArray presets = doc["preset_modes"];
+      for (JsonVariant p : presets) {
+        presetCount++;
+        if (strcmp(p.as<const char *>(), "none") == 0) {
+          containsNone = true;
+        }
+      }
+      break;
+    }
+
+    rc = (foundConfig && !containsNone && presetCount > 0) ? 0 : 1;
+    if (rc == 0) {
+      test_pass(__FILE__, __LINE__);
+      passed++;
+    } else {
+      test_fail(__FILE__, __LINE__, "preset_modes must not include reserved value 'none'");
+      failed++;
+    }
+    test_suite_end("MqttPublisher::preset_modes_no_none", rc == 0 ? 1 : 0, rc != 0 ? 1 : 0);
+  }
+
+  // ── Regression: preset STATE must still report "none" when no preset active ──
+  // "none" is HA-reserved and must be sent as the *state* (not listed as a
+  // mode) whenever the pool is running in plain "auto" mode.
+  {
+    test_begin("MqttPublisher::publishClimateState", "preset state is 'none' when no preset active");
+
+    mqttCapture.clear();
+    NetworkManager::setMqttConnected(true);
+    operationModeNode.setMode("auto");
+
+    MqttPublisher::publishStates();
+
+    std::string presetState;
+    bool found = false;
+    for (const auto &msg : mqttCapture.published) {
+      if (msg.topic.find("climate/pool-controller/thermostat/preset/state") != std::string::npos) {
+        presetState = msg.payload;
+        found = true;
+      }
+    }
+
+    rc = (found && presetState == "none") ? 0 : 1;
+    if (rc == 0) {
+      test_pass(__FILE__, __LINE__);
+      passed++;
+    } else {
+      char msg[128];
+      snprintf(msg, sizeof(msg), "Expected preset state 'none', got '%s' (found=%d)", presetState.c_str(), found);
+      test_fail(__FILE__, __LINE__, msg);
+      failed++;
+    }
+    test_suite_end("MqttPublisher::preset_state_none", rc == 0 ? 1 : 0, rc != 0 ? 1 : 0);
+  }
+
   return passed + failed;
 }
