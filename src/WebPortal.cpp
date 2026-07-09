@@ -264,9 +264,7 @@ void WebPortal::setupRoutes() {
         return;
       apiFsUpload();
     },
-    []() {
-      handleFsUploadStream();
-    });
+    []() { handleFsUploadStream(); });
 
   // OTA Firmware handling (manual upload via web form)
   server_.on(

@@ -251,6 +251,10 @@ function updateAuthUI() {
     el.style.display = isAuthenticated ? '' : 'none';
   }
 
+  // Hide bottom tab bar when not authenticated — read-only dashboard only
+  const tabBar = document.getElementById('tabBar');
+  if (tabBar) tabBar.style.display = isAuthenticated ? '' : 'none';
+
   // Tab visibility
   const tabsToHide = ['tab-sensors'];
   for (const id of tabsToHide) {
