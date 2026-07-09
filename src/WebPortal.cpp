@@ -244,12 +244,9 @@ void WebPortal::setupRoutes() {
     apiUpdateInstall();
   });
 
-  // Sensor mapping endpoints
-  server_.on("/api/sensors", HTTP_GET, []() {
-    if (!handleAuthentication())
-      return;
-    apiGetSensors();
-  });
+  // Sensor mapping endpoints — GET is unauthenticated (read-only display),
+  // POST (save) remains authenticated.
+  server_.on("/api/sensors", HTTP_GET, apiGetSensors);
   server_.on("/api/sensors/map", HTTP_POST, []() {
     if (!handleAuthentication())
       return;
@@ -296,11 +293,8 @@ void WebPortal::setupRoutes() {
 }
 
 void WebPortal::handleRoot() {
-  if (!isClientAuthenticated()) {
-    handleLogin();
-    return;
-  }
-
+  // Dashboard is always served — interactive controls are gated by the frontend
+  // based on the "authenticated" field from /api/status.
   File f = LittleFS.open("/web/index.html", "r");
   if (f) {
     server_.streamFile(f, "text/html");
@@ -444,6 +438,7 @@ void WebPortal::apiGetStatus() {
   doc["mqtt_connected"] = NetworkManager::isMqttConnected();
   doc["local_ip"] = NetworkManager::getLocalIP();
   doc["fw_version"] = FW_VERSION;
+  doc["authenticated"] = isClientAuthenticated();
 
   // Current date/time in configured timezone
   TimeChangeRule *tcr;
@@ -460,6 +455,15 @@ void WebPortal::apiGetStatus() {
   // can show them without authentication (apiGetStatus is unauthenticated).
   doc["temp_max_pool"] = ConfigManager::getSettings().tempMaxPool;
   doc["temp_min_solar"] = ConfigManager::getSettings().tempMinSolar;
+  doc["temp_hysteresis"] = ConfigManager::getSettings().tempHysteresis;
+  doc["temp_circ_threshold"] = ConfigManager::getSettings().tempCircThreshold;
+  doc["temp_circ_factor"] = ConfigManager::getSettings().tempCircFactor;
+  doc["temp_circ_max_runtime"] = ConfigManager::getSettings().tempCircMaxRuntime;
+  doc["loop_interval"] = ConfigManager::getSettings().loopInterval;
+  doc["timezone"] = ConfigManager::getSettings().timezoneIndex;
+  doc["time_loss_green_hours"] = ConfigManager::getSettings().timeLossGreenHours;
+  doc["time_loss_red_hours"] = ConfigManager::getSettings().timeLossRedHours;
+  doc["ntp_server"] = ConfigManager::getNtp().server;
 
   // Effective runtime (temperature-based circulation) — actual minutes, not end-of-day
   {
@@ -483,7 +487,7 @@ void WebPortal::apiGetStatus() {
 
   // Serialize directly to a pre-allocated buffer to minimize String usage
   // Use a static buffer to avoid heap fragmentation
-  static char jsonBuffer[1024];
+  static char jsonBuffer[1536];
   size_t jsonLength = serializeJson(doc, jsonBuffer, sizeof(jsonBuffer));
   if (jsonLength > 0) {
     server_.send(200, "application/json", jsonBuffer);

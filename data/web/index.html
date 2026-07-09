@@ -25,6 +25,26 @@
 <body>
 <h1 style="margin-bottom: 0.1rem;">Pool Controller</h1>
 
+<!-- Login Banner (shown when not authenticated, hidden when logged in) -->
+<div id="loginBanner" style="display: none; align-items: center; justify-content: center; gap: 0.75rem; padding: 0.6rem 1rem; margin: 0.5rem 1rem 0; background: rgba(0, 229, 255, 0.08); border: 1px solid rgba(0, 229, 255, 0.15); border-radius: 10px; font-size: 0.85rem;">
+  <span style="color: var(--text-muted);">📊 Read-only view —</span>
+  <button onclick="showLoginForm()" style="background: linear-gradient(135deg, #00b4d8, #00e5ff); border: none; border-radius: 8px; color: #000; font-weight: 600; font-size: 0.8rem; padding: 0.4rem 1rem; cursor: pointer;">Sign In for full access</button>
+</div>
+
+<!-- Login Modal (inline overlay, shown by showLoginForm) -->
+<div id="loginModal" style="display: none; position: fixed; inset: 0; z-index: 100; background: rgba(6,18,30,0.85); backdrop-filter: blur(8px); align-items: center; justify-content: center; padding: 2rem;">
+  <div style="background: var(--glass-bg); border: 1px solid var(--panel-border); border-radius: 16px; padding: 2rem; max-width: 380px; width: 100%;">
+    <h2 style="color: #00e5ff; text-align: center; margin: 0 0 0.25rem; font-size: 1.4rem;">Pool Controller</h2>
+    <p style="color: var(--text-muted); text-align: center; margin-bottom: 1.5rem; font-size: 0.85rem;">Administrator Sign In</p>
+    <form id="loginForm">
+      <input type="password" id="loginPassword" required placeholder="Administrator Password" style="width: 100%; padding: 0.75rem 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(0,200,220,0.1); border-radius: 8px; color: #e2f0f7; font-size: 1rem; box-sizing: border-box;">
+      <div id="loginError" style="color: #ef4444; margin-top: 0.5rem; display: none; font-size: 0.85rem;">Invalid Password!</div>
+      <button type="submit" style="width: 100%; padding: 0.75rem; margin-top: 1rem; background: linear-gradient(135deg, #00b4d8, #00e5ff); border: none; border-radius: 8px; color: #000; font-weight: 600; font-size: 1rem; cursor: pointer;">Unlock Console</button>
+    </form>
+    <button onclick="closeLoginForm()" style="width: 100%; padding: 0.6rem; margin-top: 0.5rem; background: transparent; border: 1px solid var(--panel-border); border-radius: 8px; color: var(--text-muted); font-size: 0.85rem; cursor: pointer;">Cancel</button>
+  </div>
+</div>
+
 <!-- Bottom Tab Bar (iOS 26 Style) -->
 <nav class="tab-bar" id="tabBar">
   <button class="tab-bar-item active" data-tab="dashboard" onclick="switchTab('dashboard')">
