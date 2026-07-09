@@ -253,6 +253,13 @@ void WebPortal::setupRoutes() {
     apiSaveSensorMapping();
   });
 
+  // LittleFS file upload (for OTA-safe web asset deployment)
+  server_.on("/api/fs/upload", HTTP_POST, []() {
+    if (!handleAuthentication())
+      return;
+    apiFsUpload();
+  });
+
   // OTA Firmware handling (manual upload via web form)
   server_.on(
     "/api/update", HTTP_POST,
@@ -1063,6 +1070,53 @@ void WebPortal::apiSaveSensorMapping() {
   }
 
   server_.send(200, "application/json", "{\"status\":\"ok\",\"message\":\"Sensor mapping saved. Reboot to apply.\"}");
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// LittleFS file upload handler
+// ═══════════════════════════════════════════════════════════════════════
+
+void WebPortal::apiFsUpload() {
+  if (!server_.hasArg("path") || !server_.hasArg("content")) {
+    server_.send(400, "text/plain", "Missing path or content");
+    return;
+  }
+
+  String path = server_.arg("path");
+
+  // Security: only allow files under /web/
+  if (!path.startsWith("/web/")) {
+    server_.send(403, "text/plain", "Only /web/ paths allowed");
+    return;
+  }
+
+  // Security: prevent path traversal
+  if (path.indexOf("..") != -1) {
+    server_.send(403, "text/plain", "Path traversal not allowed");
+    return;
+  }
+
+  // Ensure the /web/ directory exists
+  if (!LittleFS.exists("/web")) {
+    LittleFS.mkdir("/web");
+  }
+
+  String content = server_.arg("content");
+
+  File f = LittleFS.open(path, "w");
+  if (!f) {
+    server_.send(500, "text/plain", "Failed to open file for writing");
+    return;
+  }
+
+  size_t written = f.print(content);
+  f.close();
+
+  if (written == content.length()) {
+    server_.send(200, "text/plain", "OK");
+  } else {
+    server_.send(500, "text/plain", "Write incomplete");
+  }
 }
 
 }  // namespace PoolController

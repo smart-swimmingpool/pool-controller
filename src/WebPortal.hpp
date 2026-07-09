@@ -114,6 +114,8 @@ private:
   static void apiGetSensors();
   /** @brief POST /api/sensors/map — save sensor-to-role address mapping to NVS. */
   static void apiSaveSensorMapping();
+  /** @brief POST /api/fs/upload — upload a file to LittleFS (OTA-safe web asset deployment). */
+  static void apiFsUpload();
 
   static WebServer server_;
   static DNSServer dnsServer_;
