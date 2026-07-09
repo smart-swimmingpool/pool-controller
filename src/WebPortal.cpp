@@ -41,6 +41,9 @@
 
 namespace PoolController {
 
+// File-scoped state for streaming LittleFS upload (used by handleFsUploadStream)
+static File fsUploadFile;
+
 WebServer WebPortal::server_(80);
 DNSServer WebPortal::dnsServer_;
 bool WebPortal::dnsServerStarted_ = false;
@@ -254,11 +257,16 @@ void WebPortal::setupRoutes() {
   });
 
   // LittleFS file upload (for OTA-safe web asset deployment)
-  server_.on("/api/fs/upload", HTTP_POST, []() {
-    if (!handleAuthentication())
-      return;
-    apiFsUpload();
-  });
+  server_.on(
+    "/api/fs/upload", HTTP_POST,
+    []() {
+      if (!handleAuthentication())
+        return;
+      apiFsUpload();
+    },
+    []() {
+      handleFsUploadStream();
+    });
 
   // OTA Firmware handling (manual upload via web form)
   server_.on(
@@ -1077,45 +1085,70 @@ void WebPortal::apiSaveSensorMapping() {
 // ═══════════════════════════════════════════════════════════════════════
 
 void WebPortal::apiFsUpload() {
-  if (!server_.hasArg("path") || !server_.hasArg("content")) {
-    server_.send(400, "text/plain", "Missing path or content");
+  // POST completion handler — called after all upload chunks are processed.
+  // The actual file writing is done in handleFsUploadStream().
+  // If fsUploadFile is still open, close it as a safety net.
+  if (fsUploadFile) {
+    fsUploadFile.close();
+  }
+  server_.send(200, "text/plain", "OK");
+}
+
+void WebPortal::handleFsUploadStream() {
+  if (!isClientAuthenticated())
     return;
-  }
 
-  String path = server_.arg("path");
+  HTTPUpload &upload = server_.upload();
 
-  // Security: only allow files under /web/
-  if (!path.startsWith("/web/")) {
-    server_.send(403, "text/plain", "Only /web/ paths allowed");
-    return;
-  }
+  if (upload.status == UPLOAD_FILE_START) {
+    // Close any previously open file (safety cleanup)
+    if (fsUploadFile) {
+      fsUploadFile.close();
+    }
 
-  // Security: prevent path traversal
-  if (path.indexOf("..") != -1) {
-    server_.send(403, "text/plain", "Path traversal not allowed");
-    return;
-  }
+    // Resolve the target path from the multipart form field "path"
+    if (!server_.hasArg("path")) {
+      Serial.println("FS Upload: missing path argument — aborting");
+      return;
+    }
 
-  // Ensure the /web/ directory exists
-  if (!LittleFS.exists("/web")) {
-    LittleFS.mkdir("/web");
-  }
+    String path = server_.arg("path");
 
-  String content = server_.arg("content");
+    // Security: only allow files under /web/
+    if (!path.startsWith("/web/")) {
+      Serial.printf("FS Upload: path \"%s\" not under /web/ — rejected\n", path.c_str());
+      return;
+    }
 
-  File f = LittleFS.open(path, "w");
-  if (!f) {
-    server_.send(500, "text/plain", "Failed to open file for writing");
-    return;
-  }
+    // Security: prevent path traversal
+    if (path.indexOf("..") != -1) {
+      Serial.printf("FS Upload: path traversal detected: \"%s\"\n", path.c_str());
+      return;
+    }
 
-  size_t written = f.print(content);
-  f.close();
+    // Ensure the /web/ directory exists
+    if (!LittleFS.exists("/web")) {
+      LittleFS.mkdir("/web");
+    }
 
-  if (written == content.length()) {
-    server_.send(200, "text/plain", "OK");
-  } else {
-    server_.send(500, "text/plain", "Write incomplete");
+    fsUploadFile = LittleFS.open(path, "w");
+    if (!fsUploadFile) {
+      Serial.printf("FS Upload: failed to open \"%s\" for writing\n", path.c_str());
+      return;
+    }
+
+    Serial.printf("FS Upload: started \"%s\" (%u bytes)\n", path.c_str(), upload.totalSize);
+
+  } else if (upload.status == UPLOAD_FILE_WRITE) {
+    if (fsUploadFile) {
+      fsUploadFile.write(upload.buf, upload.currentSize);
+    }
+
+  } else if (upload.status == UPLOAD_FILE_END) {
+    if (fsUploadFile) {
+      fsUploadFile.close();
+      Serial.printf("FS Upload: finished \"%s\" (%u bytes)\n", upload.filename.c_str(), upload.totalSize);
+    }
   }
 }
 
