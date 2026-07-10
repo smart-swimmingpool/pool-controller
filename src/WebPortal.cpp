@@ -41,6 +41,9 @@
 
 namespace PoolController {
 
+// File-scoped state for streaming LittleFS upload (used by handleFsUploadStream)
+static File fsUploadFile;
+
 WebServer WebPortal::server_(80);
 DNSServer WebPortal::dnsServer_;
 bool WebPortal::dnsServerStarted_ = false;
@@ -244,17 +247,24 @@ void WebPortal::setupRoutes() {
     apiUpdateInstall();
   });
 
-  // Sensor mapping endpoints
-  server_.on("/api/sensors", HTTP_GET, []() {
-    if (!handleAuthentication())
-      return;
-    apiGetSensors();
-  });
+  // Sensor mapping endpoints — GET is unauthenticated (read-only display),
+  // POST (save) remains authenticated.
+  server_.on("/api/sensors", HTTP_GET, apiGetSensors);
   server_.on("/api/sensors/map", HTTP_POST, []() {
     if (!handleAuthentication())
       return;
     apiSaveSensorMapping();
   });
+
+  // LittleFS file upload (for OTA-safe web asset deployment)
+  server_.on(
+    "/api/fs/upload", HTTP_POST,
+    []() {
+      if (!handleAuthentication())
+        return;
+      apiFsUpload();
+    },
+    []() { handleFsUploadStream(); });
 
   // OTA Firmware handling (manual upload via web form)
   server_.on(
@@ -296,11 +306,8 @@ void WebPortal::setupRoutes() {
 }
 
 void WebPortal::handleRoot() {
-  if (!isClientAuthenticated()) {
-    handleLogin();
-    return;
-  }
-
+  // Dashboard is always served — interactive controls are gated by the frontend
+  // based on the "authenticated" field from /api/status.
   File f = LittleFS.open("/web/index.html", "r");
   if (f) {
     server_.streamFile(f, "text/html");
@@ -444,6 +451,7 @@ void WebPortal::apiGetStatus() {
   doc["mqtt_connected"] = NetworkManager::isMqttConnected();
   doc["local_ip"] = NetworkManager::getLocalIP();
   doc["fw_version"] = FW_VERSION;
+  doc["authenticated"] = isClientAuthenticated();
 
   // Current date/time in configured timezone
   TimeChangeRule *tcr;
@@ -460,6 +468,15 @@ void WebPortal::apiGetStatus() {
   // can show them without authentication (apiGetStatus is unauthenticated).
   doc["temp_max_pool"] = ConfigManager::getSettings().tempMaxPool;
   doc["temp_min_solar"] = ConfigManager::getSettings().tempMinSolar;
+  doc["temp_hysteresis"] = ConfigManager::getSettings().tempHysteresis;
+  doc["temp_circ_threshold"] = ConfigManager::getSettings().tempCircThreshold;
+  doc["temp_circ_factor"] = ConfigManager::getSettings().tempCircFactor;
+  doc["temp_circ_max_runtime"] = ConfigManager::getSettings().tempCircMaxRuntime;
+  doc["loop_interval"] = ConfigManager::getSettings().loopInterval;
+  doc["timezone"] = ConfigManager::getSettings().timezoneIndex;
+  doc["time_loss_green_hours"] = ConfigManager::getSettings().timeLossGreenHours;
+  doc["time_loss_red_hours"] = ConfigManager::getSettings().timeLossRedHours;
+  doc["ntp_server"] = ConfigManager::getNtp().server;
 
   // Effective runtime (temperature-based circulation) — actual minutes, not end-of-day
   {
@@ -483,7 +500,7 @@ void WebPortal::apiGetStatus() {
 
   // Serialize directly to a pre-allocated buffer to minimize String usage
   // Use a static buffer to avoid heap fragmentation
-  static char jsonBuffer[1024];
+  static char jsonBuffer[1536];
   size_t jsonLength = serializeJson(doc, jsonBuffer, sizeof(jsonBuffer));
   if (jsonLength > 0) {
     server_.send(200, "application/json", jsonBuffer);
@@ -1059,6 +1076,78 @@ void WebPortal::apiSaveSensorMapping() {
   }
 
   server_.send(200, "application/json", "{\"status\":\"ok\",\"message\":\"Sensor mapping saved. Reboot to apply.\"}");
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// LittleFS file upload handler
+// ═══════════════════════════════════════════════════════════════════════
+
+void WebPortal::apiFsUpload() {
+  // POST completion handler — called after all upload chunks are processed.
+  // The actual file writing is done in handleFsUploadStream().
+  // If fsUploadFile is still open, close it as a safety net.
+  if (fsUploadFile) {
+    fsUploadFile.close();
+  }
+  server_.send(200, "text/plain", "OK");
+}
+
+void WebPortal::handleFsUploadStream() {
+  if (!isClientAuthenticated())
+    return;
+
+  HTTPUpload &upload = server_.upload();
+
+  if (upload.status == UPLOAD_FILE_START) {
+    // Close any previously open file (safety cleanup)
+    if (fsUploadFile) {
+      fsUploadFile.close();
+    }
+
+    // Resolve the target path from the multipart form field "path"
+    if (!server_.hasArg("path")) {
+      Serial.println("FS Upload: missing path argument — aborting");
+      return;
+    }
+
+    String path = server_.arg("path");
+
+    // Security: only allow files under /web/
+    if (!path.startsWith("/web/")) {
+      Serial.printf("FS Upload: path \"%s\" not under /web/ — rejected\n", path.c_str());
+      return;
+    }
+
+    // Security: prevent path traversal
+    if (path.indexOf("..") != -1) {
+      Serial.printf("FS Upload: path traversal detected: \"%s\"\n", path.c_str());
+      return;
+    }
+
+    // Ensure the /web/ directory exists
+    if (!LittleFS.exists("/web")) {
+      LittleFS.mkdir("/web");
+    }
+
+    fsUploadFile = LittleFS.open(path, "w");
+    if (!fsUploadFile) {
+      Serial.printf("FS Upload: failed to open \"%s\" for writing\n", path.c_str());
+      return;
+    }
+
+    Serial.printf("FS Upload: started \"%s\" (%u bytes)\n", path.c_str(), upload.totalSize);
+
+  } else if (upload.status == UPLOAD_FILE_WRITE) {
+    if (fsUploadFile) {
+      fsUploadFile.write(upload.buf, upload.currentSize);
+    }
+
+  } else if (upload.status == UPLOAD_FILE_END) {
+    if (fsUploadFile) {
+      fsUploadFile.close();
+      Serial.printf("FS Upload: finished \"%s\" (%u bytes)\n", upload.filename.c_str(), upload.totalSize);
+    }
+  }
 }
 
 }  // namespace PoolController

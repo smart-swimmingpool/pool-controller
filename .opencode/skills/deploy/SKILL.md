@@ -32,12 +32,17 @@ serial flash, web filesystem upload, OTA update, and semver release management.
 ## Overview
 
 ```text
-┌─────────────┐    ┌──────────────┐    ┌────────────────┐    ┌─────────────────┐
-│  Pre-flight  │ → │  Build       │ → │  Flash / OTA   │ → │  Verify         │
-│  - lint      │    │  pio run     │    │  serial / ota  │    │  - monitor logs │
-│  - format    │    │  -e esp32dev │    │  + uploadfs    │    │  - version check│
-│  - version   │    │              │    │                │    │  - web UI       │
-└─────────────┘    └──────────────┘    └────────────────┘    └─────────────────┘
+┌─────────────┐    ┌──────────────┐    ┌──────────────────────┐    ┌─────────────────┐
+│  Pre-flight  │ → │  Build       │ → │  Deploy              │ → │  Verify         │
+│  - lint      │    │  pio run     │    │                      │    │  - monitor logs │
+│  - format    │    │  -e norvi    │    │  Serial:             │    │  - version check│
+│  - version   │    │              │    │    flash + uploadfs  │    │  - web UI       │
+└─────────────┘    └──────────────┘    │    OTA:               │    └─────────────────┘
+                                       │    1. flash firmware  │
+                                       │    2. upload web fs   │
+                                       │       via /api/fs/    │
+                                       │       upload (6 files)│
+                                       └──────────────────────┘
 ```
 
 ## Prerequisites
@@ -215,9 +220,55 @@ curl -b /tmp/ota-cookie.txt -s -F "firmware=@.pio/build/norvi_ae01_r/firmware.bi
 
 ### 4. OTA + uploadfs (if web files changed)
 
-The littlefs filesystem (web UI assets) cannot be uploaded via `/api/update`. Only the firmware binary is supported via OTA.
+The `/api/update` endpoint only flashes the firmware binary — LittleFS web assets
+(HTML/CSS/JS) are **not** included. After OTA, deploy web assets via the
+`/api/fs/upload` endpoint (available since firmware v4.1.1, PR #155).
 
-For LittleFS changes, use **serial upload** (see "Serial Flash" section above).
+#### One-liner: firmware + all web assets
+
+```bash
+DEVICE=http://pool-controller.local
+PASSWORD=admin
+COOKIE_JAR=$(mktemp)
+
+# Login
+curl -c "$COOKIE_JAR" -s -X POST "$DEVICE/api/login" -d "password=$PASSWORD" > /dev/null
+
+# Flash firmware
+curl -b "$COOKIE_JAR" -s -F "firmware=@.pio/build/norvi_ae01_r/firmware.bin" \
+  "$DEVICE/api/update" && echo "Firmware flashed, waiting for reboot..."
+sleep 20
+
+# Re-login (session was lost on reboot)
+curl -c "$COOKIE_JAR" -s -X POST "$DEVICE/api/login" -d "password=$PASSWORD" > /dev/null
+
+# Upload all web assets
+for f in index.html app.js style.css sw.js manifest.json icon.svg; do
+  curl -b "$COOKIE_JAR" -s -X POST "$DEVICE/api/fs/upload" \
+    -F "path=/web/$f" -F "content=@data/web/$f"
+done
+
+rm -f "$COOKIE_JAR"
+echo "Deployment complete!"
+```
+
+#### Manual upload of individual files
+
+```bash
+curl -b /tmp/ota-cookie.txt -X POST http://<device-ip>/api/fs/upload \
+  -F "path=/web/app.js" \
+  -F "content=@data/web/app.js"
+```
+
+Response `200 OK` means the file was written to LittleFS. The endpoint:
+- Requires authentication (valid session cookie)
+- Only allows paths under `/web/` (security)
+- Blocks path traversal (`..`)
+- Streams multipart uploads — no size limit
+- Returns `200 OK` on success (handled by the POST completion handler)
+
+> **Note:** Firmware versions without `/api/fs/upload` (pre-v4.1.1) require
+> serial `uploadfs` for web asset deployment. See "Serial Flash" above.
 
 ### OTA troubleshooting
 

@@ -34,6 +34,10 @@ function toggleMoreMenu() {
 
 console.log('[pool] app.js loaded, version=2026-06-05');
 
+// ── Auth State ──
+
+let isAuthenticated = false;
+
 async function loadTelemetry() {
   try {
     const res = await fetch('/api/status');
@@ -145,6 +149,42 @@ async function loadTelemetry() {
       }
     }
 
+    // ── Auth state ──
+    if (data.authenticated !== undefined) {
+      isAuthenticated = data.authenticated;
+    }
+    updateAuthUI();
+
+    // ── Pool & Time Tab (read-only params from /api/status) ──
+    const statusFields = [
+      ['loopInterval', data.loop_interval],
+      ['tempMaxPool', data.temp_max_pool],
+      ['tempMinSolar', data.temp_min_solar],
+      ['tempHysteresis', data.temp_hysteresis],
+      ['tempCircThreshold', data.temp_circ_threshold],
+      ['tempCircFactor', data.temp_circ_factor],
+      ['tempCircMaxRuntime', data.temp_circ_max_runtime],
+      ['timezone', data.timezone],
+      ['timeLossGreen', data.time_loss_green_hours],
+      ['timeLossRed', data.time_loss_red_hours],
+      ['ntpServer', data.ntp_server],
+    ];
+    for (const [id, val] of statusFields) {
+      if (val != null) {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+      }
+    }
+
+    // Timer start/end fields on Pool tab
+    if (data.timer_start_h != null) {
+      const pad2 = (n) => n.toString().padStart(2, '0');
+      const stEl = document.getElementById('timerStart');
+      if (stEl) stEl.value = pad2(data.timer_start_h) + ':' + pad2(data.timer_start_m);
+      const etEl = document.getElementById('timerEnd');
+      if (etEl) etEl.value = pad2(data.timer_end_h) + ':' + pad2(data.timer_end_m);
+    }
+
     // AP-Mode: WiFi-Tab anzeigen
     if (data.ap_mode) {
       switchTab('wifi');
@@ -172,6 +212,142 @@ async function loadTelemetry() {
     console.error('[pool] loadTelemetry error:', e);
   }
 }
+
+// ── Auth UI Gating ──
+
+function updateAuthUI() {
+  const loginBanner = document.getElementById('loginBanner');
+  if (loginBanner) {
+    loginBanner.style.display = isAuthenticated ? 'none' : 'flex';
+  }
+
+  // Dashboard: disable interactive controls
+  const interactiveSelectors = [
+    '.pump-card',                       // pump toggle
+    '.mode-card',                       // mode buttons
+    '#poolTemp',                        // max pool temp click
+    '#solarTemp',                       // min solar temp click
+  ];
+  for (const sel of interactiveSelectors) {
+    for (const el of document.querySelectorAll(sel)) {
+      if (isAuthenticated) {
+        el.style.cursor = el.dataset.origCursor || '';
+        if (el.dataset.origOnclick) {
+          el.setAttribute('onclick', el.dataset.origOnclick);
+        }
+      } else {
+        if (!el.dataset.origCursor) el.dataset.origCursor = el.style.cursor;
+        if (el.getAttribute('onclick')) {
+          el.dataset.origOnclick = el.getAttribute('onclick');
+          el.removeAttribute('onclick');
+        }
+        el.style.cursor = 'default';
+      }
+    }
+  }
+
+  // Hide pump toggle hints
+  for (const el of document.querySelectorAll('.pump-toggle-hint')) {
+    el.style.display = isAuthenticated ? '' : 'none';
+  }
+
+  // Hide bottom tab bar when not authenticated — read-only dashboard only
+  const tabBar = document.getElementById('tabBar');
+  if (tabBar) tabBar.style.display = isAuthenticated ? '' : 'none';
+
+  // Tab visibility
+  const tabsToHide = ['tab-sensors'];
+  for (const id of tabsToHide) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = isAuthenticated ? '' : 'none';
+  }
+
+  // Hide Sensors tab button
+  const sensorsTabBtn = document.querySelector('.tab-bar-item[data-tab="sensors"]');
+  if (sensorsTabBtn) sensorsTabBtn.style.display = isAuthenticated ? '' : 'none';
+
+  // More menu: hide admin items (wifi, mqtt, system)
+  for (const item of document.querySelectorAll('.more-sheet-item')) {
+    const text = item.textContent.trim().toLowerCase();
+    if (text === 'wifi' || text === 'mqtt' || text.startsWith('system') || text.startsWith('🔒')) {
+      item.style.display = isAuthenticated ? '' : 'none';
+    }
+  }
+
+  // Pool tab: disable all inputs, selects, buttons
+  for (const el of document.querySelectorAll('#tab-pool input, #tab-pool select, #tab-pool button')) {
+    el.disabled = !isAuthenticated;
+    if (!isAuthenticated) {
+      el.style.opacity = '0.6';
+      el.style.cursor = 'not-allowed';
+    } else {
+      el.style.opacity = '';
+      el.style.cursor = '';
+    }
+  }
+
+  // Time tab: disable all inputs, selects, buttons
+  for (const el of document.querySelectorAll('#tab-time input, #tab-time select, #tab-time button')) {
+    el.disabled = !isAuthenticated;
+    if (!isAuthenticated) {
+      el.style.opacity = '0.6';
+      el.style.cursor = 'not-allowed';
+    } else {
+      el.style.opacity = '';
+      el.style.cursor = '';
+    }
+  }
+
+  // System / WiFi / MQTT / Sensors tabs: fully hide when not authenticated
+  for (const id of ['tab-system', 'tab-wifi', 'tab-mqtt']) {
+    const el = document.getElementById(id);
+    if (el && el.style.display !== 'block') el.style.display = isAuthenticated ? '' : 'none';
+  }
+
+  // Sensors tab: disable radio buttons and hide save bar
+  if (!isAuthenticated) {
+    for (const el of document.querySelectorAll('#tab-sensors input[type="radio"]')) {
+      el.disabled = true;
+    }
+    const saveBar = document.getElementById('sensorSaveBar');
+    if (saveBar) saveBar.style.display = 'none';
+  }
+}
+
+// ── Login Modal ──
+
+function showLoginForm() {
+  const modal = document.getElementById('loginModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeLoginForm() {
+  const modal = document.getElementById('loginModal');
+  if (modal) modal.style.display = 'none';
+  document.getElementById('loginError').style.display = 'none';
+}
+
+// Attach login form handler when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('loginForm');
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const pwd = document.getElementById('loginPassword').value;
+      const err = document.getElementById('loginError');
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'password=' + encodeURIComponent(pwd)
+      });
+      if (res.status === 200) {
+        window.location.reload();
+      } else {
+        err.style.display = 'block';
+      }
+    });
+  }
+});
 
 // ── WiFi Scan ──
 

@@ -436,7 +436,9 @@ class LittleFSClass {
 public:
   bool begin(bool) { return true; }
   bool exists(const char *) { return false; }
+  bool mkdir(const char *) { return true; }
   File open(const char *, const char * = "r") { return File(); }
+  File open(const String &path, const char *mode = "r") { return open(path.c_str(), mode); }
   bool remove(const char *) { return true; }
   bool rename(const char *, const char *) { return true; }
   void end() {}
