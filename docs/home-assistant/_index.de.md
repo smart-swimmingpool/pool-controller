@@ -40,8 +40,9 @@ ergibt `sensor.<prefix>_pool_temperature`). Ersetze `<prefix>` durch deinen GerÃ
 | `sensor` | `system_uptime` | diagnostic | Betriebszeit (Dauer) |
 | `sensor` | `effective_runtime` | diagnostic | Effektive Filterlaufzeit (Dauer) |
 | `sensor` | `local_time` | diagnostic | Aktuelle Ortszeit |
-| `sensor` | `pool_sensor_found` | diagnostic | Status Pool-Sensor (gefunden/fehlt) |
-| `sensor` | `solar_sensor_found` | diagnostic | Status Solar-Sensor (gefunden/fehlt) |
+| `binary_sensor` | `pool_sensor_found` | diagnostic | Status Pool-Sensor (gefunden/fehlt) |
+| `binary_sensor` | `solar_sensor_found` | diagnostic | Status Solar-Sensor (gefunden/fehlt) |
+| `binary_sensor` | `mqtt_status` | diagnostic | MQTT-Verbindungsstatus |
 | `select` | `operation_mode` | â€” | Betriebsart (auto/manu/boost/timer) |
 | `select` | `pool_sensor` | config | Pool-Sensor-Adresszuordnung |
 | `select` | `solar_sensor` | config | Solar-Sensor-Adresszuordnung |

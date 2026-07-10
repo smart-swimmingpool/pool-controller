@@ -39,8 +39,9 @@ produces `sensor.<prefix>_pool_temperature`). Replace `<prefix>` with your devic
 | `sensor` | `system_uptime` | diagnostic | Device uptime (duration) |
 | `sensor` | `effective_runtime` | diagnostic | Effective circulation runtime (duration) |
 | `sensor` | `local_time` | diagnostic | Current local time |
-| `sensor` | `pool_sensor_found` | diagnostic | Pool sensor detection status |
-| `sensor` | `solar_sensor_found` | diagnostic | Solar sensor detection status |
+| `binary_sensor` | `pool_sensor_found` | diagnostic | Pool sensor detection status |
+| `binary_sensor` | `solar_sensor_found` | diagnostic | Solar sensor detection status |
+| `binary_sensor` | `mqtt_status` | diagnostic | MQTT connection status |
 | `select` | `operation_mode` | — | Operating mode (auto/manu/boost/timer) |
 | `select` | `pool_sensor` | config | Pool sensor address mapping |
 | `select` | `solar_sensor` | config | Solar sensor address mapping |
