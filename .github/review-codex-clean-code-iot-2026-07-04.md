@@ -39,7 +39,7 @@ return String("homeassistant/") + component + "/pool-controller/" + objectId;
 Betroffen sind auch:
 - `src/MqttPublisher.cpp:538-609` — `String(poolTemperatureNode.getTemperature(), 1).c_str()` bei jedem publish
 - `src/WebPortal.cpp:724` — `"{\"status\":\"ok\",\"mode\":\"" + mode + "\"}"` String-Konkatenation im API-Handler
-- `src/WebPortal.cpp:756` — `"{\"status\":\"ok\",\"state\":" + String(newState ? "true" : "false") + "}"` 
+- `src/WebPortal.cpp:756` — `"{\"status\":\"ok\",\"state\":" + String(newState ? "true" : "false") + "}"`
 - `src/WebPortal.cpp:799` — `"session=" + activeSessionToken_ + "; Path=/; ..."`
 
 **Empfehlung:** `getBaseTopic()` durch `snprintf` in `char[]`-Buffer ersetzen oder eine statische `char[]`-Cache-Strategie implementieren. Für `publishStates()` eine einzige `char topic[128]` pro publish-Slot vorhalten.
@@ -285,6 +285,7 @@ Die Datei ist mit 1035 Zeilen die größte im Projekt und erfüllt mehrere Aufga
 ## 📋 Handlungsempfehlungen nach Priorität
 
 ### Sofort (nächster Release)
+
 | # | Befund | Aktion | Aufwand |
 |---|--------|--------|---------|
 | 1 | **K1** String in MqttPublisher-Loop | `getBaseTopic()` → `snprintf()` + `char[]` | 2h |
@@ -293,6 +294,7 @@ Die Datei ist mit 1035 Zeilen die größte im Projekt und erfüllt mehrere Aufga
 | 4 | **K7** Code-Duplikat Sensor-Mapping | In Helper extrahieren | 0.5h |
 
 ### Nächster Minor-Release
+
 | # | Befund | Aktion | Aufwand |
 |---|--------|--------|---------|
 | 5 | **K4** Millis-Wrap-Robustheit | Einheitliche Wrap-sichere Formel | 1h |
@@ -300,6 +302,7 @@ Die Datei ist mit 1035 Zeilen die größte im Projekt und erfüllt mehrere Aufga
 | 7 | **C3** Extern-Vernetzung | Zentrale `Nodes.hpp` | 1h |
 
 ### Tech-Debt (nächster Major)
+
 | # | Befund | Aktion | Aufwand |
 |---|--------|--------|---------|
 | 8 | **C2** Mqtt-Command-Router | Command-Pattern | 4h |

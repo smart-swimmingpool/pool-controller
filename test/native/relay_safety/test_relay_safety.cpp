@@ -225,8 +225,8 @@ void test_rule_timer_solar_off_when_pool_off() {
   rule.setTimerSetting(toTimerSetting(outsideWindowRelativeToNow(now)));
   rule.setPoolTemperature(25.0f);
 
-  solarPump.setSwitch(true);  // RuleTimer never turns solar on itself, but
-                               // guard against it ever failing to turn it off.
+  solarPump.setSwitch(true);  // RuleTimer never turns solar on itself,
+  // but guard against it ever failing to turn it off.
   CHECK(solarPump.getSwitch() == true);
 
   rule.loop();
