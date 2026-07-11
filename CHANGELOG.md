@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.2.0](https://github.com/smart-swimmingpool/pool-controller/compare/v4.1.1...v4.2.0) (2026-07-11)
+
+
+### Features
+
+* **web:** add /api/fs/upload endpoint for OTA-safe web asset deployment ([cee0b4a](https://github.com/smart-swimmingpool/pool-controller/commit/cee0b4aad3eedcc8e322086898e15bea18f87fca))
+* **web:** make dashboard and operating parameters visible without login ([919bbde](https://github.com/smart-swimmingpool/pool-controller/commit/919bbde875d92ddf53a2a831bbcb356528344cc7))
+
+
+### Bug Fixes
+
+* **ci:** fix native test build and clang-format violations ([ba6a1a8](https://github.com/smart-swimmingpool/pool-controller/commit/ba6a1a864d741e84ed9ab9632290de0cbc0aaac4))
+* **norvi:** move solar pump relay from R1 (GPIO12) to R5 (GPIO33) ([#158](https://github.com/smart-swimmingpool/pool-controller/issues/158)) ([5cf8fda](https://github.com/smart-swimmingpool/pool-controller/commit/5cf8fdaecafcc48350a6ec4008fda075af844a0c))
+* **web:** use streaming multipart upload for /api/fs/upload ([0c38f50](https://github.com/smart-swimmingpool/pool-controller/commit/0c38f506be573f97f58788885ddce26a384c0420))
+
 ## [4.1.1](https://github.com/smart-swimmingpool/pool-controller/compare/v4.1.0...v4.1.1) (2026-07-07)
 
 
