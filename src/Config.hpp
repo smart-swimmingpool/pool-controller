@@ -91,6 +91,12 @@ constexpr std::uint8_t PIN_RELAY_POOL{14};
  * otherwise unused on NORVI builds.
  */
 constexpr std::uint8_t PIN_RELAY_SOLAR{33};
+static_assert(PIN_RELAY_SOLAR != 12,
+  "PIN_RELAY_SOLAR must not be reverted to GPIO12 (Relay Output 1) without "
+  "confirming the field hardware fault is resolved — see the doc comment "
+  "above and docs/norvi-ae01-r.md for context. R1 was found permanently "
+  "conducting (welded/fused contact or NO/NC miswiring) on at least one "
+  "field unit; Relay Output 0 uses identical firmware logic and works.");
 /** @brief Status LED — external LED via transistor output 0.1 (open-collector, 100 mA max). */
 constexpr std::uint8_t PIN_LED_STATUS{27};
 /** @brief Optional warning LED — not used on NORVI. */
