@@ -80,8 +80,23 @@ constexpr std::uint8_t PIN_DS_SOLAR{25};
 constexpr std::uint8_t PIN_DS_POOL{25};
 /** @brief Relay control pin — pool circulation pump (Relay Output 0). */
 constexpr std::uint8_t PIN_RELAY_POOL{14};
-/** @brief Relay control pin — solar heating pump (Relay Output 1). */
-constexpr std::uint8_t PIN_RELAY_SOLAR{12};
+/**
+ * @brief Relay control pin — solar heating pump.
+ *
+ * Moved from Relay Output 1 (GPIO12) to Relay Output 5 (GPIO33): a field
+ * unit's R1 channel was found to be permanently conducting (relay audibly
+ * clicks on setSwitch(), but COM1/NO1 never opens) — a hardware fault
+ * (welded/fused contact or NO/NC miswiring), not a firmware issue: R0 uses
+ * the identical RelayModuleNode logic and switches correctly. R5/GPIO33 is
+ * otherwise unused on NORVI builds.
+ */
+constexpr std::uint8_t PIN_RELAY_SOLAR{33};
+static_assert(PIN_RELAY_SOLAR != 12,
+  "PIN_RELAY_SOLAR must not be reverted to GPIO12 (Relay Output 1) without "
+  "confirming the field hardware fault is resolved — see the doc comment "
+  "above and docs/norvi-ae01-r.md for context. R1 was found permanently "
+  "conducting (welded/fused contact or NO/NC miswiring) on at least one "
+  "field unit; Relay Output 0 uses identical firmware logic and works.");
 /** @brief Status LED — external LED via transistor output 0.1 (open-collector, 100 mA max). */
 constexpr std::uint8_t PIN_LED_STATUS{27};
 /** @brief Optional warning LED — not used on NORVI. */

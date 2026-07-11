@@ -57,7 +57,7 @@ pin mapping that avoids the occupied and input-only pins:
 | `PIN_DS_SOLAR`    |    **GPIO25**     | DS18B20 — Solar collector temperature        |       Expansion Port Pin 1       |
 | `PIN_DS_POOL`     |    **GPIO25**     | DS18B20 — Pool water temperature             | Shared bus on GPIO25 (expansion) |
 | `PIN_RELAY_POOL`  |  **GPIO14** (R0)  | Relay — Pool circulation pump                |          Relay Output 0          |
-| `PIN_RELAY_SOLAR` |  **GPIO12** (R1)  | Relay — Solar heating pump                   |          Relay Output 1          |
+| `PIN_RELAY_SOLAR` |  **GPIO33** (R5)  | Relay — Solar heating pump                   |          Relay Output 5          |
 | `PIN_LED_STATUS`  | **GPIO27** (T0.1) | Status LED (external, via transistor output) |      Transistor Output 0.1       |
 | `PIN_OLED_SDA`    |    **GPIO16**     | I2C SDA — built-in 0.96" OLED (SSD1306)      |          Internal (I2C)          |
 | `PIN_OLED_SCL`    |    **GPIO17**     | I2C SCL — built-in 0.96" OLED (SSD1306)      |          Internal (I2C)          |
@@ -213,14 +213,23 @@ to the default device index.
  ─── RELAY OUTPUTS (built-in) ─────────────────────────────────────────
 
    NORVI Relay Output 0 (GPIO14):   Pool pump
-   NORVI Relay Output 1 (GPIO12):   Solar pump
+   NORVI Relay Output 5 (GPIO33):   Solar pump
 
    L (mains) ─── RCD ─── MCB ──┬── Relay COM0 ── Pool Pump NO
-                                └── Relay COM1 ── Solar Pump NO
+                                └── Relay COM5 ── Solar Pump NO
    N (neutral) ───────────────────────── Neutral bar ── Pump N
 
    The NORVI relays are Normally Open (SPST) — connect your 230V AC
    loads between COM and NO. The relays are rated 5A/250V AC.
+
+   > **Note:** Solar pump moved from Relay Output 1 (GPIO12) to Relay
+   > Output 5 (GPIO33) after a field unit's R1 channel was found
+   > permanently conducting (relay audibly clicks, but COM1/NO1 never
+   > opens) — a hardware fault (welded/fused contact or NO/NC
+   > miswiring), confirmed not to be a firmware issue since Relay
+   > Output 0 uses identical control logic and switches correctly.
+   > If your R1 channel works fine, you can keep using it by reverting
+   > `PIN_RELAY_SOLAR` in `Config.hpp`.
 
    ⚡ Relay polarity: Unlike standard external relay modules (which are
    typically active-LOW: LOW = ON, HIGH = OFF), the NORVI AE01-R built-in
@@ -318,7 +327,7 @@ ESP32 are both powered from this single supply.
 | **Relay power**  | 5V to relay module             | Integrated (24V → relay coils)                    |
 | **Relay polarity** | Active-LOW (LOW = ON)        | **Active-HIGH** (HIGH = ON)                       |
 | **Sensor pins**  | GPIO32, GPIO33            | GPIO25 (Exp Port), GPIO5 (solder)                 |
-| **Relay pins**   | GPIO25, GPIO26            | GPIO14 (R0), GPIO12 (R1)                          |
+| **Relay pins**   | GPIO25, GPIO26            | GPIO14 (R0), GPIO33 (R5)                          |
 | **Status LED**   | Built-in (GPIO2)          | External via GPIO27 (T0.1)                        |
 | **OLED display** | None                      | Built-in 0.96" (SSD1306) — 4 info pages + QR code |
 | **Push buttons** | BOOT button (GPIO0)       | 3 front buttons — cycle pages & modes             |
@@ -377,7 +386,7 @@ pio run -e norvi_ae01_r -t uploadfs
 |   3    | RS-485 RX (shared with USB)            |              ❌              |
 |   4    | RS-485 Flow Control                    |              ❌              |
 | **5**  | **— (free GPIO, no NORVI peripheral)** | ✅ **DS18B20 Pool (solder)** |
-|   12   | **Relay Output 1**                     |        ✅ Solar pump         |
+|   12   | Relay Output 1 (avoid — see note above) |              ❌              |
 |   13   | Relay Output 2                         |              ❌              |
 |   14   | **Relay Output 0**                     |         ✅ Pool pump         |
 |   15   | Relay Output 3                         |              ❌              |
@@ -393,7 +402,7 @@ pio run -e norvi_ae01_r -t uploadfs
 |   26   | Transistor Output 0.0                  |          ❌ (free)           |
 |   27   | **Transistor Output 0.1**              |   ✅ Status LED (external)   |
 | **32** | **Analog Input / Buttons**             |   ✅ 3 front-panel buttons   |
-|   33   | Relay Output 5                         |              ❌              |
+| **33** | **Relay Output 5**                     |       ✅ Solar pump          |
 |   34   | Digital Input 2 (input only)           |              ❌              |
 |   35   | Digital Input 3 (input only)           |              ❌              |
 |   38   | —                                      |              ❌              |

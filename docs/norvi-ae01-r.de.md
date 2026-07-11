@@ -58,7 +58,7 @@ Pinbelegung ausgewählt, die die belegten und reinen-Eingang-Pins vermeidet:
 | `PIN_DS_SOLAR`    |    **GPIO25**     | DS18B20 — Solar-Kollektortemperatur         |          Erweiterungsport Pin 1          |
 | `PIN_DS_POOL`     |    **GPIO25**     | DS18B20 — Pool-Wassertemperatur             | Shared Bus auf GPIO25 (Erweiterungsport) |
 | `PIN_RELAY_POOL`  |  **GPIO14** (R0)  | Relais — Pool-Umwälzpumpe                   |             Relaisausgang 0              |
-| `PIN_RELAY_SOLAR` |  **GPIO12** (R1)  | Relais — Solarheizungspumpe                 |             Relaisausgang 1              |
+| `PIN_RELAY_SOLAR` |  **GPIO33** (R5)  | Relais — Solarheizungspumpe                 |             Relaisausgang 5              |
 | `PIN_LED_STATUS`  | **GPIO27** (T0.1) | Status-LED (extern, über Transistorausgang) |          Transistorausgang 0.1           |
 | `PIN_OLED_SDA`    |    **GPIO16**     | I2C SDA — eingebautes 0,96" OLED (SSD1306)  |               Intern (I2C)               |
 | `PIN_OLED_SCL`    |    **GPIO17**     | I2C SCL — eingebautes 0,96" OLED (SSD1306)  |               Intern (I2C)               |
@@ -212,15 +212,25 @@ kommt zum Einsatz.
  ─── RELAISAUSGÄNGE (eingebaut) ───────────────────────────────────────
 
    NORVI Relaisausgang 0 (GPIO14):  Pool-Pumpe
-   NORVI Relaisausgang 1 (GPIO12):  Solar-Pumpe
+   NORVI Relaisausgang 5 (GPIO33):  Solar-Pumpe
 
    L (Außenleiter) ─── RCD ─── MCB ──┬── Relais COM0 ── Pool-Pumpe NO
-                                     └── Relais COM1 ── Solar-Pumpe NO
+                                     └── Relais COM5 ── Solar-Pumpe NO
    N (Neutral) ──────────────────────────── Neutralleiter ── Pumpen N
 
    Die NORVI-Relais sind Schließer (SPST) — schließe deine 230V AC
    Verbraucher zwischen COM und NO an. Die Relais sind für 5A/250V AC
    ausgelegt.
+
+   > **Hinweis:** Die Solar-Pumpe wurde von Relaisausgang 1 (GPIO12) auf
+   > Relaisausgang 5 (GPIO33) verlegt, nachdem bei einem Feldgerät der
+   > R1-Kanal dauerhaft leitend war (Relais klickt hörbar beim
+   > Schalten, aber COM1/NO1 öffnet nie) — ein Hardwarefehler
+   > (verschweißter Kontakt oder NO/NC-Verwechslung), nachweislich kein
+   > Firmware-Fehler, da Relaisausgang 0 dieselbe Schaltlogik nutzt und
+   > korrekt funktioniert. Falls dein R1-Kanal einwandfrei funktioniert,
+   > kannst du ihn weiterverwenden, indem du `PIN_RELAY_SOLAR` in
+   > `Config.hpp` zurücksetzt.
 
    ⚡ Relais-Polarität: Im Gegensatz zu externen Relaismodulen (die typischerweise
    active-LOW sind: LOW = EIN, HIGH = AUS) sind die eingebauten NORVI-Relais
@@ -321,7 +331,7 @@ der ESP32 werden gemeinsam aus dieser Spannung versorgt.
 | **Relais-Strom** | 5V an Relaismodul             | Integriert (24V → Relaisspulen)                     |
 | **Relais-Polarität** | Active-LOW (LOW = EIN)   | **Active-HIGH** (HIGH = EIN)                        |
 | **Sensor-Pins**  | GPIO32, GPIO33           | GPIO25 (Exp Port), GPIO5 (löten)                    |
-| **Relais-Pins**  | GPIO25, GPIO26           | GPIO14 (R0), GPIO12 (R1)                            |
+| **Relais-Pins**  | GPIO25, GPIO26           | GPIO14 (R0), GPIO33 (R5)                            |
 | **Status-LED**   | Eingebaut (GPIO2)        | Extern über GPIO27 (T0.1)                           |
 | **OLED-Display** | Keines                   | Eingebaut 0,96" (SSD1306) — 4 Info-Seiten + QR-Code |
 | **Drucktaster**  | BOOT-Taster (GPIO0)      | 3 Fronttaster — Seiten & Modi                       |
@@ -381,7 +391,7 @@ pio run -e norvi_ae01_r -t uploadfs
 |   3    | RS-485 RX (mit USB geteilt)                |              ❌              |
 |   4    | RS-485 Flusskontrolle                      |              ❌              |
 | **5**  | **— (freier GPIO, kein NORVI-Peripherie)** | ✅ **DS18B20 Pool (löten)**  |
-|   12   | **Relaisausgang 1**                        |        ✅ Solar-Pumpe        |
+|   12   | Relaisausgang 1 (vermeiden — siehe Hinweis oben) |              ❌              |
 |   13   | Relaisausgang 2                            |              ❌              |
 |   14   | **Relaisausgang 0**                        |        ✅ Pool-Pumpe         |
 |   15   | Relaisausgang 3                            |              ❌              |
@@ -397,7 +407,7 @@ pio run -e norvi_ae01_r -t uploadfs
 |   26   | Transistorausgang 0.0                      |          ❌ (frei)           |
 |   27   | **Transistorausgang 0.1**                  |    ✅ Status-LED (extern)    |
 | **32** | **Analogeingang / Taster**                 |       ✅ 3 Fronttaster       |
-|   33   | Relaisausgang 5                            |              ❌              |
+| **33** | **Relaisausgang 5**                        |       ✅ Solar-Pumpe         |
 |   34   | Digitaleingang 2 (nur Eingang)             |              ❌              |
 |   35   | Digitaleingang 3 (nur Eingang)             |              ❌              |
 |   38   | —                                          |              ❌              |
