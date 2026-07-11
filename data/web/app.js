@@ -37,6 +37,7 @@ console.log('[pool] app.js loaded, version=2026-06-05');
 // ── Auth State ──
 
 let isAuthenticated = false;
+let hasAutoSwitchedToWifi = false;  // one-shot guard so AP-mode redirect doesn't fight user navigation
 
 async function loadTelemetry() {
   try {
@@ -185,9 +186,15 @@ async function loadTelemetry() {
       if (etEl) etEl.value = pad2(data.timer_end_h) + ':' + pad2(data.timer_end_m);
     }
 
-    // AP-Mode: WiFi-Tab anzeigen
+    // AP-Mode: WiFi-Tab anzeigen (nur einmalig — nicht bei jedem Poll erzwingen,
+    // sonst überschreibt es die manuelle Tab-Navigation des Nutzers)
     if (data.ap_mode) {
-      switchTab('wifi');
+      if (!hasAutoSwitchedToWifi) {
+        switchTab('wifi');
+        hasAutoSwitchedToWifi = true;
+      }
+    } else {
+      hasAutoSwitchedToWifi = false;
     }
 
     // About Tab – system info
@@ -255,11 +262,13 @@ function updateAuthUI() {
   const tabBar = document.getElementById('tabBar');
   if (tabBar) tabBar.style.display = isAuthenticated ? '' : 'none';
 
-  // Tab visibility
+  // Tab visibility — only ever force-hide when unauthenticated. Never force-show:
+  // switchTab() is the sole authority for which tab is currently visible, otherwise
+  // this would re-reveal a hidden tab on every poll and fight user navigation.
   const tabsToHide = ['tab-sensors'];
   for (const id of tabsToHide) {
     const el = document.getElementById(id);
-    if (el) el.style.display = isAuthenticated ? '' : 'none';
+    if (el && !isAuthenticated) el.style.display = 'none';
   }
 
   // Hide Sensors tab button
@@ -298,10 +307,14 @@ function updateAuthUI() {
     }
   }
 
-  // System / WiFi / MQTT / Sensors tabs: fully hide when not authenticated
+  // System / WiFi / MQTT / Sensors tabs: fully hide when not authenticated. Never
+  // force-show here — that previously used `''` (empty string), which falls back
+  // to the CSS default `display:block`, making the tab visible again on every 2s
+  // poll regardless of which tab switchTab() had actually activated (the reported
+  // "always jumps back to WiFi Settings" bug).
   for (const id of ['tab-system', 'tab-wifi', 'tab-mqtt']) {
     const el = document.getElementById(id);
-    if (el && el.style.display !== 'block') el.style.display = isAuthenticated ? '' : 'none';
+    if (el && !isAuthenticated) el.style.display = 'none';
   }
 
   // Sensors tab: disable radio buttons and hide save bar
