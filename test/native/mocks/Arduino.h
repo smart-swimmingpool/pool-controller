@@ -441,7 +441,9 @@ class LittleFSClass {
 public:
   bool begin(bool) { return true; }
   bool exists(const char *) { return false; }
+  bool mkdir(const char *) { return true; }
   File open(const char *, const char * = "r") { return File(); }
+  File open(const String &path, const char *mode = "r") { return open(path.c_str(), mode); }
   bool remove(const char *) { return true; }
   bool rename(const char *, const char *) { return true; }
   void end() {}
@@ -455,6 +457,13 @@ static LittleFSClass LittleFS;
 #define F(x) (x)
 #define snprintf_P snprintf
 #define strlcpy_P strlcpy
+
+// strlcat — BSD/ESP32 extension; only declared here when not provided by libc.
+// CMakeLists.txt's CheckSymbolExists sets HAVE_STRLCAT for glibc ≥ 2.38 / macOS.
+// When not set, stubs.cpp provides the implementation.
+#ifndef HAVE_STRLCAT
+extern "C" size_t strlcat(char *dst, const char *src, size_t siz);
+#endif
 #define strcmp_P strcmp
 #define vsnprintf_P vsnprintf
 #define pgm_read_byte(x) (*(const uint8_t *)(x))

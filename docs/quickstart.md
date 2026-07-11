@@ -47,17 +47,17 @@ Hier ist die **komplette Teileliste** mit direkten Links zu empfohlenen Shops (S
 
 ### 🛒 Teileliste
 
-| **#** | **Komponente**                     | **Menge** | **Preis (ca.)** | **Empfohlene Shops**                                                                 | **Hinweise**                                                                                     |
-|-------|------------------------------------|-----------|------------------|------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------|
-| 1     | ESP32 DevKit V1                     | 1         | 10–15€           | [Amazon](https://www.amazon.de/s?k=ESP32+DevKit+V1), [Reichelt](https://www.reichelt.de/), [AliExpress](https://www.aliexpress.com/) | **Mind. 4MB Flash**, z. B. "ESP32 DevKit V1" oder "NodeMCU-32S"                              |
-| 2     | DS18B20 Temperatur-Sensor (wasserdicht, Edelstahl, 1m Kabel) | 2         | 8–12€            | [Amazon](https://www.amazon.de/s?k=DS18B20+wasserdicht), [Conrad](https://www.conrad.de/), [AliExpress](https://www.aliexpress.com/) | **1x für Pool, 1x für Solarkreis**                                                           |
-| 3     | 2-Kanal 5V Relay-Modul (mit Optokoppler) | 1         | 5–8€             | [Amazon](https://www.amazon.de/s?k=2+Kanal+5V+Relay+Optokoppler), [Reichelt](https://www.reichelt.de/) | **Muss Aktiv-High sein!** (Prüfe Datenblatt oder Teste mit Jumper)                          |
-| 4     | Widerstand 4.7kΩ (¼W, Metallfilm)   | 2         | <1€              | [Reichelt](https://www.reichelt.de/), [Conrad](https://www.conrad.de/) | **Pull-Up für DS18B20**                                                                       |
-| 5     | Breadboard (830 Punkte) + Jumper-Kabel | 1         | 3–8€             | [Amazon](https://www.amazon.de/s?k=Breadboard+830), [Reichelt](https://www.reichelt.de/) | Für Prototyping                                                                               |
-| 6     | USB-Netzteil (5V/1A+)               | 1         | 5–10€            | Jedes USB-Ladegerät (z. B. Handy-Ladegerät)                                   | **Mind. 1A Stromstärke**                                                                       |
-| 7     | Gehäuse (IP54 oder höher)           | 1         | 5–10€            | [Amazon](https://www.amazon.de/s?k=IP54+Gehäuse), [Reichelt](https://www.reichelt.de/) | Optional, aber **empfohlen für Outdoor-Einsatz**                                              |
-| 8     | Schraubklemmen (2-Pin, 5mm Raster)  | 4–6       | 2–3€             | [Reichelt](https://www.reichelt.de/), [Conrad](https://www.conrad.de/) | Für einfache Verbindung der Sensoren/Relais                                                   |
-| **Gesamt** | | | **~45–75€** | | **Ohne Pumpen/Pool-Infrastruktur** |
+| **#**      | **Komponente**                                               | **Menge** | **Preis (ca.)** | **Empfohlene Shops**                                                                                                                 | **Hinweise**                                                       |
+| ---------- | ------------------------------------------------------------ | --------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| 1          | ESP32 DevKit V1                                              | 1         | 10–15€          | [Amazon](https://www.amazon.de/s?k=ESP32+DevKit+V1), [Reichelt](https://www.reichelt.de/), [AliExpress](https://www.aliexpress.com/) | **Mind. 4MB Flash**, z. B. "ESP32 DevKit V1" oder "NodeMCU-32S"    |
+| 2          | DS18B20 Temperatur-Sensor (wasserdicht, Edelstahl, 1m Kabel) | 2         | 8–12€           | [Amazon](https://www.amazon.de/s?k=DS18B20+wasserdicht), [Conrad](https://www.conrad.de/), [AliExpress](https://www.aliexpress.com/) | **1x für Pool, 1x für Solarkreis**                                 |
+| 3          | 2-Kanal 5V Relay-Modul (mit Optokoppler)                     | 1         | 5–8€            | [Amazon](https://www.amazon.de/s?k=2+Kanal+5V+Relay+Optokoppler), [Reichelt](https://www.reichelt.de/)                               | **Muss Aktiv-High sein!** (Prüfe Datenblatt oder Teste mit Jumper) |
+| 4          | Widerstand 4.7kΩ (¼W, Metallfilm)                            | 2         | <1€             | [Reichelt](https://www.reichelt.de/), [Conrad](https://www.conrad.de/)                                                               | **Pull-Up für DS18B20**                                            |
+| 5          | Breadboard (830 Punkte) + Jumper-Kabel                       | 1         | 3–8€            | [Amazon](https://www.amazon.de/s?k=Breadboard+830), [Reichelt](https://www.reichelt.de/)                                             | Für Prototyping                                                    |
+| 6          | USB-Netzteil (5V/1A+)                                        | 1         | 5–10€           | Jedes USB-Ladegerät (z. B. Handy-Ladegerät)                                                                                          | **Mind. 1A Stromstärke**                                           |
+| 7          | Gehäuse (IP54 oder höher)                                    | 1         | 5–10€           | [Amazon](https://www.amazon.de/s?k=IP54+Gehäuse), [Reichelt](https://www.reichelt.de/)                                               | Optional, aber **empfohlen für Outdoor-Einsatz**                   |
+| 8          | Schraubklemmen (2-Pin, 5mm Raster)                           | 4–6       | 2–3€            | [Reichelt](https://www.reichelt.de/), [Conrad](https://www.conrad.de/)                                                               | Für einfache Verbindung der Sensoren/Relais                        |
+| **Gesamt** |                                                              |           | **~45–75€**     |                                                                                                                                      | **Ohne Pumpen/Pool-Infrastruktur**                                 |
 
 ### 💡 Tipps zur Teilebeschaffung
 
@@ -125,21 +125,25 @@ Hier ist der **komplette Schaltplan** für den Pool Controller:
 ### 📋 Schritt-für-Schritt Aufbau auf dem Breadboard
 
 1. **ESP32 platzieren**
+
    - Setze das ESP32-Board **über die Mitte des Breadboards** (so dass die Pins auf beiden Seiten frei sind).
 
 2. **Stromversorgung anschließen**
+
    - Verbinde **5V** des USB-Netzteils mit der **5V-Leiste** des Breadboards.
    - Verbinde **GND** des USB-Netzteils mit der **GND-Leiste** des Breadboards.
    - Verbinde **ESP32 VIN** mit der **5V-Leiste** (für Relay-Modul).
    - Verbinde **ESP32 GND** mit der **GND-Leiste**.
 
 3. **DS18B20-Sensoren anschließen**
+
    - **VDD (rot)** → **3.3V-Leiste** des ESP32.
    - **GND (schwarz)** → **GND-Leiste**.
    - **DATA (gelb/weiß)** → **GPIO32 (Solar)** und **GPIO33 (Pool)**.
    - **Füge einen 4.7kΩ-Widerstand zwischen DATA und 3.3V hinzu** (Pull-Up).
 
 4. **Relay-Modul anschließen**
+
    - **VCC** → **5V-Leiste**.
    - **GND** → **GND-Leiste**.
    - **IN1** → **GPIO25** (Pool-Pumpe).
@@ -161,7 +165,7 @@ Hier ist der **komplette Schaltplan** für den Pool Controller:
 Hier ist ein **Beispiel-Foto** des Aufbaus:
 
 ![Pool Controller Breadboard Aufbau](https://github.com/smart-swimmingpool/pool-controller/raw/main/docs/images/pool-controller_breadboard.png)
-*Beispielaufbau auf einem Breadboard*
+_Beispielaufbau auf einem Breadboard_
 
 ---
 
@@ -176,9 +180,11 @@ Hier ist ein **Beispiel-Foto** des Aufbaus:
 ### 🔧 Option 1: Arduino IDE (einfachste Methode)
 
 1. **Arduino IDE installieren**
+
    - Lade die [Arduino IDE](https://www.arduino.cc/en/software) herunter und installiere sie.
 
 2. **ESP32-Board-Unterstützung hinzufügen**
+
    - Öffne die Arduino IDE.
    - Gehe zu **Datei → Einstellungen**.
    - Füge folgende URL unter **Zusätzliche Board-Verwalter-URLs** hinzu:
@@ -192,6 +198,7 @@ Hier ist ein **Beispiel-Foto** des Aufbaus:
    - Suche nach **esp32** und installiere das Paket.
 
 3. **Benötigte Bibliotheken installieren**
+
    - Gehe zu **Sketch → Bibliothek einbinden → Bibliotheken verwalten**.
    - Installiere folgende Bibliotheken:
      - **ArduinoJson** (von Benoît Blanchon, Version 7.3.0)
@@ -200,6 +207,7 @@ Hier ist ein **Beispiel-Foto** des Aufbaus:
      - **DallasTemperature** (von Miles Burton)
 
 4. **Projekt herunterladen**
+
    - Klone das Repository oder lade es als ZIP herunter:
 
      ```bash
@@ -212,6 +220,7 @@ Hier ist ein **Beispiel-Foto** des Aufbaus:
      `.ino`-Datei, die `src/main.cpp` inkludiert.
 
 5. **Board & Port auswählen**
+
    - Gehe zu **Werkzeuge → Board → ESP32 Arduino → ESP32 Dev Module**.
    - Wähle den **COM-Port** deines ESP32 aus (unter **Werkzeuge → Port**).
 
@@ -225,9 +234,11 @@ Hier ist ein **Beispiel-Foto** des Aufbaus:
 ### 🔧 Option 2: PlatformIO (für Fortgeschrittene)
 
 1. **PlatformIO installieren**
+
    - Installiere die [PlatformIO-Erweiterung](https://platformio.org/install) für VS Code.
 
 2. **Projekt öffnen**
+
    - Öffne den **`pool-controller`**-Ordner in VS Code.
    - PlatformIO erkennt das Projekt automatisch.
 
@@ -243,15 +254,18 @@ Hier ist ein **Beispiel-Foto** des Aufbaus:
 ### 📡 WiFi-Konfiguration (AP-Modus)
 
 1. **Stromversorgung anschließen**
+
    - Verbinde das ESP32 mit dem USB-Netzteil.
 
 2. **Auf AP-Modus warten**
+
    - Die **Status-LED** blinkt **schnell (5x pro Sekunde)** → AP-Modus aktiv.
    - Verbinde dein **Smartphone oder Laptop** mit dem WiFi-Netzwerk:
      - **SSID:** `Pool-Controller-Setup`
      - **Passwort:** Keines (offenes Netzwerk)
 
 3. **Web-Interface öffnen**
+
    - Öffne einen Browser und gehe zu:
 
    ```text
@@ -261,6 +275,7 @@ Hier ist ein **Beispiel-Foto** des Aufbaus:
    - Du wirst automatisch zum **Setup-Portal** weitergeleitet.
 
 4. **WiFi-Netzwerk auswählen**
+
    - Gehe zum Tab **WiFi Setup**.
    - Klicke auf **Scan Networks**.
    - Wähle dein **Heim-WiFi-Netzwerk** aus.
@@ -268,11 +283,13 @@ Hier ist ein **Beispiel-Foto** des Aufbaus:
    - Klicke auf **Save**.
 
 5. **Neustart abwarten**
+
    - Der Controller **startet neu** und verbindet sich mit deinem WiFi.
    - Die **Status-LED** blinkt **langsam (1x pro Sekunde)** → WiFi-Verbindung wird hergestellt.
    - Sobald die LED **dauerhaft leuchtet**, ist die Verbindung erfolgreich.
 
 6. **IP-Adresse finden**
+
    - Gehe zu deinem **Router** und suche nach dem Gerät **`Pool-Controller`** in der DHCP-Client-Liste.
    - Alternativ: Verwende einen **Netzwerk-Scanner** (z. B. `nmap`):
 
@@ -314,9 +331,11 @@ Hier ist ein **Beispiel-Foto** des Aufbaus:
 #### Option B: Home Assistant mit eingebautem MQTT-Broker
 
 1. **Home Assistant installieren**
+
    - Folge der [offiziellen Anleitung](https://www.home-assistant.io/installation/).
 
 2. **MQTT-Broker Add-on installieren**
+
    - Gehe zu **Supervisor → Add-on Store**.
    - Suche nach **Mosquitto broker** und installiere es.
    - Starte das Add-on und aktiviere **Start on boot**.
@@ -334,9 +353,11 @@ Hier ist ein **Beispiel-Foto** des Aufbaus:
 ### 🏡 Option A: Home Assistant (empfohlen)
 
 1. **Home Assistant starten**
+
    - Falls noch nicht geschehen, installiere [Home Assistant](https://www.home-assistant.io/).
 
 2. **MQTT-Integration aktivieren**
+
    - Gehe zu **Einstellungen → Geräte & Dienste**.
    - Klicke auf **+ Hinzufügen**.
    - Suche nach **MQTT** und wähle es aus.
@@ -344,6 +365,7 @@ Hier ist ein **Beispiel-Foto** des Aufbaus:
    - Klicke auf **Überprüfen** und dann auf **Einrichten**.
 
 3. **Geräte automatisch erkennen lassen**
+
    - Der Pool Controller **sollte automatisch erkannt werden** (Home Assistant MQTT Discovery).
    - Gehe zu **Einstellungen → Geräte & Dienste**.
    - Suche nach **Pool Controller** und füge es hinzu.
@@ -359,9 +381,11 @@ Hier ist ein **Beispiel-Foto** des Aufbaus:
 ### 🏡 Option B: openHAB
 
 1. **openHAB installieren**
+
    - Folge der [offiziellen Anleitung](https://www.openhab.org/docs/installation/).
 
 2. **MQTT-Binding installieren**
+
    - Gehe zu **Add-ons → Bindings → MQTT Binding** und installiere es.
 
 3. **MQTT-Broker konfigurieren**
@@ -393,6 +417,7 @@ Hier ist ein **Beispiel-Foto** des Aufbaus:
 ### 🌡️ Temperatur-Sensoren (DS18B20) testen
 
 1. **Sensoren überprüfen**
+
    - Öffne das **Web-Interface** des Controllers.
    - Gehe zum **Dashboard**-Tab.
    - Prüfe, ob die **Temperaturwerte** angezeigt werden:
@@ -401,17 +426,18 @@ Hier ist ein **Beispiel-Foto** des Aufbaus:
 
 2. **Häufige Probleme & Lösungen**
 
-   | **Problem**                          | **Lösung**                                                                                     |
-   |--------------------------------------|-------------------------------------------------------------------------------------------------|
-   | Sensor zeigt `-127°C` an              | **Kein Pull-Up-Widerstand** oder **falsche GPIO-Pins** → Prüfe 4.7kΩ-Widerstand und Pin-Belegung. |
-   | Sensor zeigt `85°C` an                | **Kurzschluss oder defekter Sensor** → Teste Sensor mit einfachem Arduino-Sketch.              |
-   | Sensor wird nicht erkannt            | **Falsche GPIO-Pins oder defektes Kabel** → Prüfe Verbindungen mit Multimeter.                 |
+   | **Problem**               | **Lösung**                                                                                        |
+   | ------------------------- | ------------------------------------------------------------------------------------------------- |
+   | Sensor zeigt `-127°C` an  | **Kein Pull-Up-Widerstand** oder **falsche GPIO-Pins** → Prüfe 4.7kΩ-Widerstand und Pin-Belegung. |
+   | Sensor zeigt `85°C` an    | **Kurzschluss oder defekter Sensor** → Teste Sensor mit einfachem Arduino-Sketch.                 |
+   | Sensor wird nicht erkannt | **Falsche GPIO-Pins oder defektes Kabel** → Prüfe Verbindungen mit Multimeter.                    |
 
 ---
 
 ### 🔌 Relay-Modul testen
 
 1. **Relays manuell steuern**
+
    - Gehe zum **Web-Interface → Configuration**-Tab.
    - Wähle den **Modus: Manual**.
    - Aktiviere **Pool Pump** oder **Solar Pump**.
@@ -431,16 +457,19 @@ Hier ist ein **Beispiel-Foto** des Aufbaus:
 ### 📌 Nächste Schritte
 
 1. **Automatisierung einrichten**
+
    - Konfiguriere **Regeln** (Auto, Timer, Boost) im Web-Interface.
    - Beispiel:
      - **Auto-Modus:** Pumpe läuft nur, wenn Solar-Temperatur > Pool-Temperatur + 5°C.
      - **Timer-Modus:** Pumpe läuft täglich von 8:00–20:00 Uhr.
 
 2. **Daten visualisieren**
+
    - **Grafana:** Importiere das [Grafana-Dashboard](https://github.com/smart-swimmingpool/grafana-dashboard) für Temperaturverläufe.
    - **Home Assistant:** Erstelle ein **Lovelace-Dashboard** mit allen Sensoren.
 
 3. **Erweiterungen**
+
    - **Wasserqualitätsmodul:** (Falls verfügbar) zur Überwachung von pH/Wert und Chlorid.
    - **Weitere Sensoren:** Drucksensoren, Durchflusssensoren.
 
@@ -452,14 +481,14 @@ Hier ist ein **Beispiel-Foto** des Aufbaus:
 
 ## 🆘 Häufige Probleme & Lösungen (FAQ)
 
-| **Problem**                          | **Lösung**                                                                                     |
-|--------------------------------------|-------------------------------------------------------------------------------------------------|
-| **Controller startet nicht**         | Prüfe USB-Kabel und Stromversorgung. Prüfe, ob die **Status-LED leuchtet**.                  |
-| **WiFi verbindet sich nicht**         | Prüfe WiFi-Passwort. Starte im **AP-Modus** neu und konfiguriere WiFi.                        |
-| **MQTT verbindet sich nicht**        | Prüfe **MQTT-Broker-IP/Port**. Prüfe, ob der Broker läuft (`sudo systemctl status mosquitto`). |
-| **Sensoren werden nicht erkannt**    | Prüfe **Pull-Up-Widerstände** (4.7kΩ). Prüfe **GPIO-Pins** in `Config.hpp`.                     |
-| **Relays schalten nicht**            | Prüfe **Aktiv-High/Aktiv-Low**. Prüfe **Stromversorgung des Relay-Moduls (5V)**.             |
-| **Home Assistant erkennt Controller nicht** | Prüfe **MQTT Discovery** (ab v3.3.0). Lösche alte Homie-Nachrichten vom Broker.         |
+| **Problem**                                 | **Lösung**                                                                                     |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| **Controller startet nicht**                | Prüfe USB-Kabel und Stromversorgung. Prüfe, ob die **Status-LED leuchtet**.                    |
+| **WiFi verbindet sich nicht**               | Prüfe WiFi-Passwort. Starte im **AP-Modus** neu und konfiguriere WiFi.                         |
+| **MQTT verbindet sich nicht**               | Prüfe **MQTT-Broker-IP/Port**. Prüfe, ob der Broker läuft (`sudo systemctl status mosquitto`). |
+| **Sensoren werden nicht erkannt**           | Prüfe **Pull-Up-Widerstände** (4.7kΩ). Prüfe **GPIO-Pins** in `Config.hpp`.                    |
+| **Relays schalten nicht**                   | Prüfe **Aktiv-High/Aktiv-Low**. Prüfe **Stromversorgung des Relay-Moduls (5V)**.               |
+| **Home Assistant erkennt Controller nicht** | Prüfe **MQTT Discovery** (ab v3.3.0). Lösche alte Homie-Nachrichten vom Broker.                |
 
 **📌 Ausführliche FAQ findest du hier:** [FAQ: Häufige Probleme & Lösungen](faq.md)
 

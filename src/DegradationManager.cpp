@@ -10,15 +10,11 @@
 
 #include "DegradationManager.hpp"
 #include "NetworkManager.hpp"
+#include "Nodes.hpp"
 #include "SystemMonitor.hpp"
 #include "TimeClientHelper.hpp"  // TimeDegradation, getTimeDegradation
-#include "RelayModuleNode.hpp"
 
 namespace PoolController {
-
-// Nodes declared in PoolController.cpp
-extern RelayModuleNode poolPumpNode;
-extern RelayModuleNode solarPumpNode;
 
 // Static member definitions
 DegradationLevel DegradationManager::currentLevel_ = DegradationLevel::NORMAL;
@@ -26,6 +22,7 @@ DegradationLevel DegradationManager::previousLevel_ = DegradationLevel::NORMAL;
 bool DegradationManager::poolSensorOk_ = false;
 bool DegradationManager::solarSensorOk_ = false;
 bool DegradationManager::forcedSafeMode_ = false;
+bool DegradationManager::sensorsEverReported_ = false;
 unsigned long DegradationManager::lastEvaluationMs_ = 0;
 
 // ===========================================================================
@@ -113,6 +110,7 @@ const char *DegradationManager::levelToString(DegradationLevel level) {
 }
 
 void DegradationManager::reportSensorStatus(const char *nodeId, bool valid) {
+  sensorsEverReported_ = true;  // Mark that at least one sensor has been reported
   if (strcmp(nodeId, "pool-temp") == 0) {
     poolSensorOk_ = valid;
   } else if (strcmp(nodeId, "solar-temp") == 0) {
@@ -191,7 +189,7 @@ DegradationLevel DegradationManager::evaluateLevel() {
   // Time is OK for GREEN + YELLOW (millis() estimate is usable up to 24h)
   bool timeOk = (getTimeDegradation() != TimeDegradation::RED);
   bool memoryOk = SystemMonitor::isHealthy();
-  bool sensorOk = poolSensorOk_ && solarSensorOk_;  // Both probes must be healthy
+  bool sensorOk = sensorsEverReported_ ? (poolSensorOk_ && solarSensorOk_) : true;  // Both probes must be healthy
 
   // Count active failures (memory failure = CRITICAL immediately).
   // Time loss without WiFi is a consequence, not an independent failure —

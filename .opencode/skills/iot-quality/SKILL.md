@@ -48,6 +48,8 @@ quality — it targets patterns that cause failures in always-on resource-constr
 │        function-local                          │
 │ □ 9. MQTT publish payload fits buffer         │
 │ □ 10. NVS prefs.end() called in all paths     │
+│ □ 11. CodeQL: No new critical/high alerts in  │
+│        src/ -- check security/code-scanning    │
 └─────────────────────────────────────────────┘
 ```
 

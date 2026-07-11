@@ -27,16 +27,16 @@ medium priority issues.
 
 ### Security Issues Addressed
 
-| Priority | Issue | Component | CWE | Status |
-|----------|-------|-----------|-----|--------|
-| **KRITISCH** | TLS/SSL certificate validation bypass | OTA Updater | CWE-295 | ✅ Fixed |
-| **KRITISCH** | Memory leak in NTP client | TimeClientHelper | CWE-401 | ✅ Fixed |
-| **HOCH** | Session token predictability | WebPortal | CWE-330 | ✅ Fixed |
-| **HOCH** | Missing input validation for SSID/password | WebPortal | CWE-20 | ✅ Fixed |
-| **HOCH** | Missing MQTT command validation | MqttPublisher | CWE-20 | ✅ Fixed |
-| **MITTEL** | String memory fragmentation | WebPortal | CWE-776 | ✅ Fixed |
-| **MITTEL** | No rate limiting for login attempts | WebPortal | CWE-307 | ✅ Fixed |
-| **MITTEL** | Insufficient JSON buffer sizes | WebPortal | CWE-770 | ✅ Fixed |
+| Priority     | Issue                                      | Component        | CWE     | Status   |
+| ------------ | ------------------------------------------ | ---------------- | ------- | -------- |
+| **KRITISCH** | TLS/SSL certificate validation bypass      | OTA Updater      | CWE-295 | ✅ Fixed |
+| **KRITISCH** | Memory leak in NTP client                  | TimeClientHelper | CWE-401 | ✅ Fixed |
+| **HOCH**     | Session token predictability               | WebPortal        | CWE-330 | ✅ Fixed |
+| **HOCH**     | Missing input validation for SSID/password | WebPortal        | CWE-20  | ✅ Fixed |
+| **HOCH**     | Missing MQTT command validation            | MqttPublisher    | CWE-20  | ✅ Fixed |
+| **MITTEL**   | String memory fragmentation                | WebPortal        | CWE-776 | ✅ Fixed |
+| **MITTEL**   | No rate limiting for login attempts        | WebPortal        | CWE-307 | ✅ Fixed |
+| **MITTEL**   | Insufficient JSON buffer sizes             | WebPortal        | CWE-770 | ✅ Fixed |
 
 ### Files Modified
 
@@ -63,18 +63,21 @@ In addition to the security fixes listed below, v3.2.1 includes new OTA safety f
 **Feature**: Added space verification before starting OTA updates to prevent bricking from insufficient flash space.
 
 **Implementation**:
+
 - Checks available flash space using `ESP.getFreeSketchSpace()`
 - Requires 15% safety margin above firmware size
 - Enforces minimum 1MB free space requirement
 - Prevents OTA start if space is insufficient
 
 **Technical Details**:
+
 - Safety margin: 15% (configurable via `kSpaceSafetyMargin`)
 - Minimum free space: 1MB (configurable via `kMinFreeSpace`)
 - Works on ESP32 and ESP8266
 - Native test fallback: 4MB for testing
 
 **Verification**:
+
 - ✅ Prevents OTA when space is insufficient
 - ✅ Allows OTA when sufficient space available
 - ✅ Handles edge cases (tiny firmware, large firmware)
@@ -86,18 +89,21 @@ In addition to the security fixes listed below, v3.2.1 includes new OTA safety f
 **Feature**: Added firmware size validation during download to prevent malicious or corrupted downloads.
 
 **Implementation**:
+
 - Validates Content-Length header from HTTP response
 - Enforces minimum (50KB) and maximum (2MB) firmware size limits
 - Prevents integer overflow attacks
 - Provides clear error messages for size mismatches
 
 **Technical Details**:
+
 - Minimum firmware size: 50KB (prevents truncated downloads)
 - Maximum firmware size: 2MB (prevents unreasonable downloads)
 - 10% tolerance for size variations
 - Integrated into `downloadAndApply()` method
 
 **Verification**:
+
 - ✅ Rejects firmware that's too small
 - ✅ Rejects firmware that's too large
 - ✅ Accepts firmware within valid range
@@ -115,11 +121,13 @@ In addition to the security fixes listed below, v3.2.1 includes new OTA safety f
 making the device vulnerable to man-in-the-middle attacks during firmware updates.
 
 **Impact**:
+
 - Attackers on the same network could intercept and modify firmware updates
 - Malicious firmware could be installed without user knowledge
 - Complete compromise of device security
 
 **Fix**:
+
 ```cpp
 // OLD (VULNERABLE):
 client.setInsecure();
@@ -140,14 +148,16 @@ client.setInsecure();
 ```
 
 **Technical Details**:
+
 - Uses ESP32's built-in CA bundle (`x509_crt_bundle`) when available (130+ root CAs)
 - Falls back to single root CA (`kGitHubRootCA`) for older ESP32 cores
 - Validates GitHub's TLS certificates properly
 - Compatible with GitHub's CDN which may use various CA chains (Let's Encrypt, Sectigo, etc.)
 - Addresses [openspec/specs/github-ca-chain.spec.md requirement
-R2](https://github.com/openspec/specs/blob/main/openspec/specs/github-ca-chain.spec.md)
+  R2](https://github.com/openspec/specs/blob/main/openspec/specs/github-ca-chain.spec.md)
 
 **Verification**:
+
 - ✅ Compiles with ESP32 Arduino core >= 2.0.0
 - ✅ Compiles with older ESP32 cores
 - ✅ TLS handshake succeeds with GitHub
@@ -163,11 +173,13 @@ R2](https://github.com/openspec/specs/blob/main/openspec/specs/github-ca-chain.s
 reconnection or restart.
 
 **Impact**:
+
 - Gradual memory consumption over time
 - Potential device instability or crashes
 - Reduced available heap for other operations
 
 **Fix**:
+
 ```cpp
 // OLD (LEAKING):
 NTPClient *timeClient = nullptr;
@@ -188,12 +200,14 @@ void timeClientSetup(const char *ntpServer) {
 ```
 
 **Technical Details**:
+
 - Uses `std::unique_ptr` for automatic memory management
 - Memory automatically freed when object goes out of scope
 - No manual `delete` required
 - Exception-safe
 
 **Verification**:
+
 - ✅ No memory leaks detected in valgrind tests
 - ✅ Memory usage stable over time
 - ✅ Proper cleanup on reconnection
@@ -210,11 +224,13 @@ void timeClientSetup(const char *ntpServer) {
 brute-force attacks.
 
 **Impact**:
+
 - Attackers could predict valid session tokens
 - Unauthorized access to authenticated sessions
 - Potential session hijacking
 
 **Fix**:
+
 ```cpp
 // OLD (PREDICTABLE):
 static String generateSecureToken(size_t length) {
@@ -262,6 +278,7 @@ static String generateSecureToken(size_t length) {
 ```
 
 **Technical Details**:
+
 - Uses ESP32 hardware RNG (`esp_random()`) for cryptographic security
 - Generates 32-character tokens from 62-character alphabet
 - Token space: 62^32 ≈ 2.28 × 10^57 possible combinations
@@ -269,6 +286,7 @@ static String generateSecureToken(size_t length) {
 - Session timeout reduced from 15 to 10 minutes
 
 **Verification**:
+
 - ✅ Tokens are cryptographically random
 - ✅ No predictable patterns in generated tokens
 - ✅ Compatible with ESP32 hardware RNG
@@ -284,11 +302,13 @@ static String generateSecureToken(size_t length) {
 buffer overflows or other issues.
 
 **Impact**:
+
 - Buffer overflow vulnerabilities
 - Device instability or crashes
 - Potential code execution
 
 **Fix**:
+
 ```cpp
 // Input validation for SSID
 if (ssid.length() == 0 || ssid.length() > 32) {
@@ -313,12 +333,14 @@ for (size_t i = 0; i < ssid.length(); i++) {
 ```
 
 **Technical Details**:
+
 - SSID: 1-32 characters, printable ASCII (32-126)
 - Password: 0-64 characters (empty allowed for open networks)
 - Rejects control characters and non-printable bytes
 - Returns appropriate HTTP 400 error codes
 
 **Verification**:
+
 - ✅ Rejects invalid SSIDs
 - ✅ Rejects passwords that are too long
 - ✅ Rejects non-printable characters
@@ -333,11 +355,13 @@ for (size_t i = 0; i < ssid.length(); i++) {
 **Vulnerability**: MQTT commands were not validated, allowing arbitrary commands to be executed via MQTT messages.
 
 **Impact**:
+
 - Unauthorized command execution
 - Device control by unauthorized users
 - Potential security bypass
 
 **Fix**:
+
 ```cpp
 // Always validate command value for security
 static const char *validFirmwareCommands[] = {"INSTALL"};
@@ -372,6 +396,7 @@ if (val < 0.0f || val > 40.0f) {
 ```
 
 **Technical Details**:
+
 - Whitelist-based command validation
 - Range validation for numeric parameters
 - Validation always active, regardless of MQTT authentication setting
@@ -379,6 +404,7 @@ if (val < 0.0f || val > 40.0f) {
 - Commands are validated before execution
 
 **Verification**:
+
 - ✅ Rejects invalid commands
 - ✅ Rejects out-of-range values
 - ✅ Accepts valid commands
@@ -396,11 +422,13 @@ if (val < 0.0f || val > 40.0f) {
 ESP32's limited heap.
 
 **Impact**:
+
 - Memory fragmentation over time
 - Reduced available heap
 - Potential device instability
 
 **Fix**:
+
 ```cpp
 // OLD (FRAGMENTING):
 String jsonString;
@@ -425,6 +453,7 @@ if (jsonLength > 0) {
 ```
 
 **Technical Details**:
+
 - Uses static character buffers instead of dynamic String objects
 - Direct serialization to buffer using ArduinoJson
 - Buffer overflow detection
@@ -432,6 +461,7 @@ if (jsonLength > 0) {
 - Mock-compatible (no `reserve()`, no range-based for loops)
 
 **Verification**:
+
 - ✅ No memory fragmentation detected
 - ✅ Stable memory usage over time
 - ✅ Buffer overflow detection works
@@ -446,11 +476,13 @@ if (jsonLength > 0) {
 **Vulnerability**: No rate limiting on login attempts, making brute-force attacks feasible.
 
 **Impact**:
+
 - Brute-force attacks possible
 - Credential stuffing attacks
 - Increased attack surface
 
 **Fix**:
+
 ```cpp
 // In WebPortal.hpp
 static constexpr uint32_t kMaxLoginAttempts = 5;
@@ -483,6 +515,7 @@ lastLoginAttemptTime_ = millis();
 ```
 
 **Technical Details**:
+
 - Maximum 5 login attempts per minute
 - 1-minute lockout period after exceeding limit
 - Proper handling of unsigned integer wrap-around
@@ -490,6 +523,7 @@ lastLoginAttemptTime_ = millis();
 - HTTP 429 (Too Many Requests) status code
 
 **Verification**:
+
 - ✅ Locks out after 5 failed attempts
 - ✅ Unlocks after 1 minute
 - ✅ Resets counter on successful login
@@ -505,11 +539,13 @@ lastLoginAttemptTime_ = millis();
 or long configuration values.
 
 **Impact**:
+
 - Incomplete JSON responses
 - Malformed data
 - Potential parsing errors on client side
 
 **Fix**:
+
 ```cpp
 // WiFi scan buffer increased from 2048 to 4096
 static char jsonBuffer[4096];
@@ -537,12 +573,14 @@ if (jsonLength > 0) {
 ```
 
 **Technical Details**:
+
 - WiFi scan buffer: 2048 → 4096 bytes
 - Config buffer: 1024 → 2048 bytes
 - Truncation detection added
 - Proper error handling (HTTP 500)
 
 **Verification**:
+
 - ✅ Handles environments with many WiFi networks
 - ✅ Handles long MQTT hostnames and credentials
 - ✅ Detects and reports buffer overflow
@@ -559,12 +597,14 @@ if (jsonLength > 0) {
 **Change**: Kept default "admin" password (SHA-256 hashed) with clear documentation that users must change it.
 
 **Rationale**:
+
 - Users expect a known default password for initial setup
 - Random passwords create support burden and lockout issues
 - Clear documentation and security checklist guide users to change it
 - SHA-256 hash prevents password exposure in source code
 
 **Security Note**:
+
 - Default password hash: `8c6976e5...a448a918` (SHA-256 of "admin", see ConfigManager.cpp)
 - This is the SHA-256 hash of "admin"
 - Users **MUST** change this password via Web UI → Security & Update → Change Password
@@ -579,12 +619,14 @@ if (jsonLength > 0) {
 **Change**: Made MQTT authentication optional (not enforced).
 
 **Rationale**:
+
 - Some users may have MQTT brokers without authentication
 - Command validation is always active, regardless of authentication setting
 - Users can enable authentication if their broker supports it
 - Security through validation, not just authentication
 
 **Recommendation**:
+
 - Users **SHOULD** enable MQTT authentication when possible
 - Use dedicated MQTT user with minimal permissions
 - See [MQTT Configuration](/docs/mqtt-configuration/) for setup instructions
@@ -598,12 +640,14 @@ if (jsonLength > 0) {
 **Change**: Removed `Secure` cookie attribute because the device serves UI on HTTP (port 80).
 
 **Rationale**:
+
 - Adding `Secure` attribute would prevent browsers from sending cookies over HTTP
 - Device does not support HTTPS (no SSL/TLS for web interface)
 - `Secure` attribute would cause login loop on HTTP connections
 - Other security attributes maintained: `HttpOnly`, `SameSite=Strict`
 
 **Security Note**:
+
 - Users should ensure device is only accessible on trusted local networks
 - Consider using VPN or reverse proxy with HTTPS for remote access
 - See [Security Checklist](/docs/security-checklist/) for network security recommendations
@@ -617,17 +661,20 @@ if (jsonLength > 0) {
 All changes have been validated through the following CI checks:
 
 1. **Super-Linter** ✅
+
    - Code style and formatting
    - Include order (C system → C++ system → project headers)
    - Trailing whitespace
    - Gitleaks (secrets detection)
 
 2. **PlatformIO CI** ✅
+
    - Compilation for ESP32 target
    - Dependency compatibility
    - Build configuration
 
 3. **Native Tests** ✅
+
    - Unit tests for WebPortal, ConfigManager, MqttPublisher
    - Mock-compatible code
    - Cross-platform compatibility
@@ -640,6 +687,7 @@ All changes have been validated through the following CI checks:
 ### Test Coverage
 
 New test cases added for:
+
 - Session token generation
 - Input validation (SSID, password, MQTT commands)
 - Rate limiting
@@ -658,21 +706,25 @@ New test cases added for:
 ### For Users Upgrading from v3.2.0 or Earlier
 
 1. **Backup Configuration**
+
    - Take a screenshot of current settings
    - Export configuration if available
    - Note down WiFi and MQTT credentials
 
 2. **Update Firmware**
+
    - Use Web UI → System → Check for Updates
    - Or manual upload via Web UI
    - Or serial flash using PlatformIO
 
 3. **Change Default Password** (CRITICAL)
+
    - After update, immediately change password
    - Web UI → Security & Update → Change Password
    - Use strong password (8+ characters, mixed case, digits, special chars)
 
 4. **Enable MQTT Authentication** (RECOMMENDED)
+
    - Configure MQTT username and password
    - Web UI → MQTT Settings
    - Use dedicated user with minimal permissions
@@ -685,10 +737,12 @@ New test cases added for:
 ### For Developers
 
 1. **Update Dependencies**
+
    - Ensure ESP32 Arduino core >= 2.0.0 for best security
    - Older cores will fall back to single CA certificate
 
 2. **Test Compatibility**
+
    - Verify compilation with your target platform
    - Test native tests on development machine
    - Check memory usage with your configuration
@@ -703,13 +757,13 @@ New test cases added for:
 ## Known Limitations
 
 1. **No HTTPS Support**: The web interface runs on HTTP only. For secure remote access, use a VPN or reverse proxy with
-HTTPS.
+   HTTPS.
 
 2. **NVS Storage**: WiFi and MQTT passwords are stored in plain text in NVS. Enable flash encryption for production
-deployments.
+   deployments.
 
 3. **ESP32 Core Compatibility**: Full CA bundle support requires ESP32 Arduino core >= 2.0.0. Older cores fall back to
-single CA certificate.
+   single CA certificate.
 
 4. **Memory Constraints**: ESP32 has limited heap. Avoid adding memory-intensive features without testing.
 
@@ -740,10 +794,10 @@ single CA certificate.
 
 ## Changelog
 
-| Version | Date | Changes |
-|---------|------|---------|
-| v3.2.1 | 2026-06-19 | Security fixes and memory leak fixes |
-| v3.2.0 | 2026-06-07 | Previous release with identified vulnerabilities |
+| Version | Date       | Changes                                          |
+| ------- | ---------- | ------------------------------------------------ |
+| v3.2.1  | 2026-06-19 | Security fixes and memory leak fixes             |
+| v3.2.0  | 2026-06-07 | Previous release with identified vulnerabilities |
 
 ---
 
@@ -752,12 +806,12 @@ single CA certificate.
 For questions or issues related to these security fixes:
 
 - **Security Issues**: Open a confidential issue at [GitHub
-Security](https://github.com/smart-swimmingpool/pool-controller/security)
+  Security](https://github.com/smart-swimmingpool/pool-controller/security)
 - **General Issues**: Open an issue at [GitHub Issues](https://github.com/smart-swimmingpool/pool-controller/issues)
 - **Discussions**: Join the discussion at [GitHub
-Discussions](https://github.com/smart-swimmingpool/smart-swimmingpool.github.io/discussions)
+  Discussions](https://github.com/smart-swimmingpool/smart-swimmingpool.github.io/discussions)
 
 ---
 
 > **⚠️ DISCLAIMER**: While these fixes address identified vulnerabilities, no system can be 100% secure. Users are
-responsible for their own security configurations and should follow best practices for IoT device security.
+> responsible for their own security configurations and should follow best practices for IoT device security.

@@ -96,6 +96,10 @@ HACS → Frontend → button-card → Install
 
 Without `button-card`, replace `custom:button-card` with `type: button` in the grid cards (loses
 active-mode highlighting).
+```
+
+Without `button-card`, replace `custom:button-card` with `type: button` in the grid cards (loses
+active-mode highlighting).
 
 ### Entity ID Warning
 

@@ -24,29 +24,21 @@
 #include <qrcode.h>
 
 #include "Config.hpp"
+#include "NorviButtonHandler.hpp"
 #include "Utils.hpp"
-#include "DallasTemperatureNode.hpp"
-#include "RelayModuleNode.hpp"
-#include "OperationModeNode.hpp"
 #include "NetworkManager.hpp"
+#include "Nodes.hpp"
 #include "SystemMonitor.hpp"
 #include "TimeClientHelper.hpp"
 #include "ConfigManager.hpp"
 
 namespace PoolController {
 
-// ── Forward declarations of global nodes (defined in PoolController.cpp) ───
-
-extern DallasTemperatureNode solarTemperatureNode;
-extern DallasTemperatureNode poolTemperatureNode;
-extern RelayModuleNode poolPumpNode;
-extern RelayModuleNode solarPumpNode;
-extern OperationModeNode operationModeNode;
-
 // ── File-scope helper forward declarations ────────────────────────────
 // These are called from drawPage() which appears before their definition.
 static void drawDegC(uint8_t textsize);
 static void drawButtonHints();
+static void drawProgressBar();
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Static members
@@ -72,9 +64,16 @@ bool NorviOledDisplay::setupRoleIsSolar_ = true;
 
 bool NorviOledDisplay::firstBootDone_ = false;
 
+NorviOledDisplay::MenuItem NorviOledDisplay::menuSelection_ = MenuItem::MODE;
+bool NorviOledDisplay::menuActive_ = false;
+
 // ── SSD1306 display instance (128×64, I2C, address 0x3C) ─────────────────
 
 static Adafruit_SSD1306 display(128, 64, &Wire, -1);
+
+/// Auto-return warning countdown (ms until return), 0 = no warning active.
+/// Set by loop(), consumed by drawFooter().
+static uint32_t autoReturnWarningMs = 0;
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Coord helpers — apply burn-in offset to all drawing
@@ -156,6 +155,108 @@ static void dspInvertedText(int16_t x, int16_t y, const __FlashStringHelper *tex
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// Scrolling text helper — auto-scrolls horizontally if text exceeds maxWidth
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// Pauses 2 s at start, scrolls left at 25 px/s, pauses 1 s at end,
+// rewinds at 50 px/s. Animation resets when page or text content changes.
+
+static uint32_t scrollAnimStartMs_ = 0;
+static int8_t scrollPhase_ = 0;  // 0=pause 1=scroll-L 2=pause 3=rewind
+static int16_t scrollOffset_ = 0;
+
+/**
+ * @brief Draw text with horizontal scrolling if it exceeds @p maxWidth.
+ *
+ * The display driver clips at 0..127 automatically, so drawing at
+ * x - offset achieves a hardware-accelerated left scroll without
+ * manual clipping.
+ */
+static void drawScrollingText(int16_t x, int16_t y, const char *text, int16_t maxWidth) {
+  if (!text || text[0] == '\0')
+    return;
+
+  int16_t x1, y1;
+  uint16_t textW, h;
+  display.getTextBounds(text, 0, y, &x1, &y1, &textW, &h);
+
+  if (textW <= (uint16_t)maxWidth) {
+    dspCursor(x, y);
+    display.print(text);
+    return;
+  }
+
+  // State tracking — read current page once
+  static int16_t lastTextW = 0;
+  static NorviOledDisplay::Page scrollPage_ = static_cast<NorviOledDisplay::Page>(0xFF);
+  const auto curPage = NorviOledDisplay::getCurrentPage();
+
+  // Reset animation on page or text width change
+  if (textW != lastTextW) {
+    scrollPhase_ = 0;
+    scrollOffset_ = 0;
+    scrollAnimStartMs_ = millis();
+    lastTextW = textW;
+  } else if (curPage != scrollPage_) {
+    // Re-sync when navigating to a different page mid-scroll
+    scrollPhase_ = 0;
+    scrollOffset_ = 0;
+    scrollAnimStartMs_ = millis();
+    scrollPage_ = curPage;
+  }
+
+  const uint32_t now = millis();
+  const int16_t scrollRange = textW - maxWidth;
+  const uint32_t elapsed = now - scrollAnimStartMs_;
+
+  switch (scrollPhase_) {
+  case 0:  // Pause at start — full text visible entering from right
+    scrollOffset_ = 0;
+    if (elapsed >= 2000) {
+      scrollPhase_ = 1;
+      scrollAnimStartMs_ = now;
+    }
+    break;
+
+  case 1:  // Scroll left at 25 px/s
+    scrollOffset_ = static_cast<int16_t>(elapsed * 25 / 1000);
+    if (scrollOffset_ >= scrollRange) {
+      scrollOffset_ = scrollRange;
+      scrollPhase_ = 2;
+      scrollAnimStartMs_ = now;
+    }
+    break;
+
+  case 2:  // Pause at end — last characters visible
+    if (elapsed >= 1000) {
+      scrollPhase_ = 3;
+      scrollAnimStartMs_ = now;
+    }
+    break;
+
+  case 3:  // Rewind right at 50 px/s
+    scrollOffset_ = scrollRange - static_cast<int16_t>(elapsed * 50 / 1000);
+    if (scrollOffset_ <= 0) {
+      scrollOffset_ = 0;
+      scrollPhase_ = 0;
+      scrollAnimStartMs_ = now;
+    }
+    break;
+  }
+
+  dspCursor(x - scrollOffset_, y);
+  display.print(text);
+}
+
+/// Overload for PROGMEM / Flash strings.
+static void drawScrollingText(int16_t x, int16_t y, const __FlashStringHelper *text, int16_t maxWidth) {
+  char buf[64];
+  strncpy_P(buf, reinterpret_cast<PGM_P>(text), sizeof(buf) - 1);
+  buf[sizeof(buf) - 1] = '\0';
+  drawScrollingText(x, y, buf, maxWidth);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // begin() — Initialization
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -207,14 +308,37 @@ void NorviOledDisplay::begin() {
 void NorviOledDisplay::loop() {
   const uint32_t now = millis();
 
-  // ── Auto-return to MAIN after idle timeout ──────────────────────────
-  if (currentPage_ != Page::MAIN && !isSetupActive() && (now - lastButtonPressMs_ >= AUTO_RETURN_MS)) {
+  // ── Auto-return after idle timeout ───────────────────────────────────
+  if (menuActive_ && (now - lastButtonPressMs_ >= 30000)) {
+    // Menu: 30 s idle → close menu
+    menuActive_ = false;
+    forceRedraw_ = true;
+  } else if (!isSetupActive() && currentPage_ != Page::MAIN && (now - lastButtonPressMs_ >= AUTO_RETURN_MS)) {
+    // Info pages (non-MAIN): 60 s idle → MAIN
     currentPage_ = Page::MAIN;
     forceRedraw_ = true;
   }
 
-  // ── Throttle redraw rate ────────────────────────────────────────────
-  if (!forceRedraw_ && (now - lastUpdateMs_ < UPDATE_INTERVAL_MS)) {
+  // ── Long-press progress: accelerate redraw during hold ──────────────
+  float longPressProgress = NorviButtonHandler::getLongPressProgress();
+  bool isLongPressing = (longPressProgress > 0.0f);
+
+  // ── Auto-return warning (5s before) ─────────────────────────────────
+  // Sets file-scope autoReturnWarningMs consumed by drawFooter()
+  if (!menuActive_ && !isSetupActive() && currentPage_ != Page::MAIN) {
+    uint32_t idleMs = now - lastButtonPressMs_;
+    if (idleMs >= AUTO_RETURN_MS - 5000 && idleMs < AUTO_RETURN_MS) {
+      autoReturnWarningMs = AUTO_RETURN_MS - idleMs;  // ms until return
+      forceRedraw_ = true;
+    } else {
+      autoReturnWarningMs = 0;
+    }
+  } else {
+    autoReturnWarningMs = 0;
+  }
+
+  // ── Throttle redraw rate (skip during long-press for smooth bar) ────
+  if (!forceRedraw_ && !isLongPressing && (now - lastUpdateMs_ < UPDATE_INTERVAL_MS)) {
     return;
   }
 
@@ -225,6 +349,7 @@ void NorviOledDisplay::loop() {
   forceRedraw_ = false;
 
   drawPage();
+  drawProgressBar();
   display.display();
 }
 
@@ -235,7 +360,8 @@ void NorviOledDisplay::loop() {
 void NorviOledDisplay::previousPage() {
   uint8_t cur = static_cast<uint8_t>(currentPage_);
   if (cur == 0) {
-    currentPage_ = static_cast<Page>(maxNavPage());
+    // Wrap: MAIN → WIFI_SETUP (skip SENSOR_SETUP in backward cycle)
+    currentPage_ = Page::WIFI_SETUP;
   } else {
     currentPage_ = static_cast<Page>(cur - 1);
   }
@@ -297,12 +423,57 @@ void NorviOledDisplay::confirmAction() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// Action menu navigation
+// ═══════════════════════════════════════════════════════════════════════════
+
+void NorviOledDisplay::enterMenu() {
+  menuActive_ = true;
+  menuSelection_ = MenuItem::MODE;
+  forceRedraw_ = true;
+  lastButtonPressMs_ = millis();
+}
+
+void NorviOledDisplay::exitMenu() {
+  menuActive_ = false;
+  forceRedraw_ = true;
+  lastButtonPressMs_ = millis();
+}
+
+void NorviOledDisplay::menuNext() {
+  uint8_t cur = static_cast<uint8_t>(menuSelection_);
+  cur = (cur + 1) % 3;  // MODE → PUMP → EXIT → MODE
+  menuSelection_ = static_cast<MenuItem>(cur);
+  forceRedraw_ = true;
+  lastButtonPressMs_ = millis();
+}
+
+void NorviOledDisplay::menuPrevious() {
+  uint8_t cur = static_cast<uint8_t>(menuSelection_);
+  if (cur == 0) {
+    cur = 2;  // wrap: MODE → EXIT
+  } else {
+    cur--;
+  }
+  menuSelection_ = static_cast<MenuItem>(cur);
+  forceRedraw_ = true;
+  lastButtonPressMs_ = millis();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // drawPage() — Dispatch
 // ═══════════════════════════════════════════════════════════════════════════
 
 void NorviOledDisplay::drawPage() {
   display.clearDisplay();
   display.setTextColor(SSD1306_WHITE);
+
+  // ── Action menu overlay ─────────────────────────────────────────────
+  if (menuActive_) {
+    drawMenuPage();
+    drawButtonHints();
+    drawFooter();
+    return;
+  }
 
   switch (currentPage_) {
   case Page::MAIN:
@@ -322,13 +493,14 @@ void NorviOledDisplay::drawPage() {
     break;
   case Page::QRCODE:
     drawQrCodePage();
-    drawButtonHints();
+    if (!NetworkManager::isWiFiConnected()) {
+      drawButtonHints();  // Only on non-connected QR page (hints overlap IP)
+    }
     drawFooter();
     break;
   case Page::WIFI_SETUP:
     drawWiFiSetupPage();
-    // No button hints — full page usage for QR
-    drawFooter();
+    // Full page usage: no hints, no shared footer
     break;
   case Page::SENSOR_SETUP:
     drawSensorSetupPage();
@@ -352,42 +524,153 @@ void NorviOledDisplay::drawPage() {
 static void drawButtonHints() {
   dspVLine(125, 14, 34, SSD1306_WHITE);
 
+  // Draw button symbols (always present)
+  dspFillTriangle(121, 14, 125, 20, 117, 20, SSD1306_WHITE);  // S1 ▲
+  dspFillTriangle(117, 27, 125, 27, 121, 33, SSD1306_WHITE);  // S2 ▼
+
+  // ── Menu mode hints ───────────────────────────────────────────────────
+  if (NorviOledDisplay::isMenuActive()) {
+    dspFillRoundRect(117, 40, 8, 6, 1, SSD1306_WHITE);
+    dspCursor(99, 40);
+    display.print(F("sel"));
+    return;
+  }
+
   const auto page = NorviOledDisplay::getCurrentPage();
-  const bool setup = NorviOledDisplay::isSetupActive();
   const bool selSens = NorviOledDisplay::isSelectSensorStep();
   const bool selRole = NorviOledDisplay::isSelectRoleStep();
 
   // ── S1 hint (top) ───────────────────────────────────────────────────────
   dspFillTriangle(121, 14, 125, 20, 117, 20, SSD1306_WHITE);
-  dspCursor(99, 14);
-  if (selSens || selRole) {
+  dspCursor(86, 14);
+  if (selSens) {
     display.print(F("up"));
+  } else if (selRole) {
+    display.print(F("Solar"));
+  } else if (page == NorviOledDisplay::Page::MAIN) {
+    display.print(F("wrap"));
   } else {
-    display.print(F("nxt"));
+    display.print(F("prev"));
   }
 
   // ── S2 hint (middle) ────────────────────────────────────────────────────
   dspFillTriangle(117, 27, 125, 27, 121, 33, SSD1306_WHITE);
-  dspCursor(99, 27);
-  if (selSens || selRole) {
+  dspCursor(83, 27);
+  if (selSens) {
     display.print(F("dn"));
+  } else if (selRole) {
+    display.print(F(" Pool"));
   } else {
-    display.print(F("nxt"));
+    display.print(F("next"));
   }
 
-  // ── S3 hint (bottom) ────────────────────────────────────────────────────
-  dspFillRoundRect(117, 40, 8, 6, 1, SSD1306_WHITE);
-  dspCursor(99, 40);
-  if (setup && page == NorviOledDisplay::Page::SENSOR_SETUP) {
+  // ── S3 label (bottom) ──────────────────────────────────────────────────
+  if (page == NorviOledDisplay::Page::MAIN) {
+    dspFillRoundRect(117, 40, 8, 6, 1, SSD1306_WHITE);
+    dspCursor(80, 40);
+    display.print(F("menu"));
+  } else if (page == NorviOledDisplay::Page::SENSOR_SETUP) {
+    dspFillRoundRect(117, 40, 8, 6, 1, SSD1306_WHITE);
+    dspCursor(80, 40);
     if (selSens) {
-      display.print(F("ok"));
+      display.print(F("select"));
     } else if (selRole) {
-      display.print(F("set"));
+      display.print(F("assign"));
     } else {
-      display.print(F("ok"));
+      display.print(F("setup"));
     }
+  }
+  // Other info pages: no S3 action — hint is intentionally omitted
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Action menu (MAIN → S3)
+// ═══════════════════════════════════════════════════════════════════════════
+//
+//  ┌──────────────────────┬──────┐
+//  │ Menu                 │      │
+//  │──────────────────────│ S1 ▲│
+//  │ ▓ Mode: auto         │ S2 ▼│
+//  │   Pump: off          │ S3 ●│ sel
+//  │   Exit menu          │      │
+//  ├──────────────────────┴──────┤
+//  │ AUTO  12:30  v4.0.2     1/5│
+//  └─────────────────────────────┘
+
+void NorviOledDisplay::drawMenuPage() {
+  display.setTextSize(1);
+
+  // ── Title ──────────────────────────────────────────────────────────────
+  dspCursor(0, 0);
+  display.print(F(" Menu"));
+  dspHLine(0, 9, 128, SSD1306_WHITE);
+
+  // ── Dynamic menu items ─────────────────────────────────────────────────
+  char modeBuf[14];
+  snprintf(modeBuf, sizeof(modeBuf), " Mode: %s", operationModeNode.getMode().c_str());
+
+  char pumpBuf[14];
+  snprintf(pumpBuf, sizeof(pumpBuf), " Pump: %s", poolPumpNode.getSwitch() ? "on " : "off");
+
+  const char *exitItem = "  Exit menu";
+
+  // ── Render items (12 px line height) ──────────────────────────────────
+  static constexpr uint8_t Y0 = 14;
+  static constexpr uint8_t LH = 12;
+
+  // Item 1: Mode
+  if (menuSelection_ == MenuItem::MODE) {
+    dspInvertedText(4, Y0, modeBuf);
   } else {
-    display.print(F("ok"));
+    dspCursor(4, Y0);
+    display.print(modeBuf);
+  }
+
+  // Item 2: Pump
+  if (menuSelection_ == MenuItem::PUMP) {
+    dspInvertedText(4, Y0 + LH, pumpBuf);
+  } else {
+    dspCursor(4, Y0 + LH);
+    display.print(pumpBuf);
+  }
+
+  // Item 3: Exit
+  if (menuSelection_ == MenuItem::EXIT) {
+    dspInvertedText(4, Y0 + 2 * LH, exitItem);
+  } else {
+    dspCursor(4, Y0 + 2 * LH);
+    display.print(exitItem);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Long-press progress bar overlay
+// ═══════════════════════════════════════════════════════════════════════════
+
+static void drawProgressBar() {
+  float progress = NorviButtonHandler::getLongPressProgress();
+  if (progress <= 0.0f) {
+    return;
+  }
+
+  // Only show on SENSOR_SETUP page in IDLE state with both sensors done
+  if (NorviOledDisplay::getCurrentPage() != NorviOledDisplay::Page::SENSOR_SETUP || NorviOledDisplay::isSetupActive()) {
+    return;
+  }
+
+  // Bar dimensions (above footer line at y=55)
+  static constexpr uint8_t BAR_X = 4;
+  static constexpr uint8_t BAR_Y = 49;
+  static constexpr uint8_t BAR_W = 120;
+  static constexpr uint8_t BAR_H = 4;
+
+  // Border
+  dspRoundRect(BAR_X, BAR_Y, BAR_W, BAR_H, 1, SSD1306_WHITE);
+
+  // Fill
+  uint8_t fillW = static_cast<uint8_t>((BAR_W - 2) * progress);
+  if (fillW > 0) {
+    dspFillRect(BAR_X + 1, BAR_Y + 1, fillW, BAR_H - 2, SSD1306_WHITE);
   }
 }
 
@@ -480,18 +763,14 @@ void NorviOledDisplay::drawNetworkPage() {
   display.print(F(" Network Status"));
   dspHLine(0, 9, 128, SSD1306_WHITE);
 
-  // ── WiFi SSID ───────────────────────────────────────────────────────────
+  // ── WiFi SSID (scrolls if too long) ────────────────────────────────────
   dspCursor(0, 13);
   display.print(F("WiFi: "));
   if (NetworkManager::isWiFiConnected()) {
     if (NetworkManager::isApMode()) {
       display.print(F("AP MODE"));
     } else {
-      String ssid = WiFi.SSID();
-      if (ssid.length() > 9) {
-        ssid = ssid.substring(0, 9);
-      }
-      display.print(ssid);
+      drawScrollingText(36, 13, WiFi.SSID().c_str(), 128 - 36);
     }
   } else {
     display.print(F("---"));
@@ -578,30 +857,35 @@ void NorviOledDisplay::drawQrCodePage() {
   }
   url += '/';
 
-  // Show URL at top
-  dspCursor(0, 0);
-  if (url.length() <= 20) {
-    display.print(url);
+  if (NetworkManager::isWiFiConnected()) {
+    // ── WiFi connected: show IP prominently (text size 1) ─────────────
+    dspCursor(0, 0);
+    display.print(F("Web Interface:"));
+    dspCursor(0, 14);
+    display.print(WiFi.localIP().toString());
+    dspCursor(0, 28);
+    display.print(F("Open in your browser"));
   } else {
-    display.print(url.substring(0, 20));
-  }
+    // ── No WiFi: show QR code as large as possible ─────────────────────
+    drawScrollingText(0, 0, url.c_str(), 128);
 
-  // Generate QR code (version 1 = 21×21)
-  static constexpr size_t kQrBufferSize = 75;
-  uint8_t qrData[kQrBufferSize];
-  QRCode qr;
-  qrcode_initText(&qr, qrData, 1, 0, url.c_str());
+    // Generate QR code (version 1 = 21×21)
+    static constexpr size_t kQrBufferSize = 75;
+    uint8_t qrData[kQrBufferSize];
+    QRCode qr;
+    qrcode_initText(&qr, qrData, 1, 0, url.c_str());
 
-  // Draw QR centered, 2px per module
-  static constexpr uint8_t SCALE = 2;
-  const uint8_t qrPx = qr.size * SCALE;
-  const uint8_t xOff = (128 - qrPx) / 2;
-  const uint8_t yOff = 8;
+    // Draw QR centered, max scale that fits (2px per module = 42×42)
+    static constexpr uint8_t SCALE = 2;
+    const uint8_t qrPx = qr.size * SCALE;
+    const uint8_t xOff = (128 - qrPx) / 2;
+    const uint8_t yOff = 10;
 
-  for (uint8_t y = 0; y < qr.size; y++) {
-    for (uint8_t x = 0; x < qr.size; x++) {
-      if (qrcode_getModule(&qr, x, y)) {
-        dspFillRect(xOff + x * SCALE, yOff + y * SCALE, SCALE, SCALE, SSD1306_WHITE);
+    for (uint8_t y = 0; y < qr.size; y++) {
+      for (uint8_t x = 0; x < qr.size; x++) {
+        if (qrcode_getModule(&qr, x, y)) {
+          dspFillRect(xOff + x * SCALE, yOff + y * SCALE, SCALE, SCALE, SSD1306_WHITE);
+        }
       }
     }
   }
@@ -622,70 +906,61 @@ void NorviOledDisplay::drawWiFiSetupPage() {
   display.print(F(" WiFi Setup"));
   dspHLine(0, 9, 128, SSD1306_WHITE);
 
-  // ── Hint text ──────────────────────────────────────────────────────────
-  dspCursor(0, 12);
-  if (NetworkManager::isApMode()) {
-    display.print(F(" Connect to WiFi:"));
-    dspCursor(0, 20);
-    {
-      String apName = WiFi.softAPSSID();
-      if (apName.length() > 15) {
-        apName = apName.substring(0, 15);
-      }
-      display.print(apName);
-    }
-    dspCursor(0, 29);
-    display.print(F(" Open browser to:"));
-    dspCursor(0, 37);
-    display.print(F(" 192.168.4.1"));
-  } else if (NetworkManager::isWiFiConnected()) {
+  if (NetworkManager::isWiFiConnected()) {
+    // ── WiFi already configured: no QR, just info ─────────────────────
     dspCursor(0, 20);
     display.print(F(" WiFi configured!"));
     dspCursor(0, 29);
     display.print(F(" IP: "));
     display.print(WiFi.localIP().toString());
+    dspCursor(0, 46);
+    display.print(F(" Open browser to IP"));
   } else {
-    dspCursor(0, 20);
-    display.print(F(" Connect to WiFi,"));
-    dspCursor(0, 28);
-    display.print(F(" then browse to"));
-    dspCursor(0, 36);
-    display.print(F(" http://this-device/"));
-  }
+    // ── No WiFi / AP mode: maximal QR code ─────────────────────────────
+    String url = "http://";
+    if (NetworkManager::isApMode()) {
+      url += F("192.168.4.1");
+      // Show AP SSID line above QR (scrolls if too long)
+      dspCursor(0, 12);
+      {
+        display.print(F("AP: "));
+        drawScrollingText(24, 12, WiFi.softAPSSID().c_str(), 128 - 24);
+      }
+    } else {
+      url += F("192.168.4.1");
+      dspCursor(0, 12);
+      display.print(F("Connect to WiFi, then"));
+    }
+    url += '/';
 
-  // ── QR code (compact, top-right area) ─────────────────────────────────
-  String url = "http://";
-  if (NetworkManager::isApMode()) {
-    url += F("192.168.4.1");
-  } else if (NetworkManager::isWiFiConnected()) {
-    url += WiFi.localIP().toString();
-  } else {
-    url += F("192.168.4.1");  // Fallback to AP IP
-  }
-  url += '/';
+    // Generate QR at max usable scale (2px = 42×42)
+    static constexpr size_t kQrBufSize = 75;
+    uint8_t qrBuf[kQrBufSize];
+    QRCode qr;
+    qrcode_initText(&qr, qrBuf, 1, 0, url.c_str());
 
-  // Small QR code (version 1, 1px scale) in top-right corner
-  static constexpr size_t kQrBufSize = 75;
-  uint8_t qrBuf[kQrBufSize];
-  QRCode qr;
-  qrcode_initText(&qr, qrBuf, 1, 0, url.c_str());
+    static constexpr uint8_t QR_SCALE = 2;
+    const uint8_t qrPx = qr.size * QR_SCALE;
+    const uint8_t qrX = (128 - qrPx) / 2;
+    const uint8_t qrY = 20;
 
-  static constexpr uint8_t QR_SCALE = 1;
-  const uint8_t qrPx = qr.size * QR_SCALE;
-  const uint8_t qrX = 128 - qrPx - 2;
-  const uint8_t qrY = 10;
-
-  for (uint8_t y = 0; y < qr.size; y++) {
-    for (uint8_t x = 0; x < qr.size; x++) {
-      if (qrcode_getModule(&qr, x, y)) {
-        dspFillRect(qrX + x * QR_SCALE, qrY + y * QR_SCALE, QR_SCALE, QR_SCALE, SSD1306_WHITE);
+    for (uint8_t y = 0; y < qr.size; y++) {
+      for (uint8_t x = 0; x < qr.size; x++) {
+        if (qrcode_getModule(&qr, x, y)) {
+          dspFillRect(qrX + x * QR_SCALE, qrY + y * QR_SCALE, QR_SCALE, QR_SCALE, SSD1306_WHITE);
+        }
       }
     }
-  }
 
-  // ── Footer hint ────────────────────────────────────────────────────────
-  dspCursor(0, 50);
-  display.print(F("Scan QR or enter URL"));
+    // ── Instruction text below QR ────────────────────────────────────
+    if (NetworkManager::isApMode()) {
+      dspCursor(0, 56);
+      display.print(F("Browse to 192.168.4.1"));
+    } else {
+      dspCursor(0, 56);
+      display.print(F("browse to 192.168.4.1"));
+    }
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -698,7 +973,15 @@ void NorviOledDisplay::drawWiFiSetupPage() {
 void NorviOledDisplay::drawSensorSetupPage() {
   display.setTextSize(1);
   dspCursor(0, 0);
-  display.print(F(" Sensor Setup"));
+  display.print(F(" Setup"));
+  // Step indicator [1/2] or [2/2] when wizard is active
+  if (setupStep_ != SetupStep::IDLE) {
+    char stepBuf[8];
+    uint8_t stepNum = (setupStep_ == SetupStep::SELECT_SENSOR) ? 1 : 2;
+    snprintf(stepBuf, sizeof(stepBuf), " [%d/2]", stepNum);
+    dspCursor(60, 0);
+    display.print(stepBuf);
+  }
   dspHLine(0, 9, 128, SSD1306_WHITE);
 
   const uint8_t devCount = solarTemperatureNode.getDeviceCount();
@@ -851,7 +1134,8 @@ void NorviOledDisplay::drawFooter() {
   if (utc >= MIN_VALID_TIME) {
     TimeChangeRule *tcr = nullptr;
     time_t local = getTimeFor(getTimezoneIndex(), &tcr);
-    struct tm *ti = localtime(&local);
+    struct tm ti_val;
+    struct tm *ti = localtime_r(&local, &ti_val);
     char buf[6];
     snprintf(buf, sizeof(buf), "%02d:%02d", ti->tm_hour, ti->tm_min);
     display.print(buf);
@@ -878,12 +1162,29 @@ void NorviOledDisplay::drawFooter() {
   }
 
   // ── Firmware version ──────────────────────────────────────────────────
-  dspCursor(76, 56);
+  dspCursor(78, 56);
   display.print(F("v" FW_VERSION));
 
-  // ── Page number ──────────────────────────────────────────────────────
-  dspCursor(118, 56);
-  display.print(static_cast<uint8_t>(currentPage_) + 1);
+  // ── Auto-return warning (5s window) ──────────────────────────────────
+  // autoReturnWarningMs is set by loop() when idle approaches timeout
+  {
+    if (autoReturnWarningMs > 0) {
+      uint8_t secs = (autoReturnWarningMs + 999) / 1000;
+      // Overwrite version and page area with blink warning
+      dspCursor(68, 56);
+      display.print(F("→ MAIN "));
+      display.print(secs);
+      display.print('s');
+    } else {
+      // ── Page number (X/Y format) ────────────────────────────────────
+      dspCursor(112, 56);
+      uint8_t pageNum = static_cast<uint8_t>(currentPage_) + 1;
+      uint8_t maxPage = static_cast<uint8_t>(Page::SENSOR_SETUP);
+      char buf[8];
+      snprintf(buf, sizeof(buf), "%d/%d", pageNum, maxPage);
+      display.print(buf);
+    }
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -916,12 +1217,14 @@ void NorviOledDisplay::updateBurnInOffset() {
   }
   lastBurnInShiftMs_ = now;
 
-  // Cycle: (0,0) → (2,0) → (2,2) → (0,2) → (0,0)
+  // Cycle: (0,0) → (2,0) → (2,1) → (0,1) → (0,0)
+  // Y-offset is 1 instead of 2 because the 64-pixel height leaves no
+  // room for a 2px downward shift on bottom-aligned content (footer).
   if (burnInDx_ == 0 && burnInDy_ == 0) {
     burnInDx_ = 2;
   } else if (burnInDx_ == 2 && burnInDy_ == 0) {
-    burnInDy_ = 2;
-  } else if (burnInDx_ == 2 && burnInDy_ == 2) {
+    burnInDy_ = 1;
+  } else if (burnInDx_ == 2 && burnInDy_ == 1) {
     burnInDx_ = 0;
   } else {
     burnInDx_ = 0;
@@ -986,8 +1289,13 @@ void NorviOledDisplay::setupSelectNext() {
   forceRedraw_ = true;
 }
 
-void NorviOledDisplay::setupToggleRole() {
-  setupRoleIsSolar_ = !setupRoleIsSolar_;
+void NorviOledDisplay::setupSelectSolar() {
+  setupRoleIsSolar_ = true;
+  forceRedraw_ = true;
+}
+
+void NorviOledDisplay::setupSelectPool() {
+  setupRoleIsSolar_ = false;
   forceRedraw_ = true;
 }
 

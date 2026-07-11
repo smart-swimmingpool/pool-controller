@@ -59,18 +59,18 @@ management dashboard. It runs in two modes:
 
 ### API Endpoints
 
-| Route                    | Auth   | Function                                                   |
-| ------------------------ | ------ | ---------------------------------------------------------- |
-| `GET /`                  | Cookie | Dashboard SPA (Single Page Application)                    |
-| `GET /login`             | Cookie | Login page                                                 |
-| `POST /api/login`        | -      | Issue session cookie (SHA-256 password check)              |
-| `GET /api/status`        | ❌ No  | Live telemetry (temperatures, pump states, heap, RSSI, temperature thresholds)     |
-| `GET /api/scan`          | Yes    | Scan nearby WiFi networks                                  |
-| `GET /api/config`        | Yes    | Read current configuration                                 |
-| `POST /api/config`       | Yes    | Save configuration (`type=settings\|wifi\|mqtt\|password`) |
-| `GET /api/restart`       | Yes    | Reboot the ESP32                                           |
-| `GET /api/factory_reset` | Yes    | Wipe config file, reboot into AP setup mode                |
-| `POST /api/update`       | Yes    | OTA firmware update (signed .bin upload)                   |
+| Route                    | Auth   | Function                                                                       |
+| ------------------------ | ------ | ------------------------------------------------------------------------------ |
+| `GET /`                  | Cookie | Dashboard SPA (Single Page Application)                                        |
+| `GET /login`             | Cookie | Login page                                                                     |
+| `POST /api/login`        | -      | Issue session cookie (SHA-256 password check)                                  |
+| `GET /api/status`        | ❌ No  | Live telemetry (temperatures, pump states, heap, RSSI, temperature thresholds) |
+| `GET /api/scan`          | Yes    | Scan nearby WiFi networks                                                      |
+| `GET /api/config`        | Yes    | Read current configuration                                                     |
+| `POST /api/config`       | Yes    | Save configuration (`type=settings\|wifi\|mqtt\|password`)                     |
+| `GET /api/restart`       | Yes    | Reboot the ESP32                                                               |
+| `GET /api/factory_reset` | Yes    | Wipe config file, reboot into AP setup mode                                    |
+| `POST /api/update`       | Yes    | OTA firmware update (signed .bin upload)                                       |
 
 ### Using the REST API Directly
 

@@ -134,31 +134,6 @@ static void loadSensorAddressMapping() {
 }
 
 /**
- * @brief Save DS18B20 sensor address mapping to NVS.
- *
- * Stores the ROM addresses so that after reboot the correct device is
- * identified regardless of bus scan order.
- *
- * @param solarAddr  8-byte ROM address of the solar sensor.
- * @param poolAddr   8-byte ROM address of the pool sensor.
- */
-static void saveSensorAddressMapping(const uint8_t solarAddr[8], const uint8_t poolAddr[8]) {
-  Preferences prefs;
-  prefs.begin("ds18b20", false);  // read-write
-
-  prefs.putBytes("solar_adr", solarAddr, 8);
-  prefs.putBytes("pool_adr", poolAddr, 8);
-
-  prefs.end();
-
-  char buf[17];
-  addressToString(solarAddr, buf, sizeof(buf));
-  Serial.printf("✓ Sensor mapping saved: Solar [%s]", buf);
-  addressToString(poolAddr, buf, sizeof(buf));
-  Serial.printf(", Pool [%s]\n", buf);
-}
-
-/**
  * @brief Construct the singleton context.
  * Stores the instance pointer for internal access. All subsystems are
  * initialized later in setup() and initializeController().
@@ -311,64 +286,81 @@ auto PoolControllerContext::setup() -> void {
   NorviOledDisplay::begin();
   NorviButtonHandler::begin();
 
-  // Wire button callbacks (new navigation: S1=UP, S2=DOWN, S3=CONFIRM)
+  // Wire button callbacks (S1=UP, S2=DOWN, S3=ACTION)
   // ── S1 (UP) ───────────────────────────────────────────────────────────
   NorviButtonHandler::onButton1Press([]() {
-    if (NorviOledDisplay::isSelectSensorStep()) {
-      // Sensor selection: move to previous sensor
+    if (NorviOledDisplay::isMenuActive()) {
+      NorviOledDisplay::menuPrevious();
+    } else if (NorviOledDisplay::isSelectSensorStep()) {
       NorviOledDisplay::setupSelectPrevious();
       NorviOledDisplay::requestRedraw();
     } else if (NorviOledDisplay::isSelectRoleStep()) {
-      // Role selection: toggle Solar ↔ Pool
-      NorviOledDisplay::setupToggleRole();
+      NorviOledDisplay::setupSelectSolar();
       NorviOledDisplay::requestRedraw();
     } else {
-      // Normal mode: previous page
       NorviOledDisplay::previousPage();
     }
   });
   // ── S2 (DOWN) ─────────────────────────────────────────────────────────
   NorviButtonHandler::onButton2Press([]() {
-    if (NorviOledDisplay::isSelectSensorStep()) {
-      // Sensor selection: move to next sensor
+    if (NorviOledDisplay::isMenuActive()) {
+      NorviOledDisplay::menuNext();
+    } else if (NorviOledDisplay::isSelectSensorStep()) {
       NorviOledDisplay::setupSelectNext();
       NorviOledDisplay::requestRedraw();
     } else if (NorviOledDisplay::isSelectRoleStep()) {
-      // Role selection: toggle Solar ↔ Pool
-      NorviOledDisplay::setupToggleRole();
+      NorviOledDisplay::setupSelectPool();
       NorviOledDisplay::requestRedraw();
     } else {
-      // Normal mode: next page
       NorviOledDisplay::nextPage();
     }
   });
   // ── S3 (CONFIRM) ──────────────────────────────────────────────────────
   NorviButtonHandler::onButton3Press([]() {
-    if (NorviOledDisplay::getCurrentPage() == NorviOledDisplay::Page::SENSOR_SETUP) {
-      // Sensor setup page: advance the state machine (IDLE→SELECT→ROLE→assign)
-      NorviOledDisplay::confirmAction();
-    } else {
-      // Normal mode: cycle operation mode
-      NorviOledDisplay::requestRedraw();
-      const String &currentMode = operationModeNode.getMode();
-      if (currentMode == "auto") {
-        operationModeNode.setMode("manu");
-      } else if (currentMode == "manu") {
-        operationModeNode.setMode("boost");
-      } else if (currentMode == "boost") {
-        operationModeNode.setMode("timer");
-      } else {
-        operationModeNode.setMode("auto");
+    if (NorviOledDisplay::isMenuActive()) {
+      // Execute selected menu action, then return to MAIN
+      NorviOledDisplay::Page prevPage = NorviOledDisplay::getCurrentPage();
+      switch (NorviOledDisplay::getMenuSelection()) {
+      case NorviOledDisplay::MenuItem::MODE: {
+        // Cycle operation mode
+        const String &currentMode = operationModeNode.getMode();
+        if (currentMode == "auto") {
+          operationModeNode.setMode("manu");
+        } else if (currentMode == "manu") {
+          operationModeNode.setMode("boost");
+        } else if (currentMode == "boost") {
+          operationModeNode.setMode("timer");
+        } else {
+          operationModeNode.setMode("auto");
+        }
+        Serial.printf("→ Mode switched to: %s\n", operationModeNode.getMode().c_str());
+        break;
       }
-      Serial.printf("→ Mode switched to: %s\n", operationModeNode.getMode().c_str());
+      case NorviOledDisplay::MenuItem::PUMP:
+        // Toggle pool pump
+        poolPumpNode.setSwitch(!poolPumpNode.getSwitch());
+        Serial.printf("→ Pump toggled: %s\n", poolPumpNode.getSwitch() ? "ON" : "OFF");
+        break;
+      case NorviOledDisplay::MenuItem::EXIT:
+        // No action — just exit
+        break;
+      }
+      NorviOledDisplay::exitMenu();
+    } else if (NorviOledDisplay::getCurrentPage() == NorviOledDisplay::Page::MAIN) {
+      // MAIN page: open action menu
+      NorviOledDisplay::enterMenu();
+    } else if (NorviOledDisplay::getCurrentPage() == NorviOledDisplay::Page::SENSOR_SETUP) {
+      // Sensor setup: advance the wizard
+      NorviOledDisplay::confirmAction();
     }
+    // Other info pages: S3 intentionally does nothing
   });
   // ── S3 long-press: save sensor mapping & reboot ───────────────────────
   NorviButtonHandler::onButton3LongPress([]() -> bool {
     if (NorviOledDisplay::isMappingComplete()) {
       uint8_t solarAddr[8], poolAddr[8];
       NorviOledDisplay::getMapping(solarAddr, poolAddr);
-      saveSensorAddressMapping(solarAddr, poolAddr);
+      ConfigManager::saveSensorMapping(solarAddr, poolAddr);
       Serial.println("→ Sensor mapping saved — rebooting...");
       NetworkManager::restart();
       return true;

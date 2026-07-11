@@ -7,6 +7,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -fprofile-arcs -ftest-coverage -fsanitize=address -fno-omit-frame-pointer")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fprofile-arcs -ftest-coverage -fsanitize=address -fno-omit-frame-pointer")
 
+# Check whether the host libc provides strlcat (glibc ≥ 2.38, macOS, BSD).
+# If not, we provide our own in stubs.cpp.
+include(CheckSymbolExists)
+check_symbol_exists(strlcat "string.h" HAVE_STRLCAT)
+if(HAVE_STRLCAT)
+  add_definitions(-DHAVE_STRLCAT)
+endif()
+
 # PlatformIO compile definitions (normally passed via -D flags)
 add_definitions(-DGITHUB_REPO="smart-swimmingpool/pool-controller")
 add_definitions(-DFW_VERSION="3.3.0")

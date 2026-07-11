@@ -12,6 +12,9 @@
 #include <Arduino.h>
 #include "Timer.hpp"
 
+// Uncomment to enable verbose timer debugging (reduces ~50K log lines/day)
+// #define DEBUG_RULE_TIMER
+
 /**
  * @brief Abstract base for operation mode rule implementations.
  *
@@ -94,6 +97,34 @@ public:
     }
   }
 
+  /**
+   * @brief Get the temperature-based circulation extension in minutes.
+   *
+   * Returns how many extra minutes beyond the base timer runtime are active
+   * due to warm water. When no extension is active, returns 0.
+   *
+   * @return Extension in minutes (0-1440).
+   */
+  uint16_t getCirculationExtensionMinutes() const {
+    if (_activeEndMinutes == 0) {
+      return 0;
+    }
+
+    uint16_t total = getEffectiveRuntimeMinutes();
+    TimerSetting ts = getTimerSetting();
+    uint16_t baseStart = ts.timerStartHour * 60 + ts.timerStartMinutes;
+    uint16_t baseEnd = ts.timerEndHour * 60 + ts.timerEndMinutes;
+
+    uint16_t baseRuntime;
+    if (baseEnd >= baseStart) {
+      baseRuntime = baseEnd - baseStart;
+    } else {
+      baseRuntime = (1440 - baseStart) + baseEnd;
+    }
+
+    return (total > baseRuntime) ? (total - baseRuntime) : 0;
+  }
+
 protected:
   static constexpr const char *cIndent = "  ";
 
@@ -110,14 +141,20 @@ protected:
    *         window).
    */
   bool checkPoolPumpTimer(float poolTemp) {
+#ifdef DEBUG_RULE_TIMER
     Serial.println("↕  checkPoolPumpTimer");
+#endif
 
     tm time = getCurrentDateTime();
 
     // Check if time sync is valid
     if (time.tm_year == -1) {
+#ifdef DEBUG_RULE_TIMER
       Serial.println("  ⚠ Time sync RED - timer disabled");
+#endif
+#ifdef DEBUG_RULE_TIMER
       Serial.println("  Pool pump stays ON for safety & hygiene");
+#endif
       return true;
     }
 
@@ -127,9 +164,21 @@ protected:
     uint16_t baseStartMinutes = ts.timerStartHour * 60 + ts.timerStartMinutes;
     uint16_t baseEndMinutes = ts.timerEndHour * 60 + ts.timerEndMinutes;
 
-    Serial.printf("  currenttime = %s", asctime(&time));
-    Serial.printf("  startTime   = %s", asctime(&startTime));
-    Serial.printf("  endTime     = %s", asctime(&endTime));
+#ifdef DEBUG_RULE_TIMER
+    char timeBuf[26];
+    asctime_r(&time, timeBuf);
+    Serial.printf("  currenttime = %s", timeBuf);
+#endif
+#ifdef DEBUG_RULE_TIMER
+    char startBuf[26];
+    asctime_r(&startTime, startBuf);
+    Serial.printf("  startTime   = %s", startBuf);
+#endif
+#ifdef DEBUG_RULE_TIMER
+    char endBuf[26];
+    asctime_r(&endTime, endBuf);
+    Serial.printf("  endTime     = %s", endBuf);
+#endif
 
     time_t now = mktime(&time);
     time_t start = mktime(&startTime);
@@ -157,7 +206,9 @@ protected:
         _activeEndMinutes = extendedEnd;
         uint8_t eh = (_activeEndMinutes / 60) % 24;
         uint8_t em = _activeEndMinutes % 60;
+#ifdef DEBUG_RULE_TIMER
         Serial.printf("  → Temperature extension: end now %02d:%02d\n", eh, em);
+#endif
       }
     }
 
@@ -175,8 +226,10 @@ protected:
       }
 
       if (inExtendedWindow) {
+#ifdef DEBUG_RULE_TIMER
         Serial.printf(
           "  checkPoolPumpTimer = true (extended to %02d:%02d)\n", (uint8_t)(normalizedEnd / 60), (uint8_t)(normalizedEnd % 60));
+#endif
         return true;
       }
 
@@ -186,25 +239,35 @@ protected:
 
     // Step 3: Base timer active (no extension or extension expired)
     if (timerActive) {
+#ifdef DEBUG_RULE_TIMER
       Serial.printf("  checkPoolPumpTimer = true\n");
+#endif
       return true;
     }
 
-    // Timer not active and no extension → pump stays OFF
+// Timer not active and no extension → pump stays OFF
+#ifdef DEBUG_RULE_TIMER
     Serial.printf("  checkPoolPumpTimer = false\n");
+#endif
     return false;
   }
 
   /** @brief Standard timer check without temperature extension. */
   bool checkPoolPumpTimer() {
+#ifdef DEBUG_RULE_TIMER
     Serial.println("↕  checkPoolPumpTimer");
+#endif
 
     tm time = getCurrentDateTime();
 
     // Check if time sync is valid
     if (time.tm_year == -1) {
+#ifdef DEBUG_RULE_TIMER
       Serial.println("  ⚠ Time sync RED - timer disabled");
+#endif
+#ifdef DEBUG_RULE_TIMER
       Serial.println("  Pool pump stays ON for safety & hygiene");
+#endif
       return true;
     }
 
@@ -213,9 +276,21 @@ protected:
     tm startTime = getStartTime(time, getTimerSetting());
     tm endTime = getEndTime(time, getTimerSetting());
 
-    Serial.printf("  currenttime = %s", asctime(&time));
-    Serial.printf("  startTime   = %s", asctime(&startTime));
-    Serial.printf("  endTime     = %s", asctime(&endTime));
+#ifdef DEBUG_RULE_TIMER
+    char timeBuf[26];
+    asctime_r(&time, timeBuf);
+    Serial.printf("  currenttime = %s", timeBuf);
+#endif
+#ifdef DEBUG_RULE_TIMER
+    char startBuf[26];
+    asctime_r(&startTime, startBuf);
+    Serial.printf("  startTime   = %s", startBuf);
+#endif
+#ifdef DEBUG_RULE_TIMER
+    char endBuf[26];
+    asctime_r(&endTime, endBuf);
+    Serial.printf("  endTime     = %s", endBuf);
+#endif
 
     // Convert tm structs to time_t once to avoid multiple mktime calls
     time_t now = mktime(&time);
@@ -237,7 +312,9 @@ protected:
       retval = (difftime(now, start) >= 0) && (difftime(now, end) <= 0);
     }
 
+#ifdef DEBUG_RULE_TIMER
     Serial.printf("  checkPoolPumpTimer = %s\n", retval ? "true" : "false");
+#endif
     return retval;
   }
 

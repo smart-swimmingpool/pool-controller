@@ -23,18 +23,18 @@ ausgelegt.
 
 **Hauptunterschiede zu einem Standard-ESP32-Dev-Board:**
 
-| Merkmal | Standard ESP32 Dev Board | NORVI AE01-R |
-|---------|-------------------------|--------------|
-| Versorgungsspannung | **5V** (USB) | **24V DC** |
-| Relaismodul | Extern (benötigt 5V) | **6 eingebaute Relais** (5A 250V AC) |
-| Relais-Stromversorgung | Separates 5V-Netzteil | Integriert — wird von 24V versorgt |
-| Statusanzeige | Nur eingebaute LED | **0,96" OLED-Display** + externe LED |
-| Gehäuse | Offene Platine (Breadboard) | **Hutschienengehäuse** (IP20) |
-| Zertifizierungen | Keine | CE (EN 61131-2, EN 61010-1) |
-| Verdrahtung | Schraub-/Dupont-Klemmen | **Industrie-Schraubklemmen** |
-| Digitaleingänge | Keine | **8x Sink/Source (18–32V DC)** |
-| Zusätzliche I/O | Keine | 2x Transistorausgang, RS-485 |
-| Benutzerschnittstelle | Keine | **3 Drucktaster an der Front** |
+| Merkmal                | Standard ESP32 Dev Board    | NORVI AE01-R                         |
+| ---------------------- | --------------------------- | ------------------------------------ |
+| Versorgungsspannung    | **5V** (USB)                | **24V DC**                           |
+| Relaismodul            | Extern (benötigt 5V)        | **6 eingebaute Relais** (5A 250V AC) |
+| Relais-Stromversorgung | Separates 5V-Netzteil       | Integriert — wird von 24V versorgt   |
+| Statusanzeige          | Nur eingebaute LED          | **0,96" OLED-Display** + externe LED |
+| Gehäuse                | Offene Platine (Breadboard) | **Hutschienengehäuse** (IP20)        |
+| Zertifizierungen       | Keine                       | CE (EN 61131-2, EN 61010-1)          |
+| Verdrahtung            | Schraub-/Dupont-Klemmen     | **Industrie-Schraubklemmen**         |
+| Digitaleingänge        | Keine                       | **8x Sink/Source (18–32V DC)**       |
+| Zusätzliche I/O        | Keine                       | 2x Transistorausgang, RS-485         |
+| Benutzerschnittstelle  | Keine                       | **3 Drucktaster an der Front**       |
 
 > **Wenn du bereits ein 230V AC → 24V DC Netzteil hast**, kann der NORVI AE01-R
 > direkt daraus versorgt werden — kein separates 5V-Netzteil nötig.
@@ -53,16 +53,16 @@ ausgelegt.
 Der Firmware wird über das Präprozessor-Makro `NORVI_AE01_R` eine alternative
 Pinbelegung ausgewählt, die die belegten und reinen-Eingang-Pins vermeidet:
 
-| Konstante | NORVI GPIO | Funktion | Anschluss |
-|-----------|:----------:|----------|:---------:|
-| `PIN_DS_SOLAR` | **GPIO25** | DS18B20 — Solar-Kollektortemperatur | Erweiterungsport Pin 1 |
-| `PIN_DS_POOL` | **GPIO25** | DS18B20 — Pool-Wassertemperatur | Shared Bus auf GPIO25 (Erweiterungsport) |
-| `PIN_RELAY_POOL` | **GPIO14** (R0) | Relais — Pool-Umwälzpumpe | Relaisausgang 0 |
-| `PIN_RELAY_SOLAR` | **GPIO12** (R1) | Relais — Solarheizungspumpe | Relaisausgang 1 |
-| `PIN_LED_STATUS` | **GPIO27** (T0.1) | Status-LED (extern, über Transistorausgang) | Transistorausgang 0.1 |
-| `PIN_OLED_SDA` | **GPIO16** | I2C SDA — eingebautes 0,96" OLED (SSD1306) | Intern (I2C) |
-| `PIN_OLED_SCL` | **GPIO17** | I2C SCL — eingebautes 0,96" OLED (SSD1306) | Intern (I2C) |
-| `PIN_BUTTON_ADC` | **GPIO32** | 3 Fronttaster (über Analog-ADC) | Intern (Widerstandsteiler) |
+| Konstante         |    NORVI GPIO     | Funktion                                    |                Anschluss                 |
+| ----------------- | :---------------: | ------------------------------------------- | :--------------------------------------: |
+| `PIN_DS_SOLAR`    |    **GPIO25**     | DS18B20 — Solar-Kollektortemperatur         |          Erweiterungsport Pin 1          |
+| `PIN_DS_POOL`     |    **GPIO25**     | DS18B20 — Pool-Wassertemperatur             | Shared Bus auf GPIO25 (Erweiterungsport) |
+| `PIN_RELAY_POOL`  |  **GPIO14** (R0)  | Relais — Pool-Umwälzpumpe                   |             Relaisausgang 0              |
+| `PIN_RELAY_SOLAR` |  **GPIO33** (R5)  | Relais — Solarheizungspumpe                 |             Relaisausgang 5              |
+| `PIN_LED_STATUS`  | **GPIO27** (T0.1) | Status-LED (extern, über Transistorausgang) |          Transistorausgang 0.1           |
+| `PIN_OLED_SDA`    |    **GPIO16**     | I2C SDA — eingebautes 0,96" OLED (SSD1306)  |               Intern (I2C)               |
+| `PIN_OLED_SCL`    |    **GPIO17**     | I2C SCL — eingebautes 0,96" OLED (SSD1306)  |               Intern (I2C)               |
+| `PIN_BUTTON_ADC`  |    **GPIO32**     | 3 Fronttaster (über Analog-ADC)             |        Intern (Widerstandsteiler)        |
 
 ### DS18B20-Sensoren anschließen — Shared OneWire Bus
 
@@ -94,10 +94,10 @@ Beide Sensoren teilen sich einen **gemeinsamen OneWire-Bus auf GPIO25** am
 **Anschlusstabelle:**
 
 | Erweiterungsport | Dupont (Farbe) | DS18B20 | Auch verbunden mit |
-|------------------|----------------|---------|-------------------|
-| Pin 1 (IO25) | Gelb | DATA | 4,7 kΩ → 3,3V |
-| Pin 7 (3,3V) | Rot | VCC | 4,7 kΩ → DATA |
-| Pin 9 (GND) | Schwarz | GND | — |
+| ---------------- | -------------- | ------- | ------------------ |
+| Pin 1 (IO25)     | Gelb           | DATA    | 4,7 kΩ → 3,3V      |
+| Pin 7 (3,3V)     | Rot            | VCC     | 4,7 kΩ → DATA      |
+| Pin 9 (GND)      | Schwarz        | GND     | —                  |
 
 Beide Sensoren teilen sich **dieselben drei Pins** — beide DATA an Pin 1,
 beide VCC an Pin 7, beide GND an Pin 9. Ein einziger **4,7-kΩ-Pull-up**
@@ -212,15 +212,25 @@ kommt zum Einsatz.
  ─── RELAISAUSGÄNGE (eingebaut) ───────────────────────────────────────
 
    NORVI Relaisausgang 0 (GPIO14):  Pool-Pumpe
-   NORVI Relaisausgang 1 (GPIO12):  Solar-Pumpe
+   NORVI Relaisausgang 5 (GPIO33):  Solar-Pumpe
 
    L (Außenleiter) ─── RCD ─── MCB ──┬── Relais COM0 ── Pool-Pumpe NO
-                                     └── Relais COM1 ── Solar-Pumpe NO
+                                     └── Relais COM5 ── Solar-Pumpe NO
    N (Neutral) ──────────────────────────── Neutralleiter ── Pumpen N
 
    Die NORVI-Relais sind Schließer (SPST) — schließe deine 230V AC
    Verbraucher zwischen COM und NO an. Die Relais sind für 5A/250V AC
    ausgelegt.
+
+   > **Hinweis:** Die Solar-Pumpe wurde von Relaisausgang 1 (GPIO12) auf
+   > Relaisausgang 5 (GPIO33) verlegt, nachdem bei einem Feldgerät der
+   > R1-Kanal dauerhaft leitend war (Relais klickt hörbar beim
+   > Schalten, aber COM1/NO1 öffnet nie) — ein Hardwarefehler
+   > (verschweißter Kontakt oder NO/NC-Verwechslung), nachweislich kein
+   > Firmware-Fehler, da Relaisausgang 0 dieselbe Schaltlogik nutzt und
+   > korrekt funktioniert. Falls dein R1-Kanal einwandfrei funktioniert,
+   > kannst du ihn weiterverwenden, indem du `PIN_RELAY_SOLAR` in
+   > `Config.hpp` zurücksetzt.
 
    ⚡ Relais-Polarität: Im Gegensatz zu externen Relaismodulen (die typischerweise
    active-LOW sind: LOW = EIN, HIGH = AUS) sind die eingebauten NORVI-Relais
@@ -250,12 +260,12 @@ kommt zum Einsatz.
 Der NORVI AE01-R hat ein **0,96" SSD1306 OLED-Display** (128×64, I2C-Adresse
 0x3C). Die Firmware zeigt vier Informationsseiten:
 
-| Seite | Inhalt |
-|:-----:|--------|
+| Seite | Inhalt                                                                                             |
+| :---: | -------------------------------------------------------------------------------------------------- |
 | **1** | Pool- & Solar-Temperatur, Pumpenstatus, Betriebsmodus und Tasterhinweise (▲ Seite ▼ Pumpe ■ Modus) |
-| **2** | WLAN-SSID, IP-Adresse, MQTT-Verbindungsstatus, AP-Modus-Hinweis |
-| **3** | System-Betriebszeit, freier Heap, minimaler Heap (Low-Watermark), Firmware-Version |
-| **4** | QR-Code mit Link zum Web-Dashboard unter `http://<geräte-ip>/` |
+| **2** | WLAN-SSID, IP-Adresse, MQTT-Verbindungsstatus, AP-Modus-Hinweis                                    |
+| **3** | System-Betriebszeit, freier Heap, minimaler Heap (Low-Watermark), Firmware-Version                 |
+| **4** | QR-Code mit Link zum Web-Dashboard unter `http://<geräte-ip>/`                                     |
 
 **Gemeinsame Fußzeile:** Alle Seiten zeigen unten eine Trennlinie mit dem
 aktuellen Betriebsmodus (nur Seite 1), der lokalen Uhrzeit (HH:MM), der
@@ -284,10 +294,10 @@ Die drei Drucktaster an der Front werden über den Analog-ADC auf GPIO32
 ausgelesen. Jeder Taster erzeugt durch einen integrierten Widerstandsteiler
 einen eigenen Spannungspegel:
 
-| Taster | Aktion |
-|:------:|--------|
-| **1** (links) | OLED-Seite vorwärts blättern (1 → 2 → 3 → 4 → 1) |
-| **2** (mitte) | Im **manuellen** Modus: Pool-Pumpe EIN/AUS schalten |
+|     Taster     | Aktion                                                      |
+| :------------: | ----------------------------------------------------------- |
+| **1** (links)  | OLED-Seite vorwärts blättern (1 → 2 → 3 → 4 → 1)            |
+| **2** (mitte)  | Im **manuellen** Modus: Pool-Pumpe EIN/AUS schalten         |
 | **3** (rechts) | Betriebsmodus wechseln (auto → manu → boost → timer → auto) |
 
 Die ADC-Schwellwerte sind in `NorviButtonHandler.hpp` konfiguriert. Die
@@ -300,11 +310,11 @@ Rohwerte werden beim Start über die serielle Schnittstelle ausgegeben.
 Der NORVI AE01-R arbeitet mit **24V DC** (±10 %). Die eingebauten Relais und
 der ESP32 werden gemeinsam aus dieser Spannung versorgt.
 
-| Parameter | Wert |
-|-----------|------|
-| Nennspannung | **24V DC** |
-| Stromaufnahme | **400 mA** (alle Relais aus) |
-| Empfohlenes Netzteil | **1A 24V DC** (oder mehr) |
+| Parameter            | Wert                         |
+| -------------------- | ---------------------------- |
+| Nennspannung         | **24V DC**                   |
+| Stromaufnahme        | **400 mA** (alle Relais aus) |
+| Empfohlenes Netzteil | **1A 24V DC** (oder mehr)    |
 
 > **Hinweis:** Im Gegensatz zum Standard-ESP32-Dev-Board-Setup benötigt der
 > NORVI **kein** separates 5V-USB-Netzteil oder 5V-Relaismodul-Netzteil. Alles
@@ -321,7 +331,7 @@ der ESP32 werden gemeinsam aus dieser Spannung versorgt.
 | **Relais-Strom** | 5V an Relaismodul             | Integriert (24V → Relaisspulen)                     |
 | **Relais-Polarität** | Active-LOW (LOW = EIN)   | **Active-HIGH** (HIGH = EIN)                        |
 | **Sensor-Pins**  | GPIO32, GPIO33           | GPIO25 (Exp Port), GPIO5 (löten)                    |
-| **Relais-Pins**  | GPIO25, GPIO26           | GPIO14 (R0), GPIO12 (R1)                            |
+| **Relais-Pins**  | GPIO25, GPIO26           | GPIO14 (R0), GPIO33 (R5)                            |
 | **Status-LED**   | Eingebaut (GPIO2)        | Extern über GPIO27 (T0.1)                           |
 | **OLED-Display** | Keines                   | Eingebaut 0,96" (SSD1306) — 4 Info-Seiten + QR-Code |
 | **Drucktaster**  | BOOT-Taster (GPIO0)      | 3 Fronttaster — Seiten & Modi                       |
@@ -352,6 +362,7 @@ pio run -e norvi_ae01_r -t upload
 ```
 
 Diese Umgebung:
+
 - Definiert `-D NORVI_AE01_R` für die alternative Pinbelegung (Shared OneWire Bus)
 - Bindet `Adafruit SSD1306` und `Adafruit GFX Library` für das OLED ein
 - Initialisiert I2C auf GPIO16/GPIO17 und den Taster-ADC auf GPIO32
@@ -372,35 +383,35 @@ pio run -e norvi_ae01_r -t uploadfs
 
 ## NORVI AE01-R Pin-Referenz
 
-| GPIO | NORVI-Funktion | Vom Pool-Controller genutzt? |
-|:----:|---------------|:------------------------:|
-| 0 | NRST (PWM beim Boot) | ❌ |
-| 1 | RS-485 TX (mit USB geteilt) | ❌ |
-| 2 | Relaisausgang 4 / Eingebaute LED | ❌ |
-| 3 | RS-485 RX (mit USB geteilt) | ❌ |
-| 4 | RS-485 Flusskontrolle | ❌ |
-| **5** | **— (freier GPIO, kein NORVI-Peripherie)** | ✅ **DS18B20 Pool (löten)** |
-| 12 | **Relaisausgang 1** | ✅ Solar-Pumpe |
-| 13 | Relaisausgang 2 | ❌ |
-| 14 | **Relaisausgang 0** | ✅ Pool-Pumpe |
-| 15 | Relaisausgang 3 | ❌ |
-| 16 | **I2C SDA** (OLED-Display) | ✅ OLED-Display |
-| 17 | **I2C SCL** (OLED-Display) | ✅ OLED-Display |
-| 18 | Digitaleingang 0 (nur Eingang) | ❌ |
-| 19 | Digitaleingang 4 (nur Eingang) | ❌ |
-| 20 | — | ❌ |
-| 21 | Digitaleingang 5 (nur Eingang) | ❌ |
-| 22 | Digitaleingang 6 (nur Eingang) | ❌ |
-| 23 | Digitaleingang 7 (nur Eingang) | ❌ |
-| **25** | **Erweiterungsport Pin 1** | ✅ **DS18B20 Solar** |
-| 26 | Transistorausgang 0.0 | ❌ (frei) |
-| 27 | **Transistorausgang 0.1** | ✅ Status-LED (extern) |
-| **32** | **Analogeingang / Taster** | ✅ 3 Fronttaster |
-| 33 | Relaisausgang 5 | ❌ |
-| 34 | Digitaleingang 2 (nur Eingang) | ❌ |
-| 35 | Digitaleingang 3 (nur Eingang) | ❌ |
-| 38 | — | ❌ |
-| 39 | Digitaleingang 1 (nur Eingang) | ❌ |
+|  GPIO  | NORVI-Funktion                             | Vom Pool-Controller genutzt? |
+| :----: | ------------------------------------------ | :--------------------------: |
+|   0    | NRST (PWM beim Boot)                       |              ❌              |
+|   1    | RS-485 TX (mit USB geteilt)                |              ❌              |
+|   2    | Relaisausgang 4 / Eingebaute LED           |              ❌              |
+|   3    | RS-485 RX (mit USB geteilt)                |              ❌              |
+|   4    | RS-485 Flusskontrolle                      |              ❌              |
+| **5**  | **— (freier GPIO, kein NORVI-Peripherie)** | ✅ **DS18B20 Pool (löten)**  |
+|   12   | Relaisausgang 1 (vermeiden — siehe Hinweis oben) |              ❌              |
+|   13   | Relaisausgang 2                            |              ❌              |
+|   14   | **Relaisausgang 0**                        |        ✅ Pool-Pumpe         |
+|   15   | Relaisausgang 3                            |              ❌              |
+|   16   | **I2C SDA** (OLED-Display)                 |       ✅ OLED-Display        |
+|   17   | **I2C SCL** (OLED-Display)                 |       ✅ OLED-Display        |
+|   18   | Digitaleingang 0 (nur Eingang)             |              ❌              |
+|   19   | Digitaleingang 4 (nur Eingang)             |              ❌              |
+|   20   | —                                          |              ❌              |
+|   21   | Digitaleingang 5 (nur Eingang)             |              ❌              |
+|   22   | Digitaleingang 6 (nur Eingang)             |              ❌              |
+|   23   | Digitaleingang 7 (nur Eingang)             |              ❌              |
+| **25** | **Erweiterungsport Pin 1**                 |     ✅ **DS18B20 Solar**     |
+|   26   | Transistorausgang 0.0                      |          ❌ (frei)           |
+|   27   | **Transistorausgang 0.1**                  |    ✅ Status-LED (extern)    |
+| **32** | **Analogeingang / Taster**                 |       ✅ 3 Fronttaster       |
+| **33** | **Relaisausgang 5**                        |       ✅ Solar-Pumpe         |
+|   34   | Digitaleingang 2 (nur Eingang)             |              ❌              |
+|   35   | Digitaleingang 3 (nur Eingang)             |              ❌              |
+|   38   | —                                          |              ❌              |
+|   39   | Digitaleingang 1 (nur Eingang)             |              ❌              |
 
 > **Hinweis:** Als "nur Eingang" markierte GPIOs (GPIO34, 35, 39) haben keine
 > internen Pull-ups und sind an Optokoppler-Schaltungen angeschlossen. Sie

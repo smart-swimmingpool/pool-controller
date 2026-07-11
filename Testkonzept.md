@@ -10,24 +10,24 @@
 
 ### 1.1 Codebasis (Produktivcode in `src/`)
 
-| Kategorie | Dateien | Lines of Code |
-|-----------|---------|--------------|
-| Regel-Engine | RuleAuto, RuleBoost, RuleManu, RuleTimer, Rule.hpp | ~195 |
-| Timer & Zeit | Timer.cpp, TimeClientHelper.cpp | ~353 |
-| Temperatursensoren | DallasTemperatureNode, ESP32TemperatureNode | ~299 |
-| Relay/Pumpen | RelayModuleNode | ~71 |
-| Betriebsmodi | OperationModeNode | ~302 |
-| Konfiguration | ConfigManager | ~209 |
-| Zustandspersistenz | StateManager | ~94 |
-| Web-Interface | WebPortal | ~1068 |
-| MQTT | MqttPublisher | ~964 |
-| Netzwerk | NetworkManager, WpsProvisioner | ~448 |
-| OTA-Update | OtaUpdater | ~554 |
-| System-Monitoring | SystemMonitor, DegradationManager | ~245 |
-| Pool-Controller | PoolController | ~520 |
-| NORVI-Hardware | NorviOledDisplay, NorviButtonHandler, StatusLed | ~1277 |
-| Helper | Utils.hpp, Logger.cpp, Version.h, main.cpp | ~65 |
-| **Total** | **25 .cpp / ~30 .hpp/.h** | **~6.664** |
+| Kategorie          | Dateien                                            | Lines of Code |
+| ------------------ | -------------------------------------------------- | ------------- |
+| Regel-Engine       | RuleAuto, RuleBoost, RuleManu, RuleTimer, Rule.hpp | ~195          |
+| Timer & Zeit       | Timer.cpp, TimeClientHelper.cpp                    | ~353          |
+| Temperatursensoren | DallasTemperatureNode, ESP32TemperatureNode        | ~299          |
+| Relay/Pumpen       | RelayModuleNode                                    | ~71           |
+| Betriebsmodi       | OperationModeNode                                  | ~302          |
+| Konfiguration      | ConfigManager                                      | ~209          |
+| Zustandspersistenz | StateManager                                       | ~94           |
+| Web-Interface      | WebPortal                                          | ~1068         |
+| MQTT               | MqttPublisher                                      | ~964          |
+| Netzwerk           | NetworkManager, WpsProvisioner                     | ~448          |
+| OTA-Update         | OtaUpdater                                         | ~554          |
+| System-Monitoring  | SystemMonitor, DegradationManager                  | ~245          |
+| Pool-Controller    | PoolController                                     | ~520          |
+| NORVI-Hardware     | NorviOledDisplay, NorviButtonHandler, StatusLed    | ~1277         |
+| Helper             | Utils.hpp, Logger.cpp, Version.h, main.cpp         | ~65           |
+| **Total**          | **25 .cpp / ~30 .hpp/.h**                          | **~6.664**    |
 
 ### 1.2 Bestehende Test-Infrastruktur
 
@@ -40,21 +40,21 @@
 
 ### 1.3 Aktuelle Testabdeckung
 
-| Modul | Status | Lines | Coverage |
-|-------|--------|-------|----------|
-| Rule* (Timer/RuleTimer) | ✅ getestet | ~36 | ~80 % |
-| MqttPublisher | ✅ getestet (wrapper) | 602 | ~66 % |
-| WebPortal | ⚠️ teilweise (wrapper) | 610 | ~10 % |
-| OtaUpdater | ⚠️ teilweise | 248 | ~6 % |
-| DegradationManager | ❌ kompiliert, kaum getestet | 228 | ~0 % |
-| StateManager | ❌ kompiliert, kaum getestet | 94 | ~0 % |
-| SystemMonitor | ❌ kaum getestet | 17 | ~0 % |
-| ConfigManager | ❌ nur Mock getestet | 209 | ~0 % |
-| Timer/Timer.cpp | ❌ nicht kompiliert | 91 | 0 % |
-| OperationModeNode | ❌ nicht kompiliert | 302 | 0 % |
-| PoolController | ❌ nicht kompiliert | 520 | 0 % |
-| Alle anderen `src/*.cpp` | ❌ nicht kompiliert | ~2.700 | 0 % |
-| **Gesamt (geschätzt)** | | **~6.664** | **~12 %** |
+| Modul                    | Status                       | Lines      | Coverage  |
+| ------------------------ | ---------------------------- | ---------- | --------- |
+| Rule\* (Timer/RuleTimer) | ✅ getestet                  | ~36        | ~80 %     |
+| MqttPublisher            | ✅ getestet (wrapper)        | 602        | ~66 %     |
+| WebPortal                | ⚠️ teilweise (wrapper)       | 610        | ~10 %     |
+| OtaUpdater               | ⚠️ teilweise                 | 248        | ~6 %      |
+| DegradationManager       | ❌ kompiliert, kaum getestet | 228        | ~0 %      |
+| StateManager             | ❌ kompiliert, kaum getestet | 94         | ~0 %      |
+| SystemMonitor            | ❌ kaum getestet             | 17         | ~0 %      |
+| ConfigManager            | ❌ nur Mock getestet         | 209        | ~0 %      |
+| Timer/Timer.cpp          | ❌ nicht kompiliert          | 91         | 0 %       |
+| OperationModeNode        | ❌ nicht kompiliert          | 302        | 0 %       |
+| PoolController           | ❌ nicht kompiliert          | 520        | 0 %       |
+| Alle anderen `src/*.cpp` | ❌ nicht kompiliert          | ~2.700     | 0 %       |
+| **Gesamt (geschätzt)**   |                              | **~6.664** | **~12 %** |
 
 ### 1.4 Lückenanalyse
 
@@ -88,20 +88,21 @@ Um **80 % Line Coverage** zu erreichen, müssen ~5.330 der 6.664 Zeilen abgedeck
 
 ### 2.2 Test-Arten
 
-| Testart | Beschreibung | Anteil | Ziel |
-|---------|-------------|--------|------|
-| **Unit-Tests (Logic)** | Regel-Engine, Timer-Berechnungen, Degradation, StateManager, Validierung | 50 % | Vollständige Pfadabdeckung |
-| **Unit-Tests (I/O)** | MQTT-Payloads, Web-JSON-API, Config-Serialisierung | 20 % | Formate, Randfälle |
-| **Unit-Tests (Hardware-Abstraktion)** | Sensorknoten, Relais, OLED — über Mocks | 10 % | Zustandsautomaten |
-| **Integrationstests** | OperationModeNode→Rule→Timer, MQTT→OperationMode→Rule | 10 % | Zusammenspiel |
-| **Sicherheitstests** | Rate-Limiting, Token, Passwort, Input-Validierung | 5 % | OWASP/IoT |
-| **Speicher/Stabilität** | ASan, keine Leaks, Pufferüberläufe | 5 % | Laufzeitqualität |
+| Testart                               | Beschreibung                                                             | Anteil | Ziel                       |
+| ------------------------------------- | ------------------------------------------------------------------------ | ------ | -------------------------- |
+| **Unit-Tests (Logic)**                | Regel-Engine, Timer-Berechnungen, Degradation, StateManager, Validierung | 50 %   | Vollständige Pfadabdeckung |
+| **Unit-Tests (I/O)**                  | MQTT-Payloads, Web-JSON-API, Config-Serialisierung                       | 20 %   | Formate, Randfälle         |
+| **Unit-Tests (Hardware-Abstraktion)** | Sensorknoten, Relais, OLED — über Mocks                                  | 10 %   | Zustandsautomaten          |
+| **Integrationstests**                 | OperationModeNode→Rule→Timer, MQTT→OperationMode→Rule                    | 10 %   | Zusammenspiel              |
+| **Sicherheitstests**                  | Rate-Limiting, Token, Passwort, Input-Validierung                        | 5 %    | OWASP/IoT                  |
+| **Speicher/Stabilität**               | ASan, keine Leaks, Pufferüberläufe                                       | 5 %    | Laufzeitqualität           |
 
 ### 2.3 Test-Framework
 
 **Empfehlung: Bestehendes Custom-Framework beibehalten, aber erweitern.**
 
 Begründung:
+
 - Funktioniert bereits und liefert keine False Positives (53 Suites, 0 Failed)
 - Google Test einzuführen brächte Abhängigkeiten und CMake-Änderungen
 - Der bisherige Ansatz ist extrem leichtgewichtig und CI-kompatibel
@@ -120,6 +121,7 @@ Begründung:
 ### 2.4 Mocking-Strategie
 
 **Aktuelle Mocks** (vorhanden und nutzbar):
+
 - `Arduino.h` — String, Serial, WiFi, Preferences, LittleFS, millis, delay, GPIO
 - `ConfigManager.hpp` und `ConfigManager.cpp` — Settings, WiFi/MQTT/NTP-Konfig
 - `NetworkManager.hpp` und `NetworkManager.cpp` — WiFi-Status, MQTT-Connected
@@ -128,13 +130,14 @@ Begründung:
 - `AsyncMqttClient.h` — mit Capture-Mechanismus
 
 **Noch benötigte Mocks** (Priorität):
+
 1. ✅ **DallasTemperature.h** — OneWire-Temperatursensor (vorhanden)
 2. ✅ **ESP32TemperatureNode.hpp** — interner Temperatursensor (vorhanden)
-3. 🔲 **Adafruit_SSD1306.h** — OLED-Display — *für NorviOledDisplay-Tests*
-4. 🔲 **Adafruit_GFX.h** — Grafikbibliothek — *für OLED-Tests*
-5. 🔲 **HTTPClient.h** — *für OTA/Web-Client-Tests*
-6. 🔲 **time.h/TimeLib.h** — *erweitern für Timer-Tests*
-7. 🔲 **Bounce2.h** — Entprellung — *für ButtonHandler-Tests*
+3. 🔲 **Adafruit_SSD1306.h** — OLED-Display — _für NorviOledDisplay-Tests_
+4. 🔲 **Adafruit_GFX.h** — Grafikbibliothek — _für OLED-Tests_
+5. 🔲 **HTTPClient.h** — _für OTA/Web-Client-Tests_
+6. 🔲 **time.h/TimeLib.h** — _erweitern für Timer-Tests_
+7. 🔲 **Bounce2.h** — Entprellung — _für ButtonHandler-Tests_
 
 ---
 
@@ -142,56 +145,56 @@ Begründung:
 
 ### Phase 1 — Bestehende Tests ausbauen (Sofort)
 
-| Modul | Aktuell | Ziel | Maßnahme |
-|-------|---------|------|----------|
-| **MqttPublisher** | 66 % / 602 Z. | 85 % | Fehlende Fehlerpfade: `publishDiscovery` bei nicht-verbundenem MQTT, leere Payloads, Timeouts |
-| **WebPortal** | 10 % / 610 Z. | 80 % | `apiGetStatus`/`apiGetConfig` direkt testen (öffentliche Helper), `handleRoot`, `handleLogin`, Session-Handling, statische Dateien |
-| **OtaUpdater** | 6 % / 248 Z. | 75 % | `begin()`, `loop()`, Fehler bei github-connect, ausgeschöpfter Flash, Abbruch |
-| **DegradationManager** | ~0 % / 228 Z. | 90 % | Vollständige Zustandsmaschine (NORMAL→NO_WIFI→NO_SENSOR→CRITICAL), `forceSafeMode`, `unforceSafeMode`, Grenzfälle |
-| **StateManager** | ~0 % / 94 Z. | 95 % | Save/Load für String, Float, Int, Bool; NaN- und Bereichsvalidierung; `clear()` |
+| Modul                  | Aktuell       | Ziel | Maßnahme                                                                                                                           |
+| ---------------------- | ------------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **MqttPublisher**      | 66 % / 602 Z. | 85 % | Fehlende Fehlerpfade: `publishDiscovery` bei nicht-verbundenem MQTT, leere Payloads, Timeouts                                      |
+| **WebPortal**          | 10 % / 610 Z. | 80 % | `apiGetStatus`/`apiGetConfig` direkt testen (öffentliche Helper), `handleRoot`, `handleLogin`, Session-Handling, statische Dateien |
+| **OtaUpdater**         | 6 % / 248 Z.  | 75 % | `begin()`, `loop()`, Fehler bei github-connect, ausgeschöpfter Flash, Abbruch                                                      |
+| **DegradationManager** | ~0 % / 228 Z. | 90 % | Vollständige Zustandsmaschine (NORMAL→NO_WIFI→NO_SENSOR→CRITICAL), `forceSafeMode`, `unforceSafeMode`, Grenzfälle                  |
+| **StateManager**       | ~0 % / 94 Z.  | 95 % | Save/Load für String, Float, Int, Bool; NaN- und Bereichsvalidierung; `clear()`                                                    |
 
 ### Phase 2 — Neue Test-Suiten für Kernmodule
 
-| Modul | Lines | Ziel | Testfälle |
-|-------|-------|------|-----------|
-| **RuleAuto** | 78 | 90 % | loop mit gültigen/ungültigen Temperaturen, Solar an/aus Schwellwerte, Hysterese |
-| **RuleBoost** | 58 | 90 % | 24h-Boost, getEffectiveRuntime, Mode-String |
-| **RuleManu** | 16 | 95 % | Manueller Modus, kein Timer-Eingriff |
-| **RuleTimer** | 23 | 90 % | Timer mit/ohne customEndMinutes, TimerSetting-Übernahme |
-| **Timer.cpp** | 91 | 90 % | `getCurrentDateTime`, `getStartTime/EndTime`, `calculateEffectiveEndMinutes` (NaN, unter/über Threshold, Midnight-Crossing, Cap bei maxRuntime) |
-| **OperationModeNode** | 302 | 75 % | Mode-Wechsel, `addRule`/`getRule`, `applyProperty` (alle Properties), Input-Validierung (parseFloat/parseInt), Persistenz (loadState/saveState), HA-Commands |
+| Modul                 | Lines | Ziel | Testfälle                                                                                                                                                    |
+| --------------------- | ----- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **RuleAuto**          | 78    | 90 % | loop mit gültigen/ungültigen Temperaturen, Solar an/aus Schwellwerte, Hysterese                                                                              |
+| **RuleBoost**         | 58    | 90 % | 24h-Boost, getEffectiveRuntime, Mode-String                                                                                                                  |
+| **RuleManu**          | 16    | 95 % | Manueller Modus, kein Timer-Eingriff                                                                                                                         |
+| **RuleTimer**         | 23    | 90 % | Timer mit/ohne customEndMinutes, TimerSetting-Übernahme                                                                                                      |
+| **Timer.cpp**         | 91    | 90 % | `getCurrentDateTime`, `getStartTime/EndTime`, `calculateEffectiveEndMinutes` (NaN, unter/über Threshold, Midnight-Crossing, Cap bei maxRuntime)              |
+| **OperationModeNode** | 302   | 75 % | Mode-Wechsel, `addRule`/`getRule`, `applyProperty` (alle Properties), Input-Validierung (parseFloat/parseInt), Persistenz (loadState/saveState), HA-Commands |
 
 ### Phase 3 — Neue Test-Suiten für Service-Module
 
-| Modul | Lines | Ziel | Testfälle |
-|-------|-------|------|-----------|
-| **NetworkManager** | 245 | 70 % | WiFi-Status, RSSI, MQTT-Connection-State, Reconnect |
-| **WpsProvisioner** | 203 | 60 % | WPS-Tastenabfrage, Provisioning-Ergebnis |
-| **SystemMonitor** | 17 | 80 % | getFreeHeap, loop-Watchdog, min/max-Tracking |
-| **StatusLed** | 122 | 70 % | LED-Statusanzeige, Blinkmuster |
-| **TimeClientHelper** | 262 | 60 % | Zeitabfrage, Timezone-Wechsel, NTP-Sync, Degradation (GREEN→YELLOW→RED) |
-| **ConfigManager (real)** | 209 | 80 % | JSON-Speichern/Laden, Reset, adminPasswordHash, OTA-Transition |
-| **RelayModuleNode** | 71 | 90 % | Switch-GET/SET, State-Persistenz |
+| Modul                    | Lines | Ziel | Testfälle                                                               |
+| ------------------------ | ----- | ---- | ----------------------------------------------------------------------- |
+| **NetworkManager**       | 245   | 70 % | WiFi-Status, RSSI, MQTT-Connection-State, Reconnect                     |
+| **WpsProvisioner**       | 203   | 60 % | WPS-Tastenabfrage, Provisioning-Ergebnis                                |
+| **SystemMonitor**        | 17    | 80 % | getFreeHeap, loop-Watchdog, min/max-Tracking                            |
+| **StatusLed**            | 122   | 70 % | LED-Statusanzeige, Blinkmuster                                          |
+| **TimeClientHelper**     | 262   | 60 % | Zeitabfrage, Timezone-Wechsel, NTP-Sync, Degradation (GREEN→YELLOW→RED) |
+| **ConfigManager (real)** | 209   | 80 % | JSON-Speichern/Laden, Reset, adminPasswordHash, OTA-Transition          |
+| **RelayModuleNode**      | 71    | 90 % | Switch-GET/SET, State-Persistenz                                        |
 
 ### Phase 4 — Hardware-nahe Module (eingeschränkt)
 
-| Modul | Lines | Ziel | Testansatz |
-|-------|-------|------|-----------|
-| **NorviOledDisplay** | 1022 | 40 % | Display-Seiten, Text-Ausgabe über Mock (machbar), QR-Code (aufwändig) |
-| **NorviButtonHandler** | 155 | 50 % | Tastendruck-Erkennung, Entprellung über Bounce2-Mock |
-| **DallasTemperatureNode** | 262 | 50 % | Temperatur-Lesen simulieren, Fehlerfälle (Sensor nicht gefunden, CRC-Fehler) |
-| **ESP32TemperatureNode** | 37 | 70 % | Interne Temperatur, Fehlerbehandlung |
-| **PoolController** | 520 | 50 % | setup/loop-Zyklus, Subsystem-Initialisierung |
-| **Nodes/Logger** | 18 | 80 % | Log-Level, Formatierung |
+| Modul                     | Lines | Ziel | Testansatz                                                                   |
+| ------------------------- | ----- | ---- | ---------------------------------------------------------------------------- |
+| **NorviOledDisplay**      | 1022  | 40 % | Display-Seiten, Text-Ausgabe über Mock (machbar), QR-Code (aufwändig)        |
+| **NorviButtonHandler**    | 155   | 50 % | Tastendruck-Erkennung, Entprellung über Bounce2-Mock                         |
+| **DallasTemperatureNode** | 262   | 50 % | Temperatur-Lesen simulieren, Fehlerfälle (Sensor nicht gefunden, CRC-Fehler) |
+| **ESP32TemperatureNode**  | 37    | 70 % | Interne Temperatur, Fehlerbehandlung                                         |
+| **PoolController**        | 520   | 50 % | setup/loop-Zyklus, Subsystem-Initialisierung                                 |
+| **Nodes/Logger**          | 18    | 80 % | Log-Level, Formatierung                                                      |
 
 ### Phase 5 — Integrationstests
 
-| Test | Beschreibung |
-|------|-------------|
-| **MQTT → Rule Cycle** | HA-Command → MqttPublisher → OperationModeNode → Rule → Relay-Status per MQTT |
-| **Degradation → Rule** | Sensorausfall → DegradationManager → RuleAuto verhält sich korrekt |
-| **Config → Timer** | Config-Änderung → Timer-Berechnung ändert sich |
-| **OTA Guard** | OtaUpdater prüft Platz → verweigert bei zu wenig Flash |
+| Test                   | Beschreibung                                                                  |
+| ---------------------- | ----------------------------------------------------------------------------- |
+| **MQTT → Rule Cycle**  | HA-Command → MqttPublisher → OperationModeNode → Rule → Relay-Status per MQTT |
+| **Degradation → Rule** | Sensorausfall → DegradationManager → RuleAuto verhält sich korrekt            |
+| **Config → Timer**     | Config-Änderung → Timer-Berechnung ändert sich                                |
+| **OTA Guard**          | OtaUpdater prüft Platz → verweigert bei zu wenig Flash                        |
 
 ---
 
@@ -207,13 +210,13 @@ Fehlend: ~4.531 Zeilen
 
 ### 4.2 Aufwandsschätzung
 
-| Phase | Module | Neue Tests | Zeilen | Coverage-Beitrag |
-|-------|--------|-----------|--------|-----------------|
-| P1: Bestehende ausbauen | Mqtt, Web, OTA, Degradation, State | ~800 Z. Testcode | ~2.600 | +39 % → ~51 % |
-| P2: Kernmodule | Rules, Timer, OperationMode | ~600 Z. Testcode | ~800 | +12 % → ~63 % |
-| P3: Service-Module | Network, WPS, System, Status, Time, Relay | ~500 Z. Testcode | ~900 | +14 % → ~77 % |
-| P4: HW-nahe Module | OLED, Buttons, Dallas, ESP, PoolController | ~400 Z. Testcode | ~2.000 | +11 % → ~88 % |
-| P5: Integration | Querschnitt | ~200 Z. Testcode | — | Absicherung |
+| Phase                   | Module                                     | Neue Tests       | Zeilen | Coverage-Beitrag |
+| ----------------------- | ------------------------------------------ | ---------------- | ------ | ---------------- |
+| P1: Bestehende ausbauen | Mqtt, Web, OTA, Degradation, State         | ~800 Z. Testcode | ~2.600 | +39 % → ~51 %    |
+| P2: Kernmodule          | Rules, Timer, OperationMode                | ~600 Z. Testcode | ~800   | +12 % → ~63 %    |
+| P3: Service-Module      | Network, WPS, System, Status, Time, Relay  | ~500 Z. Testcode | ~900   | +14 % → ~77 %    |
+| P4: HW-nahe Module      | OLED, Buttons, Dallas, ESP, PoolController | ~400 Z. Testcode | ~2.000 | +11 % → ~88 %    |
+| P5: Integration         | Querschnitt                                | ~200 Z. Testcode | —      | Absicherung      |
 
 ### Realistisches Ziel nach P1+P2+P3: ~77 % Line Coverage
 
@@ -271,15 +274,15 @@ inkludieren (Mock-Layout weicht ab). Andere Module können direkt aus `src/` kom
 
 ### 5.2 Umgang mit Hardware-Abhängigkeiten
 
-| Abhängigkeit | Mock-Status | Strategie |
-|-------------|-------------|-----------|
-| Arduino.h (GPIO, Serial, millis, delay) | ✅ Vorhanden | Keine Änderung nötig |
-| Preferences (NVS) | ✅ Vorhanden | In-Memory-Map |
-| OneWire / DallasTemperature | 🔲 Erweiterung | Temperaturwerte setzbar, Fehler simulierbar |
-| Adafruit SSD1306 / GFX | 🔲 Neu | Print-Mock, keine Grafiklogik nötig |
-| AsyncMqttClient | ✅ Vorhanden | Capture-Mechanismus |
-| Bounce2 | 🔲 Neu | Button-Event-Simulation |
-| WiFiClientSecure | 🔲 Erweiterung | Für OTA-Updater-Tests |
+| Abhängigkeit                            | Mock-Status    | Strategie                                   |
+| --------------------------------------- | -------------- | ------------------------------------------- |
+| Arduino.h (GPIO, Serial, millis, delay) | ✅ Vorhanden   | Keine Änderung nötig                        |
+| Preferences (NVS)                       | ✅ Vorhanden   | In-Memory-Map                               |
+| OneWire / DallasTemperature             | 🔲 Erweiterung | Temperaturwerte setzbar, Fehler simulierbar |
+| Adafruit SSD1306 / GFX                  | 🔲 Neu         | Print-Mock, keine Grafiklogik nötig         |
+| AsyncMqttClient                         | ✅ Vorhanden   | Capture-Mechanismus                         |
+| Bounce2                                 | 🔲 Neu         | Button-Event-Simulation                     |
+| WiFiClientSecure                        | 🔲 Erweiterung | Für OTA-Updater-Tests                       |
 
 ### 5.3 Test-Orchestrierung
 
@@ -294,6 +297,7 @@ cd test/native/build && gcovr --root ../.. --filter 'src/' .
 ### 5.4 CI-Integration
 
 Bereits vorhanden in `.github/workflows/native-tests.yml`:
+
 - `pio pkg install` für Dependencies
 - CMake configure + build
 - ASan-aktivierter Testlauf
@@ -318,17 +322,18 @@ Bereits vorhanden in `.github/workflows/native-tests.yml`:
 
 ## 6. Qualitätskriterien
 
-| Kriterium | Metrik | Grenzwert |
-|-----------|--------|-----------|
-| **Line Coverage** | lcov/gcov | ≥ 80 % |
-| **Branch Coverage** | lcov/gcov | ≥ 60 % |
-| **Test-Erfolg** | Alle Tests grün | 0 Failed |
-| **ASan** | Address Sanitizer | 0 Leaks/Overflows |
-| **Test-Laufzeit** | CI | < 2 Minuten |
+| Kriterium           | Metrik            | Grenzwert         |
+| ------------------- | ----------------- | ----------------- |
+| **Line Coverage**   | lcov/gcov         | ≥ 80 %            |
+| **Branch Coverage** | lcov/gcov         | ≥ 60 %            |
+| **Test-Erfolg**     | Alle Tests grün   | 0 Failed          |
+| **ASan**            | Address Sanitizer | 0 Leaks/Overflows |
+| **Test-Laufzeit**   | CI                | < 2 Minuten       |
 
 ### 6.1 Ausnahmen (von Coverage ausgenommen)
 
 Folgende Code-Kategorien dürfen von der 80 %-Regel ausgenommen werden:
+
 - **Hardware-Init-Code** in `main.cpp` (Setup-Code, der nur auf echter HW läuft)
 - **QR-Code-Generierung** in NorviOledDisplay (komplexe Fremdbibliothek)
 - **Debug-only Blöcke** (via `#ifdef DEBUG`), falls vorhanden
@@ -353,13 +358,13 @@ lcov --list coverage.info --rc lcov_branch_coverage=1
 
 ## 7. Risiken und Gegenmaßnahmen
 
-| Risiko | Wahrscheinlichkeit | Auswirkung | Maßnahme |
-|--------|-------------------|------------|----------|
-| Aufwändige Mocks für OLED/QR-Code | Mittel | Niedrig | OLED-Tests auf Text-Ausgabe beschränken; QR-Code vom Coverage-Ziel ausnehmen |
-| Realer ConfigManager (JSON via LittleFS) schwer mockbar | Gering | Mittel | Dateibasierten Mock verwenden (temp file) — oder Integrationstest mit aufgesetztem JSON |
-| PoolController::setup/loop zu stark gekoppelt | Hoch | Mittel | Verantwortlichkeiten trennen (Refactoring) oder große Integrationstests schreiben |
-| Coverage unter 80 % wegen HW-lastiger Module | Mittel | Mittel | Priorisierte Roadmap (P1-P5) + Coverage-Ausnahmen für kritische Module |
-| CI-Coverage-Gate blockiert PRs | Gering | Mittel | Threshold schrittweise erhöhen: 50 % → 65 % → 75 % → 80 % |
+| Risiko                                                  | Wahrscheinlichkeit | Auswirkung | Maßnahme                                                                                |
+| ------------------------------------------------------- | ------------------ | ---------- | --------------------------------------------------------------------------------------- |
+| Aufwändige Mocks für OLED/QR-Code                       | Mittel             | Niedrig    | OLED-Tests auf Text-Ausgabe beschränken; QR-Code vom Coverage-Ziel ausnehmen            |
+| Realer ConfigManager (JSON via LittleFS) schwer mockbar | Gering             | Mittel     | Dateibasierten Mock verwenden (temp file) — oder Integrationstest mit aufgesetztem JSON |
+| PoolController::setup/loop zu stark gekoppelt           | Hoch               | Mittel     | Verantwortlichkeiten trennen (Refactoring) oder große Integrationstests schreiben       |
+| Coverage unter 80 % wegen HW-lastiger Module            | Mittel             | Mittel     | Priorisierte Roadmap (P1-P5) + Coverage-Ausnahmen für kritische Module                  |
+| CI-Coverage-Gate blockiert PRs                          | Gering             | Mittel     | Threshold schrittweise erhöhen: 50 % → 65 % → 75 % → 80 %                               |
 
 ---
 
@@ -376,32 +381,32 @@ lcov --list coverage.info --rc lcov_branch_coverage=1
 
 ## Anhang: Datei-Metrik-Tabelle
 
-| Source-Datei | LOC | Aktuell getestet? | Ziel % | Sprint |
-|-------------|-----|-------------------|--------|--------|
-| ConfigManager.cpp | 209 | ❌ (Mock-only) | 80 | P3a |
-| DallasTemperatureNode.cpp | 262 | ❌ | 50 | P4 |
-| DegradationManager.cpp | 228 | ⚠️ (0%) | 90 | P1 |
-| ESP32TemperatureNode.cpp | 37 | ❌ | 70 | P4 |
-| main.cpp | 45 | ❌ | 0* | — |
-| MqttPublisher.cpp | 964 | ✅ (66%) | 85 | P1 |
-| NetworkManager.cpp | 245 | ❌ (Mock-only) | 70 | P3a |
-| Nodes/Logger.cpp | 18 | ❌ | 80 | P3a |
-| NorviButtonHandler.cpp | 155 | ❌ | 50 | P4 |
-| NorviOledDisplay.cpp | 1022 | ❌ | 40 | P4 |
-| OperationModeNode.cpp | 302 | ❌ | 75 | P2 |
-| OtaUpdater.cpp | 554 | ⚠️ (6%) | 75 | P1 |
-| PoolController.cpp | 520 | ❌ | 50 | P4 |
-| RelayModuleNode.cpp | 71 | ❌ | 90 | P3a |
-| RuleAuto.cpp | 78 | ❌ | 90 | P2 |
-| RuleBoost.cpp | 58 | ❌ | 90 | P2 |
-| RuleManu.cpp | 16 | ❌ | 95 | P2 |
-| RuleTimer.cpp | 23 | ❌ | 90 | P2 |
-| StateManager.cpp | 94 | ⚠️ (0%) | 95 | P1 |
-| StatusLed.cpp | 122 | ❌ | 70 | P3a |
-| SystemMonitor.cpp | 17 | ⚠️ (0%) | 80 | P3a |
-| Timer.cpp | 91 | ❌ | 90 | P2 |
-| TimeClientHelper.cpp | 262 | ❌ | 60 | P3b |
-| WebPortal.cpp | 1068 | ⚠️ (10%) | 80 | P1 |
-| WpsProvisioner.cpp | 203 | ❌ | 60 | P3b |
+| Source-Datei              | LOC  | Aktuell getestet? | Ziel % | Sprint |
+| ------------------------- | ---- | ----------------- | ------ | ------ |
+| ConfigManager.cpp         | 209  | ❌ (Mock-only)    | 80     | P3a    |
+| DallasTemperatureNode.cpp | 262  | ❌                | 50     | P4     |
+| DegradationManager.cpp    | 228  | ⚠️ (0%)           | 90     | P1     |
+| ESP32TemperatureNode.cpp  | 37   | ❌                | 70     | P4     |
+| main.cpp                  | 45   | ❌                | 0\*    | —      |
+| MqttPublisher.cpp         | 964  | ✅ (66%)          | 85     | P1     |
+| NetworkManager.cpp        | 245  | ❌ (Mock-only)    | 70     | P3a    |
+| Nodes/Logger.cpp          | 18   | ❌                | 80     | P3a    |
+| NorviButtonHandler.cpp    | 155  | ❌                | 50     | P4     |
+| NorviOledDisplay.cpp      | 1022 | ❌                | 40     | P4     |
+| OperationModeNode.cpp     | 302  | ❌                | 75     | P2     |
+| OtaUpdater.cpp            | 554  | ⚠️ (6%)           | 75     | P1     |
+| PoolController.cpp        | 520  | ❌                | 50     | P4     |
+| RelayModuleNode.cpp       | 71   | ❌                | 90     | P3a    |
+| RuleAuto.cpp              | 78   | ❌                | 90     | P2     |
+| RuleBoost.cpp             | 58   | ❌                | 90     | P2     |
+| RuleManu.cpp              | 16   | ❌                | 95     | P2     |
+| RuleTimer.cpp             | 23   | ❌                | 90     | P2     |
+| StateManager.cpp          | 94   | ⚠️ (0%)           | 95     | P1     |
+| StatusLed.cpp             | 122  | ❌                | 70     | P3a    |
+| SystemMonitor.cpp         | 17   | ⚠️ (0%)           | 80     | P3a    |
+| Timer.cpp                 | 91   | ❌                | 90     | P2     |
+| TimeClientHelper.cpp      | 262  | ❌                | 60     | P3b    |
+| WebPortal.cpp             | 1068 | ⚠️ (10%)          | 80     | P1     |
+| WpsProvisioner.cpp        | 203  | ❌                | 60     | P3b    |
 
-*\* main.cpp wird vom Coverage-Ziel ausgenommen (HW-Init-Code)*
+_\* main.cpp wird vom Coverage-Ziel ausgenommen (HW-Init-Code)_

@@ -27,7 +27,7 @@ bool ConfigManager::configured_ = false;
 static constexpr const char *kDefaultPasswordHash =  // NOLINT(whitespace/line_length)
   "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918";
 
-static String hashSha256(const String &input) {
+static void hashSha256(const String &input, char (&output)[65]) {
   uint8_t hash[32];
   mbedtls_md_context_t ctx;
   mbedtls_md_init(&ctx);
@@ -37,12 +37,10 @@ static String hashSha256(const String &input) {
   mbedtls_md_finish(&ctx, hash);
   mbedtls_md_free(&ctx);
 
-  char result[65];
   for (int i = 0; i < 32; i++) {
-    snprintf(result + (i * 2), sizeof(result) - (i * 2), "%02x", hash[i]);
+    snprintf(output + (i * 2), sizeof(output) - (i * 2), "%02x", hash[i]);
   }
-  result[64] = '\0';
-  return String(result);
+  output[64] = '\0';
 }
 
 // ── NVS Key Names ──
@@ -201,11 +199,53 @@ void ConfigManager::logOtaTransition() {
 }
 
 void ConfigManager::setAdminPassword(const String &newPassword) {
-  adminPasswordHash_ = hashSha256(newPassword);
+  char hash[65];
+  hashSha256(newPassword, hash);
+  adminPasswordHash_ = hash;
 }
 
 bool ConfigManager::verifyAdminPassword(const String &password) {
-  return hashSha256(password) == adminPasswordHash_;
+  char hash[65];
+  hashSha256(password, hash);
+  return adminPasswordHash_ == hash;
+}
+
+void ConfigManager::saveSensorMapping(const uint8_t solarAddr[8], const uint8_t poolAddr[8]) {
+  Preferences prefs;
+  prefs.begin("ds18b20", false);  // read-write
+  prefs.putBytes("solar_adr", solarAddr, 8);
+  prefs.putBytes("pool_adr", poolAddr, 8);
+  prefs.end();
+
+  char buf[17];
+  snprintf(buf, sizeof(buf), "%02X%02X%02X%02X%02X%02X%02X%02X", solarAddr[0], solarAddr[1], solarAddr[2], solarAddr[3],
+    solarAddr[4], solarAddr[5], solarAddr[6], solarAddr[7]);
+  Serial.printf("✓ Sensor mapping saved: Solar [%s]", buf);
+  snprintf(buf, sizeof(buf), "%02X%02X%02X%02X%02X%02X%02X%02X", poolAddr[0], poolAddr[1], poolAddr[2], poolAddr[3], poolAddr[4],
+    poolAddr[5], poolAddr[6], poolAddr[7]);
+  Serial.printf(", Pool [%s]\n", buf);
+}
+
+bool ConfigManager::loadSensorMapping(uint8_t solarAddr[8], uint8_t poolAddr[8]) {
+  Preferences prefs;
+  prefs.begin("ds18b20", true);  // read-only
+
+  size_t slen = prefs.getBytes("solar_adr", solarAddr, 8);
+  size_t plen = prefs.getBytes("pool_adr", poolAddr, 8);
+
+  prefs.end();
+
+  // Return true if both addresses were read successfully
+  return (slen == 8 && plen == 8);
+}
+
+/** @brief Check if an 8-byte address is all zeros. */
+static bool isSensorAddressZero(const uint8_t addr[8]) {
+  for (uint8_t i = 0; i < 8; i++) {
+    if (addr[i] != 0)
+      return false;
+  }
+  return true;
 }
 
 }  // namespace PoolController

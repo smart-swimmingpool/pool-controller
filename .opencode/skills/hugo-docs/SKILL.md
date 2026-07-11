@@ -66,41 +66,41 @@ All documentation files use Hugo frontmatter with these fields:
 
 ```yaml
 ---
-title: Page Title                          # Display title
-summary: Brief description for listings   # Optional
-date: "2020-05-28"                        # ISO date
-lastmod: "2020-06-02"                     # Last modification date
-draft: false                              # true = hidden from build
-toc: true                                 # Show table of contents
-type: docs                                # Required — Hugo content type
-featured: true                            # Featured/important page
-tags: ["docs", "controller", "tutorial"]  # Taxonomy tags
+title: Page Title # Display title
+summary: Brief description for listings # Optional
+date: "2020-05-28" # ISO date
+lastmod: "2020-06-02" # Last modification date
+draft: false # true = hidden from build
+toc: true # Show table of contents
+type: docs # Required — Hugo content type
+featured: true # Featured/important page
+tags: ["docs", "controller", "tutorial"] # Taxonomy tags
 menu:
-  docs:                                   # Menu registration
-    parent: Pool Controller               # Top-level parent
-    name: User Guide                      # Menu display name
-    weight: 40                            # Sort order (lower = higher)
+  docs: # Menu registration
+    parent: Pool Controller # Top-level parent
+    name: User Guide # Menu display name
+    weight: 40 # Sort order (lower = higher)
 ---
 ```
 
 ### Weight Convention
 
-| Weight | Page                  | File                  |
-| ------ | --------------------- | --------------------- |
-| 10     | Overview              | `_index.md`           |
-| 20     | Hardware Guide        | `hardware-guide.md`   |
-| 25     | ESP32 Schaltplan-Opt. | `esp32-...-de.md`     |
-| 26     | ESP32 Komplett-Schalt. | `esp32-...-de.md`    |
-| 30     | Software Guide        | `software-guide.md`   |
-| 40     | Users Guide           | `users-guide.md`      |
-| 50     | Home Assistant        | `home-assistant/`     |
+| Weight | Page                   | File                |
+| ------ | ---------------------- | ------------------- |
+| 10     | Overview               | `_index.md`         |
+| 20     | Hardware Guide         | `hardware-guide.md` |
+| 25     | ESP32 Schaltplan-Opt.  | `esp32-...-de.md`   |
+| 26     | ESP32 Komplett-Schalt. | `esp32-...-de.md`   |
+| 30     | Software Guide         | `software-guide.md` |
+| 40     | Users Guide            | `users-guide.md`    |
+| 50     | Home Assistant         | `home-assistant/`   |
 
 ### Hugo Shortcodes Used
 
-| Shortcode                       | Usage                     |
-| ------------------------------- | ------------------------- |
-| `{{</* figure ... */>}}`       | Images with lightbox      |
-| `{{%/* alert note */%}}`       | Info/note callout boxes   |
+| Shortcode                | Usage                   |
+| ------------------------ | ----------------------- |
+| `{{</* figure ... */>}}` | Images with lightbox    |
+| `{{%/* alert note */%}}` | Info/note callout boxes |
 
 Examples:
 
@@ -117,10 +117,10 @@ For an ESP32-focused wiring analysis, see `docs/esp32-schematic-optimization-de.
 
 Each page has an English (`_index.md`) and German (`_index.de.md`) variant.
 
-| File                | Language |
-| ------------------- | -------- |
-| `_index.md`         | English  |
-| `_index.de.md`      | German   |
+| File           | Language |
+| -------------- | -------- |
+| `_index.md`    | English  |
+| `_index.de.md` | German   |
 
 When creating new doc pages, always provide both language variants.
 
@@ -141,14 +141,14 @@ docs/home-assistant/
 
 The project version is maintained in these locations:
 
-| Source                       | File                          | How to update             |
-| ---------------------------- | ----------------------------- | ------------------------- |
-| **Source of truth**          | `.release-please-manifest.json` | Auto by release-please  |
-| Firmware build flag          | `platformio.ini:37`           | Auto by release-please   |
-| Fallback                     | `src/Version.h`               | Auto by release-please   |
-| Docs title EN                | `docs/_index.md:4`            | **Manual**                |
-| Docs title DE                | `docs/_index.de.md:4`         | **Manual**                |
-| README                       | `README.md:1`                 | **Manual**                |
+| Source              | File                            | How to update          |
+| ------------------- | ------------------------------- | ---------------------- |
+| **Source of truth** | `.release-please-manifest.json` | Auto by release-please |
+| Firmware build flag | `platformio.ini:37`             | Auto by release-please |
+| Fallback            | `src/Version.h`                 | Auto by release-please |
+| Docs title EN       | `docs/_index.md:4`              | **Manual**             |
+| Docs title DE       | `docs/_index.de.md:4`           | **Manual**             |
+| README              | `README.md:1`                   | **Manual**             |
 
 ### When to Update Docs Version
 
@@ -214,13 +214,13 @@ After pushing to `main`:
 
 ### Troubleshooting
 
-| Symptom                          | Cause                              | Fix                                          |
-| -------------------------------- | ---------------------------------- | -------------------------------------------- |
-| Workflow shows warning "skipping" | `HUGO_DEPLOY_TOKEN` not set        | Add the token to repo secrets                |
-| HTTP 401/403 from API             | Token expired or wrong scope       | Regenerate token with `repo` scope           |
+| Symptom                           | Cause                              | Fix                                           |
+| --------------------------------- | ---------------------------------- | --------------------------------------------- |
+| Workflow shows warning "skipping" | `HUGO_DEPLOY_TOKEN` not set        | Add the token to repo secrets                 |
+| HTTP 401/403 from API             | Token expired or wrong scope       | Regenerate token with `repo` scope            |
 | Website not updated               | Build failed on website repo       | Check Actions in `smart-swimmingpool/website` |
-| Doc not appearing in menu         | Missing `menu.docs` in frontmatter | Add menu section to frontmatter              |
-| Broken layout                     | Missing/wrong `type: docs`         | Ensure `type: docs` is in frontmatter        |
+| Doc not appearing in menu         | Missing `menu.docs` in frontmatter | Add menu section to frontmatter               |
+| Broken layout                     | Missing/wrong `type: docs`         | Ensure `type: docs` is in frontmatter         |
 
 ## SEO & Canonical URLs
 

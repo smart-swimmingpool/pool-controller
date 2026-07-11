@@ -86,17 +86,17 @@ v
 
 ## 3) Wiring Table
 
-| Component             | Signal    | ESP32 Pin | Additional Component             |
-| --------------------- | --------- | --------- | -------------------------------- |
-| DS18B20 Solar         | DATA      | GPIO32    | 4.7kΩ pull-up to 3V3             |
-| DS18B20 Pool          | DATA      | GPIO33    | 4.7kΩ pull-up to 3V3             |
-| Relay Channel 1       | IN1       | GPIO25    | optional pull-down (fail-safe)   |
-| Relay Channel 2       | IN2       | GPIO26    | optional pull-down (fail-safe)   |
-| RTC DS3231 (optional) | SDA       | GPIO21    | I2C bus                          |
-| RTC DS3231 (optional) | SCL       | GPIO22    | I2C bus                          |
-| All components        | GND       | GND       | common ground routing            |
-| DS18B20 / RTC         | Power     | 3V3       | clean decoupling                 |
-| Relay module          | Power     | 5V        | separate load/logic recommended  |
+| Component             | Signal | ESP32 Pin | Additional Component            |
+| --------------------- | ------ | --------- | ------------------------------- |
+| DS18B20 Solar         | DATA   | GPIO32    | 4.7kΩ pull-up to 3V3            |
+| DS18B20 Pool          | DATA   | GPIO33    | 4.7kΩ pull-up to 3V3            |
+| Relay Channel 1       | IN1    | GPIO25    | optional pull-down (fail-safe)  |
+| Relay Channel 2       | IN2    | GPIO26    | optional pull-down (fail-safe)  |
+| RTC DS3231 (optional) | SDA    | GPIO21    | I2C bus                         |
+| RTC DS3231 (optional) | SCL    | GPIO22    | I2C bus                         |
+| All components        | GND    | GND       | common ground routing           |
+| DS18B20 / RTC         | Power  | 3V3       | clean decoupling                |
+| Relay module          | Power  | 5V        | separate load/logic recommended |
 
 ## 4) Important Notes
 

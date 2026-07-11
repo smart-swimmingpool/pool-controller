@@ -37,19 +37,19 @@ step-by-step instructions will help you get it right.
 
 ## Required Parts (BOM)
 
-| # | Component | Qty | Approx. Cost | Notes |
-|---|-----------|:---:|:------------:|-------|
-| 1 | ESP32 Development Board (e.g. ESP32 DevKit V1, NodeMCU-32S) | 1 | 10–15€ | Ensure it has at least 4MB flash |
-| 2 | DS18B20 Temperature Sensor (waterproof, stainless steel probe, 1m cable) | 2 | 8–12€ | One for pool water, one for solar collector |
-| 3 | 2-Channel 5V Relay Module (with optocoupler isolation) | 1 | 5–8€ | **Must** be active-high (see notes below) |
-| 4 | Resistor 4.7kΩ (¼W or ⅛W, metal film or carbon film) | 2 | < 1€ | Pull-up for the OneWire data lines |
-| 5 | Breadboard + jumper wires (for prototyping) **OR** Perfboard + pin headers/screw terminals (for permanent build) | 1 | 3–8€ | |
-| 6 | USB power supply 5V/≥1A (e.g. phone charger) | 1 | 5–10€ | For the ESP32 alone |
-| 7 | Hookup wire, 0.14–0.5mm² (AWG 26–20), various colors | — | 3–5€ | |
-| 8 | Optional: enclosure (ABS/PVC project box, IP54 or better) | 1 | 5–10€ | Protect from splashes/dust |
-| 9 | Optional: screw terminals (2-pin, 5mm pitch) | 4–6 | 2–3€ | For removable sensor/power connections |
-| 10 | Optional: DS3231 RTC module | 1 | 3–5€ | Backup timekeeping (not required for normal NTP operation) |
-| **Total** | | | **~45–75€** | Without enclosure; well under 100€ |
+| #         | Component                                                                                                        | Qty | Approx. Cost | Notes                                                      |
+| --------- | ---------------------------------------------------------------------------------------------------------------- | :-: | :----------: | ---------------------------------------------------------- |
+| 1         | ESP32 Development Board (e.g. ESP32 DevKit V1, NodeMCU-32S)                                                      |  1  |    10–15€    | Ensure it has at least 4MB flash                           |
+| 2         | DS18B20 Temperature Sensor (waterproof, stainless steel probe, 1m cable)                                         |  2  |    8–12€     | One for pool water, one for solar collector                |
+| 3         | 2-Channel 5V Relay Module (with optocoupler isolation)                                                           |  1  |     5–8€     | **Must** be active-high (see notes below)                  |
+| 4         | Resistor 4.7kΩ (¼W or ⅛W, metal film or carbon film)                                                             |  2  |     < 1€     | Pull-up for the OneWire data lines                         |
+| 5         | Breadboard + jumper wires (for prototyping) **OR** Perfboard + pin headers/screw terminals (for permanent build) |  1  |     3–8€     |                                                            |
+| 6         | USB power supply 5V/≥1A (e.g. phone charger)                                                                     |  1  |    5–10€     | For the ESP32 alone                                        |
+| 7         | Hookup wire, 0.14–0.5mm² (AWG 26–20), various colors                                                             |  —  |     3–5€     |                                                            |
+| 8         | Optional: enclosure (ABS/PVC project box, IP54 or better)                                                        |  1  |    5–10€     | Protect from splashes/dust                                 |
+| 9         | Optional: screw terminals (2-pin, 5mm pitch)                                                                     | 4–6 |     2–3€     | For removable sensor/power connections                     |
+| 10        | Optional: DS3231 RTC module                                                                                      |  1  |     3–5€     | Backup timekeeping (not required for normal NTP operation) |
+| **Total** |                                                                                                                  |     | **~45–75€**  | Without enclosure; well under 100€                         |
 
 ### Where to Buy
 
@@ -75,13 +75,13 @@ The firmware uses an **optimized pin assignment** that avoids strapping pins and
 ADC2-related issues (see [Alternative Pin Assignment](#alternative-pin-assignment-original)
 for details). Defined in `src/Config.hpp`:
 
-| Constant | GPIO | Purpose |
-|----------|:----:|---------|
-| `PIN_DS_SOLAR` | **GPIO32** | DS18B20 data — Solar collector temperature |
-| `PIN_DS_POOL` | **GPIO33** | DS18B20 data — Pool water temperature |
-| `PIN_RELAY_POOL` | **GPIO25** | Relay control — Pool circulation pump |
-| `PIN_RELAY_SOLAR` | **GPIO26** | Relay control — Solar heating pump |
-| `PIN_LED_STATUS` | **Built-in LED** | Status LED (Homie convention blink codes) |
+| Constant          |       GPIO       | Purpose                                    |
+| ----------------- | :--------------: | ------------------------------------------ |
+| `PIN_DS_SOLAR`    |    **GPIO32**    | DS18B20 data — Solar collector temperature |
+| `PIN_DS_POOL`     |    **GPIO33**    | DS18B20 data — Pool water temperature      |
+| `PIN_RELAY_POOL`  |    **GPIO25**    | Relay control — Pool circulation pump      |
+| `PIN_RELAY_SOLAR` |    **GPIO26**    | Relay control — Solar heating pump         |
+| `PIN_LED_STATUS`  | **Built-in LED** | Status LED (Homie convention blink codes)  |
 
 > **Note**: These pins are chosen for maximum compatibility. GPIO15/16/18/19
 > (the original assignment) work for most users, but the optimized pins
@@ -147,11 +147,11 @@ The DS18B20 has three wires (on waterproof probes: typically **red = VDD**,
 **yellow/white = DATA**, **black = GND** — but **verify with your sensor's
 datasheet**):
 
-| DS18B20 Wire | Color (typical) | Connect to |
-|:------------:|:---------------:|------------|
-| VDD | **Red** | ESP32 **3.3V** |
-| GND | **Black** | ESP32 **GND** |
-| DATA | **Yellow / White** | ESP32 **GPIO32** (solar) or **GPIO33** (pool) |
+| DS18B20 Wire |  Color (typical)   | Connect to                                    |
+| :----------: | :----------------: | --------------------------------------------- |
+|     VDD      |      **Red**       | ESP32 **3.3V**                                |
+|     GND      |     **Black**      | ESP32 **GND**                                 |
+|     DATA     | **Yellow / White** | ESP32 **GPIO32** (solar) or **GPIO33** (pool) |
 
 **Critical — add the 4.7kΩ pull-up resistor:**
 
@@ -169,12 +169,12 @@ between the DATA pin and the 3.3V rail. The resistor can be any 4.7kΩ ±5%
 
 #### 2. Relay Module
 
-| Relay Terminal | Typical Label | Connect to | Wire Color |
-|:--------------:|:-------------:|------------|:----------:|
-| Module power | `VCC` or `VDD` | **5V** (from ESP32 VIN or external 5V PSU) | **Red** |
-| Ground | `GND` | **GND** (common ground with ESP32) | **Black** |
-| Control input 1 | `IN1` or `D1` | **GPIO25** (Pool Pump) | **Yellow/Blue** |
-| Control input 2 | `IN2` or `D2` | **GPIO26** (Solar Pump) | **Green/Blue** |
+| Relay Terminal  | Typical Label  | Connect to                                 |   Wire Color    |
+| :-------------: | :------------: | ------------------------------------------ | :-------------: |
+|  Module power   | `VCC` or `VDD` | **5V** (from ESP32 VIN or external 5V PSU) |     **Red**     |
+|     Ground      |     `GND`      | **GND** (common ground with ESP32)         |    **Black**    |
+| Control input 1 | `IN1` or `D1`  | **GPIO25** (Pool Pump)                     | **Yellow/Blue** |
+| Control input 2 | `IN2` or `D2`  | **GPIO26** (Solar Pump)                    | **Green/Blue**  |
 
 **Important — Logic Level**: The firmware sets the GPIO pin **HIGH (3.3V)**
 to activate (close) the relay. If your relay module switches with LOW instead
@@ -199,12 +199,12 @@ a different module — active-high modules are easier to work with.
 
 #### 3. Power Supply
 
-| Component | Voltage | Source | Notes |
-|-----------|:-------:|--------|-------|
-| ESP32 board | **5V** | USB charger port (on ESP32) | Powers the board + provides 5V on VIN pin |
-| Relay module coils | **5V** | ESP32 VIN pin (same as USB input) | The relay module draws power from the same 5V supply |
-| DS18B20 sensors | **3.3V** | ESP32 3V3 output pin | Both sensors share the same 3.3V rail |
-| (Optional) RTC DS3231 | **3.3V** | ESP32 3V3 output pin | Same rail as sensors |
+| Component             | Voltage  | Source                            | Notes                                                |
+| --------------------- | :------: | --------------------------------- | ---------------------------------------------------- |
+| ESP32 board           |  **5V**  | USB charger port (on ESP32)       | Powers the board + provides 5V on VIN pin            |
+| Relay module coils    |  **5V**  | ESP32 VIN pin (same as USB input) | The relay module draws power from the same 5V supply |
+| DS18B20 sensors       | **3.3V** | ESP32 3V3 output pin              | Both sensors share the same 3.3V rail                |
+| (Optional) RTC DS3231 | **3.3V** | ESP32 3V3 output pin              | Same rail as sensors                                 |
 
 > **Important**: The ESP32's on-board 3.3V regulator can supply ~600mA. The
 > DS18B20 sensors draw < 5mA total — well within limits. If you add many
@@ -308,11 +308,11 @@ Once you've verified the circuit on a breadboard, build the permanent version:
 
 ## Power Supply Options
 
-| Option | Pros | Cons |
-|--------|------|------|
-| **USB phone charger** (5V/1A+) | Cheap, readily available, safe | Limited current for additional peripherals |
-| **DIN-rail PSU** (Mean Well HDR-15-5 or similar) | Professional, reliable, fits in electrical cabinet | Slightly more expensive (~15€) |
-| **ESP32 VIN from USB** + relay from same 5V | Simple wiring | Total current must stay under ESP32 board's limit |
+| Option                                           | Pros                                               | Cons                                              |
+| ------------------------------------------------ | -------------------------------------------------- | ------------------------------------------------- |
+| **USB phone charger** (5V/1A+)                   | Cheap, readily available, safe                     | Limited current for additional peripherals        |
+| **DIN-rail PSU** (Mean Well HDR-15-5 or similar) | Professional, reliable, fits in electrical cabinet | Slightly more expensive (~15€)                    |
+| **ESP32 VIN from USB** + relay from same 5V      | Simple wiring                                      | Total current must stay under ESP32 board's limit |
 
 **Recommendation**: If you're installing in a permanent location near your pump
 control panel, use a **DIN-rail 5V PSU** (e.g., Mean Well HDR-15-5). It's
@@ -332,6 +332,7 @@ issue.
 ### 1. Visual Inspection
 
 Before connecting power:
+
 - Check for **solder bridges** between adjacent pins
 - Verify **polarity** of all components (DS18B20 VDD/GND, relay VCC/GND)
 - Ensure **no stray wire strands** are shorting neighboring pins
@@ -349,6 +350,7 @@ Before connecting power:
 ### 3. Verify Sensors
 
 Open the serial monitor (115200 baud):
+
 ```
 Pool Controller v3.3.0
 Starting up...
@@ -361,12 +363,14 @@ Starting up...
 ```
 
 If sensors are connected and working:
+
 ```
 Solar temperature: 25.3°C
 Pool temperature:  22.1°C
 ```
 
 If you see `Sensor error` or `-127°C`, check:
+
 - [ ] 4.7kΩ pull-up resistor present on each DATA line?
 - [ ] DS18B20 VDD connected to 3.3V (not 5V)?
 - [ ] DS18B20 GND connected to common ground?
@@ -375,6 +379,7 @@ If you see `Sensor error` or `-127°C`, check:
 ### 4. Test Relays
 
 From the Web UI (Configuration tab) or via serial command:
+
 ```
 Mode: manual
 Pool pump: ON  → relay should click, pump starts
@@ -382,6 +387,7 @@ Solar pump: ON → relay should click, pump starts
 ```
 
 If relay doesn't click:
+
 - [ ] Is the relay module powered (5V between VCC and GND)?
 - [ ] Is the logic level correct (active-high vs active-low)?
 - [ ] Does the LED on the relay module light up when GPIO goes HIGH?
@@ -390,16 +396,16 @@ If relay doesn't click:
 
 ## Troubleshooting
 
-| Symptom | Likely Cause | Fix |
-|---------|-------------|-----|
-| "Sensor error" or `-127°C` | Missing pull-up resistor | Add 4.7kΩ between DATA and 3.3V |
-| "Sensor error" | Wrong GPIO pin | Check `PIN_DS_SOLAR`/`PIN_DS_POOL` in `src/Config.hpp` |
-| Intermittent sensor readings | Loose connection or noise | Check solder joints, separate data from relay wires |
-| Relay doesn't activate | Wrong logic level | Check active-high vs active-low; add jumper or change firmware |
-| Relay clicks but pump doesn't run | 230V wiring issue | Check COM/NO terminals, verify pump connection |
-| ESP32 won't boot (brownout) | Insufficient power | Use 5V/≥1A power supply; add 100µF capacitor near VIN |
-| ESP32 resets when relay switches | Voltage spike on relay coil | Add flyback diode across relay coil, or use module with built-in protection |
-| Sensor readings jump when relay switches | Electrical noise | Route sensor wires away from relay/power wires |
+| Symptom                                  | Likely Cause                | Fix                                                                         |
+| ---------------------------------------- | --------------------------- | --------------------------------------------------------------------------- |
+| "Sensor error" or `-127°C`               | Missing pull-up resistor    | Add 4.7kΩ between DATA and 3.3V                                             |
+| "Sensor error"                           | Wrong GPIO pin              | Check `PIN_DS_SOLAR`/`PIN_DS_POOL` in `src/Config.hpp`                      |
+| Intermittent sensor readings             | Loose connection or noise   | Check solder joints, separate data from relay wires                         |
+| Relay doesn't activate                   | Wrong logic level           | Check active-high vs active-low; add jumper or change firmware              |
+| Relay clicks but pump doesn't run        | 230V wiring issue           | Check COM/NO terminals, verify pump connection                              |
+| ESP32 won't boot (brownout)              | Insufficient power          | Use 5V/≥1A power supply; add 100µF capacitor near VIN                       |
+| ESP32 resets when relay switches         | Voltage spike on relay coil | Add flyback diode across relay coil, or use module with built-in protection |
+| Sensor readings jump when relay switches | Electrical noise            | Route sensor wires away from relay/power wires                              |
 
 ---
 
@@ -417,12 +423,12 @@ constexpr uint8_t PIN_RELAY_POOL{18};   // was 25
 constexpr uint8_t PIN_RELAY_SOLAR{19};  // was 26
 ```
 
-| Function | Optimized (Default) | Original Pin | Why the change? |
-|----------|:-------------------:|:------------:|-----------------|
-| DS18B20 Solar | **GPIO32** | GPIO15 | GPIO15 is a Strapping pin — removing OneWire eliminates any boot risk |
-| DS18B20 Pool | **GPIO33** | GPIO16 | Clean separation from remaining Strapping pin GPIO0 |
-| Relay Pool | **GPIO25** | GPIO18 | Avoid ADC2 pins (18/19) — GPIO25 is a clean digital output |
-| Relay Solar | **GPIO26** | GPIO19 | Same as above |
+| Function      | Optimized (Default) | Original Pin | Why the change?                                                       |
+| ------------- | :-----------------: | :----------: | --------------------------------------------------------------------- |
+| DS18B20 Solar |     **GPIO32**      |    GPIO15    | GPIO15 is a Strapping pin — removing OneWire eliminates any boot risk |
+| DS18B20 Pool  |     **GPIO33**      |    GPIO16    | Clean separation from remaining Strapping pin GPIO0                   |
+| Relay Pool    |     **GPIO25**      |    GPIO18    | Avoid ADC2 pins (18/19) — GPIO25 is a clean digital output            |
+| Relay Solar   |     **GPIO26**      |    GPIO19    | Same as above                                                         |
 
 The optimization is analyzed in detail in the
 [ESP32 Schematic Optimization](esp32-schematic-optimization.md) document
@@ -436,14 +442,14 @@ The controller uses its **built-in LED** to signal the current system state,
 following the [Homie Convention](https://homieiot.github.io/) standard for
 IoT device status indication. The LED is updated once per control loop cycle.
 
-| LED Pattern | System State | Visual |
-|-------------|-------------|--------|
-| **Rapid blink** (100ms on/off = 5 Hz) | **AP Mode** — no WiFi configured, setup captive portal active | |
-| **Slow blink** (500ms on/off = 1 Hz) | **Connecting** — WiFi connection in progress | ![WiFi connecting](led_wifi.gif) |
-| **Mostly on, brief blink every 2s** | **WiFi OK, MQTT disconnected** — network up, broker not reachable | ![MQTT disconnected](led_mqtt.gif) |
-| **Solid on** | **Fully connected** — WiFi + MQTT operational | |
-| **Very fast blink** (50ms on/off = 10 Hz) | **OTA Update** — firmware download/install in progress | |
-| **Double blink** (200/200/200/600ms) | **Safe Mode** — boot-loop detected or critical degradation | |
+| LED Pattern                               | System State                                                      | Visual                             |
+| ----------------------------------------- | ----------------------------------------------------------------- | ---------------------------------- |
+| **Rapid blink** (100ms on/off = 5 Hz)     | **AP Mode** — no WiFi configured, setup captive portal active     |                                    |
+| **Slow blink** (500ms on/off = 1 Hz)      | **Connecting** — WiFi connection in progress                      | ![WiFi connecting](led_wifi.gif)   |
+| **Mostly on, brief blink every 2s**       | **WiFi OK, MQTT disconnected** — network up, broker not reachable | ![MQTT disconnected](led_mqtt.gif) |
+| **Solid on**                              | **Fully connected** — WiFi + MQTT operational                     |                                    |
+| **Very fast blink** (50ms on/off = 10 Hz) | **OTA Update** — firmware download/install in progress            |                                    |
+| **Double blink** (200/200/200/600ms)      | **Safe Mode** — boot-loop detected or critical degradation        |                                    |
 
 **What to expect at first power-on:**
 

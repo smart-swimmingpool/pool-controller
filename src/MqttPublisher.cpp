@@ -18,6 +18,7 @@
 #include "DallasTemperatureNode.hpp"
 #include "ESP32TemperatureNode.hpp"
 #include "NetworkManager.hpp"
+#include "Nodes.hpp"
 #include "OtaUpdater.hpp"
 #include "OperationModeNode.hpp"
 #include "RelayModuleNode.hpp"
@@ -25,14 +26,6 @@
 #include "Version.h"
 
 namespace PoolController {
-
-// Nodes declared in PoolController.cpp
-extern DallasTemperatureNode solarTemperatureNode;
-extern DallasTemperatureNode poolTemperatureNode;
-extern ESP32TemperatureNode ctrlTemperatureNode;
-extern RelayModuleNode poolPumpNode;
-extern RelayModuleNode solarPumpNode;
-extern OperationModeNode operationModeNode;
 
 String MqttPublisher::deviceId_ = "";
 
@@ -60,19 +53,30 @@ void MqttPublisher::addDeviceInfo(JsonDocument &doc) {
   deviceObj["sw_version"] = FW_VERSION;
 }
 
-String MqttPublisher::getBaseTopic(const char *component, const char *objectId) {
+void MqttPublisher::getBaseTopic(char *buf, size_t bufSize, const char *component, const char *objectId) {
   // homeassistant/<component>/pool-controller/<object-id>/config
-  return String("homeassistant/") + component + "/pool-controller/" + objectId;
+  snprintf(buf, bufSize, "homeassistant/%s/pool-controller/%s", component, objectId);
 }
+
+// ── Helper to build a topic string into a static buffer and return a const char* ──
+// Used for JSON document field assignment where a char buffer is needed per call.
+namespace {
+struct TopicBuilder {
+  char buf[128];
+  const char *build(const char *component, const char *objectId, const char *suffix) {
+    snprintf(buf, sizeof(buf), "homeassistant/%s/pool-controller/%s%s", component, objectId, suffix);
+    return buf;
+  }
+};
+}  // namespace
 
 void MqttPublisher::publishSensorDiscovery(const char *objectId, const char *name, const char *deviceClass, const char *unit,
   const char *icon, const char *entityCategory, const char *stateClass) {
-  String configTopic = getBaseTopic("sensor", objectId) + "/config";
-
+  TopicBuilder cfgTopic, stateTopic;
   JsonDocument doc;
   doc["name"] = name;
   doc["unique_id"] = deviceId_ + "_" + objectId;
-  doc["state_topic"] = getBaseTopic("sensor", objectId) + "/state";
+  doc["state_topic"] = stateTopic.build("sensor", objectId, "/state");
   doc["availability_topic"] = "homeassistant/sensor/pool-controller/availability";
 
   if (deviceClass)
@@ -91,19 +95,19 @@ void MqttPublisher::publishSensorDiscovery(const char *objectId, const char *nam
   // Embedded device block - manually add device info
   addDeviceInfo(doc);
 
-  String payload;
-  serializeJson(doc, payload);
-  NetworkManager::publish(configTopic.c_str(), payload.c_str(), true);
+  char payloadBuf[1024];
+  serializeJson(doc, payloadBuf, sizeof(payloadBuf));
+  NetworkManager::publish(cfgTopic.build("sensor", objectId, "/config"), payloadBuf, true);
 }
 
 void MqttPublisher::publishBinarySensorDiscovery(const char *objectId, const char *name, const char *payloadOn,
   const char *payloadOff, const char *deviceClass, const char *icon, const char *entityCategory) {
-  String configTopic = getBaseTopic("binary_sensor", objectId) + "/config";
+  TopicBuilder cfgTopic, stateTopic;
 
   JsonDocument doc;
   doc["name"] = name;
   doc["unique_id"] = deviceId_ + "_" + objectId;
-  doc["state_topic"] = getBaseTopic("binary_sensor", objectId) + "/state";
+  doc["state_topic"] = stateTopic.build("binary_sensor", objectId, "/state");
   doc["availability_topic"] = "homeassistant/sensor/pool-controller/availability";
   doc["payload_on"] = payloadOn;
   doc["payload_off"] = payloadOff;
@@ -116,20 +120,20 @@ void MqttPublisher::publishBinarySensorDiscovery(const char *objectId, const cha
     doc["entity_category"] = entityCategory;
   addDeviceInfo(doc);
 
-  String payload;
-  serializeJson(doc, payload);
-  NetworkManager::publish(configTopic.c_str(), payload.c_str(), true);
+  char payloadBuf[1024];
+  serializeJson(doc, payloadBuf, sizeof(payloadBuf));
+  NetworkManager::publish(cfgTopic.build("binary_sensor", objectId, "/config"), payloadBuf, true);
 }
 
 void MqttPublisher::publishSwitchDiscovery(
   const char *objectId, const char *name, const char *icon, const char *entityCategory, const char *deviceClass) {
-  String configTopic = getBaseTopic("switch", objectId) + "/config";
+  TopicBuilder cfgTopic, stateTopic, cmdTopic;
 
   JsonDocument doc;
   doc["name"] = name;
   doc["unique_id"] = deviceId_ + "_" + objectId;
-  doc["state_topic"] = getBaseTopic("switch", objectId) + "/state";
-  doc["command_topic"] = getBaseTopic("switch", objectId) + "/set";
+  doc["state_topic"] = stateTopic.build("switch", objectId, "/state");
+  doc["command_topic"] = cmdTopic.build("switch", objectId, "/set");
   doc["availability_topic"] = "homeassistant/sensor/pool-controller/availability";
   doc["payload_on"] = "ON";
   doc["payload_off"] = "OFF";
@@ -143,20 +147,20 @@ void MqttPublisher::publishSwitchDiscovery(
   // Embedded device block - manually add device info
   addDeviceInfo(doc);
 
-  String payload;
-  serializeJson(doc, payload);
-  NetworkManager::publish(configTopic.c_str(), payload.c_str(), true);
+  char payloadBuf[1024];
+  serializeJson(doc, payloadBuf, sizeof(payloadBuf));
+  NetworkManager::publish(cfgTopic.build("switch", objectId, "/config"), payloadBuf, true);
 }
 
 void MqttPublisher::publishSelectDiscovery(const char *objectId, const char *name, const char *const *options, size_t optionCount,
   const char *icon, const char *entityCategory) {
-  String configTopic = getBaseTopic("select", objectId) + "/config";
+  TopicBuilder cfgTopic, stateTopic, cmdTopic;
 
   JsonDocument doc;
   doc["name"] = name;
   doc["unique_id"] = deviceId_ + "_" + objectId;
-  doc["state_topic"] = getBaseTopic("select", objectId) + "/state";
-  doc["command_topic"] = getBaseTopic("select", objectId) + "/set";
+  doc["state_topic"] = stateTopic.build("select", objectId, "/state");
+  doc["command_topic"] = cmdTopic.build("select", objectId, "/set");
   doc["availability_topic"] = "homeassistant/sensor/pool-controller/availability";
 
   JsonArray opts = doc["options"].to<JsonArray>();
@@ -171,20 +175,20 @@ void MqttPublisher::publishSelectDiscovery(const char *objectId, const char *nam
   // Embedded device block - manually add device info
   addDeviceInfo(doc);
 
-  String payload;
-  serializeJson(doc, payload);
-  NetworkManager::publish(configTopic.c_str(), payload.c_str(), true);
+  char payloadBuf[1024];
+  serializeJson(doc, payloadBuf, sizeof(payloadBuf));
+  NetworkManager::publish(cfgTopic.build("select", objectId, "/config"), payloadBuf, true);
 }
 
 void MqttPublisher::publishNumberDiscovery(const char *objectId, const char *name, double minVal, double maxVal, double step,
   const char *unit, const char *icon, const char *entityCategory) {
-  String configTopic = getBaseTopic("number", objectId) + "/config";
+  TopicBuilder cfgTopic, stateTopic, cmdTopic;
 
   JsonDocument doc;
   doc["name"] = name;
   doc["unique_id"] = deviceId_ + "_" + objectId;
-  doc["state_topic"] = getBaseTopic("number", objectId) + "/state";
-  doc["command_topic"] = getBaseTopic("number", objectId) + "/set";
+  doc["state_topic"] = stateTopic.build("number", objectId, "/state");
+  doc["command_topic"] = cmdTopic.build("number", objectId, "/set");
   doc["availability_topic"] = "homeassistant/sensor/pool-controller/availability";
   doc["min"] = minVal;
   doc["max"] = maxVal;
@@ -200,19 +204,19 @@ void MqttPublisher::publishNumberDiscovery(const char *objectId, const char *nam
   // Embedded device block - manually add device info
   addDeviceInfo(doc);
 
-  String payload;
-  serializeJson(doc, payload);
-  NetworkManager::publish(configTopic.c_str(), payload.c_str(), true);
+  char payloadBuf[1024];
+  serializeJson(doc, payloadBuf, sizeof(payloadBuf));
+  NetworkManager::publish(cfgTopic.build("number", objectId, "/config"), payloadBuf, true);
 }
 
 void MqttPublisher::publishTextDiscovery(const char *objectId, const char *name, const char *icon, const char *entityCategory) {
-  String configTopic = getBaseTopic("text", objectId) + "/config";
+  TopicBuilder cfgTopic, stateTopic, cmdTopic;
 
   JsonDocument doc;
   doc["name"] = name;
   doc["unique_id"] = deviceId_ + "_" + objectId;
-  doc["state_topic"] = getBaseTopic("text", objectId) + "/state";
-  doc["command_topic"] = getBaseTopic("text", objectId) + "/set";
+  doc["state_topic"] = stateTopic.build("text", objectId, "/state");
+  doc["command_topic"] = cmdTopic.build("text", objectId, "/set");
   doc["availability_topic"] = "homeassistant/sensor/pool-controller/availability";
 
   if (entityCategory)
@@ -222,19 +226,19 @@ void MqttPublisher::publishTextDiscovery(const char *objectId, const char *name,
     doc["icon"] = icon;
   addDeviceInfo(doc);
 
-  String payload;
-  serializeJson(doc, payload);
-  NetworkManager::publish(configTopic.c_str(), payload.c_str(), true);
+  char payloadBuf[1024];
+  serializeJson(doc, payloadBuf, sizeof(payloadBuf));
+  NetworkManager::publish(cfgTopic.build("text", objectId, "/config"), payloadBuf, true);
 }
 
 void MqttPublisher::publishTimeDiscovery(const char *objectId, const char *name, const char *icon, const char *entityCategory) {
-  String configTopic = getBaseTopic("time", objectId) + "/config";
+  TopicBuilder cfgTopic, stateTopic, cmdTopic;
 
   JsonDocument doc;
   doc["name"] = name;
   doc["unique_id"] = deviceId_ + "_" + objectId;
-  doc["state_topic"] = getBaseTopic("time", objectId) + "/state";
-  doc["command_topic"] = getBaseTopic("time", objectId) + "/set";
+  doc["state_topic"] = stateTopic.build("time", objectId, "/state");
+  doc["command_topic"] = cmdTopic.build("time", objectId, "/set");
   doc["availability_topic"] = "homeassistant/sensor/pool-controller/availability";
 
   if (icon)
@@ -243,21 +247,21 @@ void MqttPublisher::publishTimeDiscovery(const char *objectId, const char *name,
     doc["entity_category"] = entityCategory;
   addDeviceInfo(doc);
 
-  String payload;
-  serializeJson(doc, payload);
-  NetworkManager::publish(configTopic.c_str(), payload.c_str(), true);
+  char payloadBuf[1024];
+  serializeJson(doc, payloadBuf, sizeof(payloadBuf));
+  NetworkManager::publish(cfgTopic.build("time", objectId, "/config"), payloadBuf, true);
 }
 
 void MqttPublisher::publishUpdateDiscovery() {
-  String configTopic = getBaseTopic("update", "firmware-update") + "/config";
+  TopicBuilder cfgTopic, stateTopic, cmdTopic, attrTopic, latestTopic;
 
   JsonDocument doc;
   doc["name"] = "Firmware";
   doc["unique_id"] = deviceId_ + "_fw_update";
-  doc["state_topic"] = getBaseTopic("update", "firmware-update") + "/state";
-  doc["command_topic"] = getBaseTopic("update", "firmware-update") + "/set";
-  doc["json_attributes_topic"] = getBaseTopic("update", "firmware-update") + "/attr";
-  doc["latest_version_topic"] = getBaseTopic("update", "firmware-update") + "/latest";
+  doc["state_topic"] = stateTopic.build("update", "firmware-update", "/state");
+  doc["command_topic"] = cmdTopic.build("update", "firmware-update", "/set");
+  doc["json_attributes_topic"] = attrTopic.build("update", "firmware-update", "/attr");
+  doc["latest_version_topic"] = latestTopic.build("update", "firmware-update", "/latest");
   doc["availability_topic"] = "homeassistant/sensor/pool-controller/availability";
   doc["payload_install"] = "INSTALL";
   doc["device_class"] = "firmware";
@@ -265,13 +269,14 @@ void MqttPublisher::publishUpdateDiscovery() {
 
   addDeviceInfo(doc);
 
-  String payload;
-  serializeJson(doc, payload);
-  NetworkManager::publish(configTopic.c_str(), payload.c_str(), true);
+  char payloadBuf[1024];
+  serializeJson(doc, payloadBuf, sizeof(payloadBuf));
+  NetworkManager::publish(cfgTopic.build("update", "firmware-update", "/config"), payloadBuf, true);
 }
 
 void MqttPublisher::publishClimateDiscovery() {
-  String configTopic = getBaseTopic("climate", "thermostat") + "/config";
+  TopicBuilder cfgTopic, currentTempTopic, tempCmdTopic, tempStateTopic, modeCmdTopic, modeStateTopic, actionTopic,
+    presetCmdTopic, presetStateTopic;
 
   JsonDocument doc;
   doc["name"] = "Pool Thermostat";
@@ -279,9 +284,9 @@ void MqttPublisher::publishClimateDiscovery() {
   doc["availability_topic"] = "homeassistant/sensor/pool-controller/availability";
 
   // Temperatures
-  doc["current_temperature_topic"] = getBaseTopic("climate", "thermostat") + "/current-temperature/state";
-  doc["temperature_command_topic"] = getBaseTopic("climate", "thermostat") + "/temperature/set";
-  doc["temperature_state_topic"] = getBaseTopic("climate", "thermostat") + "/temperature/state";
+  doc["current_temperature_topic"] = currentTempTopic.build("climate", "thermostat", "/current-temperature/state");
+  doc["temperature_command_topic"] = tempCmdTopic.build("climate", "thermostat", "/temperature/set");
+  doc["temperature_state_topic"] = tempStateTopic.build("climate", "thermostat", "/temperature/state");
   doc["temperature_unit"] = "C";
 
   // HVAC modes
@@ -290,67 +295,78 @@ void MqttPublisher::publishClimateDiscovery() {
   modes.add("auto");
   modes.add("heat");
 
-  doc["mode_command_topic"] = getBaseTopic("climate", "thermostat") + "/mode/set";
-  doc["mode_state_topic"] = getBaseTopic("climate", "thermostat") + "/mode/state";
+  doc["mode_command_topic"] = modeCmdTopic.build("climate", "thermostat", "/mode/set");
+  doc["mode_state_topic"] = modeStateTopic.build("climate", "thermostat", "/mode/state");
 
   // Action (heating / idle / off)
-  doc["action_topic"] = getBaseTopic("climate", "thermostat") + "/action/state";
+  doc["action_topic"] = actionTopic.build("climate", "thermostat", "/action/state");
 
   // Temp range
   doc["min_temp"] = 0.0;
   doc["max_temp"] = 40.0;
   doc["temp_step"] = 0.5;
 
-  // Preset modes (sub-modes: none/manual/schedule/boost)
+  // Preset modes (sub-modes: manual/schedule/boost)
+  // NOTE: "none" is RESERVED by HA MQTT climate schema and must NOT be
+  // in this list — HA rejects the entire discovery config if present.
+  // HA internally sets preset_mode to "none" when no preset is active.
   {
     JsonArray presets = doc["preset_modes"].to<JsonArray>();
-    presets.add("none");
     presets.add("manual");
     presets.add("schedule");
     presets.add("boost");
   }
-  doc["preset_mode_command_topic"] = getBaseTopic("climate", "thermostat") + "/preset/set";
-  doc["preset_mode_state_topic"] = getBaseTopic("climate", "thermostat") + "/preset/state";
+  doc["preset_mode_command_topic"] = presetCmdTopic.build("climate", "thermostat", "/preset/set");
+  doc["preset_mode_state_topic"] = presetStateTopic.build("climate", "thermostat", "/preset/state");
 
   // No entity_category — shown directly on device dashboard (users expect
   // a thermostat control on the front page, not hidden in config).
   // Device block
   addDeviceInfo(doc);
 
-  String payload;
-  serializeJson(doc, payload);
-  NetworkManager::publish(configTopic.c_str(), payload.c_str(), true);
+  char payloadBuf[1536];
+  serializeJson(doc, payloadBuf, sizeof(payloadBuf));
+  NetworkManager::publish(cfgTopic.build("climate", "thermostat", "/config"), payloadBuf, true);
 }
 
 void MqttPublisher::publishClimateState() {
   if (!NetworkManager::isMqttConnected())
     return;
 
+  char topic[128];
+  char valBuf[32];
+
   // Current temperature (pool water)
-  NetworkManager::publish((getBaseTopic("climate", "thermostat") + "/current-temperature/state").c_str(),
-    String(poolTemperatureNode.getTemperature(), 1).c_str(), true);
+  snprintf(topic, sizeof(topic), "homeassistant/climate/pool-controller/thermostat/current-temperature/state");
+  snprintf(valBuf, sizeof(valBuf), "%.1f", poolTemperatureNode.getTemperature());
+  NetworkManager::publish(topic, valBuf, true);
 
   // Target temperature (= pool max temp setting)
-  NetworkManager::publish((getBaseTopic("climate", "thermostat") + "/temperature/state").c_str(),
-    String(operationModeNode.getPoolMaxTemperature(), 1).c_str(), true);
+  snprintf(topic, sizeof(topic), "homeassistant/climate/pool-controller/thermostat/temperature/state");
+  snprintf(valBuf, sizeof(valBuf), "%.1f", operationModeNode.getPoolMaxTemperature());
+  NetworkManager::publish(topic, valBuf, true);
 
   // HVAC mode ← pool operation mode
   //   manu  → off
   //   auto  → auto
   //   boost → heat
   //   timer → auto (pool pump runs on schedule)
+  snprintf(topic, sizeof(topic), "homeassistant/climate/pool-controller/thermostat/mode/state");
   const char *hvacMode = "off";
-  String poolMode = operationModeNode.getMode();
-  if (poolMode == "auto" || poolMode == "timer") {
-    hvacMode = "auto";
-  } else if (poolMode == "boost") {
-    hvacMode = "heat";
-  } else {
-    hvacMode = "off";
+  {
+    String poolMode = operationModeNode.getMode();
+    if (poolMode == "auto" || poolMode == "timer") {
+      hvacMode = "auto";
+    } else if (poolMode == "boost") {
+      hvacMode = "heat";
+    } else {
+      hvacMode = "off";
+    }
   }
-  NetworkManager::publish((getBaseTopic("climate", "thermostat") + "/mode/state").c_str(), hvacMode, true);
+  NetworkManager::publish(topic, hvacMode, true);
 
   // Action: solar pump ON → heating, pool pump ON → circulating, both OFF → off
+  snprintf(topic, sizeof(topic), "homeassistant/climate/pool-controller/thermostat/action/state");
   const char *action = "off";
   if (solarPumpNode.getSwitch()) {
     action = "heating";
@@ -359,10 +375,11 @@ void MqttPublisher::publishClimateState() {
   } else {
     action = "off";
   }
-  NetworkManager::publish((getBaseTopic("climate", "thermostat") + "/action/state").c_str(), action, true);
+  NetworkManager::publish(topic, action, true);
 
   // Preset mode ← pool operation mode
   {
+    snprintf(topic, sizeof(topic), "homeassistant/climate/pool-controller/thermostat/preset/state");
     String poolMode = operationModeNode.getMode();
     const char *preset = "none";
     if (poolMode == "manu") {
@@ -372,7 +389,7 @@ void MqttPublisher::publishClimateState() {
     } else if (poolMode == "timer") {
       preset = "schedule";
     }
-    NetworkManager::publish((getBaseTopic("climate", "thermostat") + "/preset/state").c_str(), preset, true);
+    NetworkManager::publish(topic, preset, true);
   }
 }
 
@@ -380,17 +397,19 @@ void MqttPublisher::publishUpdateState() {
   if (!NetworkManager::isMqttConnected())
     return;
 
+  char topic[128];
+
   // State topic: current installed version
-  String stateTopic = getBaseTopic("update", "firmware-update") + "/state";
-  NetworkManager::publish(stateTopic.c_str(), OtaUpdater::getCurrentVersion().c_str(), true);
+  snprintf(topic, sizeof(topic), "homeassistant/update/pool-controller/firmware-update/state");
+  NetworkManager::publish(topic, OtaUpdater::getCurrentVersion().c_str(), true);
 
   // Latest version topic: the newest available version (or current if up to date)
-  String latestTopic = getBaseTopic("update", "firmware-update") + "/latest";
+  snprintf(topic, sizeof(topic), "homeassistant/update/pool-controller/firmware-update/latest");
   String latestVer = OtaUpdater::isUpdateAvailable() ? OtaUpdater::getLatestVersion() : OtaUpdater::getCurrentVersion();
-  NetworkManager::publish(latestTopic.c_str(), latestVer.c_str(), true);
+  NetworkManager::publish(topic, latestVer.c_str(), true);
 
   // Attributes topic: extra metadata
-  String attrTopic = getBaseTopic("update", "firmware-update") + "/attr";
+  snprintf(topic, sizeof(topic), "homeassistant/update/pool-controller/firmware-update/attr");
 
   JsonDocument doc;
   doc["installed_version"] = OtaUpdater::getCurrentVersion();
@@ -403,9 +422,9 @@ void MqttPublisher::publishUpdateState() {
     doc["latest_version"] = OtaUpdater::getCurrentVersion();
   }
 
-  String payload;
-  serializeJson(doc, payload);
-  NetworkManager::publish(attrTopic.c_str(), payload.c_str(), true);
+  char payloadBuf[512];
+  serializeJson(doc, payloadBuf, sizeof(payloadBuf));
+  NetworkManager::publish(topic, payloadBuf, true);
 }
 
 void MqttPublisher::publishDiscovery() {
@@ -465,6 +484,8 @@ void MqttPublisher::publishDiscovery() {
   // Runtime diagnostics
   publishSensorDiscovery(
     "effective-runtime", "Effective Runtime", "duration", "s", "mdi:timer-sand", "diagnostic", "measurement");
+  publishSensorDiscovery(
+    "circulation-extension", "Circulation Extension", "duration", "s", "mdi:timer-plus", "diagnostic", "measurement");
 
   // ── Sensor mapping diagnostics (static entities, always available) ──
   publishBinarySensorDiscovery(
@@ -534,20 +555,46 @@ void MqttPublisher::publishStates() {
   if (!NetworkManager::isMqttConnected())
     return;
 
+  // Buffer for topic construction — reused for each publish call
+  char topic[128];
+  char valBuf[32];
+
   // Temperature States
-  NetworkManager::publish(
-    (getBaseTopic("sensor", "pool-temp") + "/state").c_str(), String(poolTemperatureNode.getTemperature(), 1).c_str(), true);
-  NetworkManager::publish(
-    (getBaseTopic("sensor", "solar-temp") + "/state").c_str(), String(solarTemperatureNode.getTemperature(), 1).c_str(), true);
-  NetworkManager::publish((getBaseTopic("sensor", "controller-temp") + "/state").c_str(),
-    String(ctrlTemperatureNode.getTemperature(), 1).c_str(), true);
+  getBaseTopic(topic, sizeof(topic), "sensor", "pool-temp");
+  strlcat(topic, "/state", sizeof(topic));
+  snprintf(valBuf, sizeof(valBuf), "%.1f", poolTemperatureNode.getTemperature());
+  NetworkManager::publish(topic, valBuf, true);
+
+  getBaseTopic(topic, sizeof(topic), "sensor", "solar-temp");
+  strlcat(topic, "/state", sizeof(topic));
+  snprintf(valBuf, sizeof(valBuf), "%.1f", solarTemperatureNode.getTemperature());
+  NetworkManager::publish(topic, valBuf, true);
+
+  getBaseTopic(topic, sizeof(topic), "sensor", "controller-temp");
+  strlcat(topic, "/state", sizeof(topic));
+  snprintf(valBuf, sizeof(valBuf), "%.1f", ctrlTemperatureNode.getTemperature());
+  NetworkManager::publish(topic, valBuf, true);
 
   // Diagnostic States
-  NetworkManager::publish((getBaseTopic("sensor", "heap") + "/state").c_str(), String(ESP.getFreeHeap()).c_str(), true);
-  NetworkManager::publish((getBaseTopic("sensor", "max-alloc") + "/state").c_str(), String(ESP.getMaxAllocHeap()).c_str(), true);
-  NetworkManager::publish(
-    (getBaseTopic("sensor", "rssi") + "/state").c_str(), String(NetworkManager::getWiFiRSSI()).c_str(), true);
-  NetworkManager::publish((getBaseTopic("sensor", "uptime") + "/state").c_str(), String(millis() / 1000).c_str(), true);
+  getBaseTopic(topic, sizeof(topic), "sensor", "heap");
+  strlcat(topic, "/state", sizeof(topic));
+  snprintf(valBuf, sizeof(valBuf), "%u", ESP.getFreeHeap());
+  NetworkManager::publish(topic, valBuf, true);
+
+  getBaseTopic(topic, sizeof(topic), "sensor", "max-alloc");
+  strlcat(topic, "/state", sizeof(topic));
+  snprintf(valBuf, sizeof(valBuf), "%u", ESP.getMaxAllocHeap());
+  NetworkManager::publish(topic, valBuf, true);
+
+  getBaseTopic(topic, sizeof(topic), "sensor", "rssi");
+  strlcat(topic, "/state", sizeof(topic));
+  snprintf(valBuf, sizeof(valBuf), "%d", NetworkManager::getWiFiRSSI());
+  NetworkManager::publish(topic, valBuf, true);
+
+  getBaseTopic(topic, sizeof(topic), "sensor", "uptime");
+  strlcat(topic, "/state", sizeof(topic));
+  snprintf(valBuf, sizeof(valBuf), "%u", millis() / 1000);
+  NetworkManager::publish(topic, valBuf, true);
 
   // Local time state
   {
@@ -556,14 +603,19 @@ void MqttPublisher::publishStates() {
     char timeBuf[64];
     snprintf(timeBuf, sizeof(timeBuf), "%04d-%02d-%02d %02d:%02d:%02d", year(localTime), month(localTime), day(localTime),
       hour(localTime), minute(localTime), second(localTime));
-    NetworkManager::publish((getBaseTopic("sensor", "local-time") + "/state").c_str(), timeBuf, true);
+    getBaseTopic(topic, sizeof(topic), "sensor", "local-time");
+    strlcat(topic, "/state", sizeof(topic));
+    NetworkManager::publish(topic, timeBuf, true);
   }
 
   // Switch States
-  NetworkManager::publish(
-    (getBaseTopic("switch", "pool-pump") + "/state").c_str(), poolPumpNode.getSwitch() ? "ON" : "OFF", true);
-  NetworkManager::publish(
-    (getBaseTopic("switch", "solar-pump") + "/state").c_str(), solarPumpNode.getSwitch() ? "ON" : "OFF", true);
+  getBaseTopic(topic, sizeof(topic), "switch", "pool-pump");
+  strlcat(topic, "/state", sizeof(topic));
+  NetworkManager::publish(topic, poolPumpNode.getSwitch() ? "ON" : "OFF", true);
+
+  getBaseTopic(topic, sizeof(topic), "switch", "solar-pump");
+  strlcat(topic, "/state", sizeof(topic));
+  NetworkManager::publish(topic, solarPumpNode.getSwitch() ? "ON" : "OFF", true);
 
   // Firmware Update
   publishUpdateState();
@@ -572,67 +624,117 @@ void MqttPublisher::publishStates() {
   publishClimateState();
 
   // Mode & Parameter States
-  NetworkManager::publish((getBaseTopic("select", "mode") + "/state").c_str(), operationModeNode.getMode().c_str(), true);
-  NetworkManager::publish((getBaseTopic("number", "pool-max-temp") + "/state").c_str(),
-    String(operationModeNode.getPoolMaxTemperature(), 1).c_str(), true);
-  NetworkManager::publish((getBaseTopic("number", "solar-min-temp") + "/state").c_str(),
-    String(operationModeNode.getSolarMinTemperature(), 1).c_str(), true);
-  NetworkManager::publish((getBaseTopic("number", "hysteresis") + "/state").c_str(),
-    String(operationModeNode.getTemperatureHysteresis(), 1).c_str(), true);
+  getBaseTopic(topic, sizeof(topic), "select", "mode");
+  strlcat(topic, "/state", sizeof(topic));
+  NetworkManager::publish(topic, operationModeNode.getMode().c_str(), true);
+
+  getBaseTopic(topic, sizeof(topic), "number", "pool-max-temp");
+  strlcat(topic, "/state", sizeof(topic));
+  snprintf(valBuf, sizeof(valBuf), "%.1f", operationModeNode.getPoolMaxTemperature());
+  NetworkManager::publish(topic, valBuf, true);
+
+  getBaseTopic(topic, sizeof(topic), "number", "solar-min-temp");
+  strlcat(topic, "/state", sizeof(topic));
+  snprintf(valBuf, sizeof(valBuf), "%.1f", operationModeNode.getSolarMinTemperature());
+  NetworkManager::publish(topic, valBuf, true);
+
+  getBaseTopic(topic, sizeof(topic), "number", "hysteresis");
+  strlcat(topic, "/state", sizeof(topic));
+  snprintf(valBuf, sizeof(valBuf), "%.1f", operationModeNode.getTemperatureHysteresis());
+  NetworkManager::publish(topic, valBuf, true);
 
   {
     TimerSetting ts = operationModeNode.getTimerSetting();
     char timeBuf[9];
+    getBaseTopic(topic, sizeof(topic), "time", "timer-start");
+    strlcat(topic, "/state", sizeof(topic));
     snprintf(timeBuf, sizeof(timeBuf), "%02d:%02d:00", ts.timerStartHour, ts.timerStartMinutes);
-    NetworkManager::publish((getBaseTopic("time", "timer-start") + "/state").c_str(), timeBuf, true);
+    NetworkManager::publish(topic, timeBuf, true);
+
+    getBaseTopic(topic, sizeof(topic), "time", "timer-end");
+    strlcat(topic, "/state", sizeof(topic));
     snprintf(timeBuf, sizeof(timeBuf), "%02d:%02d:00", ts.timerEndHour, ts.timerEndMinutes);
-    NetworkManager::publish((getBaseTopic("time", "timer-end") + "/state").c_str(), timeBuf, true);
+    NetworkManager::publish(topic, timeBuf, true);
   }
 
   // Temperature-based circulation parameters
-  NetworkManager::publish((getBaseTopic("number", "temp-circ-threshold") + "/state").c_str(),
-    String(ConfigManager::getSettings().tempCircThreshold, 1).c_str(), true);
-  NetworkManager::publish((getBaseTopic("number", "temp-circ-factor") + "/state").c_str(),
-    String(ConfigManager::getSettings().tempCircFactor).c_str(), true);
-  NetworkManager::publish((getBaseTopic("number", "temp-circ-max-runtime") + "/state").c_str(),
-    String(ConfigManager::getSettings().tempCircMaxRuntime).c_str(), true);
+  getBaseTopic(topic, sizeof(topic), "number", "temp-circ-threshold");
+  strlcat(topic, "/state", sizeof(topic));
+  snprintf(valBuf, sizeof(valBuf), "%.1f", ConfigManager::getSettings().tempCircThreshold);
+  NetworkManager::publish(topic, valBuf, true);
+
+  getBaseTopic(topic, sizeof(topic), "number", "temp-circ-factor");
+  strlcat(topic, "/state", sizeof(topic));
+  snprintf(valBuf, sizeof(valBuf), "%u", ConfigManager::getSettings().tempCircFactor);
+  NetworkManager::publish(topic, valBuf, true);
+
+  getBaseTopic(topic, sizeof(topic), "number", "temp-circ-max-runtime");
+  strlcat(topic, "/state", sizeof(topic));
+  snprintf(valBuf, sizeof(valBuf), "%u", ConfigManager::getSettings().tempCircMaxRuntime);
+  NetworkManager::publish(topic, valBuf, true);
 
   // Effective runtime sensor — actual runtime, published in seconds (for HA duration display)
   {
     Rule *active = operationModeNode.getRule();
     uint16_t effectiveMin = (active != nullptr) ? active->getEffectiveRuntimeMinutes() : 0;
-    NetworkManager::publish((getBaseTopic("sensor", "effective-runtime") + "/state").c_str(),
-      String(static_cast<uint32_t>(effectiveMin) * 60).c_str(), true);
+    getBaseTopic(topic, sizeof(topic), "sensor", "effective-runtime");
+    strlcat(topic, "/state", sizeof(topic));
+    snprintf(valBuf, sizeof(valBuf), "%u", static_cast<uint32_t>(effectiveMin) * 60);
+    NetworkManager::publish(topic, valBuf, true);
   }
-  NetworkManager::publish((getBaseTopic("select", "timezone") + "/state").c_str(),
-    getTimeInfoFor(ConfigManager::getSettings().timezoneIndex).c_str(), true);
-  NetworkManager::publish((getBaseTopic("text", "ntp-server") + "/state").c_str(), ConfigManager::getNtp().server.c_str(), true);
+
+  // Circulation extension sensor — extra minutes beyond base timer (in seconds for HA duration)
+  {
+    Rule *active = operationModeNode.getRule();
+    uint16_t extensionMin = (active != nullptr) ? active->getCirculationExtensionMinutes() : 0;
+    getBaseTopic(topic, sizeof(topic), "sensor", "circulation-extension");
+    strlcat(topic, "/state", sizeof(topic));
+    snprintf(valBuf, sizeof(valBuf), "%u", static_cast<uint32_t>(extensionMin) * 60);
+    NetworkManager::publish(topic, valBuf, true);
+  }
+
+  getBaseTopic(topic, sizeof(topic), "select", "timezone");
+  strlcat(topic, "/state", sizeof(topic));
+  NetworkManager::publish(topic, getTimeInfoFor(ConfigManager::getSettings().timezoneIndex).c_str(), true);
+
+  getBaseTopic(topic, sizeof(topic), "text", "ntp-server");
+  strlcat(topic, "/state", sizeof(topic));
+  NetworkManager::publish(topic, ConfigManager::getNtp().server.c_str(), true);
 
   // Sensor mapping states
   {
     char addrBuf[17];
+    getBaseTopic(topic, sizeof(topic), "select", "solar-sensor");
+    strlcat(topic, "/state", sizeof(topic));
     if (solarTemperatureNode.hasAddressFilter()) {
       solarTemperatureNode.getDeviceAddressString(addrBuf, sizeof(addrBuf));
-      NetworkManager::publish((getBaseTopic("select", "solar-sensor") + "/state").c_str(), addrBuf, true);
+      NetworkManager::publish(topic, addrBuf, true);
     } else {
-      NetworkManager::publish((getBaseTopic("select", "solar-sensor") + "/state").c_str(), "— Not configured —", true);
+      NetworkManager::publish(topic, "— Not configured —", true);
     }
 
+    getBaseTopic(topic, sizeof(topic), "select", "pool-sensor");
+    strlcat(topic, "/state", sizeof(topic));
     if (poolTemperatureNode.hasAddressFilter()) {
       poolTemperatureNode.getDeviceAddressString(addrBuf, sizeof(addrBuf));
-      NetworkManager::publish((getBaseTopic("select", "pool-sensor") + "/state").c_str(), addrBuf, true);
+      NetworkManager::publish(topic, addrBuf, true);
     } else {
-      NetworkManager::publish((getBaseTopic("select", "pool-sensor") + "/state").c_str(), "— Not configured —", true);
+      NetworkManager::publish(topic, "— Not configured —", true);
     }
+
     // Sensor-found binary indicators (binary_sensor → "Found"/"Missing" payload)
-    NetworkManager::publish((getBaseTopic("binary_sensor", "solar-sensor-found") + "/state").c_str(),
-      solarTemperatureNode.isSensorFound() ? "Found" : "Missing", true);
-    NetworkManager::publish((getBaseTopic("binary_sensor", "pool-sensor-found") + "/state").c_str(),
-      poolTemperatureNode.isSensorFound() ? "Found" : "Missing", true);
+    getBaseTopic(topic, sizeof(topic), "binary_sensor", "solar-sensor-found");
+    strlcat(topic, "/state", sizeof(topic));
+    NetworkManager::publish(topic, solarTemperatureNode.isSensorFound() ? "Found" : "Missing", true);
+
+    getBaseTopic(topic, sizeof(topic), "binary_sensor", "pool-sensor-found");
+    strlcat(topic, "/state", sizeof(topic));
+    NetworkManager::publish(topic, poolTemperatureNode.isSensorFound() ? "Found" : "Missing", true);
 
     // MQTT connection status
-    NetworkManager::publish(
-      (getBaseTopic("binary_sensor", "mqtt-status") + "/state").c_str(), NetworkManager::isMqttConnected() ? "ON" : "OFF", true);
+    getBaseTopic(topic, sizeof(topic), "binary_sensor", "mqtt-status");
+    strlcat(topic, "/state", sizeof(topic));
+    NetworkManager::publish(topic, NetworkManager::isMqttConnected() ? "ON" : "OFF", true);
   }
 }
 

@@ -30,6 +30,7 @@
 #include "DallasTemperatureNode.hpp"
 #include "ESP32TemperatureNode.hpp"
 #include "NetworkManager.hpp"
+#include "Nodes.hpp"
 #include "OtaUpdater.hpp"
 #include "OperationModeNode.hpp"
 #include "PoolController.hpp"
@@ -39,6 +40,9 @@
 #include "Version.h"
 
 namespace PoolController {
+
+// File-scoped state for streaming LittleFS upload (used by handleFsUploadStream)
+static File fsUploadFile;
 
 WebServer WebPortal::server_(80);
 DNSServer WebPortal::dnsServer_;
@@ -50,14 +54,6 @@ uint32_t WebPortal::lastLoginAttemptTime_ = 0;
 uint8_t WebPortal::loginAttemptCount_ = 0;
 constexpr uint32_t WebPortal::kSessionTimeoutMs;
 constexpr uint16_t WebPortal::kDnsPort;
-
-// Nodes declared in PoolController.cpp
-extern DallasTemperatureNode solarTemperatureNode;
-extern DallasTemperatureNode poolTemperatureNode;
-extern ESP32TemperatureNode ctrlTemperatureNode;
-extern RelayModuleNode poolPumpNode;
-extern RelayModuleNode solarPumpNode;
-extern OperationModeNode operationModeNode;
 
 // PROGMEM fallbacks removed — web assets are served from LittleFS only.
 // Run `pio run --target uploadfs` to deploy data/web/ to the device.
@@ -251,17 +247,24 @@ void WebPortal::setupRoutes() {
     apiUpdateInstall();
   });
 
-  // Sensor mapping endpoints
-  server_.on("/api/sensors", HTTP_GET, []() {
-    if (!handleAuthentication())
-      return;
-    apiGetSensors();
-  });
+  // Sensor mapping endpoints — GET is unauthenticated (read-only display),
+  // POST (save) remains authenticated.
+  server_.on("/api/sensors", HTTP_GET, apiGetSensors);
   server_.on("/api/sensors/map", HTTP_POST, []() {
     if (!handleAuthentication())
       return;
     apiSaveSensorMapping();
   });
+
+  // LittleFS file upload (for OTA-safe web asset deployment)
+  server_.on(
+    "/api/fs/upload", HTTP_POST,
+    []() {
+      if (!handleAuthentication())
+        return;
+      apiFsUpload();
+    },
+    []() { handleFsUploadStream(); });
 
   // OTA Firmware handling (manual upload via web form)
   server_.on(
@@ -303,11 +306,8 @@ void WebPortal::setupRoutes() {
 }
 
 void WebPortal::handleRoot() {
-  if (!isClientAuthenticated()) {
-    handleLogin();
-    return;
-  }
-
+  // Dashboard is always served — interactive controls are gated by the frontend
+  // based on the "authenticated" field from /api/status.
   File f = LittleFS.open("/web/index.html", "r");
   if (f) {
     server_.streamFile(f, "text/html");
@@ -451,6 +451,7 @@ void WebPortal::apiGetStatus() {
   doc["mqtt_connected"] = NetworkManager::isMqttConnected();
   doc["local_ip"] = NetworkManager::getLocalIP();
   doc["fw_version"] = FW_VERSION;
+  doc["authenticated"] = isClientAuthenticated();
 
   // Current date/time in configured timezone
   TimeChangeRule *tcr;
@@ -467,16 +468,39 @@ void WebPortal::apiGetStatus() {
   // can show them without authentication (apiGetStatus is unauthenticated).
   doc["temp_max_pool"] = ConfigManager::getSettings().tempMaxPool;
   doc["temp_min_solar"] = ConfigManager::getSettings().tempMinSolar;
+  doc["temp_hysteresis"] = ConfigManager::getSettings().tempHysteresis;
+  doc["temp_circ_threshold"] = ConfigManager::getSettings().tempCircThreshold;
+  doc["temp_circ_factor"] = ConfigManager::getSettings().tempCircFactor;
+  doc["temp_circ_max_runtime"] = ConfigManager::getSettings().tempCircMaxRuntime;
+  doc["loop_interval"] = ConfigManager::getSettings().loopInterval;
+  doc["timezone"] = ConfigManager::getSettings().timezoneIndex;
+  doc["time_loss_green_hours"] = ConfigManager::getSettings().timeLossGreenHours;
+  doc["time_loss_red_hours"] = ConfigManager::getSettings().timeLossRedHours;
+  doc["ntp_server"] = ConfigManager::getNtp().server;
 
   // Effective runtime (temperature-based circulation) — actual minutes, not end-of-day
   {
     Rule *active = operationModeNode.getRule();
     doc["effective_runtime"] = (active != nullptr) ? active->getEffectiveRuntimeMinutes() : 0;
+    doc["circulation_extension"] = (active != nullptr) ? active->getCirculationExtensionMinutes() : 0;
+  }
+
+  // Timer settings for dashboard display
+  {
+    TimerSetting ts = operationModeNode.getTimerSetting();
+    doc["timer_start_h"] = ts.timerStartHour;
+    doc["timer_start_m"] = ts.timerStartMinutes;
+    doc["timer_end_h"] = ts.timerEndHour;
+    doc["timer_end_m"] = ts.timerEndMinutes;
+
+    // Extended end time in minutes since midnight (0 when no extension active)
+    Rule *active = operationModeNode.getRule();
+    doc["timer_extended_end"] = (active != nullptr) ? active->getActiveEndMinutes() : 0;
   }
 
   // Serialize directly to a pre-allocated buffer to minimize String usage
   // Use a static buffer to avoid heap fragmentation
-  static char jsonBuffer[1024];
+  static char jsonBuffer[1536];
   size_t jsonLength = serializeJson(doc, jsonBuffer, sizeof(jsonBuffer));
   if (jsonLength > 0) {
     server_.send(200, "application/json", jsonBuffer);
@@ -927,31 +951,6 @@ static bool hexStringToAddress(const String &hex, uint8_t addr[8]) {
   return true;
 }
 
-/**
- * @brief Save a sensor-to-role address mapping to NVS.
- *
- * Stores the 8-byte ROM addresses for solar and pool sensors in the
- * `ds18b20` Preferences namespace, making them persist across reboots.
- *
- * @param solarAddr  Solar sensor address (or nullptr / all-zero to clear).
- * @param poolAddr   Pool sensor address (or nullptr / all-zero to clear).
- */
-static void saveSensorMappingNvs(const uint8_t solarAddr[8], const uint8_t poolAddr[8]) {
-  Preferences prefs;
-  prefs.begin("ds18b20", false);  // read-write
-  prefs.putBytes("solar_adr", solarAddr, 8);
-  prefs.putBytes("pool_adr", poolAddr, 8);
-  prefs.end();
-
-  char buf[17];
-  snprintf(buf, sizeof(buf), "%02X%02X%02X%02X%02X%02X%02X%02X", solarAddr[0], solarAddr[1], solarAddr[2], solarAddr[3],
-    solarAddr[4], solarAddr[5], solarAddr[6], solarAddr[7]);
-  Serial.printf("• Sensor mapping saved via WebUI — Solar [%s]", buf);
-  snprintf(buf, sizeof(buf), "%02X%02X%02X%02X%02X%02X%02X%02X", poolAddr[0], poolAddr[1], poolAddr[2], poolAddr[3], poolAddr[4],
-    poolAddr[5], poolAddr[6], poolAddr[7]);
-  Serial.printf(", Pool [%s]\n", buf);
-}
-
 // ═══════════════════════════════════════════════════════════════════════
 // Sensor REST API handlers
 // ═══════════════════════════════════════════════════════════════════════
@@ -1066,7 +1065,7 @@ void WebPortal::apiSaveSensorMapping() {
   }
 
   // Save to NVS (persistent across reboots)
-  saveSensorMappingNvs(solarAddr, poolAddr);
+  ConfigManager::saveSensorMapping(solarAddr, poolAddr);
 
   // Apply to running instances immediately
   if (hasSolar) {
@@ -1077,6 +1076,78 @@ void WebPortal::apiSaveSensorMapping() {
   }
 
   server_.send(200, "application/json", "{\"status\":\"ok\",\"message\":\"Sensor mapping saved. Reboot to apply.\"}");
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// LittleFS file upload handler
+// ═══════════════════════════════════════════════════════════════════════
+
+void WebPortal::apiFsUpload() {
+  // POST completion handler — called after all upload chunks are processed.
+  // The actual file writing is done in handleFsUploadStream().
+  // If fsUploadFile is still open, close it as a safety net.
+  if (fsUploadFile) {
+    fsUploadFile.close();
+  }
+  server_.send(200, "text/plain", "OK");
+}
+
+void WebPortal::handleFsUploadStream() {
+  if (!isClientAuthenticated())
+    return;
+
+  HTTPUpload &upload = server_.upload();
+
+  if (upload.status == UPLOAD_FILE_START) {
+    // Close any previously open file (safety cleanup)
+    if (fsUploadFile) {
+      fsUploadFile.close();
+    }
+
+    // Resolve the target path from the multipart form field "path"
+    if (!server_.hasArg("path")) {
+      Serial.println("FS Upload: missing path argument — aborting");
+      return;
+    }
+
+    String path = server_.arg("path");
+
+    // Security: only allow files under /web/
+    if (!path.startsWith("/web/")) {
+      Serial.printf("FS Upload: path \"%s\" not under /web/ — rejected\n", path.c_str());
+      return;
+    }
+
+    // Security: prevent path traversal
+    if (path.indexOf("..") != -1) {
+      Serial.printf("FS Upload: path traversal detected: \"%s\"\n", path.c_str());
+      return;
+    }
+
+    // Ensure the /web/ directory exists
+    if (!LittleFS.exists("/web")) {
+      LittleFS.mkdir("/web");
+    }
+
+    fsUploadFile = LittleFS.open(path, "w");
+    if (!fsUploadFile) {
+      Serial.printf("FS Upload: failed to open \"%s\" for writing\n", path.c_str());
+      return;
+    }
+
+    Serial.printf("FS Upload: started \"%s\" (%u bytes)\n", path.c_str(), upload.totalSize);
+
+  } else if (upload.status == UPLOAD_FILE_WRITE) {
+    if (fsUploadFile) {
+      fsUploadFile.write(upload.buf, upload.currentSize);
+    }
+
+  } else if (upload.status == UPLOAD_FILE_END) {
+    if (fsUploadFile) {
+      fsUploadFile.close();
+      Serial.printf("FS Upload: finished \"%s\" (%u bytes)\n", upload.filename.c_str(), upload.totalSize);
+    }
+  }
 }
 
 }  // namespace PoolController

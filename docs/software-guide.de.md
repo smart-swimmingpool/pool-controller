@@ -52,25 +52,25 @@ constexpr uint8_t TEMP_READ_INTERVAL = 30;
 Der Controller enthält einen **integrierten Webserver auf Port 80**, der ein
 vollständiges Verwaltungs-Dashboard bereitstellt. Er läuft in zwei Modi:
 
-| Modus                        | Bedingungen                         | Zugriff                                                        |
-| ---------------------------- | ----------------------------------- | -------------------------------------------------------------- |
-| **AP-Modus** (Access Point)  | Kein WiFi konfiguriert (Werkszustand)| SSID `Pool-Controller-Setup`, IP `192.168.4.1`, kein Passwort  |
-| **STA-Modus** (Station)      | Normale WiFi-Verbindung             | DHCP-IP des ESP32 im lokalen Netzwerk, Passwort-Login erforderlich |
+| Modus                       | Bedingungen                           | Zugriff                                                            |
+| --------------------------- | ------------------------------------- | ------------------------------------------------------------------ |
+| **AP-Modus** (Access Point) | Kein WiFi konfiguriert (Werkszustand) | SSID `Pool-Controller-Setup`, IP `192.168.4.1`, kein Passwort      |
+| **STA-Modus** (Station)     | Normale WiFi-Verbindung               | DHCP-IP des ESP32 im lokalen Netzwerk, Passwort-Login erforderlich |
 
 ### API-Endpunkte
 
-| Route                    | Auth   | Funktion                                                   |
-| ------------------------ | ------ | ---------------------------------------------------------- |
-| `GET /`                  | Cookie | Dashboard SPA (Single Page Application)                    |
-| `GET /login`             | Cookie | Login-Seite                                                |
-| `POST /api/login`        | -      | Session-Cookie ausstellen (SHA-256 Passwortprüfung)        |
+| Route                    | Auth    | Funktion                                                                      |
+| ------------------------ | ------- | ----------------------------------------------------------------------------- |
+| `GET /`                  | Cookie  | Dashboard SPA (Single Page Application)                                       |
+| `GET /login`             | Cookie  | Login-Seite                                                                   |
+| `POST /api/login`        | -       | Session-Cookie ausstellen (SHA-256 Passwortprüfung)                           |
 | `GET /api/status`        | ❌ Nein | Live-Telemetrie (Temperaturen, Pumpenstatus, Heap, RSSI, Temperaturschwellen) |
-| `GET /api/scan`          | Ja     | Verfügbare WiFi-Netzwerke scannen                          |
-| `GET /api/config`        | Ja     | Aktuelle Konfiguration auslesen                            |
-| `POST /api/config`       | Ja     | Konfiguration speichern (`type=settings\|wifi\|mqtt\|password`) |
-| `GET /api/restart`       | Ja     | ESP32 neu starten                                          |
-| `GET /api/factory_reset` | Ja     | Konfigurationsdatei löschen, Neustart im AP-Modus          |
-| `POST /api/update`       | Ja     | OTA-Firmware-Update (signiertes .bin hochladen)            |
+| `GET /api/scan`          | Ja      | Verfügbare WiFi-Netzwerke scannen                                             |
+| `GET /api/config`        | Ja      | Aktuelle Konfiguration auslesen                                               |
+| `POST /api/config`       | Ja      | Konfiguration speichern (`type=settings\|wifi\|mqtt\|password`)               |
+| `GET /api/restart`       | Ja      | ESP32 neu starten                                                             |
+| `GET /api/factory_reset` | Ja      | Konfigurationsdatei löschen, Neustart im AP-Modus                             |
+| `POST /api/update`       | Ja      | OTA-Firmware-Update (signiertes .bin hochladen)                               |
 
 ### REST-API direkt nutzen
 
@@ -111,19 +111,19 @@ alle Einstellungen Neustarts und Stromausfälle überdauern:
 
 ### 1. ConfigManager — Gerätekonfiguration (LittleFS)
 
-| Datei       | `/config.json`                                                      |
-| ----------- | ------------------------------------------------------------------- |
-| Max Größe   | 4 KB                                                                |
-| Inhalt      | WiFi, MQTT, NTP, ControllerSettings, Admin-Passwort-Hash            |
-| Verwaltung  | `ConfigManager::load()` beim Start, `ConfigManager::save()` bei Änderungen |
-| Zurücksetzen| `ConfigManager::reset()` → Werkseinstellungen                       |
+| Datei        | `/config.json`                                                             |
+| ------------ | -------------------------------------------------------------------------- |
+| Max Größe    | 4 KB                                                                       |
+| Inhalt       | WiFi, MQTT, NTP, ControllerSettings, Admin-Passwort-Hash                   |
+| Verwaltung   | `ConfigManager::load()` beim Start, `ConfigManager::save()` bei Änderungen |
+| Zurücksetzen | `ConfigManager::reset()` → Werkseinstellungen                              |
 
 ### 2. StateManager — Laufzeitstatus (ESP32 NVS / Preferences)
 
-| Namespace  | `pool-controller`                                                       |
-| ---------- | ----------------------------------------------------------------------- |
-| Inhalt     | Betriebsmodus, poolMaxTemp, solarMinTemp, Hysterese, timerStart/End     |
-| API        | `StateManager::saveString/Float/Int/Bool` → typsichere Key-Value-Speicherung |
+| Namespace | `pool-controller`                                                            |
+| --------- | ---------------------------------------------------------------------------- |
+| Inhalt    | Betriebsmodus, poolMaxTemp, solarMinTemp, Hysterese, timerStart/End          |
+| API       | `StateManager::saveString/Float/Int/Bool` → typsichere Key-Value-Speicherung |
 
 ### Datenfluss bei Konfigurationsänderungen
 

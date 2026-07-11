@@ -1,6 +1,7 @@
 ---
 name: iot-security
-description: "IoT security checks for the ESP32 pool-controller - Secure Boot, Flash
+description:
+  "IoT security checks for the ESP32 pool-controller - Secure Boot, Flash
   Encryption, TLS, WPS, secrets management, network security, and 24/7 operational
   security. Use when asked to audit security, fix vulnerabilities, implement secure
   communication, or harden the device firmware. 🇩🇪 Deutsche Trigger: IoT Sicherheit,
@@ -238,7 +239,51 @@ system access. For production, consider disabling or restricting serial output.
 - [ ] MQTT LWT (Last Will) published on disconnect (`NetworkManager.cpp:147` ✓)
 - [ ] Boot-loop detection prevents repeated crash-exposure of secrets (✓ P8)
 
-## 10. Network Segmentation Recommendation
+## 10. GitHub CodeQL Code Scanning
+
+The project runs [CodeQL](https://codeql.github.com/) static analysis on every push/PR
+via `.github/workflows/codeql-analysis.yml`. Alerts appear at:
+`https://github.com/smart-swimmingpool/pool-controller/security/code-scanning`
+
+### Rule Categories Most Relevant to This Project
+
+| CodeQL Rule | Severity | What It Catches | Where It Hit |
+|---|---|---|---|
+| `cpp/potentially-dangerous-function` | Critical | `localtime()`, `asctime()` -- not thread-safe | `Timer.cpp`, `NorviOledDisplay.cpp`, `Rule.hpp` (fixed) |
+| `cpp/comparison-with-wider-type` | High | Narrow vs wide type in loop condition | Homie library (path-excluded) |
+| `cpp/commented-out-code` | Note | Dead code in source | `src/` -- remove before merge |
+| `cpp/short-global-name` | Note | Globals with < 5 char names | `TimeClientHelper.cpp` |
+| `cpp/useless-expression` | Warning | Expression without side effects | Library code (path-excluded) |
+| `cpp/equality-on-floats` | Note | `==` on float values | Library code (path-excluded) |
+| `cpp/bitwise-sign-check` | Warning | Sign check of bitwise op | OneWire library (path-excluded) |
+| `cpp/constant-comparison` | Warning | Comparison always same result | Homie library (path-excluded) |
+
+### Handling CodeQL Alerts
+
+1. **Fix the issue** in `src/` -- our own code is always fixable.
+2. **Dismiss** with "won't fix" for third-party library code in `.pio/libdeps/`.
+3. **Path-exclude** library directories via `.github/codeql-config.yml` (`paths-ignore`).
+4. **Re-scan** by pushing to the branch that triggered the alert. Alerts auto-close on
+   the next successful scan of `main` when the alert no longer reproduces.
+
+### Pre-Merge CodeQL Gate
+
+Before merging a PR:
+
+- [ ] Check `https://github.com/smart-swimmingpool/pool-controller/security/code-scanning`
+      for new alerts on the PR branch
+- [ ] No new **critical** or **high** severity alerts in `src/`
+- [ ] New **note/warning** alerts are intentional or have been dismissed with a reason
+
+### Configuration
+
+- Config: `.github/codeql-config.yml` -- excludes `.pio/libdeps/**/*`
+- Workflow: `.github/workflows/codeql-analysis.yml`
+- Runs on: push to `main`, PRs to `main`, and weekly schedule
+
+---
+
+## 11. Network Segmentation Recommendation
 
 ```
 [Pool Controller] ──WiFi──┐
@@ -273,9 +318,11 @@ The pool controller should be on an isolated IoT VLAN with:
 - **[OWASP IoT Security Guidance](https://owasp.org/www-project-internet-of-things/)**
 
   Comprehensive IoT security framework
+
 - **[OWASP CSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)**
 
   CSRF protection strategies
+
 - **[OWASP Secure Coding Practices](https://owasp.org/www-project-secure-coding-practices-quick-reference-guide/)**
 
   General secure coding guidelines
@@ -285,12 +332,15 @@ The pool controller should be on an isolated IoT VLAN with:
 - **[ESP32 Security Features](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/index.html)**
 
   Official Espressif security documentation
+
 - **[ESP32 Secure Boot](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/secure-boot.html)**
 
   Secure boot implementation guide
+
 - **[ESP32 Flash Encryption](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/flash-encryption.html)**
 
   Flash encryption configuration
+
 - **[ESP32 eFuse Reference](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/efuse.html)**
 
   eFuse burning and configuration
@@ -317,8 +367,8 @@ The pool controller should be on an isolated IoT VLAN with:
   Secret detection in git repositories
 - **[CodeQL](https://codeql.github.com/)** -
   Static analysis for security vulnerabilities
-- **[Super-Linter](https://github.com/github/super-linter)** -
-  Multi-language linting with security checks
+- **[MegaLinter](https://megalinter.io/)** -
+  Multi-language linting with security checks (OX Security)
 
 ---
 

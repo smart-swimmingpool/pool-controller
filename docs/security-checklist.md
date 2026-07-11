@@ -151,7 +151,7 @@ Internet
 
 | Source     | Destination | Port | Protocol | Action | Purpose              |
 | ---------- | ----------- | ---- | -------- | ------ | -------------------- |
-| Controller | DNS Server  | 53   | UDP/TCP  | Allow  | Name resolution       |
+| Controller | DNS Server  | 53   | UDP/TCP  | Allow  | Name resolution      |
 | Controller | MQTT Broker | 1883 | TCP      | Allow  | MQTT communication   |
 | Controller | NTP Server  | 123  | UDP      | Allow  | Time sync            |
 | Controller | Internet    | 80   | TCP      | Block  | No web access needed |

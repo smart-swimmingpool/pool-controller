@@ -9,7 +9,7 @@ help:
 	@echo "=================================="
 	@echo ""
 	@echo "Available targets:"
-	@echo "  make lint          - Run Super-Linter to check code quality"
+	@echo "  make lint          - Run MegaLinter to check code quality"
 	@echo "  make lint-fix      - Auto-fix linting issues (clang-format, prettier)"
 	@echo "  make format        - Format C++ and markdown files"
 	@echo "  make build         - Build project (ESP32)"
@@ -18,30 +18,25 @@ help:
 	@echo "Before committing, always run: make lint-fix && make lint"
 	@echo ""
 
-# Run Super-Linter locally (same config as CI)
+# Run MegaLinter locally (same config as CI)
+# Requires Docker or Node.js (for mega-linter-runner)
+# Configuration is in .mega-linter.yml
 lint:
-	@echo "Running Super-Linter..."
-	@echo "Note: This uses the same configuration as GitHub Actions CI"
-	@docker run --rm \
-		-e VALIDATE_ALL_CODEBASE=false \
-		-e DEFAULT_BRANCH=main \
-		-e FILTER_REGEX_EXCLUDE=.*/(\.pio|\.vscode|\.platformio|build|lib)/.* \
-		-e VALIDATE_CPP=true \
-		-e VALIDATE_MARKDOWN=true \
-		-e VALIDATE_YAML=true \
-		-e VALIDATE_JSON=true \
-		-e VALIDATE_GITHUB_ACTIONS=true \
-		-e VALIDATE_EDITORCONFIG=true \
-		-e VALIDATE_GITLEAKS=true \
-		-e VALIDATE_BASH=true \
-		-e CPP_FILE_EXTENSIONS=cpp,hpp,h \
-		-e MARKDOWN_CONFIG_FILE=.github/linters/.markdown-lint.yml \
-		-e YAML_CONFIG_FILE=.github/linters/.yaml-lint.yml \
-		-e WARNINGS_AS_ERRORS=false \
-		-e LOG_LEVEL=NOTICE \
-		-v $(PWD):/tmp/lint \
-		--workdir /tmp/lint \
-		ghcr.io/super-linter/super-linter:v8.3.1
+	@echo "Running MegaLinter..."
+	@echo "Configuration: .mega-linter.yml (c_cpp flavor)"
+	@echo ""
+	@if command -v npx >/dev/null 2>&1; then \
+		echo "→ Using mega-linter-runner..."; \
+		npx mega-linter-runner --flavor c_cpp --remove-container; \
+	elif command -v docker >/dev/null 2>&1; then \
+		echo "→ Using Docker directly..."; \
+		docker run --rm -v $(PWD):/tmp/lint:rw \
+			-e MEGALINTER_CONFIG=.mega-linter.yml \
+			ghcr.io/oxsecurity/megalinter:v9; \
+	else \
+		echo "✗ Weder npx noch docker gefunden. MegaLinter kann nicht lokal ausgeführt werden."; \
+		exit 1; \
+	fi
 	@echo ""
 	@echo "✓ Linting complete!"
 

@@ -130,6 +130,7 @@ git checkout -b feat/your-feature-name
 ```
 
 **Branch Naming Conventions**:
+
 - `feat/` - New features
 - `fix/` - Bug fixes
 - `docs/` - Documentation updates
@@ -195,6 +196,7 @@ git push origin feat/your-feature-name
 See [CODING_GUIDELINES.md](.github/CODING_GUIDELINES.md) for detailed C++ standards.
 
 **Key Rules**:
+
 - Maximum line length: **130 characters** (clang-format)
 - Indentation: **2 spaces** (no tabs)
 - Brace style: **K&R** (opening brace on same line)
@@ -308,22 +310,26 @@ Use the GitHub PR template and include:
 ### What Reviewers Look For
 
 1. **Code Quality**
+
    - Follows coding standards
    - Clean, readable code
    - Proper error handling
    - Good documentation
 
 2. **Functionality**
+
    - Does it work as intended?
    - Are there edge cases to consider?
    - Is the implementation efficient?
 
 3. **Security**
+
    - No security vulnerabilities
    - Proper input validation
    - Secure defaults
 
 4. **Testing**
+
    - Are there tests?
    - Do existing tests still pass?
    - Is the code testable?
@@ -414,6 +420,7 @@ All pull requests must pass the following quality gates:
 - **Gitleaks**: Secret detection
 
 Run locally:
+
 ```bash
 make lint
 ```
@@ -425,6 +432,7 @@ make lint
   - `norvi_ae01_r` (NORVI industrial controller)
 
 Run locally:
+
 ```bash
 make build
 ```

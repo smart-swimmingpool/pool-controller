@@ -1,6 +1,6 @@
 ---
 name: cpp-code-quality
-description: "Code quality, linting, formatting, and CI fix patterns for the pool-controller project. Use when asked to fix linter errors, run clang-format, fix EditorConfig issues, or resolve Super-Linter CI failures. 🇩🇪 Deutsche Trigger: Code-Qualität, Linting, Formatierung, clang-format, cpplint, Super-Linter, EditorConfig, CI-Fehler beheben, Pre-Commit."
+description: "Code quality, linting, formatting, and CI fix patterns for the pool-controller project. Use when asked to fix linter errors, run clang-format, fix EditorConfig issues, or resolve MegaLinter CI failures. 🇩🇪 Deutsche Trigger: Code-Qualität, Linting, Formatierung, clang-format, cpplint, MegaLinter, EditorConfig, CI-Fehler beheben, Pre-Commit."
 keywords:
   - code qualität
   - code quality
@@ -8,7 +8,7 @@ keywords:
   - formatierung
   - clang-format
   - cpplint
-  - super-linter
+  - megalinter
   - editorconfig
   - ci fehler
   - ci fixes
@@ -196,14 +196,14 @@ Der CI-Step verwendet die Standard-Clang-Tidy-Checks (kein `check_flags` in
 
 **Zusammenfassung der aktivierten CI-Checks:**
 
-| Check | Kategorie | Was es findet |
-|-------|-----------|--------------|
-| `clang-analyzer-core.NullDereference` | Core | Nullpointer-Dereferenzierung |
-| `clang-analyzer-core.uninitialized` | Core | Uninitialisierte Variablen |
-| `clang-analyzer-deadcode.DeadStores` | Core | Tote Zuweisungen |
-| `clang-analyzer-core.CallAndMessage` | Core | Aufruf auf gelöschtem Objekt |
-| `bugprone-macro-parentheses` | Bugprone | Makros ohne Klammern |
-| `performance-unnecessary-copy` | Performance | Unnötige Kopien (Heap!) |
+| Check                                 | Kategorie   | Was es findet                |
+| ------------------------------------- | ----------- | ---------------------------- |
+| `clang-analyzer-core.NullDereference` | Core        | Nullpointer-Dereferenzierung |
+| `clang-analyzer-core.uninitialized`   | Core        | Uninitialisierte Variablen   |
+| `clang-analyzer-deadcode.DeadStores`  | Core        | Tote Zuweisungen             |
+| `clang-analyzer-core.CallAndMessage`  | Core        | Aufruf auf gelöschtem Objekt |
+| `bugprone-macro-parentheses`          | Bugprone    | Makros ohne Klammern         |
+| `performance-unnecessary-copy`        | Performance | Unnötige Kopien (Heap!)      |
 
 **Detaillierte Erklärung → [PlatformIO Check (Static Analysis)](#platformio-check-static-analysis)**
 
@@ -411,18 +411,18 @@ check_severity = medium
 
 ### 3. CLI Reference
 
-| Command | Effect |
-|---------|--------|
-| `pio check` | Run on **all** environments |
-| `pio check --environment esp32dev` | Run on **one** environment |
-| `pio check -e norvi_ae01_r` | Run on NORVI variant (also checks OLED code) |
-| `pio check --skip-packages` | Skip library analysis (faster, CI does this) |
-| `pio check --severity medium` | Only report medium+ severity (ignore noise) |
-| `pio check --verbose` | Show full check output per file |
-| `pio check --json` | Machine-readable JSON output |
-| `pio check --flags "-*,clang-analyzer-*"` | Pass extra checker list to clang-tidy |
-| `pio check --fail-on warning` | Exit non-zero on warnings (not just errors) |
-| `pio check --fail-on severity=high` | Exit non-zero on high-severity only |
+| Command                                   | Effect                                       |
+| ----------------------------------------- | -------------------------------------------- |
+| `pio check`                               | Run on **all** environments                  |
+| `pio check --environment esp32dev`        | Run on **one** environment                   |
+| `pio check -e norvi_ae01_r`               | Run on NORVI variant (also checks OLED code) |
+| `pio check --skip-packages`               | Skip library analysis (faster, CI does this) |
+| `pio check --severity medium`             | Only report medium+ severity (ignore noise)  |
+| `pio check --verbose`                     | Show full check output per file              |
+| `pio check --json`                        | Machine-readable JSON output                 |
+| `pio check --flags "-*,clang-analyzer-*"` | Pass extra checker list to clang-tidy        |
+| `pio check --fail-on warning`             | Exit non-zero on warnings (not just errors)  |
+| `pio check --fail-on severity=high`       | Exit non-zero on high-severity only          |
 
 **Typical local workflow:**
 
@@ -446,14 +446,14 @@ pio check -e esp32dev --verbose | head -50
 
 The default PlatformIO check configuration enables a subset from each category:
 
-| Category | Important Checks | Relevance |
-|----------|-----------------|-----------|
-| `clang-analyzer-*` | `core.NullDereference`, `core.uninitialized`, `deadcode.DeadStores` | **Critical** — real bugs |
-| `bugprone-*` | `macro-parentheses`, `signed-char-misuse`, `integer-division` | Medium — embedded patterns |
-| `performance-*` | `unnecessary-copy`, `inefficient-vector`, `move-const-arg` | Medium — ESP32 perf matters |
-| `readability-*` | `redundant-control-flow`, `non-const-parameter` | Low — style preference |
-| `modernize-*` | `use-override`, `deprecated-headers` | Low — code evolution |
-| `cppcoreguidelines-*` | Various C++ Core Guidelines | Low — too strict for Arduino |
+| Category              | Important Checks                                                    | Relevance                    |
+| --------------------- | ------------------------------------------------------------------- | ---------------------------- |
+| `clang-analyzer-*`    | `core.NullDereference`, `core.uninitialized`, `deadcode.DeadStores` | **Critical** — real bugs     |
+| `bugprone-*`          | `macro-parentheses`, `signed-char-misuse`, `integer-division`       | Medium — embedded patterns   |
+| `performance-*`       | `unnecessary-copy`, `inefficient-vector`, `move-const-arg`          | Medium — ESP32 perf matters  |
+| `readability-*`       | `redundant-control-flow`, `non-const-parameter`                     | Low — style preference       |
+| `modernize-*`         | `use-override`, `deprecated-headers`                                | Low — code evolution         |
+| `cppcoreguidelines-*` | Various C++ Core Guidelines                                         | Low — too strict for Arduino |
 
 **Most useful single-check invocation for this project:**
 
@@ -478,21 +478,21 @@ src/PoolController.cpp:123:15: error: variable 'sensorAddr' is uninitialized
     [clang-analyzer-core.uninitialized]
 ```
 
-| Part | Meaning |
-|------|---------|
-| `src/PoolController.cpp:123:15` | File: **line:column** of the violation |
-| `error: / warning:` | **Severity** (error > warning > note) |
-| `variable 'x' is uninitialized` | **Message** describing the issue |
-| `when calling '...'` | **Context** — path that triggers the issue |
-| `[checker-name]` | **Checker ID** — use for suppression or targeted runs |
+| Part                            | Meaning                                               |
+| ------------------------------- | ----------------------------------------------------- |
+| `src/PoolController.cpp:123:15` | File: **line:column** of the violation                |
+| `error: / warning:`             | **Severity** (error > warning > note)                 |
+| `variable 'x' is uninitialized` | **Message** describing the issue                      |
+| `when calling '...'`            | **Context** — path that triggers the issue            |
+| `[checker-name]`                | **Checker ID** — use for suppression or targeted runs |
 
 **Severity mapping:**
 
-| pio check severity | clang-tidy diagnostic | Action required |
-|-------------------|----------------------|-----------------|
-| **error** | `error` | Must fix |
-| **warning** | `warning` | Should fix (or suppress) |
-| **note** | `note` | Informational (review) |
+| pio check severity | clang-tidy diagnostic | Action required          |
+| ------------------ | --------------------- | ------------------------ |
+| **error**          | `error`               | Must fix                 |
+| **warning**        | `warning`             | Should fix (or suppress) |
+| **note**           | `note`                | Informational (review)   |
 
 ---
 
@@ -650,10 +650,10 @@ Create `.clang-tidy` in the project root (not currently used):
 
 ```yaml
 # .clang-tidy — project-wide suppressions
-Checks: '-*,clang-analyzer-*,bugprone-*,performance-*'
+Checks: "-*,clang-analyzer-*,bugprone-*,performance-*"
 CheckOptions:
   - key: performance-unnecessary-copy
-    value: "false"  # disable this specific check project-wide
+    value: "false" # disable this specific check project-wide
 ```
 
 > **⚠ Prefer `// NOLINT` over `.clang-tidy`** — suppress only where needed and
@@ -696,14 +696,14 @@ Current CI step (from `.github/workflows/linter.yml`):
 
 ### 9. Quick Troubleshooting
 
-| Symptom | Cause | Fix |
-|---------|-------|-----|
-| `pio check` extremely slow | Analyzing libraries | Add `--skip-packages` |
-| `clang-tidy: command not found` | Toolchain missing | `pio update` or re-run `pio check` to auto-install |
-| False positive on PROGMEM/variable | Analyzer doesn't understand PROGMEM | `// NOLINTNEXTLINE` |
-| "Too many errors" (clang-tidy caps at 500) | Too many violations | Fix warnings gradually, use `--severity high` first |
-| Different results locally vs CI | Different clang-tidy versions | Run in CI Docker or add `--flags "-*"` to test baseline |
-| No violations found but code has bugs | Wrong `check_tool` or `check_flags` | Try `check_tool = clangtidy,clangsa` or add `-checks=*` |
+| Symptom                                    | Cause                               | Fix                                                     |
+| ------------------------------------------ | ----------------------------------- | ------------------------------------------------------- |
+| `pio check` extremely slow                 | Analyzing libraries                 | Add `--skip-packages`                                   |
+| `clang-tidy: command not found`            | Toolchain missing                   | `pio update` or re-run `pio check` to auto-install      |
+| False positive on PROGMEM/variable         | Analyzer doesn't understand PROGMEM | `// NOLINTNEXTLINE`                                     |
+| "Too many errors" (clang-tidy caps at 500) | Too many violations                 | Fix warnings gradually, use `--severity high` first     |
+| Different results locally vs CI            | Different clang-tidy versions       | Run in CI Docker or add `--flags "-*"` to test baseline |
+| No violations found but code has bugs      | Wrong `check_tool` or `check_flags` | Try `check_tool = clangtidy,clangsa` or add `-checks=*` |
 
 ---
 
@@ -723,8 +723,8 @@ The hook runs clang-format on staged `.cpp`/`.hpp` files before each commit.
 
 ## Full CI Simulation (ARM64)
 
-Super-Linter Docker image (`ghcr.io/super-linter/super-linter:v8`) hat **kein ARM64 Image**. Lokal auf ARM64 daher
-nicht via Docker ausführbar. Stattdessen die einzelnen Linter direkt installieren und ausführen:
+MegaLinter Docker image (`ghcr.io/oxsecurity/megalinter:v9`) läuft problemlos auf ARM64. Alternativ
+können die einzelnen Linter direkt installiert und ausgeführt werden:
 
 ### Installation der Einzel-Linter
 
@@ -740,7 +740,7 @@ sudo npm install -g markdownlint-cli editorconfig-checker
 sudo apt install -y shellcheck  # VALIDATE_BASH
 ```
 
-### Einzel-Linter ausführen (Alternative zu Super-Linter)
+### Einzel-Linter ausführen (Alternative zu MegaLinter)
 
 ```bash
 # MARKDOWN (120 Zeichen wie CI):
@@ -785,8 +785,8 @@ markdownlint $(git diff --name-only --diff-filter=AM HEAD~1 | grep '\.md$')
 ### Linting & Static Analysis
 
 - **[cpplint](https://github.com/cpplint/cpplint)** - Google's C++ linter
-- **[Super-Linter](https://github.com/github/super-linter)** -
-  Multi-language linting framework
+- **[MegaLinter](https://megalinter.io/)** -
+  Multi-language linting framework (OX Security)
 - **[CodeQL](https://codeql.github.com/)** -
   Semantic code analysis for security vulnerabilities
 - **[clang-tidy](https://clang.llvm.org/extra/clang-tidy/)** -
@@ -813,7 +813,7 @@ markdownlint $(git diff --name-only --diff-filter=AM HEAD~1 | grep '\.md$')
 
 ### Practical Implementation Guides
 
-- **[Setting up Super-Linter](https://github.com/github/super-linter/blob/main/README.md)** -
+- **[MegaLinter Configuration](https://megalinter.io/latest/configuration/)** -
   Configuration and customization
 - **[clang-format Configuration](https://clang.llvm.org/docs/ClangFormatStyleOptions.html)** -
   Style option reference

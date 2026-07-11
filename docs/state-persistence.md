@@ -243,12 +243,13 @@ If the controller reboots frequently:
 2. **Identify memory leak**: Look for pattern in when reboots occur
 3. **Reduce memory usage**:
 
-    - Increase measurement intervals
-    - Reduce MQTT message frequency
-    - Disable features if possible
+   - Increase measurement intervals
+   - Reduce MQTT message frequency
+   - Disable features if possible
+
 4. **Lower threshold**: Temporarily lower critical threshold to prevent reboots
 
-    (the controller will still reboot, but you may extend uptime while debugging)
+   (the controller will still reboot, but you may extend uptime while debugging)
 
 ### Watchdog Timeouts
 
@@ -257,7 +258,7 @@ If watchdog triggers (ESP32):
 1. **Long-blocking operations**: Check for delays or long operations in code
 2. **Increase timeout**: Modify timeout in `SystemMonitor::begin()`
 3. **Feed more frequently**: Add `SystemMonitor::feedWatchdog()` in long
-  operations
+   operations
 
 ## Technical Details
 
