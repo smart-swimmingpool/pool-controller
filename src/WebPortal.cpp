@@ -1104,13 +1104,21 @@ void WebPortal::handleFsUploadStream() {
       fsUploadFile.close();
     }
 
-    // Resolve the target path from the multipart form field "path"
-    if (!server_.hasArg("path")) {
+    // Resolve the target path — try multipart form field "path" first,
+    // then fall back to upload.filename (which is set from the Content-Disposition
+    // filename attribute). server_.arg("path") is unreliable during the upload
+    // callback because the multipart arg parser may not have finished yet for
+    // fields that arrive before the file part.
+    String path;
+    if (server_.hasArg("path")) {
+      path = server_.arg("path");
+    } else if (upload.filename.length() > 0) {
+      path = upload.filename;
+    }
+    if (path.length() == 0) {
       Serial.println("FS Upload: missing path argument — aborting");
       return;
     }
-
-    String path = server_.arg("path");
 
     // Security: only allow files under /web/
     if (!path.startsWith("/web/")) {
