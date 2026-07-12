@@ -81,7 +81,9 @@ bool DallasTemperatureNode::resolveFilter() {
       DeviceAddress addr;
       if (activeSensor->getAddress(addr, i)) {
         if (memcmp(addr, filterAddr_, sizeof(DeviceAddress)) == 0) {
-          deviceIndex_ = i;
+          // Note: intentionally NOT updating deviceIndex_ here — the constructor-
+          // provided default (solar=0, pool=1) must survive as the fallback index
+          // used by the no-filter path in clearAddressFilter().
           memcpy(deviceAddress_, addr, sizeof(DeviceAddress));
           _sensorFound = true;
           char adr[18];
