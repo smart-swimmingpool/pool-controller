@@ -59,7 +59,8 @@ void RuleAuto::loop() {
       }
     } else {
       // solar is off
-      if ((getPoolTemperature() <= (getPoolMaxTemperature() - hyst)) && (getPoolTemperature() <= (getSolarTemperature() - hyst)) &&
+      if ((getPoolTemperature() <= (getPoolMaxTemperature() - hyst)) &&
+        (getPoolTemperature() <= (getSolarTemperature() - hyst)) &&
         ((getSolarMinTemperature() + hyst) <= getSolarTemperature())) {
         Serial.printf("  § RuleAuto: Pool temp (%f) below max temp minus hysteresis (%f). Switch solar on\n",
           getPoolTemperature(), getPoolMaxTemperature() - hyst);

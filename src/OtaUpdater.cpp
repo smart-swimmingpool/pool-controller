@@ -18,6 +18,7 @@
 
 #include "ConfigManager.hpp"
 #include "NetworkManager.hpp"
+#include "SystemMonitor.hpp"
 #include "TimeClientHelper.hpp"
 
 namespace PoolController {
@@ -482,6 +483,9 @@ bool OtaUpdater::downloadAndApply(const String &url) {
   int totalRead = 0;
 
   while (http.connected() && totalRead < totalSize) {
+    // Feed watchdog to prevent 30s timeout reset during long downloads
+    PoolController::SystemMonitor::feedWatchdog();
+
     size_t available = stream->available();
     if (available == 0) {
       delay(1);
