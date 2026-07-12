@@ -131,6 +131,11 @@ private:
 
   uint8_t numberOfDevices;
 
+  /** @brief Scan the bus for the current filter and update deviceAddress_.
+   *  Called by begin(), setAddressFilter(), and clearAddressFilter().
+   *  @return true if the device was found, false if fallback was used. */
+  bool resolveFilter();
+
   /** @brief Format a DeviceAddress as a hex string. */
   void address2String(const DeviceAddress deviceAddress, char *buffer, size_t size) const;
 };

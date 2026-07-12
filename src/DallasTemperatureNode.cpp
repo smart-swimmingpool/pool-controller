@@ -57,11 +57,69 @@ DallasTemperatureNode::DallasTemperatureNode(
 void DallasTemperatureNode::setAddressFilter(const DeviceAddress addr) {
   memcpy(filterAddr_, addr, sizeof(DeviceAddress));
   hasFilter_ = true;
+
+  if (numberOfDevices > 0) {
+    resolveFilter();
+  }
 }
 
 void DallasTemperatureNode::clearAddressFilter() {
   memset(filterAddr_, 0, sizeof(DeviceAddress));
   hasFilter_ = false;
+
+  if (numberOfDevices > 0) {
+    resolveFilter();
+  }
+}
+
+bool DallasTemperatureNode::resolveFilter() {
+  DallasTemperature *activeSensor = sharedSensor_ ? sharedSensor_ : &sensor;
+
+  if (hasFilter_ && numberOfDevices > 0) {
+    // ── Address filter active: find the matching device on the bus ──
+    for (uint8_t i = 0; i < numberOfDevices; i++) {
+      DeviceAddress addr;
+      if (activeSensor->getAddress(addr, i)) {
+        if (memcmp(addr, filterAddr_, sizeof(DeviceAddress)) == 0) {
+          deviceIndex_ = i;
+          memcpy(deviceAddress_, addr, sizeof(DeviceAddress));
+          _sensorFound = true;
+          char adr[18];
+          address2String(addr, adr, sizeof(adr));
+          Serial.printf("  ◦ %s: filter resolved → device %d [%s] ✓\n", _id, i, adr);
+          return true;
+        }
+      }
+    }
+    // Filter address not found on bus — fall back to deviceIndex_
+    Serial.printf("  ✖ %s: filter address not found on bus! "
+                  "Falling back to device index %d\n",
+      _id, deviceIndex_);
+    if (activeSensor->getAddress(deviceAddress_, deviceIndex_)) {
+      _sensorFound = true;
+      return true;
+    }
+    _sensorFound = false;
+    return false;
+  }
+
+  if (numberOfDevices > 0) {
+    // ── No filter: cache address by deviceIndex_ ───────────────────
+    if (activeSensor->getAddress(deviceAddress_, deviceIndex_)) {
+      _sensorFound = true;
+      char adr[18];
+      address2String(deviceAddress_, adr, sizeof(adr));
+      Serial.printf("  ◦ %s: no filter → device %d [%s]", _id, deviceIndex_, adr);
+      if (sharedSensor_) {
+        Serial.print(" (shared bus)");
+      }
+      Serial.println();
+      return true;
+    }
+  }
+
+  _sensorFound = false;
+  return false;
 }
 
 void DallasTemperatureNode::getDeviceAddressString(char *buffer, size_t size) const {
@@ -117,44 +175,7 @@ void DallasTemperatureNode::begin() {
     }
 
     // ── Resolve address filter (persistent mapping) ─────────────────────
-    if (hasFilter_) {
-      bool found = false;
-      for (uint8_t i = 0; i < numberOfDevices; i++) {
-        DeviceAddress addr;
-        if (activeSensor->getAddress(addr, i)) {
-          if (memcmp(addr, filterAddr_, sizeof(DeviceAddress)) == 0) {
-            deviceIndex_ = i;
-            memcpy(deviceAddress_, addr, sizeof(DeviceAddress));
-            _sensorFound = true;
-            found = true;
-            char adr[18];
-            address2String(addr, adr, sizeof(adr));
-            Serial.printf("  ◦ %s: matched address filter → device %d [%s] ✓\n", _id, i, adr);
-            break;
-          }
-        }
-      }
-      if (!found) {
-        Serial.printf("  ✖ %s: address filter not found! "
-                      "Falling back to device index %d\n",
-          _id, deviceIndex_);
-        if (activeSensor->getAddress(deviceAddress_, deviceIndex_)) {
-          _sensorFound = true;
-        }
-      }
-    } else {
-      // ── No filter: cache address by deviceIndex_ ─────────────────────
-      if (activeSensor->getAddress(deviceAddress_, deviceIndex_)) {
-        _sensorFound = true;
-        char adr[18];
-        address2String(deviceAddress_, adr, sizeof(adr));
-        Serial.printf("  ◦ %s: no filter → device %d [%s]", _id, deviceIndex_, adr);
-        if (sharedSensor_) {
-          Serial.print(" (shared bus)");
-        }
-        Serial.println();
-      }
-    }
+    resolveFilter();
 
     // ── Report global status ───────────────────────────────────────────
     if (sharedSensor_) {
