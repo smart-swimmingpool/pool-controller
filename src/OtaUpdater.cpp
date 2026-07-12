@@ -22,41 +22,36 @@
 
 namespace PoolController {
 
-// ISRG Root X1 — Let's Encrypt root CA used by GitHub
-// https://letsencrypt.org/certificates/
-// ISRG Root X1 — Let's Encrypt root CA used by GitHub
-// https://letsencrypt.org/certificates/
-// SHA256: 96:bcec:0626:4976:f374:6077:9acf:28c5:a7cf:e8a3:c0aa:e11a:8ffe:ce05:c0bd:df08:c6
+// USERTrust ECC Certification Authority — self-signed root CA that GitHub's
+// current TLS chain (api.github.com and release/object downloads) actually
+// terminates at: leaf -> "Sectigo Public Server Authentication CA DV E36"
+// -> "Sectigo Public Server Authentication Root E46" -> this root.
+// Verified against the live chain on 2026-07-11 via:
+//   openssl s_client -connect api.github.com:443 -showcerts
+// The previously pinned ISRG Root X1 (Let's Encrypt) does NOT appear anywhere
+// in GitHub's chain and caused every OTA check/download to fail TLS
+// verification silently (fetchLatestRelease()/downloadAndApply() both
+// returned false with no HTTP-level diagnostic beyond "connection failed").
+// Valid until 2038-01-18; if GitHub rotates its CA again, this constant
+// needs updating (see openspec/specs/github-ca-chain.spec.md for the
+// longer-term fix: a real CA bundle instead of a single pinned root).
+// SHA256 fingerprint: 4F:F4:60:D5:4B:9C:86:DA:BF:BC:FC:57:12:E0:40:0D:
+//                     2B:ED:3F:BC:4D:4F:BD:AA:86:E0:6A:DC:D2:A9:AD:7A
 static const char kGitHubRootCA[] PROGMEM = "-----BEGIN CERTIFICATE-----\n"
-                                            "MIIFazCCA1OgAwIBAgIRAIIQz7DSQONZRGPgu2OCiwAwDQYJKoZIhvcNAQELBQAw\n"
-                                            "TzELMAkGA1UEBhMCVVMxKTAnBgNVBAoTIEludGVybmV0IFNlY3VyaXR5IFJlc2Vh\n"
-                                            "cmNoIEdyb3VwMRUwEwYDVQQDEwxJU1JHIFJvb3QgWDEwHhcNMTUwNjA0MTEwNDM4\n"
-                                            "WhcNMzUwNjA0MTEwNDM4WjBPMQswCQYDVQQGEwJVUzEpMCcGA1UEChMgSW50ZXJu\n"
-                                            "ZXQgU2VjdXJpdHkgUmVzZWFyY2ggR3JvdXAxFTATBgNVBAMTDElTUkcgUm9vdCBY\n"
-                                            "MTCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoCggIBAK3oJHP0FDfzm54rVygc\n"
-                                            "h77ct984kIxuPOZXoHj3dcKi/vVqbvYATyjb3miGbESTtrFj/RQSa78f0uoxmyF+\n"
-                                            "0TM8ukj13Xnfs7j/EvEhmkvBioZxaUpmZmyPfjxwv60pIgbz5MDmgK7iS4+3mX6U\n"
-                                            "A5/TR5d8mUgjU+g4rk8Kb4Mu0UlXjIB0ttov0DiNewNwIRt18jA8+o+u3dpjq+sW\n"
-                                            "T8KOEUt+zwvo/7V3LvSye0rgTBIlDHCNAymg4VMk7BPZ7hm/ELNKjD+Jo2FR3qyH\n"
-                                            "B5T0Y3HsLuJvW5iB4YlcNHlsdu87kGJ55tukmi8mxdAQ4Q7e2RCOFvu396j3x+UC\n"
-                                            "B5iPNgiV5+I3lg02dZ77DnKxHZu8A/lJBdiB3QW0KtZB6awBdpUKD9jf1b0SHzUv\n"
-                                            "KBds0pjBqAlkd25HN7rOrFleaJ1/ctaJxQZBKT5ZPt0m9STJEadao0xAH0ahmbWn\n"
-                                            "OlFuhjuefXKnEgV4We0+UXgVCwOPjdAvBbI+e0ocS3MFEvzG6uBQE3xDk3SzynTn\n"
-                                            "jh8BCNAw1FtxNrQHusEwMFxIt4I7mKZ9YIqioymCzLq9gwQbooMDQaHWBfEbwrbw\n"
-                                            "qHyGO0aoSCqI3Haadr8faqU9GY/rOPNk3sgrDQoo//fb4hVC1CLQJ13hef4Y53CI\n"
-                                            "rU7m2Ys6xt0nUW7/vGT1M0NPAgMBAAGjQjBAMA4GA1UdDwEB/wQEAwIBBjAPBgNV\n"
-                                            "HRMBAf8EBTADAQH/MB0GA1UdDgQWBBR5tFnme7bl5AFzgAiIyBpY9umbbjANBgkq\n"
-                                            "hkiG9w0BAQsFAAOCAgEAVR9YqbyyqFDQDLHYGmkgJykIrGF1XIpu+ILlaS/V9lZL\n"
-                                            "ubhzEFnTIZd+50xx+7LSYK05qAvqFyFWhfFQDlnrzuBZ6brJFe+GnY+EgPbk6ZGQ\n"
-                                            "3BebYhtF8GaV0nxvwuo77x/Py9auJ/GpsMiu/X1+mvoiBOv/2X/qkSsisRcOj/KK\n"
-                                            "NFtY2PwByVS5uCbMiogziUwthDyC3+6WVwW6LLv3xLfHTjuCvjHIInNzktHCgKQ5\n"
-                                            "ORAzI4JMPJ+GslWYHb4phowim57iaztXOoJwTdwJx4nLCgdNbOhdjsnvzqvHu7Ur\n"
-                                            "TkXWStAmzOVyyghqpZXjFaH3pO3JLF+l+/+sKAIuvtd7u+Nxe5AW0wdeRlN8NwdC\n"
-                                            "jNPElpzVmbUq4JUagEiuTDkHzsxHpFKVK7q4+63SM1N95R1NbdWhscdCb+ZAJzVc\n"
-                                            "oyi3B43njTOQ5yOf+1CceWxG1bQVs5ZufpsMljq4Ui0/1lvh+wjChP4kqKOJ2qxq\n"
-                                            "4RgqsahDYVvTH9w7jXbyLeiNdd8XM2w9U/t7y0Ff/9yi0GE44Za4rF2LN9d11TPA\n"
-                                            "mRGunUHBcnWEvgJBQl9nJEiU0Zsnvgc/ubhPgXRR4Xq37Z0j4r7g1SgEEzwxA57d\n"
-                                            "emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=\n"
+                                            "MIICjzCCAhWgAwIBAgIQXIuZxVqUxdJxVt7NiYDMJjAKBggqhkjOPQQDAzCBiDEL\n"
+                                            "MAkGA1UEBhMCVVMxEzARBgNVBAgTCk5ldyBKZXJzZXkxFDASBgNVBAcTC0plcnNl\n"
+                                            "eSBDaXR5MR4wHAYDVQQKExVUaGUgVVNFUlRSVVNUIE5ldHdvcmsxLjAsBgNVBAMT\n"
+                                            "JVVTRVJUcnVzdCBFQ0MgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkwHhcNMTAwMjAx\n"
+                                            "MDAwMDAwWhcNMzgwMTE4MjM1OTU5WjCBiDELMAkGA1UEBhMCVVMxEzARBgNVBAgT\n"
+                                            "Ck5ldyBKZXJzZXkxFDASBgNVBAcTC0plcnNleSBDaXR5MR4wHAYDVQQKExVUaGUg\n"
+                                            "VVNFUlRSVVNUIE5ldHdvcmsxLjAsBgNVBAMTJVVTRVJUcnVzdCBFQ0MgQ2VydGlm\n"
+                                            "aWNhdGlvbiBBdXRob3JpdHkwdjAQBgcqhkjOPQIBBgUrgQQAIgNiAAQarFRaqflo\n"
+                                            "I+d61SRvU8Za2EurxtW20eZzca7dnNYMYf3boIkDuAUU7FfO7l0/4iGzzvfUinng\n"
+                                            "o4N+LZfQYcTxmdwlkWOrfzCjtHDix6EznPO/LlxTsV+zfTJ/ijTjeXmjQjBAMB0G\n"
+                                            "A1UdDgQWBBQ64QmG1M8ZwpZ2dEl23OA1xmNjmjAOBgNVHQ8BAf8EBAMCAQYwDwYD\n"
+                                            "VR0TAQH/BAUwAwEB/zAKBggqhkjOPQQDAwNoADBlAjA2Z6EWCNzklwBBHU6+4WMB\n"
+                                            "zzuqQhFkoJ2UOQIReVx7Hfpkue4WQrO/isIJxOzksU0CMQDpKmFHjFJKS04YcPbW\n"
+                                            "RNZu9YO6bVi9JNlWSOrvxKJGgYhqOkbRqZtNyWHa0V1Xahg=\n"
                                             "-----END CERTIFICATE-----\n";
 
 // ── Statics ──
@@ -280,22 +275,15 @@ bool OtaUpdater::fetchLatestRelease() {
   }
 
   WiFiClientSecure client;
-  // Use CA certificate validation for GitHub TLS
-  // Try to use ESP32's built-in CA bundle if available (includes ~130 root CAs)
-  // This covers GitHub's CDN which may use various CA chains (Let's Encrypt, Sectigo, etc.)
-  // Per openspec/specs/github-ca-chain.spec.md requirement R2
-#if defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
-// Check if x509_crt_bundle and setCACertBundle are available (ESP32 Arduino core >= 2.0.0)
-#if defined(x509_crt_bundle) && defined(ESP32_WiFiClientSecure_setCACertBundle)
-  client.setCACertBundle(x509_crt_bundle);
-#else
-  // Fallback to single root CA for older ESP32 cores
+  // Pin the actual root CA GitHub's chain terminates at (see kGitHubRootCA
+  // comment above). NOTE: `setCACertBundle(x509_crt_bundle)` was previously
+  // attempted here behind an `#if defined(x509_crt_bundle)` guard, but
+  // that symbol is never actually defined in this project (it requires
+  // generating and embedding a CA bundle binary — see
+  // openspec/specs/github-ca-chain.spec.md, tasks T1/T2, still open) — the
+  // guard was always false and silently fell back to this same single-cert
+  // path, so it was removed as dead code (YAGNI).
   client.setCACert(kGitHubRootCA);
-#endif
-#else
-  // Fallback for non-ESP32 platforms - use single root CA
-  client.setCACert(kGitHubRootCA);
-#endif
   client.setTimeout(10000);
 
   // Build API URL
@@ -424,22 +412,15 @@ bool OtaUpdater::isNewerVersion(const String &current, const String &latest) {
 
 bool OtaUpdater::downloadAndApply(const String &url) {
   WiFiClientSecure client;
-  // Use CA certificate validation for GitHub TLS
-  // Try to use ESP32's built-in CA bundle if available (includes ~130 root CAs)
-  // This covers GitHub's CDN which may use various CA chains (Let's Encrypt, Sectigo, etc.)
-  // Per openspec/specs/github-ca-chain.spec.md requirement R2
-#if defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
-// Check if x509_crt_bundle and setCACertBundle are available (ESP32 Arduino core >= 2.0.0)
-#if defined(x509_crt_bundle) && defined(ESP32_WiFiClientSecure_setCACertBundle)
-  client.setCACertBundle(x509_crt_bundle);
-#else
-  // Fallback to single root CA for older ESP32 cores
+  // Pin the actual root CA GitHub's chain terminates at (see kGitHubRootCA
+  // comment above). NOTE: `setCACertBundle(x509_crt_bundle)` was previously
+  // attempted here behind an `#if defined(x509_crt_bundle)` guard, but
+  // that symbol is never actually defined in this project (it requires
+  // generating and embedding a CA bundle binary — see
+  // openspec/specs/github-ca-chain.spec.md, tasks T1/T2, still open) — the
+  // guard was always false and silently fell back to this same single-cert
+  // path, so it was removed as dead code (YAGNI).
   client.setCACert(kGitHubRootCA);
-#endif
-#else
-  // Fallback for non-ESP32 platforms - use single root CA
-  client.setCACert(kGitHubRootCA);
-#endif
   client.setTimeout(10000);
 
   HTTPClient http;
