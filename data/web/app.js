@@ -186,10 +186,14 @@ async function loadTelemetry() {
       if (etEl) etEl.value = pad2(data.timer_end_h) + ':' + pad2(data.timer_end_m);
     }
 
-    // AP-Mode: WiFi-Tab anzeigen (nur einmalig — nicht bei jedem Poll erzwingen,
-    // sonst überschreibt es die manuelle Tab-Navigation des Nutzers)
+    // AP-Mode: WiFi-Tab anzeigen
     if (data.ap_mode) {
-      if (!hasAutoSwitchedToWifi) {
+      if (!isAuthenticated) {
+        // Ohne Auth immer zum WiFi-Tab (Captive Portal / AP-Setup) —
+        // der Nutzer muss sich verbinden können, kein freies Navigieren nötig
+        switchTab('wifi');
+      } else if (!hasAutoSwitchedToWifi) {
+        // Nach Login: einmalig WiFi-Tab zeigen, dann freie Navigation erlauben
         switchTab('wifi');
         hasAutoSwitchedToWifi = true;
       }
