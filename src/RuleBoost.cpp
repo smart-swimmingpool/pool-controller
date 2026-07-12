@@ -41,7 +41,7 @@ void RuleBoost::loop() {
       Serial.println(F("§ RuleBoost: below max. Temperature. Switch solar on"));
       _solarRelay->setSwitch(true);
 
-    } else if ((_solarRelay->getSwitch()) && (poolTemp > (getPoolMaxTemperature() + getTemperatureHysteresis())) &&
+    } else if ((_solarRelay->getSwitch()) && (poolTemp > getPoolMaxTemperature()) &&
       (poolTemp > (solarTemp + getTemperatureHysteresis()))) {
       Serial.print(cIndent);
       Serial.println(F("§ RuleBoost: Max. Temperature reached. Switch solar off"));

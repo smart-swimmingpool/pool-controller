@@ -36,12 +36,13 @@ void RuleAuto::loop() {
 
   _poolRelay->setSwitch(checkPoolPumpTimer(poolTemp));
 
+  float hyst = getTemperatureHysteresis();
+
   if (_poolRelay->getSwitch()) {
     // pool pump is running
 
     if (_solarRelay->getSwitch()) {
       // solar is on
-      float hyst = getTemperatureHysteresis();
       if (getSolarTemperature() < (getSolarMinTemperature() - hyst)) {
         Serial.printf("  § RuleAuto: Solar below min. required solar temp. (%f). Switch solar off\n", getSolarMinTemperature());
         _solarRelay->setSwitch(false);
@@ -49,8 +50,8 @@ void RuleAuto::loop() {
         Serial.printf("  § RuleAuto: Pool temp. (%f) reaches solar temp (%f). Switch solar off\n", getPoolTemperature(),
           getSolarTemperature());
         _solarRelay->setSwitch(false);
-      } else if (getPoolTemperature() >= (getPoolMaxTemperature() + hyst)) {
-        Serial.printf("  § RuleAuto: Pool temp. (%f) above max. temperature (%f). Switch solar off\n", getPoolTemperature(),
+      } else if (getPoolTemperature() >= getPoolMaxTemperature()) {
+        Serial.printf("  § RuleAuto: Pool temp. (%f) reached max. temperature (%f). Switch solar off\n", getPoolTemperature(),
           getPoolMaxTemperature());
         _solarRelay->setSwitch(false);
       } else {
@@ -58,9 +59,10 @@ void RuleAuto::loop() {
       }
     } else {
       // solar is off
-      if ((getPoolTemperature() <= getPoolMaxTemperature()) && (getPoolTemperature() <= getSolarTemperature()) &&
-        (getSolarMinTemperature() <= getSolarTemperature())) {
-        Serial.printf("  § RuleAuto: below max. Temperature (%f). Switch solar on\n", getPoolMaxTemperature());
+      if ((getPoolTemperature() <= (getPoolMaxTemperature() - hyst)) && (getPoolTemperature() <= (getSolarTemperature() - hyst)) &&
+        ((getSolarMinTemperature() + hyst) <= getSolarTemperature())) {
+        Serial.printf("  § RuleAuto: Pool temp (%f) below max temp minus hysteresis (%f). Switch solar on\n",
+          getPoolTemperature(), getPoolMaxTemperature() - hyst);
         _solarRelay->setSwitch(true);
       } else {
         Serial.println("  § RuleAuto: Solar off -> no change");
