@@ -41,19 +41,19 @@ produces `sensor.<prefix>_pool_temperature`). Replace `<prefix>` with your devic
 | `sensor` | `local_time` | diagnostic | Current local time |
 | `binary_sensor` | `pool_sensor_found` | diagnostic | Pool sensor detection status |
 | `binary_sensor` | `solar_sensor_found` | diagnostic | Solar sensor detection status |
-| `binary_sensor` | `mqtt_status` | diagnostic | MQTT connection status |
+| `binary_sensor` | `mqtt_connected` | diagnostic | MQTT connection status |
 | `select` | `operation_mode` | — | Operating mode (auto/manu/boost/timer) |
 | `select` | `pool_sensor` | config | Pool sensor address mapping |
 | `select` | `solar_sensor` | config | Solar sensor address mapping |
 | `select` | `timezone` | config | Timezone selection |
 | `switch` | `pool_pump` | — | Pool circulation pump |
 | `switch` | `solar_pump` | — | Solar heating pump |
-| `number` | `max_pool_temp` | config | Maximum pool temperature target |
-| `number` | `min_solar_temp` | config | Minimum solar activation temperature |
+| `number` | `maximum_pool_temperature` | config | Maximum pool temperature target |
+| `number` | `minimum_solar_temperature` | config | Minimum solar activation temperature |
 | `number` | `temperature_hysteresis` | config | Temperature hysteresis value |
-| `number` | `circ_temp_threshold` | config | Temperature-based circulation threshold |
-| `number` | `circ_temp_factor` | config | Temperature-based circulation factor |
-| `number` | `circ_max_runtime` | config | Temperature-based circulation max runtime |
+| `number` | `circulation_temperature_threshold` | config | Temperature-based circulation threshold |
+| `number` | `circulation_temperature_factor` | config | Temperature-based circulation factor |
+| `number` | `circulation_maximum_runtime` | config | Temperature-based circulation max runtime |
 | `time` | `timer_start` | config | Timer start time (HH:MM) |
 | `time` | `timer_end` | config | Timer end time (HH:MM) |
 | `text` | `ntp_server` | config | NTP server address |
@@ -92,10 +92,6 @@ highlight the active operation mode:
 
 ```text
 HACS → Frontend → button-card → Install
-```
-
-Without `button-card`, replace `custom:button-card` with `type: button` in the grid cards (loses
-active-mode highlighting).
 ```
 
 Without `button-card`, replace `custom:button-card` with `type: button` in the grid cards (loses
