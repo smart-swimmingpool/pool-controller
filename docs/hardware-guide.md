@@ -181,7 +181,7 @@ to activate (close) the relay. If your relay module switches with LOW instead
 (active-low), look for a **jumper** on the module to change the mode, or choose
 a different module — active-high modules are easier to work with.
 
-**Load wiring (230V side):**
+**Load wiring (230V side) — Standard external relay module:**
 
 ```
    L (mains live) ─── RCD ─── MCB ──┬── Relay COM1 ── Pool Pump
@@ -196,6 +196,23 @@ a different module — active-high modules are easier to work with.
 - Connect the relay's **NO** (normally open) terminal to the pump.
 - The other pump wire goes to **neutral (N)**.
 - Always wire the 230V circuit through an **RCD and appropriately rated MCB**.
+
+   ╔══════════════════════════════════════════════════════════════════════╗
+   ║  ⚠ IMPORTANT — Motor Load Limitation (same as NORVI)               ║
+   ║                                                                     ║
+   ║  External 5V relay modules (e.g. SRD-05VDC-SL-C) are specified     ║
+   ║  for **resistive loads** (typically 10A/250V AC). A **pump is an   ║
+   ║  inductive motor load** with 5–10× higher inrush current that can   ║
+   ║  weld the relay contacts after repeated switching, just like the    ║
+   ║  NORVI built-in relays.                                             ║
+   ║                                                                     ║
+   ║  If you are switching pumps or any motor load >300W:                ║
+   ║  → Use the ESP32 relay to switch a **DIN-rail contactor**           ║
+   ║  → The contactor handles the motor load; the 5V relay is only a     ║
+   ║    control interface (no contact wear)                              ║
+   ║                                                                     ║
+   ║  See → **[Contactor Wiring Guide](contactor-guide.md)**             ║
+   ╚══════════════════════════════════════════════════════════════════════╝
 
 #### 3. Power Supply
 

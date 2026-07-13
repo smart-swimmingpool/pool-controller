@@ -189,7 +189,7 @@ um das Relais zu aktivieren (active-high). Wenn dein Modul bei LOW schaltet
 (active-low), suche nach einem **Jumper** auf der Modulplatine, um den Modus
 zu wechseln. Active-high-Module sind einfacher in der Handhabung.
 
-**Lastseite (230V-Seite):**
+**Lastseite (230V-Seite) — Standard-Relaismodul:**
 
 ```
    L (Außenleiter) ─── FI ─── LS ──┬── Relais COM1 ── Pool-Pumpe
@@ -205,6 +205,24 @@ zu wechseln. Active-high-Module sind einfacher in der Handhabung.
 - Den anderen Pumpenanschluss an **Neutralleiter (N)**.
 - Den 230V-Stromkreis **immer** über einen FI-Schutzschalter und einen
   passend abgesicherten Leitungsschutzschalter führen.
+
+   ╔══════════════════════════════════════════════════════════════════════╗
+   ║  ⚠ WICHTIG — Grenze bei Motorlast (gleiches Problem wie NORVI)     ║
+   ║                                                                     ║
+   ║  Externe 5V-Relaismodule (z.B. SRD-05VDC-SL-C) sind für ohmsche    ║
+   ║  Last spezifiziert (typ. 10A/250V AC). Eine **Pumpe ist eine        ║
+   ║  induktive Motorlast** mit 5–10× höherem Einschaltstrom, der die    ║
+   ║  Relaiskontakte nach wiederholtem Schalten verschweißen kann —      ║
+   ║  genauso wie bei den NORVI-Bordrelais.                              ║
+   ║                                                                     ║
+   ║  Falls du Pumpen oder andere Motorlasten >300W schaltest:           ║
+   ║  → Verwende das ESP32-Relais nur zur Ansteuerung eines              ║
+   ║    **Hutschienen-Schützes** (Contacteur)                            ║
+   ║  → Das Schütz übernimmt die Motorlast; das 5V-Relais ist nur        ║
+   ║    noch die Steuerschnittstelle (kein Kontaktverschleiß)            ║
+   ║                                                                     ║
+   ║  Siehe → **[Schütz-Schaltung für Pumpen](contactor-guide.de.md)**   ║
+   ╚══════════════════════════════════════════════════════════════════════╝
 
 ### 3. Stromversorgung
 
