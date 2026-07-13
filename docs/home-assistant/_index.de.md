@@ -42,19 +42,19 @@ ergibt `sensor.<prefix>_pool_temperature`). Ersetze `<prefix>` durch deinen Ger�
 | `sensor` | `local_time` | diagnostic | Aktuelle Ortszeit |
 | `binary_sensor` | `pool_sensor_found` | diagnostic | Status Pool-Sensor (gefunden/fehlt) |
 | `binary_sensor` | `solar_sensor_found` | diagnostic | Status Solar-Sensor (gefunden/fehlt) |
-| `binary_sensor` | `mqtt_status` | diagnostic | MQTT-Verbindungsstatus |
+| `binary_sensor` | `mqtt_connected` | diagnostic | MQTT-Verbindungsstatus |
 | `select` | `operation_mode` | — | Betriebsart (auto/manu/boost/timer) |
 | `select` | `pool_sensor` | config | Pool-Sensor-Adresszuordnung |
 | `select` | `solar_sensor` | config | Solar-Sensor-Adresszuordnung |
 | `select` | `timezone` | config | Zeitzonenauswahl |
 | `switch` | `pool_pump` | — | Pool-Umwälzpumpe |
 | `switch` | `solar_pump` | — | Solar-Heizungspumpe |
-| `number` | `max_pool_temp` | config | Zieltemperatur Pool max. |
-| `number` | `min_solar_temp` | config | Minimale Solar-Aktivierungstemperatur |
+| `number` | `maximum_pool_temperature` | config | Zieltemperatur Pool max. |
+| `number` | `minimum_solar_temperature` | config | Minimale Solar-Aktivierungstemperatur |
 | `number` | `temperature_hysteresis` | config | Temperaturhysterese |
-| `number` | `circ_temp_threshold` | config | Schwellwert temp. Filterlaufzeit |
-| `number` | `circ_temp_factor` | config | Faktor temp. Filterlaufzeit |
-| `number` | `circ_max_runtime` | config | Maximale Laufzeit temp. Filterlaufzeit |
+| `number` | `circulation_temperature_threshold` | config | Schwellwert temp. Filterlaufzeit |
+| `number` | `circulation_temperature_factor` | config | Faktor temp. Filterlaufzeit |
+| `number` | `circulation_maximum_runtime` | config | Maximale Laufzeit temp. Filterlaufzeit |
 | `time` | `timer_start` | config | Timer Startzeit (HH:MM) |
 | `time` | `timer_end` | config | Timer Endzeit (HH:MM) |
 | `text` | `ntp_server` | config | NTP-Server-Adresse |
