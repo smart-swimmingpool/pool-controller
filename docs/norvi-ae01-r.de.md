@@ -2,6 +2,7 @@
 title: NORVI AE01-R Konfiguration
 summary: Pool-Controller-Pinbelegung, Verdrahtung und Unterschiede bei Verwendung des industriellen NORVI IIOT-AE01-R anstelle eines Standard-ESP32-Dev-Boards
 date: "2026-06-09"
+lastmod: "2026-07-13"
 draft: false
 toc: true
 type: docs
@@ -222,15 +223,24 @@ kommt zum Einsatz.
    Verbraucher zwischen COM und NO an. Die Relais sind für 5A/250V AC
    ausgelegt.
 
-   > **Hinweis:** Die Solar-Pumpe wurde von Relaisausgang 1 (GPIO12) auf
-   > Relaisausgang 5 (GPIO33) verlegt, nachdem bei einem Feldgerät der
-   > R1-Kanal dauerhaft leitend war (Relais klickt hörbar beim
-   > Schalten, aber COM1/NO1 öffnet nie) — ein Hardwarefehler
-   > (verschweißter Kontakt oder NO/NC-Verwechslung), nachweislich kein
-   > Firmware-Fehler, da Relaisausgang 0 dieselbe Schaltlogik nutzt und
-   > korrekt funktioniert. Falls dein R1-Kanal einwandfrei funktioniert,
-   > kannst du ihn weiterverwenden, indem du `PIN_RELAY_SOLAR` in
-   > `Config.hpp` zurücksetzt.
+    > **Hinweis:** Die Solar-Pumpe wurde von Relaisausgang 1 (GPIO12) auf
+    > Relaisausgang 5 (GPIO33) verlegt, nachdem bei einem Feldgerät der
+    > R1-Kanal dauerhaft leitend war (Relais klickt hörbar beim
+    > Schalten, aber COM1/NO1 öffnet nie) — ein Hardwarefehler
+    > (verschweißter Kontakt oder NO/NC-Verwechslung), nachweislich kein
+    > Firmware-Fehler, da Relaisausgang 0 dieselbe Schaltlogik nutzt und
+    > korrekt funktioniert. Falls dein R1-Kanal einwandfrei funktioniert,
+    > kannst du ihn weiterverwenden, indem du `PIN_RELAY_SOLAR` in
+    > `Config.hpp` zurücksetzt.
+    >
+    > **Ursachenklärung:** In der Folge trat derselbe Fehler auch am
+    > R5-Kanal auf, der die Solarpumpe übernahm. Die wahrscheinliche
+    > Ursache ist nicht das einzelne Relais, sondern die **Motorlast der
+    > Solarpumpe selbst**. NORVI-Relais sind für 5A ohmsche Last
+    > spezifiziert — eine Pumpe (induktive Last) erzeugt 5–10× höhere
+    > Einschaltströme und kann die Kontakte verschweißen. Siehe die
+    > **[Schütz-Schaltung für Pumpen](contactor-guide.de.md)** für eine
+    > dauerhafte Lösung mit externen Schützen.
 
    ⚡ Relais-Polarität: Im Gegensatz zu externen Relaismodulen (die typischerweise
    active-LOW sind: LOW = EIN, HIGH = AUS) sind die eingebauten NORVI-Relais
@@ -424,6 +434,8 @@ pio run -e norvi_ae01_r -t uploadfs
 
 - [NORVI IIOT-AE01-R Datenblatt](https://norvi.io/docs/norvi-iiot-ae01-r-datasheet/)
 - [NORVI IIOT-AE01-R Benutzerhandbuch](https://norvi.io/docs/norvi-iiot-ae01-r-user-guide/)
-- [KiCad-Schaltplan: NORVI AE01-R](kicad/norvi-ae01-r/norvi-ae01-r-schematic.pdf) — KiCad-9.0-Schaltplan als PDF-Export
-- [Haupt-Hardware-Guide](hardware-guide.de.md)
+- [KiCad-Schaltplan: NORVI AE01-R](kicad/norvi-ae01-r/norvi-ae01-r-schematic.pdf) — KiCad 9.0 PDF-Export des Schaltplans
+- [Haupt-Hardware-Anleitung](hardware-guide.de.md)
+- [Schütz-Schaltung für Pumpen](contactor-guide.de.md) — Externe Schütze für dauerhaft zuverlässiges Pumpenschalten
+- [SVG-Schaltplan: Schütz-Schaltung](wiring-contactor.svg)
 - [Config.hpp Pin-Quelle](https://github.com/smart-swimmingpool/pool-controller/blob/main/src/Config.hpp)

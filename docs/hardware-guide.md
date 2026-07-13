@@ -2,7 +2,7 @@
 title: Hardware Guide
 summary: Step-by-step hardware assembly guide for the ESP32 Pool Controller — parts list with alternatives, wiring diagram for DS18B20 sensors and relay module, power supply, soldering tips, and manufacturing best practices
 date: "2026-06-07"
-lastmod: "2026-06-07"
+lastmod: "2026-07-13"
 draft: false
 toc: true
 type: docs
@@ -394,6 +394,22 @@ If relay doesn't click:
 
 ---
 
+## ⚠ Important: Relay Contacts Under Motor Load (Pumps)
+
+The relays used in this project (NORVI on-board relays as well as external 5V
+modules) are specified for **resistive loads**. A **pump is an inductive motor
+load** with 5–10× higher inrush current. This can cause **welded relay
+contacts** after a few hundred switching cycles — the relay still clicks, but
+the NO contact never opens, and the pump runs continuously even with the
+controller showing OFF.
+
+**Recommendation:** For pumps >300W, always use **external DIN-rail
+contactors** between the relay and the pump. The relay then switches only
+the contactor's 24V coil (a few mA) — the contactor's main contacts handle
+the 230V load. See the dedicated guide:
+
+👉 **[Contactor Wiring Guide](contactor-guide.md)**
+
 ## Troubleshooting
 
 | Symptom                                  | Likely Cause                | Fix                                                                         |
@@ -403,6 +419,7 @@ If relay doesn't click:
 | Intermittent sensor readings             | Loose connection or noise   | Check solder joints, separate data from relay wires                         |
 | Relay doesn't activate                   | Wrong logic level           | Check active-high vs active-low; add jumper or change firmware              |
 | Relay clicks but pump doesn't run        | 230V wiring issue           | Check COM/NO terminals, verify pump connection                              |
+| **Pump runs despite OFF display**        | **Welded relay contact (motor load)** | **Use external contactor** (see [Contactor Guide](contactor-guide.md)) |
 | ESP32 won't boot (brownout)              | Insufficient power          | Use 5V/≥1A power supply; add 100µF capacitor near VIN                       |
 | ESP32 resets when relay switches         | Voltage spike on relay coil | Add flyback diode across relay coil, or use module with built-in protection |
 | Sensor readings jump when relay switches | Electrical noise            | Route sensor wires away from relay/power wires                              |
@@ -471,6 +488,8 @@ IoT device status indication. The LED is updated once per control loop cycle.
 - [NORVI AE01-R Configuration Guide](norvi-ae01-r.md) — industrial ESP32 controller pin mapping & wiring
 - [ESP32 Schematic Optimization (DE)](esp32-schematic-optimization.md)
 - [ESP32 Complete Wiring Schematic (DE)](esp32-complete-wiring-schematic.md)
+- [Contactor Wiring Guide](contactor-guide.md) — External contactors for reliable pump switching
+- [SVG Wiring Diagram: Contactor Circuit](wiring-contactor.svg)
 - [DS18B20 Datasheet](https://www.analog.com/media/en/technical-documentation/data-sheets/DS18B20.pdf)
 - [ESP32 Pin Reference](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/gpio.html)
 - [Config.hpp pin source](https://github.com/smart-swimmingpool/pool-controller/blob/main/src/Config.hpp)

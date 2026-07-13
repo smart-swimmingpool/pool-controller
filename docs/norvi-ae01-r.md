@@ -2,6 +2,7 @@
 title: NORVI AE01-R Configuration
 summary: Pool Controller pin mapping, wiring, and differences when using the industrial NORVI IIOT-AE01-R controller instead of a standard ESP32 dev board
 date: "2026-06-09"
+lastmod: "2026-07-13"
 draft: false
 toc: true
 type: docs
@@ -222,14 +223,22 @@ to the default device index.
    The NORVI relays are Normally Open (SPST) — connect your 230V AC
    loads between COM and NO. The relays are rated 5A/250V AC.
 
-   > **Note:** Solar pump moved from Relay Output 1 (GPIO12) to Relay
-   > Output 5 (GPIO33) after a field unit's R1 channel was found
-   > permanently conducting (relay audibly clicks, but COM1/NO1 never
-   > opens) — a hardware fault (welded/fused contact or NO/NC
-   > miswiring), confirmed not to be a firmware issue since Relay
-   > Output 0 uses identical control logic and switches correctly.
-   > If your R1 channel works fine, you can keep using it by reverting
-   > `PIN_RELAY_SOLAR` in `Config.hpp`.
+    > **Note:** Solar pump moved from Relay Output 1 (GPIO12) to Relay
+    > Output 5 (GPIO33) after a field unit's R1 channel was found
+    > permanently conducting (relay audibly clicks, but COM1/NO1 never
+    > opens) — a hardware fault (welded/fused contact or NO/NC
+    > miswiring), confirmed not to be a firmware issue since Relay
+    > Output 0 uses identical control logic and switches correctly.
+    > If your R1 channel works fine, you can keep using it by reverting
+    > `PIN_RELAY_SOLAR` in `Config.hpp`.
+    >
+    > **Root cause:** The same failure later occurred on the R5 channel
+    > which took over the solar pump duty. The likely cause is not the
+    > individual relay but the **motor load of the solar pump itself**.
+    > NORVI relays are rated for 5A resistive load — a pump (inductive
+    > load) generates 5–10× higher inrush current and can weld the
+    > contacts. See the **[Contactor Wiring Guide](contactor-guide.md)**
+    > for a permanent solution with external contactors.
 
    ⚡ Relay polarity: Unlike standard external relay modules (which are
    typically active-LOW: LOW = ON, HIGH = OFF), the NORVI AE01-R built-in
@@ -420,4 +429,6 @@ pio run -e norvi_ae01_r -t uploadfs
 - [NORVI IIOT-AE01-R User Guide](https://norvi.io/docs/norvi-iiot-ae01-r-user-guide/)
 - [KiCad Schematic: NORVI AE01-R](kicad/norvi-ae01-r/norvi-ae01-r-schematic.pdf) — KiCad 9.0 schematic PDF export
 - [Main Hardware Guide](hardware-guide.md)
+- [Contactor Wiring Guide](contactor-guide.md) — External contactors for reliable pump switching
+- [SVG Wiring Diagram: Contactor Circuit](wiring-contactor.svg)
 - [Config.hpp pin source](https://github.com/smart-swimmingpool/pool-controller/blob/main/src/Config.hpp)

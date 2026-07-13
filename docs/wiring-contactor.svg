@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700" font-family="monospace">
+  <style>
+    text { font-size: 11px; fill: #222; }
+    .title { font-size: 16px; font-weight: bold; }
+    .subtitle { font-size: 12px; fill: #555; }
+    .label { font-size: 10px; fill: #666; }
+    .line-24v { stroke: #e67e22; stroke-width: 2; fill: none; }
+    .line-gnd { stroke: #333; stroke-width: 2; fill: none; }
+    .line-230v { stroke: #c0392b; stroke-width: 2; fill: none; }
+    .line-n { stroke: #2980b9; stroke-width: 2; fill: none; }
+    .line-gpio { stroke: #27ae60; stroke-width: 1.5; fill: none; stroke-dasharray: 4,3; }
+    .box-norvi { fill: #eee; stroke: #333; stroke-width: 2; rx: 4; }
+    .box-relay { fill: #f9f9f9; stroke: #666; stroke-width: 1.5; rx: 3; }
+    .box-contactor { fill: #e8f5e9; stroke: #2e7d32; stroke-width: 2; rx: 4; }
+    .box-diode { fill: #fff3e0; stroke: #e65100; stroke-width: 1.5; rx: 3; }
+    .switch-closed { stroke: #c0392b; stroke-width: 2; }
+    .switch-open { stroke: #999; stroke-width: 2; }
+    .coil { fill: #fff; stroke: #333; stroke-width: 1.5; }
+  </style>
+
+  <!-- TITLE -->
+  <text x="30" y="30" class="title">Pool Controller – Schütz-Schaltung mit NORVI AE01-R</text>
+  <text x="30" y="46" class="subtitle">NORVI-Relais schalten 24V DC-Spulen der Schütze – Schütze schalten 230V AC Pumpen</text>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- 24V DC POWER SUPPLY -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  
+  <rect x="30" y="70" width="160" height="70" class="box-norvi" />
+  <text x="40" y="92">24V DC PSU</text>
+  <text x="40" y="108" class="label">1A / 24V DC</text>
+  <text x="40" y="124" class="label">(oder NORVI-eigene 24V</text>
+  <text x="40" y="138" class="label"> mitbenutzen)</text>
+
+  <line x1="190" y1="95" x2="260" y2="95" class="line-24v"/>
+  <text x="195" y="88" class="label">24V+</text>
+  <line x1="190" y1="115" x2="260" y2="115" class="line-gnd"/>
+  <text x="195" y="130" class="label">GND</text>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- NORVI AE01-R -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  
+  <rect x="270" y="60" width="180" height="200" class="box-norvi" />
+  <text x="320" y="80" font-weight="bold" font-size="13">NORVI AE01-R</text>
+  <text x="310" y="95" class="label">ESP32-WROOM32</text>
+
+  <!-- Pins -->
+  <line x1="310" y1="120" x2="340" y2="120" class="line-gpio"/>
+  <text x="280" y="124" class="label">GPIO14 (R0)</text>
+  
+  <line x1="310" y1="150" x2="340" y2="150" class="line-gpio"/>
+  <text x="280" y="154" class="label">GPIO33 (R5)</text>
+
+  <line x1="350" y1="210" x2="380" y2="210" class="line-24v"/>
+  <text x="355" y="203" class="label">24V IN</text>
+  <line x1="350" y1="230" x2="380" y2="230" class="line-gnd"/>
+  <text x="355" y="245" class="label">GND</text>
+
+  <!-- NORVI relay symbols inside -->
+  <text x="320" y="270" class="label">Interne NORVI-Relais</text>
+  <text x="320" y="283" class="label">(SPST-NO, active-HIGH)</text>
+  <text x="320" y="296" class="label">R0 = GPIO14 → Pool</text>
+  <text x="320" y="309" class="label">R5 = GPIO33 → Solar</text>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- NORVI RELAY CONTACTS R5 (Solar) -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  
+  <!-- R5 COM -->
+  <line x1="450" y1="95" x2="490" y2="95" class="line-24v"/>
+  <text x="455" y="88" class="label">24V+</text>
+
+  <rect x="490" y="80" width="50" height="30" class="box-relay" />
+  <text x="495" y="98">R5 COM</text>
+  <line x1="540" y1="95" x2="570" y2="95" class="line-24v"/>
+
+  <!-- R5 NO → to contactor coil -->
+  <rect x="570" y="80" width="50" height="30" class="box-relay" />
+  <text x="575" y="98">R5 NO</text>
+  <line x1="620" y1="95" x2="660" y2="95" class="line-24v"/>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- SCHÜTZ 1 (Solar) -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  
+  <rect x="660" y="65" width="160" height="170" class="box-contactor" />
+  <text x="690" y="85" font-weight="bold">Schütz Solar</text>
+  <text x="690" y="98" class="label">Finder 22.21.0.024.4000</text>
+  <text x="690" y="110" class="label">20A / 250V AC, 24V DC-Spule</text>
+
+  <!-- Coil A1 -->
+  <circle cx="720" cy="135" r="8" class="coil"/>
+  <circle cx="750" cy="135" r="8" class="coil"/>
+  <line x1="728" y1="135" x2="742" y2="135" class="line-24v"/>
+  <text x="690" y="140" class="label">A1 (+)</text>
+  <text x="765" y="140" class="label">A2 (-)</text>
+
+  <line x1="660" y1="95" x2="700" y2="135" class="line-24v"/>
+  <line x1="760" y1="135" x2="800" y2="210" class="line-gnd"/>
+  
+  <!-- Main contacts 1-2 -->
+  <line x1="680" y1="175" x2="700" y2="175" class="line-230v"/>
+  <text x="665" y="172" class="label">1</text>
+  
+  <!-- Switch symbol (NO) -->
+  <circle cx="710" cy="175" r="3" fill="#fff" stroke="#c0392b" stroke-width="2"/>
+  <line x1="713" y1="175" x2="735" y2="175" class="line-230v"/>
+  <circle cx="738" cy="175" r="3" fill="#fff" stroke="#c0392b" stroke-width="2"/>
+  <line x1="741" y1="175" x2="760" y2="175" class="line-230v"/>
+  
+  <text x="765" y="172" class="label">2</text>
+  <line x1="820" y1="175" x2="860" y2="175" class="line-230v"/>
+
+  <!-- Freewheeling diode -->
+  <g transform="translate(630, 140)">
+    <rect x="0" y="0" width="20" height="30" class="box-diode" />
+    <text x="3" y="12" font-size="9">D1</text>
+    <text x="3" y="23" font-size="7">1N4007</text>
+    <line x1="10" y1="0" x2="10" y2="30" stroke="#e65100" stroke-width="1"/>
+  </g>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- 230V AC SUPPLY -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <rect x="30" y="280" width="160" height="60" class="box-norvi" />
+  <text x="40" y="302">230V AC</text>
+  <text x="40" y="318" class="label">L (Phase) und N (Neutral)</text>
+
+  <line x1="190" y1="300" x2="280" y2="300" class="line-230v"/>
+  <text x="195" y="293" class="label">L</text>
+  <line x1="190" y1="330" x2="280" y2="330" class="line-n"/>
+  <text x="195" y="345" class="label">N</text>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- POOL PUMP circuit (R0 → Schütz 2) -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <rect x="660" y="300" width="160" height="170" class="box-contactor" />
+  <text x="690" y="320" font-weight="bold">Schütz Pool</text>
+  <text x="690" y="333" class="label">Finder 22.21.0.024.4000</text>
+
+  <!-- Coil A1/A2 -->
+  <circle cx="720" cy="370" r="8" class="coil"/>
+  <circle cx="750" cy="370" r="8" class="coil"/>
+  <line x1="728" y1="370" x2="742" y2="370" class="line-24v"/>
+  <text x="690" y="375" class="label">A1 (+)</text>
+  <text x="765" y="375" class="label">A2 (-)</text>
+
+  <!-- Freewheeling diode for pool -->
+  <g transform="translate(630, 375)">
+    <rect x="0" y="0" width="20" height="30" class="box-diode" />
+    <text x="3" y="12" font-size="9">D2</text>
+    <text x="3" y="23" font-size="7">1N4007</text>
+    <line x1="10" y1="0" x2="10" y2="30" stroke="#e65100" stroke-width="1"/>
+  </g>
+
+  <!-- Main contacts -->
+  <line x1="680" y1="410" x2="700" y2="410" class="line-230v"/>
+  <text x="665" y="407" class="label">1</text>
+  <circle cx="710" cy="410" r="3" fill="#fff" stroke="#c0392b" stroke-width="2"/>
+  <line x1="713" y1="410" x2="735" y2="410" class="line-230v"/>
+  <circle cx="738" cy="410" r="3" fill="#fff" stroke="#c0392b" stroke-width="2"/>
+  <line x1="741" y1="410" x2="760" y2="410" class="line-230v"/>
+  <text x="765" y="407" class="label">2</text>
+  <line x1="820" y1="410" x2="860" y2="410" class="line-230v"/>
+
+  <!-- R0 to Schütz 2 coil -->
+  <line x1="450" y1="120" x2="480" y2="120" class="line-24v"/>
+  <rect x="480" y="108" width="50" height="24" class="box-relay" />
+  <text x="485" y="124">R0 COM</text>
+  <line x1="530" y1="120" x2="560" y2="120" class="line-24v"/>
+  <rect x="560" y="108" width="50" height="24" class="box-relay" />
+  <text x="565" y="124">R0 NO</text>
+  <line x1="610" y1="120" x2="640" y2="120" class="line-24v"/>
+  <line x1="640" y1="120" x2="700" y2="370" class="line-24v"/>
+
+  <!-- 24V to R0 COM and R5 COM -->
+  <line x1="260" y1="95" x2="460" y2="95" class="line-24v"/>
+  <line x1="460" y1="95" x2="460" y2="120" class="line-24v"/>
+
+  <!-- GND to both contactor coils -->
+  <line x1="260" y1="115" x2="400" y2="115" class="line-gnd"/>
+  <line x1="400" y1="115" x2="400" y2="210" class="line-gnd"/>
+  <line x1="400" y1="210" x2="800" y2="210" class="line-gnd"/>
+  <line x1="800" y1="210" x2="800" y2="370" class="line-gnd"/>
+
+  <!-- 230V L to both contactors -->
+  <line x1="280" y1="300" x2="640" y2="300" class="line-230v"/>
+  <line x1="640" y1="300" x2="640" y2="410" class="line-230v"/>
+  <line x1="640" y1="410" x2="680" y2="410" class="line-230v"/>
+  <line x1="640" y1="175" x2="680" y2="175" class="line-230v"/>
+
+  <!-- 230V N to both pumps -->
+  <line x1="280" y1="330" x2="900" y2="330" class="line-n"/>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- SOLAR PUMP -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <rect x="870" y="145" width="100" height="50" rx="6" fill="#fce4ec" stroke="#c0392b" stroke-width="2" />
+  <text x="890" y="170" font-weight="bold">SOLAR</text>
+  <text x="890" y="183" font-weight="bold">PUMPE</text>
+  <text x="890" y="193" class="label">300–600W</text>
+
+  <line x1="860" y1="175" x2="870" y2="175" class="line-230v"/>
+  <line x1="900" y1="330" x2="900" y2="195" class="line-n"/>
+  <line x1="900" y1="195" x2="920" y2="195" class="line-n"/>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- POOL PUMP -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <rect x="870" y="380" width="100" height="50" rx="6" fill="#e3f2fd" stroke="#1565c0" stroke-width="2" />
+  <text x="890" y="405" font-weight="bold">POOL</text>
+  <text x="890" y="418" font-weight="bold">PUMPE</text>
+
+  <line x1="860" y1="410" x2="870" y2="410" class="line-230v"/>
+  <line x1="900" y1="330" x2="900" y2="430" class="line-n"/>
+  <line x1="900" y1="430" x2="920" y2="430" class="line-n"/>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- RCD/MCB notes -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <rect x="40" y="420" width="500" height="120" rx="6" fill="#fffde7" stroke="#f9a825" stroke-width="1.5" />
+  <text x="50" y="440" font-weight="bold">⚠ Wichtige Hinweise</text>
+  <text x="50" y="458" class="label">• 24V DC-Versorgung: max. 1A (beide Schütze ziehen &lt;200mA)</text>
+  <text x="50" y="472" class="label">• Freilaufdioden (1N4007) paralell zu jeder Schützspule:</text>
+  <text x="60" y="486" class="label">  Kathode (–) an A1 (+), Anode (+) an A2 (GND)</text>
+  <text x="50" y="500" class="label">• 230V-Seite: Vorsicherung 10A, RCD (FI) 30mA, separaten LS für jede Pumpe</text>
+  <text x="50" y="514" class="label">• NORVI und 24V PSU auf gemeinsamer Hutschiene im Schaltschrank</text>
+  <text x="50" y="528" class="label">• Leitungen: 1,5mm² für 230V, 0,75mm² für 24V</text>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- Parts list -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+
+  <rect x="40" y="555" width="500" height="130" rx="6" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.5" />
+  <text x="50" y="575" font-weight="bold">📋 Einkaufsliste</text>
+  <text x="50" y="595" font-weight="bold">2× Finder 22.21.0.024.4000</text>
+  <text x="200" y="595" class="label">20A Schütz, 24V DC, 1× NO</text>
+  <text x="50" y="612" font-weight="bold">2× 1N4007 Diode</text>
+  <text x="200" y="612" class="label">Freilaufdioden für Spulen</text>
+  <text x="50" y="629" font-weight="bold">1× Aderendhülsen-Set 0,75mm²/1,5mm²</text>
+  <text x="200" y="629" class="label">für saubere Klemmstellen</text>
+  <text x="50" y="646" font-weight="bold">1× 3-adrige Leitung 1,5mm² (5m)</text>
+  <text x="200" y="646" class="label">230V-Verdrahtung zu Pumpen</text>
+  <text x="50" y="663" font-weight="bold">Optional: 2× Wago 221-412</text>
+  <text x="200" y="663" class="label">für Dienstklemmstellen 24V/230V</text>
+
+  <!-- Footer -->
+  <text x="30" y="690" font-size="9" fill="#999">Pool Controller – Schütz-Schaltung v1.0 | NORVI AE01-R | Stand 2026-07-13</text>
+</svg>
