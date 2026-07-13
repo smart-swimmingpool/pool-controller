@@ -2,6 +2,7 @@
 title: NORVI AE01-R Konfiguration
 summary: Pool-Controller-Pinbelegung, Verdrahtung und Unterschiede bei Verwendung des industriellen NORVI IIOT-AE01-R anstelle eines Standard-ESP32-Dev-Boards
 date: "2026-06-09"
+lastmod: "2026-07-13"
 draft: false
 toc: true
 type: docs
@@ -211,26 +212,75 @@ kommt zum Einsatz.
 
  ─── RELAISAUSGÄNGE (eingebaut) ───────────────────────────────────────
 
-   NORVI Relaisausgang 0 (GPIO14):  Pool-Pumpe
-   NORVI Relaisausgang 5 (GPIO33):  Solar-Pumpe
+   ╔══════════════════════════════════════════════════════════════════════╗
+   ║  ⚠ WICHTIG — Grenze bei Motorlast                                  ║
+   ║                                                                     ║
+   ║  Die NORVI-Bordrelais sind für **5A ohmsche Last** ausgelegt       ║
+   ║  (Glühlampen, Heizungen, Signallasten). Eine **Pumpe ist eine       ║
+   ║  induktive Motorlast** mit 5–10× höherem Einschaltstrom, der die    ║
+   ║  Relaiskontakte nach einigen hundert Schaltspielen verschweißt.     ║
+   ║                                                                     ║
+   ║  **Standard-Konfiguration:** Die NORVI-Relais ausschließlich als    ║
+   ║  **Steuerrelais für externe Hutschienen-Schütze** verwenden. Das    ║
+   ║  Schütz schaltet die 230V-Pumpe; das NORVI-Relais schaltet nur die  ║
+   ║  24V-Spule des Schützes (~20mA). Das ist verscheißfrei für die      ║
+   ║  gesamte Lebensdauer der Anlage.                                    ║
+   ║                                                                     ║
+   ║  Siehe → **[Schütz-Schaltung für Pumpen](contactor-guide.de.md)**   ║
+   ╚══════════════════════════════════════════════════════════════════════╝
 
-   L (Außenleiter) ─── RCD ─── MCB ──┬── Relais COM0 ── Pool-Pumpe NO
-                                     └── Relais COM5 ── Solar-Pumpe NO
-   N (Neutral) ──────────────────────────── Neutralleiter ── Pumpen N
+   NORVI Relaisausgang 0 (GPIO14):  Steuersignal → Schütz Pool A1
+   NORVI Relaisausgang 5 (GPIO33):  Steuersignal → Schütz Solar A1
 
-   Die NORVI-Relais sind Schließer (SPST) — schließe deine 230V AC
-   Verbraucher zwischen COM und NO an. Die Relais sind für 5A/250V AC
-   ausgelegt.
+   ── Standard-Verdrahtung (mit Schützen) ─────────────────────────────
 
-   > **Hinweis:** Die Solar-Pumpe wurde von Relaisausgang 1 (GPIO12) auf
-   > Relaisausgang 5 (GPIO33) verlegt, nachdem bei einem Feldgerät der
-   > R1-Kanal dauerhaft leitend war (Relais klickt hörbar beim
-   > Schalten, aber COM1/NO1 öffnet nie) — ein Hardwarefehler
-   > (verschweißter Kontakt oder NO/NC-Verwechslung), nachweislich kein
-   > Firmware-Fehler, da Relaisausgang 0 dieselbe Schaltlogik nutzt und
-   > korrekt funktioniert. Falls dein R1-Kanal einwandfrei funktioniert,
-   > kannst du ihn weiterverwenden, indem du `PIN_RELAY_SOLAR` in
-   > `Config.hpp` zurücksetzt.
+   24V DC (+) ──┬── NORVI R0 COM ── NO ──┬── Ext. Schütz Pool A1 ── A2 ──┬── GND
+                 │                        │                               │
+                 ├── NORVI R5 COM ── NO ──┤── Ext. Schütz Solar A1 ── A2 ──┤
+                 │                        │                               │
+                 └───── NORVI 24V IN ─────┘                               │
+                                                                          │
+   GND ──────────────────────────────────────────────────────────────────┘
+
+   Jeweils eine 1N4007-Freilaufdiode parallel zur Schützspule
+   (Kathode an A1, Anode an A2). Die 230V-Lastseite:
+
+   L (Außenleiter) ─── RCD ─── MCB ──┬── Schütz Solar 1-2 ── Solarpumpe L
+                                      └── Schütz Pool 1-2 ─── Poolpumpe L
+   N (Neutral) ──────────────────────────── Neutralleiter ── Beide Pumpen N
+
+   ── Alternative: Direktverdrahtung (nur ohmsche Last) ────────────────
+
+   Falls du **keine Motorlast** schaltest (Heizstäbe, LED-Beleuchtung,
+   Ventile, Signallampen), können die NORVI-Relais direkt verdrahtet
+   werden. Sie sind Schließer (SPST), ausgelegt für 5A/250V AC.
+
+   L (Außenleiter) ─── RCD ─── MCB ──┬── NORVI COM0 ── NO0 ── Ohmsche Last
+                                      └── NORVI COM5 ── NO5 ── Ohmsche Last
+   N (Neutral) ──────────────────────────── Neutralleiter ── Last N
+
+   > **Schließe Pumpen oder andere induktive Motorlasten niemals direkt
+   > an die NORVI-Relais an.** Die Kontakte werden unter dem
+   > Einschaltstrom versagen (verschweißen). Verwende externe Schütze
+   > wie oben gezeigt.
+
+   ── Feldbericht ──────────────────────────────────────────────────────
+
+   In einer Feldinstallation wurde eine Solarpumpe (300–600W) zuerst an
+   Relaisausgang 1 (GPIO12, R1) betrieben. Nach einigen hundert
+   Schaltvorgängen hatte R1 einen verschweißten Kontakt — das Relais
+   klickte hörbar, aber der NO-Kontakt öffnete nie. Die Pumpe wurde
+   auf Relaisausgang 5 (GPIO33, R5) umgeklemmt, der Wochen später
+   denselben Fehler zeigte. Relaisausgang 0 (GPIO14, Poolpumpe)
+   arbeitete währenddessen fehlerfrei, weil die Poolpumpe andere
+   Motoreigenschaften hat (geringerer Einschaltstrom, Kondensator-
+   oder Sanftanlauf).
+
+   **Gemeinsamer Faktor: die Motorlast der Solarpumpe, nicht die
+   Relais-Hardware.**
+
+   Siehe die [Schütz-Schaltung für Pumpen](contactor-guide.de.md) für
+   die dauerhaft zuverlässige Lösung.
 
    ⚡ Relais-Polarität: Im Gegensatz zu externen Relaismodulen (die typischerweise
    active-LOW sind: LOW = EIN, HIGH = AUS) sind die eingebauten NORVI-Relais
@@ -424,6 +474,8 @@ pio run -e norvi_ae01_r -t uploadfs
 
 - [NORVI IIOT-AE01-R Datenblatt](https://norvi.io/docs/norvi-iiot-ae01-r-datasheet/)
 - [NORVI IIOT-AE01-R Benutzerhandbuch](https://norvi.io/docs/norvi-iiot-ae01-r-user-guide/)
-- [KiCad-Schaltplan: NORVI AE01-R](kicad/norvi-ae01-r/norvi-ae01-r-schematic.pdf) — KiCad-9.0-Schaltplan als PDF-Export
-- [Haupt-Hardware-Guide](hardware-guide.de.md)
+- [KiCad-Schaltplan: NORVI AE01-R](kicad/norvi-ae01-r/norvi-ae01-r-schematic.pdf) — KiCad 9.0 PDF-Export des Schaltplans
+- [Haupt-Hardware-Anleitung](hardware-guide.de.md)
+- [Schütz-Schaltung für Pumpen](contactor-guide.de.md) — Externe Schütze für dauerhaft zuverlässiges Pumpenschalten
+- [SVG-Schaltplan: Schütz-Schaltung](wiring-contactor.svg)
 - [Config.hpp Pin-Quelle](https://github.com/smart-swimmingpool/pool-controller/blob/main/src/Config.hpp)

@@ -2,7 +2,7 @@
 title: Hardware-Anleitung
 summary: Schritt-für-Schritt-Hardware-Anleitung für den ESP32-Pool-Controller — Teileliste mit Bezugsquellen, Schaltplan für DS18B20-Sensoren und Relaismodul, Löt- und Fertigungstipps, Stromversorgung und Inbetriebnahme
 date: "2026-06-07"
-lastmod: "2026-06-07"
+lastmod: "2026-07-13"
 draft: false
 toc: true
 type: docs
@@ -189,7 +189,7 @@ um das Relais zu aktivieren (active-high). Wenn dein Modul bei LOW schaltet
 (active-low), suche nach einem **Jumper** auf der Modulplatine, um den Modus
 zu wechseln. Active-high-Module sind einfacher in der Handhabung.
 
-**Lastseite (230V-Seite):**
+**Lastseite (230V-Seite) — Standard-Relaismodul:**
 
 ```
    L (Außenleiter) ─── FI ─── LS ──┬── Relais COM1 ── Pool-Pumpe
@@ -205,6 +205,24 @@ zu wechseln. Active-high-Module sind einfacher in der Handhabung.
 - Den anderen Pumpenanschluss an **Neutralleiter (N)**.
 - Den 230V-Stromkreis **immer** über einen FI-Schutzschalter und einen
   passend abgesicherten Leitungsschutzschalter führen.
+
+   ╔══════════════════════════════════════════════════════════════════════╗
+   ║  ⚠ WICHTIG — Grenze bei Motorlast (gleiches Problem wie NORVI)     ║
+   ║                                                                     ║
+   ║  Externe 5V-Relaismodule (z.B. SRD-05VDC-SL-C) sind für ohmsche    ║
+   ║  Last spezifiziert (typ. 10A/250V AC). Eine **Pumpe ist eine        ║
+   ║  induktive Motorlast** mit 5–10× höherem Einschaltstrom, der die    ║
+   ║  Relaiskontakte nach wiederholtem Schalten verschweißen kann —      ║
+   ║  genauso wie bei den NORVI-Bordrelais.                              ║
+   ║                                                                     ║
+   ║  Falls du Pumpen oder andere Motorlasten >300W schaltest:           ║
+   ║  → Verwende das ESP32-Relais nur zur Ansteuerung eines              ║
+   ║    **Hutschienen-Schützes** (Contacteur)                            ║
+   ║  → Das Schütz übernimmt die Motorlast; das 5V-Relais ist nur        ║
+   ║    noch die Steuerschnittstelle (kein Kontaktverschleiß)            ║
+   ║                                                                     ║
+   ║  Siehe → **[Schütz-Schaltung für Pumpen](contactor-guide.de.md)**   ║
+   ╚══════════════════════════════════════════════════════════════════════╝
 
 ### 3. Stromversorgung
 
@@ -417,6 +435,22 @@ Wenn das Relais nicht klickt:
 
 ---
 
+## ⚠ Wichtig: Relaiskontakte bei Motorlast (Pumpen)
+
+Die verwendeten Relais (NORVI-Bordrelais wie auch externe 5V-Module) sind für
+**ohmsche Lasten** spezifiziert. Eine **Pumpe ist eine induktive Motorlast**
+mit 5–10× höherem Einschaltstrom (Inrush). Dies kann nach einigen hundert
+Schaltvorgängen zu **verschweißten Relaiskontakten** führen — das Relais
+klickt dann zwar noch, aber der NO-Kontakt trennt nicht mehr, und die Pumpe
+läuft dauerhaft, obwohl der Controller AUS anzeigt.
+
+**Empfehlung:** Verwende bei Pumpen >300W grundsätzlich **externe
+Installationsschütze** zwischen Relais und Pumpe. Das Relais schaltet dann
+nur die 24V-Spule des Schützes (einige mA) — die Hauptkontakte des Schützes
+schalten die 230V-Last. Siehe die separate Anleitung:
+
+👉 **[Schütz-Schaltung für Pumpen – Anleitung](contactor-guide.de.md)**
+
 ## Fehlersuche
 
 | Symptom                            | Wahrscheinliche Ursache             | Lösung                                                              |
@@ -426,6 +460,7 @@ Wenn das Relais nicht klickt:
 | Unbeständige Messwerte             | Wackelkontakt oder Einstreuungen    | Lötstellen prüfen, Daten- und Relaisleitungen trennen               |
 | Relais schaltet nicht              | Falscher Logikpegel                 | Active-high vs. active-low prüfen; Jumper umstecken                 |
 | Relais klickt, Pumpe läuft nicht   | 230V-Verdrahtungsfehler             | COM/NO-Kontakte prüfen, Pumpenanschluss kontrollieren               |
+| Pumpe läuft trotz AUS-Anzeige      | Relaiskontakt verschweißt (Motorlast) | **Schütz zwischenschalten** (siehe [Schütz-Anleitung](contactor-guide.de.md)) |
 | ESP32 startet nicht (Brownout)     | Zu schwache Stromversorgung         | 5V/≥1A-Netzteil verwenden; 100µF-Kondensator nahe VIN               |
 | ESP32 resetet beim Relais-Schalten | Spannungsspitze an der Relais-Spule | Freilaufdiode parallel zur Spule, oder Modul mit eingebautem Schutz |
 | Messwerte springen beim Schalten   | Elektrisches Rauschen               | Sensorleitungen getrennt von Relais-/Stromkabeln führen             |
@@ -495,6 +530,8 @@ dem Standard für IoT-Statusanzeigen.
 - [NORVI AE01-R Konfigurationsanleitung](norvi-ae01-r.de.md) — Industrie-ESP32-Controller Pinbelegung & Verdrahtung
 - [ESP32 Schaltplananalyse und Optimierung](esp32-schematic-optimization.de.md)
 - [ESP32 Komplett-Schaltplan](esp32-complete-wiring-schematic.de.md)
+- [Schütz-Schaltung für Pumpen](contactor-guide.de.md) — Externe Schütze für dauerhaft zuverlässiges Pumpenschalten
+- [SVG-Schaltplan: Schütz-Schaltung](wiring-contactor.svg)
 - [DS18B20 Datenblatt](https://www.analog.com/media/en/technical-documentation/data-sheets/DS18B20.pdf)
 - [ESP32 Pin-Referenz](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/gpio.html)
 - [Config.hpp Pin-Quelle](https://github.com/smart-swimmingpool/pool-controller/blob/main/src/Config.hpp)

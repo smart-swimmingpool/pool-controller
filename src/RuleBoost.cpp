@@ -35,20 +35,25 @@ void RuleBoost::loop() {
   }
 
   if (_poolRelay->getSwitch()) {
-    if ((!_solarRelay->getSwitch()) && (poolTemp < (getPoolMaxTemperature() - getTemperatureHysteresis())) &&
-      (poolTemp < (solarTemp - getTemperatureHysteresis()))) {
-      Serial.print(cIndent);
-      Serial.println(F("§ RuleBoost: below max. Temperature. Switch solar on"));
-      _solarRelay->setSwitch(true);
-
-    } else if ((_solarRelay->getSwitch()) && (poolTemp > (getPoolMaxTemperature() + getTemperatureHysteresis())) &&
-      (poolTemp > (solarTemp + getTemperatureHysteresis()))) {
-      Serial.print(cIndent);
-      Serial.println(F("§ RuleBoost: Max. Temperature reached. Switch solar off"));
-      _solarRelay->setSwitch(false);
-
+    if (_solarRelay->getSwitch()) {
+      // solar is ON — check if it should turn OFF
+      if (poolTemp > getPoolMaxTemperature()) {
+        Serial.print(cIndent);
+        Serial.println(F("§ RuleBoost: Maximum pool temp reached. Switch solar off"));
+        _solarRelay->setSwitch(false);
+      } else if (poolTemp > (solarTemp + getTemperatureHysteresis())) {
+        Serial.print(cIndent);
+        Serial.println(F("§ RuleBoost: Pool temp reaches solar temp. Switch solar off"));
+        _solarRelay->setSwitch(false);
+      }
     } else {
-      // no change of status
+      // solar is OFF — check if it should turn ON
+      if ((poolTemp < (getPoolMaxTemperature() - getTemperatureHysteresis())) &&
+        (poolTemp < (solarTemp - getTemperatureHysteresis()))) {
+        Serial.print(cIndent);
+        Serial.println(F("§ RuleBoost: below max. Temperature. Switch solar on"));
+        _solarRelay->setSwitch(true);
+      }
     }
   } else {
     Serial.print(cIndent);

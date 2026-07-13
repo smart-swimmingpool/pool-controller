@@ -26,15 +26,33 @@ RelayModuleNode::RelayModuleNode(const char *id, const char *name, const uint8_t
 void RelayModuleNode::begin() {
   Serial.printf("• RelayModule Node '%s' initializing on PIN %d...\n", _id, _pin);
 
+  // ── Safe-start sequence ───────────────────────────────────────────────
+  //
+  // 1. Pre-set GPIO output register to OFF level BEFORE pinMode(OUTPUT).
+  //    On ESP32, digitalWrite() writes to the GPIO_OUT register via W1TS/W1TC
+  //    even while the pin is still in INPUT mode — the safe level is ready
+  //    the moment pinMode() switches the pin to OUTPUT.
+  //
+  //    This prevents:
+  //    • A stale NVS state ("switch"=true) from a previous relay pin
+  //      (e.g. R1→R5 migration) from immediately energizing the new relay.
+  //    • Any glitch from the GPIO_OUT register's power-on reset value
+  //      (which is undefined / bootloader-dependent).
+  //    • A window between pinMode() and the first digitalWrite() where the
+  //      output could float or hold an old register value.
+  //
+  //    Polarity-independent OFF:
+  //      active-LOW  → OFF = HIGH
+  //      active-HIGH → OFF = LOW
+  digitalWrite(_pin, _activeLow ? HIGH : LOW);
   pinMode(_pin, OUTPUT);
 
-  // Load and restore relay state from persistent storage (NVS)
+  // 2. Load persisted state from NVS
   preferences.begin(_id, false);
   _currentState = preferences.getBool("switch", false);
   preferences.end();
 
-  // Apply polarity: active-LOW  → ON = LOW,  OFF = HIGH
-  //                active-HIGH → ON = HIGH, OFF = LOW
+  // 3. Apply polarity and transition to persisted state (OFF→ON if needed)
   digitalWrite(_pin, _currentState == _activeLow ? LOW : HIGH);
 
   Serial.printf("  ◦ Relay restored to state: %s\n", _currentState ? "ON" : "OFF");

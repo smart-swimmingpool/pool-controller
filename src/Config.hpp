@@ -89,6 +89,17 @@ constexpr std::uint8_t PIN_RELAY_POOL{14};
  * (welded/fused contact or NO/NC miswiring), not a firmware issue: R0 uses
  * the identical RelayModuleNode logic and switches correctly. R5/GPIO33 is
  * otherwise unused on NORVI builds.
+ *
+ * @note When changing the relay output for the solar pump (e.g. from R1 to R5),
+ *       the NVS state ("solar-pump"/"switch") from the previous relay pin
+ *       carries over and may cause the new relay to energize at boot. The
+ *       RelayModuleNode::begin() safe-start sequence mitigates this by forcing
+ *       the GPIO to OFF before enabling output, then transitioning to the
+ *       persisted state. If the pump runs despite the controller showing OFF
+ *       after a pin change, clear NVS manually:
+ *         pio run -e norvi_ae01_r -t exec -- prefs erase solar-pump
+ *       Or add a one-time NVS clear by calling preferences.clear() on the
+ *       "solar-pump" namespace during the migration boot.
  */
 constexpr std::uint8_t PIN_RELAY_SOLAR{33};
 static_assert(PIN_RELAY_SOLAR != 12,

@@ -2,6 +2,7 @@
 title: NORVI AE01-R Configuration
 summary: Pool Controller pin mapping, wiring, and differences when using the industrial NORVI IIOT-AE01-R controller instead of a standard ESP32 dev board
 date: "2026-06-09"
+lastmod: "2026-07-13"
 draft: false
 toc: true
 type: docs
@@ -212,24 +213,72 @@ to the default device index.
 
  ─── RELAY OUTPUTS (built-in) ─────────────────────────────────────────
 
-   NORVI Relay Output 0 (GPIO14):   Pool pump
-   NORVI Relay Output 5 (GPIO33):   Solar pump
+   ╔══════════════════════════════════════════════════════════════════════╗
+   ║  ⚠ IMPORTANT — Motor Load Limitation                               ║
+   ║                                                                     ║
+   ║  The NORVI built-in relays are rated for **5A resistive load**      ║
+   ║  (light bulbs, heaters, signal loads). A **pump is an inductive     ║
+   ║  motor load** with 5–10× higher inrush current that can weld the    ║
+   ║  relay contacts after a few hundred switching cycles.               ║
+   ║                                                                     ║
+   ║  **Standard configuration:** Use the NORVI relays exclusively as    ║
+   ║  **control relays for external DIN-rail contactors.** The contactor ║
+   ║  switches the 230V pump load; the NORVI relay switches only the     ║
+   ║  contactor's 24V DC coil (~20mA). This is zero-wear on the NORVI    ║
+   ║  relays and fully reliable for the life of the installation.        ║
+   ║                                                                     ║
+   ║  See → **[Contactor Wiring Guide](contactor-guide.md)**             ║
+   ╚══════════════════════════════════════════════════════════════════════╝
 
-   L (mains) ─── RCD ─── MCB ──┬── Relay COM0 ── Pool Pump NO
-                                └── Relay COM5 ── Solar Pump NO
-   N (neutral) ───────────────────────── Neutral bar ── Pump N
+   NORVI Relay Output 0 (GPIO14):   Control signal → Pool contactor coil
+   NORVI Relay Output 5 (GPIO33):   Control signal → Solar contactor coil
 
-   The NORVI relays are Normally Open (SPST) — connect your 230V AC
-   loads between COM and NO. The relays are rated 5A/250V AC.
+   ── Standard wiring (contactors) ─────────────────────────────────────
 
-   > **Note:** Solar pump moved from Relay Output 1 (GPIO12) to Relay
-   > Output 5 (GPIO33) after a field unit's R1 channel was found
-   > permanently conducting (relay audibly clicks, but COM1/NO1 never
-   > opens) — a hardware fault (welded/fused contact or NO/NC
-   > miswiring), confirmed not to be a firmware issue since Relay
-   > Output 0 uses identical control logic and switches correctly.
-   > If your R1 channel works fine, you can keep using it by reverting
-   > `PIN_RELAY_SOLAR` in `Config.hpp`.
+   24V DC (+) ──┬── NORVI R0 COM ── NO ──┬── Ext. Contactor Pool A1 ── A2 ──┬── GND
+                 │                        │                                  │
+                 ├── NORVI R5 COM ── NO ──┤── Ext. Contactor Solar A1 ── A2 ──┤
+                 │                        │                                  │
+                 └───── NORVI 24V IN ─────┘                                  │
+                                                                             │
+   GND ─────────────────────────────────────────────────────────────────────┘
+
+   Each contactor requires a 1N4007 flyback diode across its coil
+   (cathode to A1, anode to A2). The 230V load side:
+
+   L (mains) ─── RCD ─── MCB ──┬── Contactor Solar 1-2 ── Solar Pump L
+                                └── Contactor Pool 1-2 ─── Pool Pump L
+   N (neutral) ───────────────────────── Neutral bar ── Both Pumps N
+
+   ── Alternative: direct wiring (resistive loads only) ─────────────────
+
+   If you are switching **non-motor loads** (heating elements, LED
+   lighting, valves, signal lamps), the NORVI relays can be wired
+   directly. They are Normally Open (SPST), rated 5A/250V AC.
+
+   L (mains) ─── RCD ─── MCB ──┬── NORVI COM0 ── NO0 ── Resistive Load
+                                └── NORVI COM5 ── NO5 ── Resistive Load
+   N (neutral) ───────────────────────── Neutral bar ── Load N
+
+   > **Do not wire pumps or any inductive motor load directly to the
+   > NORVI relays.** The contacts will fail (weld closed) under the
+   > inrush current. Use external contactors as shown above.
+
+   ── Field report ─────────────────────────────────────────────────────
+
+   In one field installation, a solar pump (300–600W) was first connected
+   to Relay Output 1 (GPIO12, R1). After a few hundred switching cycles,
+   R1 developed a welded contact — the relay clicked audibly but the NO
+   contact never opened. The pump was then rewired to Relay Output 5
+   (GPIO33, R5), which had the same failure weeks later. Relay Output 0
+   (GPIO14, pool pump) continued working throughout because the pool
+   pump has a different motor characteristic (lower inrush, capacitor
+   start, or soft-start).
+
+   **Common factor: the solar pump motor load, not the relay hardware.**
+
+   See the [Contactor Wiring Guide](contactor-guide.md) for the
+   permanently reliable solution.
 
    ⚡ Relay polarity: Unlike standard external relay modules (which are
    typically active-LOW: LOW = ON, HIGH = OFF), the NORVI AE01-R built-in
@@ -420,4 +469,6 @@ pio run -e norvi_ae01_r -t uploadfs
 - [NORVI IIOT-AE01-R User Guide](https://norvi.io/docs/norvi-iiot-ae01-r-user-guide/)
 - [KiCad Schematic: NORVI AE01-R](kicad/norvi-ae01-r/norvi-ae01-r-schematic.pdf) — KiCad 9.0 schematic PDF export
 - [Main Hardware Guide](hardware-guide.md)
+- [Contactor Wiring Guide](contactor-guide.md) — External contactors for reliable pump switching
+- [SVG Wiring Diagram: Contactor Circuit](wiring-contactor.svg)
 - [Config.hpp pin source](https://github.com/smart-swimmingpool/pool-controller/blob/main/src/Config.hpp)
