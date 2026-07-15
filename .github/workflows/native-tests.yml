@@ -73,6 +73,18 @@ jobs:
           ASAN_OPTIONS: "detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1:detect_invalid_pointer_pairs=2"
         run: ./build/test_runner
 
+      - name: Configure CMake (relay safety regression tests)
+        working-directory: test/native/relay_safety
+        run: cmake -B build -S .
+
+      - name: Build relay safety regression tests
+        working-directory: test/native/relay_safety
+        run: cmake --build build
+
+      - name: Run relay safety regression tests
+        working-directory: test/native/relay_safety
+        run: ASAN_OPTIONS="detect_stack_use_after_return=1" ./build/test_relay_safety
+
       - name: Generate lcov coverage report
         if: always()
         run: |

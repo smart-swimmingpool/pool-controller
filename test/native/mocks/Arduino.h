@@ -50,6 +50,11 @@ public:
   }
   size_t length() const { return data_.length(); }
   bool isEmpty() const { return data_.empty(); }
+  void reserve(size_t n) { data_.reserve(n); }
+  String &operator+=(const String &rhs) {
+    data_ += rhs.data_;
+    return *this;
+  }
   int toInt() const { return atoi(data_.c_str()); }
   float toFloat() const { return static_cast<float>(atof(data_.c_str())); }
   String substring(int start, int end = -1) const {
@@ -488,9 +493,25 @@ extern "C" size_t strlcat(char *dst, const char *src, size_t siz);
 #define INPUT_PULLDOWN 0x3
 
 inline void pinMode(uint8_t, uint8_t) {}
-inline void digitalWrite(uint8_t, uint8_t) {}
-inline int digitalRead(uint8_t) {
-  return 0;
+
+// ---- digitalWrite/digitalRead capture ----
+// Records the last value written to each pin so tests can assert on actual
+// GPIO polarity behavior (e.g. relay active-HIGH vs active-LOW regression
+// tests) instead of only observing the no-op default.
+inline std::map<uint8_t, uint8_t> &_digitalPinState() {
+  static std::map<uint8_t, uint8_t> state;
+  return state;
+}
+inline void digitalWrite(uint8_t pin, uint8_t value) {
+  _digitalPinState()[pin] = value;
+}
+inline int digitalRead(uint8_t pin) {
+  auto &state = _digitalPinState();
+  auto it = state.find(pin);
+  return it != state.end() ? it->second : 0;
+}
+inline void _resetDigitalPinState() {
+  _digitalPinState().clear();
 }
 inline int analogRead(uint8_t) {
   return 0;

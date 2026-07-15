@@ -124,6 +124,7 @@ build/
 
 # Native test build artifacts
 test/native/build/
+test/native/relay_safety/build/
 
 # Coverage data files (gcov)
 *.gcda

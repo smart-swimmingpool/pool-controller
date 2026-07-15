@@ -1,6 +1,6 @@
 ---
 title: Home Assistant Integration
-summary: Pool Controller Home Assistant Integration \u2014 automatische MQTT Discovery Entit\u00e4ten, Sensor/Switch/Number/Select/Time-Dom\u00e4nen, Lovelace Dashboard YAML, Migration von alten Konfigurationen
+summary: Pool Controller Home Assistant Integration — automatische MQTT Discovery Entitäten, Sensor/Switch/Number/Select/Time-Domänen, Lovelace Dashboard YAML, Migration von alten Konfigurationen
 date: "2026-06-06"
 lastmod: "2026-06-06"
 draft: false
@@ -13,54 +13,59 @@ menu:
     weight: 50
 ---
 
-Der Pool Controller integriert sich nahtlos in [Home Assistant](https://home-assistant.io) \u00fcber **MQTT
-Discovery** (Standard-Protokoll). Alle Entit\u00e4ten werden automatisch registriert, sobald der Controller mit
+Der Pool Controller integriert sich nahtlos in [Home Assistant](https://home-assistant.io) über **MQTT
+Discovery** (Standard-Protokoll). Alle Entitäten werden automatisch registriert, sobald der Controller mit
 dem MQTT-Broker verbunden ist.
 
 ## MQTT Discovery
 
 Der Controller publiziert [HA MQTT Discovery](https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery)-Payloads
-beim Start und bei jeder MQTT-Wiederherstellung. Keine manuelle MQTT-Konfiguration n\u00f6tig \u2014 die Ger\u00e4te
+beim Start und bei jeder MQTT-Wiederherstellung. Keine manuelle MQTT-Konfiguration nötig — die Geräte
 erscheinen automatisch in Home Assistant.
 
-### Verf\u00fcgbare Entit\u00e4ten
+### Verfügbare Entitäten
 
-| Domain          | Object ID                | Kategorie  | Beschreibung                           |
-| --------------- | ------------------------ | ---------- | -------------------------------------- |
-| `sensor`        | `pool_temperature`       | \u2014     | Wassertemperatur Pool                  |
-| `sensor`        | `solar_temperature`      | \u2014     | Temperatur Solarkollektor              |
-| `sensor`        | `controller_temperature` | diagnostic | ESP32-Chip-Temperatur                  |
-| `sensor`        | `free_heap_space`        | diagnostic | Freier Heap-Speicher                   |
-| `sensor`        | `max_alloc_block`        | diagnostic | Gr\u00f6\u00dfter allozierbarer Block  |
-| `sensor`        | `wifi_signal_strength`   | diagnostic | WiFi-Signalst\u00e4rke (dBm)           |
-| `sensor`        | `system_uptime`          | diagnostic | Betriebszeit (Dauer)                   |
-| `sensor`        | `effective_runtime`      | diagnostic | Effektive Filterlaufzeit (Dauer)       |
-| `sensor`        | `local_time`             | diagnostic | Aktuelle Ortszeit                      |
-| `binary_sensor` | `pool_sensor_found`      | diagnostic | Status Pool-Sensor (gefunden/fehlt)    |
-| `binary_sensor` | `solar_sensor_found`     | diagnostic | Status Solar-Sensor (gefunden/fehlt)   |
-| `binary_sensor` | `mqtt_status`            | diagnostic | MQTT-Verbindungsstatus                 |
-| `select`        | `mode`                   | \u2014     | Betriebsart (auto/manu/boost/timer)    |
-| `select`        | `pool_sensor`            | config     | Pool-Sensor-Adresszuordnung            |
-| `select`        | `solar_sensor`           | config     | Solar-Sensor-Adresszuordnung           |
-| `select`        | `timezone`               | config     | Zeitzonenauswahl                       |
-| `switch`        | `pool_pump`              | \u2014     | Pool-Umw\u00e4lzpumpe                  |
-| `switch`        | `solar_pump`             | \u2014     | Solar-Heizungspumpe                    |
-| `number`        | `pool_max_temp`          | config     | Zieltemperatur Pool max.               |
-| `number`        | `solar_min_temp`         | config     | Minimale Solar-Aktivierungstemperatur  |
-| `number`        | `hysteresis`             | config     | Temperaturhysterese                    |
-| `number`        | `temp_circ_threshold`    | config     | Schwellwert temp. Filterlaufzeit       |
-| `number`        | `temp_circ_factor`       | config     | Faktor temp. Filterlaufzeit            |
-| `number`        | `temp_circ_max_runtime`  | config     | Maximale Laufzeit temp. Filterlaufzeit |
-| `time`          | `timer_start`            | config     | Timer Startzeit (HH:MM)                |
-| `time`          | `timer_end`              | config     | Timer Endzeit (HH:MM)                  |
-| `text`          | `ntp_server`             | config     | NTP-Server-Adresse                     |
-| `update`        | `firmware`               | config     | Firmware-Update-Entit\u00e4t           |
-| `climate`       | `pool_climate`           | \u2014     | Pool-Thermostat mit Preset-Modi        |
+Die Entity-IDs werden aus dem `name`-Feld der Discovery-Payloads abgeleitet (z.B. Name `"Pool Temperature"`
+ergibt `sensor.<prefix>_pool_temperature`). Ersetze `<prefix>` durch deinen Geräte-Prefix
+(siehe Warnung unten).
 
-> **Entity-IDs** in HA werden aus der MQTT unique_id generiert und enthalten einen ger\u00e4tespezifischen
-> MAC-Suffix (z.B. `sensor.pool_controller_a1b2c3_pool_temperature`). Pr\u00fcfe **Entwickler-Tools \u2192 Entit\u00e4ten** und
-> filtere nach "pool" um deine IDs zu finden. Ersetze `pool_controller` im Dashboard-YAML durch deinen
-> tats\u00e4chlichen Prefix.
+| Domain | Object ID | Kategorie | Beschreibung |
+|--------|-----------|-----------|-------------|
+| `sensor` | `pool_temperature` | — | Wassertemperatur Pool |
+| `sensor` | `solar_temperature` | — | Temperatur Solarkollektor |
+| `sensor` | `controller_temperature` | diagnostic | ESP32-Chip-Temperatur |
+| `sensor` | `free_heap_space` | diagnostic | Freier Heap-Speicher |
+| `sensor` | `max_alloc_block` | diagnostic | Größter allozierbarer Block |
+| `sensor` | `wifi_signal_strength` | diagnostic | WiFi-Signalstärke (dBm) |
+| `sensor` | `system_uptime` | diagnostic | Betriebszeit (Dauer) |
+| `sensor` | `effective_runtime` | diagnostic | Effektive Filterlaufzeit (Dauer) |
+| `sensor` | `local_time` | diagnostic | Aktuelle Ortszeit |
+| `binary_sensor` | `pool_sensor_found` | diagnostic | Status Pool-Sensor (gefunden/fehlt) |
+| `binary_sensor` | `solar_sensor_found` | diagnostic | Status Solar-Sensor (gefunden/fehlt) |
+| `binary_sensor` | `mqtt_connected` | diagnostic | MQTT-Verbindungsstatus |
+| `select` | `operation_mode` | — | Betriebsart (auto/manu/boost/timer) |
+| `select` | `pool_sensor` | config | Pool-Sensor-Adresszuordnung |
+| `select` | `solar_sensor` | config | Solar-Sensor-Adresszuordnung |
+| `select` | `timezone` | config | Zeitzonenauswahl |
+| `switch` | `pool_pump` | — | Pool-Umwälzpumpe |
+| `switch` | `solar_pump` | — | Solar-Heizungspumpe |
+| `number` | `maximum_pool_temperature` | config | Zieltemperatur Pool max. |
+| `number` | `minimum_solar_temperature` | config | Minimale Solar-Aktivierungstemperatur |
+| `number` | `temperature_hysteresis` | config | Temperaturhysterese |
+| `number` | `circulation_temperature_threshold` | config | Schwellwert temp. Filterlaufzeit |
+| `number` | `circulation_temperature_factor` | config | Faktor temp. Filterlaufzeit |
+| `number` | `circulation_maximum_runtime` | config | Maximale Laufzeit temp. Filterlaufzeit |
+| `time` | `timer_start` | config | Timer Startzeit (HH:MM) |
+| `time` | `timer_end` | config | Timer Endzeit (HH:MM) |
+| `text` | `ntp_server` | config | NTP-Server-Adresse |
+| `update` | `firmware` | config | Firmware-Update-Entität |
+| `climate` | `pool_thermostat` | config | Pool-Thermostat (HVAC-Modus + Zieltemp.) |
+
+> **Entity-IDs** in HA werden aus dem `name`-Feld der MQTT Discovery generiert. Die entity_id ist
+> `sensor.<device_prefix>_pool_temperature` usw. — wobei `<device_prefix>` in der Regel
+> `pool_controller` ist (vom Gerätenamen). Prüfe **Entwickler-Tools → Entitäten** und filtere nach
+> "pool" um deine IDs zu finden. Ersetze `pool_controller` im Dashboard-YAML durch deinen
+> Geräte-Prefix falls er abweicht.
 
 ## Lovelace Dashboard
 
@@ -71,11 +76,37 @@ Eine vorgefertigte Lovelace-Dashboard-Konfiguration liegt in
 
 Zwei zielgruppenspezifische Ansichten:
 
-- **\ud83c\udfca Pool-Ansicht** \u2014 f\u00fcr den Bademeister (t\u00e4gliche Bedienung): Temperaturanzeigen, Modus-Umschaltung (mit Hervorhebung), Timer, Pumpensteuerung, Klima-Thermostat, temperatureabh\u00e4ngige Filterlaufzeit, 24h-Verlauf mit Controller-Temperatur
-- **\u2699 System-Ansicht** \u2014 f\u00fcr den IoT-Entwickler (Diagnose & Konfiguration): Zeitzone & NTP, Sensor-Zuordnung (DS18B20-Adressauswahl), Systemdiagnose (Heap, WiFi, Betriebszeit, Controller-Temperatur, effektive Laufzeit), Firmware-Updates
+- **🏊 Pool-Ansicht** — für den Bademeister (tägliche Bedienung): Temperaturanzeigen, Modus-Umschaltung (mit Hervorhebung), Timer, Pumpensteuerung, Klima-Thermostat, temperatureabhängige Filterlaufzeit, 24h-Verlauf mit Controller-Temperatur
+- **⚙ System-Ansicht** — für den IoT-Entwickler (Diagnose & Konfiguration): Zeitzone & NTP, Sensor-Zuordnung (DS18B20-Adressauswahl), Systemdiagnose (Heap, WiFi, Betriebszeit, Controller-Temperatur, effektive Laufzeit), Firmware-Updates
 
 ### Einrichtung
 
 1. Kopiere die YAML-Datei in dein HA-Konfigurationsverzeichnis
-2. HA \u00f6ffnen \u2192 **Dashboard \u2192 Bearbeiten \u2192 Drei-Punkte \u2192 Raw-Konfigurationseditor**
-3. Inhalt einf\u00fcgen
+2. HA öffnen → **Dashboard → Bearbeiten → Drei-Punkte → Raw-Konfigurationseditor**
+3. Inhalt einfügen
+4. Entity-IDs an deine Installation anpassen (siehe Warnung)
+5. Speichern
+
+### Abhängigkeiten
+
+Die Modus-Buttons nutzen [`button-card`](https://github.com/custom-cards/button-card) (Custom Card) zur
+visuellen Hervorhebung des aktiven Modus:
+
+```text
+HACS → Frontend → button-card → Installieren
+```
+
+Ohne `button-card` `custom:button-card` durch `type: button` ersetzen (dann keine Hervorhebung).
+
+### Warnung zu Entity-IDs
+
+Die Entity-IDs hängen von der MQTT Discovery-Konfiguration ab — das YAML verwendet `pool_controller` als
+Geräte-Prefix. Falls deine IDs einen abweichenden Prefix haben, ersetze alle Vorkommen im YAML. Prüfe
+deine tatsächlichen Entity-IDs in **Entwickler-Tools → Entitäten** (filtere nach "pool").
+
+## Migration von früheren Versionen
+
+Bei einem Update von einer älteren Firmware können alte Discovery-Konfigurationen im MQTT-Broker verbleiben.
+Der Controller publiziert automatisch leere retained Configs für obsolete Entitäten
+(`number/timer-start-h/min`, `number/timer-end-h/min`, `number/timezone`). Nach dem ersten MQTT-Reconnect
+entfernt Home Assistant die verwaisten Entitäten automatisch.

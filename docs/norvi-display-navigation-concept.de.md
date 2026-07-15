@@ -365,7 +365,7 @@ Folgende Texte können diese Länge überschreiten und **müssen horizontal scro
 |-------|------|---------------|---------|
 | NETWORK | WiFi SSID | 32 Zeichen | Wird auf 9 Zeichen gekürzt — unbrauchbar |
 | WIFI_SETUP | AP-Name (SoftAP SSID) | 32 Zeichen | Wird auf 14 Zeichen gekürzt |
-| QRCODE | URL (http://192.168.xxx.xxx/) | ~23 Zeichen | Wird auf 20 Zeichen gekürzt |
+| QRCODE | URL (<http://192.168.xxx.xxx/>) | ~23 Zeichen | Wird auf 20 Zeichen gekürzt |
 | QRCODE (WiFi) | IP-Adresse in Text Size 2 | ~14 Zeichen | Überläuft die 128px (12px/Zeichen) |
 
 **Scroll-Verhalten:**
@@ -466,6 +466,7 @@ static void drawScrollingText(int16_t x, int16_t y,
 ```
 
 **Betroffene Aufrufe:**
+
 | Seite | Alt | Neu |
 |-------|-----|-----|
 | NETWORK, SSID | `ssid.substring(0,9)` | `drawScrollingText(36, 13, WiFi.SSID().c_str(), 92)` |
