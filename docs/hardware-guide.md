@@ -227,7 +227,7 @@ a different module — active-high modules are easier to work with.
 
 {{< figure
   library="true"
-  src="../pool-controller_breadboard.png"
+  src="pool-controller_breadboard.png"
   title="Breadboard prototype with ESP32, DS18B20 sensors, 4.7kΩ pull-up resistors, and 2-channel relay module"
   lightbox="true" >}}
 
@@ -465,7 +465,7 @@ IoT device status indication. The LED is updated once per control loop cycle.
 
 ## References
 
-- Fritzing source file: [pool-controller.fzz](https://github.com/smart-swimmingpool/pool-controller/raw/main/docs/pool-controller.fzz)
+- Fritzing source file: [pool-controller.fzz](pool-controller.fzz)
 - [KiCad Schematic: ESP32 Dev Board](kicad/esp32-dev-board/esp32-dev-board-schematic.pdf) — KiCad 9.0 PDF export
 - [KiCad Schematic: NORVI AE01-R](kicad/norvi-ae01-r/norvi-ae01-r-schematic.pdf) — KiCad 9.0 PDF export
 - [NORVI AE01-R Configuration Guide](norvi-ae01-r.md) — industrial ESP32 controller pin mapping & wiring
