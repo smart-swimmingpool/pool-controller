@@ -375,8 +375,17 @@ input:focus, select:focus {
 
 /* Auth-gated: disabled state */
 .pump-switch-card.disabled {
-  opacity: 0.5;
+  opacity: 0.3;
   cursor: default;
+  filter: grayscale(0.6);
+}
+.pump-switch-card.disabled .pump-switch-track {
+  background: rgba(255, 255, 255, 0.06) !important;
+  box-shadow: none !important;
+}
+.pump-switch-card.disabled .pump-switch-thumb {
+  background: rgba(255, 255, 255, 0.3) !important;
+  box-shadow: none !important;
 }
 .pump-switch-card.disabled:hover {
   background: var(--glass-bg);
