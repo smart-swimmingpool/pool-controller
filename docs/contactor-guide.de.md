@@ -12,6 +12,17 @@ menu:
     weight: 65
 ---
 
+> **⚠️ Hinweis:** ECM-Pumpen (elektronisch kommutierte Motoren <100W)
+> haben große Eingangskondensatoren, die beim Schließen des Relais
+> kurzzeitig einen hohen Ladestrom (10–20A für Mikrosekunden) ziehen.
+> Über viele Schaltzyklen kann dieser kapazitive Einschaltstrom
+> Relaiskontakte mikro-verschweißen. Ein **RC-Snubber** (100nF + 100Ω)
+> parallel zum Relaiskontakt unterdrückt diesen Effekt und ist für
+> Lasten <100W ausreichend — kein Schütz nötig.
+>
+> Die Schütz-Lösung ist für größere Pumpen (>300W) oder induktive
+> Lasten >2A Dauerstrom vorgesehen.
+
 ## Übersicht
 
 Dieses Dokument erklärt, warum die eingebauten Relais des NORVI AE01-R (und
@@ -49,14 +60,14 @@ trennt nicht mehr — die Pumpe läuft **dauerhaft**, auch wenn der Controller
 
 ### Feldbericht
 
-In einer realen Installation trat dieser Fehler nacheinander an zwei
-verschiedenen Relaisausgängen (zuerst R1, dann R5) desselben NORVI-Moduls auf,
-nachdem diese jeweils die Solarpumpe (300–600W) schalteten. Der
-gemeinsame Faktor war **nicht** das Relais oder der Treiber, sondern die
-**Pumpe selbst** als Last. Das baugleiche R0 (Poolpumpe) zeigte keine
-Ausfälle — likely weil die Poolpumpe anders aufgebaut ist
-(Kondensatormotor mit Sanftanlauf, seltener geschaltet, oder geringere
-Leistung).
+In einer Feldinstallation trat dieser Fehler an zwei verschiedenen
+Relaisausgängen (R1, dann R5) desselben NORVI AE01-R auf, beide mit
+derselben Solarpumpe. Die Pumpe entpuppte sich als **6–28W ECM-Typ**
+(Lowara Artiga ECO AUTO+) — weit innerhalb der Relais-Spezifikation, trotzdem
+verschweißten die Kontakte. Ursache ist der kapazitive Einschaltstrom der
+Eingangskondensatoren (~10–20A Spitze für Mikrosekunden pro Schaltvorgang).
+Das baugleiche R0 (Poolpumpe, Speck BADU Magic II/6 450W Asynchronmotor)
+zeigte keinen Ausfall.
 
 ---
 
@@ -136,10 +147,10 @@ Wenn du maximale Platzersparnis brauchst:
 ```
 24V DC (+) ──┬── NORVI R0 COM ── NO ──┬── Schütz Pool A1 ── A2 ──┬── GND
              │                        │                          │
-             ├── NORVI R5 COM ── NO ──┤── Schütz Solar A1 ── A2 ──┤
+             ├── NORVI R4 COM ── NO ──┤── Schütz Solar A1 ── A2 ──┤
              │                        │                          │
              └───── NORVI 24V IN ─────┘                          │
-                                                         │
+                                                          │
 GND ─────────────────────────────────────────────────────┘
 ```
 
@@ -198,9 +209,9 @@ Amazon.
 **Schritt 1: 24V-Steuerkreis**
 
 1. **24V DC (+) an NORVI-Relais COM** — Brücken von NORVI-24V-Klemme zu
-   COM-R0 und COM-R5
+   COM-R0 und COM-R4
 2. **NORVI-Relais NO an Schütz-A1** — jeweils R0-NO → Schütz Pool A1,
-   R5-NO → Schütz Solar A1
+   R4-NO → Schütz Solar A1
 3. **Schütz-A2 an GND** — beide A2 auf GND-Sammelschiene
 4. **Freilaufdiode** — 1N4007 parallel zu A1/A2 jedes Schützes
    (Kathode an A1, Anode an A2)

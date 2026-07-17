@@ -58,7 +58,7 @@ pin mapping that avoids the occupied and input-only pins:
 | `PIN_DS_SOLAR`    |    **GPIO25**     | DS18B20 — Solar collector temperature        |       Expansion Port Pin 1       |
 | `PIN_DS_POOL`     |    **GPIO25**     | DS18B20 — Pool water temperature             | Shared bus on GPIO25 (expansion) |
 | `PIN_RELAY_POOL`  |  **GPIO14** (R0)  | Relay — Pool circulation pump                |          Relay Output 0          |
-| `PIN_RELAY_SOLAR` |  **GPIO33** (R5)  | Relay — Solar heating pump                   |          Relay Output 5          |
+| `PIN_RELAY_SOLAR` |  **GPIO2** (R4)   | Relay — Solar heating pump (moved: R1→R5→R4) |          Relay Output 4          |
 | `PIN_LED_STATUS`  | **GPIO27** (T0.1) | Status LED (external, via transistor output) |      Transistor Output 0.1       |
 | `PIN_OLED_SDA`    |    **GPIO16**     | I2C SDA — built-in 0.96" OLED (SSD1306)      |          Internal (I2C)          |
 | `PIN_OLED_SCL`    |    **GPIO17**     | I2C SCL — built-in 0.96" OLED (SSD1306)      |          Internal (I2C)          |
@@ -211,33 +211,38 @@ to the default device index.
    One 4.7kΩ resistor between DATA (Pin 1) and 3.3V (Pin 7) is enough.
    Dupont cables: 3× Female-Female (red/yellow/black).
 
- ─── RELAY OUTPUTS (built-in) ─────────────────────────────────────────
+   ─── RELAY OUTPUTS (built-in) ─────────────────────────────────────────
 
    ╔══════════════════════════════════════════════════════════════════════╗
-   ║  ⚠ IMPORTANT — Motor Load Limitation                               ║
+   ║  ⚠ IMPORTANT — Motor Load Consideration                            ║
    ║                                                                     ║
-   ║  The NORVI built-in relays are rated for **5A resistive load**      ║
-   ║  (light bulbs, heaters, signal loads). A **pump is an inductive     ║
-   ║  motor load** with 5–10× higher inrush current that can weld the    ║
-   ║  relay contacts after a few hundred switching cycles.               ║
+   ║  The NORVI built-in relays are rated for **5A resistive load**.     ║
+   ║  A pump is a motor load with inrush current that can weld relay     ║
+   ║  contacts after repeated switching.                                 ║
    ║                                                                     ║
-   ║  **Standard configuration:** Use the NORVI relays exclusively as    ║
-   ║  **control relays for external DIN-rail contactors.** The contactor ║
-   ║  switches the 230V pump load; the NORVI relay switches only the     ║
-   ║  contactor's 24V DC coil (~20mA). This is zero-wear on the NORVI    ║
-   ║  relays and fully reliable for the life of the installation.        ║
+   ║  **Standard configuration:** Use the NORVI relays as **control      ║
+   ║  relays for external DIN-rail contactors** (see Contactor Wiring    ║
+   ║  Guide below). This is zero-wear on the NORVI relays.               ║
+   ║                                                                     ║
+   ║  **For low-power pumps (<100W, e.g. ECM solar pumps):** Direct      ║
+   ║  wiring is possible with an **RC snubber** (100nF + 100Ω) across    ║
+   ║  the relay contacts to suppress capacitive inrush.                  ║
    ║                                                                     ║
    ║  See → **[Contactor Wiring Guide](contactor-guide.md)**             ║
    ╚══════════════════════════════════════════════════════════════════════╝
 
-   NORVI Relay Output 0 (GPIO14):   Control signal → Pool contactor coil
-   NORVI Relay Output 5 (GPIO33):   Control signal → Solar contactor coil
+   NORVI Relay Output 0 (GPIO14):   Control → Pool pump (via contactor or direct <100W)
+   NORVI Relay Output 4 (GPIO2):    Control → Solar pump (via contactor or direct with snubber)
+
+   L (mains) ─── RCD ─── MCB ──┬── Relay COM0 ── Pump L
+                                └── Relay COM4 ── Pump L
+   N (neutral) ───────────────────────── Neutral bar ── Pump N
 
    ── Standard wiring (contactors) ─────────────────────────────────────
 
    24V DC (+) ──┬── NORVI R0 COM ── NO ──┬── Ext. Contactor Pool A1 ── A2 ──┬── GND
                  │                        │                                  │
-                 ├── NORVI R5 COM ── NO ──┤── Ext. Contactor Solar A1 ── A2 ──┤
+                 ├── NORVI R4 COM ── NO ──┤── Ext. Contactor Solar A1 ── A2 ──┤
                  │                        │                                  │
                  └───── NORVI 24V IN ─────┘                                  │
                                                                              │
@@ -250,35 +255,29 @@ to the default device index.
                                 └── Contactor Pool 1-2 ─── Pool Pump L
    N (neutral) ───────────────────────── Neutral bar ── Both Pumps N
 
-   ── Alternative: direct wiring (resistive loads only) ─────────────────
+   ── Alternative: direct wiring (resistive/low-power loads) ───────────
 
-   If you are switching **non-motor loads** (heating elements, LED
-   lighting, valves, signal lamps), the NORVI relays can be wired
-   directly. They are Normally Open (SPST), rated 5A/250V AC.
+   For **non-motor loads** (heating elements, valves, signal lamps) or
+   **low-power ECM pumps (<100W) with an RC snubber**, the NORVI relays
+   can be wired directly. They are Normally Open (SPST), rated 5A/250V AC.
 
-   L (mains) ─── RCD ─── MCB ──┬── NORVI COM0 ── NO0 ── Resistive Load
-                                └── NORVI COM5 ── NO5 ── Resistive Load
+   L (mains) ─── RCD ─── MCB ──┬── NORVI COM0 ── NO0 ── Load
+                                └── NORVI COM4 ── NO4 ── Load
    N (neutral) ───────────────────────── Neutral bar ── Load N
 
-   > **Do not wire pumps or any inductive motor load directly to the
-   > NORVI relays.** The contacts will fail (weld closed) under the
-   > inrush current. Use external contactors as shown above.
+   > **For pumps >100W or without RC snubber:** Use external contactors
+   > as shown above. Direct wiring of motor loads will eventually weld
+   > the relay contacts.
 
    ── Field report ─────────────────────────────────────────────────────
 
-   In one field installation, a solar pump (300–600W) was first connected
-   to Relay Output 1 (GPIO12, R1). After a few hundred switching cycles,
-   R1 developed a welded contact — the relay clicked audibly but the NO
-   contact never opened. The pump was then rewired to Relay Output 5
-   (GPIO33, R5), which had the same failure weeks later. Relay Output 0
-   (GPIO14, pool pump) continued working throughout because the pool
-   pump has a different motor characteristic (lower inrush, capacitor
-   start, or soft-start).
-
-   **Common factor: the solar pump motor load, not the relay hardware.**
-
-   See the [Contactor Wiring Guide](contactor-guide.md) for the
-   permanently reliable solution.
+   In one field installation, a solar pump was connected to Relay Output 1
+   (GPIO12, R1). After a few hundred switching cycles, R1 developed a
+   welded contact — the relay clicked audibly but the NO contact never
+   opened. Subsequent rewiring to R5 (GPIO33) failed identically. R0
+   (GPIO14, pool pump) continued working (different motor characteristic).
+   The pump is now configured for R4 (GPIO2). An RC snubber (100nF + 100Ω)
+   is recommended across relay contacts for ECM capacitive inrush protection.
 
    ⚡ Relay polarity: Unlike standard external relay modules (which are
    typically active-LOW: LOW = ON, HIGH = OFF), the NORVI AE01-R built-in
@@ -376,7 +375,7 @@ ESP32 are both powered from this single supply.
 | **Relay power**  | 5V to relay module             | Integrated (24V → relay coils)                    |
 | **Relay polarity** | Active-LOW (LOW = ON)        | **Active-HIGH** (HIGH = ON)                       |
 | **Sensor pins**  | GPIO32, GPIO33            | GPIO25 (Exp Port), GPIO5 (solder)                 |
-| **Relay pins**   | GPIO25, GPIO26            | GPIO14 (R0), GPIO33 (R5)                          |
+| **Relay pins**   | GPIO25, GPIO26            | GPIO14 (R0), GPIO2 (R4)                           |
 | **Status LED**   | Built-in (GPIO2)          | External via GPIO27 (T0.1)                        |
 | **OLED display** | None                      | Built-in 0.96" (SSD1306) — 4 info pages + QR code |
 | **Push buttons** | BOOT button (GPIO0)       | 3 front buttons — cycle pages & modes             |
@@ -431,11 +430,11 @@ pio run -e norvi_ae01_r -t uploadfs
 | :----: | -------------------------------------- | :--------------------------: |
 |   0    | NRST (outputs PWM at boot)             |              ❌              |
 |   1    | RS-485 TX (shared with USB)            |              ❌              |
-|   2    | Relay Output 4 / Built-in LED          |              ❌              |
+| **2**  | **Relay Output 4 / Built-in LED**        |   ✅ **Solar pump (R4)**     |
 |   3    | RS-485 RX (shared with USB)            |              ❌              |
 |   4    | RS-485 Flow Control                    |              ❌              |
 | **5**  | **— (free GPIO, no NORVI peripheral)** | ✅ **DS18B20 Pool (solder)** |
-|   12   | Relay Output 1 (avoid — see note above) |              ❌              |
+|   12   | Relay Output 1 (welded — use R4 instead) |              ❌              |
 |   13   | Relay Output 2                         |              ❌              |
 |   14   | **Relay Output 0**                     |         ✅ Pool pump         |
 |   15   | Relay Output 3                         |              ❌              |
@@ -451,7 +450,7 @@ pio run -e norvi_ae01_r -t uploadfs
 |   26   | Transistor Output 0.0                  |          ❌ (free)           |
 |   27   | **Transistor Output 0.1**              |   ✅ Status LED (external)   |
 | **32** | **Analog Input / Buttons**             |   ✅ 3 front-panel buttons   |
-| **33** | **Relay Output 5**                     |       ✅ Solar pump          |
+|   33   | Relay Output 5                         |              ❌              |
 |   34   | Digital Input 2 (input only)           |              ❌              |
 |   35   | Digital Input 3 (input only)           |              ❌              |
 |   38   | —                                      |              ❌              |
