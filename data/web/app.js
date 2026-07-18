@@ -61,22 +61,12 @@ async function loadTelemetry() {
       document.getElementById('solarThreshold').textContent = 'min ' + data.temp_min_solar.toFixed(1) + '°C';
     }
 
-    // Pumpen
+    // Pumpen — Toggle-Switches aktualisieren
     if (data.pool_pump != null) {
-      const el = document.getElementById('poolPump');
-      const isOn = data.pool_pump;
-      el.innerHTML = isOn
-        ? '<span style="color: #22c55e;">●</span> ON'
-        : '<span style="color: var(--text-muted);">○</span> OFF';
-      el.style.color = isOn ? '#22c55e' : 'var(--text-muted)';
+      setPumpSwitch('pool', data.pool_pump);
     }
     if (data.solar_pump != null) {
-      const el = document.getElementById('solarPump');
-      const isOn = data.solar_pump;
-      el.innerHTML = isOn
-        ? '<span style="color: #22c55e;">●</span> ON'
-        : '<span style="color: var(--text-muted);">○</span> OFF';
-      el.style.color = isOn ? '#22c55e' : 'var(--text-muted)';
+      setPumpSwitch('solar', data.solar_pump);
     }
 
     // Modus hervorheben
@@ -230,7 +220,7 @@ function updateAuthUI() {
 
   // Dashboard: disable interactive controls
   const interactiveSelectors = [
-    '.pump-card',                       // pump toggle
+    '.pump-switch-card',                // pump toggle switches
     '.mode-card',                       // mode buttons
     '#poolTemp',                        // max pool temp click
     '#solarTemp',                       // min solar temp click
@@ -242,6 +232,7 @@ function updateAuthUI() {
         if (el.dataset.origOnclick) {
           el.setAttribute('onclick', el.dataset.origOnclick);
         }
+        el.classList.remove('disabled');
       } else {
         if (!el.dataset.origCursor) el.dataset.origCursor = el.style.cursor;
         if (el.getAttribute('onclick')) {
@@ -249,13 +240,9 @@ function updateAuthUI() {
           el.removeAttribute('onclick');
         }
         el.style.cursor = 'default';
+        el.classList.add('disabled');
       }
     }
-  }
-
-  // Hide pump toggle hints
-  for (const el of document.querySelectorAll('.pump-toggle-hint')) {
-    el.style.display = isAuthenticated ? '' : 'none';
   }
 
   // Hide bottom tab bar when not authenticated — read-only dashboard only
@@ -415,6 +402,20 @@ async function saveMqtt() {
     body: 'type=mqtt&host=' + encodeURIComponent(host) + '&port=' + portVal + '&username=' + encodeURIComponent(user) + '&password=' + encodeURIComponent(pass)
   });
   if (res.status === 200) alert('MQTT config saved!');
+}
+
+// ── Pump Switch UI Helper ──
+
+function setPumpSwitch(pump, isOn) {
+  const toggle = document.getElementById(pump + 'PumpToggle');
+  const status = document.getElementById(pump + 'PumpStatus');
+  if (toggle) {
+    toggle.classList.toggle('on', isOn);
+  }
+  if (status) {
+    status.textContent = isOn ? 'ON' : 'OFF';
+    status.className = 'pump-switch-status ' + (isOn ? 'on' : 'off');
+  }
 }
 
 // ── Pump Toggle ──

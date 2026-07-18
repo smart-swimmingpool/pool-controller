@@ -108,14 +108,28 @@
     </div>
 
     <!-- Pumpen -->
-    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
-      <div class="pump-card" style="background: var(--glass-bg); padding: 1rem; border-radius: 12px; border: 1px solid var(--panel-border); cursor: pointer;" onclick="togglePump('pool')">
-        <label style="font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Pool Pump <span class="pump-toggle-hint" style="color: var(--accent-solar); font-weight: 400; text-transform: none;">↻ toggle</span></label>
-        <div class="tel-val" id="poolPump" style="font-size: 1.4rem; font-weight: 700; margin-top: 0.25rem; color: var(--text-muted);">OFF</div>
+    <div class="pump-switches">
+      <div class="pump-switch-card" onclick="togglePump('pool')">
+        <div class="pump-switch-header">
+          <span class="pump-switch-name">Pool Pump</span>
+          <span class="pump-switch-toggle" id="poolPumpToggle">
+            <span class="pump-switch-track">
+              <span class="pump-switch-thumb"></span>
+            </span>
+          </span>
+        </div>
+        <div class="pump-switch-status off" id="poolPumpStatus">OFF</div>
       </div>
-      <div class="pump-card" style="background: var(--glass-bg); padding: 1rem; border-radius: 12px; border: 1px solid var(--panel-border); cursor: pointer;" onclick="togglePump('solar')">
-        <label style="font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Solar Pump <span class="pump-toggle-hint" style="color: var(--accent-solar); font-weight: 400; text-transform: none;">↻ toggle</span></label>
-        <div class="tel-val" id="solarPump" style="font-size: 1.4rem; font-weight: 700; margin-top: 0.25rem; color: var(--text-muted);">OFF</div>
+      <div class="pump-switch-card" onclick="togglePump('solar')">
+        <div class="pump-switch-header">
+          <span class="pump-switch-name">Solar Pump</span>
+          <span class="pump-switch-toggle" id="solarPumpToggle">
+            <span class="pump-switch-track">
+              <span class="pump-switch-thumb"></span>
+            </span>
+          </span>
+        </div>
+        <div class="pump-switch-status off" id="solarPumpStatus">OFF</div>
       </div>
     </div>
 
