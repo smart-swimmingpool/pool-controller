@@ -159,12 +159,12 @@ Hier ist der **komplette Schaltplan** für den Pool Controller:
 
 ### 📸 Visuelle Anleitung
 
-> **🔗 [Fritzing-Datei herunterladen](https://github.com/smart-swimmingpool/pool-controller/raw/main/docs/pool-controller.fzz)**
+> **🔗 [Fritzing-Datei herunterladen](pool-controller.fzz)**
 > (Öffne mit [Fritzing](https://fritzing.org/))
 
 Hier ist ein **Beispiel-Foto** des Aufbaus:
 
-![Pool Controller Breadboard Aufbau](https://github.com/smart-swimmingpool/pool-controller/raw/main/docs/images/pool-controller_breadboard.png)
+![Pool Controller Breadboard Aufbau](pool-controller_breadboard.png)
 _Beispielaufbau auf einem Breadboard_
 
 ---
