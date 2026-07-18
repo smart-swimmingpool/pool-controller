@@ -16,9 +16,9 @@ menu:
 > haben große Eingangskondensatoren, die beim Schließen des Relais
 > kurzzeitig einen hohen Ladestrom (10–20A für Mikrosekunden) ziehen.
 > Über viele Schaltzyklen kann dieser kapazitive Einschaltstrom
-> Relaiskontakte mikro-verschweißen. Ein **RC-Snubber** (100nF + 100Ω)
-> parallel zum Relaiskontakt unterdrückt diesen Effekt und ist für
-> Lasten <100W ausreichend — kein Schütz nötig.
+> Relaiskontakte mikro-verschweißen. Ein **RC-Snubber** (100nF + 100Ω,
+> **X2-Kondensator**) parallel zum Relaiskontakt unterdrückt diesen
+> Effekt und ist für Lasten <100W ausreichend — kein Schütz nötig.
 >
 > Die Schütz-Lösung ist für größere Pumpen (>300W) oder induktive
 > Lasten >2A Dauerstrom vorgesehen.
@@ -78,17 +78,19 @@ robustes Relais in Hutschienenbauweise. Das NORVI-Relais schaltet nur noch
 die **Steuerspule des Schützes** (einige mA bei 24V DC) — die Hauptkontakte
 des Schützes schalten die 230V-Last.
 
-```
- NORVI-Relais           Schütz (extern)            Pumpe
- ┌──────────┐          ┌──────────────────┐      ┌────────┐
- │          │  24V DC  │  A1 (+)          │      │        │
- │ COM ─────┼──────────┤  (Spule)         │      │        │
- │          │          │         A2 (-) ──┼── GND│        │
- │ NO  ─────┼──────┐   │                  │      │        │
- └──────────┘      │   │ 1 (L-Eingang) ───┤─── 2 │        │
-                   │   └──────────────────┘      │  L-N  │
- 230V L ───────────┘                             └────────┘
- 230V N ───────────────────────────────────────────┘
+ ```
+  NORVI-Relais           Schütz (extern)            Pumpe
+  ┌──────────┐          ┌──────────────────┐      ┌────────┐
+  │          │  24V DC  │  A1 (+)          │      │        │
+  │ COM ─────┼──────────┤  (Spule)         │      │        │
+  │          │          │         A2 (-) ──┼── GND│        │
+  │ NO  ─────┼──────┐   │                  │      │        │
+  └──────────┘      │   │ 1 (L-Eingang) ───┤─── 2 │        │
+                    │   └──────────────────┘      │  L-N  │
+  24V DC (+) ───────┘                             └────────┘
+  230V L (via Schütz) ──────────────────────────────┘
+  230V N ──────────────────────────────────────────────┘
+  GND ───────────────────────────────────────────────────┘
 ```
 
 ### Vorteile

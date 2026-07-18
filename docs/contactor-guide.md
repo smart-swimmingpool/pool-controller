@@ -16,8 +16,9 @@ menu:
 > large input capacitors that cause a brief high charging peak (10–20A
 > for microseconds) each time the relay closes. Over many cycles this
 > capacitive inrush can micro-weld relay contacts. An **RC snubber**
-> (100nF + 100Ω) across the relay contact suppresses this effect and is
-> sufficient for loads <100W — no contactor required.
+> (100nF + 100Ω, **X2-rated capacitor**) across the relay contact
+> suppresses this effect and is sufficient for loads <100W — no contactor
+> required.
 >
 > The contactor solution below is intended for larger pumps (>300W) or
 > inductive loads where running current exceeds 2A.
@@ -85,7 +86,7 @@ main contacts handle the 230V AC load.
                     │   └────────────────────┘      │  L-N  │
   24V DC (+) ───────┘                               └────────┘
   230V L (via contactor) ─────────────────────────────┘
-  230V N (via contactor) ─────────────────────────────┘
+  230V N ─────────────────────────────────────────────────┘
   GND ────────────────────────────────────────────────────┘
 ```
 

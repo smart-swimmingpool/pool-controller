@@ -225,8 +225,9 @@ to the default device index.
    ║  Guide below). This is zero-wear on the NORVI relays.               ║
    ║                                                                     ║
    ║  **For low-power pumps (<100W, e.g. ECM solar pumps):** Direct      ║
-   ║  wiring is possible with an **RC snubber** (100nF + 100Ω) across    ║
-   ║  the relay contacts to suppress capacitive inrush.                  ║
+   ║  wiring is possible with an **RC snubber** (100nF + 100Ω,          ║
+   ║  X2-rated capacitor) across the relay contacts to suppress          ║
+   ║  capacitive inrush.                                                  ║
    ║                                                                     ║
    ║  See → **[Contactor Wiring Guide](contactor-guide.md)**             ║
    ╚══════════════════════════════════════════════════════════════════════╝
@@ -276,8 +277,9 @@ to the default device index.
    welded contact — the relay clicked audibly but the NO contact never
    opened. Subsequent rewiring to R5 (GPIO33) failed identically. R0
    (GPIO14, pool pump) continued working (different motor characteristic).
-   The pump is now configured for R4 (GPIO2). An RC snubber (100nF + 100Ω)
-   is recommended across relay contacts for ECM capacitive inrush protection.
+   The pump is now configured for R4 (GPIO2). An RC snubber (100nF + 100Ω,
+   X2-rated capacitor) is recommended across relay contacts for ECM
+   capacitive inrush protection.
 
    ⚡ Relay polarity: Unlike standard external relay modules (which are
    typically active-LOW: LOW = ON, HIGH = OFF), the NORVI AE01-R built-in

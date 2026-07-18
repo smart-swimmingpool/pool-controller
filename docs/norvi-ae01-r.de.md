@@ -224,9 +224,9 @@ kommt zum Einsatz.
    ║  unten). Das ist verscheißfrei für die gesamte Lebensdauer.         ║
    ║                                                                     ║
    ║  **Für Kleinstpumpen (<100W, z. B. ECM-Solarpumpen):** Direkt-     ║
-   ║  Verdrahtung ist möglich mit einem **RC-Snubber** (100nF + 100Ω)    ║
-   ║  parallel zu den Relaiskontakten zur Unterdrückung kapazitiver      ║
-   ║  Einschaltströme.                                                   ║
+   ║  Verdrahtung ist möglich mit einem **RC-Snubber** (100nF + 100Ω,  ║
+   ║  X2-Kondensator) parallel zu den Relaiskontakten zur Unterdrückung║
+   ║  kapazitiver Einschaltströme.                                     ║
    ║                                                                     ║
    ║  Siehe → **[Schütz-Schaltung für Pumpen](contactor-guide.de.md)**   ║
    ╚══════════════════════════════════════════════════════════════════════╝
@@ -277,7 +277,9 @@ kommt zum Einsatz.
    nie. Umverdrahtung auf R5 (GPIO33) zeigte denselben Fehler. R0
    (GPIO14, Poolpumpe) lief weiter (andere Motorkennlinie). Die
    Solarpumpe ist jetzt auf R4 (GPIO2) konfiguriert. Ein RC-Snubber
-   (100nF + 100Ω) wird parallel zu den R4-Kontakten empfohlen. Im Gegensatz zu externen Relaismodulen (die typischerweise
+   (100nF + 100Ω, X2-Kondensator) wird parallel zu den R4-Kontakten
+   empfohlen. Im Gegensatz zu externen Relaismodulen (die
+   typischerweise
    active-LOW sind: LOW = EIN, HIGH = AUS) sind die eingebauten NORVI-Relais
    **active-HIGH**: `HIGH` auf dem GPIO-Pin erregt die Relaisspule (Schließer
    schließt), `LOW` entregt sie (Schließer öffnet).
