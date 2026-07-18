@@ -29,13 +29,23 @@ int8_t StatusLed::warnPin_ = PIN_LED_WARN;
 // ── Initialisierung ────────────────────────────────────────────────────────
 
 void StatusLed::begin() {
-  // Modellunabhängiger Pin — überschreibe Config.hpp-Default, falls die
-  // Platform einen spezifischen LED_BUILTIN definiert.
+  // Reload from config — handles board-specific overrides (e.g. NORVI GPIO27).
+  ledPin_ = PIN_LED_STATUS;
+
 #ifdef LED_BUILTIN
-  ledPin_ = static_cast<uint8_t>(LED_BUILTIN);
-  Serial.printf("• StatusLed using LED_BUILTIN (GPIO %d)\n", ledPin_);
+  // Override Config.hpp default only when it uses the generic value (GPIO2),
+  // meaning no board-specific config set a different pin.  This lets NORVI
+  // (external LED on GPIO27) keep its explicit assignment while standard
+  // ESP32 dev boards still get LED_BUILTIN (typically also GPIO2).
+  if (PIN_LED_STATUS == 2) {
+    ledPin_ = static_cast<uint8_t>(LED_BUILTIN);
+    Serial.printf("• StatusLed using LED_BUILTIN (GPIO %d)\n", ledPin_);
+  } else {
+    Serial.printf("• StatusLed using config pin GPIO %d (board-specific, LED_BUILTIN overridden)\n",
+                  ledPin_);
+  }
 #else
-  Serial.printf("• StatusLed using default GPIO %d (no LED_BUILTIN defined)\n", ledPin_);
+  Serial.printf("• StatusLed using config default GPIO %d (no LED_BUILTIN)\n", ledPin_);
 #endif
 
   pinMode(ledPin_, OUTPUT);

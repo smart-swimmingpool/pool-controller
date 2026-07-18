@@ -74,17 +74,19 @@ A **contactor** is a heavy-duty relay built for motor loads. The NORVI relay
 switches only the **contactor's coil** (a few mA at 24V DC) — the contactor's
 main contacts handle the 230V AC load.
 
-```
- NORVI Relay            Contactor (external)           Pump
- ┌──────────┐          ┌────────────────────┐      ┌────────┐
- │          │  24V DC  │  A1 (+)            │      │        │
- │ COM ─────┼──────────┤  (coil)            │      │        │
- │          │          │          A2 (-) ───┼── GND│        │
- │ NO  ─────┼──────┐   │                    │      │        │
- └──────────┘      │   │ 1 (L-input) ───────┤─── 2 │        │
-                   │   └────────────────────┘      │  L-N  │
- 230V L ───────────┘                               └────────┘
- 230V N ─────────────────────────────────────────────┘
+ ```
+  NORVI Relay            Contactor (external)           Pump
+  ┌──────────┐          ┌────────────────────┐      ┌────────┐
+  │          │  24V DC  │  A1 (+)            │      │        │
+  │ COM ─────┼──────────┤  (coil)            │      │        │
+  │          │          │          A2 (-) ───┼── GND│        │
+  │ NO  ─────┼──────┐   │                    │      │        │
+  └──────────┘      │   │ 1 (L-input) ───────┤─── 2 │        │
+                    │   └────────────────────┘      │  L-N  │
+  24V DC (+) ───────┘                               └────────┘
+  230V L (via contactor) ─────────────────────────────┘
+  230V N (via contactor) ─────────────────────────────┘
+  GND ────────────────────────────────────────────────────┘
 ```
 
 ### Benefits

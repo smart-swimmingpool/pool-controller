@@ -133,3 +133,4 @@ test/native/relay_safety/build/
 
 # Frontend (separate JS project) — ignore lockfiles and node_modules
 test/frontend/
+graphify-out/

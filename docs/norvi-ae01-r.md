@@ -234,8 +234,8 @@ to the default device index.
    NORVI Relay Output 0 (GPIO14):   Control → Pool pump (via contactor or direct <100W)
    NORVI Relay Output 4 (GPIO2):    Control → Solar pump (via contactor or direct with snubber)
 
-   L (mains) ─── RCD ─── MCB ──┬── Relay COM0 ── Pump L
-                                └── Relay COM4 ── Pump L
+   L (mains) ─── RCD ─── MCB ──┬── Relay COM0 ── NO0 ── Pump L
+                                └── Relay COM4 ── NO4 ── Pump L
    N (neutral) ───────────────────────── Neutral bar ── Pump N
 
    ── Standard wiring (contactors) ─────────────────────────────────────
