@@ -6,8 +6,8 @@
 
 ## Motivation
 
-The pool controller currently logs exclusively to the serial interface (276
-`Serial.printf/print/println` calls across ~25 files). There is no way to inspect
+The pool controller currently logs exclusively to the serial interface (253
+`Serial.printf/print/println` calls across 21 files). There is no way to inspect
 logs from the web UI, which makes remote debugging difficult on a 24/7 device.
 
 This feature adds a web-based logging view: the device captures log lines into a
@@ -20,7 +20,9 @@ as a console with level filters, auto-refresh, and auto-scroll.
 1. **Content:** Full system log + filtered event view (level/category filters).
 2. **Persistence:** RAM ring buffer only (no flash wear). Optional MQTT export for
    warnings/errors + curated events so logs survive reboot in Home Assistant.
-3. **Placement:** New "Logs" entry in the More bottom-sheet menu (not a bottom tab).
+3. **Placement:** "📜 Logs" button on the dashboard plus an entry in the More
+   bottom-sheet menu (not a bottom tab). The dashboard button is the unauthenticated
+   access path — the tab bar and More menu are hidden entirely without login.
 4. **Access:** Read-only without login (like dashboard telemetry); clear operation
    requires login.
 5. **Updates:** Auto-polling every 2 s while the tab is visible (same pattern as
@@ -134,9 +136,9 @@ events; a text/sensor entity would only show a "last line" without history.
   - Timestamps: relative (`+1h 02m 33s` since boot); absolute time when NTP synced
     (compare with `/api/status` `local_time`).
   - "Clear" button — only visible when authenticated.
-- **PROGMEM fallback**: mirror the new view (HTML + inline JS) in
-  `kPortalPageHtml` / `kPremiumStyles` inside `WebPortal.cpp` (existing
-  two-layer principle: LittleFS first, PROGMEM fallback).
+- **LittleFS only**: web assets are served from LittleFS exclusively —
+  `WebPortal.cpp:58` documents "PROGMEM fallbacks removed". No PROGMEM mirror
+  for the new view (previous plan draft's fallback is obsolete by decision).
 
 ## Error handling
 
@@ -152,8 +154,8 @@ events; a text/sensor entity would only show a "last line" without history.
   (existing test setup, native build).
 - Migration verification: firmware builds; serial output on representative paths
   (boot, mode change, MQTT connect) is byte-identical before/after.
-- Manual: `pio run --target uploadfs` + browser; verify tab in LittleFS mode and
-  PROGMEM fallback mode (remove `/web/index.html`).
+- Manual: `pio run --target uploadfs` + browser; verify tab in LittleFS mode
+  (the only mode — no PROGMEM fallback exists).
 - MQTT: mosquitto subscribe `pool/log`, HA sensor appears via discovery.
 
 ## Out of scope
