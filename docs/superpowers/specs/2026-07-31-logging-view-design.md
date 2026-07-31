@@ -87,15 +87,40 @@ Replaces the current stub `src/Nodes/Logger.{hpp,cpp}`.
 ### 4. MQTT export (`MqttPublisher`)
 
 Follow existing HA Discovery patterns (`publishTextDiscovery`, `getBaseTopic`).
+Research-backed format (official `event.mqtt` docs + HA Core sources): the HA
+**MQTT event entity** is the idiomatic representation for discrete device
+events; a text/sensor entity would only show a "last line" without history.
 
-- **Raw topic** `pool/log` (JSON lines, QoS 0, non-retained) — for external tools.
-  Payload: `{"level":"WARN","uptime":3610,"msg":"..."}`.
-- **HA sensor "Last Log Event"** via `publishTextDiscovery` (diagnostic category):
-  `state_topic: pool/log`, `value_template` extracting WARN/ERROR lines → last
-  warning/error visible in HA.
+- **Raw topic** `pool/log` (JSON lines, QoS 0, non-retained) — for external
+  tools. Payload: `{"level":"WARN","uptime":3610,"msg":"..."}`.
+- **HA event entity "Pool Controller Event"** via MQTT Discovery
+  (`platform: event`) on topic `pool/event`:
+  - Discovery topic `homeassistant/event/<node_id>/pool_controller_event/config`
+    (retained), payload `{"platform":"event","name":"Pool Controller Event",
+    "unique_id":"pool_controller_event","state_topic":"pool/event",
+    "event_types":["mode_changed","pump_on","pump_off","wifi_connected",
+    "wifi_disconnected","mqtt_connected","mqtt_disconnected","ota_started",
+    "ota_success","ota_failed","factory_reset","warning","error"],
+    "entity_category":"diagnostic","device":{...same block as sensors...}}`.
+  - State payload (JSON, **must** contain `event_type` ∈ `event_types`):
+    `{"event_type":"pump_on","message":"Pump turned on","level":"INFO","uptime":3610}`
+    — extra keys (`message`, `level`, `uptime`) become entity attributes.
+    Events are stateless; replayed retained messages are discarded by HA.
+  - Separate `pool/event` topic (instead of reusing `pool/log`) keeps the
+    event_type always present without a fragile `value_template` on the raw log
+    stream. The `value_template` is intentionally omitted.
 - **Volume control:** only WARN/ERROR + curated events (mode changes, pump
   toggles, WiFi/MQTT connect/disconnect, OTA, factory reset) are published to
   MQTT — not every INFO line.
+- **Logbook (documented, not firmware):** event entities do *not* create
+  message-bearing logbook entries (`event_type: LOGBOOK_ENTRY` is a known
+  misconception). Users who want pool events in the HA logbook get a documented
+  automation blueprint: MQTT trigger on `pool/event` → `logbook.log` service
+  with `name`, `message: "{{ trigger.payload_json.event_type }}: {{ ... }}"`
+  and `entity_id`. This stays in docs, never in firmware.
+- **ESPHome precedent (documented):** ESPHome forwards device logs into the HA
+  core log (default level WARNING, no MQTT equivalent of log_stream); our event
+  entity is the MQTT-only analog.
 
 ### 5. Web UI (`data/web/index.html`, `data/web/app.js`, `data/web/style.css`)
 
