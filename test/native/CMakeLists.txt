@@ -77,6 +77,7 @@ set(TEST_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_state_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_timer.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_logcapture.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_webportal_logs.cpp
 )
 
 add_executable(test_runner

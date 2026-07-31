@@ -257,6 +257,14 @@ void WebPortal::setupRoutes() {
     apiSaveSensorMapping();
   });
 
+  // Log view — GET is unauthenticated (read-only), clear remains authenticated.
+  server_.on("/api/logs", HTTP_GET, apiGetLogs);
+  server_.on("/api/logs/clear", HTTP_POST, []() {
+    if (!handleAuthentication())
+      return;
+    apiClearLogs();
+  });
+
   // LittleFS file upload (for OTA-safe web asset deployment)
   server_.on(
     "/api/fs/upload", HTTP_POST,
@@ -508,6 +516,74 @@ void WebPortal::apiGetStatus() {
   } else {
     server_.send(500, "text/plain", "JSON serialization error");
   }
+}
+
+// ── Log view (REST /api/logs) ──────────────────────────────────────────────
+
+size_t WebPortal::buildLogsJson(uint32_t since, size_t count, LogLevel minLevel, char *buf, size_t bufSize) {
+  if (buf == nullptr || bufSize == 0) {
+    return 0;
+  }
+
+  // Copy entries out of the ring into a fixed array (snapshot consistency —
+  // getEntries reads under the log mutex). Static: no stack pressure.
+  static LogEntry entries[LogCapture::LOG_BUFFER_ENTRIES];
+  size_t n = LogCapture::getEntries(since, count, minLevel, entries, LogCapture::LOG_BUFFER_ENTRIES);
+
+  JsonDocument doc;
+  doc["ok"] = true;
+  doc["next"] = LogCapture::lastSeq() + 1;
+
+  JsonArray arr = doc["entries"].to<JsonArray>();
+  for (size_t i = 0; i < n; ++i) {
+    JsonObject obj = arr.add<JsonObject>();
+    obj["seq"] = entries[i].seq;
+    obj["t"] = entries[i].uptimeMs;
+    obj["level"] = LogCapture::levelName(entries[i].level);
+    obj["msg"] = entries[i].message;
+  }
+
+  size_t jsonLength = serializeJson(doc, buf, bufSize);
+  // Signal truncation (buffer too small) instead of returning broken JSON
+  if (jsonLength >= bufSize) {
+    return 0;
+  }
+  return jsonLength;
+}
+
+void WebPortal::apiGetLogs() {
+  uint32_t since = 0;
+  size_t count = 200;
+  LogLevel minLevel = LogLevel::Info;
+
+  if (server_.hasArg("since")) {
+    since = static_cast<uint32_t>(atol(server_.arg("since").c_str()));
+  }
+  if (server_.hasArg("count")) {
+    long c = atol(server_.arg("count").c_str());
+    if (c > 0 && c <= 500) {
+      count = static_cast<size_t>(c);
+    }
+  }
+  if (server_.hasArg("level")) {
+    minLevel = LogCapture::parseLevel(server_.arg("level").c_str());
+  }
+
+  // Serialize directly to a pre-allocated buffer to minimize String usage.
+  // Worst case: LOG_BUFFER_ENTRIES entries x ~140 bytes each + envelope.
+  // Use a static buffer to avoid heap fragmentation.
+  static char jsonBuffer[16384];
+  size_t jsonLength = buildLogsJson(since, count, minLevel, jsonBuffer, sizeof(jsonBuffer));
+  if (jsonLength > 0) {
+    server_.send(200, "application/json", jsonBuffer);
+  } else {
+    server_.send(500, "text/plain", "JSON serialization error");
+  }
+}
+
+void WebPortal::apiClearLogs() {
+  LogCapture::clear();
+  server_.send(200, "application/json", "{\"ok\":true}");
 }
 
 void WebPortal::apiScanWiFi() {

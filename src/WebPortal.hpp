@@ -13,6 +13,8 @@
 #include <WebServer.h>
 #include <DNSServer.h>
 
+#include "LogCapture.hpp"
+
 namespace PoolController {
 
 /**
@@ -59,6 +61,12 @@ public:
   /** @brief Get login lockout duration in milliseconds. */
   static uint32_t getLoginLockoutMs() { return kLoginLockoutMs; }
 
+  // ── Log view helper (public for testing) ──
+  /** @brief Serialize LogCapture entries as the /api/logs JSON payload.
+   *         @return bytes written (0 on error / empty buffer). */
+  static size_t buildLogsJson(uint32_t since, size_t count, LogLevel minLevel,
+                              char *buf, size_t bufSize);
+
 private:
   /** @brief Register all HTTP routes, handlers, and static asset paths. */
   static void setupRoutes();
@@ -86,6 +94,10 @@ private:
   // ── REST API Handlers ──
   /** @brief GET /api/status — return JSON with all telemetry data. */
   static void apiGetStatus();
+  /** @brief GET /api/logs — return JSON with captured log entries (unauthenticated, read-only). */
+  static void apiGetLogs();
+  /** @brief POST /api/logs/clear — empty the LogCapture ring buffer (authenticated). */
+  static void apiClearLogs();
   /** @brief GET /api/wifi/scan — return JSON list of visible WiFi networks. */
   static void apiScanWiFi();
   /** @brief GET /api/config — return current configuration as JSON. */
