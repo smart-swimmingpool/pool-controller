@@ -118,6 +118,10 @@ bool OperationModeNode::setMode(String mode) {
     for (auto &rule : _ruleVec) {
       rule->resetTemperatureExtension();
     }
+    // Curated log event for MQTT event entity — only on actual mode change
+    if (!_mode.equals(mode)) {
+      PoolController::LogCapture::logEvent("MODE_CHANGED", "Mode switched to %s", mode.c_str());
+    }
     _mode = mode;
     LOG_DEBUG("set mode: %s\n", _mode.c_str());
     if (!_suppressPersist)

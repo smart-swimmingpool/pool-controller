@@ -43,11 +43,15 @@ bool NetworkManager::begin() {
   // Set up MQTT event handlers (one-time, async)
   mqttClient_.onConnect([](bool sessionPresent) {
     LOG_INFO("✓ MQTT connected!\n");
+    LogCapture::logEvent("MQTT_CONNECTED", "MQTT broker connected");
     // Publish online to LWT topic immediately (async, non-blocking)
     mqttClient_.publish("homeassistant/sensor/pool-controller/availability", 1, true, "online");
   });
   mqttClient_.onDisconnect(
-    [](AsyncMqttClientDisconnectReason reason) { LOG_ERROR("✖ MQTT disconnected, reason=%d\n", static_cast<int>(reason)); });
+    [](AsyncMqttClientDisconnectReason reason) {
+      LOG_ERROR("✖ MQTT disconnected, reason=%d\n", static_cast<int>(reason));
+      LogCapture::logEvent("MQTT_DISCONNECTED", "MQTT disconnected, reason %d", static_cast<int>(reason));
+    });
 
   if (ConfigManager::getWiFi().ssid.length() == 0) {
     LOG_WARN("⚠ No WiFi SSID configured! Starting AP mode.\n");
@@ -255,6 +259,7 @@ void NetworkManager::handleWiFiEvent(WiFiEvent_t event) {
   case ARDUINO_EVENT_WIFI_STA_GOT_IP:
     LOG_INFO("✓ WiFi connected! SSID: \"%s\", IP: %s, RSSI: %d dBm, Channel: %d\n", WiFi.SSID().c_str(),
       WiFi.localIP().toString().c_str(), WiFi.RSSI(), WiFi.channel());
+    LogCapture::logEvent("WIFI_CONNECTED", "WiFi connected to %s", WiFi.SSID().c_str());
     apModeActive_ = false;
     // Start mDNS responder so the device is reachable as pool-controller.local
     if (MDNS.begin("pool-controller")) {
@@ -266,6 +271,7 @@ void NetworkManager::handleWiFiEvent(WiFiEvent_t event) {
     break;
   case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
     LOG_ERROR("✖ WiFi disconnected. Status: %d (SSID: \"%s\")\n", WiFi.status(), WiFi.SSID().c_str());
+    LogCapture::logEvent("WIFI_DISCONNECTED", "WiFi disconnected, status %d", WiFi.status());
     break;
   default:
     break;

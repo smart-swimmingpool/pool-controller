@@ -77,6 +77,9 @@ void RelayModuleNode::setSwitch(const bool state) {
   digitalWrite(_pin, state == _activeLow ? LOW : HIGH);
   _currentState = state;
 
+  // Curated log event for MQTT event entity (only on real state change)
+  PoolController::LogCapture::logEvent(state ? "PUMP_ON" : "PUMP_OFF", "%s %s", getId(), state ? "ON" : "OFF");
+
   // Persist relay state via Preferences (NVS)
   preferences.begin(_id, false);
   preferences.putBool("switch", state);
