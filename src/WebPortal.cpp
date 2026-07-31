@@ -38,6 +38,7 @@
 #include "SystemMonitor.hpp"
 #include "TimeClientHelper.hpp"
 #include "Version.h"
+#include "LogCapture.hpp"
 
 namespace PoolController {
 
@@ -60,7 +61,7 @@ constexpr uint16_t WebPortal::kDnsPort;
 
 bool WebPortal::begin() {
   if (!LittleFS.begin(false)) {
-    Serial.println("✖ LittleFS mount failed — static web assets may be unavailable");
+    LOG_ERROR("✖ LittleFS mount failed — static web assets may be unavailable\n");
   }
 
   setupRoutes();
@@ -69,12 +70,12 @@ bool WebPortal::begin() {
   if (NetworkManager::isApMode()) {
     dnsServer_.setErrorReplyCode(DNSReplyCode::NoError);
     dnsServer_.start(kDnsPort, "*", WiFi.softAPIP());
-    Serial.println("✓ Captive Portal DNS running.");
+      LOG_INFO("✓ Captive Portal DNS running.\n");
     dnsServerStarted_ = true;
   }
 
   server_.begin();
-  Serial.println("✓ Web Server running on port 80.");
+  LOG_INFO("✓ Web Server running on port 80.\n");
 
   // Initialize CSRF token
   generateCsrfToken();
@@ -87,7 +88,7 @@ void WebPortal::loop() {
     if (!dnsServerStarted_) {
       dnsServer_.setErrorReplyCode(DNSReplyCode::NoError);
       dnsServer_.start(kDnsPort, "*", WiFi.softAPIP());
-      Serial.println("✓ Captive Portal DNS running.");
+    LOG_INFO("✓ Captive Portal DNS running.\n");
       dnsServerStarted_ = true;
     }
     dnsServer_.processNextRequest();
@@ -96,7 +97,7 @@ void WebPortal::loop() {
 
   // Session timeout checking
   if (activeSessionToken_.length() > 0 && (millis() - sessionStartTime_ > kSessionTimeoutMs)) {
-    Serial.println("Session timed out.");
+    LOG_WARN("Session timed out.\n");
     activeSessionToken_ = "";
   }
 }
@@ -281,7 +282,7 @@ void WebPortal::setupRoutes() {
         return;
       HTTPUpload &upload = server_.upload();
       if (upload.status == UPLOAD_FILE_START) {
-        Serial.printf("Signed OTA Update Starting: %s\n", upload.filename.c_str());
+        LOG_INFO("Signed OTA Update Starting: %s\n", upload.filename.c_str());
         if (!Update.begin(UPDATE_SIZE_UNKNOWN)) {
           Update.printError(Serial);
         }
@@ -291,7 +292,7 @@ void WebPortal::setupRoutes() {
         }
       } else if (upload.status == UPLOAD_FILE_END) {
         if (Update.end(true)) {
-          Serial.printf("Signed OTA Update Success: %u bytes\n", upload.totalSize);
+          LOG_INFO("Signed OTA Update Success: %u bytes\n", upload.totalSize);
         } else {
           Update.printError(Serial);
         }
@@ -1116,19 +1117,19 @@ void WebPortal::handleFsUploadStream() {
       path = upload.filename;
     }
     if (path.length() == 0) {
-      Serial.println("FS Upload: missing path argument — aborting");
+      LOG_WARN("FS Upload: missing path argument — aborting\n");
       return;
     }
 
     // Security: only allow files under /web/
     if (!path.startsWith("/web/")) {
-      Serial.printf("FS Upload: path \"%s\" not under /web/ — rejected\n", path.c_str());
+      LOG_WARN("FS Upload: path \"%s\" not under /web/ — rejected\n", path.c_str());
       return;
     }
 
     // Security: prevent path traversal
     if (path.indexOf("..") != -1) {
-      Serial.printf("FS Upload: path traversal detected: \"%s\"\n", path.c_str());
+      LOG_WARN("FS Upload: path traversal detected: \"%s\"\n", path.c_str());
       return;
     }
 
@@ -1139,11 +1140,11 @@ void WebPortal::handleFsUploadStream() {
 
     fsUploadFile = LittleFS.open(path, "w");
     if (!fsUploadFile) {
-      Serial.printf("FS Upload: failed to open \"%s\" for writing\n", path.c_str());
+      LOG_ERROR("FS Upload: failed to open \"%s\" for writing\n", path.c_str());
       return;
     }
 
-    Serial.printf("FS Upload: started \"%s\" (%u bytes)\n", path.c_str(), upload.totalSize);
+    LOG_INFO("FS Upload: started \"%s\" (%u bytes)\n", path.c_str(), upload.totalSize);
 
   } else if (upload.status == UPLOAD_FILE_WRITE) {
     if (fsUploadFile) {
@@ -1153,7 +1154,7 @@ void WebPortal::handleFsUploadStream() {
   } else if (upload.status == UPLOAD_FILE_END) {
     if (fsUploadFile) {
       fsUploadFile.close();
-      Serial.printf("FS Upload: finished \"%s\" (%u bytes)\n", upload.filename.c_str(), upload.totalSize);
+      LOG_INFO("FS Upload: finished \"%s\" (%u bytes)\n", upload.filename.c_str(), upload.totalSize);
     }
   }
 }

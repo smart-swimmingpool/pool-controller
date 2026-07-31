@@ -11,6 +11,7 @@
 #include "RelayModuleNode.hpp"
 #include "Utils.hpp"
 #include "DegradationManager.hpp"
+#include "LogCapture.hpp"
 
 RelayModuleNode::RelayModuleNode(const char *id, const char *name, const uint8_t pin) : RelayModuleNode(id, name, pin, true) {}
 
@@ -24,7 +25,7 @@ RelayModuleNode::RelayModuleNode(const char *id, const char *name, const uint8_t
 }
 
 void RelayModuleNode::begin() {
-  Serial.printf("• RelayModule Node '%s' initializing on PIN %d...\n", _id, _pin);
+  LOG_INFO("• RelayModule Node '%s' initializing on PIN %d...\n", _id, _pin);
 
   // ── Safe-start sequence ───────────────────────────────────────────────
   //
@@ -55,7 +56,7 @@ void RelayModuleNode::begin() {
   // 3. Apply polarity and transition to persisted state (OFF→ON if needed)
   digitalWrite(_pin, _currentState == _activeLow ? LOW : HIGH);
 
-  Serial.printf("  ◦ Relay restored to state: %s\n", _currentState ? "ON" : "OFF");
+  LOG_INFO("  ◦ Relay restored to state: %s\n", _currentState ? "ON" : "OFF");
 }
 
 void RelayModuleNode::setSwitch(const bool state) {
@@ -67,7 +68,7 @@ void RelayModuleNode::setSwitch(const bool state) {
   // a relay to switch ON. Only OFF transitions are permitted so relays default
   // to the safe OFF state.
   if (state && PoolController::DegradationManager::isSafe()) {
-    Serial.println("  ⚠ SAFE MODE — ignoring relay ON request");
+    LOG_WARN("  ⚠ SAFE MODE — ignoring relay ON request\n");
     return;
   }
 
@@ -81,7 +82,7 @@ void RelayModuleNode::setSwitch(const bool state) {
   preferences.putBool("switch", state);
   preferences.end();
 
-  Serial.printf("  ◦ Relay '%s' switched to: %s\n", _id, state ? "ON" : "OFF");
+  LOG_INFO("  ◦ Relay '%s' switched to: %s\n", _id, state ? "ON" : "OFF");
 }
 
 bool RelayModuleNode::getSwitch() {
@@ -91,6 +92,6 @@ bool RelayModuleNode::getSwitch() {
 void RelayModuleNode::loop() {
   if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval)) {
     _lastMeasurement = millis();
-    Serial.printf("〽 Relay '%s' status: %s\n", _id, getSwitch() ? "ON" : "OFF");
+    LOG_DEBUG("〽 Relay '%s' status: %s\n", _id, getSwitch() ? "ON" : "OFF");
   }
 }

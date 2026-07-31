@@ -24,6 +24,7 @@
 #include "RelayModuleNode.hpp"
 #include "TimeClientHelper.hpp"
 #include "Version.h"
+#include "LogCapture.hpp"
 
 namespace PoolController {
 
@@ -37,7 +38,7 @@ void MqttPublisher::begin() {
   snprintf(macStr, sizeof(macStr), "pool_controller_%02x%02x%02x", mac[3], mac[4], mac[5]);
   deviceId_ = String(macStr);
 
-  Serial.printf("✓ HA Discovery Device ID set to: %s\n", deviceId_.c_str());
+  LOG_INFO("✓ HA Discovery Device ID set to: %s\n", deviceId_.c_str());
 
   // Register callback in NetworkManager
   NetworkManager::setMqttCallback(handleMqttMessage);
@@ -431,7 +432,7 @@ void MqttPublisher::publishDiscovery() {
   if (!NetworkManager::isMqttConnected())
     return;
 
-  Serial.println("Publishing HA Discovery Payloads...");
+  LOG_INFO("Publishing HA Discovery Payloads...\n");
 
   // ── Primary Sensors (no entity_category — shown on device front page) ──
   publishSensorDiscovery("pool-temp", "Pool Temperature", "temperature", "°C", "mdi:pool", nullptr, "measurement");
@@ -548,7 +549,7 @@ void MqttPublisher::publishDiscovery() {
     NetworkManager::publish(topic, "", true);  // empty retained → HA removes entity
   }
 
-  Serial.println("✓ HA Discovery Payloads & Subscriptions complete");
+  LOG_INFO("✓ HA Discovery Payloads & Subscriptions complete\n");
 }
 
 void MqttPublisher::publishStates() {
@@ -793,7 +794,7 @@ void MqttPublisher::publishSensorMappingDiscovery() {
   NetworkManager::subscribe("homeassistant/select/pool-controller/solar-sensor/set");
   NetworkManager::subscribe("homeassistant/select/pool-controller/pool-sensor/set");
 
-  Serial.printf("• HA: Sensor mapping select entities published (%u options)\n", solarOptCount);
+  LOG_INFO("• HA: Sensor mapping select entities published (%u options)\n", solarOptCount);
 }
 
 // Helper function to check if MQTT authentication is configured
@@ -836,19 +837,19 @@ void MqttPublisher::handleMqttMessage(
   if (top.endsWith("/firmware-update/set")) {
     // MQTT authentication is optional, but if configured, we check it
     if (shouldEnforceMqttAuth() && !isMqttAuthenticated()) {
-      Serial.println("MQTT: Firmware update command rejected - MQTT authentication required");
+      LOG_WARN("MQTT: Firmware update command rejected - MQTT authentication required\n");
       return;
     }
 
     // Always validate command value for security
     static const char *validFirmwareCommands[] = {"INSTALL"};
     if (!MqttPublisher::isValidCommand(value, validFirmwareCommands, 1)) {
-      Serial.printf("MQTT: Invalid firmware command: %s\n", value.c_str());
+      LOG_WARN("MQTT: Invalid firmware command: %s\n", value.c_str());
       return;
     }
 
     if (value == "INSTALL") {
-      Serial.println("MQTT: Firmware update triggered from Home Assistant");
+      LOG_INFO("MQTT: Firmware update triggered from Home Assistant\n");
       OtaUpdater::startUpdate();
     }
     return;
@@ -866,11 +867,11 @@ void MqttPublisher::handleMqttMessage(
     else if (value == "boost")
       poolMode = "boost";
     else {
-      Serial.printf("MQTT: Unknown preset \"%s\" — ignoring\n", value.c_str());
+      LOG_WARN("MQTT: Unknown preset \"%s\" — ignoring\n", value.c_str());
       publishStates();
       return;
     }
-    Serial.printf("MQTT: Climate preset → pool mode \"%s\"\n", poolMode.c_str());
+    LOG_INFO("MQTT: Climate preset → pool mode \"%s\"\n", poolMode.c_str());
     operationModeNode.setMode(poolMode.c_str());
     ConfigManager::getSettings().opMode = poolMode;
     ConfigManager::save();
@@ -887,11 +888,11 @@ void MqttPublisher::handleMqttMessage(
     else if (value == "heat")
       poolMode = "boost";
     else {
-      Serial.printf("MQTT: Unknown climate mode \"%s\" — ignoring\n", value.c_str());
+      LOG_WARN("MQTT: Unknown climate mode \"%s\" — ignoring\n", value.c_str());
       publishStates();
       return;
     }
-    Serial.printf("MQTT: Climate mode → pool mode \"%s\"\n", poolMode.c_str());
+    LOG_INFO("MQTT: Climate mode → pool mode \"%s\"\n", poolMode.c_str());
     operationModeNode.setMode(poolMode.c_str());
     ConfigManager::getSettings().opMode = poolMode;
     ConfigManager::save();
@@ -901,7 +902,7 @@ void MqttPublisher::handleMqttMessage(
 
   if (top.endsWith("/thermostat/temperature/set")) {
     float val = value.toFloat();
-    Serial.printf("MQTT: Climate target temperature → %.1f\n", val);
+    LOG_INFO("MQTT: Climate target temperature → %.1f\n", val);
     operationModeNode.setPoolMaxTemperature(val);
     ConfigManager::getSettings().tempMaxPool = val;
     ConfigManager::save();
@@ -912,7 +913,7 @@ void MqttPublisher::handleMqttMessage(
   if (top.endsWith("/pool-pump/set") || top.endsWith("/solar-pump/set")) {
     // MQTT authentication is optional, but if configured, we check it
     if (shouldEnforceMqttAuth() && !isMqttAuthenticated()) {
-      Serial.println("MQTT: Pump command rejected - MQTT authentication required");
+      LOG_WARN("MQTT: Pump command rejected - MQTT authentication required\n");
       publishStates();
       return;
     }
@@ -920,14 +921,14 @@ void MqttPublisher::handleMqttMessage(
     // Always validate payload for security
     static const char *validPumpCommands[] = {"ON", "OFF"};
     if (!MqttPublisher::isValidCommand(value, validPumpCommands, 2)) {
-      Serial.printf("MQTT: Invalid pump command: %s\n", value.c_str());
+      LOG_WARN("MQTT: Invalid pump command: %s\n", value.c_str());
       publishStates();
       return;
     }
 
     // Only allow pump control from HA in manual mode
     if (operationModeNode.getMode() != "manu") {
-      Serial.printf("MQTT: Ignoring pump command — not in manual mode (current: %s)\n", operationModeNode.getMode().c_str());
+      LOG_WARN("MQTT: Ignoring pump command — not in manual mode (current: %s)\n", operationModeNode.getMode().c_str());
       publishStates();
       return;
     }
@@ -939,7 +940,7 @@ void MqttPublisher::handleMqttMessage(
   } else if (top.endsWith("/mode/set")) {
     // MQTT authentication is optional, but if configured, we check it
     if (shouldEnforceMqttAuth() && !isMqttAuthenticated()) {
-      Serial.println("MQTT: Mode command rejected - MQTT authentication required");
+      LOG_WARN("MQTT: Mode command rejected - MQTT authentication required\n");
       publishStates();
       return;
     }
@@ -947,7 +948,7 @@ void MqttPublisher::handleMqttMessage(
     // Always validate mode value for security
     static const char *validModes[] = {"auto", "manu", "boost", "timer"};
     if (!MqttPublisher::isValidCommand(value, validModes, 4)) {
-      Serial.printf("MQTT: Invalid mode command: %s\n", value.c_str());
+      LOG_WARN("MQTT: Invalid mode command: %s\n", value.c_str());
       publishStates();
       return;
     }
@@ -958,7 +959,7 @@ void MqttPublisher::handleMqttMessage(
   } else if (top.endsWith("/pool-max-temp/set")) {
     // MQTT authentication is optional, but if configured, we check it
     if (shouldEnforceMqttAuth() && !isMqttAuthenticated()) {
-      Serial.println("MQTT: Config command rejected - MQTT authentication required");
+      LOG_WARN("MQTT: Config command rejected - MQTT authentication required\n");
       publishStates();
       return;
     }
@@ -966,7 +967,7 @@ void MqttPublisher::handleMqttMessage(
     float val = value.toFloat();
     // Always validate range for security
     if (val < 0.0f || val > 40.0f) {
-      Serial.printf("MQTT: Invalid pool-max-temp value: %.1f\n", val);
+      LOG_WARN("MQTT: Invalid pool-max-temp value: %.1f\n", val);
       publishStates();
       return;
     }
@@ -976,7 +977,7 @@ void MqttPublisher::handleMqttMessage(
   } else if (top.endsWith("/solar-min-temp/set")) {
     // MQTT authentication is optional, but if configured, we check it
     if (shouldEnforceMqttAuth() && !isMqttAuthenticated()) {
-      Serial.println("MQTT: Config command rejected - MQTT authentication required");
+      LOG_WARN("MQTT: Config command rejected - MQTT authentication required\n");
       publishStates();
       return;
     }
@@ -984,7 +985,7 @@ void MqttPublisher::handleMqttMessage(
     float val = value.toFloat();
     // Always validate range for security
     if (val < 0.0f || val > 100.0f) {
-      Serial.printf("MQTT: Invalid solar-min-temp value: %.1f\n", val);
+      LOG_WARN("MQTT: Invalid solar-min-temp value: %.1f\n", val);
       publishStates();
       return;
     }
@@ -994,7 +995,7 @@ void MqttPublisher::handleMqttMessage(
   } else if (top.endsWith("/hysteresis/set")) {
     // MQTT authentication is optional, but if configured, we check it
     if (shouldEnforceMqttAuth() && !isMqttAuthenticated()) {
-      Serial.println("MQTT: Config command rejected - MQTT authentication required");
+      LOG_WARN("MQTT: Config command rejected - MQTT authentication required\n");
       publishStates();
       return;
     }
@@ -1002,7 +1003,7 @@ void MqttPublisher::handleMqttMessage(
     float val = value.toFloat();
     // Always validate range for security
     if (val < 0.0f || val > 10.0f) {
-      Serial.printf("MQTT: Invalid hysteresis value: %.1f\n", val);
+      LOG_WARN("MQTT: Invalid hysteresis value: %.1f\n", val);
       publishStates();
       return;
     }
@@ -1049,7 +1050,7 @@ void MqttPublisher::handleMqttMessage(
   } else if (top.endsWith("/timezone/set")) {
     int idx = getTimezoneIndexFromLabel(value);
     if (idx < 0) {
-      Serial.printf("MQTT: Unknown timezone label \"%s\" — ignoring\n", value.c_str());
+      LOG_WARN("MQTT: Unknown timezone label \"%s\" — ignoring\n", value.c_str());
       publishStates();
       return;
     }
@@ -1076,7 +1077,7 @@ void MqttPublisher::handleMqttMessage(
         char *end = nullptr;
         unsigned long val = strtoul(byteStr, &end, 16);
         if (end != byteStr + 2) {
-          Serial.printf("MQTT: Invalid hex in sensor selection — ignoring\n");
+          LOG_WARN("MQTT: Invalid hex in sensor selection — ignoring\n");
           publishStates();
           return;
         }
@@ -1094,14 +1095,14 @@ void MqttPublisher::handleMqttMessage(
           solarTemperatureNode.setAddressFilter(addr);
         else
           solarTemperatureNode.clearAddressFilter();
-        Serial.printf("MQTT: Solar sensor %s via HA\n", hasAddr ? "assigned" : "cleared");
+        LOG_INFO("MQTT: Solar sensor %s via HA\n", hasAddr ? "assigned" : "cleared");
       } else {
         prefs.putBytes("pool_adr", addr, 8);
         if (hasAddr)
           poolTemperatureNode.setAddressFilter(addr);
         else
           poolTemperatureNode.clearAddressFilter();
-        Serial.printf("MQTT: Pool sensor %s via HA\n", hasAddr ? "assigned" : "cleared");
+        LOG_INFO("MQTT: Pool sensor %s via HA\n", hasAddr ? "assigned" : "cleared");
       }
       prefs.end();
     }

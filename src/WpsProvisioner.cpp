@@ -17,6 +17,7 @@
 #include <atomic>
 
 #include "ConfigManager.hpp"
+#include "LogCapture.hpp"
 
 namespace {
 constexpr gpio_num_t WPS_TRIGGER_PIN{GPIO_NUM_0};
@@ -41,7 +42,7 @@ static WpsProvisionState wpsProvisionState{};
 auto stopWps() -> void {
   const esp_err_t disableErr = esp_wifi_wps_disable();
   if (disableErr != ESP_OK && disableErr != ESP_ERR_WIFI_WPS_SM) {
-    Serial.printf("WPS disable failed: 0x%x (%s)\n", static_cast<unsigned>(disableErr), esp_err_to_name(disableErr));
+    LOG_ERROR("WPS disable failed: 0x%x (%s)\n", static_cast<unsigned>(disableErr), esp_err_to_name(disableErr));
   }
 }
 
@@ -60,13 +61,13 @@ auto startWps() -> bool {
     modelNumberLen < 0 || static_cast<size_t>(modelNumberLen) >= sizeof(config.factory_info.model_number) || modelNameLen < 0 ||
     static_cast<size_t>(modelNameLen) >= sizeof(config.factory_info.model_name) || deviceNameLen < 0 ||
     static_cast<size_t>(deviceNameLen) >= sizeof(config.factory_info.device_name)) {
-    Serial.println(F("WPS: factory-info string truncated"));
+    LOG_INFO("WPS: factory-info string truncated\n");
     return false;
   }
 
   const esp_err_t enableErr = esp_wifi_wps_enable(&config);
   if (enableErr != ESP_OK) {
-    Serial.printf("WPS enable failed: 0x%x (%s)\n", static_cast<unsigned>(enableErr), esp_err_to_name(enableErr));
+    LOG_ERROR("WPS enable failed: 0x%x (%s)\n", static_cast<unsigned>(enableErr), esp_err_to_name(enableErr));
     return false;
   }
 
@@ -76,7 +77,7 @@ auto startWps() -> bool {
   const esp_err_t startErr = esp_wifi_wps_start(0);
 #endif
   if (startErr != ESP_OK) {
-    Serial.printf("WPS start failed: 0x%x (%s)\n", static_cast<unsigned>(startErr), esp_err_to_name(startErr));
+    LOG_ERROR("WPS start failed: 0x%x (%s)\n", static_cast<unsigned>(startErr), esp_err_to_name(startErr));
     stopWps();
     return false;
   }
@@ -93,7 +94,7 @@ auto persistWpsWifiCredentials() -> bool {
   WiFi.SSID().toCharArray(connectedSsid, sizeof(connectedSsid));
 
   if (connectedSsid[0] == '\0') {
-    Serial.println(F("WPS: no SSID after successful pairing"));
+    LOG_INFO("WPS: no SSID after successful pairing\n");
     return false;
   }
 
@@ -102,11 +103,11 @@ auto persistWpsWifiCredentials() -> bool {
   PoolController::ConfigManager::setConfigured(true);  // P1: Mark device as configured
 
   if (!PoolController::ConfigManager::save()) {
-    Serial.println(F("WPS: failed to persist WiFi credentials to config"));
+    LOG_ERROR("WPS: failed to persist WiFi credentials to config\n");
     return false;
   }
 
-  Serial.printf("WPS: persisted WiFi credentials for SSID '%s'\n", connectedSsid);
+  LOG_INFO("WPS: persisted WiFi credentials for SSID '%s'\n", connectedSsid);
   return true;
 }
 
@@ -165,7 +166,7 @@ auto WpsProvisioner::runIfRequested() -> void {
     return;
   }
 
-  Serial.println(F("WPS: trigger button held, starting WPS provisioning"));
+  LOG_INFO("WPS: trigger button held, starting WPS provisioning\n");
 
   wpsProvisionState.success.store(false);
   wpsProvisionState.failed.store(false);
@@ -190,10 +191,10 @@ auto WpsProvisioner::runIfRequested() -> void {
   if (wpsProvisionState.success.load() && waitForWifiConnected(WPS_CONNECT_TIMEOUT_MS)) {
     const bool persisted = persistWpsWifiCredentials();
     if (!persisted) {
-      Serial.println(F("WPS: connected, but credentials were not persisted"));
+      LOG_INFO("WPS: connected, but credentials were not persisted\n");
     }
   } else {
-    Serial.println(F("WPS: provisioning failed or timed out"));
+    LOG_ERROR("WPS: provisioning failed or timed out\n");
     stopWps();
     // Retry with previously stored WiFi credentials.
     WiFi.begin();

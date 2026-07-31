@@ -28,6 +28,7 @@
 #include "Utils.hpp"
 #include "NetworkManager.hpp"
 #include "Nodes.hpp"
+#include "LogCapture.hpp"
 #include "SystemMonitor.hpp"
 #include "TimeClientHelper.hpp"
 #include "ConfigManager.hpp"
@@ -261,16 +262,16 @@ static void drawScrollingText(int16_t x, int16_t y, const __FlashStringHelper *t
 // ═══════════════════════════════════════════════════════════════════════════
 
 void NorviOledDisplay::begin() {
-  Serial.println("• NorviOledDisplay initializing on I2C GPIO16(SDA)/GPIO17(SCL)...");
+  LOG_INFO("• NorviOledDisplay initializing on I2C GPIO16(SDA)/GPIO17(SCL)...\n");
 
   Wire.begin(PIN_OLED_SDA, PIN_OLED_SCL);
 
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
-    Serial.println("✖ NorviOledDisplay: SSD1306 allocation failed — display disabled");
+    LOG_ERROR("✖ NorviOledDisplay: SSD1306 allocation failed — display disabled\n");
     return;
   }
 
-  Serial.println("✓ NorviOledDisplay initialized (128×64, address 0x3C)");
+  LOG_INFO("✓ NorviOledDisplay initialized (128×64, address 0x3C)\n");
 
   // ── Splash screen ──────────────────────────────────────────────────────
   display.clearDisplay();
@@ -287,10 +288,10 @@ void NorviOledDisplay::begin() {
   // ── Determine starting page based on first-boot state ──────────────────
   if (needsWiFiSetup()) {
     currentPage_ = Page::WIFI_SETUP;
-    Serial.println("→ First boot: no WiFi configured — showing WIFI_SETUP page");
+    LOG_INFO("→ First boot: no WiFi configured — showing WIFI_SETUP page\n");
   } else if (needsSensorMapping()) {
     currentPage_ = Page::SENSOR_SETUP;
-    Serial.println("→ First boot: sensors not mapped — showing SENSOR_SETUP page");
+    LOG_INFO("→ First boot: sensors not mapped — showing SENSOR_SETUP page\n");
   } else {
     currentPage_ = Page::MAIN;
     firstBootDone_ = true;
@@ -414,7 +415,7 @@ void NorviOledDisplay::confirmAction() {
       setupStep_ = SetupStep::IDLE;
       // Check if both done
       if (setupSolarDone_ && setupPoolDone_) {
-        Serial.println("→ Both sensors assigned — save mapping via long-press S3");
+        LOG_INFO("→ Both sensors assigned — save mapping via long-press S3\n");
       }
       forceRedraw_ = true;
     }
@@ -1313,7 +1314,7 @@ bool NorviOledDisplay::setupApplyAssignment() {
     }
     memcpy(setupSolarAddr_, addr, 8);
     setupSolarDone_ = true;
-    Serial.println("→ Sensor assigned as Solar");
+    LOG_INFO("→ Sensor assigned as Solar\n");
   } else {
     // If this address is already assigned as Solar, clear that
     if (setupSolarDone_ && memcmp(addr, setupSolarAddr_, 8) == 0) {
@@ -1322,7 +1323,7 @@ bool NorviOledDisplay::setupApplyAssignment() {
     }
     memcpy(setupPoolAddr_, addr, 8);
     setupPoolDone_ = true;
-    Serial.println("→ Sensor assigned as Pool");
+    LOG_INFO("→ Sensor assigned as Pool\n");
   }
 
   forceRedraw_ = true;

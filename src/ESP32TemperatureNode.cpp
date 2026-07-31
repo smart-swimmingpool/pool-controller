@@ -9,6 +9,7 @@
 
 #include "ESP32TemperatureNode.hpp"
 #include "Utils.hpp"
+#include "LogCapture.hpp"
 
 ESP32TemperatureNode::ESP32TemperatureNode(const char *id, const char *name, const int measurementInterval) {
   _id = id;
@@ -19,7 +20,7 @@ ESP32TemperatureNode::ESP32TemperatureNode(const char *id, const char *name, con
 }
 
 void ESP32TemperatureNode::begin() {
-  Serial.printf("• ESP32 Internal Temp sensor '%s' initialized.\n", _id);
+  LOG_INFO("• ESP32 Internal Temp sensor '%s' initialized.\n", _id);
 }
 
 void ESP32TemperatureNode::loop() {
@@ -34,6 +35,6 @@ void ESP32TemperatureNode::loop() {
     // standard conversion is: C = (F - 32) / 1.8
     _temperature = (temp_farenheit - 32.0f) / 1.8f;
 
-    Serial.printf("〽 ESP32 internal temp: %f °C\n", _temperature);
+    LOG_DEBUG("〽 ESP32 internal temp: %f °C\n", _temperature);
   }
 }

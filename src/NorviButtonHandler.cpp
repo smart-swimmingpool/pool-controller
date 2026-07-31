@@ -19,6 +19,7 @@
 
 #include <Arduino.h>
 #include "Config.hpp"
+#include "LogCapture.hpp"
 
 namespace PoolController {
 
@@ -43,7 +44,7 @@ uint32_t NorviButtonHandler::pressStartMs_ = 0;
 // ═══════════════════════════════════════════════════════════════════════════
 
 void NorviButtonHandler::begin() {
-  Serial.printf("• NorviButtonHandler initializing on ADC GPIO%d...\n", PIN_BUTTON_ADC);
+  LOG_INFO("• NorviButtonHandler initializing on ADC GPIO%d...\n", PIN_BUTTON_ADC);
 
   pinMode(PIN_BUTTON_ADC, INPUT);
 
@@ -52,11 +53,11 @@ void NorviButtonHandler::begin() {
   delay(10);
   lastRaw_ = analogRead(PIN_BUTTON_ADC);
 
-  Serial.printf("  ◦ ADC initial value: %u\n", lastRaw_);
-  Serial.printf("  ◦ Button 1 ADC range: %u–%u\n", THRESH_BTN1_MIN, THRESH_BTN1_MAX);
-  Serial.printf("  ◦ Button 2 ADC range: %u–%u\n", THRESH_BTN2_MIN, THRESH_BTN2_MAX);
-  Serial.printf("  ◦ Button 3 ADC range: %u–%u\n", THRESH_BTN3_MIN, THRESH_BTN3_MAX);
-  Serial.println("✓ NorviButtonHandler initialized");
+  LOG_INFO("  ◦ ADC initial value: %u\n", lastRaw_);
+  LOG_INFO("  ◦ Button 1 ADC range: %u–%u\n", THRESH_BTN1_MIN, THRESH_BTN1_MAX);
+  LOG_INFO("  ◦ Button 2 ADC range: %u–%u\n", THRESH_BTN2_MIN, THRESH_BTN2_MAX);
+  LOG_INFO("  ◦ Button 3 ADC range: %u–%u\n", THRESH_BTN3_MIN, THRESH_BTN3_MAX);
+  LOG_INFO("✓ NorviButtonHandler initialized\n");
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -77,7 +78,7 @@ void NorviButtonHandler::loop() {
   // Add debug logging for ADC changes
   static uint16_t lastDebugAdc_ = 0xFFFF;
   if (abs(static_cast<int>(lastRaw_) - static_cast<int>(lastDebugAdc_)) > 50) {
-    Serial.printf("ADC: %u → %d\n", lastDebugAdc_, static_cast<int>(detected));
+    LOG_DEBUG("ADC: %u → %d\n", lastDebugAdc_, static_cast<int>(detected));
     lastDebugAdc_ = lastRaw_;
   }
 
