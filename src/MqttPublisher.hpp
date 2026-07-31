@@ -69,6 +69,18 @@ private:
   static void publishClimateDiscovery();
   /** @brief Publish select-entity discovery for sensor-to-role mapping (detected addresses as options). */
   static void publishSensorMappingDiscovery();
+  /**
+   * @brief Publish HA MQTT "event" component discovery for curated log events.
+   * @param objectId  Entity object id (e.g. "logs").
+   * @param name      Display name.
+   * @param icon      Optional MDI icon.
+   */
+  static void publishEventDiscovery(const char *objectId, const char *name, const char *icon = nullptr);
+  /**
+   * @brief Export new LogCapture entries as MQTT events (WARN/ERROR + curated
+   * logEvent markers). Called from publishStates(); deduplicated via s_lastExportedSeq.
+   */
+  static void exportLogEvents();
 
   static void getBaseTopic(char *buf, size_t bufSize, const char *component, const char *objectId);
   static void addDeviceInfo(JsonDocument &doc);
@@ -76,6 +88,8 @@ private:
   static void publishClimateState();
 
   static String deviceId_;
+  /** @brief Sequence watermark for the MQTT log-event export pump (LogCapture::seq). */
+  static std::uint32_t s_lastExportedSeq;
 };
 
 }  // namespace PoolController

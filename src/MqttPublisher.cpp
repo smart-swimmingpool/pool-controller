@@ -29,6 +29,7 @@
 namespace PoolController {
 
 String MqttPublisher::deviceId_ = "";
+std::uint32_t MqttPublisher::s_lastExportedSeq = 0;
 
 void MqttPublisher::begin() {
   // Generate unique MAC-based device identifier
@@ -37,6 +38,10 @@ void MqttPublisher::begin() {
   char macStr[18];
   snprintf(macStr, sizeof(macStr), "pool_controller_%02x%02x%02x", mac[3], mac[4], mac[5]);
   deviceId_ = String(macStr);
+
+  // Start the log-event export watermark at the current ring position so the
+  // pre-MQTT boot backlog (plain Info chatter) is not flooded onto the bus.
+  s_lastExportedSeq = LogCapture::lastSeq();
 
   LOG_INFO("✓ HA Discovery Device ID set to: %s\n", deviceId_.c_str());
 
@@ -69,6 +74,18 @@ struct TopicBuilder {
     return buf;
   }
 };
+
+// Curated event whitelist — MUST match the event_types in publishEventDiscovery().
+bool isKnownEventType(const char *type) {
+  static const char *const kEventTypes[] = {
+    "LOG_WARN", "LOG_ERROR", "MODE_CHANGED", "PUMP_ON", "PUMP_OFF",
+    "WIFI_CONNECTED", "WIFI_DISCONNECTED", "MQTT_CONNECTED", "MQTT_DISCONNECTED"};
+  for (const char *known : kEventTypes) {
+    if (strcmp(known, type) == 0)
+      return true;
+  }
+  return false;
+}
 }  // namespace
 
 void MqttPublisher::publishSensorDiscovery(const char *objectId, const char *name, const char *deviceClass, const char *unit,
@@ -230,6 +247,36 @@ void MqttPublisher::publishTextDiscovery(const char *objectId, const char *name,
   char payloadBuf[1024];
   serializeJson(doc, payloadBuf, sizeof(payloadBuf));
   NetworkManager::publish(cfgTopic.build("text", objectId, "/config"), payloadBuf, true);
+}
+
+void MqttPublisher::publishEventDiscovery(const char *objectId, const char *name, const char *icon) {
+  TopicBuilder cfgTopic, stateTopic;
+  JsonDocument doc;
+  doc["name"] = name;
+  doc["unique_id"] = deviceId_ + "_" + objectId;
+  doc["state_topic"] = stateTopic.build("event", objectId, "/state");
+  doc["availability_topic"] = "homeassistant/sensor/pool-controller/availability";
+  doc["platform"] = "event";
+
+  // Whitelist MUST match the curated event types parsed by exportLogEvents().
+  JsonArray eventTypes = doc["event_types"].to<JsonArray>();
+  eventTypes.add("LOG_WARN");
+  eventTypes.add("LOG_ERROR");
+  eventTypes.add("MODE_CHANGED");
+  eventTypes.add("PUMP_ON");
+  eventTypes.add("PUMP_OFF");
+  eventTypes.add("WIFI_CONNECTED");
+  eventTypes.add("WIFI_DISCONNECTED");
+  eventTypes.add("MQTT_CONNECTED");
+  eventTypes.add("MQTT_DISCONNECTED");
+
+  if (icon)
+    doc["icon"] = icon;
+  addDeviceInfo(doc);
+
+  char payloadBuf[1024];
+  serializeJson(doc, payloadBuf, sizeof(payloadBuf));
+  NetworkManager::publish(cfgTopic.build("event", objectId, "/config"), payloadBuf, true);
 }
 
 void MqttPublisher::publishTimeDiscovery(const char *objectId, const char *name, const char *icon, const char *entityCategory) {
@@ -433,6 +480,9 @@ void MqttPublisher::publishDiscovery() {
     return;
 
   LOG_INFO("Publishing HA Discovery Payloads...\n");
+
+  // ── Log event entity (HA "event" component) ──
+  publishEventDiscovery("logs", "Pool Controller Logs", "mdi:clipboard-text-outline");
 
   // ── Primary Sensors (no entity_category — shown on device front page) ──
   publishSensorDiscovery("pool-temp", "Pool Temperature", "temperature", "°C", "mdi:pool", nullptr, "measurement");
@@ -736,7 +786,81 @@ void MqttPublisher::publishStates() {
     getBaseTopic(topic, sizeof(topic), "binary_sensor", "mqtt-status");
     strlcat(topic, "/state", sizeof(topic));
     NetworkManager::publish(topic, NetworkManager::isMqttConnected() ? "ON" : "OFF", true);
+
+    // Export new log entries as MQTT events (WARN/ERROR + curated logEvent markers)
+    exportLogEvents();
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Log-event export pump (WARN/ERROR + curated logEvent markers)
+// ═══════════════════════════════════════════════════════════════════════
+
+void MqttPublisher::exportLogEvents() {
+  // Batch snapshot of the ring (static: keeps ~9 KB off the loop stack).
+  static LogEntry entries[LogCapture::LOG_BUFFER_ENTRIES];
+  const size_t count = LogCapture::getEntries(
+    s_lastExportedSeq, LogCapture::LOG_BUFFER_ENTRIES, LogLevel::Info, entries, LogCapture::LOG_BUFFER_ENTRIES);
+  if (count == 0)
+    return;
+
+  TopicBuilder stateTopic;
+  for (size_t i = 0; i < count; ++i) {
+    const LogEntry &entry = entries[i];
+    const char *body = entry.message;
+    const char *eventType = nullptr;
+    char typeBuf[32];
+
+    // Parse the "[TYPE] message" marker written by LogCapture::logEvent().
+    if (body[0] == '[') {
+      const char *close = strchr(body, ']');
+      if (close != nullptr && close > body + 1) {
+        const size_t len = static_cast<size_t>(close - body - 1);
+        if (len < sizeof(typeBuf)) {
+          memcpy(typeBuf, body + 1, len);
+          typeBuf[len] = '\0';
+          if (isKnownEventType(typeBuf)) {
+            eventType = typeBuf;
+            body = close + 1;
+            while (*body == ' ')
+              ++body;
+          }
+        }
+      }
+    }
+
+    // WARN/ERROR entries without a curated marker → LOG_WARN/LOG_ERROR.
+    // Info/Debug chatter is skipped (volume control — nothing on MQTT).
+    if (eventType == nullptr) {
+      switch (entry.level) {
+        case LogLevel::Warning: eventType = "LOG_WARN"; break;
+        case LogLevel::Error: eventType = "LOG_ERROR"; break;
+        default: continue;
+      }
+    }
+
+    // HA event-entity state: {"event_type": "...", "message": "..."}
+    JsonDocument doc;
+    doc["event_type"] = eventType;
+    doc["message"] = body;
+    char payload[256];
+    serializeJson(doc, payload, sizeof(payload));
+    NetworkManager::publish(stateTopic.build("event", "logs", "/state"), payload, false);
+
+    // Raw JSON-line for external tools (WARN/ERROR only — not Info-level events).
+    if (entry.level == LogLevel::Warning || entry.level == LogLevel::Error) {
+      JsonDocument rawDoc;
+      rawDoc["seq"] = entry.seq;
+      rawDoc["t"] = entry.uptimeMs;
+      rawDoc["level"] = LogCapture::levelName(entry.level);
+      rawDoc["msg"] = entry.message;
+      char rawBuf[256];
+      serializeJson(rawDoc, rawBuf, sizeof(rawBuf));
+      NetworkManager::publish("pool-controller/log", rawBuf, false);
+    }
+  }
+
+  s_lastExportedSeq = LogCapture::lastSeq();
 }
 
 // ═══════════════════════════════════════════════════════════════════════
