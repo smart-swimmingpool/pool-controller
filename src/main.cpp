@@ -11,6 +11,7 @@
  */
 
 #include <Arduino.h>
+#include "LogCapture.hpp"
 #include "PoolController.hpp"
 
 /** @brief Singleton context owning all controller subsystems. */
@@ -34,6 +35,9 @@ auto setup() -> void {
   }
 
   context.setup();
+
+  // Central logging service — initialized after Serial is guaranteed up.
+  PoolController::LogCapture::begin();
 }
 
 /**
