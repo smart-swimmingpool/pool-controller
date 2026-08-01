@@ -758,7 +758,7 @@ int run_mqttpublisher_tests() {
     } else {
       char msg[160];
       snprintf(msg, sizeof(msg), "clean=%d ev2=%s raw2=%s (no retry)", clean ? 1 : 0,
-               ev2 != nullptr ? ev2->payload.c_str() : "NULL", raw2 != nullptr ? raw2->payload.c_str() : "NULL");
+        ev2 != nullptr ? ev2->payload.c_str() : "NULL", raw2 != nullptr ? raw2->payload.c_str() : "NULL");
       test_fail(__FILE__, __LINE__, msg);
       failed++;
     }

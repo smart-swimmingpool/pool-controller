@@ -266,7 +266,7 @@ int run_logcapture_tests() {
     size_t ringLen = strnlen(entries[0].message, sizeof(entries[0].message));
 
     rc = (got == 1 && ringLen == LOG_MSG_SIZE - 1 && serialOut.size() == sizeof(longMsg) - 1 &&
-          memcmp(serialOut.data(), longMsg, sizeof(longMsg) - 1) == 0)
+           memcmp(serialOut.data(), longMsg, sizeof(longMsg) - 1) == 0)
       ? 0
       : 1;
     if (rc == 0) {
@@ -275,7 +275,7 @@ int run_logcapture_tests() {
     } else {
       char msg[128];
       snprintf(msg, sizeof(msg), "ring len %u (want %d), serial len %zu (want %zu)", (unsigned)ringLen, LOG_MSG_SIZE - 1,
-               serialOut.size(), sizeof(longMsg) - 1);
+        serialOut.size(), sizeof(longMsg) - 1);
       test_fail(__FILE__, __LINE__, msg);
       failed++;
     }
