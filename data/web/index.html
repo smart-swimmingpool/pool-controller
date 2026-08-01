@@ -68,6 +68,9 @@
   <div class="more-sheet-overlay" onclick="toggleMoreMenu()"></div>
   <div class="more-sheet-panel">
     <div class="more-sheet-handle"></div>
+    <div class="more-sheet-item" onclick="switchTab('logs')">
+      <span class="more-sheet-icon">📜</span> Logs
+    </div>
     <div class="more-sheet-item" onclick="switchTab('wifi')">
       <span class="more-sheet-icon">📶</span> WiFi
     </div>
@@ -508,6 +511,18 @@
   <div style="text-align: center; font-size: 0.65rem; color: var(--text-muted); opacity: 0.6; margin-top: 0.5rem;">
     Open Source · MIT
   </div>
+</div>
+
+<!-- ── Log Console Tab ── -->
+<div id="tab-logs" class="tab-content" style="display:none;">
+  <div style="display:flex; gap:0.5rem; align-items:center; margin-bottom:0.75rem; flex-wrap:wrap;">
+    <button class="log-chip active" data-level="info">Alle</button>
+    <button class="log-chip" data-level="warning">Warnungen</button>
+    <button class="log-chip" data-level="error">Fehler</button>
+    <button id="btnClearLogs" style="display:none; margin-left:auto; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:8px; padding:0.35rem 0.9rem; font-size:0.75rem; color:#ef4444; cursor:pointer;" onclick="clearLogs()">🗑 Clear</button>
+  </div>
+  <div id="logConsole"></div>
+  <div id="logConsoleEmpty" style="display:none; text-align:center; padding:2rem; color:var(--text-muted); font-size:0.85rem; opacity:0.5;">— No log entries yet —</div>
 </div>
 
 <script src="/app.js"></script>

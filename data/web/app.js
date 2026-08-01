@@ -12,7 +12,7 @@ function switchTab(tabName) {
 
   // Update bottom tab bar active state.
   // Tabs under "More" (wifi, mqtt, system, about) keep "more" highlighted.
-  const moreTabs = ['wifi', 'mqtt', 'system', 'about'];
+  const moreTabs = ['logs', 'wifi', 'mqtt', 'system', 'about'];
   const barTab = moreTabs.includes(tabName) ? 'more' : tabName;
   document.querySelectorAll('.tab-bar-item').forEach(item => {
     item.classList.toggle('active', item.dataset.tab === barTab);
@@ -262,10 +262,10 @@ function updateAuthUI() {
   const sensorsTabBtn = document.querySelector('.tab-bar-item[data-tab="sensors"]');
   if (sensorsTabBtn) sensorsTabBtn.style.display = isAuthenticated ? '' : 'none';
 
-  // More menu: hide admin items (wifi, mqtt, system)
+  // More menu: hide admin items (wifi, mqtt, system, logs)
   for (const item of document.querySelectorAll('.more-sheet-item')) {
     const text = item.textContent.trim().toLowerCase();
-    if (text === 'wifi' || text === 'mqtt' || text.startsWith('system') || text.startsWith('🔒')) {
+    if (text === 'wifi' || text === 'mqtt' || text.startsWith('system') || text.startsWith('🔒') || text.includes('logs')) {
       item.style.display = isAuthenticated ? '' : 'none';
     }
   }
@@ -294,12 +294,12 @@ function updateAuthUI() {
     }
   }
 
-  // System / WiFi / MQTT / Sensors tabs: fully hide when not authenticated. Never
+  // System / WiFi / MQTT / Logs / Sensors tabs: fully hide when not authenticated. Never
   // force-show here — that previously used `''` (empty string), which falls back
   // to the CSS default `display:block`, making the tab visible again on every 2s
   // poll regardless of which tab switchTab() had actually activated (the reported
   // "always jumps back to WiFi Settings" bug).
-  for (const id of ['tab-system', 'tab-wifi', 'tab-mqtt']) {
+  for (const id of ['tab-system', 'tab-wifi', 'tab-mqtt', 'tab-logs']) {
     const el = document.getElementById(id);
     if (el && !isAuthenticated) el.style.display = 'none';
   }
@@ -1001,9 +1001,79 @@ async function saveSensorMapping() {
   }
 }
 
+// ── Log Console ──
+
+var lastLogSeq = 0;
+var logLevelFilter = 'info';
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function loadLogs() {
+  var wasAtBottom, consoleEl = document.getElementById('logConsole');
+  if (!consoleEl) return;
+  wasAtBottom = consoleEl.scrollTop + consoleEl.clientHeight >= consoleEl.scrollHeight - 40;
+  fetch('/api/logs?since=' + lastLogSeq + '&count=200&level=' + logLevelFilter)
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      var empty = document.getElementById('logConsoleEmpty');
+      if (!data.entries || data.entries.length === 0) {
+        if (!consoleEl.hasChildNodes()) empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+      data.entries.forEach(function(entry) {
+        var line = document.createElement('div');
+        line.className = 'log-entry log-' + entry.level;
+        line.textContent = entry.msg;
+        consoleEl.appendChild(line);
+      });
+      lastLogSeq = data.next;
+      if (wasAtBottom && data.entries.length > 0) {
+        consoleEl.scrollTop = consoleEl.scrollHeight;
+      }
+    })
+    .catch(function() { /* silent */ });
+}
+
+function clearLogs() {
+  fetch('/api/logs/clear', { method: 'POST' }).then(function() {
+    var c = document.getElementById('logConsole');
+    if (c) c.textContent = '';
+    var e = document.getElementById('logConsoleEmpty');
+    if (e) e.style.display = 'block';
+    lastLogSeq = 0;
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.log-chip').forEach(function(chip) {
+    chip.addEventListener('click', function() {
+      document.querySelectorAll('.log-chip').forEach(function(c) { c.classList.remove('active'); });
+      this.classList.add('active');
+      logLevelFilter = this.dataset.level;
+      lastLogSeq = 0;
+      var c = document.getElementById('logConsole');
+      if (c) c.textContent = '';
+      var e = document.getElementById('logConsoleEmpty');
+      if (e) e.style.display = 'none';
+      loadLogs();
+    });
+  });
+});
+
+var _origUpdateAuthUI = (typeof updateAuthUI === 'function') ? updateAuthUI : function(){};
+updateAuthUI = function() {
+  _origUpdateAuthUI();
+  var clearBtn = document.getElementById('btnClearLogs');
+  if (clearBtn) clearBtn.style.display = isAuthenticated ? 'inline-block' : 'none';
+};
+
 // ── Init ──
 
 setInterval(loadTelemetry, 2000);
+setInterval(loadLogs, 2000);
 
 window.onload = function() {
   loadTelemetry();
