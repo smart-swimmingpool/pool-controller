@@ -1011,6 +1011,13 @@ function escapeHtml(s) {
 }
 
 function loadLogs() {
+  // Only poll while the Logs tab is actually visible: the unconditional 2s
+  // timer used to keep appending DOM nodes (and fetching) in hidden tabs,
+  // growing the document by tens of thousands of nodes per day.
+  if (document.visibilityState !== 'visible') return;
+  var logTab = document.getElementById('tab-logs');
+  if (!logTab || logTab.style.display === 'none') return;
+
   var wasAtBottom, consoleEl = document.getElementById('logConsole');
   if (!consoleEl) return;
   wasAtBottom = consoleEl.scrollTop + consoleEl.clientHeight >= consoleEl.scrollHeight - 40;
@@ -1029,6 +1036,11 @@ function loadLogs() {
         line.textContent = entry.msg;
         consoleEl.appendChild(line);
       });
+      // Evict oldest entries beyond the client-side cap so an always-open
+      // dashboard cannot grow the log DOM without bound.
+      while (consoleEl.childNodes.length > 500) {
+        consoleEl.removeChild(consoleEl.firstChild);
+      }
       lastLogSeq = data.next;
       if (wasAtBottom && data.entries.length > 0) {
         consoleEl.scrollTop = consoleEl.scrollHeight;
