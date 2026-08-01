@@ -797,8 +797,10 @@ int run_mqttpublisher_tests() {
     // The WARN event must be exported exactly once (nested call deferred).
     size_t evCount = 0, rawCount = 0;
     for (const auto &m : mqttCapture.published) {
-      if (m.topic == "homeassistant/event/pool-controller/logs/state") evCount++;
-      if (m.topic == "pool-controller/log") rawCount++;
+      if (m.topic == "homeassistant/event/pool-controller/logs/state")
+        evCount++;
+      if (m.topic == "pool-controller/log")
+        rawCount++;
     }
     if (evCount != 1) {
       test_fail(__FILE__, __LINE__, "event state published != 1 times (nested export interleaved)");
@@ -816,7 +818,8 @@ int run_mqttpublisher_tests() {
     MqttPublisher::publishStates();
     size_t evAfter = 0;
     for (const auto &m : mqttCapture.published)
-      if (m.topic == "homeassistant/event/pool-controller/logs/state") evAfter++;
+      if (m.topic == "homeassistant/event/pool-controller/logs/state")
+        evAfter++;
     if (evAfter != 1) {
       test_fail(__FILE__, __LINE__, "watermark regressed — follow-up pass re-exported event");
       missing++;
