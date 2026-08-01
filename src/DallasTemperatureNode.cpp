@@ -201,15 +201,15 @@ void DallasTemperatureNode::beginMeasurement() {
   if (sharedSensor_ && numberOfDevices > 0) {
     // Shared bus: only the master drives the conversion for all sensors.
     if (isBusMaster_) {
-      PoolController::SystemMonitor::feedWatchdog();
+      PoolController::SystemMonitor::feedWatchdogFromTask();
       activeSensor->requestTemperatures();
-      PoolController::SystemMonitor::feedWatchdog();
+      PoolController::SystemMonitor::feedWatchdogFromTask();
     }
   } else if (numberOfDevices > 0) {
     // Dedicated bus: start our own conversion.
-    PoolController::SystemMonitor::feedWatchdog();
+    PoolController::SystemMonitor::feedWatchdogFromTask();
     activeSensor->requestTemperatures();
-    PoolController::SystemMonitor::feedWatchdog();
+    PoolController::SystemMonitor::feedWatchdogFromTask();
   }
 }
 

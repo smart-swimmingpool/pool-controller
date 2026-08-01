@@ -14,6 +14,7 @@
 
 #include "DallasTemperatureNode.hpp"
 #include "ESP32TemperatureNode.hpp"
+#include "SystemMonitor.hpp"
 
 namespace PoolController {
 
@@ -41,6 +42,8 @@ void sensorTaskFunc(void *) {
       solarTemperatureNode.beginMeasurement();
       // Yield while the conversion runs — never block the control loop.
       vTaskDelay(pdMS_TO_TICKS(CONVERSION_DELAY_MS));
+      // Feed from the task context so long I/O waits can't starve the WDT.
+      SystemMonitor::feedWatchdogFromTask();
       solarTemperatureNode.finishMeasurement();
       poolTemperatureNode.finishMeasurement();
     }

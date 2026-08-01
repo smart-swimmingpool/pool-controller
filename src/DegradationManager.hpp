@@ -102,11 +102,15 @@ public:
   static void unforceSafeMode();
 
 private:
-  static bool sensorsEverReported_;
+  // Written by reportSensorStatus() from SensorTask (Core 0), read by
+  // evaluate() on the control loop (Core 1). Word-sized volatile access
+  // is atomic on ESP32 — readers may see one-cycle-stale flags but never
+  // torn values, which is acceptable for degradation heuristics.
+  static volatile bool sensorsEverReported_;
   static DegradationLevel currentLevel_;
   static DegradationLevel previousLevel_;
-  static bool poolSensorOk_;
-  static bool solarSensorOk_;
+  static volatile bool poolSensorOk_;
+  static volatile bool solarSensorOk_;
   static bool forcedSafeMode_;
   static unsigned long lastEvaluationMs_;
 

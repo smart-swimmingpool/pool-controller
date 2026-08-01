@@ -81,6 +81,7 @@ set(TEST_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_telemetry_queue.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_sensor_slots.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_core_scheduler.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_degradation_manager.cpp
 )
 
 add_executable(test_runner

@@ -71,6 +71,13 @@ public:
   static void feedWatchdog() { esp_task_wdt_reset(); }
 
   /**
+   * @brief Feed the watchdog from a non-loop task (SensorTask, PublishTask, DisplayTask).
+   * esp_task_wdt_reset() is safe to call from any task; this wrapper exists
+   * so I/O tasks can feed during long I/O waits without touching loop state.
+   */
+  static void feedWatchdogFromTask() { esp_task_wdt_reset(); }
+
+  /**
    * Check memory status and reboot if critically low.
    * Call this periodically (e.g., every 10 seconds).
    */
