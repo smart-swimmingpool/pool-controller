@@ -43,6 +43,7 @@
 #ifdef NORVI_AE01_R
 #include "NorviOledDisplay.hpp"
 #include "NorviButtonHandler.hpp"
+#include "DisplayTask.hpp"
 #endif
 
 #include "Config.hpp"
@@ -488,8 +489,9 @@ auto PoolControllerContext::loop() -> void {
   StatusLed::loop();
 
 #ifdef NORVI_AE01_R
-  // Update NORVI OLED display and read front-panel buttons
-  NorviOledDisplay::loop();
+  // Advance display state machine (Core 1) and request render on DisplayTask (Core 0).
+  NorviOledDisplay::update();
+  DisplayTask::requestRender();
   NorviButtonHandler::loop();
 #endif
 

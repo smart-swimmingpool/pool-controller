@@ -75,11 +75,16 @@ public:
   static void begin();
 
   /**
-   * @brief Update the display periodically.
-   * Handles auto-return to MAIN, burn-in shift, and page redraw.
-   * Must be called from PoolController::loop().
+   * @brief Advance the display state machine (page nav, auto-return, burn-in).
+   * Runs on the control loop (Core 1); cheap, non-blocking.
    */
-  static void loop();
+  static void update();
+
+  /**
+   * @brief Redraw the current page and push to the OLED over I2C.
+   * Runs on DisplayTask (Core 0). Reads temps from SensorSlots.
+   */
+  static void render();
 
   /** @brief Previous page (S1 / UP). */
   static void previousPage();
@@ -219,9 +224,12 @@ private:
   // ═════════════════════════════════════════════════════════════════════
 
   static Page currentPage_;
-  static uint32_t lastUpdateMs_;
+  // Written by the control loop (Core 1) and read/reset by DisplayTask
+  // (Core 0): word-sized access is atomic on ESP32, so a one-cycle-stale
+  // redraw decision is acceptable.
+  static volatile uint32_t lastUpdateMs_;
   static constexpr uint32_t UPDATE_INTERVAL_MS{2000};
-  static bool forceRedraw_;
+  static volatile bool forceRedraw_;
 
   // ── Idle auto-return ─────────────────────────────────────────────────
   static uint32_t lastButtonPressMs_;

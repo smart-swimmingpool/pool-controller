@@ -14,6 +14,9 @@
 
 #include "SensorTask.hpp"
 #include "PublishTask.hpp"
+#ifdef NORVI_AE01_R
+#include "DisplayTask.hpp"
+#endif
 
 namespace PoolController {
 
@@ -23,6 +26,9 @@ void CoreScheduler::begin() {
 
   SensorTask::start(TASK_PRIORITY_SENSOR, TASK_STACK_SENSOR, core0);
   PublishTask::start(TASK_PRIORITY_PUBLISH, TASK_STACK_PUBLISH, core0);
+#ifdef NORVI_AE01_R
+  DisplayTask::start(TASK_PRIORITY_DISPLAY, TASK_STACK_DISPLAY, core0);
+#endif
 }
 
 void CoreScheduler::logStackWatermarks() {
@@ -33,6 +39,9 @@ void CoreScheduler::logStackWatermarks() {
   lastLog = millis();
   SensorTask::logStackWatermark();
   PublishTask::logStackWatermark();
+#ifdef NORVI_AE01_R
+  DisplayTask::logStackWatermark();
+#endif
 }
 
 }  // namespace PoolController
