@@ -71,6 +71,9 @@ public:
   /**
    * Copies up to min(maxCount, outCapacity) entries newer than sinceSeq with
    * level >= minLevel into out. Returns the number of entries written.
+   * A sinceSeq higher than lastSeq() (stale cursor from before a reboot, where
+   * begin() restarted the sequence at 0) is treated as 0, so the whole
+   * currently-visible ring is returned instead of nothing.
    */
   static std::size_t getEntries(
     std::uint32_t sinceSeq, std::size_t maxCount, LogLevel minLevel, LogEntry *out, std::size_t outCapacity);

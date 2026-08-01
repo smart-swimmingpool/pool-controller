@@ -145,6 +145,30 @@ int run_logcapture_tests() {
     test_suite_end("LogCapture::since", rc == 0 ? 1 : 0, rc != 0 ? 1 : 0);
   }
 
+  // ── Test: stale cursor from before a reboot is clamped to 0 ──
+  {
+    test_begin("LogCapture", "stale pre-reboot cursor returns whole ring");
+    LogCapture::begin();
+    for (size_t i = 0; i < 5; ++i) {
+      LogCapture::log(LogLevel::Info, "boot %zu", i);
+    }
+    // begin() restarts the sequence at 0, so a cursor persisted across the
+    // reboot (higher than every new seq) must not suppress the whole ring.
+    LogEntry entries[8];
+    size_t got = LogCapture::getEntries(1000, 8, LogLevel::Debug, entries, 8);
+    rc = (got == 5 && entries[0].seq == 1 && entries[4].seq == 5) ? 0 : 1;
+    if (rc == 0) {
+      test_pass(__FILE__, __LINE__);
+      passed++;
+    } else {
+      char msg[64];
+      snprintf(msg, sizeof(msg), "Expected 5 entries seq 1..5, got %u", (unsigned)got);
+      test_fail(__FILE__, __LINE__, msg);
+      failed++;
+    }
+    test_suite_end("LogCapture::stale_cursor", rc == 0 ? 1 : 0, rc != 0 ? 1 : 0);
+  }
+
   // ── Test: level filter ──
   {
     test_begin("LogCapture", "level filter >= Warning");

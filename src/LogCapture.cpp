@@ -110,6 +110,11 @@ std::size_t LogCapture::getEntries(
 
   std::size_t written = 0;
   LOG_CRITICAL_ENTER();
+  // A `since` cursor from before a reboot (begin() restarts s_seq at 0) is
+  // higher than every new entry: clamp it to 0 so the client receives the
+  // whole currently-visible ring (e.g. boot diagnostics) instead of nothing
+  // until the sequence wraps past the stale cursor.
+  const std::uint32_t effectiveSince = (sinceSeq > s_seq) ? 0 : sinceSeq;
   // Entries written since the last clear (watermark hides pre-clear entries).
   const std::uint32_t postClear = s_seq - s_clearedSeq;
   const std::size_t visible = (postClear < LOG_BUFFER_ENTRIES) ? static_cast<std::size_t>(postClear) : LOG_BUFFER_ENTRIES;
@@ -118,7 +123,7 @@ std::size_t LogCapture::getEntries(
 
   for (std::size_t i = 0; i < visible && written < cap; ++i) {
     const LogEntry &entry = s_buffer[(oldest + i) % LOG_BUFFER_ENTRIES];
-    if (entry.seq <= sinceSeq) {
+    if (entry.seq <= effectiveSince) {
       continue;
     }
     if (entry.level < minLevel) {
