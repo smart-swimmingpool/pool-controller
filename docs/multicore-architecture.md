@@ -27,8 +27,8 @@ separation**:
 
 | Core | Role | Contents |
 | ---- | ---- | -------- |
-| **Core 0** (PRO_CPU) | I/O core | SensorTask (DS18B20 + internal temp), DisplayTask (OLED/buttons, NORVI only), PublishTask (MQTT telemetry serialization) |
-| **Core 1** (APP_CPU) | Control core | Arduino `loop()`: watchdog, degradation, rules, relays, StatusLED, async network managers, OTA |
+| **Core 0** (PRO_CPU) | I/O core | SensorTask (DS18B20 + internal temp), DisplayTask (OLED rendering, NORVI only), PublishTask (MQTT telemetry serialization) |
+| **Core 1** (APP_CPU) | Control core | Arduino `loop()`: watchdog, degradation, rules, relays, StatusLED, async network managers, OTA, front-panel button scan |
 
 ## Why
 
@@ -64,8 +64,8 @@ the control loop on Core 1.
 ```text
 SensorTask (Core 0) ── lock-free slots ──▶ control loop (Core 1): rules/relays/watchdog
 SensorTask ── status ────────────────────▶ DegradationManager (Core 1)
-control loop ── snapshot ────────────────▶ DisplayTask (Core 0, NORVI)
-DisplayTask ── button queue ─────────────▶ control loop
+control loop ── update() + render request ─▶ DisplayTask (Core 0, NORVI)
+button scan stays on the control loop (Core 1) — callbacks mutate loop singletons
 control loop ── telemetry queue ─────────▶ PublishTask (Core 0) ──▶ MQTT
 control loop ── async network/OTA ──────── (unchanged, Core 1)
 ```
@@ -74,9 +74,13 @@ Every cross-task data path is **single-writer**:
 
 - Sensor values: lock-free slots (atomic/single-word) — SensorTask writes, control
   loop reads.
-- Display state: mutex-protected snapshot — control loop writes, DisplayTask reads.
-- Button input: small queue / atomic flags — DisplayTask writes, control loop reads.
-- Telemetry: fixed-capacity FreeRTOS queue — control loop enqueues, PublishTask
+- Display state: `volatile` render-request flag — control loop requests, DisplayTask
+  renders (word-sized access is atomic on ESP32).
+- Button input: stays on the control loop — button callbacks mutate control-loop
+  singletons (`operationModeNode`, `poolPumpNode`), so scanning on Core 0 would
+  violate the single-writer rule. The OLED *rendering* (blocking I2C work) is what
+  runs on Core 0.
+- Telemetry: fixed-capacity SPSC ring buffer — control loop enqueues, PublishTask
   serializes and publishes.
 
 The MQTT *connection* and the web/OTA managers stay on the control loop — they are

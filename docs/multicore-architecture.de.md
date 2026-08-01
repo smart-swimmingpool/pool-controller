@@ -27,8 +27,8 @@ umstrukturiert:
 
 | Kern | Rolle | Inhalt |
 | ---- | ----- | ------ |
-| **Kern 0** (PRO_CPU) | I/O-Kern | SensorTask (DS18B20 + interner Temperatursensor), DisplayTask (OLED/Taster, nur NORVI), PublishTask (MQTT-Telemetrie-Serialisierung) |
-| **Kern 1** (APP_CPU) | Regel-Kern | Arduino-`loop()`: Watchdog, Degradation, Regeln, Relais, Status-LED, asynchrone Netzwerk-Manager, OTA |
+| **Kern 0** (PRO_CPU) | I/O-Kern | SensorTask (DS18B20 + interner Temperatursensor), DisplayTask (OLED-Rendering, nur NORVI), PublishTask (MQTT-Telemetrie-Serialisierung) |
+| **Kern 1** (APP_CPU) | Regel-Kern | Arduino-`loop()`: Watchdog, Degradation, Regeln, Relais, Status-LED, asynchrone Netzwerk-Manager, OTA, Frontpanel-Tasterabfrage |
 
 ## Warum
 
@@ -64,8 +64,8 @@ die Regelschleife auf Kern 1 also nie verdrängen.
 ```text
 SensorTask (Kern 0) ── lock-free Slots ──▶ Regelschleife (Kern 1): Regeln/Relais/Watchdog
 SensorTask ── Status ────────────────────▶ DegradationManager (Kern 1)
-Regelschleife ── Snapshot ───────────────▶ DisplayTask (Kern 0, NORVI)
-DisplayTask ── Taster-Queue ─────────────▶ Regelschleife
+Regelschleife ── update() + Render-Anforderung ─▶ DisplayTask (Kern 0, NORVI)
+Tasterabfrage bleibt in der Regelschleife (Kern 1) — Callbacks mutieren Loop-Singletons
 Regelschleife ── Telemetrie-Queue ────────▶ PublishTask (Kern 0) ──▶ MQTT
 Regelschleife ── asynchrones Netzwerk/OTA ── (unverändert, Kern 1)
 ```
@@ -73,9 +73,13 @@ Regelschleife ── asynchrones Netzwerk/OTA ── (unverändert, Kern 1)
 Jeder task-übergreifende Datenpfad ist **Single-Writer**:
 
 - Sensorwerte: lock-free Slots (atomar/ein Wort) — SensorTask schreibt, Regelschleife liest.
-- Display-Zustand: Mutex-geschützter Snapshot — Regelschleife schreibt, DisplayTask liest.
-- Taster-Eingaben: kleine Queue / atomare Flags — DisplayTask schreibt, Regelschleife liest.
-- Telemetrie: FreeRTOS-Queue mit fester Kapazität — Regelschleife stellt ein,
+- Display-Zustand: `volatile`-Render-Anforderungs-Flag — Regelschleife fordert an,
+  DisplayTask rendert (Wortzugriff ist auf dem ESP32 atomar).
+- Taster-Eingaben: bleiben in der Regelschleife — die Taster-Callbacks mutieren
+  Loop-Singletons (`operationModeNode`, `poolPumpNode`); eine Abfrage auf Kern 0
+  würde die Single-Writer-Regel verletzen. Ausgelagert ist nur das OLED-*Rendering*
+  (blockierende I2C-Arbeit).
+- Telemetrie: SPSC-Ringpuffer mit fester Kapazität — Regelschleife stellt ein,
   PublishTask serialisiert und publiziert.
 
 Die MQTT-*Verbindung* und die Web-/OTA-Manager bleiben in der Regelschleife — sie
