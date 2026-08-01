@@ -64,8 +64,8 @@ void RuleAuto::loop() {
       if ((getPoolTemperature() <= (getPoolMaxTemperature() - hyst)) &&
         (getPoolTemperature() <= (getSolarTemperature() - hyst)) &&
         ((getSolarMinTemperature() + hyst) <= getSolarTemperature())) {
-        LOG_INFO("  § RuleAuto: Pool temp (%f) below max temp minus hysteresis (%f). Switch solar on\n",
-          getPoolTemperature(), getPoolMaxTemperature() - hyst);
+        LOG_INFO("  § RuleAuto: Pool temp (%f) below max temp minus hysteresis (%f). Switch solar on\n", getPoolTemperature(),
+          getPoolMaxTemperature() - hyst);
         _solarRelay->setSwitch(true);
       } else {
         LOG_INFO("  § RuleAuto: Solar off -> no change\n");

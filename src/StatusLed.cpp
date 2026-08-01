@@ -41,8 +41,7 @@ void StatusLed::begin() {
     ledPin_ = static_cast<uint8_t>(LED_BUILTIN);
     LOG_INFO("• StatusLed using LED_BUILTIN (GPIO %d)\n", ledPin_);
   } else {
-    LOG_INFO("• StatusLed using config pin GPIO %d (board-specific, LED_BUILTIN overridden)\n",
-             ledPin_);
+    LOG_INFO("• StatusLed using config pin GPIO %d (board-specific, LED_BUILTIN overridden)\n", ledPin_);
   }
 #else
   LOG_INFO("• StatusLed using config default GPIO %d (no LED_BUILTIN)\n", ledPin_);

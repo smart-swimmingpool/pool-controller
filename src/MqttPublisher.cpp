@@ -77,9 +77,8 @@ struct TopicBuilder {
 
 // Curated event whitelist — MUST match the event_types in publishEventDiscovery().
 bool isKnownEventType(const char *type) {
-  static const char *const kEventTypes[] = {
-    "LOG_WARN", "LOG_ERROR", "MODE_CHANGED", "PUMP_ON", "PUMP_OFF",
-    "WIFI_CONNECTED", "WIFI_DISCONNECTED", "MQTT_CONNECTED", "MQTT_DISCONNECTED"};
+  static const char *const kEventTypes[] = {"LOG_WARN", "LOG_ERROR", "MODE_CHANGED", "PUMP_ON", "PUMP_OFF", "WIFI_CONNECTED",
+    "WIFI_DISCONNECTED", "MQTT_CONNECTED", "MQTT_DISCONNECTED"};
   for (const char *known : kEventTypes) {
     if (strcmp(known, type) == 0)
       return true;
@@ -833,9 +832,14 @@ void MqttPublisher::exportLogEvents() {
     // Info/Debug chatter is skipped (volume control — nothing on MQTT).
     if (eventType == nullptr) {
       switch (entry.level) {
-        case LogLevel::Warning: eventType = "LOG_WARN"; break;
-        case LogLevel::Error: eventType = "LOG_ERROR"; break;
-        default: continue;
+      case LogLevel::Warning:
+        eventType = "LOG_WARN";
+        break;
+      case LogLevel::Error:
+        eventType = "LOG_ERROR";
+        break;
+      default:
+        continue;
       }
     }
 

@@ -42,9 +42,9 @@ enum class LogLevel : std::uint8_t { Debug = 0, Info, Warning, Critical, Error }
  * A single captured log entry. Fixed size — no heap.
  */
 struct LogEntry {
-  std::uint32_t seq;       //!< monotonically increasing, used for since-polling
-  std::uint32_t uptimeMs;  //!< millis() at capture time
-  LogLevel level;          //!< severity
+  std::uint32_t seq;           //!< monotonically increasing, used for since-polling
+  std::uint32_t uptimeMs;      //!< millis() at capture time
+  LogLevel level;              //!< severity
   char message[LOG_MSG_SIZE];  //!< formatted message (null-terminated)
 };
 
@@ -65,8 +65,8 @@ public:
    * Copies up to min(maxCount, outCapacity) entries newer than sinceSeq with
    * level >= minLevel into out. Returns the number of entries written.
    */
-  static std::size_t getEntries(std::uint32_t sinceSeq, std::size_t maxCount,
-                                LogLevel minLevel, LogEntry *out, std::size_t outCapacity);
+  static std::size_t getEntries(
+    std::uint32_t sinceSeq, std::size_t maxCount, LogLevel minLevel, LogEntry *out, std::size_t outCapacity);
   /** Sequence number of the last assigned entry (0 if none yet). */
   static std::uint32_t lastSeq();
   /** Empties the ring. s_seq is NOT reset so polling clients keep working. */
@@ -82,8 +82,8 @@ private:
   static void store(LogLevel level, const char *message);
 
   static LogEntry s_buffer[LOG_BUFFER_ENTRIES];
-  static std::size_t s_head;        //!< next free slot
-  static std::uint32_t s_seq;       //!< last assigned sequence number
+  static std::size_t s_head;          //!< next free slot
+  static std::uint32_t s_seq;         //!< last assigned sequence number
   static std::uint32_t s_clearedSeq;  //!< watermark: entries <= this are hidden after clear()
   static bool s_logToSerial;
 };
@@ -91,6 +91,6 @@ private:
 }  // namespace PoolController
 
 #define LOG_DEBUG(...) PoolController::LogCapture::log(PoolController::LogLevel::Debug, __VA_ARGS__)
-#define LOG_INFO(...)  PoolController::LogCapture::log(PoolController::LogLevel::Info, __VA_ARGS__)
-#define LOG_WARN(...)  PoolController::LogCapture::log(PoolController::LogLevel::Warning, __VA_ARGS__)
+#define LOG_INFO(...) PoolController::LogCapture::log(PoolController::LogLevel::Info, __VA_ARGS__)
+#define LOG_WARN(...) PoolController::LogCapture::log(PoolController::LogLevel::Warning, __VA_ARGS__)
 #define LOG_ERROR(...) PoolController::LogCapture::log(PoolController::LogLevel::Error, __VA_ARGS__)

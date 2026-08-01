@@ -99,8 +99,8 @@ void LogCapture::store(LogLevel level, const char *message) {
   }
 }
 
-std::size_t LogCapture::getEntries(std::uint32_t sinceSeq, std::size_t maxCount,
-                                   LogLevel minLevel, LogEntry *out, std::size_t outCapacity) {
+std::size_t LogCapture::getEntries(
+  std::uint32_t sinceSeq, std::size_t maxCount, LogLevel minLevel, LogEntry *out, std::size_t outCapacity) {
   const std::size_t cap = (maxCount < outCapacity) ? maxCount : outCapacity;
   if (out == nullptr || cap == 0) {
     return 0;
@@ -110,8 +110,7 @@ std::size_t LogCapture::getEntries(std::uint32_t sinceSeq, std::size_t maxCount,
   LOG_CRITICAL_ENTER();
   // Entries written since the last clear (watermark hides pre-clear entries).
   const std::uint32_t postClear = s_seq - s_clearedSeq;
-  const std::size_t visible =
-      (postClear < LOG_BUFFER_ENTRIES) ? static_cast<std::size_t>(postClear) : LOG_BUFFER_ENTRIES;
+  const std::size_t visible = (postClear < LOG_BUFFER_ENTRIES) ? static_cast<std::size_t>(postClear) : LOG_BUFFER_ENTRIES;
   // After clear() the ring restarts at slot 0; once wrapped, s_head is oldest.
   const std::size_t oldest = (postClear < LOG_BUFFER_ENTRIES) ? 0 : s_head;
 
@@ -147,16 +146,16 @@ void LogCapture::clear() {
 
 const char *LogCapture::levelName(LogLevel level) {
   switch (level) {
-    case LogLevel::Debug:
-      return "debug";
-    case LogLevel::Info:
-      return "info";
-    case LogLevel::Warning:
-      return "warning";
-    case LogLevel::Critical:
-      return "critical";
-    case LogLevel::Error:
-      return "error";
+  case LogLevel::Debug:
+    return "debug";
+  case LogLevel::Info:
+    return "info";
+  case LogLevel::Warning:
+    return "warning";
+  case LogLevel::Critical:
+    return "critical";
+  case LogLevel::Error:
+    return "error";
   }
   return "info";
 }
@@ -168,8 +167,7 @@ LogLevel LogCapture::parseLevel(const char *name) {
   // Case-insensitive compare without relying on platform string.h.
   auto iequals = [](const char *a, const char *b) {
     while (*a != '\0' && *b != '\0') {
-      if (std::tolower(static_cast<unsigned char>(*a)) !=
-          std::tolower(static_cast<unsigned char>(*b))) {
+      if (std::tolower(static_cast<unsigned char>(*a)) != std::tolower(static_cast<unsigned char>(*b))) {
         return false;
       }
       ++a;

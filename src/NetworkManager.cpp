@@ -47,11 +47,10 @@ bool NetworkManager::begin() {
     // Publish online to LWT topic immediately (async, non-blocking)
     mqttClient_.publish("homeassistant/sensor/pool-controller/availability", 1, true, "online");
   });
-  mqttClient_.onDisconnect(
-    [](AsyncMqttClientDisconnectReason reason) {
-      LOG_ERROR("✖ MQTT disconnected, reason=%d\n", static_cast<int>(reason));
-      LogCapture::logEvent("MQTT_DISCONNECTED", "MQTT disconnected, reason %d", static_cast<int>(reason));
-    });
+  mqttClient_.onDisconnect([](AsyncMqttClientDisconnectReason reason) {
+    LOG_ERROR("✖ MQTT disconnected, reason=%d\n", static_cast<int>(reason));
+    LogCapture::logEvent("MQTT_DISCONNECTED", "MQTT disconnected, reason %d", static_cast<int>(reason));
+  });
 
   if (ConfigManager::getWiFi().ssid.length() == 0) {
     LOG_WARN("⚠ No WiFi SSID configured! Starting AP mode.\n");

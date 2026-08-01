@@ -55,8 +55,7 @@ extern void test_suite_end(const char *name, int passed, int failed);
 namespace {
 
 // Serializes via the hook and parses the result. Returns true on success.
-bool buildAndParse(uint32_t since, size_t count, LogLevel minLevel,
-                   JsonDocument &doc, size_t &payloadLen) {
+bool buildAndParse(uint32_t since, size_t count, LogLevel minLevel, JsonDocument &doc, size_t &payloadLen) {
   char buf[8192];
   payloadLen = WebPortal::buildLogsJson(since, count, minLevel, buf, sizeof(buf));
   if (payloadLen == 0) {
@@ -94,8 +93,10 @@ int run_webportal_logs_tests() {
     }
     if (rc == 0) {
       JsonArray arr = doc["entries"].as<JsonArray>();
-      rc = (arr[0]["seq"] == 1 && arr[0]["level"] == "info" &&
-            strcmp(arr[0]["msg"], "boot msg 1") == 0 && arr[0]["t"].is<uint32_t>()) ? 0 : 1;
+      rc = (arr[0]["seq"] == 1 && arr[0]["level"] == "info" && strcmp(arr[0]["msg"], "boot msg 1") == 0 &&
+             arr[0]["t"].is<uint32_t>())
+        ? 0
+        : 1;
     }
     if (rc == 0) {
       JsonArray arr = doc["entries"].as<JsonArray>();

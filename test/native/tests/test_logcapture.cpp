@@ -60,16 +60,14 @@ int run_logcapture_tests() {
       LogCapture::log(LogLevel::Info, "entry %zu", i);
     }
     LogEntry entries[LogCapture::LOG_BUFFER_ENTRIES];
-    size_t got = LogCapture::getEntries(0, 4096, LogLevel::Debug, entries,
-                                        LogCapture::LOG_BUFFER_ENTRIES);
+    size_t got = LogCapture::getEntries(0, 4096, LogLevel::Debug, entries, LogCapture::LOG_BUFFER_ENTRIES);
     rc = (got == LogCapture::LOG_BUFFER_ENTRIES) ? 0 : 1;
     if (rc == 0) {
       test_pass(__FILE__, __LINE__);
       passed++;
     } else {
       char msg[64];
-      snprintf(msg, sizeof(msg), "Expected %u entries, got %u",
-               (unsigned)LogCapture::LOG_BUFFER_ENTRIES, (unsigned)got);
+      snprintf(msg, sizeof(msg), "Expected %u entries, got %u", (unsigned)LogCapture::LOG_BUFFER_ENTRIES, (unsigned)got);
       test_fail(__FILE__, __LINE__, msg);
       failed++;
     }
@@ -101,8 +99,7 @@ int run_logcapture_tests() {
       passed++;
     } else {
       char msg[64];
-      snprintf(msg, sizeof(msg), "Expected lastSeq %u, got %u", (unsigned)N,
-               (unsigned)LogCapture::lastSeq());
+      snprintf(msg, sizeof(msg), "Expected lastSeq %u, got %u", (unsigned)N, (unsigned)LogCapture::lastSeq());
       test_fail(__FILE__, __LINE__, msg);
       failed++;
     }
@@ -158,9 +155,7 @@ int run_logcapture_tests() {
     LogCapture::log(LogLevel::Error, "e");
     LogEntry entries[8];
     size_t got = LogCapture::getEntries(0, 8, LogLevel::Warning, entries, 8);
-    rc = (got == 2 && entries[0].level == LogLevel::Warning && entries[1].level == LogLevel::Error)
-             ? 0
-             : 1;
+    rc = (got == 2 && entries[0].level == LogLevel::Warning && entries[1].level == LogLevel::Error) ? 0 : 1;
     if (rc == 0) {
       test_pass(__FILE__, __LINE__);
       passed++;
@@ -202,8 +197,7 @@ int run_logcapture_tests() {
       passed++;
     } else {
       char msg[64];
-      snprintf(msg, sizeof(msg), "Expected lastSeq 3 after clear, got %u",
-               (unsigned)LogCapture::lastSeq());
+      snprintf(msg, sizeof(msg), "Expected lastSeq 3 after clear, got %u", (unsigned)LogCapture::lastSeq());
       test_fail(__FILE__, __LINE__, msg);
       failed++;
     }
@@ -242,8 +236,7 @@ int run_logcapture_tests() {
       passed++;
     } else {
       char msg[64];
-      snprintf(msg, sizeof(msg), "Expected truncated len %d, got %u", LOG_MSG_SIZE - 1,
-               (unsigned)len);
+      snprintf(msg, sizeof(msg), "Expected truncated len %d, got %u", LOG_MSG_SIZE - 1, (unsigned)len);
       test_fail(__FILE__, __LINE__, msg);
       failed++;
     }
@@ -257,16 +250,14 @@ int run_logcapture_tests() {
     LogCapture::logEvent("MODE_CHANGED", "to auto");
     LogEntry entries[2];
     size_t got = LogCapture::getEntries(0, 2, LogLevel::Debug, entries, 2);
-    bool hasPrefix = (got == 1 && entries[0].message[0] == '[' &&
-                      strstr(entries[0].message, "MODE_CHANGED") != nullptr);
+    bool hasPrefix = (got == 1 && entries[0].message[0] == '[' && strstr(entries[0].message, "MODE_CHANGED") != nullptr);
     rc = hasPrefix ? 0 : 1;
     if (rc == 0) {
       test_pass(__FILE__, __LINE__);
       passed++;
     } else {
       char msg[64];
-      snprintf(msg, sizeof(msg), "Expected '[MODE_CHANGED] ...', got '%s'",
-               got == 1 ? entries[0].message : "(none)");
+      snprintf(msg, sizeof(msg), "Expected '[MODE_CHANGED] ...', got '%s'", got == 1 ? entries[0].message : "(none)");
       test_fail(__FILE__, __LINE__, msg);
       failed++;
     }
@@ -276,12 +267,10 @@ int run_logcapture_tests() {
   // ── Test: parseLevel ──
   {
     test_begin("LogCapture", "parseLevel case-insensitive");
-    rc = (LogCapture::parseLevel("warning") == LogLevel::Warning &&
-          LogCapture::parseLevel("ERROR") == LogLevel::Error &&
-          LogCapture::parseLevel("Debug") == LogLevel::Debug &&
-          LogCapture::parseLevel("bogus") == LogLevel::Info)
-             ? 0
-             : 1;
+    rc = (LogCapture::parseLevel("warning") == LogLevel::Warning && LogCapture::parseLevel("ERROR") == LogLevel::Error &&
+           LogCapture::parseLevel("Debug") == LogLevel::Debug && LogCapture::parseLevel("bogus") == LogLevel::Info)
+      ? 0
+      : 1;
     if (rc == 0) {
       test_pass(__FILE__, __LINE__);
       passed++;

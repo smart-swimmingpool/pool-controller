@@ -180,6 +180,7 @@ pio run   # Firmware kompiliert (LogCapture wird in setup() noch nicht benutzt �
 ### Task 3 — Serial-Migration (21 Dateien, 253 Stellen)
 
 **Level-Inferenz-Regeln (mechanisch):**
+
 | Marker im String | Level |
 |---|---|
 | `✖`, `ERROR`, `FAIL`, `CRITICAL` | `LOG_ERROR` |
@@ -196,7 +197,11 @@ pio run   # Firmware kompiliert (LogCapture wird in setup() noch nicht benutzt �
 - `Update.printError(Serial)` in OtaUpdater → `Serial.print(Update.errorString())`-Ersatz via `LOG_ERROR("%s", Update.errorString())` NUR wo die Updater-API es erlaubt (printError ist library-intern auf Serial verdrahtet — **unverändert lassen**, kommentieren).
 
 **Reihenfolge** (klein → groß, jeder Datei-Task einzeln committen; Call-Zahlen verifiziert):
-1. `src/Timer.cpp` (1) · 2. `src/RuleTimer.cpp` (1) · 3. `src/RuleManu.cpp` (1) · 4. `src/TimeClientHelper.cpp` (2) · 5. `src/ESP32TemperatureNode.cpp` (2) · 6. `src/StatusLed.cpp` (5) · 7. `src/RelayModuleNode.cpp` (5) · 8. `src/NorviButtonHandler.cpp` (7) · 9. `src/NorviOledDisplay.cpp` (8) · 10. `src/WpsProvisioner.cpp` (10) · 11. `src/ConfigManager.cpp` (11) · 12. `src/RuleBoost.cpp` (12) · 13. `src/WebPortal.cpp` (13) · 14. `src/NetworkManager.cpp` (15) · 15. `src/DegradationManager.cpp` (15) · 16. `src/RuleAuto.cpp` (16) · 17. `src/DallasTemperatureNode.cpp` (20) · 18. `src/OperationModeNode.cpp` (23) · 19. `src/PoolController.cpp` (26) · 20. `src/MqttPublisher.cpp` (27) · 21. `src/OtaUpdater.cpp` (33)
+1. `src/Timer.cpp` (1) · 2. `src/RuleTimer.cpp` (1) · 3. `src/RuleManu.cpp` (1) · 4. `src/TimeClientHelper.cpp` (2) · 5. `src/ESP32TemperatureNode.cpp` (2) ·
+   6. `src/StatusLed.cpp` (5) · 7. `src/RelayModuleNode.cpp` (5) · 8. `src/NorviButtonHandler.cpp` (7) · 9. `src/NorviOledDisplay.cpp` (8) ·
+   10. `src/WpsProvisioner.cpp` (10) · 11. `src/ConfigManager.cpp` (11) · 12. `src/RuleBoost.cpp` (12) · 13. `src/WebPortal.cpp` (13) ·
+   14. `src/NetworkManager.cpp` (15) · 15. `src/DegradationManager.cpp` (15) · 16. `src/RuleAuto.cpp` (16) · 17. `src/DallasTemperatureNode.cpp` (20) ·
+   18. `src/OperationModeNode.cpp` (23) · 19. `src/PoolController.cpp` (26) · 20. `src/MqttPublisher.cpp` (27) · 21. `src/OtaUpdater.cpp` (33)
 
 **Sonderfälle:**
 - `NorviOledDisplay`/`NorviButtonHandler`: Serial nur als Debug-Pfad — Flags/Guard-Bedingungen (z. B. `if (DEBUG)`) beibehalten, nur die Ausgabe ersetzen.
@@ -238,7 +243,10 @@ server_.on("/api/logs/clear", HTTP_POST, []() {
 5. Keine PROGMEM-Anteile (LittleFS-only-Vorgabe).
 
 **Test (TDD):**
-- Neues Muster anlehnen an `test_webportal_json.cpp` (WebServer-Mock fängt `send()` via `wsCapture`). Da `apiGetStatus` private ist und der bestehende Test inline-JSON baut, wird für `apiGetLogs` derselbe Weg genutzt: **Test-Hook** — `LogCapture` selbst unit-testen (Task 1) + JSON-Serialisierung über einen **public static Test-Hook** testen, z. B. `WebPortal::buildLogsJson(uint32_t since, size_t count, LogLevel minLevel, char *buf, size_t bufSize) -> size_t` (public for testing, Muster: „Rate limiting helpers (public for testing)" existiert bereits in `WebPortal.hpp`). `apiGetLogs` ruft den Hook auf und sendet.
+- Neues Muster anlehnen an `test_webportal_json.cpp` (WebServer-Mock fängt `send()` via `wsCapture`). Da `apiGetStatus` private ist und der bestehende Test
+  inline-JSON baut, wird für `apiGetLogs` derselbe Weg genutzt: **Test-Hook** — `LogCapture` selbst unit-testen (Task 1) + JSON-Serialisierung über einen
+  **public static Test-Hook** testen, z. B. `WebPortal::buildLogsJson(uint32_t since, size_t count, LogLevel minLevel, char *buf, size_t bufSize) -> size_t`
+  (public for testing, Muster: „Rate limiting helpers (public for testing)" existiert bereits in `WebPortal.hpp`). `apiGetLogs` ruft den Hook auf und sendet.
 - Testfälle: since-Filter wirkt, count-Cap, Level-Filter, `next` = lastSeq+1, leeres Ergebnis → `entries: []`.
 - Registrierung: `test_webportal_json.cpp` erweitern oder neue Testdatei + `test_main.cpp`-Eintrag.
 

@@ -70,7 +70,7 @@ bool WebPortal::begin() {
   if (NetworkManager::isApMode()) {
     dnsServer_.setErrorReplyCode(DNSReplyCode::NoError);
     dnsServer_.start(kDnsPort, "*", WiFi.softAPIP());
-      LOG_INFO("✓ Captive Portal DNS running.\n");
+    LOG_INFO("✓ Captive Portal DNS running.\n");
     dnsServerStarted_ = true;
   }
 
@@ -88,7 +88,7 @@ void WebPortal::loop() {
     if (!dnsServerStarted_) {
       dnsServer_.setErrorReplyCode(DNSReplyCode::NoError);
       dnsServer_.start(kDnsPort, "*", WiFi.softAPIP());
-    LOG_INFO("✓ Captive Portal DNS running.\n");
+      LOG_INFO("✓ Captive Portal DNS running.\n");
       dnsServerStarted_ = true;
     }
     dnsServer_.processNextRequest();
