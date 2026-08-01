@@ -57,7 +57,7 @@
 **Interfaces:**
 - Produces: `enum class PublishRequestKind : uint8_t { STATES = 0, DISCOVERY = 1 }` and `class TelemetryQueue` with `bool enqueue(PublishRequestKind kind)`, `bool dequeue(PublishRequestKind &kind)`, `size_t count() const`, `static constexpr size_t CAPACITY = 8`. Non-blocking, single-producer/single-consumer, drop-on-full (returns false).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `test/native/tests/test_telemetry_queue.cpp`:
 
@@ -130,12 +130,12 @@ void process() {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd test/native/build && cmake .. && make test_runner 2>&1 | tail -5 && ASAN_OPTIONS="detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1:detect_invalid_pointer_pairs=2" ./test_runner | tail -8`
 Expected: FAIL — `TelemetryQueue.hpp` not found / class not defined.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 Create `src/TelemetryQueue.hpp`:
 
@@ -248,7 +248,7 @@ void TelemetryQueue::reset() {
 }  // namespace PoolController
 ```
 
-- [ ] **Step 4: Wire into CMake and run tests**
+- [x] **Step 4: Wire into CMake and run tests**
 
 Modify `test/native/CMakeLists.txt`:
 - Add to `SERVICE_SOURCES`: `${PROJ_ROOT}/src/TelemetryQueue.cpp`
@@ -257,7 +257,7 @@ Modify `test/native/CMakeLists.txt`:
 Run: `cd test/native/build && cmake .. >/dev/null && make test_runner 2>&1 | tail -3 && ASAN_OPTIONS="..." ./test_runner | tail -6`
 Expected: PASS — queue tests green, all 74 previous suites still green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/TelemetryQueue.hpp src/TelemetryQueue.cpp test/native/tests/test_telemetry_queue.cpp test/native/CMakeLists.txt
@@ -277,7 +277,7 @@ git commit -m "feat: add SPSC telemetry queue for off-core MQTT publishing"
 - Consumes: nothing (standalone).
 - Produces: `enum class SensorId : uint8_t { SOLAR = 0, POOL = 1, CONTROLLER = 2, COUNT = 3 }`, and `class SensorSlots` with `static void reset()`, `static void write(SensorId id, float value, bool found)`, `static float read(SensorId id)`, `static bool isFound(SensorId id)`. Single writer (SensorTask), many readers. Values are `volatile` — a reader may see one-cycle-stale data, which is acceptable for temperature telemetry.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `test/native/tests/test_sensor_slots.cpp`:
 
@@ -330,12 +330,12 @@ void process() {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd test/native/build && cmake .. && make test_runner 2>&1 | tail -5 && ASAN_OPTIONS="..." ./test_runner | tail -8`
 Expected: FAIL — `SensorSlots.hpp` not found.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 Create `src/SensorSlots.hpp`:
 
@@ -435,7 +435,7 @@ bool SensorSlots::isFound(SensorId id) { return slots_[static_cast<uint8_t>(id)]
 }  // namespace PoolController
 ```
 
-- [ ] **Step 4: Wire into CMake and run tests**
+- [x] **Step 4: Wire into CMake and run tests**
 
 Modify `test/native/CMakeLists.txt`:
 - Add to `SERVICE_SOURCES`: `${PROJ_ROOT}/src/SensorSlots.cpp`
@@ -444,7 +444,7 @@ Modify `test/native/CMakeLists.txt`:
 Run: `cd test/native/build && cmake .. >/dev/null && make test_runner 2>&1 | tail -3 && ASAN_OPTIONS="..." ./test_runner | tail -6`
 Expected: PASS — slot tests green, previous suites still green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/SensorSlots.hpp src/SensorSlots.cpp test/native/tests/test_sensor_slots.cpp test/native/CMakeLists.txt
@@ -464,7 +464,7 @@ git commit -m "feat: add lock-free sensor slots for cross-task temperature shari
 - Consumes: `SensorSlots` (from Task 2), existing `SystemMonitor` / `DegradationManager` APIs.
 - Produces: `void beginMeasurement()` (bus master triggers `requestTemperatures()`; standalone nodes trigger their own) and `void finishMeasurement()` (reads result, updates slots via `SensorSlots::write(id, temp, found)`, reports to `DegradationManager`). `loop()` becomes a thin sync wrapper calling both in sequence (kept for tests/back-compat). `getTemperature()` / `isSensorFound()` now read from `SensorSlots`.
 
-- [ ] **Step 1: Extend the header**
+- [x] **Step 1: Extend the header**
 
 In `src/DallasTemperatureNode.hpp`, after the existing `void loop();` declaration, add:
 
@@ -491,7 +491,7 @@ In `src/DallasTemperatureNode.hpp`, after the existing `void loop();` declaratio
   void finishMeasurement();
 ```
 
-- [ ] **Step 2: Split the implementation**
+- [x] **Step 2: Split the implementation**
 
 In `src/DallasTemperatureNode.cpp`, replace the body of `loop()` with:
 
@@ -628,7 +628,7 @@ PoolController::SensorId DallasTemperatureNode::slotId() const {
 }
 ```
 
-- [ ] **Step 3: Update the native mock**
+- [x] **Step 3: Update the native mock**
 
 In `test/native/mocks/DallasTemperatureNode.hpp`, add the two new method declarations with the same signatures (no-op or capture behavior is fine — the mock only needs to compile and satisfy callers):
 
@@ -637,12 +637,12 @@ In `test/native/mocks/DallasTemperatureNode.hpp`, add the two new method declara
   void finishMeasurement() {}
 ```
 
-- [ ] **Step 4: Run native tests (regression)**
+- [x] **Step 4: Run native tests (regression)**
 
 Run: `cd test/native/build && cmake .. >/dev/null && make test_runner 2>&1 | tail -3 && ASAN_OPTIONS="..." ./test_runner | tail -6`
 Expected: PASS — all suites green (this task is a refactor; the sync `loop()` path preserves behavior).
 
-- [ ] **Step 5: Build both device environments (compile check)**
+- [x] **Step 5: Build both device environments (compile check)**
 
 Run:
 ```bash
@@ -651,7 +651,7 @@ Run:
 ```
 Expected: both `SUCCESS` (SensorSlots links into the firmware).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/DallasTemperatureNode.hpp src/DallasTemperatureNode.cpp test/native/mocks/DallasTemperatureNode.hpp
@@ -673,7 +673,7 @@ git commit -m "refactor: split DallasTemperatureNode measurement into begin/fini
 - Consumes: `SensorSlots` (Task 2), `DallasTemperatureNode` begin/finish (Task 3), `ESP32TemperatureNode::loop()`.
 - Produces: `CoreScheduler::begin()` (creates SensorTask on Core 0, priority 2, 6 KB stack; PublishTask priority 1, 4 KB — created in Task 5), `SensorTask::start()` internals, and `CoreScheduler::logStackWatermarks()` (called periodically). Native `mocks/CoreScheduler.hpp` captures registration so tests can assert parameters.
 
-- [ ] **Step 1: Write the failing test (parameter assertions via mock)**
+- [x] **Step 1: Write the failing test (parameter assertions via mock)**
 
 Create `test/native/mocks/CoreScheduler.hpp`:
 
@@ -744,7 +744,7 @@ void process() {
 
 Add `test/native/tests/test_core_scheduler.cpp` to `TEST_SOURCES` in `CMakeLists.txt`.
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd test/native/build && cmake .. && make test_runner 2>&1 | tail -5 && ASAN_OPTIONS="..." ./test_runner | tail -8`
 Expected: FAIL — linker error: `CoreScheduler::begin()` undefined (mock .cpp not provided yet). Provide it now:
@@ -772,12 +772,12 @@ void CoreScheduler::logStackWatermarks() {}
 
 Add `test/native/mocks/CoreScheduler.cpp` to `MOCK_SOURCES` in `CMakeLists.txt`.
 
-- [ ] **Step 3: Run test to verify it passes**
+- [x] **Step 3: Run test to verify it passes**
 
 Run: `cd test/native/build && cmake .. >/dev/null && make test_runner 2>&1 | tail -3 && ASAN_OPTIONS="..." ./test_runner | tail -6`
 Expected: PASS.
 
-- [ ] **Step 4: Implement CoreScheduler (device side)**
+- [x] **Step 4: Implement CoreScheduler (device side)**
 
 Create `src/CoreScheduler.hpp`:
 
@@ -874,7 +874,7 @@ void CoreScheduler::logStackWatermarks() {
 }  // namespace PoolController
 ```
 
-- [ ] **Step 5: Implement SensorTask (device side)**
+- [x] **Step 5: Implement SensorTask (device side)**
 
 Create `src/SensorTask.hpp`:
 
@@ -989,7 +989,7 @@ void SensorTask::logStackWatermark() {
 
 > **Design note:** `DallasTemperatureNode` instances stay file-scope globals in `PoolController.cpp`; `SensorTask.cpp` declares them `extern`. The address-filter and recovery logic in `begin()`/`finishMeasurement()` is unchanged — only the call site moved off-core.
 
-- [ ] **Step 6: Wire into PoolController**
+- [x] **Step 6: Wire into PoolController**
 
 In `src/PoolController.cpp`:
 
@@ -1011,7 +1011,7 @@ In `src/PoolController.cpp`:
 ```
 5. Update the `loop()` doc comment to reflect that sensor reads moved off-core.
 
-- [ ] **Step 7: Run native tests + build both environments**
+- [x] **Step 7: Run native tests + build both environments**
 
 Run:
 ```bash
@@ -1021,7 +1021,7 @@ cd test/native/build && cmake .. >/dev/null && make test_runner 2>&1 | tail -3 &
 ```
 Expected: native tests PASS; both firmware builds SUCCESS.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/CoreScheduler.hpp src/CoreScheduler.cpp src/SensorTask.hpp src/SensorTask.cpp src/PoolController.cpp test/native/mocks/CoreScheduler.hpp test/native/mocks/CoreScheduler.cpp test/native/tests/test_core_scheduler.cpp test/native/CMakeLists.txt
@@ -1041,7 +1041,7 @@ git commit -m "feat: run DS18B20 sensor reads in a dedicated Core-0 task"
 - Consumes: `TelemetryQueue` (Task 1), `MqttPublisher` (unchanged static API: `publishStates()`, `publishDiscovery()`).
 - Produces: `PublishTask::start(priority, stackBytes, core)`, `PublishTask::logStackWatermark()`. Publish requests are enqueued by the control loop; PublishTask drains them and calls `MqttPublisher` on Core 0.
 
-- [ ] **Step 1: Implement PublishTask (device side)**
+- [x] **Step 1: Implement PublishTask (device side)**
 
 Create `src/PublishTask.hpp`:
 
@@ -1147,7 +1147,7 @@ Add a singleton accessor to `src/TelemetryQueue.hpp` (so both the control loop a
   }
 ```
 
-- [ ] **Step 2: Start PublishTask from CoreScheduler**
+- [x] **Step 2: Start PublishTask from CoreScheduler**
 
 In `src/CoreScheduler.cpp` `begin()`, after `SensorTask::start(...)`:
 
@@ -1157,7 +1157,7 @@ In `src/CoreScheduler.cpp` `begin()`, after `SensorTask::start(...)`:
 
 Add include `#include "PublishTask.hpp"`. In `logStackWatermarks()` add `PublishTask::logStackWatermark();`.
 
-- [ ] **Step 3: Enqueue instead of inline publish in PoolController**
+- [x] **Step 3: Enqueue instead of inline publish in PoolController**
 
 In `src/PoolController.cpp` `loop()`, replace the MQTT publish block:
 
@@ -1183,7 +1183,7 @@ In `src/PoolController.cpp` `loop()`, replace the MQTT publish block:
 
 Add includes `#include "TelemetryQueue.hpp"` and `#include "PublishTask.hpp"` to `src/PoolController.cpp`.
 
-- [ ] **Step 4: Run native tests + build both environments**
+- [x] **Step 4: Run native tests + build both environments**
 
 Run:
 ```bash
@@ -1193,7 +1193,7 @@ cd test/native/build && cmake .. >/dev/null && make test_runner 2>&1 | tail -3 &
 ```
 Expected: native tests PASS; both firmware builds SUCCESS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/PublishTask.hpp src/PublishTask.cpp src/CoreScheduler.cpp src/PoolController.cpp src/TelemetryQueue.hpp
@@ -1214,7 +1214,7 @@ git commit -m "feat: offload MQTT telemetry serialization to a Core-0 publish ta
 - Consumes: `SensorSlots` (Task 2), existing `NorviOledDisplay` static API.
 - Produces: `DisplayTask::start(priority, stackBytes, core)`, `DisplayTask::logStackWatermark()`, `DisplayTask::requestRender()`. `NorviOledDisplay::update()` (state machine, Core 1) and `NorviOledDisplay::render()` (draw + I2C push, Core 0). Button handling stays on Core 1 (buttons are debounce-based, <1 ms, and their callbacks mutate control-loop singletons — single-writer rule).
 
-- [ ] **Step 1: Split NorviOledDisplay::loop()**
+- [x] **Step 1: Split NorviOledDisplay::loop()**
 
 In `src/NorviOledDisplay.hpp`, replace the `loop()` declaration with:
 
@@ -1255,7 +1255,7 @@ Keep the existing auto-return / burn-in / page-navigation logic inside `update()
 
 Add `#include "SensorSlots.hpp"` to `src/NorviOledDisplay.cpp`.
 
-- [ ] **Step 2: Implement DisplayTask**
+- [x] **Step 2: Implement DisplayTask**
 
 Create `src/DisplayTask.hpp`:
 
@@ -1348,7 +1348,7 @@ void DisplayTask::logStackWatermark() {
 }  // namespace PoolController
 ```
 
-- [ ] **Step 3: Wire into PoolController**
+- [x] **Step 3: Wire into PoolController**
 
 In `src/PoolController.cpp`, under the existing `#ifdef NORVI_AE01_R` block in `loop()`:
 
@@ -1370,7 +1370,7 @@ Add `#include "DisplayTask.hpp"` (inside the `#ifdef NORVI_AE01_R` include block
 
 > **Design note (deviation from spec §3):** the button *scan* stays in the control loop because button callbacks mutate control-loop singletons (`operationModeNode`, `poolPumpNode`) — running them on Core 0 would violate the single-writer rule. Debounce-based scanning is <1 ms. The OLED *rendering* (the blocking I2C work) is what moves to Core 0.
 
-- [ ] **Step 4: Run native tests + build both environments**
+- [x] **Step 4: Run native tests + build both environments**
 
 Run:
 ```bash
@@ -1380,7 +1380,7 @@ cd test/native/build && cmake .. >/dev/null && make test_runner 2>&1 | tail -3 &
 ```
 Expected: native tests PASS; both firmware builds SUCCESS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/DisplayTask.hpp src/DisplayTask.cpp src/PoolController.cpp src/NorviOledDisplay.hpp src/NorviOledDisplay.cpp
@@ -1401,7 +1401,7 @@ git commit -m "feat: render NORVI OLED on a Core-0 display task"
 - Consumes: existing `DegradationManager` API.
 - Produces: `DegradationManager::reportSensorStatus(const char *id, bool found)` remains callable from SensorTask (Core 0) while `evaluate()` stays on Core 1; `SystemMonitor::feedWatchdogFromTask()`.
 
-- [ ] **Step 1: Harden DegradationManager::reportSensorStatus**
+- [x] **Step 1: Harden DegradationManager::reportSensorStatus**
 
 Read `src/DegradationManager.hpp` first. Then make the status update atomic (a single critical section around the flag write):
 
@@ -1415,7 +1415,7 @@ Read `src/DegradationManager.hpp` first. Then make the status update atomic (a s
 
 If `reportSensorStatus` only touches a per-sensor bool, a `volatile bool` is sufficient; if it aggregates counts, use the critical section. Match whichever the existing implementation needs — do not change semantics.
 
-- [ ] **Step 2: Add the watchdog wrapper**
+- [x] **Step 2: Add the watchdog wrapper**
 
 In `src/SystemMonitor.hpp`, after `feedWatchdog()`:
 
@@ -1430,7 +1430,7 @@ In `src/SystemMonitor.hpp`, after `feedWatchdog()`:
 
 In `src/SensorTask.cpp`, replace the direct `SystemMonitor::feedWatchdog()` calls inside `beginMeasurement()`/`finishMeasurement()` paths with `SystemMonitor::feedWatchdogFromTask()` — update `DallasTemperatureNode.cpp` accordingly (it already calls `SystemMonitor::feedWatchdog()`, which is fine; the wrapper is used by SensorTask itself around the conversion delay).
 
-- [ ] **Step 3: Run native tests + build both environments**
+- [x] **Step 3: Run native tests + build both environments**
 
 Run:
 ```bash
@@ -1440,7 +1440,7 @@ cd test/native/build && cmake .. >/dev/null && make test_runner 2>&1 | tail -3 &
 ```
 Expected: native tests PASS; both firmware builds SUCCESS.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/DegradationManager.hpp src/DegradationManager.cpp src/SystemMonitor.hpp src/SensorTask.cpp src/DallasTemperatureNode.cpp
@@ -1455,7 +1455,7 @@ git commit -m "feat: thread-safe sensor status reporting and task watchdog wrapp
 - Modify: `docs/multicore-architecture.md`, `docs/multicore-architecture.de.md` (verify they match the implemented split — button scan stays on Core 1)
 - Modify: `docs/software-guide.md` if it describes the loop (check first)
 
-- [ ] **Step 1: Full native test run**
+- [x] **Step 1: Full native test run**
 
 Run:
 ```bash
@@ -1464,7 +1464,7 @@ ASAN_OPTIONS="detect_stack_use_after_return=1:check_initialization_order=1:stric
 ```
 Expected: `Results: N suites passed, 0 suites failed` with N ≥ 74.
 
-- [ ] **Step 2: Build both environments clean**
+- [x] **Step 2: Build both environments clean**
 
 Run:
 ```bash
@@ -1473,15 +1473,15 @@ Run:
 ```
 Expected: both `SUCCESS` with no new warnings beyond baseline.
 
-- [ ] **Step 3: Verify docs match implementation**
+- [x] **Step 3: Verify docs match implementation**
 
 Read `docs/multicore-architecture.md` + `.de.md`. If they say "button scan runs on DisplayTask", update to "button scan stays on Core 1 (single-writer rule); only OLED rendering runs on Core 0". Also confirm the task table (Sensor 2/6KB, Publish 1/4KB, Display 1/3KB) matches `CoreScheduler.hpp`.
 
-- [ ] **Step 4: Manual on-device checklist (documented for the PR)**
+- [x] **Step 4: Manual on-device checklist (documented for the PR)**
 
 Add a short "Manual verification" section to the PR description (or the docs page): loop iteration <20 ms during sensor reads (log a `millis()` delta around `context.loop()` temporarily or use an existing timing log), OLED renders and buttons work, MQTT telemetry cadence unchanged, no watchdog resets over 24 h.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add docs/multicore-architecture.md docs/multicore-architecture.de.md docs/software-guide.md 2>/dev/null || true
