@@ -1004,12 +1004,17 @@ async function saveSensorMapping() {
 // ── Log Console ──
 
 var lastLogSeq = 0;
+var lastLogBoot = 0;
 var logLevelFilter = 'info';
 // Generation token: bumped on every request, filter change and clear.
 // Responses carrying an older token are discarded, so a slow in-flight
 // poll cannot append stale/duplicate entries or overwrite lastLogSeq
 // after a newer poll, filter switch or clear has happened.
 var logReqToken = 0;
+// Serializes polls: fetch() responses taking longer than the 2s tick must not
+// start a second concurrent poll (whose response would bump the token and
+// discard the first one — leaving the console stuck until the next clear).
+var logPollInFlight = false;
 
 function escapeHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -1023,15 +1028,28 @@ function loadLogs() {
   var logTab = document.getElementById('tab-logs');
   if (!logTab || logTab.style.display === 'none') return;
 
+  // Never overlap polls: a slow response would otherwise be superseded by the
+  // next tick's request (token bump) and discarded, stalling the console until
+  // a clear or filter change. The next tick resumes after this one settles.
+  if (logPollInFlight) return;
+
   var wasAtBottom, consoleEl = document.getElementById('logConsole');
   if (!consoleEl) return;
   wasAtBottom = consoleEl.scrollTop + consoleEl.clientHeight >= consoleEl.scrollHeight - 40;
   var token = ++logReqToken;
-  fetch('/api/logs?since=' + lastLogSeq + '&count=200&level=' + logLevelFilter)
+  logPollInFlight = true;
+  // boot = epoch of the cursor: after a reboot the server forces a full dump
+  // (entries 1..N) even when the new seq is already past our stored cursor.
+  fetch('/api/logs?since=' + lastLogSeq + '&boot=' + lastLogBoot + '&count=200&level=' + logLevelFilter)
     .then(function(res) { return res.json(); })
     .then(function(data) {
       if (token !== logReqToken) return;  // superseded by a newer poll/filter/clear
       var empty = document.getElementById('logConsoleEmpty');
+      // Boot change: the server re-sent the whole new-boot ring, so the old
+      // pre-reboot lines are stale — drop them instead of appending on top.
+      if (data.boot !== lastLogBoot) {
+        consoleEl.textContent = '';
+      }
       if (!data.entries || data.entries.length === 0) {
         if (!consoleEl.hasChildNodes()) empty.style.display = 'block';
         return;
@@ -1049,11 +1067,15 @@ function loadLogs() {
         consoleEl.removeChild(consoleEl.firstChild);
       }
       lastLogSeq = data.next;
+      lastLogBoot = data.boot;
       if (wasAtBottom && data.entries.length > 0) {
         consoleEl.scrollTop = consoleEl.scrollHeight;
       }
     })
-    .catch(function() { /* silent */ });
+    .catch(function() { /* silent */ })
+    .finally(function() {
+      logPollInFlight = false;
+    });
 }
 
 function clearLogs() {
