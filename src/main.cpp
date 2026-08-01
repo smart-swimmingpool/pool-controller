@@ -34,10 +34,12 @@ auto setup() -> void {
     delay(10);
   }
 
-  context.setup();
-
-  // Central logging service — initialized after Serial is guaranteed up.
+  // Central logging service — must start before context.setup() so boot-time
+  // LOG_* entries (WiFi/MQTT init, sensor scans) are captured and the MQTT
+  // export watermark sees the pre-boot sequence. Serial is already up here.
   PoolController::LogCapture::begin();
+
+  context.setup();
 }
 
 /**
