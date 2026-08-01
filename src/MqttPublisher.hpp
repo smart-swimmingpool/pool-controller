@@ -78,7 +78,9 @@ private:
   static void publishEventDiscovery(const char *objectId, const char *name, const char *icon = nullptr);
   /**
    * @brief Export new LogCapture entries as MQTT events (WARN/ERROR + curated
-   * logEvent markers). Called from publishStates(); deduplicated via s_lastExportedSeq.
+   * logEvent markers). Called from publishStates(); deduplicated via
+   * s_lastExportedSeq and guarded against reentrancy from the AsyncTCP
+   * callback task (handleMqttMessage → publishStates).
    */
   static void exportLogEvents();
 

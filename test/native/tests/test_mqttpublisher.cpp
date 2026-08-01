@@ -765,6 +765,72 @@ int run_mqttpublisher_tests() {
     test_suite_end("MqttPublisher::export_retry_publish_fail", rc == 0 ? 1 : 0, rc != 0 ? 1 : 0);
   }
 
+  // ── Test: reentrant export (AsyncTCP callback path) is skipped by the guard ──
+  // handleMqttMessage → publishStates() can run on the AsyncTCP task while the
+  // loop task is mid-exportLogEvents(). Both share the static snapshot buffer
+  // and the watermark; the guard must make the nested export a no-op so the
+  // event is published exactly once and the watermark is not regressed.
+  {
+    test_begin("MqttPublisher::publishStates", "reentrant export during publish is skipped");
+
+    mqttCapture.clear();
+    NetworkManager::setMqttConnected(true);
+    LogCapture::begin();
+    MqttPublisher::begin();
+
+    LogCapture::log(LogLevel::Warning, "reentrant guard probe");
+    // Fire one nested publishStates() from inside the export's event-state
+    // publish — simulates the AsyncTCP callback task preempting the loop task.
+    bool hookFired = false;
+    NetworkManager::setPublishHook("homeassistant/event/pool-controller/logs/state", [&hookFired]() {
+      hookFired = true;
+      MqttPublisher::publishStates();
+    });
+    MqttPublisher::publishStates();
+
+    int missing = 0;
+    if (!hookFired) {
+      test_fail(__FILE__, __LINE__, "publish hook did not fire mid-export");
+      missing++;
+    }
+
+    // The WARN event must be exported exactly once (nested call deferred).
+    size_t evCount = 0, rawCount = 0;
+    for (const auto &m : mqttCapture.published) {
+      if (m.topic == "homeassistant/event/pool-controller/logs/state") evCount++;
+      if (m.topic == "pool-controller/log") rawCount++;
+    }
+    if (evCount != 1) {
+      test_fail(__FILE__, __LINE__, "event state published != 1 times (nested export interleaved)");
+      missing++;
+    } else
+      test_pass(__FILE__, __LINE__);  // NOLINT
+    if (rawCount != 1) {
+      test_fail(__FILE__, __LINE__, "raw log topic published != 1 times (nested export interleaved)");
+      missing++;
+    } else
+      test_pass(__FILE__, __LINE__);  // NOLINT
+
+    // Watermark must not have regressed: a follow-up pass publishes nothing new.
+    NetworkManager::clearPublishHook();
+    MqttPublisher::publishStates();
+    size_t evAfter = 0;
+    for (const auto &m : mqttCapture.published)
+      if (m.topic == "homeassistant/event/pool-controller/logs/state") evAfter++;
+    if (evAfter != 1) {
+      test_fail(__FILE__, __LINE__, "watermark regressed — follow-up pass re-exported event");
+      missing++;
+    } else
+      test_pass(__FILE__, __LINE__);  // NOLINT
+
+    rc = (missing == 0) ? 0 : 1;
+    if (rc == 0)
+      passed++;
+    else
+      failed++;
+    test_suite_end("MqttPublisher::export_reentrancy_guard", missing == 0 ? 1 : 0, missing);
+  }
+
   // ── Test: logEvent marker becomes event_type on the event state topic ──
   // Task 5: LogCapture::logEvent("[MODE_CHANGED] ...") → event_type=MODE_CHANGED.
   // Info-level events are NOT mirrored to the raw topic (raw is WARN/ERROR only).

@@ -31,6 +31,21 @@ namespace PoolController {
 String MqttPublisher::deviceId_ = "";
 std::uint32_t MqttPublisher::s_lastExportedSeq = 0;
 
+// Reentrancy guard for the log-event export (see exportLogEvents). AsyncMqttClient
+// callbacks (handleMqttMessage → publishStates) run on the AsyncTCP task, which can
+// preempt the loop task mid-export; both paths share the static snapshot buffer and
+// s_lastExportedSeq. Native tests (no ESP32 macros) compile the guard to a no-op.
+#if defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
+#include <freertos/FreeRTOS.h>
+#include <freertos/portmacro.h>
+static portMUX_TYPE s_exportMux = portMUX_INITIALIZER_UNLOCKED;
+#define EXPORT_CRITICAL_ENTER() portENTER_CRITICAL(&s_exportMux)
+#define EXPORT_CRITICAL_EXIT() portEXIT_CRITICAL(&s_exportMux)
+#else
+#define EXPORT_CRITICAL_ENTER() ((void)0)
+#define EXPORT_CRITICAL_EXIT() ((void)0)
+#endif
+
 void MqttPublisher::begin() {
   // Generate unique MAC-based device identifier
   uint8_t mac[6];
@@ -796,12 +811,31 @@ void MqttPublisher::publishStates() {
 // ═══════════════════════════════════════════════════════════════════════
 
 void MqttPublisher::exportLogEvents() {
+  // Only one export may run at a time: AsyncMqttClient callbacks (handleMqttMessage
+  // → publishStates) run on the AsyncTCP task and can preempt the loop task's
+  // periodic export. Both share the static snapshot buffer and the watermark, so a
+  // concurrent entry would clobber the snapshot or regress s_lastExportedSeq and
+  // duplicate MQTT events. The losing export defers to the next pass — it returns
+  // before touching the watermark, so its pending entries are not lost.
+  static bool s_exportRunning = false;
+  EXPORT_CRITICAL_ENTER();
+  if (s_exportRunning) {
+    EXPORT_CRITICAL_EXIT();
+    return;
+  }
+  s_exportRunning = true;
+  EXPORT_CRITICAL_EXIT();
+
   // Batch snapshot of the ring (static: keeps ~9 KB off the loop stack).
   static LogEntry entries[LogCapture::LOG_BUFFER_ENTRIES];
   const size_t count = LogCapture::getEntries(
     s_lastExportedSeq, LogCapture::LOG_BUFFER_ENTRIES, LogLevel::Info, entries, LogCapture::LOG_BUFFER_ENTRIES);
-  if (count == 0)
+  if (count == 0) {
+    EXPORT_CRITICAL_ENTER();
+    s_exportRunning = false;
+    EXPORT_CRITICAL_EXIT();
     return;
+  }
 
   TopicBuilder stateTopic;
   // Watermark only advances through entries whose required publishes were
@@ -890,6 +924,10 @@ void MqttPublisher::exportLogEvents() {
   // Entries after a failed publish (or appended during the snapshot) are
   // picked up by the next export pass instead.
   s_lastExportedSeq = lastOkSeq;
+
+  EXPORT_CRITICAL_ENTER();
+  s_exportRunning = false;
+  EXPORT_CRITICAL_EXIT();
 }
 
 // ═══════════════════════════════════════════════════════════════════════
