@@ -31,6 +31,13 @@
 #define LOG_MSG_SIZE 96
 #endif
 
+// Formatting buffer for a single log call. Larger than LOG_MSG_SIZE so the
+// Serial mirror keeps the complete formatted message (e.g. a full OTA URL)
+// while only the ring copy is truncated to LOG_MSG_SIZE-1 in store().
+#ifndef LOG_FORMAT_SIZE
+#define LOG_FORMAT_SIZE 512
+#endif
+
 namespace PoolController {
 
 /**

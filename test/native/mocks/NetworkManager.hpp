@@ -20,6 +20,7 @@ public:
   static String getLocalIP() { return String("192.168.1.100"); }
 
   static bool publish(const char *topic, const char *payload, bool retained = false) {
+    if (!_publishOk) return false;
     return _mqttClient.publish(topic, 1, retained, payload) > 0;
   }
   static bool subscribe(const char *topic) { return _mqttClient.subscribe(topic) > 0; }
@@ -37,6 +38,8 @@ public:
   static void setMqttConnected(bool v) { _mqttConnected = v; }
   static void setApMode(bool v) { _apMode = v; }
   static void setWiFiRSSI(int rssi) { _wifiRssi = rssi; }
+  // Simulate AsyncMqttClient refusing to enqueue (publish returns false).
+  static void setPublishOk(bool ok) { _publishOk = ok; }
 
   static AsyncMqttClient &getClient() { return _mqttClient; }
 
@@ -46,6 +49,7 @@ private:
   static bool _mqttConnected;
   static bool _apMode;
   static int _wifiRssi;
+  static bool _publishOk;
 };
 
 } // namespace PoolController

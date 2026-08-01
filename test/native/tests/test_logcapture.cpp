@@ -243,6 +243,45 @@ int run_logcapture_tests() {
     test_suite_end("LogCapture::truncation", rc == 0 ? 1 : 0, rc != 0 ? 1 : 0);
   }
 
+  // ── Test: Serial mirror keeps the full message even when the ring truncates ──
+  {
+    test_begin("LogCapture", "serial mirror keeps full message when ring truncates");
+    LogCapture::begin();
+    LogCapture::setLogToSerial(true);
+    SerialClass::enableCapture();
+
+    // Message longer than a ring slot: the ring copy must be truncated to
+    // LOG_MSG_SIZE-1, but the Serial mirror must receive the full text.
+    char longMsg[LOG_MSG_SIZE * 3];
+    memset(longMsg, 'C', sizeof(longMsg) - 1);
+    longMsg[sizeof(longMsg) - 1] = '\0';
+    LogCapture::log(LogLevel::Info, "%s", longMsg);
+
+    const std::string serialOut = SerialClass::capture();
+    SerialClass::disableCapture();
+    LogCapture::setLogToSerial(false);
+
+    LogEntry entries[2];
+    size_t got = LogCapture::getEntries(0, 2, LogLevel::Debug, entries, 2);
+    size_t ringLen = strnlen(entries[0].message, sizeof(entries[0].message));
+
+    rc = (got == 1 && ringLen == LOG_MSG_SIZE - 1 && serialOut.size() == sizeof(longMsg) - 1 &&
+          memcmp(serialOut.data(), longMsg, sizeof(longMsg) - 1) == 0)
+      ? 0
+      : 1;
+    if (rc == 0) {
+      test_pass(__FILE__, __LINE__);
+      passed++;
+    } else {
+      char msg[128];
+      snprintf(msg, sizeof(msg), "ring len %u (want %d), serial len %zu (want %zu)", (unsigned)ringLen, LOG_MSG_SIZE - 1,
+               serialOut.size(), sizeof(longMsg) - 1);
+      test_fail(__FILE__, __LINE__, msg);
+      failed++;
+    }
+    test_suite_end("LogCapture::serial_full_mirror", rc == 0 ? 1 : 0, rc != 0 ? 1 : 0);
+  }
+
   // ── Test: logEvent prefix marker ──
   {
     test_begin("LogCapture", "logEvent prefixes event type");

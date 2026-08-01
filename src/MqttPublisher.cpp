@@ -804,6 +804,12 @@ void MqttPublisher::exportLogEvents() {
     return;
 
   TopicBuilder stateTopic;
+  // Watermark only advances through entries whose required publishes were
+  // successfully queued. When MQTT disconnects mid-burst or the client
+  // refuses to enqueue (NetworkManager::publish() == false), the watermark
+  // stays before the failed entry so it is retried on the next export pass
+  // instead of being dropped.
+  uint32_t lastOkSeq = s_lastExportedSeq;
   for (size_t i = 0; i < count; ++i) {
     const LogEntry &entry = entries[i];
     const char *body = entry.message;
@@ -839,6 +845,9 @@ void MqttPublisher::exportLogEvents() {
         eventType = "LOG_ERROR";
         break;
       default:
+        // Skipped by design — no publish required, so the watermark may
+        // advance past it.
+        lastOkSeq = entry.seq;
         continue;
       }
     }
@@ -849,7 +858,7 @@ void MqttPublisher::exportLogEvents() {
     doc["message"] = body;
     char payload[256];
     serializeJson(doc, payload, sizeof(payload));
-    NetworkManager::publish(stateTopic.build("event", "logs", "/state"), payload, false);
+    bool ok = NetworkManager::publish(stateTopic.build("event", "logs", "/state"), payload, false);
 
     // Raw JSON-line for external tools (WARN/ERROR only — not Info-level events).
     if (entry.level == LogLevel::Warning || entry.level == LogLevel::Error) {
@@ -860,16 +869,27 @@ void MqttPublisher::exportLogEvents() {
       rawDoc["msg"] = entry.message;
       char rawBuf[256];
       serializeJson(rawDoc, rawBuf, sizeof(rawBuf));
-      NetworkManager::publish("pool-controller/log", rawBuf, false);
+      ok = NetworkManager::publish("pool-controller/log", rawBuf, false) && ok;
     }
+
+    // A required publish failed (e.g. AsyncMqttClient refused to enqueue
+    // during the discovery/state burst right after reconnect): keep the
+    // watermark before this entry so the whole tail is retried next pass.
+    // Do not drop the event by marking it exported without a successful queue.
+    if (!ok)
+      break;
+
+    // This entry's required publishes were all successfully queued.
+    lastOkSeq = entry.seq;
   }
 
-  // Advance the watermark only through the completed snapshot. Using
-  // LogCapture::lastSeq() here would mark entries appended concurrently by
-  // async WiFi/MQTT callbacks as exported even though they were never
-  // processed — their HA events would be permanently lost. They will be
+  // Advance the watermark only through entries whose required publishes were
+  // successfully queued. Using LogCapture::lastSeq() here would mark entries
+  // appended concurrently by async WiFi/MQTT callbacks as exported even though
+  // they were never processed — their HA events would be permanently lost.
+  // Entries after a failed publish (or appended during the snapshot) are
   // picked up by the next export pass instead.
-  s_lastExportedSeq = entries[count - 1].seq;
+  s_lastExportedSeq = lastOkSeq;
 }
 
 // ═══════════════════════════════════════════════════════════════════════

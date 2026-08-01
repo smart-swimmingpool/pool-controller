@@ -1005,6 +1005,11 @@ async function saveSensorMapping() {
 
 var lastLogSeq = 0;
 var logLevelFilter = 'info';
+// Generation token: bumped on every request, filter change and clear.
+// Responses carrying an older token are discarded, so a slow in-flight
+// poll cannot append stale/duplicate entries or overwrite lastLogSeq
+// after a newer poll, filter switch or clear has happened.
+var logReqToken = 0;
 
 function escapeHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -1021,9 +1026,11 @@ function loadLogs() {
   var wasAtBottom, consoleEl = document.getElementById('logConsole');
   if (!consoleEl) return;
   wasAtBottom = consoleEl.scrollTop + consoleEl.clientHeight >= consoleEl.scrollHeight - 40;
+  var token = ++logReqToken;
   fetch('/api/logs?since=' + lastLogSeq + '&count=200&level=' + logLevelFilter)
     .then(function(res) { return res.json(); })
     .then(function(data) {
+      if (token !== logReqToken) return;  // superseded by a newer poll/filter/clear
       var empty = document.getElementById('logConsoleEmpty');
       if (!data.entries || data.entries.length === 0) {
         if (!consoleEl.hasChildNodes()) empty.style.display = 'block';
@@ -1050,6 +1057,7 @@ function loadLogs() {
 }
 
 function clearLogs() {
+  logReqToken++;  // invalidate any in-flight poll — it must not repopulate the console
   fetch('/api/logs/clear', { method: 'POST' }).then(function() {
     var c = document.getElementById('logConsole');
     if (c) c.textContent = '';
@@ -1062,6 +1070,7 @@ function clearLogs() {
 document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('.log-chip').forEach(function(chip) {
     chip.addEventListener('click', function() {
+      logReqToken++;  // discard in-flight responses from the previous filter
       document.querySelectorAll('.log-chip').forEach(function(c) { c.classList.remove('active'); });
       this.classList.add('active');
       logLevelFilter = this.dataset.level;

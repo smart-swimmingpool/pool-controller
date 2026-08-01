@@ -121,8 +121,17 @@ private:
 // ---- Serial mock ----
 class SerialClass {
 public:
+  // Optional stdout capture for tests that need to assert on Serial output.
+  // Disabled by default so existing tests are unaffected.
+  static std::string s_capture;
+  static bool s_captureEnabled;
+  static void enableCapture() { s_captureEnabled = true; s_capture.clear(); }
+  static void disableCapture() { s_captureEnabled = false; s_capture.clear(); }
+  static const std::string &capture() { return s_capture; }
+
   void begin(int) {}
   void print(const char *s) {
+    if (s_captureEnabled) s_capture += s;
     fprintf(stdout, "%s", s);
     fflush(stdout);
   }

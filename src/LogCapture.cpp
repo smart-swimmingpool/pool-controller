@@ -54,12 +54,14 @@ void LogCapture::log(LogLevel level, const char *fmt, ...) {
   if (fmt == nullptr) {
     return;
   }
-  char message[LOG_MSG_SIZE];
+  // Format into the full-size buffer so the Serial mirror (in store())
+  // receives the complete message; only the ring copy is truncated.
+  char message[LOG_FORMAT_SIZE];
   va_list args;
   va_start(args, fmt);
   vsnprintf(message, sizeof(message), fmt, args);
   va_end(args);
-  message[LOG_MSG_SIZE - 1] = '\0';
+  message[LOG_FORMAT_SIZE - 1] = '\0';
   store(level, message);
 }
 
@@ -67,14 +69,14 @@ void LogCapture::logEvent(const char *eventType, const char *fmt, ...) {
   if (eventType == nullptr || fmt == nullptr) {
     return;
   }
-  char body[LOG_MSG_SIZE];
+  char body[LOG_FORMAT_SIZE];
   va_list args;
   va_start(args, fmt);
   vsnprintf(body, sizeof(body), fmt, args);
   va_end(args);
-  body[LOG_MSG_SIZE - 1] = '\0';
+  body[LOG_FORMAT_SIZE - 1] = '\0';
 
-  char message[LOG_MSG_SIZE];
+  char message[LOG_FORMAT_SIZE + 64];  // room for the "[TYPE] " prefix
   snprintf(message, sizeof(message), "[%s] %s", eventType, body);
   store(LogLevel::Info, message);
 }

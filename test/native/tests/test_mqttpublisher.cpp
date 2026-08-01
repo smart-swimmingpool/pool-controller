@@ -724,6 +724,47 @@ int run_mqttpublisher_tests() {
     test_suite_end("MqttPublisher::export_dedup", rc == 0 ? 1 : 0, rc != 0 ? 1 : 0);
   }
 
+  // ── Test: failed publish keeps the watermark → entry is retried next pass ──
+  // Task 5: NetworkManager::publish() can return false (MQTT queue refused /
+  // disconnected mid-burst). The watermark must NOT advance past such an
+  // entry, otherwise the event is dropped permanently.
+  {
+    test_begin("MqttPublisher::publishStates", "failed publish does not advance watermark");
+
+    mqttCapture.clear();
+    NetworkManager::setMqttConnected(true);
+    NetworkManager::setPublishOk(false);  // simulate AsyncMqttClient refusing to enqueue
+    LogCapture::begin();
+    MqttPublisher::begin();
+
+    LogCapture::log(LogLevel::Error, "queued when broker back");
+    MqttPublisher::publishStates();
+
+    // No event may be marked exported while publish fails.
+    const MqttMessage *ev = mqttCapture.findPublished("homeassistant/event/pool-controller/logs/state");
+    bool clean = (ev == nullptr);
+
+    // Broker accepts again → the same entry must now be exported (retry).
+    NetworkManager::setPublishOk(true);
+    mqttCapture.clear();
+    MqttPublisher::publishStates();
+    const MqttMessage *ev2 = mqttCapture.findPublished("homeassistant/event/pool-controller/logs/state");
+    const MqttMessage *raw2 = mqttCapture.findPublished("pool-controller/log");
+
+    rc = (clean && ev2 != nullptr && raw2 != nullptr) ? 0 : 1;
+    if (rc == 0) {
+      test_pass(__FILE__, __LINE__);
+      passed++;
+    } else {
+      char msg[160];
+      snprintf(msg, sizeof(msg), "clean=%d ev2=%s raw2=%s (no retry)", clean ? 1 : 0,
+               ev2 != nullptr ? ev2->payload.c_str() : "NULL", raw2 != nullptr ? raw2->payload.c_str() : "NULL");
+      test_fail(__FILE__, __LINE__, msg);
+      failed++;
+    }
+    test_suite_end("MqttPublisher::export_retry_publish_fail", rc == 0 ? 1 : 0, rc != 0 ? 1 : 0);
+  }
+
   // ── Test: logEvent marker becomes event_type on the event state topic ──
   // Task 5: LogCapture::logEvent("[MODE_CHANGED] ...") → event_type=MODE_CHANGED.
   // Info-level events are NOT mirrored to the raw topic (raw is WARN/ERROR only).
