@@ -864,7 +864,12 @@ void MqttPublisher::exportLogEvents() {
     }
   }
 
-  s_lastExportedSeq = LogCapture::lastSeq();
+  // Advance the watermark only through the completed snapshot. Using
+  // LogCapture::lastSeq() here would mark entries appended concurrently by
+  // async WiFi/MQTT callbacks as exported even though they were never
+  // processed — their HA events would be permanently lost. They will be
+  // picked up by the next export pass instead.
+  s_lastExportedSeq = entries[count - 1].seq;
 }
 
 // ═══════════════════════════════════════════════════════════════════════
