@@ -13,6 +13,8 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
+#include "SensorSlots.hpp"
+
 /**
  * @brief Reads temperature from a DS18B20 sensor on a OneWire bus.
  *
@@ -67,9 +69,9 @@ public:
   unsigned long getMeasurementInterval() const { return _measurementInterval; }
 
   /** @brief Get the last successfully read temperature. @return Temperature in °C, or NAN if no valid read. */
-  float getTemperature() const { return _temperature; }
+  float getTemperature() const { return PoolController::SensorSlots::read(slotId()); }
   /** @brief Check if a sensor was found on the bus. @return true if at least one device is present. */
-  bool isSensorFound() const { return _sensorFound; }
+  bool isSensorFound() const { return PoolController::SensorSlots::isFound(slotId()); }
 
   /** @brief Get number of devices detected on this node's bus. */
   uint8_t getDeviceCount() const { return numberOfDevices; }
@@ -100,6 +102,27 @@ public:
   void begin();
   /** @brief Read temperature periodically (respects measurementInterval). */
   void loop();
+
+  /**
+   * @brief Start a temperature conversion (non-blocking on Core 0).
+   *
+   * In shared-bus mode only the master (deviceIndex 0) issues
+   * requestTemperatures(); slaves just return. In dedicated mode the
+   * node starts its own conversion.
+   * @note Call from SensorTask; the result must be read later via
+   *       finishMeasurement() after the conversion time has elapsed.
+   */
+  void beginMeasurement();
+
+  /**
+   * @brief Read the conversion result and publish it to SensorSlots.
+   *
+   * Reads the temperature from the bus, updates the internal state, reports
+   * sensor status to DegradationManager, and writes the value into the
+   * thread-safe SensorSlots for cross-task consumers.
+   * @note Call from SensorTask after beginMeasurement() + conversion delay.
+   */
+  void finishMeasurement();
 
 private:
   static const int MIN_INTERVAL = 10;  // in seconds (more granular loop support)
@@ -135,6 +158,9 @@ private:
    *  Called by begin(), setAddressFilter(), and clearAddressFilter().
    *  @return true if the device was found, false if fallback was used. */
   bool resolveFilter();
+
+  /** @brief Map this node to its SensorSlots id. */
+  PoolController::SensorId slotId() const;
 
   /** @brief Format a DeviceAddress as a hex string. */
   void address2String(const DeviceAddress deviceAddress, char *buffer, size_t size) const;

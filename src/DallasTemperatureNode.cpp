@@ -12,6 +12,7 @@
 #include "Config.hpp"
 #include "SystemMonitor.hpp"
 #include "DegradationManager.hpp"
+#include "SensorSlots.hpp"
 #include "Utils.hpp"
 
 // ── Dedicated bus constructor ──────────────────────────────────────────────
@@ -194,101 +195,103 @@ void DallasTemperatureNode::begin() {
   }
 }
 
-void DallasTemperatureNode::loop() {
+void DallasTemperatureNode::beginMeasurement() {
   DallasTemperature *activeSensor = sharedSensor_ ? sharedSensor_ : &sensor;
-  unsigned long effectiveInterval = std::isnan(_temperature) ? RECOVERY_INTERVAL : _measurementInterval;
 
-  if (Utils::shouldMeasure(_lastMeasurement, effectiveInterval)) {
-    _lastMeasurement = millis();
-
-    if (sharedSensor_ && numberOfDevices > 0) {
-      // ── Shared bus mode ────────────────────────────────────────────────
-      // The master (deviceIndex 0) drives the conversion for all sensors.
-      if (isBusMaster_) {
-        Serial.printf("〽 Reading Dallas sensors (shared bus)\n");
-
-        PoolController::SystemMonitor::feedWatchdog();
-        activeSensor->requestTemperatures();
-        PoolController::SystemMonitor::feedWatchdog();
-
-        // Master reads its own sensor
-        float newTemp = activeSensor->getTempC(deviceAddress_);
-        if (newTemp == DEVICE_DISCONNECTED_C) {
-          Serial.println("  ✖ Solar sensor disconnected - setting to NaN");
-          _temperature = NAN;
-          _sensorFound = false;
-          PoolController::DegradationManager::reportSensorStatus(_id, false);
-        } else {
-          _temperature = newTemp;
-          _sensorFound = true;
-          PoolController::DegradationManager::reportSensorStatus(_id, true);
-          Serial.printf("  ◦ Solar Temp = %.1f°C\n", _temperature);
-        }
-      } else {
-        // Slave: read from the conversion the master already triggered
-        float newTemp = activeSensor->getTempC(deviceAddress_);
-        if (newTemp == DEVICE_DISCONNECTED_C) {
-          Serial.println("  ✖ Pool sensor disconnected - setting to NaN");
-          _temperature = NAN;
-          _sensorFound = false;
-          PoolController::DegradationManager::reportSensorStatus(_id, false);
-        } else {
-          _temperature = newTemp;
-          _sensorFound = true;
-          PoolController::DegradationManager::reportSensorStatus(_id, true);
-          Serial.printf("  ◦ Pool Temp = %.1f°C\n", _temperature);
-        }
-      }
-    } else if (numberOfDevices > 0) {
-      // ── Dedicated bus mode (standard) ──────────────────────────────────
-      Serial.printf("〽 Reading Dallas sensor: %s\n", _id);
-
+  if (sharedSensor_ && numberOfDevices > 0) {
+    // Shared bus: only the master drives the conversion for all sensors.
+    if (isBusMaster_) {
       PoolController::SystemMonitor::feedWatchdog();
       activeSensor->requestTemperatures();
       PoolController::SystemMonitor::feedWatchdog();
+    }
+  } else if (numberOfDevices > 0) {
+    // Dedicated bus: start our own conversion.
+    PoolController::SystemMonitor::feedWatchdog();
+    activeSensor->requestTemperatures();
+    PoolController::SystemMonitor::feedWatchdog();
+  }
+}
 
-      for (uint8_t i = 0; i < numberOfDevices; i++) {
-        DeviceAddress tempDeviceAddress;
-        if (activeSensor->getAddress(tempDeviceAddress, i)) {
-          float newTemp = activeSensor->getTempC(tempDeviceAddress);
-          if (newTemp == DEVICE_DISCONNECTED_C) {
-            Serial.println("  ✖ Sensor disconnected - setting to NaN");
-            _temperature = NAN;
-            _sensorFound = false;
-            PoolController::DegradationManager::reportSensorStatus(_id, false);
-          } else {
-            _temperature = newTemp;
-            _sensorFound = true;
-            PoolController::DegradationManager::reportSensorStatus(_id, true);
-            Serial.printf("  ◦ Temp = %.1f°C\n", _temperature);
-          }
-        }
-      }
-    } else {
-      // ── No sensor found — rescan ──────────────────────────────────────
-      Serial.println("No Sensor found on bus! Rescanning...");
+void DallasTemperatureNode::finishMeasurement() {
+  DallasTemperature *activeSensor = sharedSensor_ ? sharedSensor_ : &sensor;
+
+  if (sharedSensor_ && numberOfDevices > 0) {
+    // Shared bus: master and slave each read their own device.
+    float newTemp = activeSensor->getTempC(deviceAddress_);
+    if (newTemp == DEVICE_DISCONNECTED_C) {
+      _temperature = NAN;
+      _sensorFound = false;
       PoolController::DegradationManager::reportSensorStatus(_id, false);
-
-      if (sharedSensor_) {
-        // In shared mode, rescan the shared bus
-        activeSensor->begin();
-        numberOfDevices = activeSensor->getDeviceCount();
-        if (numberOfDevices > deviceIndex_) {
-          activeSensor->getAddress(deviceAddress_, deviceIndex_);
-          _sensorFound = true;
-          PoolController::DegradationManager::reportSensorStatus(_id, true);
-          Serial.printf("  ◦ %d device(s) found after rescan\n", numberOfDevices);
-        }
-      } else {
-        activeSensor->begin();
-        numberOfDevices = activeSensor->getDeviceCount();
-        if (numberOfDevices > 0) {
-          Serial.printf("  ◦ %d device(s) found after rescan\n", numberOfDevices);
-          _sensorFound = true;
+      Serial.printf("  ✖ %s sensor disconnected - setting to NaN\n", _id);
+    } else {
+      _temperature = newTemp;
+      _sensorFound = true;
+      PoolController::DegradationManager::reportSensorStatus(_id, true);
+      Serial.printf("  ◦ %s Temp = %.1f°C\n", _id, _temperature);
+    }
+    PoolController::SensorSlots::write(slotId(), _temperature, _sensorFound);
+  } else if (numberOfDevices > 0) {
+    // Dedicated bus: read all devices, take the last valid reading.
+    bool foundAny = false;
+    for (uint8_t i = 0; i < numberOfDevices; i++) {
+      DeviceAddress tempDeviceAddress;
+      if (activeSensor->getAddress(tempDeviceAddress, i)) {
+        float newTemp = activeSensor->getTempC(tempDeviceAddress);
+        if (newTemp != DEVICE_DISCONNECTED_C) {
+          _temperature = newTemp;
+          foundAny = true;
         }
       }
     }
+    _sensorFound = foundAny;
+    PoolController::DegradationManager::reportSensorStatus(_id, foundAny);
+    if (foundAny) {
+      Serial.printf("  ◦ %s Temp = %.1f°C\n", _id, _temperature);
+    } else {
+      _temperature = NAN;
+      Serial.printf("  ✖ %s sensor disconnected - setting to NaN\n", _id);
+    }
+    PoolController::SensorSlots::write(slotId(), _temperature, _sensorFound);
+  } else {
+    // No sensor found — rescan the bus.
+    Serial.printf("No Sensor found on bus! Rescanning (%s)...\n", _id);
+    PoolController::DegradationManager::reportSensorStatus(_id, false);
+    PoolController::SensorSlots::write(slotId(), NAN, false);
+
+    if (sharedSensor_) {
+      activeSensor->begin();
+      numberOfDevices = activeSensor->getDeviceCount();
+      if (numberOfDevices > deviceIndex_) {
+        activeSensor->getAddress(deviceAddress_, deviceIndex_);
+        _sensorFound = true;
+        PoolController::DegradationManager::reportSensorStatus(_id, true);
+        Serial.printf("  ◦ %d device(s) found after rescan\n", numberOfDevices);
+      }
+    } else {
+      activeSensor->begin();
+      numberOfDevices = activeSensor->getDeviceCount();
+      if (numberOfDevices > 0) {
+        _sensorFound = true;
+        Serial.printf("  ◦ %d device(s) found after rescan\n", numberOfDevices);
+      }
+    }
   }
+}
+
+void DallasTemperatureNode::loop() {
+  unsigned long effectiveInterval = std::isnan(_temperature) ? RECOVERY_INTERVAL : _measurementInterval;
+  if (Utils::shouldMeasure(_lastMeasurement, effectiveInterval)) {
+    _lastMeasurement = millis();
+    Serial.printf("〽 Reading Dallas sensor: %s\n", _id);
+    beginMeasurement();
+    // Sync fallback (tests / non-task callers): conversion is blocking here.
+    finishMeasurement();
+  }
+}
+
+PoolController::SensorId DallasTemperatureNode::slotId() const {
+  return (_id[0] == 's') ? PoolController::SensorId::SOLAR : PoolController::SensorId::POOL;
 }
 
 void DallasTemperatureNode::address2String(const DeviceAddress deviceAddress, char *buffer, size_t size) const {
