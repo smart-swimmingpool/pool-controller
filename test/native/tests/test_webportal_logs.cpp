@@ -85,7 +85,9 @@ int run_webportal_logs_tests() {
     size_t len = 0;
     rc = buildAndParse(0, 200, LogLevel::Debug, doc, len) ? 0 : 1;
     if (rc == 0) {
-      rc = (doc["ok"] == true && doc["next"] == 3) ? 0 : 1;
+      // next = highest consumed seq (2), NOT lastSeq()+1 (3): the client sends
+      // next back as the exclusive `since` cursor, so seq 3 must not be skipped.
+      rc = (doc["ok"] == true && doc["next"] == 2) ? 0 : 1;
     }
     if (rc == 0) {
       JsonArray arr = doc["entries"].as<JsonArray>();
@@ -153,6 +155,11 @@ int run_webportal_logs_tests() {
       rc = (arr.size() == 2 && arr[0]["seq"] == 1 && arr[1]["seq"] == 2) ? 0 : 1;
     }
     if (rc == 0) {
+      // Truncated response must NOT jump to lastSeq+1 (6): next = last consumed
+      // seq (2), so the client's next poll with since=2 fetches 3..5.
+      rc = (doc["next"] == 2) ? 0 : 1;
+    }
+    if (rc == 0) {
       test_pass(__FILE__, __LINE__);
       passed++;
     } else {
@@ -201,13 +208,15 @@ int run_webportal_logs_tests() {
     rc = buildAndParse(0, 200, LogLevel::Debug, doc, len) ? 0 : 1;
     if (rc == 0) {
       JsonArray arr = doc["entries"].as<JsonArray>();
-      rc = (arr.size() == 0 && doc["ok"] == true && doc["next"] == 3) ? 0 : 1;
+      // No entries consumed → cursor stays at the requested since (0), so the
+      // client does not skip anything when new entries arrive.
+      rc = (arr.size() == 0 && doc["ok"] == true && doc["next"] == 0) ? 0 : 1;
     }
     if (rc == 0) {
       test_pass(__FILE__, __LINE__);
       passed++;
     } else {
-      test_fail(__FILE__, __LINE__, "after clear entries should be empty, next stays lastSeq+1");
+      test_fail(__FILE__, __LINE__, "after clear entries should be empty, next stays at since");
       failed++;
     }
     test_suite_end("WebPortal::buildLogsJson::empty", rc == 0 ? 1 : 0, rc != 0 ? 1 : 0);

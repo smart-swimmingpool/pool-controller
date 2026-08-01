@@ -532,7 +532,12 @@ size_t WebPortal::buildLogsJson(uint32_t since, size_t count, LogLevel minLevel,
 
   JsonDocument doc;
   doc["ok"] = true;
-  doc["next"] = LogCapture::lastSeq() + 1;
+  // getEntries() treats `since` as an exclusive cursor (skips entry.seq <= since),
+  // so next must be the highest sequence actually consumed, not lastSeq()+1:
+  // a cursor of lastSeq()+1 would skip the entry whose seq equals that value on
+  // the next poll, and truncated responses would jump past unreturned entries.
+  // With no entries, keep the previous cursor (no progress, nothing skipped).
+  doc["next"] = (n > 0) ? entries[n - 1].seq : since;
 
   JsonArray arr = doc["entries"].to<JsonArray>();
   for (size_t i = 0; i < n; ++i) {
