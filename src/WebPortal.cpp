@@ -562,16 +562,16 @@ size_t WebPortal::buildLogsJson(uint32_t since, uint32_t epoch, size_t count, Lo
 
 void WebPortal::apiGetLogs() {
   uint32_t since = 0;
-  uint32_t epoch = 0;
+  // Omitted boot parameter = current boot: the documented since-polling flow
+  // keeps working incrementally. Only clients that explicitly send a boot epoch
+  // get reboot detection (a stale epoch forces a full dump).
+  uint32_t epoch = LogCapture::epoch();
   size_t count = 200;
   LogLevel minLevel = LogLevel::Info;
 
   if (server_.hasArg("since")) {
     since = static_cast<uint32_t>(atol(server_.arg("since").c_str()));
   }
-  // Boot epoch of the client's cursor. Clients that do not send it (epoch 0)
-  // get a full dump whenever a boot happened since their last poll, which is
-  // the safe fallback for this endpoint.
   if (server_.hasArg("boot")) {
     epoch = static_cast<uint32_t>(atol(server_.arg("boot").c_str()));
   }

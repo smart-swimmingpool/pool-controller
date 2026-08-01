@@ -24,6 +24,7 @@
 #if defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
 #include <freertos/FreeRTOS.h>
 #include <freertos/portmacro.h>
+#include <esp_system.h>  // esp_random() for the per-boot epoch
 static portMUX_TYPE s_logMux = portMUX_INITIALIZER_UNLOCKED;
 #define LOG_CRITICAL_ENTER() portENTER_CRITICAL(&s_logMux)
 #define LOG_CRITICAL_EXIT() portEXIT_CRITICAL(&s_logMux)
@@ -47,7 +48,16 @@ void LogCapture::begin() {
   s_head = 0;
   s_seq = 0;
   s_clearedSeq = 0;
-  ++s_epoch;  // new boot: cursors persisted across the reboot are now stale
+#if defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
+  // A static RAM counter would restart at the same value after a real reboot
+  // (reinitialized to 0, then incremented to 1 — the same as the previous
+  // boot), so it cannot distinguish physical boots. Randomize instead:
+  // a reboot virtually never reuses the previous epoch, so persisted client
+  // cursors are reliably detected as stale even while the sequence catches up.
+  s_epoch = esp_random();
+#else
+  ++s_epoch;  // native tests: deterministic monotonic increment per begin()
+#endif
   s_logToSerial = true;
   LOG_CRITICAL_EXIT();
 }

@@ -83,8 +83,11 @@ public:
   /** Sequence number of the last assigned entry (0 if none yet). */
   static std::uint32_t lastSeq();
   /**
-   * Monotonic boot epoch. begin() increments it, so polling clients can detect
-   * a reboot even when the new sequence is still below their stored cursor.
+   * Boot epoch identifying the current boot. On ESP32 begin() assigns a fresh
+   * random value per boot (a RAM counter would restart at the same value after
+   * a real reboot and could not distinguish physical boots); native test builds
+   * use a deterministic monotonic increment. Clients echo it back so a reboot
+   * is detected even when the new sequence is still below their stored cursor.
    */
   static std::uint32_t epoch();
   /** Empties the ring. s_seq is NOT reset so polling clients keep working. */
