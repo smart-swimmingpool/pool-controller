@@ -65,6 +65,7 @@ set(MOCK_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/mocks/ConfigManager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mocks/globals.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mocks/stubs.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/mocks/CoreScheduler.cpp
 )
 
 # Test sources
@@ -79,6 +80,7 @@ set(TEST_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_timer.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_telemetry_queue.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_sensor_slots.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_core_scheduler.cpp
 )
 
 add_executable(test_runner

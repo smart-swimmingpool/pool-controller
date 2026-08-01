@@ -108,6 +108,7 @@ extern int run_state_manager_tests();
 extern int run_timer_tests();
 extern int run_telemetry_queue_tests();
 extern int run_sensor_slots_tests();
+extern int run_core_scheduler_tests();
 
 int main() {
   printf("\n══════════════════════════════════════════════════\n");
@@ -124,6 +125,7 @@ int main() {
   total += run_timer_tests();
   total += run_telemetry_queue_tests();
   total += run_sensor_slots_tests();
+  total += run_core_scheduler_tests();
 
   printf("\n══════════════════════════════════════════════════\n");
   printf("  Results: %d suites passed, %d suites failed\n", g_testsPassed, g_testsFailed);
