@@ -38,6 +38,7 @@
 #include "StatusLed.hpp"
 
 #include "CoreScheduler.hpp"
+#include "TelemetryQueue.hpp"
 
 #ifdef NORVI_AE01_R
 #include "NorviOledDisplay.hpp"
@@ -501,18 +502,18 @@ auto PoolControllerContext::loop() -> void {
   static bool wasMqttConnected = false;
   bool currentMqttState = NetworkManager::isMqttConnected();
   if (currentMqttState && !wasMqttConnected) {
-    // Freshly connected to MQTT: publish Discovery and States
-    MqttPublisher::publishDiscovery();
-    MqttPublisher::publishStates();
+    // Freshly connected to MQTT: publish Discovery and States via PublishTask.
+    TelemetryQueue::instance().enqueue(PublishRequestKind::DISCOVERY);
+    TelemetryQueue::instance().enqueue(PublishRequestKind::STATES);
     wasMqttConnected = true;
   } else if (!currentMqttState) {
     wasMqttConnected = false;
   }
 
-  // Periodically publish telemetry states to HA (P4)
+  // Periodically enqueue telemetry publish to HA (P4) — serialization runs on Core 0.
   if (currentMqttState && Utils::shouldMeasure(_lastMeasurement, _measurementInterval)) {
     _lastMeasurement = millis();
-    MqttPublisher::publishStates();
+    TelemetryQueue::instance().enqueue(PublishRequestKind::STATES);
   }
 
   // Log Core-0 task stack high-water marks (throttled inside).

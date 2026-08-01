@@ -13,6 +13,7 @@
 #include <freertos/task.h>
 
 #include "SensorTask.hpp"
+#include "PublishTask.hpp"
 
 namespace PoolController {
 
@@ -21,6 +22,7 @@ void CoreScheduler::begin() {
   const BaseType_t core0 = PRO_CPU_NUM;
 
   SensorTask::start(TASK_PRIORITY_SENSOR, TASK_STACK_SENSOR, core0);
+  PublishTask::start(TASK_PRIORITY_PUBLISH, TASK_STACK_PUBLISH, core0);
 }
 
 void CoreScheduler::logStackWatermarks() {
@@ -30,6 +32,7 @@ void CoreScheduler::logStackWatermarks() {
   }
   lastLog = millis();
   SensorTask::logStackWatermark();
+  PublishTask::logStackWatermark();
 }
 
 }  // namespace PoolController
