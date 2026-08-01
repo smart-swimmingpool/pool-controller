@@ -71,14 +71,22 @@ public:
   /**
    * Copies up to min(maxCount, outCapacity) entries newer than sinceSeq with
    * level >= minLevel into out. Returns the number of entries written.
-   * A sinceSeq higher than lastSeq() (stale cursor from before a reboot, where
-   * begin() restarted the sequence at 0) is treated as 0, so the whole
-   * currently-visible ring is returned instead of nothing.
+   *
+   * The cursor (sinceSeq, epoch) is only trusted when it belongs to the
+   * current boot: a stale cursor — epoch != epoch() (it was persisted across a
+   * reboot, where begin() restarted the sequence at 0) or sinceSeq > lastSeq()
+   * — is treated as 0, so the whole currently-visible ring is returned
+   * instead of nothing or a partial new-boot log.
    */
   static std::size_t getEntries(
-    std::uint32_t sinceSeq, std::size_t maxCount, LogLevel minLevel, LogEntry *out, std::size_t outCapacity);
+    std::uint32_t sinceSeq, std::uint32_t epoch, std::size_t maxCount, LogLevel minLevel, LogEntry *out, std::size_t outCapacity);
   /** Sequence number of the last assigned entry (0 if none yet). */
   static std::uint32_t lastSeq();
+  /**
+   * Monotonic boot epoch. begin() increments it, so polling clients can detect
+   * a reboot even when the new sequence is still below their stored cursor.
+   */
+  static std::uint32_t epoch();
   /** Empties the ring. s_seq is NOT reset so polling clients keep working. */
   static void clear();
   static const char *levelName(LogLevel level);
@@ -95,6 +103,7 @@ private:
   static std::size_t s_head;          //!< next free slot
   static std::uint32_t s_seq;         //!< last assigned sequence number
   static std::uint32_t s_clearedSeq;  //!< watermark: entries <= this are hidden after clear()
+  static std::uint32_t s_epoch;       //!< boot epoch, incremented by begin()
   static bool s_logToSerial;
 };
 

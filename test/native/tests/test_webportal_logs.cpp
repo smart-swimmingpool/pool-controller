@@ -55,9 +55,9 @@ extern void test_suite_end(const char *name, int passed, int failed);
 namespace {
 
 // Serializes via the hook and parses the result. Returns true on success.
-bool buildAndParse(uint32_t since, size_t count, LogLevel minLevel, JsonDocument &doc, size_t &payloadLen) {
+bool buildAndParse(uint32_t since, uint32_t epoch, size_t count, LogLevel minLevel, JsonDocument &doc, size_t &payloadLen) {
   char buf[8192];
-  payloadLen = WebPortal::buildLogsJson(since, count, minLevel, buf, sizeof(buf));
+  payloadLen = WebPortal::buildLogsJson(since, epoch, count, minLevel, buf, sizeof(buf));
   if (payloadLen == 0) {
     return false;
   }
@@ -83,11 +83,11 @@ int run_webportal_logs_tests() {
 
     JsonDocument doc;
     size_t len = 0;
-    rc = buildAndParse(0, 200, LogLevel::Debug, doc, len) ? 0 : 1;
+    rc = buildAndParse(0, LogCapture::epoch(), 200, LogLevel::Debug, doc, len) ? 0 : 1;
     if (rc == 0) {
       // next = highest consumed seq (2), NOT lastSeq()+1 (3): the client sends
       // next back as the exclusive `since` cursor, so seq 3 must not be skipped.
-      rc = (doc["ok"] == true && doc["next"] == 2) ? 0 : 1;
+      rc = (doc["ok"] == true && doc["next"] == 2 && doc["boot"] == LogCapture::epoch()) ? 0 : 1;
     }
     if (rc == 0) {
       JsonArray arr = doc["entries"].as<JsonArray>();
@@ -124,7 +124,7 @@ int run_webportal_logs_tests() {
 
     JsonDocument doc;
     size_t len = 0;
-    rc = buildAndParse(3, 200, LogLevel::Debug, doc, len) ? 0 : 1;
+    rc = buildAndParse(3, LogCapture::epoch(), 200, LogLevel::Debug, doc, len) ? 0 : 1;
     if (rc == 0) {
       JsonArray arr = doc["entries"].as<JsonArray>();
       rc = (arr.size() == 2 && arr[0]["seq"] == 4 && arr[1]["seq"] == 5) ? 0 : 1;
@@ -149,7 +149,7 @@ int run_webportal_logs_tests() {
 
     JsonDocument doc;
     size_t len = 0;
-    rc = buildAndParse(0, 2, LogLevel::Debug, doc, len) ? 0 : 1;
+    rc = buildAndParse(0, LogCapture::epoch(), 2, LogLevel::Debug, doc, len) ? 0 : 1;
     if (rc == 0) {
       JsonArray arr = doc["entries"].as<JsonArray>();
       rc = (arr.size() == 2 && arr[0]["seq"] == 1 && arr[1]["seq"] == 2) ? 0 : 1;
@@ -180,7 +180,7 @@ int run_webportal_logs_tests() {
 
     JsonDocument doc;
     size_t len = 0;
-    rc = buildAndParse(0, 200, LogLevel::Warning, doc, len) ? 0 : 1;
+    rc = buildAndParse(0, LogCapture::epoch(), 200, LogLevel::Warning, doc, len) ? 0 : 1;
     if (rc == 0) {
       JsonArray arr = doc["entries"].as<JsonArray>();
       rc = (arr.size() == 2 && arr[0]["level"] == "warning" && arr[1]["level"] == "error") ? 0 : 1;
@@ -205,12 +205,12 @@ int run_webportal_logs_tests() {
 
     JsonDocument doc;
     size_t len = 0;
-    rc = buildAndParse(0, 200, LogLevel::Debug, doc, len) ? 0 : 1;
+    rc = buildAndParse(0, LogCapture::epoch(), 200, LogLevel::Debug, doc, len) ? 0 : 1;
     if (rc == 0) {
       JsonArray arr = doc["entries"].as<JsonArray>();
       // No entries consumed → cursor stays at the requested since (0), so the
       // client does not skip anything when new entries arrive.
-      rc = (arr.size() == 0 && doc["ok"] == true && doc["next"] == 0) ? 0 : 1;
+      rc = (arr.size() == 0 && doc["ok"] == true && doc["next"] == 0 && doc["boot"] == LogCapture::epoch()) ? 0 : 1;
     }
     if (rc == 0) {
       test_pass(__FILE__, __LINE__);

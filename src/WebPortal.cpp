@@ -520,7 +520,7 @@ void WebPortal::apiGetStatus() {
 
 // ── Log view (REST /api/logs) ──────────────────────────────────────────────
 
-size_t WebPortal::buildLogsJson(uint32_t since, size_t count, LogLevel minLevel, char *buf, size_t bufSize) {
+size_t WebPortal::buildLogsJson(uint32_t since, uint32_t epoch, size_t count, LogLevel minLevel, char *buf, size_t bufSize) {
   if (buf == nullptr || bufSize == 0) {
     return 0;
   }
@@ -528,10 +528,14 @@ size_t WebPortal::buildLogsJson(uint32_t since, size_t count, LogLevel minLevel,
   // Copy entries out of the ring into a fixed array (snapshot consistency —
   // getEntries reads under the log mutex). Static: no stack pressure.
   static LogEntry entries[LogCapture::LOG_BUFFER_ENTRIES];
-  size_t n = LogCapture::getEntries(since, count, minLevel, entries, LogCapture::LOG_BUFFER_ENTRIES);
+  size_t n = LogCapture::getEntries(since, epoch, count, minLevel, entries, LogCapture::LOG_BUFFER_ENTRIES);
 
   JsonDocument doc;
   doc["ok"] = true;
+  // The client echoes the boot epoch it last saw; a mismatch with the current
+  // boot tells it to discard its cursor even when the new sequence has already
+  // grown past it. Always report the CURRENT epoch, not the requested one.
+  doc["boot"] = LogCapture::epoch();
   // getEntries() treats `since` as an exclusive cursor (skips entry.seq <= since),
   // so next must be the highest sequence actually consumed, not lastSeq()+1:
   // a cursor of lastSeq()+1 would skip the entry whose seq equals that value on
@@ -558,11 +562,18 @@ size_t WebPortal::buildLogsJson(uint32_t since, size_t count, LogLevel minLevel,
 
 void WebPortal::apiGetLogs() {
   uint32_t since = 0;
+  uint32_t epoch = 0;
   size_t count = 200;
   LogLevel minLevel = LogLevel::Info;
 
   if (server_.hasArg("since")) {
     since = static_cast<uint32_t>(atol(server_.arg("since").c_str()));
+  }
+  // Boot epoch of the client's cursor. Clients that do not send it (epoch 0)
+  // get a full dump whenever a boot happened since their last poll, which is
+  // the safe fallback for this endpoint.
+  if (server_.hasArg("boot")) {
+    epoch = static_cast<uint32_t>(atol(server_.arg("boot").c_str()));
   }
   if (server_.hasArg("count")) {
     long c = atol(server_.arg("count").c_str());
@@ -578,7 +589,7 @@ void WebPortal::apiGetLogs() {
   // Worst case: LOG_BUFFER_ENTRIES entries x ~140 bytes each + envelope.
   // Use a static buffer to avoid heap fragmentation.
   static char jsonBuffer[16384];
-  size_t jsonLength = buildLogsJson(since, count, minLevel, jsonBuffer, sizeof(jsonBuffer));
+  size_t jsonLength = buildLogsJson(since, epoch, count, minLevel, jsonBuffer, sizeof(jsonBuffer));
   if (jsonLength > 0) {
     server_.send(200, "application/json", jsonBuffer);
   } else {

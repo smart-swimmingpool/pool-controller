@@ -828,8 +828,8 @@ void MqttPublisher::exportLogEvents() {
 
   // Batch snapshot of the ring (static: keeps ~9 KB off the loop stack).
   static LogEntry entries[LogCapture::LOG_BUFFER_ENTRIES];
-  const size_t count = LogCapture::getEntries(
-    s_lastExportedSeq, LogCapture::LOG_BUFFER_ENTRIES, LogLevel::Info, entries, LogCapture::LOG_BUFFER_ENTRIES);
+  const size_t count = LogCapture::getEntries(s_lastExportedSeq, LogCapture::epoch(), LogCapture::LOG_BUFFER_ENTRIES,
+    LogLevel::Info, entries, LogCapture::LOG_BUFFER_ENTRIES);
   if (count == 0) {
     EXPORT_CRITICAL_ENTER();
     s_exportRunning = false;

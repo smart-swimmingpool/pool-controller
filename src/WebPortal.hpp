@@ -63,8 +63,9 @@ public:
 
   // ── Log view helper (public for testing) ──
   /** @brief Serialize LogCapture entries as the /api/logs JSON payload.
+   *         @param epoch boot epoch of the client's cursor (see LogCapture::epoch()).
    *         @return bytes written (0 on error / empty buffer). */
-  static size_t buildLogsJson(uint32_t since, size_t count, LogLevel minLevel, char *buf, size_t bufSize);
+  static size_t buildLogsJson(uint32_t since, uint32_t epoch, size_t count, LogLevel minLevel, char *buf, size_t bufSize);
 
 private:
   /** @brief Register all HTTP routes, handlers, and static asset paths. */

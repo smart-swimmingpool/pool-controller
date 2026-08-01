@@ -39,6 +39,7 @@ LogEntry LogCapture::s_buffer[LogCapture::LOG_BUFFER_ENTRIES];
 std::size_t LogCapture::s_head = 0;
 std::uint32_t LogCapture::s_seq = 0;
 std::uint32_t LogCapture::s_clearedSeq = 0;
+std::uint32_t LogCapture::s_epoch = 0;
 bool LogCapture::s_logToSerial = true;
 
 void LogCapture::begin() {
@@ -46,6 +47,7 @@ void LogCapture::begin() {
   s_head = 0;
   s_seq = 0;
   s_clearedSeq = 0;
+  ++s_epoch;  // new boot: cursors persisted across the reboot are now stale
   s_logToSerial = true;
   LOG_CRITICAL_EXIT();
 }
@@ -102,7 +104,7 @@ void LogCapture::store(LogLevel level, const char *message) {
 }
 
 std::size_t LogCapture::getEntries(
-  std::uint32_t sinceSeq, std::size_t maxCount, LogLevel minLevel, LogEntry *out, std::size_t outCapacity) {
+  std::uint32_t sinceSeq, std::uint32_t epoch, std::size_t maxCount, LogLevel minLevel, LogEntry *out, std::size_t outCapacity) {
   const std::size_t cap = (maxCount < outCapacity) ? maxCount : outCapacity;
   if (out == nullptr || cap == 0) {
     return 0;
@@ -110,11 +112,16 @@ std::size_t LogCapture::getEntries(
 
   std::size_t written = 0;
   LOG_CRITICAL_ENTER();
-  // A `since` cursor from before a reboot (begin() restarts s_seq at 0) is
-  // higher than every new entry: clamp it to 0 so the client receives the
-  // whole currently-visible ring (e.g. boot diagnostics) instead of nothing
-  // until the sequence wraps past the stale cursor.
-  const std::uint32_t effectiveSince = (sinceSeq > s_seq) ? 0 : sinceSeq;
+  // A cursor is only trusted when it belongs to the current boot. Two cases
+  // make it stale and force a full re-read (effectiveSince = 0):
+  //  1. epoch mismatch: the client's cursor was persisted across a reboot
+  //     (begin() restarted s_seq at 0 AND incremented s_epoch). A seq-only
+  //     clamp misses this when the new boot has already produced more entries
+  //     than the old cursor (sinceSeq <= s_seq but the entries 1..sinceSeq of
+  //     the new boot would be skipped).
+  //  2. sinceSeq > s_seq within the same boot (ring wraparound past the
+  //     cursor, or a cursor from before this feature existed with epoch 0).
+  const std::uint32_t effectiveSince = (epoch != s_epoch || sinceSeq > s_seq) ? 0 : sinceSeq;
   // Entries written since the last clear (watermark hides pre-clear entries).
   const std::uint32_t postClear = s_seq - s_clearedSeq;
   const std::size_t visible = (postClear < LOG_BUFFER_ENTRIES) ? static_cast<std::size_t>(postClear) : LOG_BUFFER_ENTRIES;
@@ -140,6 +147,13 @@ std::uint32_t LogCapture::lastSeq() {
   const std::uint32_t seq = s_seq;
   LOG_CRITICAL_EXIT();
   return seq;
+}
+
+std::uint32_t LogCapture::epoch() {
+  LOG_CRITICAL_ENTER();
+  const std::uint32_t epoch = s_epoch;
+  LOG_CRITICAL_EXIT();
+  return epoch;
 }
 
 void LogCapture::clear() {

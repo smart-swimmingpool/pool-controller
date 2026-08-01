@@ -60,7 +60,7 @@ int run_logcapture_tests() {
       LogCapture::log(LogLevel::Info, "entry %zu", i);
     }
     LogEntry entries[LogCapture::LOG_BUFFER_ENTRIES];
-    size_t got = LogCapture::getEntries(0, 4096, LogLevel::Debug, entries, LogCapture::LOG_BUFFER_ENTRIES);
+    size_t got = LogCapture::getEntries(0, LogCapture::epoch(), 4096, LogLevel::Debug, entries, LogCapture::LOG_BUFFER_ENTRIES);
     rc = (got == LogCapture::LOG_BUFFER_ENTRIES) ? 0 : 1;
     if (rc == 0) {
       test_pass(__FILE__, __LINE__);
@@ -107,7 +107,7 @@ int run_logcapture_tests() {
 
     test_begin("LogCapture", "entries have strictly increasing seq");
     LogEntry entries[N];
-    size_t got = LogCapture::getEntries(0, N, LogLevel::Debug, entries, N);
+    size_t got = LogCapture::getEntries(0, LogCapture::epoch(), N, LogLevel::Debug, entries, N);
     bool increasing = (got == N);
     for (size_t i = 1; increasing && i < got; ++i) {
       increasing = (entries[i].seq > entries[i - 1].seq);
@@ -131,7 +131,7 @@ int run_logcapture_tests() {
       LogCapture::log(LogLevel::Info, "log %zu", i);
     }
     LogEntry entries[8];
-    size_t got = LogCapture::getEntries(3, 8, LogLevel::Debug, entries, 8);
+    size_t got = LogCapture::getEntries(3, LogCapture::epoch(), 8, LogLevel::Debug, entries, 8);
     rc = (got == 2 && entries[0].seq == 4 && entries[1].seq == 5) ? 0 : 1;
     if (rc == 0) {
       test_pass(__FILE__, __LINE__);
@@ -155,7 +155,7 @@ int run_logcapture_tests() {
     // begin() restarts the sequence at 0, so a cursor persisted across the
     // reboot (higher than every new seq) must not suppress the whole ring.
     LogEntry entries[8];
-    size_t got = LogCapture::getEntries(1000, 8, LogLevel::Debug, entries, 8);
+    size_t got = LogCapture::getEntries(1000, LogCapture::epoch(), 8, LogLevel::Debug, entries, 8);
     rc = (got == 5 && entries[0].seq == 1 && entries[4].seq == 5) ? 0 : 1;
     if (rc == 0) {
       test_pass(__FILE__, __LINE__);
@@ -178,7 +178,7 @@ int run_logcapture_tests() {
     LogCapture::log(LogLevel::Warning, "w");
     LogCapture::log(LogLevel::Error, "e");
     LogEntry entries[8];
-    size_t got = LogCapture::getEntries(0, 8, LogLevel::Warning, entries, 8);
+    size_t got = LogCapture::getEntries(0, LogCapture::epoch(), 8, LogLevel::Warning, entries, 8);
     rc = (got == 2 && entries[0].level == LogLevel::Warning && entries[1].level == LogLevel::Error) ? 0 : 1;
     if (rc == 0) {
       test_pass(__FILE__, __LINE__);
@@ -201,7 +201,7 @@ int run_logcapture_tests() {
     LogCapture::log(LogLevel::Info, "c");
     LogCapture::clear();
     LogEntry entries[8];
-    size_t got = LogCapture::getEntries(0, 8, LogLevel::Debug, entries, 8);
+    size_t got = LogCapture::getEntries(0, LogCapture::epoch(), 8, LogLevel::Debug, entries, 8);
     rc = (got == 0) ? 0 : 1;
     if (rc == 0) {
       test_pass(__FILE__, __LINE__);
@@ -229,7 +229,7 @@ int run_logcapture_tests() {
 
     test_begin("LogCapture", "post-clear entries continue above watermark");
     LogCapture::log(LogLevel::Info, "d");
-    size_t got2 = LogCapture::getEntries(0, 8, LogLevel::Debug, entries, 8);
+    size_t got2 = LogCapture::getEntries(0, LogCapture::epoch(), 8, LogLevel::Debug, entries, 8);
     rc = (got2 == 1 && entries[0].seq == 4) ? 0 : 1;
     if (rc == 0) {
       test_pass(__FILE__, __LINE__);
@@ -252,7 +252,7 @@ int run_logcapture_tests() {
     longMsg[sizeof(longMsg) - 1] = '\0';
     LogCapture::log(LogLevel::Info, "%s", longMsg);
     LogEntry entries[2];
-    size_t got = LogCapture::getEntries(0, 2, LogLevel::Debug, entries, 2);
+    size_t got = LogCapture::getEntries(0, LogCapture::epoch(), 2, LogLevel::Debug, entries, 2);
     size_t len = strnlen(entries[0].message, sizeof(entries[0].message));
     rc = (got == 1 && len == LOG_MSG_SIZE - 1 && entries[0].message[len] == '\0') ? 0 : 1;
     if (rc == 0) {
@@ -286,7 +286,7 @@ int run_logcapture_tests() {
     LogCapture::setLogToSerial(false);
 
     LogEntry entries[2];
-    size_t got = LogCapture::getEntries(0, 2, LogLevel::Debug, entries, 2);
+    size_t got = LogCapture::getEntries(0, LogCapture::epoch(), 2, LogLevel::Debug, entries, 2);
     size_t ringLen = strnlen(entries[0].message, sizeof(entries[0].message));
 
     rc = (got == 1 && ringLen == LOG_MSG_SIZE - 1 && serialOut.size() == sizeof(longMsg) - 1 &&
@@ -312,7 +312,7 @@ int run_logcapture_tests() {
     LogCapture::begin();
     LogCapture::logEvent("MODE_CHANGED", "to auto");
     LogEntry entries[2];
-    size_t got = LogCapture::getEntries(0, 2, LogLevel::Debug, entries, 2);
+    size_t got = LogCapture::getEntries(0, LogCapture::epoch(), 2, LogLevel::Debug, entries, 2);
     bool hasPrefix = (got == 1 && entries[0].message[0] == '[' && strstr(entries[0].message, "MODE_CHANGED") != nullptr);
     rc = hasPrefix ? 0 : 1;
     if (rc == 0) {
@@ -342,6 +342,78 @@ int run_logcapture_tests() {
       failed++;
     }
     test_suite_end("LogCapture::parselevel", rc == 0 ? 1 : 0, rc != 0 ? 1 : 0);
+  }
+
+  // ── Test: reboot epoch distinguishes stale cursors ──
+  {
+    test_begin("LogCapture", "boot epoch changes across reboots");
+    LogCapture::begin();
+    const uint32_t e1 = LogCapture::epoch();
+    LogCapture::begin();
+    const uint32_t e2 = LogCapture::epoch();
+    rc = (e2 != e1) ? 0 : 1;
+    if (rc == 0) {
+      test_pass(__FILE__, __LINE__);
+      passed++;
+    } else {
+      test_fail(__FILE__, __LINE__, "epoch must change after begin()");
+      failed++;
+    }
+    test_suite_end("LogCapture::reboot_epoch::changes", rc == 0 ? 1 : 0, rc != 0 ? 1 : 0);
+  }
+
+  {
+    test_begin("LogCapture", "stale pre-reboot cursor with new seq <= since returns whole ring");
+    // Scenario from the review: boot 1 fills seq 1..20, client cursor since=20.
+    // Reboot (begin) restarts seq at 0; by the first poll the new boot already
+    // reached s_seq == 40. The old seq-only clamp (sinceSeq > s_seq) would NOT
+    // trigger (20 <= 40) and silently skip new-boot entries 1..20. The epoch
+    // mismatch must force a full re-read instead.
+    LogCapture::begin();
+    const uint32_t boot1 = LogCapture::epoch();
+    for (uint32_t i = 0; i < 20; ++i) {
+      LogCapture::log(LogLevel::Info, "boot1 %u", i);
+    }
+    LogCapture::begin();
+    for (uint32_t i = 0; i < 40; ++i) {
+      LogCapture::log(LogLevel::Info, "boot2 %u", i);
+    }
+    LogEntry entries[64];
+    size_t got = LogCapture::getEntries(20, boot1, 64, LogLevel::Debug, entries, 64);
+    rc = (got == 40 && entries[0].seq == 1 && entries[39].seq == 40) ? 0 : 1;
+    if (rc == 0) {
+      test_pass(__FILE__, __LINE__);
+      passed++;
+    } else {
+      char msg[64];
+      snprintf(msg, sizeof(msg), "Expected 40 entries seq 1..40, got %u", (unsigned)got);
+      test_fail(__FILE__, __LINE__, msg);
+      failed++;
+    }
+    test_suite_end("LogCapture::reboot_epoch::stale_cursor", rc == 0 ? 1 : 0, rc != 0 ? 1 : 0);
+  }
+
+  {
+    test_begin("LogCapture", "current-boot cursor still filters by since");
+    // Same ring as above, but the client now echoes the CURRENT epoch: the
+    // cursor since=20 is trusted and only entries 21..40 are returned.
+    LogCapture::begin();
+    for (uint32_t i = 0; i < 40; ++i) {
+      LogCapture::log(LogLevel::Info, "boot %u", i);
+    }
+    LogEntry entries[64];
+    size_t got = LogCapture::getEntries(20, LogCapture::epoch(), 64, LogLevel::Debug, entries, 64);
+    rc = (got == 20 && entries[0].seq == 21 && entries[19].seq == 40) ? 0 : 1;
+    if (rc == 0) {
+      test_pass(__FILE__, __LINE__);
+      passed++;
+    } else {
+      char msg[64];
+      snprintf(msg, sizeof(msg), "Expected 20 entries seq 21..40, got %u", (unsigned)got);
+      test_fail(__FILE__, __LINE__, msg);
+      failed++;
+    }
+    test_suite_end("LogCapture::reboot_epoch::current_cursor", rc == 0 ? 1 : 0, rc != 0 ? 1 : 0);
   }
 
   return passed + failed;
