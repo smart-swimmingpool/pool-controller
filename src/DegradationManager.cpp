@@ -19,10 +19,10 @@ namespace PoolController {
 // Static member definitions
 DegradationLevel DegradationManager::currentLevel_ = DegradationLevel::NORMAL;
 DegradationLevel DegradationManager::previousLevel_ = DegradationLevel::NORMAL;
-bool DegradationManager::poolSensorOk_ = false;
-bool DegradationManager::solarSensorOk_ = false;
+volatile bool DegradationManager::poolSensorOk_ = false;
+volatile bool DegradationManager::solarSensorOk_ = false;
 bool DegradationManager::forcedSafeMode_ = false;
-bool DegradationManager::sensorsEverReported_ = false;
+volatile bool DegradationManager::sensorsEverReported_ = false;
 unsigned long DegradationManager::lastEvaluationMs_ = 0;
 
 // ===========================================================================

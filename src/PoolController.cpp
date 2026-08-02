@@ -37,9 +37,13 @@
 
 #include "StatusLed.hpp"
 
+#include "CoreScheduler.hpp"
+#include "TelemetryQueue.hpp"
+
 #ifdef NORVI_AE01_R
 #include "NorviOledDisplay.hpp"
 #include "NorviButtonHandler.hpp"
+#include "DisplayTask.hpp"
 #endif
 
 #include "Config.hpp"
@@ -420,6 +424,9 @@ auto PoolControllerContext::setup() -> void {
   // OTA safety: detect version transition and verify config integrity
   ConfigManager::logOtaTransition();
 
+  // Start Core-0 I/O tasks (sensors, display, publish).
+  CoreScheduler::begin();
+
   Serial.printf("✓ Controller setup completed. Free heap: %u B\n", ESP.getFreeHeap());
 }
 
@@ -431,9 +438,11 @@ auto PoolControllerContext::setup() -> void {
  *   2. Evaluate degradation levels (DegradationManager)
  *   3. Clear boot-loop counter after 5 min stable uptime
  *   4. Run managers: NetworkManager, WebPortal, OtaUpdater
- *   5. Run nodes: sensors, relays, operation mode (triggers rule engine)
+ *   5. Run nodes: relays, operation mode (triggers rule engine)
+ *      — temperature sensors run in SensorTask on Core 0 (see SensorTask.cpp)
  *   6. Publish HA Discovery + states on MQTT (re)connect
  *   7. Periodically publish telemetry states to MQTT (every loopInterval s)
+ *   8. Log Core-0 task stack watermarks (throttled)
  */
 auto PoolControllerContext::loop() -> void {
   // Feed watchdog and check memory thresholds
@@ -480,15 +489,13 @@ auto PoolControllerContext::loop() -> void {
   StatusLed::loop();
 
 #ifdef NORVI_AE01_R
-  // Update NORVI OLED display and read front-panel buttons
-  NorviOledDisplay::loop();
+  // Advance display state machine (Core 1) and request render on DisplayTask (Core 0).
+  NorviOledDisplay::update();
+  DisplayTask::requestRender();
   NorviButtonHandler::loop();
 #endif
 
   // Run drivers & logic rules
-  solarTemperatureNode.loop();
-  poolTemperatureNode.loop();
-  ctrlTemperatureNode.loop();
   poolPumpNode.loop();
   solarPumpNode.loop();
   operationModeNode.loop();
@@ -497,19 +504,22 @@ auto PoolControllerContext::loop() -> void {
   static bool wasMqttConnected = false;
   bool currentMqttState = NetworkManager::isMqttConnected();
   if (currentMqttState && !wasMqttConnected) {
-    // Freshly connected to MQTT: publish Discovery and States
-    MqttPublisher::publishDiscovery();
-    MqttPublisher::publishStates();
+    // Freshly connected to MQTT: publish Discovery and States via PublishTask.
+    TelemetryQueue::instance().enqueue(PublishRequestKind::DISCOVERY);
+    TelemetryQueue::instance().enqueue(PublishRequestKind::STATES);
     wasMqttConnected = true;
   } else if (!currentMqttState) {
     wasMqttConnected = false;
   }
 
-  // Periodically publish telemetry states to HA (P4)
+  // Periodically enqueue telemetry publish to HA (P4) — serialization runs on Core 0.
   if (currentMqttState && Utils::shouldMeasure(_lastMeasurement, _measurementInterval)) {
     _lastMeasurement = millis();
-    MqttPublisher::publishStates();
+    TelemetryQueue::instance().enqueue(PublishRequestKind::STATES);
   }
+
+  // Log Core-0 task stack high-water marks (throttled inside).
+  CoreScheduler::logStackWatermarks();
 }
 
 }  // namespace PoolController
