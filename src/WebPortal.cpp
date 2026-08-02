@@ -573,7 +573,16 @@ void WebPortal::apiGetLogs() {
     since = static_cast<uint32_t>(atol(server_.arg("since").c_str()));
   }
   if (server_.hasArg("boot")) {
-    epoch = static_cast<uint32_t>(atol(server_.arg("boot").c_str()));
+    // Parse as unsigned 32-bit: esp_random() produces values above LONG_MAX
+    // on roughly half of boots, which atol() would overflow (→ stale epoch →
+    // full ring + duplicate entries on every poll). strtoul reconstructs the
+    // full uint32 range; on invalid input we keep the current boot (safe
+    // fallback that preserves incremental since-polling).
+    char *end = nullptr;
+    const unsigned long v = strtoul(server_.arg("boot").c_str(), &end, 10);
+    if (end != server_.arg("boot").c_str() && v <= UINT32_MAX) {
+      epoch = static_cast<uint32_t>(v);
+    }
   }
   if (server_.hasArg("count")) {
     long c = atol(server_.arg("count").c_str());

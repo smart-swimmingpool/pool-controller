@@ -663,6 +663,43 @@ int run_mqttpublisher_tests() {
     test_suite_end("MqttPublisher::export_warn_event", missing == 0 ? 1 : 0, missing);
   }
 
+  // ── Test: WARN/ERROR emitted BEFORE MqttPublisher::begin() is preserved ──
+  // The export watermark starts at seq 0 (beginning of the current boot), so
+  // boot-loop errors, ConfigManager failures, and WPS/SSID warnings logged
+  // before the publisher starts are still exported — not permanently dropped.
+  {
+    test_begin("MqttPublisher::publishStates", "pre-publisher WARN is exported");
+
+    mqttCapture.clear();
+    NetworkManager::setMqttConnected(true);
+    LogCapture::begin();
+    LogCapture::log(LogLevel::Warning, "no SSID configured");
+    MqttPublisher::begin();
+
+    MqttPublisher::publishStates();
+
+    const MqttMessage *ev = mqttCapture.findPublished("homeassistant/event/pool-controller/logs/state");
+    const MqttMessage *raw = mqttCapture.findPublished("pool-controller/log");
+
+    rc = (ev != nullptr && raw != nullptr) ? 0 : 1;
+    if (rc == 0) {
+      JsonDocument doc;
+      DeserializationError err = deserializeJson(doc, ev->payload);
+      if (err || strcmp(doc["event_type"] | "", "LOG_WARN") != 0) {
+        test_fail(__FILE__, __LINE__, "pre-publisher WARN not exported as LOG_WARN");
+        rc = 1;
+      } else
+        test_pass(__FILE__, __LINE__);  // NOLINT
+    } else {
+      test_fail(__FILE__, __LINE__, "pre-publisher WARN must be exported via MQTT");
+    }
+    if (rc == 0)
+      passed++;
+    else
+      failed++;
+    test_suite_end("MqttPublisher::export_pre_publisher_warn", rc == 0 ? 1 : 0, rc != 0 ? 1 : 0);
+  }
+
   // ── Test: Info entries are NOT exported ──
   // Task 5 volume control: only WARN/ERROR and curated events cross MQTT.
   {

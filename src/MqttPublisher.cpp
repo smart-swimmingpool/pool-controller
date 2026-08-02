@@ -54,9 +54,13 @@ void MqttPublisher::begin() {
   snprintf(macStr, sizeof(macStr), "pool_controller_%02x%02x%02x", mac[3], mac[4], mac[5]);
   deviceId_ = String(macStr);
 
-  // Start the log-event export watermark at the current ring position so the
-  // pre-MQTT boot backlog (plain Info chatter) is not flooded onto the bus.
-  s_lastExportedSeq = LogCapture::lastSeq();
+  // Start the log-event export watermark at the beginning of the current boot
+  // (seq 0). exportLogEvents() already filters Info/Debug chatter, so starting
+  // here does not flood the bus — but it DOES preserve WARN/ERROR and curated
+  // events emitted before this point (boot-loop detection, ConfigManager,
+  // NetworkManager/WPS/SSID warnings), which a lastSeq() watermark would
+  // permanently drop.
+  s_lastExportedSeq = 0;
 
   LOG_INFO("✓ HA Discovery Device ID set to: %s\n", deviceId_.c_str());
 
