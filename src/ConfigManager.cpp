@@ -9,6 +9,7 @@
 
 #include "ConfigManager.hpp"
 #include "Version.h"
+#include "LogCapture.hpp"
 #include <Preferences.h>
 #include <mbedtls/md.h>
 
@@ -71,14 +72,14 @@ static constexpr const char *kCfgConfigured = "cfg_configured";
 // ── Lifecycle ──
 
 bool ConfigManager::begin() {
-  Serial.println("✓ NVS config namespace opened");
+  LOG_INFO("✓ NVS config namespace opened\n");
   return load();
 }
 
 bool ConfigManager::load() {
   Preferences prefs;
   if (!prefs.begin(kNvsNamespace, true)) {  // read-only mode
-    Serial.println("✖ Failed to open NVS config namespace");
+    LOG_ERROR("✖ Failed to open NVS config namespace\n");
     reset();
     return false;
   }
@@ -111,14 +112,14 @@ bool ConfigManager::load() {
 
   prefs.end();
 
-  Serial.println("✓ Configuration loaded from NVS");
+  LOG_INFO("✓ Configuration loaded from NVS\n");
   return true;
 }
 
 bool ConfigManager::save() {
   Preferences prefs;
   if (!prefs.begin(kNvsNamespace, false)) {  // read-write mode
-    Serial.println("✖ Failed to open NVS config namespace for writing");
+    LOG_ERROR("✖ Failed to open NVS config namespace for writing\n");
     return false;
   }
 
@@ -150,7 +151,7 @@ bool ConfigManager::save() {
 
   prefs.end();
 
-  Serial.println("✓ Configuration saved to NVS");
+  LOG_INFO("✓ Configuration saved to NVS\n");
   return true;
 }
 
@@ -169,7 +170,7 @@ void ConfigManager::reset() {
   adminPasswordHash_ = kDefaultPasswordHash;  // Reset to default "admin" password
   configured_ = false;
 
-  Serial.println("✓ Configuration reset to factory defaults");
+  LOG_INFO("✓ Configuration reset to factory defaults\n");
 }
 
 // ── Boot Version Tracking ──
@@ -183,16 +184,16 @@ void ConfigManager::logOtaTransition() {
 
   if (previousVersion.isEmpty()) {
     // First boot ever — nothing to compare
-    Serial.printf("ℹ First boot — firmware version %s\n", runningVersion.c_str());
+    LOG_INFO("ℹ First boot — firmware version %s\n", runningVersion.c_str());
   } else if (previousVersion != runningVersion) {
     // Version changed — OTA update just happened
-    Serial.printf("◉ OTA UPDATE DETECTED: %s → %s\n", previousVersion.c_str(), runningVersion.c_str());
+    LOG_INFO("◉ OTA UPDATE DETECTED: %s → %s\n", previousVersion.c_str(), runningVersion.c_str());
 
     // Update stored version to match running version
     prefs.putString("fw_version", runningVersion);
   } else {
     // Normal boot — same version
-    Serial.printf("ℹ Normal boot — firmware %s (no OTA change)\n", runningVersion.c_str());
+    LOG_INFO("ℹ Normal boot — firmware %s (no OTA change)\n", runningVersion.c_str());
   }
 
   prefs.end();
@@ -220,10 +221,10 @@ void ConfigManager::saveSensorMapping(const uint8_t solarAddr[8], const uint8_t 
   char buf[17];
   snprintf(buf, sizeof(buf), "%02X%02X%02X%02X%02X%02X%02X%02X", solarAddr[0], solarAddr[1], solarAddr[2], solarAddr[3],
     solarAddr[4], solarAddr[5], solarAddr[6], solarAddr[7]);
-  Serial.printf("✓ Sensor mapping saved: Solar [%s]", buf);
+  LOG_INFO("✓ Sensor mapping saved: Solar [%s]", buf);
   snprintf(buf, sizeof(buf), "%02X%02X%02X%02X%02X%02X%02X%02X", poolAddr[0], poolAddr[1], poolAddr[2], poolAddr[3], poolAddr[4],
     poolAddr[5], poolAddr[6], poolAddr[7]);
-  Serial.printf(", Pool [%s]\n", buf);
+  LOG_INFO(", Pool [%s]\n", buf);
 }
 
 bool ConfigManager::loadSensorMapping(uint8_t solarAddr[8], uint8_t poolAddr[8]) {

@@ -2,7 +2,7 @@
 title: MQTT-Konfiguration
 summary: Home Assistant MQTT Discovery Konfiguration, Entity-Referenztabelle und Migration von Homie für den ESP32 Pool Controller
 date: "2026-06-11"
-lastmod: "2026-06-11"
+lastmod: "2026-07-31"
 draft: false
 toc: true
 type: docs
@@ -107,6 +107,29 @@ Der Controller veröffentlicht die folgenden Entitäten über MQTT Discovery, gr
 | OTA-Update-Trigger | `button/ota-update`      | `config`        | `homeassistant/button/pool-controller/ota-update/set`      |
 | Firmware           | `update/firmware-update` | `config`        | `homeassistant/update/pool-controller/firmware-update/set` |
 | Pool-Thermostat    | `climate/thermostat`     | `config`        | (Modus + Temperatur via Climate-Topics)                    |
+
+### Events (Log-Stream)
+
+Der Controller veröffentlicht **kuratierte Log-Ereignisse** als HA-`event`-Entität
+(für Automatisierungen und Benachrichtigungen) sowie einen **Roh-Log-Stream**
+für externe Tools:
+
+| Funktion           | HA-Komponente/Objekt-ID | Entity Category | Topic                                                                  |
+| ------------------ | ----------------------- | --------------- | ---------------------------------------------------------------------- |
+| Kuratierte Log-Events | `event/logs`          | `diagnostic`    | `homeassistant/event/pool-controller/logs/state` (Discovery `.../config`) |
+
+- **Discovery-Topic**: `homeassistant/event/pool-controller/logs/config`
+  (`"platform": "event"`) mit `event_types`:
+  `LOG_WARN`, `LOG_ERROR`, `MODE_CHANGED`, `PUMP_ON`, `PUMP_OFF`,
+  `WIFI_CONNECTED`, `WIFI_DISCONNECTED`, `MQTT_CONNECTED`, `MQTT_DISCONNECTED`
+- **State-Payload** (nur bei Änderung veröffentlicht, per Log-Sequenz dedupliziert):
+  ```json
+  {"event_type": "MODE_CHANGED", "message": "Mode switched to auto"}
+  ```
+- **Roh-Stream** `pool-controller/log` (JSON Lines, nur WARN/ERROR):
+  ```json
+  {"seq": 42, "t": 123456, "level": "warning", "msg": "..."}
+  ```
 
 ### Entity-Category-Referenz
 

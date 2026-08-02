@@ -9,6 +9,7 @@
  */
 
 #include "DegradationManager.hpp"
+#include "LogCapture.hpp"
 #include "NetworkManager.hpp"
 #include "Nodes.hpp"
 #include "SystemMonitor.hpp"
@@ -43,7 +44,7 @@ void DegradationManager::begin() {
   forcedSafeMode_ = false;
   lastEvaluationMs_ = 0;
 
-  Serial.println(F("✓ DegradationManager initialized"));
+  LOG_INFO("✓ DegradationManager initialized\n");
 }
 
 void DegradationManager::evaluate() {
@@ -133,35 +134,32 @@ void DegradationManager::unforceSafeMode() {
 
 void DegradationManager::onTransition() {
   // Log the transition
-  Serial.print(F("⚙ Degradation: "));
-  Serial.print(levelToString(previousLevel_));
-  Serial.print(F(" → "));
-  Serial.println(levelToString(currentLevel_));
+  LOG_INFO("⚙ Degradation: %s → %s\n", levelToString(previousLevel_), levelToString(currentLevel_));
 
   // Additional per-level actions
   switch (currentLevel_) {
   case DegradationLevel::NORMAL:
-    Serial.println(F("✓ All systems nominal"));
+    LOG_INFO("✓ All systems nominal\n");
     break;
 
   case DegradationLevel::NO_WIFI:
-    Serial.println(F("⚠ WiFi/MQTT disconnected — operating offline"));
-    Serial.println(F("  All control rules still active"));
+    LOG_WARN("⚠ WiFi/MQTT disconnected — operating offline\n");
+    LOG_WARN("  All control rules still active\n");
     break;
 
   case DegradationLevel::NO_TIME:
-    Serial.println(F("⚠ NTP time sync lost — timer scheduling degraded"));
-    Serial.println(F("  Timer mode falls back to auto mode"));
+    LOG_WARN("⚠ NTP time sync lost — timer scheduling degraded\n");
+    LOG_WARN("  Timer mode falls back to auto mode\n");
     break;
 
   case DegradationLevel::NO_SENSOR:
-    Serial.println(F("⚠ Temperature sensor fault — using cautious defaults"));
-    Serial.println(F("  Auto mode may not function correctly"));
+    LOG_WARN("⚠ Temperature sensor fault — using cautious defaults\n");
+    LOG_WARN("  Auto mode may not function correctly\n");
     break;
 
   case DegradationLevel::CRITICAL:
-    Serial.println(F("✖ CRITICAL: Multiple system failures detected!"));
-    Serial.println(F("  Entering safe mode — all relays off"));
+    LOG_ERROR("✖ CRITICAL: Multiple system failures detected!\n");
+    LOG_ERROR("  Entering safe mode — all relays off\n");
     // De-energize both relays immediately (P1 review fix)
     poolPumpNode.setSwitch(false);
     solarPumpNode.setSwitch(false);
@@ -171,7 +169,7 @@ void DegradationManager::onTransition() {
   // MQTT notification — best-effort, no retry.
   // Full publish is handled by MqttPublisher on its next publish cycle.
   if (NetworkManager::isMqttConnected()) {
-    Serial.println(F("  Degradation state will be published via MQTT"));
+    LOG_INFO("  Degradation state will be published via MQTT\n");
   }
 }
 

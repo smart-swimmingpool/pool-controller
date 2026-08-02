@@ -25,6 +25,11 @@
 // Static storage backing the mock Preferences (NVS) key/value store.
 std::map<std::string, std::string> Preferences::s_data;
 
+// Serial mock capture state (disabled by default) — LogCapture.cpp's
+// Serial mirror references these statics via Arduino.h.
+std::string SerialClass::s_capture;
+bool SerialClass::s_captureEnabled = false;
+
 // ── ConfigManager: only the static settings_ member is referenced (via
 //    getSettings(), which Timer.cpp's calculateEffectiveEndMinutes() calls).
 //    Default member initializers in ControllerSettings give sane defaults. ──

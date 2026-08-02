@@ -15,6 +15,7 @@
 
 #include "ConfigManager.hpp"
 #include "WpsProvisioner.hpp"
+#include "LogCapture.hpp"
 
 namespace PoolController {
 
@@ -41,15 +42,18 @@ bool NetworkManager::begin() {
 
   // Set up MQTT event handlers (one-time, async)
   mqttClient_.onConnect([](bool sessionPresent) {
-    Serial.println("✓ MQTT connected!");
+    LOG_INFO("✓ MQTT connected!\n");
+    LogCapture::logEvent("MQTT_CONNECTED", "MQTT broker connected");
     // Publish online to LWT topic immediately (async, non-blocking)
     mqttClient_.publish("homeassistant/sensor/pool-controller/availability", 1, true, "online");
   });
-  mqttClient_.onDisconnect(
-    [](AsyncMqttClientDisconnectReason reason) { Serial.printf("✖ MQTT disconnected, reason=%d\n", static_cast<int>(reason)); });
+  mqttClient_.onDisconnect([](AsyncMqttClientDisconnectReason reason) {
+    LOG_ERROR("✖ MQTT disconnected, reason=%d\n", static_cast<int>(reason));
+    LogCapture::logEvent("MQTT_DISCONNECTED", "MQTT disconnected, reason %d", static_cast<int>(reason));
+  });
 
   if (ConfigManager::getWiFi().ssid.length() == 0) {
-    Serial.println("⚠ No WiFi SSID configured! Starting AP mode.");
+    LOG_WARN("⚠ No WiFi SSID configured! Starting AP mode.\n");
     startAPMode();
     return true;
   }
@@ -66,13 +70,13 @@ void NetworkManager::loop() {
       uint32_t now = millis();
       if (now - lastWiFiRetryTime_ >= kWiFiRetryIntervalMs) {
         lastWiFiRetryTime_ = now;
-        Serial.println("🔄 AP mode: retrying WiFi connection with saved credentials...");
+        LOG_INFO("🔄 AP mode: retrying WiFi connection with saved credentials...\n");
         WiFi.mode(WIFI_MODE_APSTA);
         connectWiFi();
       }
 
       if (WiFi.status() == WL_CONNECTED) {
-        Serial.println("✓ AP mode: WiFi reconnected! Switching back to normal mode.");
+        LOG_INFO("✓ AP mode: WiFi reconnected! Switching back to normal mode.\n");
         WiFi.mode(WIFI_MODE_STA);
         apModeActive_ = false;
         connectionStartTime_ = 0;
@@ -92,7 +96,7 @@ void NetworkManager::loop() {
 
     uint32_t now = millis();
     if (now - connectionStartTime_ >= 20000) {
-      Serial.println("⚠ WiFi connection timeout (20s). Falling back to AP Setup Mode!");
+      LOG_WARN("⚠ WiFi connection timeout (20s). Falling back to AP Setup Mode!\n");
       startAPMode();
       return;
     }
@@ -124,7 +128,7 @@ void NetworkManager::loop() {
         statusStr = "UNKNOWN";
         break;
       }
-      Serial.printf("🔄 WiFi retry... status=%s (%d), elapsed=%ums\n", statusStr, status, now - connectionStartTime_);
+      LOG_INFO("🔄 WiFi retry... status=%s (%d), elapsed=%ums\n", statusStr, status, now - connectionStartTime_);
       connectWiFi();
     }
     return;
@@ -138,7 +142,7 @@ void NetworkManager::loop() {
       uint32_t now = millis();
       if (now - lastMqttRetryTime_ >= kMqttRetryIntervalMs) {
         lastMqttRetryTime_ = now;
-        Serial.println("🔄 MQTT disconnected, retrying...");
+        LOG_INFO("🔄 MQTT disconnected, retrying...\n");
         connectMqtt();
       }
     }
@@ -164,13 +168,12 @@ void NetworkManager::startAPMode() {
 
   // Setup standard open AP named 'Pool-Controller-Setup'
   WiFi.softAP("Pool-Controller-Setup");
-  Serial.print("🚀 AP Mode active. SSID: 'Pool-Controller-Setup'. IP: ");
-  Serial.println(WiFi.softAPIP());
+  LOG_INFO("🚀 AP Mode active. SSID: 'Pool-Controller-Setup'. IP: %s\n", WiFi.softAPIP().toString().c_str());
 }
 
 void NetworkManager::connectWiFi() {
   const String &ssid = ConfigManager::getWiFi().ssid;
-  Serial.printf("📡 Connecting to WiFi: %s ...\n", ssid.c_str());
+  LOG_INFO("📡 Connecting to WiFi: %s ...\n", ssid.c_str());
   WiFi.begin(ssid.c_str(), ConfigManager::getWiFi().password.c_str());
 }
 
@@ -253,19 +256,21 @@ void NetworkManager::restart() {
 void NetworkManager::handleWiFiEvent(WiFiEvent_t event) {
   switch (event) {
   case ARDUINO_EVENT_WIFI_STA_GOT_IP:
-    Serial.printf("✓ WiFi connected! SSID: \"%s\", IP: %s, RSSI: %d dBm, Channel: %d\n", WiFi.SSID().c_str(),
+    LOG_INFO("✓ WiFi connected! SSID: \"%s\", IP: %s, RSSI: %d dBm, Channel: %d\n", WiFi.SSID().c_str(),
       WiFi.localIP().toString().c_str(), WiFi.RSSI(), WiFi.channel());
+    LogCapture::logEvent("WIFI_CONNECTED", "WiFi connected to %s", WiFi.SSID().c_str());
     apModeActive_ = false;
     // Start mDNS responder so the device is reachable as pool-controller.local
     if (MDNS.begin("pool-controller")) {
       MDNS.addService("http", "tcp", 80);
-      Serial.println("✓ mDNS: pool-controller.local");
+      LOG_INFO("✓ mDNS: pool-controller.local\n");
     } else {
-      Serial.println("✖ mDNS responder setup failed");
+      LOG_ERROR("✖ mDNS responder setup failed\n");
     }
     break;
   case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
-    Serial.printf("✖ WiFi disconnected. Status: %d (SSID: \"%s\")\n", WiFi.status(), WiFi.SSID().c_str());
+    LOG_ERROR("✖ WiFi disconnected. Status: %d (SSID: \"%s\")\n", WiFi.status(), WiFi.SSID().c_str());
+    LogCapture::logEvent("WIFI_DISCONNECTED", "WiFi disconnected, status %d", WiFi.status());
     break;
   default:
     break;

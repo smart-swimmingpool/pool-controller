@@ -2,7 +2,7 @@
 title: MQTT Configuration
 summary: Home Assistant MQTT Discovery configuration, entity reference table, and migration from Homie for the ESP32 Pool Controller
 date: "2026-06-07"
-lastmod: "2026-06-07"
+lastmod: "2026-07-31"
 draft: false
 toc: true
 type: docs
@@ -107,6 +107,28 @@ The controller publishes the following entities via MQTT Discovery, grouped by t
 | OTA update trigger | `button/ota-update`      | `config`        | `homeassistant/button/pool-controller/ota-update/set`      |
 | Firmware           | `update/firmware-update` | `config`        | `homeassistant/update/pool-controller/firmware-update/set` |
 | Pool Thermostat    | `climate/thermostat`     | `config`        | (mode + temperature via climate topics)                    |
+
+### Events (Log stream)
+
+The controller publishes **curated log events** as an HA `event` entity (for
+automations and notifications) plus a **raw log stream** for external tools:
+
+| Function           | HA component/object-id | Entity Category | Topic                                                                  |
+| ------------------ | ---------------------- | --------------- | ---------------------------------------------------------------------- |
+| Curated log events | `event/logs`           | `diagnostic`    | `homeassistant/event/pool-controller/logs/state` (discovery `.../config`) |
+
+- **Discovery topic**: `homeassistant/event/pool-controller/logs/config`
+  (`"platform": "event"`) with `event_types`:
+  `LOG_WARN`, `LOG_ERROR`, `MODE_CHANGED`, `PUMP_ON`, `PUMP_OFF`,
+  `WIFI_CONNECTED`, `WIFI_DISCONNECTED`, `MQTT_CONNECTED`, `MQTT_DISCONNECTED`
+- **State payload** (published on change only, deduplicated by log sequence):
+  ```json
+  {"event_type": "MODE_CHANGED", "message": "Mode switched to auto"}
+  ```
+- **Raw stream** `pool-controller/log` (JSON Lines, WARN/ERROR only):
+  ```json
+  {"seq": 42, "t": 123456, "level": "warning", "msg": "..."}
+  ```
 
 ### Entity Category Reference
 

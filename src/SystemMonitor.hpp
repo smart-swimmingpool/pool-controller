@@ -23,6 +23,8 @@
 #include <esp_idf_version.h>
 #include <esp_task_wdt.h>
 
+#include "LogCapture.hpp"
+
 namespace PoolController {
 
 /**
@@ -92,7 +94,7 @@ public:
 
     // Critical memory — reboot immediately
     if (freeHeap < CRITICAL_MEMORY_THRESHOLD) {
-      Serial.printf("CRITICAL: Free heap %d bytes < %d bytes. Rebooting...\n", freeHeap, CRITICAL_MEMORY_THRESHOLD);
+      LOG_ERROR("CRITICAL: Free heap %d bytes < %d bytes. Rebooting...\n", freeHeap, CRITICAL_MEMORY_THRESHOLD);
       Serial.flush();
       delay(1000);
       ESP.restart();
@@ -100,8 +102,8 @@ public:
 
     // Low memory — log warning
     if (freeHeap < LOW_MEMORY_THRESHOLD && !lowMemoryWarning) {
-      Serial.printf("WARNING: Low memory detected. Free heap: %d bytes "
-                    "(min: %d)\n",
+      LOG_WARN("WARNING: Low memory detected. Free heap: %d bytes "
+               "(min: %d)\n",
         freeHeap, minFreeHeap);
       lowMemoryWarning = true;
     } else if (freeHeap >= LOW_MEMORY_THRESHOLD && lowMemoryWarning) {
@@ -117,7 +119,7 @@ public:
 
   /** Force a reboot */
   static void reboot() {
-    Serial.println("System reboot requested");
+    LOG_INFO("System reboot requested\n");
     Serial.flush();
     delay(1000);
     ESP.restart();
@@ -154,12 +156,12 @@ public:
 
     int bootCount = prefs.getInt("bootCount", 0) + 1;
 
-    Serial.printf("  Boot counter: %d\n", bootCount);
+    LOG_INFO("  Boot counter: %d\n", bootCount);
 
     bool isBootLoop = (bootCount >= BOOT_LOOP_MAX_COUNT);
     if (isBootLoop) {
-      Serial.printf("✖ BOOT-LOOP DETECTED (%d consecutive boots)\n", bootCount);
-      Serial.println("  Entering safe mode — all relays OFF");
+      LOG_ERROR("✖ BOOT-LOOP DETECTED (%d consecutive boots)\n", bootCount);
+      LOG_ERROR("  Entering safe mode — all relays OFF\n");
     }
 
     prefs.putInt("bootCount", bootCount);

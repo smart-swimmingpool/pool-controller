@@ -11,6 +11,7 @@
  */
 
 #include <Arduino.h>
+#include "LogCapture.hpp"
 #include "PoolController.hpp"
 
 /** @brief Singleton context owning all controller subsystems. */
@@ -32,6 +33,11 @@ auto setup() -> void {
   while (!Serial && (millis() - startWait < 3000)) {
     delay(10);
   }
+
+  // Central logging service — must start before context.setup() so boot-time
+  // LOG_* entries (WiFi/MQTT init, sensor scans) are captured and the MQTT
+  // export watermark sees the pre-boot sequence. Serial is already up here.
+  PoolController::LogCapture::begin();
 
   context.setup();
 }

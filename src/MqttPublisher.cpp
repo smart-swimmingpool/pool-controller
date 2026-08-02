@@ -24,10 +24,27 @@
 #include "RelayModuleNode.hpp"
 #include "TimeClientHelper.hpp"
 #include "Version.h"
+#include "LogCapture.hpp"
 
 namespace PoolController {
 
 String MqttPublisher::deviceId_ = "";
+std::uint32_t MqttPublisher::s_lastExportedSeq = 0;
+
+// Reentrancy guard for the log-event export (see exportLogEvents). AsyncMqttClient
+// callbacks (handleMqttMessage → publishStates) run on the AsyncTCP task, which can
+// preempt the loop task mid-export; both paths share the static snapshot buffer and
+// s_lastExportedSeq. Native tests (no ESP32 macros) compile the guard to a no-op.
+#if defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
+#include <freertos/FreeRTOS.h>
+#include <freertos/portmacro.h>
+static portMUX_TYPE s_exportMux = portMUX_INITIALIZER_UNLOCKED;
+#define EXPORT_CRITICAL_ENTER() portENTER_CRITICAL(&s_exportMux)
+#define EXPORT_CRITICAL_EXIT() portEXIT_CRITICAL(&s_exportMux)
+#else
+#define EXPORT_CRITICAL_ENTER() ((void)0)
+#define EXPORT_CRITICAL_EXIT() ((void)0)
+#endif
 
 void MqttPublisher::begin() {
   // Generate unique MAC-based device identifier
@@ -37,7 +54,15 @@ void MqttPublisher::begin() {
   snprintf(macStr, sizeof(macStr), "pool_controller_%02x%02x%02x", mac[3], mac[4], mac[5]);
   deviceId_ = String(macStr);
 
-  Serial.printf("✓ HA Discovery Device ID set to: %s\n", deviceId_.c_str());
+  // Start the log-event export watermark at the beginning of the current boot
+  // (seq 0). exportLogEvents() already filters Info/Debug chatter, so starting
+  // here does not flood the bus — but it DOES preserve WARN/ERROR and curated
+  // events emitted before this point (boot-loop detection, ConfigManager,
+  // NetworkManager/WPS/SSID warnings), which a lastSeq() watermark would
+  // permanently drop.
+  s_lastExportedSeq = 0;
+
+  LOG_INFO("✓ HA Discovery Device ID set to: %s\n", deviceId_.c_str());
 
   // Register callback in NetworkManager
   NetworkManager::setMqttCallback(handleMqttMessage);
@@ -68,6 +93,17 @@ struct TopicBuilder {
     return buf;
   }
 };
+
+// Curated event whitelist — MUST match the event_types in publishEventDiscovery().
+bool isKnownEventType(const char *type) {
+  static const char *const kEventTypes[] = {"LOG_WARN", "LOG_ERROR", "MODE_CHANGED", "PUMP_ON", "PUMP_OFF", "WIFI_CONNECTED",
+    "WIFI_DISCONNECTED", "MQTT_CONNECTED", "MQTT_DISCONNECTED"};
+  for (const char *known : kEventTypes) {
+    if (strcmp(known, type) == 0)
+      return true;
+  }
+  return false;
+}
 }  // namespace
 
 void MqttPublisher::publishSensorDiscovery(const char *objectId, const char *name, const char *deviceClass, const char *unit,
@@ -229,6 +265,36 @@ void MqttPublisher::publishTextDiscovery(const char *objectId, const char *name,
   char payloadBuf[1024];
   serializeJson(doc, payloadBuf, sizeof(payloadBuf));
   NetworkManager::publish(cfgTopic.build("text", objectId, "/config"), payloadBuf, true);
+}
+
+void MqttPublisher::publishEventDiscovery(const char *objectId, const char *name, const char *icon) {
+  TopicBuilder cfgTopic, stateTopic;
+  JsonDocument doc;
+  doc["name"] = name;
+  doc["unique_id"] = deviceId_ + "_" + objectId;
+  doc["state_topic"] = stateTopic.build("event", objectId, "/state");
+  doc["availability_topic"] = "homeassistant/sensor/pool-controller/availability";
+  doc["platform"] = "event";
+
+  // Whitelist MUST match the curated event types parsed by exportLogEvents().
+  JsonArray eventTypes = doc["event_types"].to<JsonArray>();
+  eventTypes.add("LOG_WARN");
+  eventTypes.add("LOG_ERROR");
+  eventTypes.add("MODE_CHANGED");
+  eventTypes.add("PUMP_ON");
+  eventTypes.add("PUMP_OFF");
+  eventTypes.add("WIFI_CONNECTED");
+  eventTypes.add("WIFI_DISCONNECTED");
+  eventTypes.add("MQTT_CONNECTED");
+  eventTypes.add("MQTT_DISCONNECTED");
+
+  if (icon)
+    doc["icon"] = icon;
+  addDeviceInfo(doc);
+
+  char payloadBuf[1024];
+  serializeJson(doc, payloadBuf, sizeof(payloadBuf));
+  NetworkManager::publish(cfgTopic.build("event", objectId, "/config"), payloadBuf, true);
 }
 
 void MqttPublisher::publishTimeDiscovery(const char *objectId, const char *name, const char *icon, const char *entityCategory) {
@@ -431,7 +497,10 @@ void MqttPublisher::publishDiscovery() {
   if (!NetworkManager::isMqttConnected())
     return;
 
-  Serial.println("Publishing HA Discovery Payloads...");
+  LOG_INFO("Publishing HA Discovery Payloads...\n");
+
+  // ── Log event entity (HA "event" component) ──
+  publishEventDiscovery("logs", "Pool Controller Logs", "mdi:clipboard-text-outline");
 
   // ── Primary Sensors (no entity_category — shown on device front page) ──
   publishSensorDiscovery("pool-temp", "Pool Temperature", "temperature", "°C", "mdi:pool", nullptr, "measurement");
@@ -548,7 +617,7 @@ void MqttPublisher::publishDiscovery() {
     NetworkManager::publish(topic, "", true);  // empty retained → HA removes entity
   }
 
-  Serial.println("✓ HA Discovery Payloads & Subscriptions complete");
+  LOG_INFO("✓ HA Discovery Payloads & Subscriptions complete\n");
 }
 
 void MqttPublisher::publishStates() {
@@ -735,7 +804,134 @@ void MqttPublisher::publishStates() {
     getBaseTopic(topic, sizeof(topic), "binary_sensor", "mqtt-status");
     strlcat(topic, "/state", sizeof(topic));
     NetworkManager::publish(topic, NetworkManager::isMqttConnected() ? "ON" : "OFF", true);
+
+    // Export new log entries as MQTT events (WARN/ERROR + curated logEvent markers)
+    exportLogEvents();
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Log-event export pump (WARN/ERROR + curated logEvent markers)
+// ═══════════════════════════════════════════════════════════════════════
+
+void MqttPublisher::exportLogEvents() {
+  // Only one export may run at a time: AsyncMqttClient callbacks (handleMqttMessage
+  // → publishStates) run on the AsyncTCP task and can preempt the loop task's
+  // periodic export. Both share the static snapshot buffer and the watermark, so a
+  // concurrent entry would clobber the snapshot or regress s_lastExportedSeq and
+  // duplicate MQTT events. The losing export defers to the next pass — it returns
+  // before touching the watermark, so its pending entries are not lost.
+  static bool s_exportRunning = false;
+  EXPORT_CRITICAL_ENTER();
+  if (s_exportRunning) {
+    EXPORT_CRITICAL_EXIT();
+    return;
+  }
+  s_exportRunning = true;
+  EXPORT_CRITICAL_EXIT();
+
+  // Batch snapshot of the ring (static: keeps ~9 KB off the loop stack).
+  static LogEntry entries[LogCapture::LOG_BUFFER_ENTRIES];
+  const size_t count = LogCapture::getEntries(s_lastExportedSeq, LogCapture::epoch(), LogCapture::LOG_BUFFER_ENTRIES,
+    LogLevel::Info, entries, LogCapture::LOG_BUFFER_ENTRIES);
+  if (count == 0) {
+    EXPORT_CRITICAL_ENTER();
+    s_exportRunning = false;
+    EXPORT_CRITICAL_EXIT();
+    return;
+  }
+
+  TopicBuilder stateTopic;
+  // Watermark only advances through entries whose required publishes were
+  // successfully queued. When MQTT disconnects mid-burst or the client
+  // refuses to enqueue (NetworkManager::publish() == false), the watermark
+  // stays before the failed entry so it is retried on the next export pass
+  // instead of being dropped.
+  uint32_t lastOkSeq = s_lastExportedSeq;
+  for (size_t i = 0; i < count; ++i) {
+    const LogEntry &entry = entries[i];
+    const char *body = entry.message;
+    const char *eventType = nullptr;
+    char typeBuf[32];
+
+    // Parse the "[TYPE] message" marker written by LogCapture::logEvent().
+    if (body[0] == '[') {
+      const char *close = strchr(body, ']');
+      if (close != nullptr && close > body + 1) {
+        const size_t len = static_cast<size_t>(close - body - 1);
+        if (len < sizeof(typeBuf)) {
+          memcpy(typeBuf, body + 1, len);
+          typeBuf[len] = '\0';
+          if (isKnownEventType(typeBuf)) {
+            eventType = typeBuf;
+            body = close + 1;
+            while (*body == ' ')
+              ++body;
+          }
+        }
+      }
+    }
+
+    // WARN/ERROR entries without a curated marker → LOG_WARN/LOG_ERROR.
+    // Info/Debug chatter is skipped (volume control — nothing on MQTT).
+    if (eventType == nullptr) {
+      switch (entry.level) {
+      case LogLevel::Warning:
+        eventType = "LOG_WARN";
+        break;
+      case LogLevel::Error:
+        eventType = "LOG_ERROR";
+        break;
+      default:
+        // Skipped by design — no publish required, so the watermark may
+        // advance past it.
+        lastOkSeq = entry.seq;
+        continue;
+      }
+    }
+
+    // HA event-entity state: {"event_type": "...", "message": "..."}
+    JsonDocument doc;
+    doc["event_type"] = eventType;
+    doc["message"] = body;
+    char payload[256];
+    serializeJson(doc, payload, sizeof(payload));
+    bool ok = NetworkManager::publish(stateTopic.build("event", "logs", "/state"), payload, false);
+
+    // Raw JSON-line for external tools (WARN/ERROR only — not Info-level events).
+    if (entry.level == LogLevel::Warning || entry.level == LogLevel::Error) {
+      JsonDocument rawDoc;
+      rawDoc["seq"] = entry.seq;
+      rawDoc["t"] = entry.uptimeMs;
+      rawDoc["level"] = LogCapture::levelName(entry.level);
+      rawDoc["msg"] = entry.message;
+      char rawBuf[256];
+      serializeJson(rawDoc, rawBuf, sizeof(rawBuf));
+      ok = NetworkManager::publish("pool-controller/log", rawBuf, false) && ok;
+    }
+
+    // A required publish failed (e.g. AsyncMqttClient refused to enqueue
+    // during the discovery/state burst right after reconnect): keep the
+    // watermark before this entry so the whole tail is retried next pass.
+    // Do not drop the event by marking it exported without a successful queue.
+    if (!ok)
+      break;
+
+    // This entry's required publishes were all successfully queued.
+    lastOkSeq = entry.seq;
+  }
+
+  // Advance the watermark only through entries whose required publishes were
+  // successfully queued. Using LogCapture::lastSeq() here would mark entries
+  // appended concurrently by async WiFi/MQTT callbacks as exported even though
+  // they were never processed — their HA events would be permanently lost.
+  // Entries after a failed publish (or appended during the snapshot) are
+  // picked up by the next export pass instead.
+  s_lastExportedSeq = lastOkSeq;
+
+  EXPORT_CRITICAL_ENTER();
+  s_exportRunning = false;
+  EXPORT_CRITICAL_EXIT();
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -793,7 +989,7 @@ void MqttPublisher::publishSensorMappingDiscovery() {
   NetworkManager::subscribe("homeassistant/select/pool-controller/solar-sensor/set");
   NetworkManager::subscribe("homeassistant/select/pool-controller/pool-sensor/set");
 
-  Serial.printf("• HA: Sensor mapping select entities published (%u options)\n", solarOptCount);
+  LOG_INFO("• HA: Sensor mapping select entities published (%u options)\n", solarOptCount);
 }
 
 // Helper function to check if MQTT authentication is configured
@@ -836,19 +1032,19 @@ void MqttPublisher::handleMqttMessage(
   if (top.endsWith("/firmware-update/set")) {
     // MQTT authentication is optional, but if configured, we check it
     if (shouldEnforceMqttAuth() && !isMqttAuthenticated()) {
-      Serial.println("MQTT: Firmware update command rejected - MQTT authentication required");
+      LOG_WARN("MQTT: Firmware update command rejected - MQTT authentication required\n");
       return;
     }
 
     // Always validate command value for security
     static const char *validFirmwareCommands[] = {"INSTALL"};
     if (!MqttPublisher::isValidCommand(value, validFirmwareCommands, 1)) {
-      Serial.printf("MQTT: Invalid firmware command: %s\n", value.c_str());
+      LOG_WARN("MQTT: Invalid firmware command: %s\n", value.c_str());
       return;
     }
 
     if (value == "INSTALL") {
-      Serial.println("MQTT: Firmware update triggered from Home Assistant");
+      LOG_INFO("MQTT: Firmware update triggered from Home Assistant\n");
       OtaUpdater::startUpdate();
     }
     return;
@@ -866,11 +1062,11 @@ void MqttPublisher::handleMqttMessage(
     else if (value == "boost")
       poolMode = "boost";
     else {
-      Serial.printf("MQTT: Unknown preset \"%s\" — ignoring\n", value.c_str());
+      LOG_WARN("MQTT: Unknown preset \"%s\" — ignoring\n", value.c_str());
       publishStates();
       return;
     }
-    Serial.printf("MQTT: Climate preset → pool mode \"%s\"\n", poolMode.c_str());
+    LOG_INFO("MQTT: Climate preset → pool mode \"%s\"\n", poolMode.c_str());
     operationModeNode.setMode(poolMode.c_str());
     ConfigManager::getSettings().opMode = poolMode;
     ConfigManager::save();
@@ -887,11 +1083,11 @@ void MqttPublisher::handleMqttMessage(
     else if (value == "heat")
       poolMode = "boost";
     else {
-      Serial.printf("MQTT: Unknown climate mode \"%s\" — ignoring\n", value.c_str());
+      LOG_WARN("MQTT: Unknown climate mode \"%s\" — ignoring\n", value.c_str());
       publishStates();
       return;
     }
-    Serial.printf("MQTT: Climate mode → pool mode \"%s\"\n", poolMode.c_str());
+    LOG_INFO("MQTT: Climate mode → pool mode \"%s\"\n", poolMode.c_str());
     operationModeNode.setMode(poolMode.c_str());
     ConfigManager::getSettings().opMode = poolMode;
     ConfigManager::save();
@@ -901,7 +1097,7 @@ void MqttPublisher::handleMqttMessage(
 
   if (top.endsWith("/thermostat/temperature/set")) {
     float val = value.toFloat();
-    Serial.printf("MQTT: Climate target temperature → %.1f\n", val);
+    LOG_INFO("MQTT: Climate target temperature → %.1f\n", val);
     operationModeNode.setPoolMaxTemperature(val);
     ConfigManager::getSettings().tempMaxPool = val;
     ConfigManager::save();
@@ -912,7 +1108,7 @@ void MqttPublisher::handleMqttMessage(
   if (top.endsWith("/pool-pump/set") || top.endsWith("/solar-pump/set")) {
     // MQTT authentication is optional, but if configured, we check it
     if (shouldEnforceMqttAuth() && !isMqttAuthenticated()) {
-      Serial.println("MQTT: Pump command rejected - MQTT authentication required");
+      LOG_WARN("MQTT: Pump command rejected - MQTT authentication required\n");
       publishStates();
       return;
     }
@@ -920,14 +1116,14 @@ void MqttPublisher::handleMqttMessage(
     // Always validate payload for security
     static const char *validPumpCommands[] = {"ON", "OFF"};
     if (!MqttPublisher::isValidCommand(value, validPumpCommands, 2)) {
-      Serial.printf("MQTT: Invalid pump command: %s\n", value.c_str());
+      LOG_WARN("MQTT: Invalid pump command: %s\n", value.c_str());
       publishStates();
       return;
     }
 
     // Only allow pump control from HA in manual mode
     if (operationModeNode.getMode() != "manu") {
-      Serial.printf("MQTT: Ignoring pump command — not in manual mode (current: %s)\n", operationModeNode.getMode().c_str());
+      LOG_WARN("MQTT: Ignoring pump command — not in manual mode (current: %s)\n", operationModeNode.getMode().c_str());
       publishStates();
       return;
     }
@@ -939,7 +1135,7 @@ void MqttPublisher::handleMqttMessage(
   } else if (top.endsWith("/mode/set")) {
     // MQTT authentication is optional, but if configured, we check it
     if (shouldEnforceMqttAuth() && !isMqttAuthenticated()) {
-      Serial.println("MQTT: Mode command rejected - MQTT authentication required");
+      LOG_WARN("MQTT: Mode command rejected - MQTT authentication required\n");
       publishStates();
       return;
     }
@@ -947,7 +1143,7 @@ void MqttPublisher::handleMqttMessage(
     // Always validate mode value for security
     static const char *validModes[] = {"auto", "manu", "boost", "timer"};
     if (!MqttPublisher::isValidCommand(value, validModes, 4)) {
-      Serial.printf("MQTT: Invalid mode command: %s\n", value.c_str());
+      LOG_WARN("MQTT: Invalid mode command: %s\n", value.c_str());
       publishStates();
       return;
     }
@@ -958,7 +1154,7 @@ void MqttPublisher::handleMqttMessage(
   } else if (top.endsWith("/pool-max-temp/set")) {
     // MQTT authentication is optional, but if configured, we check it
     if (shouldEnforceMqttAuth() && !isMqttAuthenticated()) {
-      Serial.println("MQTT: Config command rejected - MQTT authentication required");
+      LOG_WARN("MQTT: Config command rejected - MQTT authentication required\n");
       publishStates();
       return;
     }
@@ -966,7 +1162,7 @@ void MqttPublisher::handleMqttMessage(
     float val = value.toFloat();
     // Always validate range for security
     if (val < 0.0f || val > 40.0f) {
-      Serial.printf("MQTT: Invalid pool-max-temp value: %.1f\n", val);
+      LOG_WARN("MQTT: Invalid pool-max-temp value: %.1f\n", val);
       publishStates();
       return;
     }
@@ -976,7 +1172,7 @@ void MqttPublisher::handleMqttMessage(
   } else if (top.endsWith("/solar-min-temp/set")) {
     // MQTT authentication is optional, but if configured, we check it
     if (shouldEnforceMqttAuth() && !isMqttAuthenticated()) {
-      Serial.println("MQTT: Config command rejected - MQTT authentication required");
+      LOG_WARN("MQTT: Config command rejected - MQTT authentication required\n");
       publishStates();
       return;
     }
@@ -984,7 +1180,7 @@ void MqttPublisher::handleMqttMessage(
     float val = value.toFloat();
     // Always validate range for security
     if (val < 0.0f || val > 100.0f) {
-      Serial.printf("MQTT: Invalid solar-min-temp value: %.1f\n", val);
+      LOG_WARN("MQTT: Invalid solar-min-temp value: %.1f\n", val);
       publishStates();
       return;
     }
@@ -994,7 +1190,7 @@ void MqttPublisher::handleMqttMessage(
   } else if (top.endsWith("/hysteresis/set")) {
     // MQTT authentication is optional, but if configured, we check it
     if (shouldEnforceMqttAuth() && !isMqttAuthenticated()) {
-      Serial.println("MQTT: Config command rejected - MQTT authentication required");
+      LOG_WARN("MQTT: Config command rejected - MQTT authentication required\n");
       publishStates();
       return;
     }
@@ -1002,7 +1198,7 @@ void MqttPublisher::handleMqttMessage(
     float val = value.toFloat();
     // Always validate range for security
     if (val < 0.0f || val > 10.0f) {
-      Serial.printf("MQTT: Invalid hysteresis value: %.1f\n", val);
+      LOG_WARN("MQTT: Invalid hysteresis value: %.1f\n", val);
       publishStates();
       return;
     }
@@ -1049,7 +1245,7 @@ void MqttPublisher::handleMqttMessage(
   } else if (top.endsWith("/timezone/set")) {
     int idx = getTimezoneIndexFromLabel(value);
     if (idx < 0) {
-      Serial.printf("MQTT: Unknown timezone label \"%s\" — ignoring\n", value.c_str());
+      LOG_WARN("MQTT: Unknown timezone label \"%s\" — ignoring\n", value.c_str());
       publishStates();
       return;
     }
@@ -1076,7 +1272,7 @@ void MqttPublisher::handleMqttMessage(
         char *end = nullptr;
         unsigned long val = strtoul(byteStr, &end, 16);
         if (end != byteStr + 2) {
-          Serial.printf("MQTT: Invalid hex in sensor selection — ignoring\n");
+          LOG_WARN("MQTT: Invalid hex in sensor selection — ignoring\n");
           publishStates();
           return;
         }
@@ -1094,14 +1290,14 @@ void MqttPublisher::handleMqttMessage(
           solarTemperatureNode.setAddressFilter(addr);
         else
           solarTemperatureNode.clearAddressFilter();
-        Serial.printf("MQTT: Solar sensor %s via HA\n", hasAddr ? "assigned" : "cleared");
+        LOG_INFO("MQTT: Solar sensor %s via HA\n", hasAddr ? "assigned" : "cleared");
       } else {
         prefs.putBytes("pool_adr", addr, 8);
         if (hasAddr)
           poolTemperatureNode.setAddressFilter(addr);
         else
           poolTemperatureNode.clearAddressFilter();
-        Serial.printf("MQTT: Pool sensor %s via HA\n", hasAddr ? "assigned" : "cleared");
+        LOG_INFO("MQTT: Pool sensor %s via HA\n", hasAddr ? "assigned" : "cleared");
       }
       prefs.end();
     }

@@ -481,3 +481,45 @@ input:focus, select:focus {
   input, select { font-size: 0.9rem; padding: 0.6rem 0.75rem; }
   .input-hint { font-size: 0.65rem; }
 }
+
+/* ── Log Console ── */
+#tab-logs {
+  padding-bottom: 70px;  /* leaves room for the fixed bottom nav bar */
+}
+#logConsole {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  padding: 0.75rem;
+  height: calc(100dvh - 180px);
+  overflow-y: auto;
+  font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  word-break: break-all;
+}
+.log-entry {
+  padding: 0.15rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.log-debug   { color: #6b7b8d; }
+.log-info    { color: var(--text-muted); }
+.log-warning { color: #f59e0b; }
+.log-error   { color: #ef4444; }
+.log-critical { color: #ef4444; font-weight: 600; }
+.log-chip {
+  background: rgba(0,0,0,0.2);
+  border: 1px solid var(--panel-border);
+  border-radius: 20px;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.log-chip.active {
+  background: rgba(0, 229, 255, 0.15);
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+}
+#btnClearLogs { outline: none; }
