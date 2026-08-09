@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-09  
 **Status:** Draft for user review  
-**Scope:** Add a hardware concept for an Olimex ESP32-C6-EVB based pool-controller variant with a 2" ST7789 SPI TFT and KY-040 rotary encoder for local settings navigation.
+**Scope:** Add a hardware concept for an Olimex ESP32-C6-EVB based pool-controller variant with a 2.8" ST7789/ILI9341-class SPI TFT and KY-040 rotary encoder for local settings navigation.
 
 ## Motivation
 
@@ -22,7 +22,7 @@ Chosen combination:
 
 ```text
 Board:      Olimex ESP32-C6-EVB
-Display:    AZ-Delivery 2" SPI TFT, ST7789/ST7789VW, 320x240
+Display:    2.8" SPI TFT recommended, 2.4" minimum, 320x240
 Input:      KY-040 rotary encoder with push button
 Settings:   existing ConfigManager / Preferences / NVS
 ```
@@ -52,17 +52,24 @@ Main risks:
 - Several GPIOs are already consumed by relays, opto inputs, UEXT, LED, and
   button functions.
 
-### ST7789 2" TFT
+### 2.4"/2.8" SPI TFT
 
-The display is appropriate for status pages and a simple settings menu:
+The initial 2" display idea is technically usable, but it is not ideal for the
+desired combined Pool + Solar overview. To avoid repeating the cramped NORVI
+OLED experience, the preferred display size is 2.8". A 2.4" display is the
+minimum acceptable size if enclosure space is tight.
 
-- 320x240 is enough for readable values and menus.
+The display is appropriate for status pages and a simple settings menu when it
+has at least 2.4" diagonal size:
+
+- 320x240 is enough for readable values and menus at 2.4"/2.8".
 - SPI display libraries are widely available.
 - A full framebuffer should be avoided; use partial drawing or library-managed
   small buffers.
 
-The UI should stay simple: status screens, lists, edit fields, and confirmation
-dialogs. A heavy LVGL-style animated UI is out of scope for this variant.
+The UI should stay simple: one combined overview screen, short lists, edit
+fields, and confirmation dialogs. A heavy LVGL-style animated UI is out of
+scope for this variant.
 
 ### KY-040 Rotary Encoder
 
@@ -96,6 +103,62 @@ Recommended local menu scope:
 5. Sensor assignment/status where this can reuse existing `ConfigManager` data.
 
 Potentially dangerous operations should use explicit confirmation screens.
+
+## Main Screen Layout
+
+The main screen should show Pool and Solar at the same time. This is the key
+reason to prefer a 2.8" display over the originally considered 2" display.
+
+Example structure:
+
+```text
+┌────────────────────────────┐
+│ POOL                 AUTO  │
+│ 27.4 °C                    │
+│ Pumpe: AN                  │
+├────────────────────────────┤
+│ SOLAR                  OK  │
+│ 35.1 °C                    │
+│ Ventil: SOLAR              │
+└────────────────────────────┘
+```
+
+Layout rules:
+
+- Pool and Solar each get a clear half-screen block.
+- Temperatures are the largest text on the screen.
+- Mode/status labels stay short: `AUTO`, `MAN`, `AUS`, `OK`, `ERR`.
+- No dense tables and no more than three secondary lines per block.
+- Detailed values and settings move to subpages selected with the encoder.
+
+## Local Control Flow
+
+The rotary encoder should behave consistently across the whole local UI:
+
+```text
+Status screen:
+  rotate        -> switch between overview/detail pages
+  short press   -> open main menu
+  long press    -> refresh/return to overview
+
+Menu list:
+  rotate        -> move selection up/down
+  short press   -> enter selected item
+  long press    -> go back
+
+Value editing:
+  rotate        -> increase/decrease value or change option
+  short press   -> save/confirm
+  long press    -> cancel without saving
+
+Confirmation screen:
+  rotate        -> choose No/Yes
+  short press   -> confirm current choice
+  long press    -> cancel
+```
+
+This gives users a predictable mental model: rotate changes focus or value,
+short press accepts, and long press exits or cancels.
 
 ## Architecture
 
@@ -183,6 +246,7 @@ Minimum meaningful verification for implementation:
 3. Unit-test or host-test the menu state machine where feasible.
 4. Hardware smoke test:
    - TFT initializes and renders a status page.
+   - Main page shows Pool and Solar together without cramped text.
    - Encoder rotation creates up/down events.
    - Short press selects.
    - Long press backs out.
@@ -192,21 +256,31 @@ Minimum meaningful verification for implementation:
 
 ## Alternatives Considered
 
-### A. Olimex + TFT + KY-040 Encoder — chosen
+### A. Olimex + 2.8" TFT + KY-040 Encoder — chosen
 
 Best balance of robustness, pin usage, and menu usability.
 
-### B. Olimex + TFT + Joystick
+### A2. Olimex + 2.4" TFT + KY-040 Encoder — acceptable minimum
+
+Works if enclosure space is limited, but gives less visual breathing room for
+the combined Pool + Solar overview.
+
+### B. Olimex + 2" TFT + KY-040 Encoder
+
+Technically works, but it is too close to the cramped NORVI experience when
+Pool and Solar must be visible together on the main screen.
+
+### C. Olimex + TFT + Joystick
 
 Works electrically if powered from 3.3 V, but consumes ADC pins and creates more
 software/UX complexity.
 
-### C. Olimex + Web UI only
+### D. Olimex + Web UI only
 
 Simplest and lowest-risk implementation. Rejected for this concept because the
 goal is explicit local settings control.
 
-### D. Touch TFT
+### E. Touch TFT
 
 Most comfortable local UI, but higher complexity, more pins, more display work,
 and more mechanical/front-panel considerations.
@@ -225,8 +299,10 @@ and more mechanical/front-panel considerations.
 1. Which PlatformIO board definition works best for the Olimex ESP32-C6-EVB?
 2. Which exact GPIOs are safe and exposed for TFT DC/RST/CS/backlight and encoder
    A/B/SW?
-3. Should display backlight be fixed-on or PWM-dimmable?
-4. Which settings are safe enough for local editing in the first release?
-5. Should the NORVI OLED/button implementation be adapted to the same `LocalUi`
+3. Which exact 2.8" SPI TFT module should be used, and is ST7789 or ILI9341 the
+   best-supported controller for that module?
+4. Should display backlight be fixed-on or PWM-dimmable?
+5. Which settings are safe enough for local editing in the first release?
+6. Should the NORVI OLED/button implementation be adapted to the same `LocalUi`
    interface immediately, or should the abstraction be introduced only for the
    new Olimex variant first?
