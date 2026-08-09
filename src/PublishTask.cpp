@@ -45,8 +45,8 @@ void PublishTask::start(uint8_t priority, uint16_t stackBytes, BaseType_t core) 
 
 void PublishTask::logStackWatermark() {
   if (publishTaskHandle != nullptr) {
-    Serial.printf("  PublishTask stack high-water: %u B\n",
-      static_cast<unsigned>(uxTaskGetStackHighWaterMark(publishTaskHandle)));
+    Serial.printf(
+      "  PublishTask stack high-water: %u B\n", static_cast<unsigned>(uxTaskGetStackHighWaterMark(publishTaskHandle)));
   }
 }
 

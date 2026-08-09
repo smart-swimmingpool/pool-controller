@@ -35,12 +35,14 @@ void DisplayTask::start(uint8_t priority, uint16_t stackBytes, BaseType_t core) 
   xTaskCreatePinnedToCore(displayTaskFunc, "display", stackBytes, nullptr, priority, &displayTaskHandle, core);
 }
 
-void DisplayTask::requestRender() { renderRequested = true; }
+void DisplayTask::requestRender() {
+  renderRequested = true;
+}
 
 void DisplayTask::logStackWatermark() {
   if (displayTaskHandle != nullptr) {
-    Serial.printf("  DisplayTask stack high-water: %u B\n",
-      static_cast<unsigned>(uxTaskGetStackHighWaterMark(displayTaskHandle)));
+    Serial.printf(
+      "  DisplayTask stack high-water: %u B\n", static_cast<unsigned>(uxTaskGetStackHighWaterMark(displayTaskHandle)));
   }
 }
 

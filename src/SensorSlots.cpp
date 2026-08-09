@@ -13,9 +13,9 @@
 namespace PoolController {
 
 SensorSlots::Slot SensorSlots::slots_[static_cast<uint8_t>(SensorId::COUNT)] = {
-    {NAN, false},
-    {NAN, false},
-    {NAN, false},
+  {NAN, false},
+  {NAN, false},
+  {NAN, false},
 };
 
 void SensorSlots::reset() {
@@ -31,8 +31,12 @@ void SensorSlots::write(SensorId id, float value, bool found) {
   slot.found = found;
 }
 
-float SensorSlots::read(SensorId id) { return slots_[static_cast<uint8_t>(id)].value; }
+float SensorSlots::read(SensorId id) {
+  return slots_[static_cast<uint8_t>(id)].value;
+}
 
-bool SensorSlots::isFound(SensorId id) { return slots_[static_cast<uint8_t>(id)].found; }
+bool SensorSlots::isFound(SensorId id) {
+  return slots_[static_cast<uint8_t>(id)].found;
+}
 
 }  // namespace PoolController

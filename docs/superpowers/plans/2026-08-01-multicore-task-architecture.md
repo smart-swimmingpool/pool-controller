@@ -4,7 +4,8 @@
 
 **Goal:** Move blocking I/O (DS18B20 reads, OLED rendering, MQTT telemetry serialization) off the Arduino control loop onto dedicated FreeRTOS tasks pinned to Core 0, so loop iteration time drops from ~750 ms to <20 ms while all features keep their exact semantics.
 
-**Architecture:** A small static `CoreScheduler` launcher creates three Core-0 tasks (SensorTask, PublishTask, DisplayTask). The control loop (Core 1) keeps rules/relays/watchdog/network untouched. Cross-task data moves through lock-free, single-writer channels: `SensorSlots` (temperature values), a SPSC `TelemetryQueue` (publish requests), and a display snapshot. No singleton is mutated from two tasks without an explicit primitive.
+**Architecture:** A small static `CoreScheduler` launcher creates three Core-0 tasks (SensorTask, PublishTask, DisplayTask). The control loop (Core 1) keeps rules/relays/watchdog/network untouched. Cross-task data moves through lock-free, single-writer channels: `SensorSlots` (temperature values), a SPSC `TelemetryQueue` (publish requests), and a display snapshot. No singleton is mutated from two
+tasks without an explicit primitive.
 
 **Tech Stack:** FreeRTOS (ESP-IDF 5.x via Arduino framework, espressif32 @ 7.0.1), C++17, `std::atomic` for lock-free primitives, existing native test harness (CMake + ASan + gcov, `test/native`).
 
@@ -275,7 +276,8 @@ git commit -m "feat: add SPSC telemetry queue for off-core MQTT publishing"
 
 **Interfaces:**
 - Consumes: nothing (standalone).
-- Produces: `enum class SensorId : uint8_t { SOLAR = 0, POOL = 1, CONTROLLER = 2, COUNT = 3 }`, and `class SensorSlots` with `static void reset()`, `static void write(SensorId id, float value, bool found)`, `static float read(SensorId id)`, `static bool isFound(SensorId id)`. Single writer (SensorTask), many readers. Values are `volatile` — a reader may see one-cycle-stale data, which is acceptable for temperature telemetry.
+- Produces: `enum class SensorId : uint8_t { SOLAR = 0, POOL = 1, CONTROLLER = 2, COUNT = 3 }`, and `class SensorSlots` with `static void reset()`, `static void write(SensorId id, float value, bool found)`, `static float read(SensorId id)`, `static bool isFound(SensorId id)`. Single writer (SensorTask), many readers. Values are `volatile` — a reader may see one-cycle-stale data, which is
+  acceptable for temperature telemetry.
 
 - [x] **Step 1: Write the failing test**
 
@@ -462,7 +464,8 @@ git commit -m "feat: add lock-free sensor slots for cross-task temperature shari
 
 **Interfaces:**
 - Consumes: `SensorSlots` (from Task 2), existing `SystemMonitor` / `DegradationManager` APIs.
-- Produces: `void beginMeasurement()` (bus master triggers `requestTemperatures()`; standalone nodes trigger their own) and `void finishMeasurement()` (reads result, updates slots via `SensorSlots::write(id, temp, found)`, reports to `DegradationManager`). `loop()` becomes a thin sync wrapper calling both in sequence (kept for tests/back-compat). `getTemperature()` / `isSensorFound()` now read from `SensorSlots`.
+- Produces: `void beginMeasurement()` (bus master triggers `requestTemperatures()`; standalone nodes trigger their own) and `void finishMeasurement()` (reads result, updates slots via `SensorSlots::write(id, temp, found)`, reports to `DegradationManager`). `loop()` becomes a thin sync wrapper calling both in sequence (kept for tests/back-compat). `getTemperature()` / `isSensorFound()` now read from
+  `SensorSlots`.
 
 - [x] **Step 1: Extend the header**
 

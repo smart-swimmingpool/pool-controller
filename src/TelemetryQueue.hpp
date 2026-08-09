@@ -16,8 +16,8 @@ namespace PoolController {
 
 /** @brief Kinds of publish requests the control loop can enqueue. */
 enum class PublishRequestKind : uint8_t {
-  STATES = 0,    ///< Publish current telemetry states
-  DISCOVERY = 1, ///< Publish Home Assistant discovery configs
+  STATES = 0,     ///< Publish current telemetry states
+  DISCOVERY = 1,  ///< Publish Home Assistant discovery configs
 };
 
 /**
@@ -57,9 +57,9 @@ public:
   void reset();
 
 private:
-  std::atomic<size_t> head_{0};           ///< Consumer index (only consumer writes)
-  std::atomic<size_t> tail_{0};           ///< Producer index (only producer writes)
-  PublishRequestKind items_[CAPACITY];    ///< Fixed ring storage
+  std::atomic<size_t> head_{0};         ///< Consumer index (only consumer writes)
+  std::atomic<size_t> tail_{0};         ///< Producer index (only producer writes)
+  PublishRequestKind items_[CAPACITY];  ///< Fixed ring storage
 };
 
 }  // namespace PoolController

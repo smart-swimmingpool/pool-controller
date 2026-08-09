@@ -65,8 +65,7 @@ void SensorTask::start(uint8_t priority, uint16_t stackBytes, BaseType_t core) {
 
 void SensorTask::logStackWatermark() {
   if (sensorTaskHandle != nullptr) {
-    Serial.printf("  SensorTask stack high-water: %u B\n",
-      static_cast<unsigned>(uxTaskGetStackHighWaterMark(sensorTaskHandle)));
+    Serial.printf("  SensorTask stack high-water: %u B\n", static_cast<unsigned>(uxTaskGetStackHighWaterMark(sensorTaskHandle)));
   }
 }
 
