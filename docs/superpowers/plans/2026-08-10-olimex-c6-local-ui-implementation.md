@@ -71,9 +71,9 @@ Insert an `#elif defined(OLIMEX_ESP32_C6_EVB)` block between the NORVI block and
 #elif defined(OLIMEX_ESP32_C6_EVB)
 
 /** @brief DS18B20 data pin — solar collector temperature sensor. */
-constexpr std::uint8_t PIN_DS_SOLAR{4};
+constexpr std::uint8_t PIN_DS_SOLAR{6};
 /** @brief DS18B20 data pin — pool water temperature sensor. */
-constexpr std::uint8_t PIN_DS_POOL{5};
+constexpr std::uint8_t PIN_DS_POOL{20};
 /** @brief Relay control pin — pool circulation pump (Olimex relay). */
 constexpr std::uint8_t PIN_RELAY_POOL{10};
 /** @brief Relay control pin — solar heating pump (Olimex relay). */
@@ -89,11 +89,11 @@ constexpr std::uint8_t PIN_TFT_SCLK{19};
 constexpr std::uint8_t PIN_TFT_MISO{20};
 constexpr std::uint8_t PIN_TFT_CS{21};
 constexpr std::uint8_t PIN_TFT_DC{7};
-constexpr std::uint8_t PIN_TFT_RST{6};
+constexpr std::int8_t PIN_TFT_RST{-1};  // -1 = display reset tied high
 constexpr std::int8_t PIN_TFT_BACKLIGHT{-1};  // -1 = fixed 3.3 V backlight
 
-constexpr std::uint8_t PIN_ENCODER_CLK{12};
-constexpr std::uint8_t PIN_ENCODER_DT{13};
+constexpr std::uint8_t PIN_ENCODER_CLK{4};
+constexpr std::uint8_t PIN_ENCODER_DT{5};
 constexpr std::uint8_t PIN_ENCODER_SW{0};
 
 constexpr std::uint16_t TFT_DISPLAY_WIDTH{320};
@@ -103,7 +103,7 @@ constexpr bool TFT_DRIVER_ILI9341{true};
 constexpr bool TFT_DRIVER_ST7789{false};
 ```
 
-Do not use GPIO1/2/3/15 for UI; those are Olimex opto inputs. Do not use GPIO10/11/22/23 except for relays.
+Do not use GPIO1/2/3/15 for UI; those are Olimex opto inputs. Do not use GPIO10/11/22/23 except for relays. GPIO12/13/14 are not useful defaults because they are not exposed on the standard EVB headers. The defaults above intentionally keep the encoder on UEXT UART1 pins GPIO4/GPIO5 plus EXT1 GPIO0, keep TFT SPI on UEXT SPI, and avoid display reset by requiring the concrete TFT module to tie reset high or expose a reset pad that can be wired later.
 
 - [ ] **Step 2: Add static assertions for display driver selection**
 
@@ -114,6 +114,7 @@ At the end of the namespace, before `}  // namespace PoolController`, add:
 static_assert(TFT_DISPLAY_WIDTH == 320, "Olimex local UI expects a 320 px wide display");
 static_assert(TFT_DISPLAY_HEIGHT == 240, "Olimex local UI expects a 240 px high display");
 static_assert(TFT_DRIVER_ILI9341 != TFT_DRIVER_ST7789, "Select exactly one TFT driver");
+static_assert(PIN_TFT_RST < 0 || PIN_TFT_RST != PIN_TFT_CS, "TFT reset pin must not conflict with TFT CS");
 static_assert(PIN_TFT_BACKLIGHT < 0 || PIN_TFT_BACKLIGHT != PIN_TFT_CS, "Backlight control pin must not conflict with TFT CS");
 #endif
 ```
