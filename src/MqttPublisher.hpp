@@ -12,6 +12,7 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <AsyncMqttClient.h>
+#include <cstdint>
 
 namespace PoolController {
 
