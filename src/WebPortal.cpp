@@ -772,7 +772,7 @@ void WebPortal::apiSaveConfig() {
     operationModeNode.setMeasurementInterval(ConfigManager::getSettings().loopInterval);
 
     // Propagate changes directly into runtime parameters
-    operationModeNode.setMode(ConfigManager::getSettings().opMode.c_str());
+    operationModeNode.setMode(ConfigManager::getSettings().opMode.c_str(), "web:settings");
     operationModeNode.setPoolMaxTemperature(ConfigManager::getSettings().tempMaxPool);
     operationModeNode.setSolarMinTemperature(ConfigManager::getSettings().tempMinSolar);
     operationModeNode.setTemperatureHysteresis(ConfigManager::getSettings().tempHysteresis);
@@ -844,7 +844,7 @@ void WebPortal::apiSetMode() {
   }
 
   String mode = server_.arg("mode");
-  if (operationModeNode.setMode(mode)) {
+  if (operationModeNode.setMode(mode, "web:apiSetMode")) {
     ConfigManager::getSettings().opMode = mode;
     ConfigManager::save();
     server_.send(200, "application/json", "{\"status\":\"ok\",\"mode\":\"" + mode + "\"}");

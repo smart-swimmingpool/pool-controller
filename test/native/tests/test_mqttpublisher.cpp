@@ -316,19 +316,68 @@ int run_mqttpublisher_tests() {
     MqttPublisher::handleMqttMessage(const_cast<char *>("homeassistant/select/pool-controller/mode/set"),
       const_cast<char *>("boost"), AsyncMqttClientMessageProperties{0, false, false}, 5, 0, 5);
 
-    // The mode should have been set to "boost"
+    // The mode should have been set to "boost" and tagged with its MQTT source.
     std::string mode = operationModeNode.getMode().c_str();
-    rc = (mode == "boost") ? 0 : 1;
-    if (rc == 0) {
+    int missing = 0;
+    if (mode == "boost") {
       test_pass(__FILE__, __LINE__);
-      passed++;
     } else {
       char msg[64];
       snprintf(msg, sizeof(msg), "Expected mode=boost, got %s", mode.c_str());
       test_fail(__FILE__, __LINE__, msg);
-      failed++;
+      missing++;
     }
-    test_suite_end("MqttPublisher::handle_mode_command", rc == 0 ? 1 : 0, rc != 0 ? 1 : 0);
+    if (strcmp(operationModeNode.getLastModeSource(), "mqtt:mode/set") == 0) {
+      test_pass(__FILE__, __LINE__);
+    } else {
+      test_fail(__FILE__, __LINE__, "Mode source not tagged as mqtt:mode/set");
+      missing++;
+    }
+
+    rc = (missing == 0) ? 0 : 1;
+    if (rc == 0)
+      passed++;
+    else
+      failed++;
+    test_suite_end("MqttPublisher::handle_mode_command", missing == 0 ? 1 : 0, missing);
+  }
+
+  // ── Test: Handle MQTT climate commands with mode source tags ──
+  {
+    test_begin("MqttPublisher", "handle climate mode/preset commands tags source");
+
+    operationModeNode.setMode("auto");
+    AsyncMqttClientMessageProperties props{0, false, false};
+
+    char modeTopic[] = "homeassistant/climate/pool-controller/thermostat/mode/set";
+    char modePayload[] = "heat";
+    MqttPublisher::handleMqttMessage(modeTopic, modePayload, props, strlen(modePayload), 0, strlen(modePayload));
+
+    int missing = 0;
+    if (strcmp(operationModeNode.getLastModeSource(), "mqtt:thermostat/mode") == 0) {
+      test_pass(__FILE__, __LINE__);
+    } else {
+      test_fail(__FILE__, __LINE__, "Climate mode source not tagged as mqtt:thermostat/mode");
+      missing++;
+    }
+
+    char presetTopic[] = "homeassistant/climate/pool-controller/thermostat/preset/set";
+    char presetPayload[] = "schedule";
+    MqttPublisher::handleMqttMessage(presetTopic, presetPayload, props, strlen(presetPayload), 0, strlen(presetPayload));
+
+    if (strcmp(operationModeNode.getLastModeSource(), "mqtt:thermostat/preset") == 0) {
+      test_pass(__FILE__, __LINE__);
+    } else {
+      test_fail(__FILE__, __LINE__, "Climate preset source not tagged as mqtt:thermostat/preset");
+      missing++;
+    }
+
+    rc = (missing == 0) ? 0 : 1;
+    if (rc == 0)
+      passed++;
+    else
+      failed++;
+    test_suite_end("MqttPublisher::handle_climate_mode_sources", missing == 0 ? 1 : 0, missing);
   }
 
   // ── Test: Handle MQTT pump command in manual mode ──

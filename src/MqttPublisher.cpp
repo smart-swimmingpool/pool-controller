@@ -1067,7 +1067,7 @@ void MqttPublisher::handleMqttMessage(
       return;
     }
     LOG_INFO("MQTT: Climate preset → pool mode \"%s\"\n", poolMode.c_str());
-    operationModeNode.setMode(poolMode.c_str());
+    operationModeNode.setMode(poolMode.c_str(), "mqtt:thermostat/preset");
     ConfigManager::getSettings().opMode = poolMode;
     ConfigManager::save();
     publishStates();
@@ -1088,7 +1088,7 @@ void MqttPublisher::handleMqttMessage(
       return;
     }
     LOG_INFO("MQTT: Climate mode → pool mode \"%s\"\n", poolMode.c_str());
-    operationModeNode.setMode(poolMode.c_str());
+    operationModeNode.setMode(poolMode.c_str(), "mqtt:thermostat/mode");
     ConfigManager::getSettings().opMode = poolMode;
     ConfigManager::save();
     publishStates();
@@ -1148,7 +1148,7 @@ void MqttPublisher::handleMqttMessage(
       return;
     }
 
-    operationModeNode.setMode(value.c_str());
+    operationModeNode.setMode(value.c_str(), "mqtt:mode/set");
     ConfigManager::getSettings().opMode = value;
     ConfigManager::save();
   } else if (top.endsWith("/pool-max-temp/set")) {
