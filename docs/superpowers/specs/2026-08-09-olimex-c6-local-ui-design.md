@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-09  
 **Status:** Draft for user review  
-**Scope:** Add a hardware concept for an Olimex ESP32-C6-EVB based pool-controller variant with a 2.8" ST7789/ILI9341-class SPI TFT and KY-040 rotary encoder for local settings navigation.
+**Scope:** Add a hardware concept for an Olimex ESP32-C6-EVB based pool-controller variant with a configurable 320x240 SPI TFT and KY-040 rotary encoder for local settings navigation.
 
 ## Motivation
 
@@ -22,7 +22,8 @@ Chosen combination:
 
 ```text
 Board:      Olimex ESP32-C6-EVB
-Display:    2.8" SPI TFT recommended, 2.4" minimum, 320x240
+Display:    320x240 SPI TFT, 2.8" recommended, 2.4" acceptable
+Driver:     configurable ST7789 or ILI9341-class controller
 Input:      KY-040 rotary encoder with push button
 Settings:   existing ConfigManager / Preferences / NVS
 ```
@@ -113,12 +114,12 @@ No-go conditions:
 - A later expansion that raises total 3.3 V rail load close to the conservative
   1.2 A budget without a renewed power check.
 
-### 2.4"/2.8" SPI TFT
+### Configurable 320x240 SPI TFT
 
 The initial 2" display idea is technically usable, but it is not ideal for the
 desired combined Pool + Solar overview. To avoid repeating the cramped NORVI
-OLED experience, the preferred display size is 2.8". A 2.4" display is the
-minimum acceptable size if enclosure space is tight.
+OLED experience, the preferred display size is 2.8". A 2.4" display is
+acceptable if enclosure space or available parts require it.
 
 The display is appropriate for status pages and a simple settings menu when it
 has at least 2.4" diagonal size:
@@ -131,6 +132,21 @@ has at least 2.4" diagonal size:
 The UI should stay simple: one combined overview screen, short lists, edit
 fields, and confirmation dialogs. A heavy LVGL-style animated UI is out of
 scope for this variant.
+
+The implementation should not hard-code the physical diagonal size. It should be
+configured around display properties that affect code behavior:
+
+```text
+DISPLAY_WIDTH       = 320
+DISPLAY_HEIGHT      = 240
+DISPLAY_DRIVER      = ILI9341 or ST7789
+DISPLAY_SIZE_CLASS  = compact or normal
+```
+
+This allows the same UI architecture to support both a 2.4" and 2.8" 320x240
+module. The 2.4" layout can use the `compact` size class with tighter spacing;
+the 2.8" layout can use the `normal` size class for better visual breathing
+room.
 
 ### KY-040 Rotary Encoder
 
@@ -191,6 +207,28 @@ Layout rules:
 - Mode/status labels stay short: `AUTO`, `MAN`, `AUS`, `OK`, `ERR`.
 - No dense tables and no more than three secondary lines per block.
 - Detailed values and settings move to subpages selected with the encoder.
+
+## QR Code Display
+
+The TFT should be able to show QR codes for setup and diagnostics. Useful QR
+targets include:
+
+- the local web UI, for example `http://pool-controller.local`,
+- a Wi-Fi/setup captive portal address,
+- a Home Assistant or documentation link,
+- a short diagnostic URL or support page.
+
+QR rendering requirements:
+
+- Render black-on-white with a quiet border around the code.
+- Keep the encoded payload short; prefer URLs over large JSON/config blobs.
+- Target at least about 160x160 px, with 200x200 px preferred on 320x240.
+- Use a dedicated QR screen rather than trying to fit the QR code beside the
+  Pool/Solar overview.
+- Keep screen brightness high while the QR page is open.
+
+On a 2.8" 320x240 TFT this should be comfortably scannable. On a 2.4" 320x240
+TFT it should still work when shown as a dedicated full-screen QR page.
 
 ## Local Control Flow
 
@@ -324,9 +362,10 @@ Minimum meaningful verification for implementation:
 
 ## Alternatives Considered
 
-### A. Olimex + 2.8" TFT + KY-040 Encoder — chosen
+### A. Olimex + configurable 320x240 TFT + KY-040 Encoder — chosen
 
-Best balance of robustness, pin usage, and menu usability.
+Best balance of robustness, pin usage, and menu usability. The implementation
+should support both 2.4" and 2.8" 320x240 modules by configuration.
 
 ### A2. Olimex + 2.4" TFT + KY-040 Encoder — acceptable minimum
 
@@ -367,8 +406,8 @@ and more mechanical/front-panel considerations.
 1. Which PlatformIO board definition works best for the Olimex ESP32-C6-EVB?
 2. Which exact GPIOs are safe and exposed for TFT DC/RST/CS/backlight and encoder
    A/B/SW?
-3. Which exact 2.8" SPI TFT module should be used, and is ST7789 or ILI9341 the
-   best-supported controller for that module?
+3. Which exact 320x240 SPI TFT module is available, what physical size is it,
+   and does it use ST7789, ILI9341, or another supported controller?
 4. Should display backlight be fixed-on or PWM-dimmable?
 5. Which settings are safe enough for local editing in the first release?
 6. Should the NORVI OLED/button implementation be adapted to the same `LocalUi`
