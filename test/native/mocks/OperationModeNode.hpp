@@ -19,13 +19,23 @@ public:
   void loop() {}
 
   String getMode() const { return String(_mode.c_str()); }
-  bool setMode(String mode) { _mode = mode.c_str(); return true; }
+  bool setMode(String mode) { return setMode(mode, "unspecified"); }
+  bool setMode(String mode, const char *source) {
+    _lastModeSource = source != nullptr ? source : "unspecified";
+    _mode = mode.c_str();
+    return true;
+  }
+  const char *getLastModeSource() const { return _lastModeSource.c_str(); }
 
   Rule *getRule() {
-    if (_mode == "auto") return &_autoRule;
-    if (_mode == "manu") return &_manuRule;
-    if (_mode == "boost") return &_boostRule;
-    if (_mode == "timer") return &_timerRule;
+    if (_mode == "auto")
+      return &_autoRule;
+    if (_mode == "manu")
+      return &_manuRule;
+    if (_mode == "boost")
+      return &_boostRule;
+    if (_mode == "timer")
+      return &_timerRule;
     return nullptr;
   }
 
@@ -48,6 +58,7 @@ public:
 
 private:
   std::string _mode = "auto";
+  std::string _lastModeSource = "";
   TimerSetting _timer;
   unsigned long _measurementInterval = 300;
   RuleAuto _autoRule;

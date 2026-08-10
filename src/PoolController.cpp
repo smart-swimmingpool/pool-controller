@@ -231,7 +231,7 @@ auto PoolControllerContext::initializeController() -> void {
   operationModeNode.begin();
 
   // Load properties into Operation Mode
-  operationModeNode.setMode(ConfigManager::getSettings().opMode.c_str());
+  operationModeNode.setMode(ConfigManager::getSettings().opMode.c_str(), "boot:config");
   operationModeNode.setPoolMaxTemperature(ConfigManager::getSettings().tempMaxPool);
   operationModeNode.setSolarMinTemperature(ConfigManager::getSettings().tempMinSolar);
   operationModeNode.setTemperatureHysteresis(ConfigManager::getSettings().tempHysteresis);
@@ -326,13 +326,13 @@ auto PoolControllerContext::setup() -> void {
         // Cycle operation mode
         const String &currentMode = operationModeNode.getMode();
         if (currentMode == "auto") {
-          operationModeNode.setMode("manu");
+          operationModeNode.setMode("manu", "button:S3/menu");
         } else if (currentMode == "manu") {
-          operationModeNode.setMode("boost");
+          operationModeNode.setMode("boost", "button:S3/menu");
         } else if (currentMode == "boost") {
-          operationModeNode.setMode("timer");
+          operationModeNode.setMode("timer", "button:S3/menu");
         } else {
-          operationModeNode.setMode("auto");
+          operationModeNode.setMode("auto", "button:S3/menu");
         }
         LOG_INFO("→ Mode switched to: %s\n", operationModeNode.getMode().c_str());
         break;

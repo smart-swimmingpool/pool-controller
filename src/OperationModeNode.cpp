@@ -113,22 +113,31 @@ Rule *OperationModeNode::getRule() {
 }
 
 bool OperationModeNode::setMode(String mode) {
+  return setMode(mode, "unspecified");
+}
+
+bool OperationModeNode::setMode(String mode, const char *source) {
+  if (source == nullptr) {
+    source = "unspecified";
+  }
   if (mode.equals(STATUS_AUTO) || mode.equals(STATUS_MANU) || mode.equals(STATUS_BOOST) || mode.equals(STATUS_TIMER)) {
-    // Reset temperature-based runtime extension on mode change
-    for (auto &rule : _ruleVec) {
-      rule->resetTemperatureExtension();
-    }
-    // Curated log event for MQTT event entity — only on actual mode change
     if (!_mode.equals(mode)) {
-      PoolController::LogCapture::logEvent("MODE_CHANGED", "Mode switched to %s", mode.c_str());
+      // Reset temperature-based runtime extension on mode change
+      for (auto &rule : _ruleVec) {
+        rule->resetTemperatureExtension();
+      }
+      PoolController::LogCapture::logEvent("MODE_CHANGED", "Mode changed %s -> %s (source=%s, persist=%s)", _mode.c_str(),
+        mode.c_str(), source, _suppressPersist ? "no" : "yes");
+      _mode = mode;
+      LOG_DEBUG("set mode: %s (source=%s)\n", _mode.c_str(), source);
+      if (!_suppressPersist)
+        saveState();
+    } else {
+      LOG_INFO("Mode set requested: %s -> %s (source=%s, changed=no, persist=no)\n", _mode.c_str(), mode.c_str(), source);
     }
-    _mode = mode;
-    LOG_DEBUG("set mode: %s\n", _mode.c_str());
-    if (!_suppressPersist)
-      saveState();
     return true;
   } else {
-    LOG_ERROR("✖ UNDEFINED Mode: %s. Current unchanged mode: %s\n", mode.c_str(), _mode.c_str());
+    LOG_ERROR("✖ UNDEFINED Mode: %s. Current unchanged mode: %s (source=%s)\n", mode.c_str(), _mode.c_str(), source);
     return false;
   }
 }
@@ -158,9 +167,8 @@ void OperationModeNode::loop() {
     if (rule != nullptr) {
       rule->loop();
     } else {
-      LOG_ERROR("  ✖ no rule defined for mode: %s. Falling back to manual.\n", _mode.c_str());
-      _mode = STATUS_MANU;
-      saveState();
+      LOG_ERROR("  ✖ no rule defined for mode: %s. Falling back to manual (source=rule-fallback:no-rule).\n", _mode.c_str());
+      setMode(STATUS_MANU, "rule-fallback:no-rule");
     }
   }
 }
@@ -177,7 +185,7 @@ bool OperationModeNode::applyProperty(const String &property, const String &valu
 
   if (property.equalsIgnoreCase("mode")) {
     LOG_INFO("  ✔ set operational mode: %s\n", value.c_str());
-    retval = this->setMode(value);
+    retval = this->setMode(value, "ha:command");
   } else if (property.equalsIgnoreCase("hysteresis")) {
     LOG_INFO("  ✔ hysteresis: %s\n", value.c_str());
     float newValue;
@@ -282,6 +290,8 @@ void OperationModeNode::loadState() {
   if (savedMode == STATUS_AUTO || savedMode == STATUS_MANU || savedMode == STATUS_BOOST || savedMode == STATUS_TIMER) {
     _mode = savedMode;
   }
+
+  LOG_INFO("✓ Operational mode loaded from persistent storage: %s (source=loadState)\n", _mode.c_str());
 
   _poolMaxTemp = StateManager::loadFloat("poolMaxTemp", 28.5f);
   _solarMinTemp = StateManager::loadFloat("solarMinTemp", 55.0f);
