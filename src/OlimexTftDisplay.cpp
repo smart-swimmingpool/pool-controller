@@ -41,7 +41,11 @@ bool OlimexTftDisplay::forceRedraw_{true};
 
 void OlimexTftDisplay::begin() {
   SPI.begin(PIN_TFT_SCLK, PIN_TFT_MISO, PIN_TFT_MOSI, PIN_TFT_CS);
-  activeTft().begin(27000000);
+  if constexpr (TFT_DRIVER_ST7789) {
+    tftSt7789.init(TFT_DISPLAY_WIDTH, TFT_DISPLAY_HEIGHT);
+  } else {
+    tftIli9341.begin(27000000);
+  }
   activeTft().setRotation(1);
   activeTft().fillScreen(rgb(0, 0, 0));
   drawHeader("POOL", "BOOT");
