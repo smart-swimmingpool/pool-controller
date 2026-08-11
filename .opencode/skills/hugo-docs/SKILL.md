@@ -22,6 +22,7 @@ keywords:
   - doc update
   - seo
   - canonical url
+  - olimex esp32 c6 evb
 ---
 
 # Hugo Documentation — Pool Controller
@@ -59,6 +60,8 @@ smart-swimmingpool/website/        # Hugo site build → smart-swimmingpool.com
 ```
 
 ## Project-Specific Hugo Conventions
+
+For Olimex local-UI hardware notes, keep the source-of-truth checklist in `docs/olimex-esp32-c6-evb.md` aligned with implementation and `src/Config.hpp` pin names.
 
 ### Frontmatter
 

@@ -43,6 +43,10 @@
 #include "NorviButtonHandler.hpp"
 #endif
 
+#if defined(OLIMEX_ESP32_C6_EVB) && defined(HAS_LOCAL_TFT_UI)
+#include "OlimexLocalUi.hpp"
+#endif
+
 #include "Config.hpp"
 
 namespace PoolController {
@@ -60,6 +64,10 @@ DallasTemperatureNode poolTemperatureNode("pool-temp", "Pool Temperature", PIN_D
 ESP32TemperatureNode ctrlTemperatureNode("controller-temp", "Controller Temperature", TEMP_READ_INTERVAL);
 #ifdef NORVI_AE01_R
 // NORVI AE01-R uses active-HIGH relays (HIGH = relay ON, LOW = relay OFF)
+RelayModuleNode poolPumpNode("pool-pump", "Pool Pump", PIN_RELAY_POOL, false);
+RelayModuleNode solarPumpNode("solar-pump", "Solar Pump", PIN_RELAY_SOLAR, false);
+#elif defined(OLIMEX_ESP32_C6_EVB)
+// Olimex relay outputs are active-HIGH
 RelayModuleNode poolPumpNode("pool-pump", "Pool Pump", PIN_RELAY_POOL, false);
 RelayModuleNode solarPumpNode("solar-pump", "Solar Pump", PIN_RELAY_SOLAR, false);
 #else
@@ -418,6 +426,10 @@ auto PoolControllerContext::setup() -> void {
   // Load operational settings from NVS Preferences
   operationModeNode.loadState();
 
+#if defined(OLIMEX_ESP32_C6_EVB) && defined(HAS_LOCAL_TFT_UI)
+  OlimexLocalUi::begin();
+#endif
+
   // OTA safety: detect version transition and verify config integrity
   ConfigManager::logOtaTransition();
 
@@ -479,6 +491,10 @@ auto PoolControllerContext::loop() -> void {
     StatusLed::setPattern(StatusLedPattern::ONLINE);
   }
   StatusLed::loop();
+
+#if defined(OLIMEX_ESP32_C6_EVB) && defined(HAS_LOCAL_TFT_UI)
+  OlimexLocalUi::loop();
+#endif
 
 #ifdef NORVI_AE01_R
   // Update NORVI OLED display and read front-panel buttons
