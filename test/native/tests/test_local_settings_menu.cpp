@@ -23,6 +23,7 @@ extern void test_suite_end(const char *name, int passed, int failed);
   } while (0)
 
 using PoolController::LocalMenuItem;
+using PoolController::LocalMenuAction;
 using PoolController::LocalSettingsMenu;
 using PoolController::LocalUiEvent;
 using PoolController::LocalUiPage;
@@ -70,15 +71,37 @@ static int test_long_press_returns_to_overview() {
   return 0;
 }
 
+static int test_mode_selection_requests_action() {
+  LocalSettingsMenu menu;
+  menu.handleEvent(LocalUiEvent::SHORT_PRESS);
+  menu.handleEvent(LocalUiEvent::SHORT_PRESS);
+  ASSERT_EQ(menu.currentPage(), LocalUiPage::OVERVIEW);
+  ASSERT_EQ(menu.consumePendingAction(), LocalMenuAction::CYCLE_MODE);
+  ASSERT_EQ(menu.consumePendingAction(), LocalMenuAction::NONE);
+  return 0;
+}
+
+static int test_pump_selection_requests_action() {
+  LocalSettingsMenu menu;
+  menu.handleEvent(LocalUiEvent::SHORT_PRESS);
+  menu.handleEvent(LocalUiEvent::ROTATE_CLOCKWISE);
+  menu.handleEvent(LocalUiEvent::SHORT_PRESS);
+  ASSERT_EQ(menu.currentPage(), LocalUiPage::OVERVIEW);
+  ASSERT_EQ(menu.consumePendingAction(), LocalMenuAction::TOGGLE_PUMP);
+  return 0;
+}
+
 int run_local_settings_menu_tests() {
   int failures = 0;
   failures += test_short_press_opens_menu();
   failures += test_rotate_pages_on_overview();
   failures += test_menu_navigation_and_qr_selection();
   failures += test_long_press_returns_to_overview();
-  test_suite_end("LocalSettingsMenu", 4 - failures, failures);
+  failures += test_mode_selection_requests_action();
+  failures += test_pump_selection_requests_action();
+  test_suite_end("LocalSettingsMenu", 6 - failures, failures);
   if (failures == 0) {
-    printf("  LocalSettingsMenu Tests: 4 passed, 0 failed\n");
+    printf("  LocalSettingsMenu Tests: 6 passed, 0 failed\n");
   }
   return failures;
 }

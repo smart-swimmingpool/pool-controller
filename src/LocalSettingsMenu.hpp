@@ -16,6 +16,7 @@ public:
 
   LocalUiPage currentPage() const { return currentPage_; }
   LocalMenuItem currentMenuItem() const { return currentMenuItem_; }
+  LocalMenuAction consumePendingAction();
   bool isMenuActive() const { return currentPage_ == LocalUiPage::MENU; }
   bool needsRedraw() const { return needsRedraw_; }
   void clearRedraw() { needsRedraw_ = false; }
@@ -30,6 +31,7 @@ private:
 
   LocalUiPage currentPage_{LocalUiPage::OVERVIEW};
   LocalMenuItem currentMenuItem_{LocalMenuItem::MODE};
+  LocalMenuAction pendingAction_{LocalMenuAction::NONE};
   bool needsRedraw_{true};
 };
 

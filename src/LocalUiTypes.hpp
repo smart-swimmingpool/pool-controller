@@ -32,6 +32,12 @@ enum class LocalMenuItem : std::uint8_t {
   EXIT,
 };
 
+enum class LocalMenuAction : std::uint8_t {
+  NONE = 0,
+  CYCLE_MODE,
+  TOGGLE_PUMP,
+};
+
 enum class DisplayDriver : std::uint8_t {
   ILI9341 = 0,
   ST7789,

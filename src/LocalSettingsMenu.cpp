@@ -77,13 +77,25 @@ void LocalSettingsMenu::selectMenuItem() {
   case LocalMenuItem::QR_CODE:
     currentPage_ = LocalUiPage::QRCODE;
     break;
-  case LocalMenuItem::EXIT:
   case LocalMenuItem::MODE:
+    pendingAction_ = LocalMenuAction::CYCLE_MODE;
+    currentPage_ = LocalUiPage::OVERVIEW;
+    break;
   case LocalMenuItem::PUMP:
+    pendingAction_ = LocalMenuAction::TOGGLE_PUMP;
+    currentPage_ = LocalUiPage::OVERVIEW;
+    break;
+  case LocalMenuItem::EXIT:
     currentPage_ = LocalUiPage::OVERVIEW;
     break;
   }
   needsRedraw_ = true;
+}
+
+LocalMenuAction LocalSettingsMenu::consumePendingAction() {
+  const auto action = pendingAction_;
+  pendingAction_ = LocalMenuAction::NONE;
+  return action;
 }
 
 void LocalSettingsMenu::returnToOverview() {
