@@ -41,6 +41,9 @@
 #ifdef NORVI_AE01_R
 #include "NorviOledDisplay.hpp"
 #include "NorviButtonHandler.hpp"
+#if defined(OLIMEX_ESP32_C6_EVB) && defined(HAS_LOCAL_TFT_UI)
+#include "OlimexLocalUi.hpp"
+#endif
 #endif
 
 #include "Config.hpp"
@@ -273,6 +276,10 @@ auto PoolControllerContext::setup() -> void {
   // Initialize Status-LED with Homie-compatible blink codes
   StatusLed::begin();
 
+#if defined(OLIMEX_ESP32_C6_EVB) && defined(HAS_LOCAL_TFT_UI)
+  OlimexLocalUi::begin();
+#endif
+
   // Load persistent sensor address mapping from NVS early.
   // Must run before NorviOledDisplay::begin() so that first-boot detection
   // (needsSensorMapping) correctly checks whether sensors are assigned.
@@ -479,6 +486,10 @@ auto PoolControllerContext::loop() -> void {
     StatusLed::setPattern(StatusLedPattern::ONLINE);
   }
   StatusLed::loop();
+
+#if defined(OLIMEX_ESP32_C6_EVB) && defined(HAS_LOCAL_TFT_UI)
+  OlimexLocalUi::loop();
+#endif
 
 #ifdef NORVI_AE01_R
   // Update NORVI OLED display and read front-panel buttons
