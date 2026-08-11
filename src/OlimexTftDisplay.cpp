@@ -91,7 +91,7 @@ void OlimexTftDisplay::drawPage(LocalUiPage page, LocalMenuItem menuItem) {
 }
 
 void OlimexTftDisplay::drawOverview() {
-  drawHeader("POOL", ConfigManager::getSettings().opMode.c_str(), 6);
+  drawHeader("POOL", operationModeNode.getMode().c_str(), 6);
   char buf[16];
   Utils::floatToString(poolTemperatureNode.getTemperature(), buf, sizeof(buf), 1);
   activeTft().setTextSize(TFT_DISPLAY_SIZE_CLASS_COMPACT ? 3 : 4);
