@@ -18,6 +18,9 @@ keywords:
   - pio cli
   - ci integration
   - platformio check
+  - olimex esp32 c6 evb
+  - pioarduino
+  - platformio core dir
 ---
 
 # PlatformIO Environment — Pool Controller
@@ -26,6 +29,13 @@ PlatformIO environment configuration for the ESP32 pool-controller. This skill
 covers the build system, platform configuration, library management, and
 environment setup — complementing the `platformio-workflow` skill for
 operational commands.
+
+## Olimex ESP32-C6-EVB Notes
+
+- Use the `olimex_esp32_c6_evb` environment for the Olimex board.
+- ESP32-C6 Arduino builds require the pinned pioarduino platform; keep a separate `PLATFORMIO_CORE_DIR` for C6/pioarduino builds versus upstream ESP32/NORVI builds.
+- Native USB CDC is the serial console path; keep `ARDUINO_USB_CDC_ON_BOOT=1` enabled.
+- Local UI wiring lives in `src/Config.hpp`; treat it as the source of truth for TFT, encoder, relay, and sensor pins.
 
 ## Architecture Overview
 

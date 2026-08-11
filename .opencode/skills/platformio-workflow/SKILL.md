@@ -14,6 +14,9 @@ keywords:
   - pio device monitor
   - dependency management
   - library dependency
+  - olimex build
+  - pioarduino
+  - native usb cdc
 ---
 
 # PlatformIO Workflow — Pool Controller
@@ -31,6 +34,12 @@ Build, flash, monitor, and OTA operations for the ESP32 pool-controller.
 - **C++ Standard**: C++17
 - **Serial speed**: 115200 baud
 - **Upload speed**: 230400 baud
+
+### Olimex C6 variant
+
+- Build target: `olimex_esp32_c6_evb`
+- Use the pinned pioarduino platform and a separate `PLATFORMIO_CORE_DIR` when building C6, so the pioarduino packages do not interfere with upstream ESP32/NORVI builds.
+- Native USB CDC is the serial console path on this board; keep `ARDUINO_USB_CDC_ON_BOOT=1` enabled.
 
 ## Build Commands
 
