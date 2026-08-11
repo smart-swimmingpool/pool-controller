@@ -9,4 +9,4 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v7
-      - uses: oxsecurity/megalinter/flavors/c_cpp@v9.6.0
+      - uses: oxsecurity/megalinter/flavors/c_cpp@v10.0.0
