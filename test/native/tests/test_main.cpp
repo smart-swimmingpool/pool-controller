@@ -108,6 +108,7 @@ extern int run_state_manager_tests();
 extern int run_timer_tests();
 extern int run_logcapture_tests();
 extern int run_webportal_logs_tests();
+extern int run_local_settings_menu_tests();
 
 int main() {
   printf("\n══════════════════════════════════════════════════\n");
@@ -124,6 +125,7 @@ int main() {
   total += run_timer_tests();
   total += run_logcapture_tests();
   total += run_webportal_logs_tests();
+  total += run_local_settings_menu_tests();
 
   printf("\n══════════════════════════════════════════════════\n");
   printf("  Results: %d suites passed, %d suites failed\n", g_testsPassed, g_testsFailed);
