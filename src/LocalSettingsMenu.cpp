@@ -71,17 +71,17 @@ void LocalSettingsMenu::previousMenuItem() {
 
 void LocalSettingsMenu::selectMenuItem() {
   switch (currentMenuItem_) {
-    case LocalMenuItem::NETWORK_STATUS:
-      currentPage_ = LocalUiPage::NETWORK;
-      break;
-    case LocalMenuItem::QR_CODE:
-      currentPage_ = LocalUiPage::QRCODE;
-      break;
-    case LocalMenuItem::EXIT:
-    case LocalMenuItem::MODE:
-    case LocalMenuItem::PUMP:
-      currentPage_ = LocalUiPage::OVERVIEW;
-      break;
+  case LocalMenuItem::NETWORK_STATUS:
+    currentPage_ = LocalUiPage::NETWORK;
+    break;
+  case LocalMenuItem::QR_CODE:
+    currentPage_ = LocalUiPage::QRCODE;
+    break;
+  case LocalMenuItem::EXIT:
+  case LocalMenuItem::MODE:
+  case LocalMenuItem::PUMP:
+    currentPage_ = LocalUiPage::OVERVIEW;
+    break;
   }
   needsRedraw_ = true;
 }

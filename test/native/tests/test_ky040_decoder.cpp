@@ -1,15 +1,15 @@
-#include "Ky040Decoder.hpp"
-
 #include <cstdio>
 
-#define ASSERT_EQ(a, b)                                                                                    \
-  do {                                                                                                     \
-    auto _a = (a);                                                                                         \
-    auto _b = (b);                                                                                         \
-    if (_a != _b) {                                                                                        \
-      printf("    ✗ %s:%d expected equality\n", __FILE__, __LINE__);                                     \
-      return 1;                                                                                            \
-    }                                                                                                      \
+#include "Ky040Decoder.hpp"
+
+#define ASSERT_EQ(a, b)                                              \
+  do {                                                               \
+    auto _a = (a);                                                   \
+    auto _b = (b);                                                   \
+    if (_a != _b) {                                                  \
+      printf("    ✗ %s:%d expected equality\n", __FILE__, __LINE__); \
+      return 1;                                                      \
+    }                                                                \
   } while (0)
 
 using PoolController::Ky040Decoder;

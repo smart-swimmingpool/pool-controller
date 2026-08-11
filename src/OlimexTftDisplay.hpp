@@ -5,12 +5,12 @@
 namespace PoolController {
 
 class OlimexTftDisplay {
- public:
+public:
   static void begin();
   static void drawPage(LocalUiPage page, LocalMenuItem menuItem);
   static void requestRedraw() { forceRedraw_ = true; }
 
- private:
+private:
   static void drawOverview();
   static void drawMenu(LocalMenuItem menuItem);
   static void drawNetwork();

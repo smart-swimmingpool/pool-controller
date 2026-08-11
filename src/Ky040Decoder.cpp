@@ -8,20 +8,20 @@ LocalUiEvent Ky040Decoder::update(bool clkHigh, bool dtHigh, bool swPressed, std
   lastState_ = state;
 
   switch (transition) {
-    case 0b1110:
-    case 0b1000:
-    case 0b0001:
-    case 0b0111:
-      --delta_;
-      break;
-    case 0b1101:
-    case 0b0100:
-    case 0b0010:
-    case 0b1011:
-      ++delta_;
-      break;
-    default:
-      break;
+  case 0b1110:
+  case 0b1000:
+  case 0b0001:
+  case 0b0111:
+    --delta_;
+    break;
+  case 0b1101:
+  case 0b0100:
+  case 0b0010:
+  case 0b1011:
+    ++delta_;
+    break;
+  default:
+    break;
   }
 
   if (state == 0x03 && delta_ >= 4) {

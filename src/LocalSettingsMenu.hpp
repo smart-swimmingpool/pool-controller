@@ -9,7 +9,7 @@
 namespace PoolController {
 
 class LocalSettingsMenu {
- public:
+public:
   LocalSettingsMenu() = default;
 
   void handleEvent(LocalUiEvent event);
@@ -20,7 +20,7 @@ class LocalSettingsMenu {
   bool needsRedraw() const { return needsRedraw_; }
   void clearRedraw() { needsRedraw_ = false; }
 
- private:
+private:
   void nextPage();
   void previousPage();
   void nextMenuItem();

@@ -2,15 +2,16 @@
 
 #if defined(OLIMEX_ESP32_C6_EVB) && defined(HAS_LOCAL_TFT_UI)
 
-#include "Config.hpp"
-#include "ConfigManager.hpp"
-#include "Version.h"
+#include <qrcode.h>
 
 #include <Arduino.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_ILI9341.h>
 #include <Adafruit_ST7789.h>
-#include <qrcode.h>
+
+#include "Config.hpp"
+#include "ConfigManager.hpp"
+#include "Version.h"
 
 namespace PoolController {
 namespace {
@@ -61,21 +62,21 @@ void OlimexTftDisplay::drawPage(LocalUiPage page, LocalMenuItem menuItem) {
   forceRedraw_ = false;
   activeTft().fillScreen(rgb(0, 0, 0));
   switch (page) {
-    case LocalUiPage::OVERVIEW:
-      drawOverview();
-      break;
-    case LocalUiPage::NETWORK:
-      drawNetwork();
-      break;
-    case LocalUiPage::SYSTEM:
-      drawSystem();
-      break;
-    case LocalUiPage::QRCODE:
-      drawQrCode();
-      break;
-    case LocalUiPage::MENU:
-      drawMenu(menuItem);
-      break;
+  case LocalUiPage::OVERVIEW:
+    drawOverview();
+    break;
+  case LocalUiPage::NETWORK:
+    drawNetwork();
+    break;
+  case LocalUiPage::SYSTEM:
+    drawSystem();
+    break;
+  case LocalUiPage::QRCODE:
+    drawQrCode();
+    break;
+  case LocalUiPage::MENU:
+    drawMenu(menuItem);
+    break;
   }
 }
 
@@ -127,8 +128,10 @@ void OlimexTftDisplay::drawQrCode() {
   drawHeader("QR", "WEB UI");
   const char *url = "http://pool-controller.local";
   QRCode qrcode;
-  std::uint8_t qrcodeData[qrcode_getBufferSize(3)];
-  qrcode_initText(&qrcode, qrcodeData, 3, ECC_LOW, url);
+  constexpr std::uint8_t kQrVersion{3};
+  constexpr std::uint16_t kQrBufferSize{106};
+  std::uint8_t qrcodeData[kQrBufferSize];
+  qrcode_initText(&qrcode, qrcodeData, kQrVersion, ECC_LOW, url);
   const std::uint8_t scale = 6;
   const std::uint16_t offsetX = 70;
   const std::uint16_t offsetY = 35;

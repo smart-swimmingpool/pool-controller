@@ -1,20 +1,20 @@
 #pragma once
 
-#include "LocalUiTypes.hpp"
-
 #include <functional>
+
+#include "LocalUiTypes.hpp"
 
 namespace PoolController {
 
 class OlimexEncoderHandler {
- public:
+public:
   using EventCallback = std::function<void(LocalUiEvent)>;
 
   static void begin();
   static void loop();
   static void onEvent(EventCallback cb) { eventCallback_ = cb; }
 
- private:
+private:
   static EventCallback eventCallback_;
 };
 

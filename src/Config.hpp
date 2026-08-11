@@ -143,7 +143,7 @@ constexpr std::uint8_t PIN_TFT_SCLK{19};
 constexpr std::uint8_t PIN_TFT_MISO{20};
 constexpr std::uint8_t PIN_TFT_CS{21};
 constexpr std::uint8_t PIN_TFT_DC{7};
-constexpr std::int8_t PIN_TFT_RST{-1};  // -1 = display reset tied high
+constexpr std::int8_t PIN_TFT_RST{-1};        // -1 = display reset tied high
 constexpr std::int8_t PIN_TFT_BACKLIGHT{-1};  // -1 = fixed 3.3 V backlight
 
 constexpr std::uint8_t PIN_ENCODER_CLK{4};

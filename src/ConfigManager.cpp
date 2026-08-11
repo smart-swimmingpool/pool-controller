@@ -8,10 +8,12 @@
  */
 
 #include "ConfigManager.hpp"
-#include "Version.h"
-#include "LogCapture.hpp"
+
 #include <Preferences.h>
 #include <mbedtls/md.h>
+
+#include "LogCapture.hpp"
+#include "Version.h"
 
 namespace PoolController {
 

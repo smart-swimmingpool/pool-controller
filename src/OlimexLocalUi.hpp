@@ -3,7 +3,7 @@
 namespace PoolController {
 
 class OlimexLocalUi {
- public:
+public:
   static void begin();
   static void loop();
   static void requestRedraw();
