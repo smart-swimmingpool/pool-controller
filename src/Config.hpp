@@ -148,7 +148,7 @@ constexpr std::int8_t PIN_TFT_BACKLIGHT{-1};  // -1 = fixed 3.3 V backlight
 
 constexpr std::uint8_t PIN_ENCODER_CLK{4};
 constexpr std::uint8_t PIN_ENCODER_DT{5};
-constexpr std::uint8_t PIN_ENCODER_SW{12};
+constexpr std::uint8_t PIN_ENCODER_SW{16};
 
 constexpr std::uint16_t TFT_DISPLAY_WIDTH{320};
 constexpr std::uint16_t TFT_DISPLAY_HEIGHT{240};

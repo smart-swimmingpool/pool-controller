@@ -11,6 +11,11 @@ namespace PoolController {
 namespace {
 
 LocalSettingsMenu menu;
+std::uint32_t lastLiveRedrawMs{0};
+
+bool isLivePage(LocalUiPage page) {
+  return page == LocalUiPage::OVERVIEW || page == LocalUiPage::NETWORK || page == LocalUiPage::SYSTEM;
+}
 
 }  // namespace
 
@@ -49,6 +54,7 @@ void executePendingAction(LocalMenuAction action) {
 
 void OlimexLocalUi::begin() {
   OlimexTftDisplay::begin();
+  lastLiveRedrawMs = millis();
   OlimexEncoderHandler::onEvent([](LocalUiEvent event) {
     menu.handleEvent(event);
     OlimexTftDisplay::requestRedraw();
@@ -62,6 +68,11 @@ void OlimexLocalUi::loop() {
   const auto pendingAction = menu.consumePendingAction();
   if (pendingAction != LocalMenuAction::NONE) {
     executePendingAction(pendingAction);
+    OlimexTftDisplay::requestRedraw();
+  }
+  const auto now = millis();
+  if (isLivePage(menu.currentPage()) && (now - lastLiveRedrawMs >= 1000UL)) {
+    lastLiveRedrawMs = now;
     OlimexTftDisplay::requestRedraw();
   }
   if (menu.needsRedraw()) {
