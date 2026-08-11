@@ -7,16 +7,18 @@
 #include "Version.h"
 
 #include <Arduino.h>
-#include <QRCode.h>
-#include <TFT_eSPI.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_ILI9341.h>
+#include <Adafruit_ST7789.h>
+#include <qrcode.h>
 
 namespace PoolController {
 namespace {
 
-TFT_eSPI tft;
+Adafruit_ILI9341 tft(&SPI, PIN_TFT_DC, PIN_TFT_CS, PIN_TFT_RST);
 
 void drawHeader(const char *left, const char *right) {
-  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+  tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
   tft.setTextSize(TFT_DISPLAY_SIZE_CLASS_COMPACT ? 1 : 2);
   tft.setCursor(8, 6);
   tft.print(left);
@@ -29,9 +31,9 @@ void drawHeader(const char *left, const char *right) {
 bool OlimexTftDisplay::forceRedraw_{true};
 
 void OlimexTftDisplay::begin() {
-  tft.init();
+  tft.begin();
   tft.setRotation(1);
-  tft.fillScreen(TFT_BLACK);
+  tft.fillScreen(ILI9341_BLACK);
   drawHeader("POOL", "BOOT");
   tft.setCursor(8, 40);
   tft.print("Starting...");
@@ -43,7 +45,7 @@ void OlimexTftDisplay::drawPage(LocalUiPage page, LocalMenuItem menuItem) {
     return;
   }
   forceRedraw_ = false;
-  tft.fillScreen(TFT_BLACK);
+  tft.fillScreen(ILI9341_BLACK);
   switch (page) {
     case LocalUiPage::OVERVIEW:
       drawOverview();
@@ -71,7 +73,7 @@ void OlimexTftDisplay::drawOverview() {
   tft.setTextSize(2);
   tft.setCursor(8, 92);
   tft.print("Pumpe: --");
-  tft.drawFastHLine(0, 120, TFT_DISPLAY_WIDTH, TFT_DARKGREY);
+  tft.drawFastHLine(0, 120, TFT_DISPLAY_WIDTH, tft.color565(64, 64, 64));
   drawHeader("SOLAR", "OK");
   tft.setTextSize(TFT_DISPLAY_SIZE_CLASS_COMPACT ? 3 : 4);
   tft.setCursor(8, 148);
@@ -87,8 +89,8 @@ void OlimexTftDisplay::drawMenu(LocalMenuItem menuItem) {
   for (std::uint8_t i = 0; i < 5; ++i) {
     tft.setCursor(20, 42 + (i * 32));
     tft.setTextSize(2);
-    tft.setTextColor(i == static_cast<std::uint8_t>(menuItem) ? TFT_BLACK : TFT_WHITE,
-      i == static_cast<std::uint8_t>(menuItem) ? TFT_YELLOW : TFT_BLACK);
+    tft.setTextColor(i == static_cast<std::uint8_t>(menuItem) ? ILI9341_BLACK : ILI9341_WHITE,
+      i == static_cast<std::uint8_t>(menuItem) ? ILI9341_YELLOW : ILI9341_BLACK);
     tft.print(items[i]);
   }
 }
@@ -116,15 +118,37 @@ void OlimexTftDisplay::drawQrCode() {
   const std::uint8_t scale = 6;
   const std::uint16_t offsetX = 70;
   const std::uint16_t offsetY = 35;
-  tft.fillRect(offsetX - 8, offsetY - 8, (qrcode.size * scale) + 16, (qrcode.size * scale) + 16, TFT_WHITE);
+  tft.fillRect(offsetX - 8, offsetY - 8, (qrcode.size * scale) + 16, (qrcode.size * scale) + 16, ILI9341_WHITE);
   for (std::uint8_t y = 0; y < qrcode.size; ++y) {
     for (std::uint8_t x = 0; x < qrcode.size; ++x) {
       if (qrcode_getModule(&qrcode, x, y)) {
-        tft.fillRect(offsetX + (x * scale), offsetY + (y * scale), scale, scale, TFT_BLACK);
+        tft.fillRect(offsetX + (x * scale), offsetY + (y * scale), scale, scale, ILI9341_BLACK);
       }
     }
   }
 }
+
+}  // namespace PoolController
+
+#else
+
+namespace PoolController {
+
+bool OlimexTftDisplay::forceRedraw_{true};
+
+void OlimexTftDisplay::begin() {}
+
+void OlimexTftDisplay::drawPage(LocalUiPage, LocalMenuItem) {}
+
+void OlimexTftDisplay::drawOverview() {}
+
+void OlimexTftDisplay::drawMenu(LocalMenuItem) {}
+
+void OlimexTftDisplay::drawNetwork() {}
+
+void OlimexTftDisplay::drawSystem() {}
+
+void OlimexTftDisplay::drawQrCode() {}
 
 }  // namespace PoolController
 
