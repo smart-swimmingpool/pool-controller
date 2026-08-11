@@ -36,6 +36,7 @@ operational commands.
 - ESP32-C6 Arduino builds require the pinned pioarduino platform; keep a separate `PLATFORMIO_CORE_DIR` for C6/pioarduino builds versus upstream ESP32/NORVI builds.
 - Native USB CDC is the serial console path; keep `ARDUINO_USB_CDC_ON_BOOT=1` enabled.
 - Local UI wiring lives in `src/Config.hpp`; treat it as the source of truth for TFT, encoder, relay, and sensor pins.
+- Current Olimex local UI pin highlights: TFT MOSI/SCLK/CS/DC = GPIO18/19/21/7, TFT MISO = -1 (write-only), KY-040 CLK/DT/SW = GPIO4/5/12, DS18B20 pool = GPIO20, relays = GPIO10/11, status LED = GPIO8.
 
 ## Architecture Overview
 

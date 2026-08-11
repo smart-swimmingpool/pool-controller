@@ -2,6 +2,8 @@
 
 #include "Ky040Decoder.hpp"
 
+extern void test_suite_end(const char *name, int passed, int failed);
+
 #define ASSERT_EQ(a, b)                                              \
   do {                                                               \
     auto _a = (a);                                                   \
@@ -40,6 +42,8 @@ static int test_short_press_on_release() {
   ASSERT_EQ(decoder.update(true, true, true, 100), LocalUiEvent::NONE);
   ASSERT_EQ(decoder.update(true, true, true, 300), LocalUiEvent::NONE);
   ASSERT_EQ(decoder.update(true, true, false, 350), LocalUiEvent::SHORT_PRESS);
+  ASSERT_EQ(decoder.update(true, true, true, 360), LocalUiEvent::NONE);
+  ASSERT_EQ(decoder.update(true, true, false, 370), LocalUiEvent::NONE);
   return 0;
 }
 
@@ -57,6 +61,7 @@ int run_ky040_decoder_tests() {
   failures += test_counter_clockwise_rotation();
   failures += test_short_press_on_release();
   failures += test_long_press_on_release();
+  test_suite_end("KY-040 Decoder", 4 - failures, failures);
   if (failures == 0) {
     printf("  KY-040 Decoder Tests: 4 passed, 0 failed\n");
   }

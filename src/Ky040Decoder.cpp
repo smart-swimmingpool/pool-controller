@@ -34,13 +34,21 @@ LocalUiEvent Ky040Decoder::update(bool clkHigh, bool dtHigh, bool swPressed, std
   }
 
   if (swPressed && !buttonWasPressed_) {
+    if (nowMs - buttonLastChangeMs_ < DEBOUNCE_MS) {
+      return LocalUiEvent::NONE;
+    }
     buttonWasPressed_ = true;
     buttonPressStartMs_ = nowMs;
+    buttonLastChangeMs_ = nowMs;
     return LocalUiEvent::NONE;
   }
 
   if (!swPressed && buttonWasPressed_) {
+    if (nowMs - buttonLastChangeMs_ < DEBOUNCE_MS) {
+      return LocalUiEvent::NONE;
+    }
     buttonWasPressed_ = false;
+    buttonLastChangeMs_ = nowMs;
     const std::uint32_t heldMs = nowMs - buttonPressStartMs_;
     return heldMs >= LONG_PRESS_MS ? LocalUiEvent::LONG_PRESS : LocalUiEvent::SHORT_PRESS;
   }

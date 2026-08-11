@@ -11,6 +11,9 @@
 
 #include "Config.hpp"
 #include "ConfigManager.hpp"
+#include "NetworkManager.hpp"
+#include "Nodes.hpp"
+#include "Utils.hpp"
 #include "Version.h"
 
 namespace PoolController {
@@ -27,13 +30,20 @@ std::uint16_t rgb(std::uint8_t r, std::uint8_t g, std::uint8_t b) {
   return TFT_DRIVER_ST7789 ? tftSt7789.color565(r, g, b) : tftIli9341.color565(r, g, b);
 }
 
-void drawHeader(const char *left, const char *right) {
+void drawHeader(const char *left, const char *right, std::uint16_t y) {
   activeTft().setTextColor(rgb(255, 255, 255), rgb(0, 0, 0));
   activeTft().setTextSize(TFT_DISPLAY_SIZE_CLASS_COMPACT ? 1 : 2);
-  activeTft().setCursor(8, 6);
+  activeTft().setCursor(8, y);
   activeTft().print(left);
-  activeTft().setCursor(240, 6);
+  activeTft().setCursor(240, y);
   activeTft().print(right);
+}
+
+void drawStatusLine(std::uint16_t x, std::uint16_t y, const char *label, const char *value) {
+  activeTft().setTextSize(2);
+  activeTft().setCursor(x, y);
+  activeTft().print(label);
+  activeTft().print(value);
 }
 
 }  // namespace
@@ -43,13 +53,13 @@ bool OlimexTftDisplay::forceRedraw_{true};
 void OlimexTftDisplay::begin() {
   SPI.begin(PIN_TFT_SCLK, PIN_TFT_MISO, PIN_TFT_MOSI, PIN_TFT_CS);
   if constexpr (TFT_DRIVER_ST7789) {
-    tftSt7789.init(TFT_DISPLAY_WIDTH, TFT_DISPLAY_HEIGHT);
+    tftSt7789.init(TFT_DISPLAY_HEIGHT, TFT_DISPLAY_WIDTH);
   } else {
     tftIli9341.begin(27000000);
   }
   activeTft().setRotation(1);
   activeTft().fillScreen(rgb(0, 0, 0));
-  drawHeader("POOL", "BOOT");
+  drawHeader("POOL", "BOOT", 6);
   activeTft().setCursor(8, 40);
   activeTft().print("Starting...");
   forceRedraw_ = true;
@@ -81,25 +91,26 @@ void OlimexTftDisplay::drawPage(LocalUiPage page, LocalMenuItem menuItem) {
 }
 
 void OlimexTftDisplay::drawOverview() {
-  drawHeader("POOL", ConfigManager::getSettings().opMode.c_str());
+  drawHeader("POOL", ConfigManager::getSettings().opMode.c_str(), 6);
+  char buf[16];
+  Utils::floatToString(poolTemperatureNode.getTemperature(), buf, sizeof(buf), 1);
   activeTft().setTextSize(TFT_DISPLAY_SIZE_CLASS_COMPACT ? 3 : 4);
   activeTft().setCursor(8, 38);
-  activeTft().print("--.- C");
-  activeTft().setTextSize(2);
-  activeTft().setCursor(8, 92);
-  activeTft().print("Pumpe: --");
+  activeTft().print(buf);
+  activeTft().print(" C");
+  drawStatusLine(8, 92, "Pump: ", poolPumpNode.getSwitch() ? "ON" : "OFF");
   activeTft().drawFastHLine(0, 120, TFT_DISPLAY_WIDTH, rgb(64, 64, 64));
-  drawHeader("SOLAR", "OK");
+  drawHeader("SOLAR", solarPumpNode.getSwitch() ? "ON" : "OFF", 126);
+  Utils::floatToString(solarTemperatureNode.getTemperature(), buf, sizeof(buf), 1);
   activeTft().setTextSize(TFT_DISPLAY_SIZE_CLASS_COMPACT ? 3 : 4);
   activeTft().setCursor(8, 148);
-  activeTft().print("--.- C");
-  activeTft().setTextSize(2);
-  activeTft().setCursor(8, 204);
-  activeTft().print("Ventil: --");
+  activeTft().print(buf);
+  activeTft().print(" C");
+  drawStatusLine(8, 204, "Valve: ", solarPumpNode.getSwitch() ? "OPEN" : "CLOSED");
 }
 
 void OlimexTftDisplay::drawMenu(LocalMenuItem menuItem) {
-  drawHeader("MENU", "OK=Select");
+  drawHeader("MENU", "OK=Select", 6);
   const char *items[] = {"Mode", "Pump", "Network", "QR Code", "Exit"};
   for (std::uint8_t i = 0; i < 5; ++i) {
     activeTft().setCursor(20, 42 + (i * 32));
@@ -111,21 +122,35 @@ void OlimexTftDisplay::drawMenu(LocalMenuItem menuItem) {
 }
 
 void OlimexTftDisplay::drawNetwork() {
-  drawHeader("NETWORK", "STATUS");
+  drawHeader("NETWORK", NetworkManager::isApMode() ? "AP" : "STA", 6);
+  char buf[32];
   activeTft().setTextSize(2);
   activeTft().setCursor(8, 48);
-  activeTft().print("WiFi/MQTT status");
+  activeTft().print(NetworkManager::isWiFiConnected() ? "WiFi: ON " : "WiFi: OFF");
+  activeTft().print("MQTT: ");
+  activeTft().print(NetworkManager::isMqttConnected() ? "ON" : "OFF");
+  activeTft().setCursor(8, 80);
+  snprintf(buf, sizeof(buf), "RSSI: %d dBm", NetworkManager::getWiFiRSSI());
+  activeTft().print(buf);
+  activeTft().setCursor(8, 112);
+  activeTft().print("IP: ");
+  activeTft().print(NetworkManager::getLocalIP());
 }
 
 void OlimexTftDisplay::drawSystem() {
-  drawHeader("SYSTEM", FW_VERSION);
+  drawHeader("SYSTEM", FW_VERSION, 6);
+  char buf[32];
   activeTft().setTextSize(2);
   activeTft().setCursor(8, 48);
-  activeTft().print("Heap / uptime");
+  snprintf(buf, sizeof(buf), "Heap: %u B", ESP.getFreeHeap());
+  activeTft().print(buf);
+  activeTft().setCursor(8, 80);
+  snprintf(buf, sizeof(buf), "Uptime: %lus", millis() / 1000UL);
+  activeTft().print(buf);
 }
 
 void OlimexTftDisplay::drawQrCode() {
-  drawHeader("QR", "WEB UI");
+  drawHeader("QR", "WEB UI", 6);
   const char *url = "http://pool-controller.local";
   QRCode qrcode;
   constexpr std::uint8_t kQrVersion{3};
@@ -135,7 +160,9 @@ void OlimexTftDisplay::drawQrCode() {
   const std::uint8_t scale = 6;
   const std::uint16_t offsetX = 70;
   const std::uint16_t offsetY = 35;
-  activeTft().fillRect(offsetX - 8, offsetY - 8, (qrcode.size * scale) + 16, (qrcode.size * scale) + 16, rgb(255, 255, 255));
+  const std::uint16_t quiet = static_cast<std::uint16_t>(4U * scale);
+  activeTft().fillRect(offsetX - quiet, offsetY - quiet, (qrcode.size * scale) + (2U * quiet),
+    (qrcode.size * scale) + (2U * quiet), rgb(255, 255, 255));
   for (std::uint8_t y = 0; y < qrcode.size; ++y) {
     for (std::uint8_t x = 0; x < qrcode.size; ++x) {
       if (qrcode_getModule(&qrcode, x, y)) {

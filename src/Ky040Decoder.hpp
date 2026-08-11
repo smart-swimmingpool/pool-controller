@@ -12,10 +12,12 @@ public:
 
 private:
   static constexpr std::uint32_t LONG_PRESS_MS{2000};
+  static constexpr std::uint32_t DEBOUNCE_MS{50};
   std::uint8_t lastState_{0x03};
   std::int8_t delta_{0};
   bool buttonWasPressed_{false};
   std::uint32_t buttonPressStartMs_{0};
+  std::uint32_t buttonLastChangeMs_{0};
 };
 
 }  // namespace PoolController

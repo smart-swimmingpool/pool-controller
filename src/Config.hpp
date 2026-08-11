@@ -140,7 +140,7 @@ constexpr std::int8_t PIN_LED_WARN{-1};
 // ── Olimex local UI pins ────────────────────────────────────────────────────
 constexpr std::uint8_t PIN_TFT_MOSI{18};
 constexpr std::uint8_t PIN_TFT_SCLK{19};
-constexpr std::uint8_t PIN_TFT_MISO{20};
+constexpr std::int8_t PIN_TFT_MISO{-1};  // write-only TFT; leave SDO/MISO unconnected
 constexpr std::uint8_t PIN_TFT_CS{21};
 constexpr std::uint8_t PIN_TFT_DC{7};
 constexpr std::int8_t PIN_TFT_RST{-1};        // -1 = display reset tied high
@@ -148,7 +148,7 @@ constexpr std::int8_t PIN_TFT_BACKLIGHT{-1};  // -1 = fixed 3.3 V backlight
 
 constexpr std::uint8_t PIN_ENCODER_CLK{4};
 constexpr std::uint8_t PIN_ENCODER_DT{5};
-constexpr std::uint8_t PIN_ENCODER_SW{0};
+constexpr std::uint8_t PIN_ENCODER_SW{12};
 
 constexpr std::uint16_t TFT_DISPLAY_WIDTH{320};
 constexpr std::uint16_t TFT_DISPLAY_HEIGHT{240};

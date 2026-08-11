@@ -66,6 +66,10 @@ ESP32TemperatureNode ctrlTemperatureNode("controller-temp", "Controller Temperat
 // NORVI AE01-R uses active-HIGH relays (HIGH = relay ON, LOW = relay OFF)
 RelayModuleNode poolPumpNode("pool-pump", "Pool Pump", PIN_RELAY_POOL, false);
 RelayModuleNode solarPumpNode("solar-pump", "Solar Pump", PIN_RELAY_SOLAR, false);
+#elif defined(OLIMEX_ESP32_C6_EVB)
+// Olimex relay outputs are active-HIGH
+RelayModuleNode poolPumpNode("pool-pump", "Pool Pump", PIN_RELAY_POOL, false);
+RelayModuleNode solarPumpNode("solar-pump", "Solar Pump", PIN_RELAY_SOLAR, false);
 #else
 // Standard external relay modules use active-LOW (LOW = relay ON, HIGH = relay OFF)
 RelayModuleNode poolPumpNode("pool-pump", "Pool Pump", PIN_RELAY_POOL);
@@ -277,10 +281,6 @@ auto PoolControllerContext::setup() -> void {
   // Initialize Status-LED with Homie-compatible blink codes
   StatusLed::begin();
 
-#if defined(OLIMEX_ESP32_C6_EVB) && defined(HAS_LOCAL_TFT_UI)
-  OlimexLocalUi::begin();
-#endif
-
   // Load persistent sensor address mapping from NVS early.
   // Must run before NorviOledDisplay::begin() so that first-boot detection
   // (needsSensorMapping) correctly checks whether sensors are assigned.
@@ -425,6 +425,10 @@ auto PoolControllerContext::setup() -> void {
 
   // Load operational settings from NVS Preferences
   operationModeNode.loadState();
+
+#if defined(OLIMEX_ESP32_C6_EVB) && defined(HAS_LOCAL_TFT_UI)
+  OlimexLocalUi::begin();
+#endif
 
   // OTA safety: detect version transition and verify config integrity
   ConfigManager::logOtaTransition();

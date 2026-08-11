@@ -2,6 +2,8 @@
 
 #include "LocalSettingsMenu.hpp"
 
+extern void test_suite_end(const char *name, int passed, int failed);
+
 #define ASSERT_TRUE(expr)                                                   \
   do {                                                                      \
     if (!(expr)) {                                                          \
@@ -74,6 +76,7 @@ int run_local_settings_menu_tests() {
   failures += test_rotate_pages_on_overview();
   failures += test_menu_navigation_and_qr_selection();
   failures += test_long_press_returns_to_overview();
+  test_suite_end("LocalSettingsMenu", 4 - failures, failures);
   if (failures == 0) {
     printf("  LocalSettingsMenu Tests: 4 passed, 0 failed\n");
   }
