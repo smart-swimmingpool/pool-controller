@@ -45,7 +45,13 @@ jobs:
 
     strategy:
       matrix:
-        environment: [esp32dev, norvi_ae01_r]
+        include:
+          - environment: esp32dev
+            pio-core-dir: ~/.platformio
+          - environment: norvi_ae01_r
+            pio-core-dir: ~/.platformio
+          - environment: olimex_esp32_c6_evb
+            pio-core-dir: ~/.platformio-olimex-c6
 
     steps:
       - name: Checkout
@@ -55,11 +61,11 @@ jobs:
         uses: actions/cache@v6
         with:
           path: |
-            ~/.platformio
+            ${{ matrix.pio-core-dir }}
             .pio
-          key: ${{ runner.os }}-pio-${{ hashFiles('**/platformio.ini') }}
+          key: ${{ runner.os }}-pio-${{ matrix.environment }}-${{ hashFiles('**/platformio.ini') }}
           restore-keys: |
-            ${{ runner.os }}-pio-
+            ${{ runner.os }}-pio-${{ matrix.environment }}-
 
       - name: Set up Python
         uses: actions/setup-python@v7
@@ -72,6 +78,8 @@ jobs:
           pip install platformio intelhex
 
       - name: Build firmware
+        env:
+          PLATFORMIO_CORE_DIR: ${{ matrix.pio-core-dir }}
         run: platformio run --environment ${{ matrix.environment }}
 
       - name: Upload firmware to release
