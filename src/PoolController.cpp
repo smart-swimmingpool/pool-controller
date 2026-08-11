@@ -41,9 +41,10 @@
 #ifdef NORVI_AE01_R
 #include "NorviOledDisplay.hpp"
 #include "NorviButtonHandler.hpp"
+#endif
+
 #if defined(OLIMEX_ESP32_C6_EVB) && defined(HAS_LOCAL_TFT_UI)
 #include "OlimexLocalUi.hpp"
-#endif
 #endif
 
 #include "Config.hpp"
