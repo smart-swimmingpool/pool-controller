@@ -49,6 +49,7 @@ NorviButtonHandler::ButtonLongPressCallback NorviButtonHandler::cbButton2Long_ =
 NorviButtonHandler::ButtonLongPressCallback NorviButtonHandler::cbButton3Long_ = nullptr;
 
 uint32_t NorviButtonHandler::pressStartMs_ = 0;
+uint32_t NorviButtonHandler::releasePendingMs_ = 0;
 
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -94,12 +95,35 @@ void NorviButtonHandler::loop() {
   // transition also restarts the stability window, so a single-sample glitch
   // crossing an adjacent range boundary (e.g. 3800 → 3700, delta 100) cannot
   // be accepted immediately — it must hold for the full stability period.
-  if (detectButton(rawAdc) != detectButton(lastFilteredAdc_)) {
+  Button rawButton = detectButton(rawAdc);
+  if (rawButton != detectButton(lastFilteredAdc_)) {
     for (uint8_t i = 0; i < ADC_FILTER_SIZE; i++) {
       adcSamples_[i] = rawAdc;
     }
     adcSampleIndex_ = 0;
     lastStableTime_ = now;
+
+    // Release observation: a confirmed press released into the no-press
+    // range is committed after DEBOUNCE_MS instead of the full stability
+    // window, so rapid consecutive taps are not merged into one press.
+    if (currentButton_ != Button::NONE && rawButton == Button::NONE) {
+      if (releasePendingMs_ == 0) {
+        releasePendingMs_ = now;
+      }
+    } else {
+      releasePendingMs_ = 0;  // back in a button range — not a release
+    }
+  }
+
+  // Commit a confirmed release once it has persisted for the debounce
+  // interval. Runs before the stability gates so it is not delayed by the
+  // press-stability window.
+  if (releasePendingMs_ != 0 && (now - releasePendingMs_ >= DEBOUNCE_MS)) {
+    currentButton_ = Button::NONE;
+    lastChangeMs_ = now;
+    pressStartMs_ = 0;
+    releasePendingMs_ = 0;
+    LOG_DEBUG("Button released: %d\n", static_cast<int>(currentButton_));
   }
 
   // Store sample for filtering

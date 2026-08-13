@@ -162,6 +162,11 @@ private:
   /// Timestamp when the current button was first pressed.
   static uint32_t pressStartMs_;
 
+  /// Timestamp when a confirmed press was first observed released (ms).
+  /// Non-zero while the release is being debounced; the release is
+  /// committed to `currentButton_` after DEBOUNCE_MS.
+  static uint32_t releasePendingMs_;
+
   // ── ADC thresholds (12-bit, 0–4095) ──────────────────────────────────
   // These are typical ranges for the NORVI AE01-R resistor ladder.
   // Adjust if needed based on serial debug output.
