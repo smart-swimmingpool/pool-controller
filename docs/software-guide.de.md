@@ -2,7 +2,7 @@
 title: Software-Entwicklung
 summary: Software-Entwicklungsleitfaden für den Pool Controller — PlatformIO Build-Umgebung, Library-Abhängigkeiten, REST-API-Referenz, Weboberfläche und Code-Architektur
 date: "2020-05-28"
-lastmod: "2026-06-11"
+lastmod: "2026-07-31"
 draft: false
 toc: true
 type: docs
@@ -71,6 +71,8 @@ vollständiges Verwaltungs-Dashboard bereitstellt. Er läuft in zwei Modi:
 | `GET /api/restart`       | Ja      | ESP32 neu starten                                                             |
 | `GET /api/factory_reset` | Ja      | Konfigurationsdatei löschen, Neustart im AP-Modus                             |
 | `POST /api/update`       | Ja      | OTA-Firmware-Update (signiertes .bin hochladen)                               |
+| `GET /api/logs`          | ❌ Nein | Log-Einträge aus dem Ringpuffer (`since`/`count`/`level`-Filter)              |
+| `POST /api/logs/clear`   | Ja      | Log-Ringpuffer leeren                                                          |
 
 ### REST-API direkt nutzen
 
@@ -92,6 +94,36 @@ curl -b "session=$SESSION" -X POST \
   -d "type=settings&mode=auto&max_pool=30.0&min_solar=55.0&hysteresis=1.0" \
   http://<controller-ip>/api/config
 ```
+
+#### Log-Ansicht-API
+
+Der Controller hält einen Ringpuffer der letzten Log-Einträge und stellt sie über REST bereit:
+
+```bash
+# Log-Einträge abrufen (keine Authentifizierung nötig)
+curl "http://<controller-ip>/api/logs?since=0&count=200&level=info"
+```
+
+| Parameter | Standard | Beschreibung                                          |
+| --------- | -------- | ----------------------------------------------------- |
+| `since`   | `0`      | Nur Einträge mit `seq` größer als dieser Wert         |
+| `count`   | `200`    | Maximale Anzahl Einträge (1–500)                      |
+| `level`   | `info`   | Mindest-Loglevel: `debug`, `info`, `warning`, `error`, `critical` |
+
+Antwort:
+
+```json
+{
+  "next": 43,
+  "entries": [
+    {"seq": 42, "t": 123456, "level": "warning", "msg": "SAFE MODE — ignoring relay ON request"}
+  ]
+}
+```
+
+- `next` ist die nächste Sequenznummer, die als `since` für inkrementelles Polling übergeben wird
+- `t` ist die Betriebszeit des Eintrags in Millisekunden
+- `POST /api/logs/clear` (authentifiziert) leert den Puffer und liefert `{"ok": true}`
 
 ### Authentifizierung
 

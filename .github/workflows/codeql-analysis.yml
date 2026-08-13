@@ -37,28 +37,15 @@ jobs:
 
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
+        uses: github/codeql-action/init@v4.37.6
         with:
           languages: ${{ matrix.language }}
 
       # Build the project using PlatformIO
-      - name: Set up Python
-        uses: actions/setup-python@v6
+      - name: Set up PlatformIO
+        uses: ./.github/actions/setup-platformio
         with:
           python-version: "3.11"
-      - name: Cache PlatformIO
-        uses: actions/cache@v6
-        with:
-          path: |
-            ~/.platformio
-            .pio
-          key: ${{ runner.os }}-pio-${{ hashFiles('**/platformio.ini') }}
-          restore-keys: |
-            ${{ runner.os }}-pio-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install platformio intelhex
       - name: Run PlatformIO
         run: platformio run
 
@@ -70,7 +57,7 @@ jobs:
       # The reliable fix is to post-process the SARIF and strip results
       # under .pio/libdeps/ before uploading.
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v4
+        uses: github/codeql-action/analyze@v4.37.6
         with:
           output: sarif-results
           upload: never
@@ -87,6 +74,6 @@ jobs:
           done
 
       - name: Upload CodeQL results
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@v4.37.6
         with:
           sarif_file: sarif-results

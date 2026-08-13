@@ -34,6 +34,7 @@ public:
   uint32_t getMeasurementInterval() const { return _measurementInterval; }
 
   bool setMode(String mode);
+  bool setMode(String mode, const char *source);
   String getMode() const { return _mode; }
 
   void addRule(Rule *rule);

@@ -54,6 +54,10 @@ set(SERVICE_SOURCES
   ${PROJ_ROOT}/src/DegradationManager.cpp
   ${PROJ_ROOT}/src/SystemMonitor.cpp
   ${PROJ_ROOT}/src/OtaUpdater.cpp
+  ${PROJ_ROOT}/src/LogCapture.cpp
+  ${PROJ_ROOT}/src/LocalSettingsMenu.cpp
+  ${PROJ_ROOT}/src/Ky040Decoder.cpp
+  ${PROJ_ROOT}/src/OlimexEncoderHandler.cpp
 )
 
 # Mock sources (compiled once)
@@ -75,6 +79,10 @@ set(TEST_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_security.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_state_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_timer.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_logcapture.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_webportal_logs.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_local_settings_menu.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_ky040_decoder.cpp
 )
 
 add_executable(test_runner

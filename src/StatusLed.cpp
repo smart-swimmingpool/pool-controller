@@ -16,6 +16,7 @@
 
 #include <Arduino.h>
 #include "Config.hpp"
+#include "LogCapture.hpp"
 
 namespace PoolController {
 
@@ -39,13 +40,12 @@ void StatusLed::begin() {
   // ESP32 dev boards still get LED_BUILTIN (typically also GPIO2).
   if (PIN_LED_STATUS == 2) {
     ledPin_ = static_cast<uint8_t>(LED_BUILTIN);
-    Serial.printf("• StatusLed using LED_BUILTIN (GPIO %d)\n", ledPin_);
+    LOG_INFO("• StatusLed using LED_BUILTIN (GPIO %d)\n", ledPin_);
   } else {
-    Serial.printf("• StatusLed using config pin GPIO %d (board-specific, LED_BUILTIN overridden)\n",
-                  ledPin_);
+    LOG_INFO("• StatusLed using config pin GPIO %d (board-specific, LED_BUILTIN overridden)\n", ledPin_);
   }
 #else
-  Serial.printf("• StatusLed using config default GPIO %d (no LED_BUILTIN)\n", ledPin_);
+  LOG_INFO("• StatusLed using config default GPIO %d (no LED_BUILTIN)\n", ledPin_);
 #endif
 
   pinMode(ledPin_, OUTPUT);
@@ -56,10 +56,10 @@ void StatusLed::begin() {
   if (warnPin_ >= 0) {
     pinMode(static_cast<uint8_t>(warnPin_), OUTPUT);
     digitalWrite(static_cast<uint8_t>(warnPin_), LOW);
-    Serial.printf("• StatusLed WARN pin enabled on GPIO %d\n", warnPin_);
+    LOG_INFO("• StatusLed WARN pin enabled on GPIO %d\n", warnPin_);
   }
 
-  Serial.println("✓ StatusLed initialized");
+  LOG_INFO("✓ StatusLed initialized\n");
 }
 
 // ── Pattern setzen ─────────────────────────────────────────────────────────

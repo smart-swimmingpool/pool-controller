@@ -105,6 +105,40 @@ constexpr std::uint8_t PIN_OLED_SCL{17};
 /** @brief Analog input pin for the three front-panel buttons. */
 constexpr std::uint8_t PIN_BUTTON_ADC{32};
 
+#elif defined(OLIMEX_ESP32_C6_EVB)
+
+/** @brief DS18B20 data pin — solar collector temperature sensor. */
+constexpr std::uint8_t PIN_DS_SOLAR{6};
+/** @brief DS18B20 data pin — pool water temperature sensor. */
+constexpr std::uint8_t PIN_DS_POOL{20};
+/** @brief Relay control pin — pool circulation pump (Olimex relay). */
+constexpr std::uint8_t PIN_RELAY_POOL{10};
+/** @brief Relay control pin — solar heating pump (Olimex relay). */
+constexpr std::uint8_t PIN_RELAY_SOLAR{11};
+/** @brief Status LED — Olimex user LED. */
+constexpr std::uint8_t PIN_LED_STATUS{8};
+/** @brief Optional warning LED — not used on Olimex. */
+constexpr std::int8_t PIN_LED_WARN{-1};
+
+// ── Olimex local UI pins ────────────────────────────────────────────────────
+constexpr std::uint8_t PIN_TFT_MOSI{18};
+constexpr std::uint8_t PIN_TFT_SCLK{19};
+constexpr std::int8_t PIN_TFT_MISO{-1};  // write-only TFT; leave SDO/MISO unconnected
+constexpr std::uint8_t PIN_TFT_CS{21};
+constexpr std::uint8_t PIN_TFT_DC{7};
+constexpr std::int8_t PIN_TFT_RST{-1};        // -1 = display reset tied high
+constexpr std::int8_t PIN_TFT_BACKLIGHT{-1};  // -1 = fixed 3.3 V backlight
+
+constexpr std::uint8_t PIN_ENCODER_CLK{4};
+constexpr std::uint8_t PIN_ENCODER_DT{5};
+constexpr std::uint8_t PIN_ENCODER_SW{16};
+
+constexpr std::uint16_t TFT_DISPLAY_WIDTH{320};
+constexpr std::uint16_t TFT_DISPLAY_HEIGHT{240};
+constexpr bool TFT_DISPLAY_SIZE_CLASS_COMPACT{false};
+constexpr bool TFT_DRIVER_ILI9341{true};
+constexpr bool TFT_DRIVER_ST7789{false};
+
 // ═══════════════════════════════════════════════════════════════════════════
 // Standard ESP32 Dev Board (default)
 // ═══════════════════════════════════════════════════════════════════════════
@@ -131,6 +165,14 @@ constexpr std::uint8_t PIN_LED_STATUS{2};
 /** @brief Optionale zweite Warn-LED (z. B. für Safe-Mode). -1 = deaktiviert. */
 constexpr std::int8_t PIN_LED_WARN{-1};
 
+#endif
+
+#if defined(OLIMEX_ESP32_C6_EVB)
+static_assert(TFT_DISPLAY_WIDTH == 320, "Olimex local UI expects a 320 px wide display");
+static_assert(TFT_DISPLAY_HEIGHT == 240, "Olimex local UI expects a 240 px high display");
+static_assert(TFT_DRIVER_ILI9341 != TFT_DRIVER_ST7789, "Select exactly one TFT driver");
+static_assert(PIN_TFT_RST < 0 || PIN_TFT_RST != PIN_TFT_CS, "TFT reset pin must not conflict with TFT CS");
+static_assert(PIN_TFT_BACKLIGHT < 0 || PIN_TFT_BACKLIGHT != PIN_TFT_CS, "Backlight control pin must not conflict with TFT CS");
 #endif
 
 }  // namespace PoolController

@@ -157,7 +157,7 @@ GND ─────────────────────────�
 ```
 
 **Freilaufdioden 1N4007** parallel zu jeder Schützspule:
-- Kathode (Strichseite) an **A1 (+)** 
+- Kathode (Strichseite) an **A1 (+)**
 - Anode an **A2 (GND)**
 
 Die Dioden löschen den Spannungsrückschlag (Back-EMF) der Schützspule beim

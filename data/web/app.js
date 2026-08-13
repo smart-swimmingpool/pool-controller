@@ -12,7 +12,7 @@ function switchTab(tabName) {
 
   // Update bottom tab bar active state.
   // Tabs under "More" (wifi, mqtt, system, about) keep "more" highlighted.
-  const moreTabs = ['wifi', 'mqtt', 'system', 'about'];
+  const moreTabs = ['logs', 'wifi', 'mqtt', 'system', 'about'];
   const barTab = moreTabs.includes(tabName) ? 'more' : tabName;
   document.querySelectorAll('.tab-bar-item').forEach(item => {
     item.classList.toggle('active', item.dataset.tab === barTab);
@@ -61,22 +61,12 @@ async function loadTelemetry() {
       document.getElementById('solarThreshold').textContent = 'min ' + data.temp_min_solar.toFixed(1) + '°C';
     }
 
-    // Pumpen
+    // Pumpen — Toggle-Switches aktualisieren
     if (data.pool_pump != null) {
-      const el = document.getElementById('poolPump');
-      const isOn = data.pool_pump;
-      el.innerHTML = isOn
-        ? '<span style="color: #22c55e;">●</span> ON'
-        : '<span style="color: var(--text-muted);">○</span> OFF';
-      el.style.color = isOn ? '#22c55e' : 'var(--text-muted)';
+      setPumpSwitch('pool', data.pool_pump);
     }
     if (data.solar_pump != null) {
-      const el = document.getElementById('solarPump');
-      const isOn = data.solar_pump;
-      el.innerHTML = isOn
-        ? '<span style="color: #22c55e;">●</span> ON'
-        : '<span style="color: var(--text-muted);">○</span> OFF';
-      el.style.color = isOn ? '#22c55e' : 'var(--text-muted)';
+      setPumpSwitch('solar', data.solar_pump);
     }
 
     // Modus hervorheben
@@ -230,7 +220,7 @@ function updateAuthUI() {
 
   // Dashboard: disable interactive controls
   const interactiveSelectors = [
-    '.pump-card',                       // pump toggle
+    '.pump-switch-card',                // pump toggle switches
     '.mode-card',                       // mode buttons
     '#poolTemp',                        // max pool temp click
     '#solarTemp',                       // min solar temp click
@@ -242,6 +232,7 @@ function updateAuthUI() {
         if (el.dataset.origOnclick) {
           el.setAttribute('onclick', el.dataset.origOnclick);
         }
+        el.classList.remove('disabled');
       } else {
         if (!el.dataset.origCursor) el.dataset.origCursor = el.style.cursor;
         if (el.getAttribute('onclick')) {
@@ -249,13 +240,9 @@ function updateAuthUI() {
           el.removeAttribute('onclick');
         }
         el.style.cursor = 'default';
+        el.classList.add('disabled');
       }
     }
-  }
-
-  // Hide pump toggle hints
-  for (const el of document.querySelectorAll('.pump-toggle-hint')) {
-    el.style.display = isAuthenticated ? '' : 'none';
   }
 
   // Hide bottom tab bar when not authenticated — read-only dashboard only
@@ -275,10 +262,10 @@ function updateAuthUI() {
   const sensorsTabBtn = document.querySelector('.tab-bar-item[data-tab="sensors"]');
   if (sensorsTabBtn) sensorsTabBtn.style.display = isAuthenticated ? '' : 'none';
 
-  // More menu: hide admin items (wifi, mqtt, system)
+  // More menu: hide admin items (wifi, mqtt, system, logs)
   for (const item of document.querySelectorAll('.more-sheet-item')) {
     const text = item.textContent.trim().toLowerCase();
-    if (text === 'wifi' || text === 'mqtt' || text.startsWith('system') || text.startsWith('🔒')) {
+    if (text === 'wifi' || text === 'mqtt' || text.startsWith('system') || text.startsWith('🔒') || text.includes('logs')) {
       item.style.display = isAuthenticated ? '' : 'none';
     }
   }
@@ -307,12 +294,12 @@ function updateAuthUI() {
     }
   }
 
-  // System / WiFi / MQTT / Sensors tabs: fully hide when not authenticated. Never
+  // System / WiFi / MQTT / Logs / Sensors tabs: fully hide when not authenticated. Never
   // force-show here — that previously used `''` (empty string), which falls back
   // to the CSS default `display:block`, making the tab visible again on every 2s
   // poll regardless of which tab switchTab() had actually activated (the reported
   // "always jumps back to WiFi Settings" bug).
-  for (const id of ['tab-system', 'tab-wifi', 'tab-mqtt']) {
+  for (const id of ['tab-system', 'tab-wifi', 'tab-mqtt', 'tab-logs']) {
     const el = document.getElementById(id);
     if (el && !isAuthenticated) el.style.display = 'none';
   }
@@ -415,6 +402,20 @@ async function saveMqtt() {
     body: 'type=mqtt&host=' + encodeURIComponent(host) + '&port=' + portVal + '&username=' + encodeURIComponent(user) + '&password=' + encodeURIComponent(pass)
   });
   if (res.status === 200) alert('MQTT config saved!');
+}
+
+// ── Pump Switch UI Helper ──
+
+function setPumpSwitch(pump, isOn) {
+  const toggle = document.getElementById(pump + 'PumpToggle');
+  const status = document.getElementById(pump + 'PumpStatus');
+  if (toggle) {
+    toggle.classList.toggle('on', isOn);
+  }
+  if (status) {
+    status.textContent = isOn ? 'ON' : 'OFF';
+    status.className = 'pump-switch-status ' + (isOn ? 'on' : 'off');
+  }
 }
 
 // ── Pump Toggle ──
@@ -1000,9 +1001,122 @@ async function saveSensorMapping() {
   }
 }
 
+// ── Log Console ──
+
+var lastLogSeq = 0;
+var lastLogBoot = 0;
+var logLevelFilter = 'info';
+// Generation token: bumped on every request, filter change and clear.
+// Responses carrying an older token are discarded, so a slow in-flight
+// poll cannot append stale/duplicate entries or overwrite lastLogSeq
+// after a newer poll, filter switch or clear has happened.
+var logReqToken = 0;
+// Serializes polls: fetch() responses taking longer than the 2s tick must not
+// start a second concurrent poll (whose response would bump the token and
+// discard the first one — leaving the console stuck until the next clear).
+var logPollInFlight = false;
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function loadLogs() {
+  // Only poll while the Logs tab is actually visible: the unconditional 2s
+  // timer used to keep appending DOM nodes (and fetching) in hidden tabs,
+  // growing the document by tens of thousands of nodes per day.
+  if (document.visibilityState !== 'visible') return;
+  var logTab = document.getElementById('tab-logs');
+  if (!logTab || logTab.style.display === 'none') return;
+
+  // Never overlap polls: a slow response would otherwise be superseded by the
+  // next tick's request (token bump) and discarded, stalling the console until
+  // a clear or filter change. The next tick resumes after this one settles.
+  if (logPollInFlight) return;
+
+  var wasAtBottom, consoleEl = document.getElementById('logConsole');
+  if (!consoleEl) return;
+  wasAtBottom = consoleEl.scrollTop + consoleEl.clientHeight >= consoleEl.scrollHeight - 40;
+  var token = ++logReqToken;
+  logPollInFlight = true;
+  // boot = epoch of the cursor: after a reboot the server forces a full dump
+  // (entries 1..N) even when the new seq is already past our stored cursor.
+  fetch('/api/logs?since=' + lastLogSeq + '&boot=' + lastLogBoot + '&count=200&level=' + logLevelFilter)
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (token !== logReqToken) return;  // superseded by a newer poll/filter/clear
+      var empty = document.getElementById('logConsoleEmpty');
+      // Boot change: the server re-sent the whole new-boot ring, so the old
+      // pre-reboot lines are stale — drop them instead of appending on top.
+      if (data.boot !== lastLogBoot) {
+        consoleEl.textContent = '';
+      }
+      if (!data.entries || data.entries.length === 0) {
+        if (!consoleEl.hasChildNodes()) empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+      data.entries.forEach(function(entry) {
+        var line = document.createElement('div');
+        line.className = 'log-entry log-' + entry.level;
+        line.textContent = entry.msg;
+        consoleEl.appendChild(line);
+      });
+      // Evict oldest entries beyond the client-side cap so an always-open
+      // dashboard cannot grow the log DOM without bound.
+      while (consoleEl.childNodes.length > 500) {
+        consoleEl.removeChild(consoleEl.firstChild);
+      }
+      lastLogSeq = data.next;
+      lastLogBoot = data.boot;
+      if (wasAtBottom && data.entries.length > 0) {
+        consoleEl.scrollTop = consoleEl.scrollHeight;
+      }
+    })
+    .catch(function() { /* silent */ })
+    .finally(function() {
+      logPollInFlight = false;
+    });
+}
+
+function clearLogs() {
+  logReqToken++;  // invalidate any in-flight poll — it must not repopulate the console
+  fetch('/api/logs/clear', { method: 'POST' }).then(function() {
+    var c = document.getElementById('logConsole');
+    if (c) c.textContent = '';
+    var e = document.getElementById('logConsoleEmpty');
+    if (e) e.style.display = 'block';
+    lastLogSeq = 0;
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.log-chip').forEach(function(chip) {
+    chip.addEventListener('click', function() {
+      logReqToken++;  // discard in-flight responses from the previous filter
+      document.querySelectorAll('.log-chip').forEach(function(c) { c.classList.remove('active'); });
+      this.classList.add('active');
+      logLevelFilter = this.dataset.level;
+      lastLogSeq = 0;
+      var c = document.getElementById('logConsole');
+      if (c) c.textContent = '';
+      var e = document.getElementById('logConsoleEmpty');
+      if (e) e.style.display = 'none';
+      loadLogs();
+    });
+  });
+});
+
+var _origUpdateAuthUI = (typeof updateAuthUI === 'function') ? updateAuthUI : function(){};
+updateAuthUI = function() {
+  _origUpdateAuthUI();
+  var clearBtn = document.getElementById('btnClearLogs');
+  if (clearBtn) clearBtn.style.display = isAuthenticated ? 'inline-block' : 'none';
+};
+
 // ── Init ──
 
 setInterval(loadTelemetry, 2000);
+setInterval(loadLogs, 2000);
 
 window.onload = function() {
   loadTelemetry();

@@ -5,12 +5,14 @@ on:
     - cron: "0 8 * * 1"
   workflow_dispatch:
 
+permissions:
+  contents: read
+  issues: write
+
 jobs:
   check-dependencies:
     name: Check PlatformIO Library Dependencies (${{ matrix.environment }})
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
 
     strategy:
       matrix:
@@ -20,16 +22,37 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.11"
-
-      - name: Install PlatformIO
-        run: |
-          python -m pip install --upgrade pip
-          pip install platformio intelhex
+      - name: Set up PlatformIO
+        uses: ./.github/actions/setup-platformio
 
       - name: Check outdated packages (${{ matrix.environment }})
+        id: outdated
         run: pio pkg outdated --environment ${{ matrix.environment }}
         continue-on-error: true
+
+      - name: Create issue if updates are available
+        if: steps.outdated.outcome == 'failure'
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const issueTitle = 'PlatformIO Updates Available';
+            const issueBody = 'PlatformIO-Abhängigkeiten benötigen Updates. Bitte überprüfen.';
+
+            // Überprüfen, ob bereits ein Issue mit diesem Titel existiert
+            const existingIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              title: issueTitle
+            });
+
+            if (existingIssues.data.length === 0) {
+              // Erstelle ein neues Issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: issueTitle,
+                body: issueBody,
+                labels: ['enhancement', 'dependencies']
+              });
+            }

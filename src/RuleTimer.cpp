@@ -8,6 +8,7 @@
  */
 
 #include "RuleTimer.hpp"
+#include "LogCapture.hpp"
 
 RuleTimer::RuleTimer(RelayModuleNode *solarRelay, RelayModuleNode *poolRelay) {
   _solarRelay = solarRelay;
@@ -15,7 +16,7 @@ RuleTimer::RuleTimer(RelayModuleNode *solarRelay, RelayModuleNode *poolRelay) {
 }
 
 void RuleTimer::loop() {
-  Serial.println("§ RuleTimer: loop");
+  LOG_INFO("§ RuleTimer: loop\n");
 
   _poolRelay->setSwitch(checkPoolPumpTimer(getPoolTemperature()));
 

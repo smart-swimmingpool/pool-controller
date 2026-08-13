@@ -38,6 +38,7 @@
 #include "SystemMonitor.hpp"
 #include "TimeClientHelper.hpp"
 #include "Version.h"
+#include "LogCapture.hpp"
 
 namespace PoolController {
 
@@ -60,7 +61,7 @@ constexpr uint16_t WebPortal::kDnsPort;
 
 bool WebPortal::begin() {
   if (!LittleFS.begin(false)) {
-    Serial.println("✖ LittleFS mount failed — static web assets may be unavailable");
+    LOG_ERROR("✖ LittleFS mount failed — static web assets may be unavailable\n");
   }
 
   setupRoutes();
@@ -69,12 +70,12 @@ bool WebPortal::begin() {
   if (NetworkManager::isApMode()) {
     dnsServer_.setErrorReplyCode(DNSReplyCode::NoError);
     dnsServer_.start(kDnsPort, "*", WiFi.softAPIP());
-    Serial.println("✓ Captive Portal DNS running.");
+    LOG_INFO("✓ Captive Portal DNS running.\n");
     dnsServerStarted_ = true;
   }
 
   server_.begin();
-  Serial.println("✓ Web Server running on port 80.");
+  LOG_INFO("✓ Web Server running on port 80.\n");
 
   // Initialize CSRF token
   generateCsrfToken();
@@ -87,7 +88,7 @@ void WebPortal::loop() {
     if (!dnsServerStarted_) {
       dnsServer_.setErrorReplyCode(DNSReplyCode::NoError);
       dnsServer_.start(kDnsPort, "*", WiFi.softAPIP());
-      Serial.println("✓ Captive Portal DNS running.");
+      LOG_INFO("✓ Captive Portal DNS running.\n");
       dnsServerStarted_ = true;
     }
     dnsServer_.processNextRequest();
@@ -96,7 +97,7 @@ void WebPortal::loop() {
 
   // Session timeout checking
   if (activeSessionToken_.length() > 0 && (millis() - sessionStartTime_ > kSessionTimeoutMs)) {
-    Serial.println("Session timed out.");
+    LOG_WARN("Session timed out.\n");
     activeSessionToken_ = "";
   }
 }
@@ -256,6 +257,14 @@ void WebPortal::setupRoutes() {
     apiSaveSensorMapping();
   });
 
+  // Log view — GET is unauthenticated (read-only), clear remains authenticated.
+  server_.on("/api/logs", HTTP_GET, apiGetLogs);
+  server_.on("/api/logs/clear", HTTP_POST, []() {
+    if (!handleAuthentication())
+      return;
+    apiClearLogs();
+  });
+
   // LittleFS file upload (for OTA-safe web asset deployment)
   server_.on(
     "/api/fs/upload", HTTP_POST,
@@ -281,7 +290,7 @@ void WebPortal::setupRoutes() {
         return;
       HTTPUpload &upload = server_.upload();
       if (upload.status == UPLOAD_FILE_START) {
-        Serial.printf("Signed OTA Update Starting: %s\n", upload.filename.c_str());
+        LOG_INFO("Signed OTA Update Starting: %s\n", upload.filename.c_str());
         if (!Update.begin(UPDATE_SIZE_UNKNOWN)) {
           Update.printError(Serial);
         }
@@ -291,7 +300,7 @@ void WebPortal::setupRoutes() {
         }
       } else if (upload.status == UPLOAD_FILE_END) {
         if (Update.end(true)) {
-          Serial.printf("Signed OTA Update Success: %u bytes\n", upload.totalSize);
+          LOG_INFO("Signed OTA Update Success: %u bytes\n", upload.totalSize);
         } else {
           Update.printError(Serial);
         }
@@ -509,6 +518,99 @@ void WebPortal::apiGetStatus() {
   }
 }
 
+// ── Log view (REST /api/logs) ──────────────────────────────────────────────
+
+size_t WebPortal::buildLogsJson(uint32_t since, uint32_t epoch, size_t count, LogLevel minLevel, char *buf, size_t bufSize) {
+  if (buf == nullptr || bufSize == 0) {
+    return 0;
+  }
+
+  // Copy entries out of the ring into a fixed array (snapshot consistency —
+  // getEntries reads under the log mutex). Static: no stack pressure.
+  static LogEntry entries[LogCapture::LOG_BUFFER_ENTRIES];
+  size_t n = LogCapture::getEntries(since, epoch, count, minLevel, entries, LogCapture::LOG_BUFFER_ENTRIES);
+
+  JsonDocument doc;
+  doc["ok"] = true;
+  // The client echoes the boot epoch it last saw; a mismatch with the current
+  // boot tells it to discard its cursor even when the new sequence has already
+  // grown past it. Always report the CURRENT epoch, not the requested one.
+  doc["boot"] = LogCapture::epoch();
+  // getEntries() treats `since` as an exclusive cursor (skips entry.seq <= since),
+  // so next must be the highest sequence actually consumed, not lastSeq()+1:
+  // a cursor of lastSeq()+1 would skip the entry whose seq equals that value on
+  // the next poll, and truncated responses would jump past unreturned entries.
+  // With no entries, keep the previous cursor (no progress, nothing skipped).
+  doc["next"] = (n > 0) ? entries[n - 1].seq : since;
+
+  JsonArray arr = doc["entries"].to<JsonArray>();
+  for (size_t i = 0; i < n; ++i) {
+    JsonObject obj = arr.add<JsonObject>();
+    obj["seq"] = entries[i].seq;
+    obj["t"] = entries[i].uptimeMs;
+    obj["level"] = LogCapture::levelName(entries[i].level);
+    obj["msg"] = entries[i].message;
+  }
+
+  size_t jsonLength = serializeJson(doc, buf, bufSize);
+  // Signal truncation (buffer too small) instead of returning broken JSON
+  if (jsonLength >= bufSize) {
+    return 0;
+  }
+  return jsonLength;
+}
+
+void WebPortal::apiGetLogs() {
+  uint32_t since = 0;
+  // Omitted boot parameter = current boot: the documented since-polling flow
+  // keeps working incrementally. Only clients that explicitly send a boot epoch
+  // get reboot detection (a stale epoch forces a full dump).
+  uint32_t epoch = LogCapture::epoch();
+  size_t count = 200;
+  LogLevel minLevel = LogLevel::Info;
+
+  if (server_.hasArg("since")) {
+    since = static_cast<uint32_t>(atol(server_.arg("since").c_str()));
+  }
+  if (server_.hasArg("boot")) {
+    // Parse as unsigned 32-bit: esp_random() produces values above LONG_MAX
+    // on roughly half of boots, which atol() would overflow (→ stale epoch →
+    // full ring + duplicate entries on every poll). strtoul reconstructs the
+    // full uint32 range; on invalid input we keep the current boot (safe
+    // fallback that preserves incremental since-polling).
+    char *end = nullptr;
+    const unsigned long v = strtoul(server_.arg("boot").c_str(), &end, 10);
+    if (end != server_.arg("boot").c_str() && v <= UINT32_MAX) {
+      epoch = static_cast<uint32_t>(v);
+    }
+  }
+  if (server_.hasArg("count")) {
+    long c = atol(server_.arg("count").c_str());
+    if (c > 0 && c <= 500) {
+      count = static_cast<size_t>(c);
+    }
+  }
+  if (server_.hasArg("level")) {
+    minLevel = LogCapture::parseLevel(server_.arg("level").c_str());
+  }
+
+  // Serialize directly to a pre-allocated buffer to minimize String usage.
+  // Worst case: LOG_BUFFER_ENTRIES entries x ~140 bytes each + envelope.
+  // Use a static buffer to avoid heap fragmentation.
+  static char jsonBuffer[16384];
+  size_t jsonLength = buildLogsJson(since, epoch, count, minLevel, jsonBuffer, sizeof(jsonBuffer));
+  if (jsonLength > 0) {
+    server_.send(200, "application/json", jsonBuffer);
+  } else {
+    server_.send(500, "text/plain", "JSON serialization error");
+  }
+}
+
+void WebPortal::apiClearLogs() {
+  LogCapture::clear();
+  server_.send(200, "application/json", "{\"ok\":true}");
+}
+
 void WebPortal::apiScanWiFi() {
   int n = WiFi.scanNetworks();
   JsonDocument doc;
@@ -670,7 +772,7 @@ void WebPortal::apiSaveConfig() {
     operationModeNode.setMeasurementInterval(ConfigManager::getSettings().loopInterval);
 
     // Propagate changes directly into runtime parameters
-    operationModeNode.setMode(ConfigManager::getSettings().opMode.c_str());
+    operationModeNode.setMode(ConfigManager::getSettings().opMode.c_str(), "web:settings");
     operationModeNode.setPoolMaxTemperature(ConfigManager::getSettings().tempMaxPool);
     operationModeNode.setSolarMinTemperature(ConfigManager::getSettings().tempMinSolar);
     operationModeNode.setTemperatureHysteresis(ConfigManager::getSettings().tempHysteresis);
@@ -742,7 +844,7 @@ void WebPortal::apiSetMode() {
   }
 
   String mode = server_.arg("mode");
-  if (operationModeNode.setMode(mode)) {
+  if (operationModeNode.setMode(mode, "web:apiSetMode")) {
     ConfigManager::getSettings().opMode = mode;
     ConfigManager::save();
     server_.send(200, "application/json", "{\"status\":\"ok\",\"mode\":\"" + mode + "\"}");
@@ -1116,19 +1218,19 @@ void WebPortal::handleFsUploadStream() {
       path = upload.filename;
     }
     if (path.length() == 0) {
-      Serial.println("FS Upload: missing path argument — aborting");
+      LOG_WARN("FS Upload: missing path argument — aborting\n");
       return;
     }
 
     // Security: only allow files under /web/
     if (!path.startsWith("/web/")) {
-      Serial.printf("FS Upload: path \"%s\" not under /web/ — rejected\n", path.c_str());
+      LOG_WARN("FS Upload: path \"%s\" not under /web/ — rejected\n", path.c_str());
       return;
     }
 
     // Security: prevent path traversal
     if (path.indexOf("..") != -1) {
-      Serial.printf("FS Upload: path traversal detected: \"%s\"\n", path.c_str());
+      LOG_WARN("FS Upload: path traversal detected: \"%s\"\n", path.c_str());
       return;
     }
 
@@ -1139,11 +1241,11 @@ void WebPortal::handleFsUploadStream() {
 
     fsUploadFile = LittleFS.open(path, "w");
     if (!fsUploadFile) {
-      Serial.printf("FS Upload: failed to open \"%s\" for writing\n", path.c_str());
+      LOG_ERROR("FS Upload: failed to open \"%s\" for writing\n", path.c_str());
       return;
     }
 
-    Serial.printf("FS Upload: started \"%s\" (%u bytes)\n", path.c_str(), upload.totalSize);
+    LOG_INFO("FS Upload: started \"%s\" (%u bytes)\n", path.c_str(), upload.totalSize);
 
   } else if (upload.status == UPLOAD_FILE_WRITE) {
     if (fsUploadFile) {
@@ -1153,7 +1255,7 @@ void WebPortal::handleFsUploadStream() {
   } else if (upload.status == UPLOAD_FILE_END) {
     if (fsUploadFile) {
       fsUploadFile.close();
-      Serial.printf("FS Upload: finished \"%s\" (%u bytes)\n", upload.filename.c_str(), upload.totalSize);
+      LOG_INFO("FS Upload: finished \"%s\" (%u bytes)\n", upload.filename.c_str(), upload.totalSize);
     }
   }
 }

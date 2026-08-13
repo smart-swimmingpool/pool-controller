@@ -20,6 +20,7 @@
 #include "NetworkManager.hpp"
 #include "SystemMonitor.hpp"
 #include "TimeClientHelper.hpp"
+#include "LogCapture.hpp"
 
 namespace PoolController {
 
@@ -72,7 +73,7 @@ uint8_t OtaUpdater::clockSyncFailCount_ = 0;
 // ── Public API ──
 
 void OtaUpdater::begin() {
-  Serial.printf("✓ OTA Updater initialized (current: %s)\n", currentVersion_.c_str());
+  LOG_INFO("✓ OTA Updater initialized (current: %s)\n", currentVersion_.c_str());
   statusMessage_ = "Idle";
 }
 
@@ -168,11 +169,11 @@ bool OtaUpdater::checkForUpdate() {
     return false;
 
   statusMessage_ = "Checking for updates...";
-  Serial.println("OTA: Checking for firmware update...");
+  LOG_INFO("OTA: Checking for firmware update...\n");
 
   if (!fetchLatestRelease()) {
     statusMessage_ = "Check failed";
-    Serial.println("OTA: Update check failed");
+    LOG_ERROR("OTA: Update check failed\n");
     return false;
   }
 
@@ -180,13 +181,13 @@ bool OtaUpdater::checkForUpdate() {
   if (isNewerVersion(currentVersion_, latestVersion_)) {
     updateAvailable_ = true;
     statusMessage_ = "Update available: v" + getLatestVersion();
-    Serial.printf("OTA: New version available: %s (current: %s)\n", latestVersion_.c_str(), currentVersion_.c_str());
+    LOG_INFO("OTA: New version available: %s (current: %s)\n", latestVersion_.c_str(), currentVersion_.c_str());
     return true;
   }
 
   updateAvailable_ = false;
   statusMessage_ = "Up to date (v" + currentVersion_ + ")";
-  Serial.println("OTA: Firmware is up to date");
+  LOG_INFO("OTA: Firmware is up to date\n");
   return false;
 }
 
@@ -194,12 +195,12 @@ bool OtaUpdater::checkForUpdate() {
 
 bool OtaUpdater::startUpdate() {
   if (updateInProgress_) {
-    Serial.println("OTA: Update already in progress");
+    LOG_WARN("OTA: Update already in progress\n");
     return false;
   }
   if (!updateAvailable_ || downloadUrl_.length() == 0) {
     statusMessage_ = "No update available";
-    Serial.println("OTA: No update package available");
+    LOG_WARN("OTA: No update package available\n");
     return false;
   }
   if (!NetworkManager::isWiFiConnected()) {
@@ -219,7 +220,7 @@ bool OtaUpdater::startUpdate() {
   const size_t estimatedFirmwareSize = 600 * 1024;  // 600KB estimate
 
   if (!hasSufficientSpace(estimatedFirmwareSize)) {
-    Serial.println("OTA: Cannot start update: insufficient flash space");
+    LOG_ERROR("OTA: Cannot start update: insufficient flash space\n");
     return false;
   }
 
@@ -229,13 +230,13 @@ bool OtaUpdater::startUpdate() {
   progress_ = 0;
   statusMessage_ = "Downloading... 0%";
 
-  Serial.printf("OTA: Starting download from %s\n", downloadUrl_.c_str());
+  LOG_INFO("OTA: Starting download from %s\n", downloadUrl_.c_str());
 
   bool ok = downloadAndApply(downloadUrl_);
   if (!ok) {
     updateInProgress_ = false;
     statusMessage_ = "Update failed!";
-    Serial.println("OTA: Update failed!");
+    LOG_ERROR("OTA: Update failed!\n");
     // updateAvailable_ stays true so the user can retry
   } else {
     // On success, clear the flag before reboot
@@ -258,7 +259,7 @@ bool OtaUpdater::fetchLatestRelease() {
   // Only sync if time is not already set (time(0) > 100000 means year 2000+)
   time_t now = time(nullptr);
   if (now < 100000) {  // Time not set yet
-    Serial.println("OTA: Syncing time before GitHub TLS verification...");
+    LOG_INFO("OTA: Syncing time before GitHub TLS verification...\n");
     // Ensure NTP client is set up
     timeClientSetup(ConfigManager::getNtp().server.c_str());
     // Sync system clock from NTP (sets settimeofday for mbedTLS)
@@ -267,11 +268,11 @@ bool OtaUpdater::fetchLatestRelease() {
     delay(2000);
     now = time(nullptr);
     if (now < 100000) {
-      Serial.println("OTA: Time sync failed, TLS verification may fail");
+      LOG_WARN("OTA: Time sync failed, TLS verification may fail\n");
       // Continue anyway - the TLS verification might still work
       // if the device has a valid time from a previous sync
     } else {
-      Serial.printf("OTA: Time synced: %ld\n", now);
+      LOG_INFO("OTA: Time synced: %ld\n", now);
     }
   }
 
@@ -289,7 +290,7 @@ bool OtaUpdater::fetchLatestRelease() {
 
   // Build API URL
   String url = String("https://api.github.com/repos/") + GITHUB_REPO + "/releases/latest";
-  Serial.printf("OTA: Fetching %s\n", url.c_str());
+  LOG_DEBUG("OTA: Fetching %s\n", url.c_str());
 
   HTTPClient http;
   http.begin(client, url);
@@ -298,7 +299,7 @@ bool OtaUpdater::fetchLatestRelease() {
 
   int httpCode = http.GET();
   if (httpCode != 200) {
-    Serial.printf("OTA: GitHub API returned HTTP %d\n", httpCode);
+    LOG_ERROR("OTA: GitHub API returned HTTP %d\n", httpCode);
     http.end();
     return false;
   }
@@ -309,14 +310,14 @@ bool OtaUpdater::fetchLatestRelease() {
   http.end();
 
   if (err) {
-    Serial.printf("OTA: JSON parse error: %s\n", err.c_str());
+    LOG_ERROR("OTA: JSON parse error: %s\n", err.c_str());
     return false;
   }
 
   // Extract tag name (e.g. "v3.2.0")
   const char *tag = doc["tag_name"];
   if (!tag || strlen(tag) == 0) {
-    Serial.println("OTA: No tag_name in response");
+    LOG_ERROR("OTA: No tag_name in response\n");
     return false;
   }
   latestVersion_ = String(tag);
@@ -361,7 +362,7 @@ bool OtaUpdater::fetchLatestRelease() {
         const char *url = asset["browser_download_url"];
         if (url) {
           downloadUrl_ = String(url);
-          Serial.println("OTA: Board-specific asset not found, using generic firmware.bin");
+          LOG_WARN("OTA: Board-specific asset not found, using generic firmware.bin\n");
           break;
         }
       }
@@ -369,11 +370,11 @@ bool OtaUpdater::fetchLatestRelease() {
   }
 
   if (downloadUrl_.length() == 0) {
-    Serial.println("OTA: No firmware binary found in release assets");
+    LOG_ERROR("OTA: No firmware binary found in release assets\n");
     return false;
   }
 
-  Serial.printf("OTA: Found %s → %s\n", latestVersion_.c_str(), downloadUrl_.c_str());
+  LOG_INFO("OTA: Found %s → %s\n", latestVersion_.c_str(), downloadUrl_.c_str());
   return true;
 }
 
@@ -431,14 +432,14 @@ bool OtaUpdater::downloadAndApply(const String &url) {
 
   int httpCode = http.GET();
   if (httpCode != 200) {
-    Serial.printf("OTA: Download returned HTTP %d\n", httpCode);
+    LOG_ERROR("OTA: Download returned HTTP %d\n", httpCode);
     http.end();
     return false;
   }
 
   int totalSize = http.getSize();
   if (totalSize <= 0) {
-    Serial.println("OTA: Invalid content size");
+    LOG_ERROR("OTA: Invalid content size\n");
     http.end();
     return false;
   }
@@ -449,14 +450,14 @@ bool OtaUpdater::downloadAndApply(const String &url) {
   const size_t kMinFirmwareSize = 50 * 1024;        // 50KB minimum
 
   if (static_cast<size_t>(totalSize) > kMaxFirmwareSize) {
-    Serial.printf("OTA: Firmware too large: %d bytes (max %u)\n", totalSize, kMaxFirmwareSize);
+    LOG_ERROR("OTA: Firmware too large: %d bytes (max %u)\n", totalSize, kMaxFirmwareSize);
     statusMessage_ = "Error: Firmware too large";
     http.end();
     return false;
   }
 
   if (static_cast<size_t>(totalSize) < kMinFirmwareSize) {
-    Serial.printf("OTA: Firmware too small: %d bytes (min %u)\n", totalSize, kMinFirmwareSize);
+    LOG_ERROR("OTA: Firmware too small: %d bytes (min %u)\n", totalSize, kMinFirmwareSize);
     statusMessage_ = "Error: Firmware too small";
     http.end();
     return false;
@@ -464,15 +465,15 @@ bool OtaUpdater::downloadAndApply(const String &url) {
 
   // Verify we have sufficient space for this specific firmware size
   if (!hasSufficientSpace(static_cast<size_t>(totalSize))) {
-    Serial.println("OTA: Insufficient space for this firmware");
+    LOG_ERROR("OTA: Insufficient space for this firmware\n");
     http.end();
     return false;
   }
 
-  Serial.printf("OTA: Download size: %d bytes\n", totalSize);
+  LOG_DEBUG("OTA: Download size: %d bytes\n", totalSize);
 
   if (!Update.begin(totalSize)) {
-    Serial.printf("OTA: Update.begin() failed: %s\n", Update.errorString());
+    LOG_ERROR("OTA: Update.begin() failed: %s\n", Update.errorString());
     http.end();
     return false;
   }
@@ -500,7 +501,7 @@ bool OtaUpdater::downloadAndApply(const String &url) {
 
     size_t written = Update.write(buffer, read);
     if (written != read) {
-      Serial.printf("OTA: Write error at byte %d: %s\n", totalRead, Update.errorString());
+      LOG_ERROR("OTA: Write error at byte %d: %s\n", totalRead, Update.errorString());
       Update.end(false);
       http.end();
       return false;
@@ -514,17 +515,17 @@ bool OtaUpdater::downloadAndApply(const String &url) {
   http.end();
 
   if (totalRead != totalSize) {
-    Serial.printf("OTA: Incomplete download (%d / %d)\n", totalRead, totalSize);
+    LOG_ERROR("OTA: Incomplete download (%d / %d)\n", totalRead, totalSize);
     Update.end(false);
     return false;
   }
 
   if (!Update.end(true)) {
-    Serial.printf("OTA: Update.end() failed: %s\n", Update.errorString());
+    LOG_ERROR("OTA: Update.end() failed: %s\n", Update.errorString());
     return false;
   }
 
-  Serial.println("OTA: Update successful! Rebooting...");
+  LOG_INFO("OTA: Update successful! Rebooting...\n");
   statusMessage_ = "Update successful! Rebooting...";
   Serial.flush();
   NetworkManager::restart();
@@ -556,12 +557,12 @@ bool OtaUpdater::hasSufficientSpace(size_t firmwareSize) {
   requiredSpace = std::max(requiredSpace, kMinFreeSpace);
 
   if (availableSpace < requiredSpace) {
-    Serial.printf("OTA: Insufficient flash space. Need %u bytes, have %u bytes\n", requiredSpace, availableSpace);
+    LOG_ERROR("OTA: Insufficient flash space. Need %u bytes, have %u bytes\n", requiredSpace, availableSpace);
     statusMessage_ = "Error: Insufficient flash space";
     return false;
   }
 
-  Serial.printf("OTA: Sufficient space available (%u bytes free, %u bytes required)\n", availableSpace, requiredSpace);
+  LOG_INFO("OTA: Sufficient space available (%u bytes free, %u bytes required)\n", availableSpace, requiredSpace);
   return true;
 }
 

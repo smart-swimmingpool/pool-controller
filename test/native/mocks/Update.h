@@ -25,7 +25,7 @@ public:
   void printError(Print &p) {}
   void printError(int) {}
   void printError(SerialClass &s) {}
-  String errorString() { return String(""); }
+  const char* errorString() { return ""; }
   void abort() {}
 };
 static UpdateClass Update;
