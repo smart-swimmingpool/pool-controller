@@ -125,6 +125,10 @@ private:
    */
   static void evaluateShortPress(uint32_t now);
 
+  /// Fires the long-press callback once after LONG_PRESS_MS.
+  /// @return true if the callback consumed the press (skip short press).
+  static bool evaluateLongPress(uint32_t now);
+
   /// Debounce interval (ms) — ignores samples within this window.
   static constexpr uint32_t DEBOUNCE_MS{80};
 

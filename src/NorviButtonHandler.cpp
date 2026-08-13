@@ -164,7 +164,11 @@ void NorviButtonHandler::loop() {
       lastDebugAdc_ = filteredAdc;
     }
     // A pending short press may complete even while the signal changes —
-    // evaluate the debounce on this reading too.
+    // evaluate the debounce on this reading too. A long-press callback may
+    // also be due, so check it first (it consumes the press on success).
+    if (evaluateLongPress(now)) {
+      return;
+    }
     evaluateShortPress(now);
     return;
   }
@@ -182,6 +186,12 @@ void NorviButtonHandler::loop() {
     }
     // Let a pending debounce complete while the ADC re-stabilizes (e.g.
     // after a release) — otherwise a short press never fires its callback.
+    // Evaluate long presses here too: a held button spends most samples in
+    // this wait, and a release at the LONG_PRESS_MS mark must not swallow
+    // the callback (e.g. S3 save-and-reboot after a full 2s hold).
+    if (evaluateLongPress(now)) {
+      return;
+    }
     evaluateShortPress(now);
     return;
   }
@@ -217,29 +227,8 @@ void NorviButtonHandler::loop() {
   }
 
   // ── Long-press detection (fire once after LONG_PRESS_MS) ─────────────
-  if (currentButton_ != Button::NONE && pressStartMs_ > 0 && (now - pressStartMs_ >= LONG_PRESS_MS)) {
-    pressStartMs_ = 0;  // Prevent re-firing
-
-    // Fire long-press callbacks; skip short-press if callback consumed it
-    switch (currentButton_) {
-    case Button::ONE:
-      if (cbButton1Long_ && cbButton1Long_()) {
-        return;
-      }
-      break;
-    case Button::TWO:
-      if (cbButton2Long_ && cbButton2Long_()) {
-        return;
-      }
-      break;
-    case Button::THREE:
-      if (cbButton3Long_ && cbButton3Long_()) {
-        return;
-      }
-      break;
-    default:
-      break;
-    }
+  if (evaluateLongPress(now)) {
+    return;  // Long-press callback consumed the press
   }
 
   // ── Short-press detection ────────────────────────────────────────────
@@ -312,6 +301,36 @@ void NorviButtonHandler::evaluateShortPress(uint32_t now) {
       break;
     }
   }
+}
+
+bool NorviButtonHandler::evaluateLongPress(uint32_t now) {
+  // Fire the long-press callback once after LONG_PRESS_MS.
+  if (currentButton_ != Button::NONE && pressStartMs_ > 0 && (now - pressStartMs_ >= LONG_PRESS_MS)) {
+    pressStartMs_ = 0;  // Prevent re-firing
+
+    // Fire long-press callbacks; report whether the callback consumed the
+    // press (short press must then be skipped).
+    switch (currentButton_) {
+    case Button::ONE:
+      if (cbButton1Long_ && cbButton1Long_()) {
+        return true;
+      }
+      break;
+    case Button::TWO:
+      if (cbButton2Long_ && cbButton2Long_()) {
+        return true;
+      }
+      break;
+    case Button::THREE:
+      if (cbButton3Long_ && cbButton3Long_()) {
+        return true;
+      }
+      break;
+    default:
+      break;
+    }
+  }
+  return false;
 }
 
 }  // namespace PoolController
