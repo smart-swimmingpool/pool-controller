@@ -31,8 +31,12 @@ uint32_t NorviButtonHandler::lastChangeMs_ = 0;
 uint32_t NorviButtonHandler::lastSampleMs_ = 0;
 uint16_t NorviButtonHandler::lastRaw_ = 0;
 
-// ADC Filtering: Moving average over 5 samples (250ms window)
-static uint16_t adcSamples_[5] = {0};
+// ADC Filtering: moving average over 5 samples (250ms window) with
+// fast-attack re-initialization — a genuine press/release jumps the
+// window immediately instead of waiting for the average to catch up.
+static constexpr uint8_t ADC_FILTER_SIZE = 5;
+static constexpr uint16_t FAST_ATTACK_DELTA = 300;
+static uint16_t adcSamples_[ADC_FILTER_SIZE] = {0};
 static uint8_t adcSampleIndex_ = 0;
 static uint32_t lastFilteredAdcTime_ = 0;
 static uint16_t lastFilteredAdc_ = 0;
@@ -77,52 +81,59 @@ void NorviButtonHandler::loop() {
   }
   lastSampleMs_ = now;
 
-  // Read ADC and apply moving average filter (5 samples = 250ms window)
+  // Read ADC
   uint16_t rawAdc = analogRead(PIN_BUTTON_ADC);
-  
+
+  // Fast-attack: a large deviation from the filtered value is a genuine
+  // press/release — re-initialize the window so the filter responds within
+  // one sample instead of a full window (fixes short presses < 500ms).
+  if (abs(static_cast<int>(rawAdc) - static_cast<int>(lastFilteredAdc_)) > FAST_ATTACK_DELTA) {
+    for (uint8_t i = 0; i < ADC_FILTER_SIZE; i++) {
+      adcSamples_[i] = rawAdc;
+    }
+    adcSampleIndex_ = 0;
+  }
+
   // Store sample for filtering
   adcSamples_[adcSampleIndex_] = rawAdc;
-  adcSampleIndex_ = (adcSampleIndex_ + 1) % 5;
-  
+  adcSampleIndex_ = (adcSampleIndex_ + 1) % ADC_FILTER_SIZE;
+
   // Calculate moving average
   uint32_t sum = 0;
-  for (uint8_t i = 0; i < 5; i++) {
+  for (uint8_t i = 0; i < ADC_FILTER_SIZE; i++) {
     sum += adcSamples_[i];
   }
-  uint16_t filteredAdc = static_cast<uint16_t>(sum / 5);
+  uint16_t filteredAdc = static_cast<uint16_t>(sum / ADC_FILTER_SIZE);
   lastFilteredAdc_ = filteredAdc;
   lastFilteredAdcTime_ = now;
-  
+
   // Enhanced ADC stability check: only accept values that are stable for 150ms
   static uint16_t lastStableAdc_ = 0;
   static uint32_t lastStableTime_ = 0;
-  
+
   if (abs(static_cast<int>(filteredAdc) - static_cast<int>(lastStableAdc_)) > 100) {
     // Significant change detected - reset stability timer
     lastStableAdc_ = filteredAdc;
     lastStableTime_ = now;
     lastRaw_ = filteredAdc;
     Button detected = detectButton(filteredAdc);
-    
+
     // Debug logging for ADC changes
     static uint16_t lastDebugAdc_ = 0xFFFF;
     if (abs(static_cast<int>(filteredAdc) - static_cast<int>(lastDebugAdc_)) > 100) {
-      LOG_DEBUG("ADC: raw=%u filtered=%u → %d | THRESH: BTN1=%u-%u BTN2=%u-%u BTN3=%u-%u NO_PRESS=%u\n",
-        rawAdc, filteredAdc, static_cast<int>(detected),
-        THRESH_BTN1_MIN, THRESH_BTN1_MAX,
-        THRESH_BTN2_MIN, THRESH_BTN2_MAX,
-        THRESH_BTN3_MIN, THRESH_BTN3_MAX,
-        THRESH_NO_PRESS);
+      LOG_DEBUG("ADC: raw=%u filtered=%u → %d | THRESH: BTN1=%u-%u BTN2=%u-%u BTN3=%u-%u NO_PRESS=%u\n", rawAdc, filteredAdc,
+        static_cast<int>(detected), THRESH_BTN1_MIN, THRESH_BTN1_MAX, THRESH_BTN2_MIN, THRESH_BTN2_MAX, THRESH_BTN3_MIN,
+        THRESH_BTN3_MAX, THRESH_NO_PRESS);
       lastDebugAdc_ = filteredAdc;
     }
     return;
   }
-  
+
   if (now - lastStableTime_ < 150) {
     // Not stable yet - ignore this reading
     lastRaw_ = filteredAdc;
     Button detected = Button::NONE;
-    
+
     // Debug logging for unstable ADC
     static uint16_t lastDebugAdc_ = 0xFFFF;
     if (abs(static_cast<int>(filteredAdc) - static_cast<int>(lastDebugAdc_)) > 100) {
@@ -131,7 +142,7 @@ void NorviButtonHandler::loop() {
     }
     return;
   }
-  
+
   // ADC is stable - use filtered value
   lastStableAdc_ = filteredAdc;
   lastStableTime_ = now;
@@ -141,12 +152,9 @@ void NorviButtonHandler::loop() {
   // Enhanced debug logging for ADC changes
   static uint16_t lastDebugAdc_ = 0xFFFF;
   if (abs(static_cast<int>(filteredAdc) - static_cast<int>(lastDebugAdc_)) > 100) {
-    LOG_DEBUG("ADC: raw=%u filtered=%u → %d | THRESH: BTN1=%u-%u BTN2=%u-%u BTN3=%u-%u NO_PRESS=%u\n",
-      rawAdc, filteredAdc, static_cast<int>(detected),
-      THRESH_BTN1_MIN, THRESH_BTN1_MAX,
-      THRESH_BTN2_MIN, THRESH_BTN2_MAX,
-      THRESH_BTN3_MIN, THRESH_BTN3_MAX,
-      THRESH_NO_PRESS);
+    LOG_DEBUG("ADC: raw=%u filtered=%u → %d | THRESH: BTN1=%u-%u BTN2=%u-%u BTN3=%u-%u NO_PRESS=%u\n", rawAdc, filteredAdc,
+      static_cast<int>(detected), THRESH_BTN1_MIN, THRESH_BTN1_MAX, THRESH_BTN2_MIN, THRESH_BTN2_MAX, THRESH_BTN3_MIN,
+      THRESH_BTN3_MAX, THRESH_NO_PRESS);
     lastDebugAdc_ = filteredAdc;
   }
 
@@ -236,7 +244,7 @@ float NorviButtonHandler::getLongPressProgress() {
 NorviButtonHandler::Button NorviButtonHandler::detectButton(uint16_t raw) {
   // Use filtered ADC value for detection
   uint16_t adcValue = lastFilteredAdc_;
-  
+
   if (adcValue >= THRESH_NO_PRESS) {
     return Button::NONE;
   }
