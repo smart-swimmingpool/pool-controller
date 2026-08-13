@@ -35,7 +35,6 @@ uint16_t NorviButtonHandler::lastRaw_ = 0;
 // fast-attack re-initialization — a genuine press/release jumps the
 // window immediately instead of waiting for the average to catch up.
 static constexpr uint8_t ADC_FILTER_SIZE = 5;
-static constexpr uint16_t FAST_ATTACK_DELTA = 300;
 static uint16_t adcSamples_[ADC_FILTER_SIZE] = {0};
 static uint8_t adcSampleIndex_ = 0;
 static uint32_t lastFilteredAdcTime_ = 0;
@@ -84,10 +83,11 @@ void NorviButtonHandler::loop() {
   // Read ADC
   uint16_t rawAdc = analogRead(PIN_BUTTON_ADC);
 
-  // Fast-attack: a large deviation from the filtered value is a genuine
-  // press/release — re-initialize the window so the filter responds within
-  // one sample instead of a full window (fixes short presses < 500ms).
-  if (abs(static_cast<int>(rawAdc) - static_cast<int>(lastFilteredAdc_)) > FAST_ATTACK_DELTA) {
+  // Fast-attack: a genuine press/release changes the button range — even
+  // when the ADC delta is small (no-press 3800 → S3 3700 = 100). Base the
+  // re-initialization on button-range transitions so every valid press is
+  // caught within one sample instead of a full moving-average window.
+  if (detectButton(rawAdc) != detectButton(lastFilteredAdc_)) {
     for (uint8_t i = 0; i < ADC_FILTER_SIZE; i++) {
       adcSamples_[i] = rawAdc;
     }
@@ -230,8 +230,8 @@ float NorviButtonHandler::getLongPressProgress() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 NorviButtonHandler::Button NorviButtonHandler::detectButton(uint16_t raw) {
-  // Use filtered ADC value for detection
-  uint16_t adcValue = lastFilteredAdc_;
+  // Use the supplied ADC value for detection.
+  uint16_t adcValue = raw;
 
   if (adcValue >= THRESH_NO_PRESS) {
     return Button::NONE;
