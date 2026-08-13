@@ -103,15 +103,24 @@ void NorviButtonHandler::loop() {
     adcSampleIndex_ = 0;
     lastStableTime_ = now;
 
+    if (releasePendingMs_ != 0) {
+      // A press transition interrupts a pending release. If the release
+      // already persisted for the debounce interval, commit it so the new
+      // press is tracked as a fresh tap; otherwise treat it as bounce.
+      if (rawButton != Button::NONE && (now - releasePendingMs_ >= DEBOUNCE_MS)) {
+        currentButton_ = Button::NONE;
+        lastChangeMs_ = now;
+        pressStartMs_ = 0;
+        LOG_DEBUG("Button released: %d\n", static_cast<int>(currentButton_));
+      }
+      releasePendingMs_ = 0;
+    }
+
     // Release observation: a confirmed press released into the no-press
     // range is committed after DEBOUNCE_MS instead of the full stability
     // window, so rapid consecutive taps are not merged into one press.
     if (currentButton_ != Button::NONE && rawButton == Button::NONE) {
-      if (releasePendingMs_ == 0) {
-        releasePendingMs_ = now;
-      }
-    } else {
-      releasePendingMs_ = 0;  // back in a button range — not a release
+      releasePendingMs_ = now;
     }
   }
 
