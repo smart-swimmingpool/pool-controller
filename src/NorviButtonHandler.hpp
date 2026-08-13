@@ -117,6 +117,14 @@ private:
    */
   static Button detectButton(uint16_t raw);
 
+  /**
+   * @brief Fire the short-press callback once the debounce interval elapsed.
+   * Runs on every sample once a press is pending — including while the ADC
+   * re-stabilizes after a release — so a short press is not swallowed by
+   * the release stabilization path.
+   */
+  static void evaluateShortPress(uint32_t now);
+
   /// Debounce interval (ms) — ignores samples within this window.
   static constexpr uint32_t DEBOUNCE_MS{80};
 
