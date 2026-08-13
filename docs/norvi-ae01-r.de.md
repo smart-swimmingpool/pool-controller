@@ -234,8 +234,8 @@ kommt zum Einsatz.
    NORVI Relaisausgang 0 (GPIO14):  Steuerung → Pool-Pumpe (via Schütz oder direkt <100W)
    NORVI Relaisausgang 2 (GPIO13):  Steuerung → Solar-Pumpe (via Schütz oder direkt mit Snubber)
 
-   L (Außenleiter) ─── RCD ─── MCB ──┬── Relais COM0 ── Pumpe L
-                                      └── Relais COM2 ── Pumpe L
+   L (Außenleiter) ─── RCD ─── MCB ──┬── Relais COM0 ── NO0 ── Pumpe L
+                                      └── Relais COM2 ── NO2 ── Pumpe L
    N (Neutral) ──────────────────────────── Neutralleiter ── Pumpen N
 
    ── Standard-Verdrahtung (mit Schützen) ─────────────────────────────
