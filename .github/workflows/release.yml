@@ -57,29 +57,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Cache PlatformIO
-        uses: actions/cache@v6
+      - name: Set up PlatformIO
+        uses: ./.github/actions/setup-platformio
         with:
-          path: |
-            ${{ matrix.pio-core-dir }}
-            .pio
-          key: ${{ runner.os }}-pio-${{ matrix.environment }}-${{ hashFiles('**/platformio.ini') }}
-          restore-keys: |
-            ${{ runner.os }}-pio-${{ matrix.environment }}-
-
-      - name: Set up Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.x"
-
-      - name: Install PlatformIO
-        run: |
-          python -m pip install --upgrade pip
-          pip install platformio intelhex
+          pio-core-dir: ${{ matrix.pio-core-dir }}
+          cache-key: ${{ runner.os }}-pio-${{ matrix.environment }}-${{ hashFiles('**/platformio.ini') }}
+          restore-key: ${{ runner.os }}-pio-${{ matrix.environment }}-
 
       - name: Build firmware
-        env:
-          PLATFORMIO_CORE_DIR: ${{ matrix.pio-core-dir }}
         run: platformio run --environment ${{ matrix.environment }}
 
       - name: Upload firmware to release
