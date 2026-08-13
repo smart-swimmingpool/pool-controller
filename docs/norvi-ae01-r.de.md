@@ -262,7 +262,7 @@ kommt zum Einsatz.
    direkt verdrahtet werden. Sie sind Schließer (SPST), 5A/250V AC.
 
    L (Außenleiter) ─── RCD ─── MCB ──┬── NORVI COM0 ── NO0 ── Last
-                                      └── NORVI COM4 ── NO4 ── Last
+                                      └── NORVI COM2 ── NO2 ── Last
    N (Neutral) ──────────────────────────── Neutralleiter ── Last N
 
    > **Für Pumpen >100W oder ohne RC-Snubber:** Externe Schütze wie oben

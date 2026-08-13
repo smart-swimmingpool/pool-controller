@@ -263,7 +263,7 @@ to the default device index.
    can be wired directly. They are Normally Open (SPST), rated 5A/250V AC.
 
    L (mains) ─── RCD ─── MCB ──┬── NORVI COM0 ── NO0 ── Load
-                                └── NORVI COM4 ── NO4 ── Load
+                                └── NORVI COM2 ── NO2 ── Load
    N (neutral) ───────────────────────── Neutral bar ── Load N
 
    > **For pumps >100W or without RC snubber:** Use external contactors
