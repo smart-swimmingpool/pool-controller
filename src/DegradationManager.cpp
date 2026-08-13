@@ -163,8 +163,7 @@ void DegradationManager::onTransition() {
     if (forcedSafeMode_) {
       LOG_ERROR("✖ SAFE MODE — reason: boot-loop detected (safe mode forced)\n");
     } else if (!SystemMonitor::isHealthy()) {
-      LOG_ERROR("✖ SAFE MODE — reason: critically low free heap (%.1f KB)\n",
-                ESP.getFreeHeap() / 1024.0f);
+      LOG_ERROR("✖ SAFE MODE — reason: critically low free heap (%.1f KB)\n", ESP.getFreeHeap() / 1024.0f);
     } else {
       LOG_ERROR("✖ SAFE MODE — reason: multiple concurrent failures\n");
       if (!NetworkManager::isWiFiConnected()) {
