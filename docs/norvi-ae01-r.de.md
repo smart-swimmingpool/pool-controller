@@ -223,16 +223,16 @@ kommt zum Einsatz.
    ║  externe Hutschienen-Schütze** verwenden (siehe Schütz-Schaltung    ║
    ║  unten). Das ist verscheißfrei für die gesamte Lebensdauer.         ║
    ║                                                                     ║
-   ║  **Für Kleinstpumpen (<100W, z. B. ECM-Solarpumpen):** Direkt-     ║
-   ║  Verdrahtung ist möglich mit einem **RC-Snubber** (100nF + 100Ω,  ║
-   ║  X2-Kondensator) parallel zu den Relaiskontakten zur Unterdrückung║
-   ║  kapazitiver Einschaltströme.                                     ║
+   ║  **Für Kleinstpumpen (<100W, z. B. ECM-Solarpumpen):** direkt       ║
+   ║  verdrahten mit **RC-Snubber** (100nF + 100Ω, X2) dämpft Abschalt-  ║
+   ║  Lichtbögen, begrenzt aber **nicht** den Einschaltstrom — zur       ║
+   ║  Vermeidung von Verschweißung das **Schütz** (oder NTC) verwenden.  ║
    ║                                                                     ║
    ║  Siehe → **[Schütz-Schaltung für Pumpen](contactor-guide.de.md)**   ║
    ╚══════════════════════════════════════════════════════════════════════╝
 
    NORVI Relaisausgang 0 (GPIO14):  Steuerung → Pool-Pumpe (via Schütz oder direkt <100W)
-   NORVI Relaisausgang 2 (GPIO13):  Steuerung → Solar-Pumpe (via Schütz oder direkt mit Snubber)
+   NORVI Relaisausgang 2 (GPIO13):  Steuerung → Solar-Pumpe (via Schütz oder direkt mit Einschaltstrombegrenzer)
 
    L (Außenleiter) ─── RCD ─── MCB ──┬── Relais COM0 ── NO0 ── Pumpe L
                                       └── Relais COM2 ── NO2 ── Pumpe L
@@ -258,16 +258,16 @@ kommt zum Einsatz.
    ── Alternative: Direktverdrahtung (ohmsche / Kleinstlast) ──────────
 
    Für **Nicht-Motorlasten** (Heizstäbe, Ventile, Signallampen) oder
-   **Kleinst-EcmPumpen (<100W) mit RC-Snubber** können die NORVI-Relais
-   direkt verdrahtet werden. Sie sind Schließer (SPST), 5A/250V AC.
+   **Kleinst-EcmPumpen (<100W) mit Einschaltstrombegrenzer** können die
+   NORVI-Relais direkt verdrahtet werden. Sie sind Schließer (SPST), 5A/250V AC.
 
    L (Außenleiter) ─── RCD ─── MCB ──┬── NORVI COM0 ── NO0 ── Last
                                       └── NORVI COM2 ── NO2 ── Last
    N (Neutral) ──────────────────────────── Neutralleiter ── Last N
 
-   > **Für Pumpen >100W oder ohne RC-Snubber:** Externe Schütze wie oben
-   > verwenden. Direktverdrahtung von Motorlasten führt zu
-   > Kontaktverschweißung.
+   > **Für Pumpen (Motorlasten):** Externe Schütze wie oben verwenden.
+   > Direktverdrahtung von Motorlasten führt zu Kontaktverschweißung;
+   > ein RC-Snubber verhindert das nicht.
 
    ── Feldbericht ──────────────────────────────────────────────────────
 
@@ -276,9 +276,10 @@ kommt zum Einsatz.
    einen verschweißten Kontakt — Relais hörbar, aber NO-Kontakt öffnete
    nie. Umverdrahtung auf R5 (GPIO33) zeigte denselben Fehler. R0
    (GPIO14, Poolpumpe) lief weiter (andere Motorkennlinie). Die
-   Solarpumpe ist jetzt auf R2 (GPIO13) konfiguriert. Ein RC-Snubber
-   (100nF + 100Ω, X2-Kondensator) wird parallel zu den R2-Kontakten
-   empfohlen. Im Gegensatz zu externen Relaismodulen (die
+   Solarpumpe ist jetzt auf R2 (GPIO13) konfiguriert. Für diese Last ist
+   ein **Schütz** (oder Einschaltstrombegrenzer) empfohlen — ein RC-Snubber
+   parallel zu den R2-Kontakten verhindert das Verschweißen nicht.
+   Im Gegensatz zu externen Relaismodulen (die
    typischerweise
    active-LOW sind: LOW = EIN, HIGH = AUS) sind die eingebauten NORVI-Relais
    **active-HIGH**: `HIGH` auf dem GPIO-Pin erregt die Relaisspule (Schließer

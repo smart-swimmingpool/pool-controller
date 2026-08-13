@@ -224,16 +224,16 @@ to the default device index.
    ║  relays for external DIN-rail contactors** (see Contactor Wiring    ║
    ║  Guide below). This is zero-wear on the NORVI relays.               ║
    ║                                                                     ║
-   ║  **For low-power pumps (<100W, e.g. ECM solar pumps):** Direct      ║
-   ║  wiring is possible with an **RC snubber** (100nF + 100Ω,          ║
-   ║  X2-rated capacitor) across the relay contacts to suppress          ║
-   ║  capacitive inrush.                                                  ║
+   ║  **For low-power pumps (<100W, e.g. ECM solar pumps):** direct      ║
+   ║  wiring with an **RC snubber** (100nF + 100Ω, X2-rated) suppresses  ║
+   ║  turn-off arcs but does **not** limit the closing inrush — use the  ║
+   ║  **contactor** solution (or an inrush limiter) to avoid welding.    ║
    ║                                                                     ║
    ║  See → **[Contactor Wiring Guide](contactor-guide.md)**             ║
    ╚══════════════════════════════════════════════════════════════════════╝
 
    NORVI Relay Output 0 (GPIO14):   Control → Pool pump (via contactor or direct <100W)
-   NORVI Relay Output 2 (GPIO13):   Control → Solar pump (via contactor or direct with snubber)
+   NORVI Relay Output 2 (GPIO13):   Control → Solar pump (via contactor or direct with inrush limiter)
 
    L (mains) ─── RCD ─── MCB ──┬── Relay COM0 ── NO0 ── Pump L
                                 └── Relay COM2 ── NO2 ── Pump L
@@ -259,16 +259,17 @@ to the default device index.
    ── Alternative: direct wiring (resistive/low-power loads) ───────────
 
    For **non-motor loads** (heating elements, valves, signal lamps) or
-   **low-power ECM pumps (<100W) with an RC snubber**, the NORVI relays
-   can be wired directly. They are Normally Open (SPST), rated 5A/250V AC.
+   **low-power pumps with low inrush** (e.g. 6–28W ECM with an inrush
+   limiter), the NORVI relays can be wired directly. They are Normally
+   Open (SPST), rated 5A/250V AC.
 
    L (mains) ─── RCD ─── MCB ──┬── NORVI COM0 ── NO0 ── Load
                                 └── NORVI COM2 ── NO2 ── Load
    N (neutral) ───────────────────────── Neutral bar ── Load N
 
-   > **For pumps >100W or without RC snubber:** Use external contactors
-   > as shown above. Direct wiring of motor loads will eventually weld
-   > the relay contacts.
+   > **For pumps (motor loads):** Use external contactors as shown above.
+   > Direct wiring of motor loads will eventually weld the relay
+   > contacts; an RC snubber does not prevent this.
 
    ── Field report ─────────────────────────────────────────────────────
 
@@ -277,9 +278,9 @@ to the default device index.
    welded contact — the relay clicked audibly but the NO contact never
    opened. Subsequent rewiring to R5 (GPIO33) failed identically. R0
    (GPIO14, pool pump) continued working (different motor characteristic).
-   The pump is now configured for R2 (GPIO13). An RC snubber (100nF + 100Ω,
-   X2-rated capacitor) is recommended across relay contacts for ECM
-   capacitive inrush protection.
+   The pump is now configured for R2 (GPIO13). A contactor (or inrush
+   limiter) is recommended for this load — an RC snubber across the
+   relay contacts does not prevent capacitive-inrush welding.
 
    ⚡ Relay polarity: Unlike standard external relay modules (which are
    typically active-LOW: LOW = ON, HIGH = OFF), the NORVI AE01-R built-in

@@ -17,8 +17,12 @@ menu:
 > kurzzeitig einen hohen Ladestrom (10–20A für Mikrosekunden) ziehen.
 > Über viele Schaltzyklen kann dieser kapazitive Einschaltstrom
 > Relaiskontakte mikro-verschweißen. Ein **RC-Snubber** (100nF + 100Ω,
-> **X2-Kondensator**) parallel zum Relaiskontakt unterdrückt diesen
-> Effekt und ist für Lasten <100W ausreichend — kein Schütz nötig.
+> **X2-Kondensator**) parallel zum Relaiskontakt dämpft Abschalt-
+> Transienten/Lichtbögen, begrenzt aber **nicht** den Einschaltstrom
+> beim Schließen — er kann das Verschweißen durch kapazitive Lasten
+> nicht verhindern. Für ECM-Pumpen die **Schütz-Schaltung** unten
+> verwenden oder einen Einschaltstrombegrenzer (NTC) / ein für
+> kapazitive Lasten ausgelegtes Relais.
 >
 > Die Schütz-Lösung ist für größere Pumpen (>300W) oder induktive
 > Lasten >2A Dauerstrom vorgesehen.

@@ -17,8 +17,10 @@ menu:
 > for microseconds) each time the relay closes. Over many cycles this
 > capacitive inrush can micro-weld relay contacts. An **RC snubber**
 > (100nF + 100Ω, **X2-rated capacitor**) across the relay contact
-> suppresses this effect and is sufficient for loads <100W — no contactor
-> required.
+> suppresses turn-off transients/arcs, but it does **not** limit the
+> closing inrush — it cannot prevent contact welding on capacitive
+> loads. For ECM pumps use the **contactor** wiring below, or an
+> inrush limiter (NTC) / a relay rated for capacitive loads.
 >
 > The contactor solution below is intended for larger pumps (>300W) or
 > inductive loads where running current exceeds 2A.
