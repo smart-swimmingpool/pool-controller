@@ -145,7 +145,7 @@ For maximum space saving:
 ```
  24V DC (+) ──┬── NORVI R0 COM ── NO ──┬── Contactor Pool A1 ── A2 ──┬── GND
               │                        │                            │
-              ├── NORVI R4 COM ── NO ──┤── Contactor Solar A1 ── A2 ──┤
+              ├── NORVI R2 COM ── NO ──┤── Contactor Solar A1 ── A2 ──┤
               │                        │                            │
               └───── NORVI 24V IN ─────┘                            │
                                                                     │
@@ -201,9 +201,9 @@ Always protect the 230V side with an RCD (30mA) and MCB (B10A or appropriate).
  **Step 1: 24V Control Circuit**
 
 1. **24V DC (+) to NORVI relay COM** — bridge from NORVI 24V terminal to
-   COM-R0 and COM-R4
+   COM-R0 and COM-R2
 2. **NORVI relay NO to contactor A1** — R0-NO → Pool contactor A1,
-   R4-NO → Solar contactor A1
+   R2-NO → Solar contactor A1
 3. **Contactor A2 to GND** — both A2 to GND bus
 4. **Flyback diode** — 1N4007 across A1/A2 of each contactor
    (cathode to A1, anode to A2)

@@ -58,7 +58,7 @@ pin mapping that avoids the occupied and input-only pins:
 | `PIN_DS_SOLAR`    |    **GPIO25**     | DS18B20 — Solar collector temperature        |       Expansion Port Pin 1       |
 | `PIN_DS_POOL`     |    **GPIO25**     | DS18B20 — Pool water temperature             | Shared bus on GPIO25 (expansion) |
 | `PIN_RELAY_POOL`  |  **GPIO14** (R0)  | Relay — Pool circulation pump                |          Relay Output 0          |
-| `PIN_RELAY_SOLAR` |  **GPIO2** (R4)   | Relay — Solar heating pump (moved: R1→R5→R4) |          Relay Output 4          |
+| `PIN_RELAY_SOLAR` |  **GPIO13** (R2)  | Relay — Solar heating pump (moved: R1→R5→R2) |          Relay Output 2          |
 | `PIN_LED_STATUS`  | **GPIO27** (T0.1) | Status LED (external, via transistor output) |      Transistor Output 0.1       |
 | `PIN_OLED_SDA`    |    **GPIO16**     | I2C SDA — built-in 0.96" OLED (SSD1306)      |          Internal (I2C)          |
 | `PIN_OLED_SCL`    |    **GPIO17**     | I2C SCL — built-in 0.96" OLED (SSD1306)      |          Internal (I2C)          |
@@ -233,17 +233,17 @@ to the default device index.
    ╚══════════════════════════════════════════════════════════════════════╝
 
    NORVI Relay Output 0 (GPIO14):   Control → Pool pump (via contactor or direct <100W)
-   NORVI Relay Output 4 (GPIO2):    Control → Solar pump (via contactor or direct with snubber)
+   NORVI Relay Output 2 (GPIO13):   Control → Solar pump (via contactor or direct with snubber)
 
    L (mains) ─── RCD ─── MCB ──┬── Relay COM0 ── NO0 ── Pump L
-                                └── Relay COM4 ── NO4 ── Pump L
+                                └── Relay COM2 ── NO2 ── Pump L
    N (neutral) ───────────────────────── Neutral bar ── Pump N
 
    ── Standard wiring (contactors) ─────────────────────────────────────
 
    24V DC (+) ──┬── NORVI R0 COM ── NO ──┬── Ext. Contactor Pool A1 ── A2 ──┬── GND
                  │                        │                                  │
-                 ├── NORVI R4 COM ── NO ──┤── Ext. Contactor Solar A1 ── A2 ──┤
+                 ├── NORVI R2 COM ── NO ──┤── Ext. Contactor Solar A1 ── A2 ──┤
                  │                        │                                  │
                  └───── NORVI 24V IN ─────┘                                  │
                                                                              │
@@ -277,7 +277,7 @@ to the default device index.
    welded contact — the relay clicked audibly but the NO contact never
    opened. Subsequent rewiring to R5 (GPIO33) failed identically. R0
    (GPIO14, pool pump) continued working (different motor characteristic).
-   The pump is now configured for R4 (GPIO2). An RC snubber (100nF + 100Ω,
+   The pump is now configured for R2 (GPIO13). An RC snubber (100nF + 100Ω,
    X2-rated capacitor) is recommended across relay contacts for ECM
    capacitive inrush protection.
 
@@ -377,7 +377,7 @@ ESP32 are both powered from this single supply.
 | **Relay power**  | 5V to relay module             | Integrated (24V → relay coils)                    |
 | **Relay polarity** | Active-LOW (LOW = ON)        | **Active-HIGH** (HIGH = ON)                       |
 | **Sensor pins**  | GPIO32, GPIO33            | GPIO25 (Exp Port), GPIO5 (solder)                 |
-| **Relay pins**   | GPIO25, GPIO26            | GPIO14 (R0), GPIO2 (R4)                           |
+| **Relay pins**   | GPIO25, GPIO26            | GPIO14 (R0), GPIO13 (R2)                          |
 | **Status LED**   | Built-in (GPIO2)          | External via GPIO27 (T0.1)                        |
 | **OLED display** | None                      | Built-in 0.96" (SSD1306) — 4 info pages + QR code |
 | **Push buttons** | BOOT button (GPIO0)       | 3 front buttons — cycle pages & modes             |
@@ -432,12 +432,12 @@ pio run -e norvi_ae01_r -t uploadfs
 | :----: | -------------------------------------- | :--------------------------: |
 |   0    | NRST (outputs PWM at boot)             |              ❌              |
 |   1    | RS-485 TX (shared with USB)            |              ❌              |
-| **2**  | **Relay Output 4 / Built-in LED**        |   ✅ **Solar pump (R4)**     |
+| **2**  | **Relay Output 4 / Built-in LED**        |              ❌              |
 |   3    | RS-485 RX (shared with USB)            |              ❌              |
 |   4    | RS-485 Flow Control                    |              ❌              |
 | **5**  | **— (free GPIO, no NORVI peripheral)** | ✅ **DS18B20 Pool (solder)** |
-|   12   | Relay Output 1 (welded — use R4 instead) |              ❌              |
-|   13   | Relay Output 2                         |              ❌              |
+|   12   | Relay Output 1 (welded — use R2 instead) |              ❌              |
+| **13** | **Relay Output 2**                     |   ✅ **Solar pump (R2)**      |
 |   14   | **Relay Output 0**                     |         ✅ Pool pump         |
 |   15   | Relay Output 3                         |              ❌              |
 |   16   | **I2C SDA** (OLED display)             |       ✅ OLED display        |

@@ -83,11 +83,11 @@ constexpr std::uint8_t PIN_RELAY_POOL{14};
 /**
  * @brief Relay control pin — solar heating pump.
  *
- * Relay Output 4 (GPIO2, R4) — moved from R5 (GPIO33) to keep R5 free.
+ * Relay Output 2 (GPIO13, R2) — moved from R5 (GPIO33) to keep R5 free.
  * R1 (GPIO12) is blocked by static_assert: that channel had a welded
  * contact under this pump load (capacitive inrush from ECM pump).
  */
-constexpr std::uint8_t PIN_RELAY_SOLAR{2};
+constexpr std::uint8_t PIN_RELAY_SOLAR{13};
 static_assert(PIN_RELAY_SOLAR != 12,
   "PIN_RELAY_SOLAR must not be reverted to GPIO12 (Relay Output 1) — "
   "that channel had a welded contact under this pump load.");

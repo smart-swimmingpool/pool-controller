@@ -149,7 +149,7 @@ Wenn du maximale Platzersparnis brauchst:
 ```
 24V DC (+) ──┬── NORVI R0 COM ── NO ──┬── Schütz Pool A1 ── A2 ──┬── GND
              │                        │                          │
-             ├── NORVI R4 COM ── NO ──┤── Schütz Solar A1 ── A2 ──┤
+             ├── NORVI R2 COM ── NO ──┤── Schütz Solar A1 ── A2 ──┤
              │                        │                          │
              └───── NORVI 24V IN ─────┘                          │
                                                           │
@@ -211,9 +211,9 @@ Amazon.
 **Schritt 1: 24V-Steuerkreis**
 
 1. **24V DC (+) an NORVI-Relais COM** — Brücken von NORVI-24V-Klemme zu
-   COM-R0 und COM-R4
+   COM-R0 und COM-R2
 2. **NORVI-Relais NO an Schütz-A1** — jeweils R0-NO → Schütz Pool A1,
-   R4-NO → Schütz Solar A1
+   R2-NO → Schütz Solar A1
 3. **Schütz-A2 an GND** — beide A2 auf GND-Sammelschiene
 4. **Freilaufdiode** — 1N4007 parallel zu A1/A2 jedes Schützes
    (Kathode an A1, Anode an A2)

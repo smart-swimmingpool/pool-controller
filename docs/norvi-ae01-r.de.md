@@ -59,7 +59,7 @@ Pinbelegung ausgewählt, die die belegten und reinen-Eingang-Pins vermeidet:
 | `PIN_DS_SOLAR`    |    **GPIO25**     | DS18B20 — Solar-Kollektortemperatur         |          Erweiterungsport Pin 1          |
 | `PIN_DS_POOL`     |    **GPIO25**     | DS18B20 — Pool-Wassertemperatur             | Shared Bus auf GPIO25 (Erweiterungsport) |
 | `PIN_RELAY_POOL`  |  **GPIO14** (R0)  | Relais — Pool-Umwälzpumpe                   |             Relaisausgang 0              |
-| `PIN_RELAY_SOLAR` |  **GPIO2** (R4)   | Relais — Solarheizungspumpe (R1→R5→R4)       |             Relaisausgang 4              |
+| `PIN_RELAY_SOLAR` |  **GPIO13** (R2)  | Relais — Solarheizungspumpe (R1→R5→R2)      |             Relaisausgang 2              |
 | `PIN_LED_STATUS`  | **GPIO27** (T0.1) | Status-LED (extern, über Transistorausgang) |          Transistorausgang 0.1           |
 | `PIN_OLED_SDA`    |    **GPIO16**     | I2C SDA — eingebautes 0,96" OLED (SSD1306)  |               Intern (I2C)               |
 | `PIN_OLED_SCL`    |    **GPIO17**     | I2C SCL — eingebautes 0,96" OLED (SSD1306)  |               Intern (I2C)               |
@@ -232,17 +232,17 @@ kommt zum Einsatz.
    ╚══════════════════════════════════════════════════════════════════════╝
 
    NORVI Relaisausgang 0 (GPIO14):  Steuerung → Pool-Pumpe (via Schütz oder direkt <100W)
-   NORVI Relaisausgang 4 (GPIO2):   Steuerung → Solar-Pumpe (via Schütz oder direkt mit Snubber)
+   NORVI Relaisausgang 2 (GPIO13):  Steuerung → Solar-Pumpe (via Schütz oder direkt mit Snubber)
 
    L (Außenleiter) ─── RCD ─── MCB ──┬── Relais COM0 ── Pumpe L
-                                      └── Relais COM4 ── Pumpe L
+                                      └── Relais COM2 ── Pumpe L
    N (Neutral) ──────────────────────────── Neutralleiter ── Pumpen N
 
    ── Standard-Verdrahtung (mit Schützen) ─────────────────────────────
 
    24V DC (+) ──┬── NORVI R0 COM ── NO ──┬── Ext. Schütz Pool A1 ── A2 ──┬── GND
                  │                        │                               │
-                 ├── NORVI R4 COM ── NO ──┤── Ext. Schütz Solar A1 ── A2 ──┤
+                 ├── NORVI R2 COM ── NO ──┤── Ext. Schütz Solar A1 ── A2 ──┤
                  │                        │                               │
                  └───── NORVI 24V IN ─────┘                               │
                                                                           │
@@ -276,8 +276,8 @@ kommt zum Einsatz.
    einen verschweißten Kontakt — Relais hörbar, aber NO-Kontakt öffnete
    nie. Umverdrahtung auf R5 (GPIO33) zeigte denselben Fehler. R0
    (GPIO14, Poolpumpe) lief weiter (andere Motorkennlinie). Die
-   Solarpumpe ist jetzt auf R4 (GPIO2) konfiguriert. Ein RC-Snubber
-   (100nF + 100Ω, X2-Kondensator) wird parallel zu den R4-Kontakten
+   Solarpumpe ist jetzt auf R2 (GPIO13) konfiguriert. Ein RC-Snubber
+   (100nF + 100Ω, X2-Kondensator) wird parallel zu den R2-Kontakten
    empfohlen. Im Gegensatz zu externen Relaismodulen (die
    typischerweise
    active-LOW sind: LOW = EIN, HIGH = AUS) sind die eingebauten NORVI-Relais
@@ -378,7 +378,7 @@ der ESP32 werden gemeinsam aus dieser Spannung versorgt.
 | **Relais-Strom** | 5V an Relaismodul             | Integriert (24V → Relaisspulen)                     |
 | **Relais-Polarität** | Active-LOW (LOW = EIN)   | **Active-HIGH** (HIGH = EIN)                        |
 | **Sensor-Pins**  | GPIO32, GPIO33           | GPIO25 (Exp Port), GPIO5 (löten)                    |
-| **Relais-Pins**  | GPIO25, GPIO26           | GPIO14 (R0), GPIO2 (R4)                             |
+| **Relais-Pins**  | GPIO25, GPIO26           | GPIO14 (R0), GPIO13 (R2)                            |
 | **Status-LED**   | Eingebaut (GPIO2)        | Extern über GPIO27 (T0.1)                           |
 | **OLED-Display** | Keines                   | Eingebaut 0,96" (SSD1306) — 4 Info-Seiten + QR-Code |
 | **Drucktaster**  | BOOT-Taster (GPIO0)      | 3 Fronttaster — Seiten & Modi                       |
@@ -434,12 +434,12 @@ pio run -e norvi_ae01_r -t uploadfs
 | :----: | ------------------------------------------ | :--------------------------: |
 |   0    | NRST (PWM beim Boot)                       |              ❌              |
 |   1    | RS-485 TX (mit USB geteilt)                |              ❌              |
-| **2**  | **Relaisausgang 4 / Eingebaute LED**     |   ✅ **Solar-Pumpe (R4)**    |
+| **2**  | **Relaisausgang 4 / Eingebaute LED**    |              ❌              |
 |   3    | RS-485 RX (mit USB geteilt)                |              ❌              |
 |   4    | RS-485 Flusskontrolle                      |              ❌              |
 | **5**  | **— (freier GPIO, kein NORVI-Peripherie)** | ✅ **DS18B20 Pool (löten)**  |
-|   12   | Relaisausgang 1 (verschweißt — R4 verwenden) |              ❌              |
-|   13   | Relaisausgang 2                            |              ❌              |
+|   12   | Relaisausgang 1 (verschweißt — R2 verwenden) |              ❌              |
+| **13** | **Relaisausgang 2**                        |   ✅ **Solar-Pumpe (R2)**    |
 |   14   | **Relaisausgang 0**                        |        ✅ Pool-Pumpe         |
 |   15   | Relaisausgang 3                            |              ❌              |
 |   16   | **I2C SDA** (OLED-Display)                 |       ✅ OLED-Display        |
