@@ -158,7 +158,26 @@ void DegradationManager::onTransition() {
     break;
 
   case DegradationLevel::CRITICAL:
-    LOG_ERROR("✖ CRITICAL: Multiple system failures detected!\n");
+    // Log the concrete reason for entering safe mode. Priority mirrors
+    // evaluateLevel(): forced (boot-loop) > low memory > multiple failures.
+    if (forcedSafeMode_) {
+      LOG_ERROR("✖ SAFE MODE — reason: boot-loop detected (safe mode forced)\n");
+    } else if (!SystemMonitor::isHealthy()) {
+      LOG_ERROR("✖ SAFE MODE — reason: critically low free heap (%.1f KB)\n", ESP.getFreeHeap() / 1024.0f);
+    } else {
+      LOG_ERROR("✖ SAFE MODE — reason: multiple concurrent failures\n");
+      if (!NetworkManager::isWiFiConnected()) {
+        LOG_ERROR("    - WiFi/MQTT disconnected\n");
+      }
+      // NTP loss while WiFi is down is a consequence, not an independent
+      // failure — mirror the counting logic in evaluateLevel().
+      if (NetworkManager::isWiFiConnected() && getTimeDegradation() == TimeDegradation::RED) {
+        LOG_ERROR("    - NTP time sync lost\n");
+      }
+      if (sensorsEverReported_ && !(poolSensorOk_ && solarSensorOk_)) {
+        LOG_ERROR("    - temperature sensor fault\n");
+      }
+    }
     LOG_ERROR("  Entering safe mode — all relays off\n");
     // De-energize both relays immediately (P1 review fix)
     poolPumpNode.setSwitch(false);
