@@ -117,6 +117,18 @@ private:
    */
   static Button detectButton(uint16_t raw);
 
+  /**
+   * @brief Fire the short-press callback once the debounce interval elapsed.
+   * Runs on every sample once a press is pending — including while the ADC
+   * re-stabilizes after a release — so a short press is not swallowed by
+   * the release stabilization path.
+   */
+  static void evaluateShortPress(uint32_t now);
+
+  /// Fires the long-press callback once after LONG_PRESS_MS.
+  /// @return true if the callback consumed the press (skip short press).
+  static bool evaluateLongPress(uint32_t now);
+
   /// Debounce interval (ms) — ignores samples within this window.
   static constexpr uint32_t DEBOUNCE_MS{80};
 
@@ -153,6 +165,11 @@ private:
 
   /// Timestamp when the current button was first pressed.
   static uint32_t pressStartMs_;
+
+  /// Timestamp when a confirmed press was first observed released (ms).
+  /// Non-zero while the release is being debounced; the release is
+  /// committed to `currentButton_` after DEBOUNCE_MS.
+  static uint32_t releasePendingMs_;
 
   // ── ADC thresholds (12-bit, 0–4095) ──────────────────────────────────
   // These are typical ranges for the NORVI AE01-R resistor ladder.

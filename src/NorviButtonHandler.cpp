@@ -31,6 +31,15 @@ uint32_t NorviButtonHandler::lastChangeMs_ = 0;
 uint32_t NorviButtonHandler::lastSampleMs_ = 0;
 uint16_t NorviButtonHandler::lastRaw_ = 0;
 
+// ADC Filtering: moving average over 5 samples (250ms window) with
+// fast-attack re-initialization — a genuine press/release jumps the
+// window immediately instead of waiting for the average to catch up.
+static constexpr uint8_t ADC_FILTER_SIZE = 5;
+static uint16_t adcSamples_[ADC_FILTER_SIZE] = {0};
+static uint8_t adcSampleIndex_ = 0;
+static uint32_t lastFilteredAdcTime_ = 0;
+static uint16_t lastFilteredAdc_ = 0;
+
 NorviButtonHandler::ButtonCallback NorviButtonHandler::cbButton1_ = nullptr;
 NorviButtonHandler::ButtonCallback NorviButtonHandler::cbButton2_ = nullptr;
 NorviButtonHandler::ButtonCallback NorviButtonHandler::cbButton3_ = nullptr;
@@ -40,6 +49,7 @@ NorviButtonHandler::ButtonLongPressCallback NorviButtonHandler::cbButton2Long_ =
 NorviButtonHandler::ButtonLongPressCallback NorviButtonHandler::cbButton3Long_ = nullptr;
 
 uint32_t NorviButtonHandler::pressStartMs_ = 0;
+uint32_t NorviButtonHandler::releasePendingMs_ = 0;
 
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -72,14 +82,133 @@ void NorviButtonHandler::loop() {
   lastSampleMs_ = now;
 
   // Read ADC
-  lastRaw_ = analogRead(PIN_BUTTON_ADC);
-  Button detected = detectButton(lastRaw_);
+  uint16_t rawAdc = analogRead(PIN_BUTTON_ADC);
 
-  // Add debug logging for ADC changes
+  // Enhanced ADC stability check: only accept values that are stable for 150ms
+  static uint16_t lastStableAdc_ = 0;
+  static uint32_t lastStableTime_ = 0;
+
+  // Fast-attack: a genuine press/release changes the button range — even
+  // when the ADC delta is small (no-press 3800 → S3 3700 = 100). Base the
+  // re-initialization on button-range transitions so every valid press is
+  // caught within one sample instead of a full moving-average window. The
+  // transition also restarts the stability window, so a single-sample glitch
+  // crossing an adjacent range boundary (e.g. 3800 → 3700, delta 100) cannot
+  // be accepted immediately — it must hold for the full stability period.
+  Button rawButton = detectButton(rawAdc);
+  if (rawButton != detectButton(lastFilteredAdc_)) {
+    for (uint8_t i = 0; i < ADC_FILTER_SIZE; i++) {
+      adcSamples_[i] = rawAdc;
+    }
+    adcSampleIndex_ = 0;
+    lastStableTime_ = now;
+
+    if (releasePendingMs_ != 0) {
+      // A press transition interrupts a pending release. If the release
+      // already persisted for the debounce interval, commit it so the new
+      // press is tracked as a fresh tap; otherwise treat it as bounce.
+      if (rawButton != Button::NONE && (now - releasePendingMs_ >= DEBOUNCE_MS)) {
+        currentButton_ = Button::NONE;
+        lastChangeMs_ = now;
+        pressStartMs_ = 0;
+        LOG_DEBUG("Button released: %d\n", static_cast<int>(currentButton_));
+      }
+      releasePendingMs_ = 0;
+    }
+
+    // Release observation: a confirmed press released into the no-press
+    // range is committed after DEBOUNCE_MS instead of the full stability
+    // window, so rapid consecutive taps are not merged into one press.
+    if (currentButton_ != Button::NONE && rawButton == Button::NONE) {
+      releasePendingMs_ = now;
+    }
+  }
+
+  // Commit a confirmed release once it has persisted for the debounce
+  // interval. Runs before the stability gates so it is not delayed by the
+  // press-stability window.
+  if (releasePendingMs_ != 0 && (now - releasePendingMs_ >= DEBOUNCE_MS)) {
+    currentButton_ = Button::NONE;
+    lastChangeMs_ = now;
+    pressStartMs_ = 0;
+    releasePendingMs_ = 0;
+    LOG_DEBUG("Button released: %d\n", static_cast<int>(currentButton_));
+  }
+
+  // Store sample for filtering
+  adcSamples_[adcSampleIndex_] = rawAdc;
+  adcSampleIndex_ = (adcSampleIndex_ + 1) % ADC_FILTER_SIZE;
+
+  // Calculate moving average
+  uint32_t sum = 0;
+  for (uint8_t i = 0; i < ADC_FILTER_SIZE; i++) {
+    sum += adcSamples_[i];
+  }
+  uint16_t filteredAdc = static_cast<uint16_t>(sum / ADC_FILTER_SIZE);
+  lastFilteredAdc_ = filteredAdc;
+  lastFilteredAdcTime_ = now;
+
+  if (abs(static_cast<int>(filteredAdc) - static_cast<int>(lastStableAdc_)) > 100) {
+    // Significant change detected - reset stability timer
+    lastStableAdc_ = filteredAdc;
+    lastStableTime_ = now;
+    lastRaw_ = filteredAdc;
+    Button detected = detectButton(filteredAdc);
+
+    // Debug logging for ADC changes
+    static uint16_t lastDebugAdc_ = 0xFFFF;
+    if (abs(static_cast<int>(filteredAdc) - static_cast<int>(lastDebugAdc_)) > 100) {
+      LOG_DEBUG("ADC: raw=%u filtered=%u → %d | THRESH: BTN1=%u-%u BTN2=%u-%u BTN3=%u-%u NO_PRESS=%u\n", rawAdc, filteredAdc,
+        static_cast<int>(detected), THRESH_BTN1_MIN, THRESH_BTN1_MAX, THRESH_BTN2_MIN, THRESH_BTN2_MAX, THRESH_BTN3_MIN,
+        THRESH_BTN3_MAX, THRESH_NO_PRESS);
+      lastDebugAdc_ = filteredAdc;
+    }
+    // A pending short press may complete even while the signal changes —
+    // evaluate the debounce on this reading too. A long-press callback may
+    // also be due, so check it first (it consumes the press on success).
+    if (evaluateLongPress(now)) {
+      return;
+    }
+    evaluateShortPress(now);
+    return;
+  }
+
+  if (now - lastStableTime_ < 150) {
+    // Not stable yet - ignore this reading
+    lastRaw_ = filteredAdc;
+    Button detected = Button::NONE;
+
+    // Debug logging for unstable ADC
+    static uint16_t lastDebugAdc_ = 0xFFFF;
+    if (abs(static_cast<int>(filteredAdc) - static_cast<int>(lastDebugAdc_)) > 100) {
+      LOG_DEBUG("ADC UNSTABLE: filtered=%u (waiting for stability)\n", filteredAdc);
+      lastDebugAdc_ = filteredAdc;
+    }
+    // Let a pending debounce complete while the ADC re-stabilizes (e.g.
+    // after a release) — otherwise a short press never fires its callback.
+    // Evaluate long presses here too: a held button spends most samples in
+    // this wait, and a release at the LONG_PRESS_MS mark must not swallow
+    // the callback (e.g. S3 save-and-reboot after a full 2s hold).
+    if (evaluateLongPress(now)) {
+      return;
+    }
+    evaluateShortPress(now);
+    return;
+  }
+
+  // ADC is stable - use filtered value
+  lastStableAdc_ = filteredAdc;
+  lastStableTime_ = now;
+  lastRaw_ = filteredAdc;
+  Button detected = detectButton(filteredAdc);
+
+  // Enhanced debug logging for ADC changes
   static uint16_t lastDebugAdc_ = 0xFFFF;
-  if (abs(static_cast<int>(lastRaw_) - static_cast<int>(lastDebugAdc_)) > 50) {
-    LOG_DEBUG("ADC: %u → %d\n", lastDebugAdc_, static_cast<int>(detected));
-    lastDebugAdc_ = lastRaw_;
+  if (abs(static_cast<int>(filteredAdc) - static_cast<int>(lastDebugAdc_)) > 100) {
+    LOG_DEBUG("ADC: raw=%u filtered=%u → %d | THRESH: BTN1=%u-%u BTN2=%u-%u BTN3=%u-%u NO_PRESS=%u\n", rawAdc, filteredAdc,
+      static_cast<int>(detected), THRESH_BTN1_MIN, THRESH_BTN1_MAX, THRESH_BTN2_MIN, THRESH_BTN2_MAX, THRESH_BTN3_MIN,
+      THRESH_BTN3_MAX, THRESH_NO_PRESS);
+    lastDebugAdc_ = filteredAdc;
   }
 
   // ── Press start tracking ─────────────────────────────────────────────
@@ -89,40 +218,68 @@ void NorviButtonHandler::loop() {
 
     if (detected != Button::NONE) {
       pressStartMs_ = now;  // Button was just pressed
+      LOG_DEBUG("Button pressed: %d\n", static_cast<int>(detected));
     } else {
       pressStartMs_ = 0;  // Button released
+      LOG_DEBUG("Button released: %d\n", static_cast<int>(currentButton_));
     }
     return;
   }
 
   // ── Long-press detection (fire once after LONG_PRESS_MS) ─────────────
-  if (currentButton_ != Button::NONE && pressStartMs_ > 0 && (now - pressStartMs_ >= LONG_PRESS_MS)) {
-    pressStartMs_ = 0;  // Prevent re-firing
-
-    // Fire long-press callbacks; skip short-press if callback consumed it
-    switch (currentButton_) {
-    case Button::ONE:
-      if (cbButton1Long_ && cbButton1Long_()) {
-        return;
-      }
-      break;
-    case Button::TWO:
-      if (cbButton2Long_ && cbButton2Long_()) {
-        return;
-      }
-      break;
-    case Button::THREE:
-      if (cbButton3Long_ && cbButton3Long_()) {
-        return;
-      }
-      break;
-    default:
-      break;
-    }
+  if (evaluateLongPress(now)) {
+    return;  // Long-press callback consumed the press
   }
 
   // ── Short-press detection ────────────────────────────────────────────
-  // Debounce: only register a change if it persists for DEBOUNCE_MS
+  // Debounce: only register a change if it persists for DEBOUNCE_MS.
+  // Also evaluated on unstable/significant-change readings (see above) so
+  // a release during re-stabilization cannot swallow the callback.
+  evaluateShortPress(now);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════════════════
+
+float NorviButtonHandler::getLongPressProgress() {
+  if (currentButton_ == Button::NONE || pressStartMs_ == 0) {
+    return 0.0f;
+  }
+  uint32_t elapsed = millis() - pressStartMs_;
+  if (elapsed >= LONG_PRESS_MS) {
+    return 1.0f;
+  }
+  return static_cast<float>(elapsed) / static_cast<float>(LONG_PRESS_MS);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+
+NorviButtonHandler::Button NorviButtonHandler::detectButton(uint16_t raw) {
+  // Use the supplied ADC value for detection.
+  uint16_t adcValue = raw;
+
+  if (adcValue >= THRESH_NO_PRESS) {
+    return Button::NONE;
+  }
+
+  if (adcValue >= THRESH_BTN1_MIN && adcValue <= THRESH_BTN1_MAX) {
+    return Button::ONE;
+  }
+
+  if (adcValue >= THRESH_BTN2_MIN && adcValue <= THRESH_BTN2_MAX) {
+    return Button::TWO;
+  }
+
+  if (adcValue >= THRESH_BTN3_MIN && adcValue <= THRESH_BTN3_MAX) {
+    return Button::THREE;
+  }
+
+  return Button::NONE;
+}
+
+void NorviButtonHandler::evaluateShortPress(uint32_t now) {
+  // Debounce: only register a change if it persists for DEBOUNCE_MS.
   if (stableButton_ != currentButton_ && (now - lastChangeMs_ >= DEBOUNCE_MS)) {
     stableButton_ = currentButton_;
 
@@ -146,41 +303,34 @@ void NorviButtonHandler::loop() {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
+bool NorviButtonHandler::evaluateLongPress(uint32_t now) {
+  // Fire the long-press callback once after LONG_PRESS_MS.
+  if (currentButton_ != Button::NONE && pressStartMs_ > 0 && (now - pressStartMs_ >= LONG_PRESS_MS)) {
+    pressStartMs_ = 0;  // Prevent re-firing
 
-// ═══════════════════════════════════════════════════════════════════════════
-
-float NorviButtonHandler::getLongPressProgress() {
-  if (currentButton_ == Button::NONE || pressStartMs_ == 0) {
-    return 0.0f;
+    // Fire long-press callbacks; report whether the callback consumed the
+    // press (short press must then be skipped).
+    switch (currentButton_) {
+    case Button::ONE:
+      if (cbButton1Long_ && cbButton1Long_()) {
+        return true;
+      }
+      break;
+    case Button::TWO:
+      if (cbButton2Long_ && cbButton2Long_()) {
+        return true;
+      }
+      break;
+    case Button::THREE:
+      if (cbButton3Long_ && cbButton3Long_()) {
+        return true;
+      }
+      break;
+    default:
+      break;
+    }
   }
-  uint32_t elapsed = millis() - pressStartMs_;
-  if (elapsed >= LONG_PRESS_MS) {
-    return 1.0f;
-  }
-  return static_cast<float>(elapsed) / static_cast<float>(LONG_PRESS_MS);
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-
-NorviButtonHandler::Button NorviButtonHandler::detectButton(uint16_t raw) {
-  if (raw >= THRESH_NO_PRESS) {
-    return Button::NONE;
-  }
-
-  if (raw >= THRESH_BTN1_MIN && raw <= THRESH_BTN1_MAX) {
-    return Button::ONE;
-  }
-
-  if (raw >= THRESH_BTN2_MIN && raw <= THRESH_BTN2_MAX) {
-    return Button::TWO;
-  }
-
-  if (raw >= THRESH_BTN3_MIN && raw <= THRESH_BTN3_MAX) {
-    return Button::THREE;
-  }
-
-  return Button::NONE;
+  return false;
 }
 
 }  // namespace PoolController
