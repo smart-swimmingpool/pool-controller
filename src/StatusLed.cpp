@@ -30,8 +30,9 @@ int8_t StatusLed::warnPin_ = PIN_LED_WARN;
 // ── Initialisierung ────────────────────────────────────────────────────────
 
 void StatusLed::begin() {
-  // Modellunabhängiger Pin — überschreibe Config.hpp-Default, falls die
-  // Platform einen spezifischen LED_BUILTIN definiert.
+  // Reload from config — handles board-specific overrides (e.g. NORVI GPIO27).
+  ledPin_ = PIN_LED_STATUS;
+
 #ifdef LED_BUILTIN
   // Override Config.hpp default only when it uses the generic value (GPIO2),
   // meaning no board-specific config set a different pin.  This lets NORVI

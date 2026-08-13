@@ -83,31 +83,14 @@ constexpr std::uint8_t PIN_RELAY_POOL{14};
 /**
  * @brief Relay control pin — solar heating pump.
  *
- * Moved from Relay Output 1 (GPIO12) to Relay Output 5 (GPIO33): a field
- * unit's R1 channel was found to be permanently conducting (relay audibly
- * clicks on setSwitch(), but COM1/NO1 never opens) — a hardware fault
- * (welded/fused contact or NO/NC miswiring), not a firmware issue: R0 uses
- * the identical RelayModuleNode logic and switches correctly. R5/GPIO33 is
- * otherwise unused on NORVI builds.
- *
- * @note When changing the relay output for the solar pump (e.g. from R1 to R5),
- *       the NVS state ("solar-pump"/"switch") from the previous relay pin
- *       carries over and may cause the new relay to energize at boot. The
- *       RelayModuleNode::begin() safe-start sequence mitigates this by forcing
- *       the GPIO to OFF before enabling output, then transitioning to the
- *       persisted state. If the pump runs despite the controller showing OFF
- *       after a pin change, clear NVS manually:
- *         pio run -e norvi_ae01_r -t exec -- prefs erase solar-pump
- *       Or add a one-time NVS clear by calling preferences.clear() on the
- *       "solar-pump" namespace during the migration boot.
+ * Relay Output 2 (GPIO13, R2) — moved from R5 (GPIO33) to keep R5 free.
+ * R1 (GPIO12) is blocked by static_assert: that channel had a welded
+ * contact under this pump load (capacitive inrush from ECM pump).
  */
-constexpr std::uint8_t PIN_RELAY_SOLAR{33};
+constexpr std::uint8_t PIN_RELAY_SOLAR{13};
 static_assert(PIN_RELAY_SOLAR != 12,
-  "PIN_RELAY_SOLAR must not be reverted to GPIO12 (Relay Output 1) without "
-  "confirming the field hardware fault is resolved — see the doc comment "
-  "above and docs/norvi-ae01-r.md for context. R1 was found permanently "
-  "conducting (welded/fused contact or NO/NC miswiring) on at least one "
-  "field unit; Relay Output 0 uses identical firmware logic and works.");
+  "PIN_RELAY_SOLAR must not be reverted to GPIO12 (Relay Output 1) — "
+  "that channel had a welded contact under this pump load.");
 /** @brief Status LED — external LED via transistor output 0.1 (open-collector, 100 mA max). */
 constexpr std::uint8_t PIN_LED_STATUS{27};
 /** @brief Optional warning LED — not used on NORVI. */
