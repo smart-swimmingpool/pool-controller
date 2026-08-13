@@ -169,7 +169,9 @@ void DegradationManager::onTransition() {
       if (!NetworkManager::isWiFiConnected()) {
         LOG_ERROR("    - WiFi/MQTT disconnected\n");
       }
-      if (getTimeDegradation() == TimeDegradation::RED) {
+      // NTP loss while WiFi is down is a consequence, not an independent
+      // failure — mirror the counting logic in evaluateLevel().
+      if (NetworkManager::isWiFiConnected() && getTimeDegradation() == TimeDegradation::RED) {
         LOG_ERROR("    - NTP time sync lost\n");
       }
       if (sensorsEverReported_ && !(poolSensorOk_ && solarSensorOk_)) {
