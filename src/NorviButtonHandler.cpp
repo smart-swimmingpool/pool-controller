@@ -83,15 +83,23 @@ void NorviButtonHandler::loop() {
   // Read ADC
   uint16_t rawAdc = analogRead(PIN_BUTTON_ADC);
 
+  // Enhanced ADC stability check: only accept values that are stable for 150ms
+  static uint16_t lastStableAdc_ = 0;
+  static uint32_t lastStableTime_ = 0;
+
   // Fast-attack: a genuine press/release changes the button range — even
   // when the ADC delta is small (no-press 3800 → S3 3700 = 100). Base the
   // re-initialization on button-range transitions so every valid press is
-  // caught within one sample instead of a full moving-average window.
+  // caught within one sample instead of a full moving-average window. The
+  // transition also restarts the stability window, so a single-sample glitch
+  // crossing an adjacent range boundary (e.g. 3800 → 3700, delta 100) cannot
+  // be accepted immediately — it must hold for the full stability period.
   if (detectButton(rawAdc) != detectButton(lastFilteredAdc_)) {
     for (uint8_t i = 0; i < ADC_FILTER_SIZE; i++) {
       adcSamples_[i] = rawAdc;
     }
     adcSampleIndex_ = 0;
+    lastStableTime_ = now;
   }
 
   // Store sample for filtering
@@ -106,10 +114,6 @@ void NorviButtonHandler::loop() {
   uint16_t filteredAdc = static_cast<uint16_t>(sum / ADC_FILTER_SIZE);
   lastFilteredAdc_ = filteredAdc;
   lastFilteredAdcTime_ = now;
-
-  // Enhanced ADC stability check: only accept values that are stable for 150ms
-  static uint16_t lastStableAdc_ = 0;
-  static uint32_t lastStableTime_ = 0;
 
   if (abs(static_cast<int>(filteredAdc) - static_cast<int>(lastStableAdc_)) > 100) {
     // Significant change detected - reset stability timer
