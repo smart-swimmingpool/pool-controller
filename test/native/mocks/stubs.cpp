@@ -92,10 +92,20 @@ uint8_t getTimeDegradationRedHours() {
   return 24;
 }
 
+// Controllable mock clock for timer-window tests. Defaults to epoch 0
+// (1970-01-01 00:00 UTC) to preserve existing test behavior; tests that need
+// a specific wall-clock time call setMockTime() with an epoch built via
+// mktime() so the localtime_r() round-trip is host-timezone independent.
+static time_t g_mockTime = 0;
+
+void setMockTime(time_t t) {
+  g_mockTime = t;
+}
+
 time_t getTimeFor(int tzIndex, TimeChangeRule **tcr) {
   if (tcr)
     *tcr = nullptr;
-  return 0;
+  return g_mockTime;
 }
 String getTimeInfoFor(int) {
   return String("UTC");

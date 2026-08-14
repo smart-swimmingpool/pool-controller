@@ -217,12 +217,20 @@ protected:
       // Normalize extended end to 0-1439 for comparison with nowMinutes
       uint16_t normalizedEnd = _activeEndMinutes % 1440;
 
+      // The extended window wraps past midnight when the base timer crosses
+      // midnight OR when the temperature extension itself pushes the end past
+      // midnight (e.g. base 16:00-20:00 extended to 04:00 next day). Keying
+      // this check on the base timer alone was wrong: it reset the extension
+      // during the base window and the pump turned off at the base end.
+      bool windowWraps = crossesMidnight || (_activeEndMinutes >= 1440);
+
       bool inExtendedWindow;
-      if (crossesMidnight) {
+      if (windowWraps) {
         // Extended window with midnight crossing
         inExtendedWindow = (nowMinutes >= baseStartMinutes || nowMinutes <= normalizedEnd);
       } else {
-        inExtendedWindow = (nowMinutes < normalizedEnd);
+        // Same-day extended window
+        inExtendedWindow = (nowMinutes >= baseStartMinutes && nowMinutes < normalizedEnd);
       }
 
       if (inExtendedWindow) {
