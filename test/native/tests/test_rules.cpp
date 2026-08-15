@@ -8,6 +8,7 @@
 
 // Mock includes (these are picked up via -I mocks/)
 #include "Arduino.h"
+#include "ConfigManager.hpp"
 #include "Rule.hpp"
 #include "RuleAuto.hpp"
 #include "RuleManu.hpp"
@@ -40,11 +41,11 @@ public:
  * round-trip inside getCurrentDateTime() yields the same wall-clock time
  * regardless of the host timezone.
  */
-static void setWallClock(int hour, int min) {
+static void setWallClock(int hour, int min, int dayOffset = 0) {
   tm t = {};
   t.tm_year = 2026 - 1900;
   t.tm_mon = 5;  // June — avoids DST ambiguity
-  t.tm_mday = 15;
+  t.tm_mday = 15 + dayOffset;
   t.tm_hour = hour;
   t.tm_min = min;
   t.tm_sec = 0;
@@ -260,7 +261,7 @@ int run_rule_tests() {
       failed++;
     }
 
-    setWallClock(2, 0);  // 02:00 next day, still inside extended window
+    setWallClock(2, 0, 1);  // 02:00 next day, still inside extended window
     on = timer.checkPoolPumpTimer(40.0f);
     rc = (on) ? 0 : 1;
     if (rc == 0) {
@@ -271,7 +272,7 @@ int run_rule_tests() {
       failed++;
     }
 
-    setWallClock(4, 30);  // past extended end → extension expired
+    setWallClock(4, 30, 1);  // 04:30 next day → extension expired
     on = timer.checkPoolPumpTimer(40.0f);
     rc = (!on && timer.getActiveEndMinutes() == 0) ? 0 : 1;
     if (rc == 0) {
@@ -409,7 +410,7 @@ int run_rule_tests() {
       failed++;
     }
 
-    setWallClock(8, 0);  // after base end, inside extended window (until 09:00)
+    setWallClock(8, 0, 1);  // next day 08:00, inside extended window (until 09:00)
     on = timer.checkPoolPumpTimer(30.0f);
     rc = (on) ? 0 : 1;
     if (rc == 0) {
@@ -420,7 +421,7 @@ int run_rule_tests() {
       failed++;
     }
 
-    setWallClock(10, 0);  // past extended end → extension expired
+    setWallClock(10, 0, 1);  // next day 10:00 → extension expired
     on = timer.checkPoolPumpTimer(30.0f);
     rc = (!on) ? 0 : 1;
     if (rc == 0) {
@@ -432,6 +433,89 @@ int run_rule_tests() {
     }
 
     test_suite_end("PumpTimer::crossing_with_extension", rc == 0 ? 3 : 0, rc != 0 ? 1 : 0);
+  }
+
+  // ── Test: full-day extension (max runtime 1440) expires at the next cycle ──
+  // Base 16:00-20:00, pool 64.0°C, tempCircMaxRuntime = 1440:
+  //   extra = 40*30 = 1200, baseRuntime = 240, total = min(1440, 1440) = 1440
+  //   extended = 960 + 1440 = 2400 → 16:00 next day (full 24 h cycle)
+  // Regression: normalizedEnd (2400 % 1440 = 960) equals baseStartMinutes, so
+  // the old wrap predicate "now >= start || now <= start" was true at every
+  // minute — the extension never expired, even after the water cooled.
+  {
+    test_begin("PumpTimer", "full-day extension expires at next cycle");
+
+    PoolController::ConfigManager::getSettings().tempCircMaxRuntime = 1440;
+
+    PumpTimerHarness timer;
+    TimerSetting ts;
+    ts.timerStartHour = 16;
+    ts.timerStartMinutes = 0;
+    ts.timerEndHour = 20;
+    ts.timerEndMinutes = 0;
+    timer.setTimerSetting(ts);
+
+    int suiteFailed = 0;
+
+    setWallClock(18, 0);  // inside base window → full-day extension applied
+    bool on = timer.checkPoolPumpTimer(64.0f);
+    bool extSet = (timer.getActiveEndMinutes() == 2400);
+    rc = (on && extSet) ? 0 : 1;
+    suiteFailed |= rc;
+    if (rc == 0) {
+      test_pass(__FILE__, __LINE__);
+      passed++;
+    } else {
+      char msg[128];
+      snprintf(msg, sizeof(msg), "on=%d activeEnd=%u (expected 1 and 2400)", on, timer.getActiveEndMinutes());
+      test_fail(__FILE__, __LINE__, msg);
+      failed++;
+    }
+
+    setWallClock(10, 0, 1);  // next day 10:00 — still within the 24 h extension
+    on = timer.checkPoolPumpTimer(64.0f);
+    rc = (on) ? 0 : 1;
+    suiteFailed |= rc;
+    if (rc == 0) {
+      test_pass(__FILE__, __LINE__);
+      passed++;
+    } else {
+      test_fail(__FILE__, __LINE__, "Pump OFF at 10:00 — expected full-day extension active");
+      failed++;
+    }
+
+    setWallClock(16, 0, 1);  // next cycle start, water cooled below threshold
+    on = timer.checkPoolPumpTimer(20.0f);
+    bool reset = (timer.getActiveEndMinutes() == 1200);  // reset to base end
+    rc = (on && reset) ? 0 : 1;
+    suiteFailed |= rc;
+    if (rc == 0) {
+      test_pass(__FILE__, __LINE__);
+      passed++;
+    } else {
+      char msg[128];
+      snprintf(msg, sizeof(msg), "on=%d activeEnd=%u (expected 1 and 1200)", on, timer.getActiveEndMinutes());
+      test_fail(__FILE__, __LINE__, msg);
+      failed++;
+    }
+
+    setWallClock(22, 0, 1);  // next day 22:00 → extension must be gone
+    on = timer.checkPoolPumpTimer(20.0f);
+    rc = (!on && timer.getActiveEndMinutes() == 0) ? 0 : 1;
+    suiteFailed |= rc;
+    if (rc == 0) {
+      test_pass(__FILE__, __LINE__);
+      passed++;
+    } else {
+      char msg[128];
+      snprintf(msg, sizeof(msg), "on=%d activeEnd=%u (expected 0 and 0)", on, timer.getActiveEndMinutes());
+      test_fail(__FILE__, __LINE__, msg);
+      failed++;
+    }
+
+    PoolController::ConfigManager::getSettings().tempCircMaxRuntime = 720;
+
+    test_suite_end("PumpTimer::full_day_expiry", suiteFailed == 0 ? 4 : 0, suiteFailed != 0 ? 1 : 0);
   }
 
   return passed + failed;

@@ -54,7 +54,10 @@ public:
   /**
    * @brief Reset temperature-based runtime extension (call on mode change).
    */
-  void resetTemperatureExtension() { _activeEndMinutes = 0; }
+  void resetTemperatureExtension() {
+    _activeEndMinutes = 0;
+    _activeEndTime = 0;
+  }
 
   /**
    * @brief Get current temperature-extended end time in minutes since midnight.
@@ -195,14 +198,27 @@ protected:
       timerActive = (difftime(now, start) >= 0) && (difftime(now, end) <= 0);
     }
 
-    uint16_t nowMinutes = time.tm_hour * 60 + time.tm_min;
-
     // Step 1: If timer is active, apply temperature extension
     if (timerActive && poolTemp > 0.0f && poolTemp == poolTemp) {
       uint16_t extendedEnd = calculateEffectiveEndMinutes(baseStartMinutes, baseEndMinutes, poolTemp);
 
-      // Only extend, never shorten
-      if (extendedEnd > _activeEndMinutes) {
+      // Absolute expiry anchored to the current cycle's base start. Minutes
+      // since midnight alone cannot tell a wrap-past-midnight end apart from
+      // the next cycle's start — e.g. a full-day extension (max runtime 1440)
+      // ends exactly at the next base start and would otherwise never expire,
+      // keeping the pump on even after the water cools.
+      time_t cycleStart = start;
+      if (crossesMidnight && now < start) {
+        // Post-midnight part of a midnight-crossing window: the cycle started
+        // on the previous day.
+        cycleStart = start - 86400;
+      }
+      int totalRuntime = static_cast<int>(extendedEnd) - static_cast<int>(baseStartMinutes);
+      time_t expiry = cycleStart + static_cast<time_t>(totalRuntime) * 60;
+
+      // Only extend, never shorten (within the current cycle)
+      if (expiry > _activeEndTime) {
+        _activeEndTime = expiry;
         _activeEndMinutes = extendedEnd;
         uint8_t eh = (_activeEndMinutes / 60) % 24;
         uint8_t em = _activeEndMinutes % 60;
@@ -213,28 +229,10 @@ protected:
     }
 
     // Step 2: Check if we're within the extended window
-    if (_activeEndMinutes > 0) {
-      // Normalize extended end to 0-1439 for comparison with nowMinutes
-      uint16_t normalizedEnd = _activeEndMinutes % 1440;
-
-      // The extended window wraps past midnight when the base timer crosses
-      // midnight OR when the temperature extension itself pushes the end past
-      // midnight (e.g. base 16:00-20:00 extended to 04:00 next day). Keying
-      // this check on the base timer alone was wrong: it reset the extension
-      // during the base window and the pump turned off at the base end.
-      bool windowWraps = crossesMidnight || (_activeEndMinutes >= 1440);
-
-      bool inExtendedWindow;
-      if (windowWraps) {
-        // Extended window with midnight crossing
-        inExtendedWindow = (nowMinutes >= baseStartMinutes || nowMinutes <= normalizedEnd);
-      } else {
-        // Same-day extended window
-        inExtendedWindow = (nowMinutes >= baseStartMinutes && nowMinutes < normalizedEnd);
-      }
-
-      if (inExtendedWindow) {
+    if (_activeEndTime > 0) {
+      if (now < _activeEndTime) {
 #ifdef DEBUG_RULE_TIMER
+        uint16_t normalizedEnd = _activeEndMinutes % 1440;
         Serial.printf(
           "  checkPoolPumpTimer = true (extended to %02d:%02d)\n", (uint8_t)(normalizedEnd / 60), (uint8_t)(normalizedEnd % 60));
 #endif
@@ -242,6 +240,7 @@ protected:
       }
 
       // Extended window expired — reset
+      _activeEndTime = 0;
       _activeEndMinutes = 0;
     }
 
@@ -336,4 +335,5 @@ protected:
 
   TimerSetting _timerSetting;
   uint16_t _activeEndMinutes = 0;  ///< Temperature-extended end in minutes since midnight
+  time_t _activeEndTime = 0;       ///< Absolute expiry of the temperature extension (0 = none)
 };
