@@ -54,7 +54,7 @@ void CalibrationManager::begin() {
     adcRead_ = []() { return static_cast<uint16_t>(analogRead(PIN_BUTTON_ADC)); };
   }
   if (timeFn_ == nullptr) {
-    timeFn_ = millis;
+    timeFn_ = []() { return static_cast<uint32_t>(millis()); };
   }
   state_ = State::IDLE;
   status_ = CalibrationStatus{};

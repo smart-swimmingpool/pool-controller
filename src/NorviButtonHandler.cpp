@@ -18,6 +18,7 @@
 #include "NorviButtonHandler.hpp"
 
 #include <Arduino.h>
+#include "CalibrationManager.hpp"
 #include "Config.hpp"
 #include "ConfigManager.hpp"
 #include "LogCapture.hpp"
@@ -99,6 +100,12 @@ void NorviButtonHandler::applySettings() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 void NorviButtonHandler::loop() {
+  // Suppress button handling while calibration is running — the wizard
+  // owns the ADC input and button presses must not trigger actions.
+  if (CalibrationManager::isActive()) {
+    return;
+  }
+
   const uint32_t now = millis();
 
   // Sample at fixed intervals to reduce noise
