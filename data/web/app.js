@@ -671,6 +671,14 @@ function closeCalibrationModal() {
   if (calibPollTimer) { clearInterval(calibPollTimer); calibPollTimer = null; }
 }
 
+function startCalibrationPolling() {
+  // Guard against duplicate poll loops when the start button is activated
+  // twice before the first request completes.
+  if (calibPollTimer) { clearInterval(calibPollTimer); }
+  calibPollTimer = setInterval(pollCalibrationStatus, 500);
+  pollCalibrationStatus();
+}
+
 async function startCalibration() {
   const res = await fetch('/api/calibrate/start', { method: 'POST' });
   if (res.status === 409) {
@@ -678,14 +686,12 @@ async function startCalibration() {
     // reload or a lost start response) — resume the running wizard so the
     // user can watch progress or cancel it instead of being stuck.
     showCalibrationModal();
-    calibPollTimer = setInterval(pollCalibrationStatus, 500);
-    pollCalibrationStatus();
+    startCalibrationPolling();
     return;
   }
   if (!res.ok) { alert('Calibration could not be started.'); return; }
   showCalibrationModal();
-  calibPollTimer = setInterval(pollCalibrationStatus, 500);
-  pollCalibrationStatus();
+  startCalibrationPolling();
 }
 
 async function pollCalibrationStatus() {
