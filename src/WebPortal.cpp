@@ -485,6 +485,11 @@ void WebPortal::apiGetStatus() {
   doc["local_ip"] = NetworkManager::getLocalIP();
   doc["fw_version"] = FW_VERSION;
   doc["authenticated"] = isClientAuthenticated();
+#ifdef NORVI_AE01_R
+  doc["norvi"] = true;
+#else
+  doc["norvi"] = false;
+#endif
 
   // Current date/time in configured timezone
   TimeChangeRule *tcr;

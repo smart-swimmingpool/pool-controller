@@ -61,6 +61,13 @@ async function loadTelemetry() {
       document.getElementById('solarThreshold').textContent = 'min ' + data.temp_min_solar.toFixed(1) + '°C';
     }
 
+    // NORVI capability: hide the calibration wizard on non-NORVI firmware
+    // (the /api/calibrate/* routes are compiled out there).
+    const calibSection = document.getElementById('calibrationSection');
+    if (calibSection) {
+      calibSection.style.display = data.norvi ? '' : 'none';
+    }
+
     // Pumpen — Toggle-Switches aktualisieren
     if (data.pool_pump != null) {
       setPumpSwitch('pool', data.pool_pump);
