@@ -718,8 +718,16 @@ async function pollCalibrationStatus() {
 }
 
 async function cancelCalibration() {
-  await fetch('/api/calibrate/cancel', { method: 'POST' });
-  closeCalibrationModal();
+  const res = await fetch('/api/calibrate/cancel', { method: 'POST' });
+  // handleAuthentication() serves the login page with HTTP 200 when the
+  // session expired, so verify an actual API response before closing.
+  const type = res.headers.get('content-type') || '';
+  if (res.ok && !type.includes('text/html')) {
+    closeCalibrationModal();
+  } else {
+    showLoginForm();
+    alert('Session expired — please log in again to cancel calibration.');
+  }
 }
 
 // ── Save Time Settings (Time Tab) ──
