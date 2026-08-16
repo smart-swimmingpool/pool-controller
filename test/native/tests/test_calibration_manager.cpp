@@ -154,6 +154,45 @@ static int test_sample_spacing_gate() {
   return 0;
 }
 
+static int test_sample_restart_on_level_change() {
+  CalibrationManager::setAdcReadForTest(fakeAdc);
+  CalibrationManager::setTimeForTest(fakeTime);
+  g_adc = 2700;
+  g_now = 0;
+  CalibrationManager::begin();
+  CalibrationManager::start();
+
+  auto holdLevel = [](uint16_t level, uint32_t startMs) {
+    g_adc = level;
+    for (uint32_t t = startMs; t < startMs + 1500; t += 50) {
+      g_now = t;
+      CalibrationManager::loop();
+    }
+  };
+
+  holdLevel(2700, 0);  // resting → BTN1 at t=1100
+
+  // BTN1: stabilize at 3400, then release mid-sampling → restart
+  g_adc = 3400;
+  for (uint32_t t = 2000; t <= 2200; t += 50) {  // wait t=2000..2100, samples t=2150,2200
+    g_now = t;
+    CalibrationManager::loop();
+  }
+  g_adc = 2700;  // release during sampling
+  for (uint32_t t = 2250; t < 3000; t += 50) {
+    g_now = t;
+    CalibrationManager::loop();
+  }
+  ASSERT_EQ(CalibrationManager::getStatus().step, CalibrationManager::Step::BTN1);
+  ASSERT_EQ(CalibrationManager::getStatus().s1, 0);
+
+  // Press again → sampling completes with a clean level
+  holdLevel(3400, 3000);
+  ASSERT_EQ(CalibrationManager::getStatus().step, CalibrationManager::Step::BTN2);
+  ASSERT_EQ(CalibrationManager::getStatus().s1, 3400);
+  return 0;
+}
+
 static int test_release_level_rejected() {
   CalibrationManager::setAdcReadForTest(fakeAdc);
   CalibrationManager::setTimeForTest(fakeTime);
@@ -262,12 +301,13 @@ int run_calibration_manager_tests() {
   failures += test_cancel_from_step();
   failures += test_full_calibration_saves_thresholds();
   failures += test_sample_spacing_gate();
+  failures += test_sample_restart_on_level_change();
   failures += test_release_level_rejected();
   failures += test_exact_minimum_gap_accepted();
   failures += test_save_failure_error();
-  test_suite_end("CalibrationManager", 9 - failures, failures);
+  test_suite_end("CalibrationManager", 10 - failures, failures);
   if (failures == 0) {
-    printf("  CalibrationManager Tests: 9 passed, 0 failed\n");
+    printf("  CalibrationManager Tests: 10 passed, 0 failed\n");
   }
   return failures;
 }

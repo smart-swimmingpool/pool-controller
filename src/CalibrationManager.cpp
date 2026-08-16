@@ -146,7 +146,18 @@ void CalibrationManager::handleMeasurementStep(State step, uint16_t previousLeve
   // instead of being collected within a few loop iterations.
   if (t - lastSampleMs_ >= SAMPLE_INTERVAL_MS) {
     lastSampleMs_ = t;
-    sampleSum_ += readAdc();
+    const uint16_t reading = readAdc();
+    // Reject outliers: if the reading leaves the stability window around
+    // the level accepted in the wait phase (e.g. the button was released),
+    // restart the measurement instead of averaging a mixed level.
+    if (reading < lastReading_ - STABILITY_WINDOW || reading > lastReading_ + STABILITY_WINDOW) {
+      sampling_ = false;
+      stableCount_ = 0;
+      status_.message = "Level changed — please hold the button steady";
+      LOG_WARN("Calibration sample out of range, restarting step\n");
+      return;
+    }
+    sampleSum_ += reading;
     sampleCount_++;
     if (sampleCount_ >= SAMPLE_COUNT) {
       outLevel = static_cast<uint16_t>(sampleSum_ / SAMPLE_COUNT);
