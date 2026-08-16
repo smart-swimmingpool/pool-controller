@@ -45,14 +45,14 @@ struct ControllerSettings {
   String opMode = "auto";
   long timeLossGreenHours = 1;
   long timeLossRedHours = 24;
-  int timezoneIndex = 0;  ///< Index into TimeClientHelper timezone table
-  uint16_t btn1Min = 3100;    ///< NORVI button 1 ADC range min
-  uint16_t btn1Max = 3520;    ///< NORVI button 1 ADC range max
-  uint16_t btn2Min = 3520;    ///< NORVI button 2 ADC range min
-  uint16_t btn2Max = 3880;    ///< NORVI button 2 ADC range max
-  uint16_t btn3Min = 3880;    ///< NORVI button 3 ADC range min
-  uint16_t btn3Max = 4095;    ///< NORVI button 3 ADC range max
-  uint16_t btnNoPress = 4096; ///< NORVI no-press threshold (no-op, > ADC max)
+  int timezoneIndex = 0;       ///< Index into TimeClientHelper timezone table
+  uint16_t btn1Min = 3100;     ///< NORVI button 1 ADC range min
+  uint16_t btn1Max = 3520;     ///< NORVI button 1 ADC range max
+  uint16_t btn2Min = 3520;     ///< NORVI button 2 ADC range min
+  uint16_t btn2Max = 3880;     ///< NORVI button 2 ADC range max
+  uint16_t btn3Min = 3880;     ///< NORVI button 3 ADC range min
+  uint16_t btn3Max = 4095;     ///< NORVI button 3 ADC range max
+  uint16_t btnNoPress = 4096;  ///< NORVI no-press threshold (no-op, > ADC max)
 };
 
 /**

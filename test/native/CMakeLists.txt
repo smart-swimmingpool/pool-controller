@@ -58,6 +58,7 @@ set(SERVICE_SOURCES
   ${PROJ_ROOT}/src/LocalSettingsMenu.cpp
   ${PROJ_ROOT}/src/Ky040Decoder.cpp
   ${PROJ_ROOT}/src/OlimexEncoderHandler.cpp
+  ${PROJ_ROOT}/src/NorviButtonHandler.cpp
 )
 
 # Mock sources (compiled once)

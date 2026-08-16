@@ -20,6 +20,13 @@ struct Settings {
   float tempCircThreshold = 24.0f;
   int tempCircFactor = 30;
   int tempCircMaxRuntime = 720;
+  uint16_t btn1Min = 3100;
+  uint16_t btn1Max = 3520;
+  uint16_t btn2Min = 3520;
+  uint16_t btn2Max = 3880;
+  uint16_t btn3Min = 3880;
+  uint16_t btn3Max = 4095;
+  uint16_t btnNoPress = 4096;
 };
 
 struct WiFiConfig {
