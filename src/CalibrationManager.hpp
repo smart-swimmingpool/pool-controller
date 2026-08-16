@@ -93,6 +93,7 @@ private:
   static uint32_t stepStartMs_;
   static uint32_t sampleCount_;
   static uint32_t sampleSum_;
+  static uint32_t lastSampleMs_;
   static uint16_t lastReading_;
   static uint16_t stableCount_;
   static bool sampling_;

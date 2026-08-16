@@ -29,6 +29,8 @@ static constexpr uint32_t STEP_TIMEOUT_MS{10000};
 static constexpr uint16_t MIN_LEVEL_GAP{100};
 /// Number of samples averaged per level (50 ms apart → 1 s window).
 static constexpr uint32_t SAMPLE_COUNT{20};
+/// Interval between individual samples during the sample phase.
+static constexpr uint32_t SAMPLE_INTERVAL_MS{50};
 /// Consecutive readings within this window count as "stable".
 static constexpr uint16_t STABILITY_WINDOW{50};
 /// Consecutive stable readings required before sampling starts.
@@ -43,6 +45,7 @@ uint32_t (*CalibrationManager::timeFn_)() = nullptr;
 uint32_t CalibrationManager::stepStartMs_{0};
 uint32_t CalibrationManager::sampleCount_{0};
 uint32_t CalibrationManager::sampleSum_{0};
+uint32_t CalibrationManager::lastSampleMs_{0};
 uint16_t CalibrationManager::lastReading_{0};
 uint16_t CalibrationManager::stableCount_{0};
 bool CalibrationManager::sampling_{false};
@@ -132,39 +135,45 @@ void CalibrationManager::handleMeasurementStep(State step, uint16_t previousLeve
       sampling_ = true;
       sampleCount_ = 0;
       sampleSum_ = 0;
+      lastSampleMs_ = t;
       status_.message = "Level stable — sampling…";
     }
     return;
   }
 
   // ── Sample phase: collect SAMPLE_COUNT readings ──────────────────────
-  sampleSum_ += readAdc();
-  sampleCount_++;
-  if (sampleCount_ >= SAMPLE_COUNT) {
-    outLevel = static_cast<uint16_t>(sampleSum_ / SAMPLE_COUNT);
-    sampling_ = false;
-    stableCount_ = 0;
-    stepStartMs_ = t;
+  // Gate on the sample interval so the readings span the intended window
+  // instead of being collected within a few loop iterations.
+  if (t - lastSampleMs_ >= SAMPLE_INTERVAL_MS) {
+    lastSampleMs_ = t;
+    sampleSum_ += readAdc();
+    sampleCount_++;
+    if (sampleCount_ >= SAMPLE_COUNT) {
+      outLevel = static_cast<uint16_t>(sampleSum_ / SAMPLE_COUNT);
+      sampling_ = false;
+      stableCount_ = 0;
+      stepStartMs_ = t;
 
-    switch (step) {
-    case State::RESTING:
-      status_.message = "Please press and hold Button 1";
-      enterState(State::BTN1);
-      break;
-    case State::BTN1:
-      status_.message = "Please press and hold Button 2";
-      enterState(State::BTN2);
-      break;
-    case State::BTN2:
-      status_.message = "Please press and hold Button 3";
-      enterState(State::BTN3);
-      break;
-    case State::BTN3:
-      status_.message = "Computing thresholds…";
-      enterState(State::COMPUTE);
-      break;
-    default:
-      break;
+      switch (step) {
+      case State::RESTING:
+        status_.message = "Please press and hold Button 1";
+        enterState(State::BTN1);
+        break;
+      case State::BTN1:
+        status_.message = "Please press and hold Button 2";
+        enterState(State::BTN2);
+        break;
+      case State::BTN2:
+        status_.message = "Please press and hold Button 3";
+        enterState(State::BTN3);
+        break;
+      case State::BTN3:
+        status_.message = "Computing thresholds…";
+        enterState(State::COMPUTE);
+        break;
+      default:
+        break;
+      }
     }
   }
 }
@@ -260,6 +269,7 @@ void CalibrationManager::enterState(State s) {
   sampling_ = false;
   stableCount_ = 0;
   lastReading_ = 0;
+  lastSampleMs_ = stepStartMs_;
   switch (s) {
   case State::RESTING:
     status_.step = Step::RESTING;

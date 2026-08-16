@@ -122,6 +122,38 @@ static int test_full_calibration_saves_thresholds() {
   return 0;
 }
 
+static int test_sample_spacing_gate() {
+  CalibrationManager::setAdcReadForTest(fakeAdc);
+  CalibrationManager::setTimeForTest(fakeTime);
+  g_adc = 2700;
+  g_now = 0;
+  CalibrationManager::begin();
+  CalibrationManager::start();
+
+  // Wait phase: 3 stable readings → sampling starts at t=100
+  for (uint32_t t = 0; t <= 100; t += 50) {
+    g_now = t;
+    CalibrationManager::loop();
+  }
+  ASSERT_EQ(CalibrationManager::getStatus().step, CalibrationManager::Step::RESTING);
+
+  // Rapid loop() calls without time advance must not collect samples —
+  // the sample phase is gated on SAMPLE_INTERVAL_MS.
+  for (int i = 0; i < 100; i++) {
+    CalibrationManager::loop();
+  }
+  ASSERT_EQ(CalibrationManager::getStatus().step, CalibrationManager::Step::RESTING);
+
+  // Advance time in 50 ms steps → sampling completes over ~1 s window
+  for (uint32_t t = 150; t < 2000; t += 50) {
+    g_now = t;
+    CalibrationManager::loop();
+  }
+  ASSERT_EQ(CalibrationManager::getStatus().step, CalibrationManager::Step::BTN1);
+  ASSERT_EQ(CalibrationManager::getStatus().restingLevel, 2700);
+  return 0;
+}
+
 static int test_release_level_rejected() {
   CalibrationManager::setAdcReadForTest(fakeAdc);
   CalibrationManager::setTimeForTest(fakeTime);
@@ -211,12 +243,13 @@ int run_calibration_manager_tests() {
   failures += test_timeout_retries_step();
   failures += test_cancel_from_step();
   failures += test_full_calibration_saves_thresholds();
+  failures += test_sample_spacing_gate();
   failures += test_release_level_rejected();
   failures += test_exact_minimum_gap_accepted();
   failures += test_save_failure_error();
-  test_suite_end("CalibrationManager", 8 - failures, failures);
+  test_suite_end("CalibrationManager", 9 - failures, failures);
   if (failures == 0) {
-    printf("  CalibrationManager Tests: 8 passed, 0 failed\n");
+    printf("  CalibrationManager Tests: 9 passed, 0 failed\n");
   }
   return failures;
 }
