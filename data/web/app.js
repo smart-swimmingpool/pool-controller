@@ -673,6 +673,15 @@ function closeCalibrationModal() {
 
 async function startCalibration() {
   const res = await fetch('/api/calibrate/start', { method: 'POST' });
+  if (res.status === 409) {
+    // Calibration is already running on the device (e.g. after a page
+    // reload or a lost start response) — resume the running wizard so the
+    // user can watch progress or cancel it instead of being stuck.
+    showCalibrationModal();
+    calibPollTimer = setInterval(pollCalibrationStatus, 500);
+    pollCalibrationStatus();
+    return;
+  }
   if (!res.ok) { alert('Calibration could not be started.'); return; }
   showCalibrationModal();
   calibPollTimer = setInterval(pollCalibrationStatus, 500);
