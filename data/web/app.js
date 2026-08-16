@@ -592,6 +592,12 @@ function validateSettings() {
     alert('Button ADC ranges must not overlap.');
     return false;
   }
+  // No-press threshold must sit above every button range, otherwise
+  // detectButton() checks THRESH_NO_PRESS first and masks those readings as NONE.
+  if (btnVal('btnNoPress') <= b3Max) {
+    alert('No-Press Threshold must be above all button ranges.');
+    return false;
+  }
   return true;
 }
 
