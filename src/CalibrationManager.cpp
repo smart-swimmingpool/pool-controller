@@ -112,8 +112,11 @@ void CalibrationManager::handleMeasurementStep(State step, uint16_t previousLeve
     }
 
     const uint16_t reading = readAdc();
-    const bool differsFromPrevious =
-      (previousLevel == 0) || (reading > previousLevel + MIN_LEVEL_GAP) || (reading < previousLevel - MIN_LEVEL_GAP);
+    // Button levels are strictly ascending: accept only readings at least
+    // MIN_LEVEL_GAP above the previous level (inclusive). This rejects
+    // release levels (which drop back toward the resting level) and accepts
+    // hardware whose adjacent levels sit exactly at the minimum gap.
+    const bool differsFromPrevious = (previousLevel == 0) || (reading >= previousLevel + MIN_LEVEL_GAP);
 
     if (differsFromPrevious &&
       (stableCount_ == 0 || (reading > lastReading_ - STABILITY_WINDOW && reading < lastReading_ + STABILITY_WINDOW))) {

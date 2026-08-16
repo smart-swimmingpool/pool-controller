@@ -122,7 +122,7 @@ static int test_full_calibration_saves_thresholds() {
   return 0;
 }
 
-static int test_non_ascending_levels_error() {
+static int test_release_level_rejected() {
   CalibrationManager::setAdcReadForTest(fakeAdc);
   CalibrationManager::setTimeForTest(fakeTime);
   g_adc = 2700;
@@ -139,11 +139,39 @@ static int test_non_ascending_levels_error() {
   };
 
   holdLevel(2700, 0);     // resting
-  holdLevel(3700, 2000);  // S1 (too high — user pressed wrong button)
-  holdLevel(3400, 4000);  // S2 (below S1 → sanity check fails)
-  holdLevel(4095, 6000);  // S3
+  holdLevel(3700, 2000);  // S1
+  holdLevel(2700, 4000);  // release level (below S1) — must be rejected
+  ASSERT_EQ(CalibrationManager::getStatus().step, CalibrationManager::Step::BTN2);
+  holdLevel(3900, 5500);  // valid S2
+  holdLevel(4095, 8000);  // S3
+  ASSERT_EQ(CalibrationManager::getStatus().step, CalibrationManager::Step::DONE);
+  return 0;
+}
 
-  ASSERT_EQ(CalibrationManager::getStatus().step, CalibrationManager::Step::ERROR);
+static int test_exact_minimum_gap_accepted() {
+  CalibrationManager::setAdcReadForTest(fakeAdc);
+  CalibrationManager::setTimeForTest(fakeTime);
+  g_adc = 2700;
+  g_now = 0;
+  CalibrationManager::begin();
+  CalibrationManager::start();
+
+  auto holdLevel = [](uint16_t level, uint32_t startMs) {
+    g_adc = level;
+    for (uint32_t t = startMs; t < startMs + 1500; t += 50) {
+      g_now = t;
+      CalibrationManager::loop();
+    }
+  };
+
+  // Every level sits exactly MIN_LEVEL_GAP (100) above the previous one —
+  // the inclusive boundary must accept these.
+  holdLevel(2700, 0);     // resting
+  holdLevel(2800, 2000);  // S1 = resting + 100
+  holdLevel(2900, 4000);  // S2 = S1 + 100
+  holdLevel(3000, 6000);  // S3 = S2 + 100
+
+  ASSERT_EQ(CalibrationManager::getStatus().step, CalibrationManager::Step::DONE);
   return 0;
 }
 
@@ -183,11 +211,12 @@ int run_calibration_manager_tests() {
   failures += test_timeout_retries_step();
   failures += test_cancel_from_step();
   failures += test_full_calibration_saves_thresholds();
-  failures += test_non_ascending_levels_error();
+  failures += test_release_level_rejected();
+  failures += test_exact_minimum_gap_accepted();
   failures += test_save_failure_error();
-  test_suite_end("CalibrationManager", 7 - failures, failures);
+  test_suite_end("CalibrationManager", 8 - failures, failures);
   if (failures == 0) {
-    printf("  CalibrationManager Tests: 7 passed, 0 failed\n");
+    printf("  CalibrationManager Tests: 8 passed, 0 failed\n");
   }
   return failures;
 }
