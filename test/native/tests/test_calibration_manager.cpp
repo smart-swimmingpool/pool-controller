@@ -19,13 +19,18 @@ using PoolController::CalibrationManager;
 // Test hooks: controllable ADC + clock
 static uint16_t g_adc = 0;
 static uint32_t g_now = 0;
-static uint16_t fakeAdc() { return g_adc; }
-static uint32_t fakeTime() { return g_now; }
+static uint16_t fakeAdc() {
+  return g_adc;
+}
+static uint32_t fakeTime() {
+  return g_now;
+}
 
 static int test_start_from_idle() {
   CalibrationManager::setAdcReadForTest(fakeAdc);
   CalibrationManager::setTimeForTest(fakeTime);
-  g_adc = 2700; g_now = 0;
+  g_adc = 2700;
+  g_now = 0;
   CalibrationManager::begin();
   ASSERT_EQ(CalibrationManager::isActive(), false);
   ASSERT_EQ(CalibrationManager::start(), true);
@@ -37,7 +42,8 @@ static int test_start_from_idle() {
 static int test_resting_measurement() {
   CalibrationManager::setAdcReadForTest(fakeAdc);
   CalibrationManager::setTimeForTest(fakeTime);
-  g_adc = 2700; g_now = 0;
+  g_adc = 2700;
+  g_now = 0;
   CalibrationManager::begin();
   CalibrationManager::start();
   // Stable resting level: advance through the wait + sample phases
@@ -53,7 +59,8 @@ static int test_resting_measurement() {
 static int test_timeout_retries_step() {
   CalibrationManager::setAdcReadForTest(fakeAdc);
   CalibrationManager::setTimeForTest(fakeTime);
-  g_adc = 2700; g_now = 0;
+  g_adc = 2700;
+  g_now = 0;
   CalibrationManager::begin();
   CalibrationManager::start();
   // No stable level: ADC oscillates wildly, never stabilizes
@@ -71,7 +78,8 @@ static int test_timeout_retries_step() {
 static int test_cancel_from_step() {
   CalibrationManager::setAdcReadForTest(fakeAdc);
   CalibrationManager::setTimeForTest(fakeTime);
-  g_adc = 2700; g_now = 0;
+  g_adc = 2700;
+  g_now = 0;
   CalibrationManager::begin();
   CalibrationManager::start();
   CalibrationManager::cancel();
@@ -83,7 +91,8 @@ static int test_cancel_from_step() {
 static int test_full_calibration_saves_thresholds() {
   CalibrationManager::setAdcReadForTest(fakeAdc);
   CalibrationManager::setTimeForTest(fakeTime);
-  g_adc = 2700; g_now = 0;
+  g_adc = 2700;
+  g_now = 0;
   CalibrationManager::begin();
   CalibrationManager::start();
 
@@ -96,13 +105,13 @@ static int test_full_calibration_saves_thresholds() {
     }
   };
 
-  holdLevel(2700, 0);    // resting
-  holdLevel(3400, 2000); // S1
-  holdLevel(3700, 4000); // S2
-  holdLevel(4095, 6000); // S3
+  holdLevel(2700, 0);     // resting
+  holdLevel(3400, 2000);  // S1
+  holdLevel(3700, 4000);  // S2
+  holdLevel(4095, 6000);  // S3
 
   ASSERT_EQ(CalibrationManager::getStatus().step, CalibrationManager::Step::DONE);
-  auto& s = PoolController::ConfigManager::getSettings();
+  auto &s = PoolController::ConfigManager::getSettings();
   ASSERT_EQ(s.btn1Min, (2700 + 3400) / 2);
   ASSERT_EQ(s.btn1Max, (3400 + 3700) / 2);
   ASSERT_EQ(s.btn2Min, (3400 + 3700) / 2);
@@ -116,7 +125,8 @@ static int test_full_calibration_saves_thresholds() {
 static int test_non_ascending_levels_error() {
   CalibrationManager::setAdcReadForTest(fakeAdc);
   CalibrationManager::setTimeForTest(fakeTime);
-  g_adc = 2700; g_now = 0;
+  g_adc = 2700;
+  g_now = 0;
   CalibrationManager::begin();
   CalibrationManager::start();
 
@@ -128,10 +138,10 @@ static int test_non_ascending_levels_error() {
     }
   };
 
-  holdLevel(2700, 0);    // resting
-  holdLevel(3700, 2000); // S1 (too high — user pressed wrong button)
-  holdLevel(3400, 4000); // S2 (below S1 → sanity check fails)
-  holdLevel(4095, 6000); // S3
+  holdLevel(2700, 0);     // resting
+  holdLevel(3700, 2000);  // S1 (too high — user pressed wrong button)
+  holdLevel(3400, 4000);  // S2 (below S1 → sanity check fails)
+  holdLevel(4095, 6000);  // S3
 
   ASSERT_EQ(CalibrationManager::getStatus().step, CalibrationManager::Step::ERROR);
   return 0;
@@ -140,7 +150,8 @@ static int test_non_ascending_levels_error() {
 static int test_save_failure_error() {
   CalibrationManager::setAdcReadForTest(fakeAdc);
   CalibrationManager::setTimeForTest(fakeTime);
-  g_adc = 2700; g_now = 0;
+  g_adc = 2700;
+  g_now = 0;
   CalibrationManager::begin();
   CalibrationManager::start();
 
