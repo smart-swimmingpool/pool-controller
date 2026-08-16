@@ -559,7 +559,7 @@ function validateSettings() {
     { id: 'btn2Max',    name: 'Button 2 Max ADC',    min: 0, max: 4095, type: 'int' },
     { id: 'btn3Min',    name: 'Button 3 Min ADC',    min: 0, max: 4095, type: 'int' },
     { id: 'btn3Max',    name: 'Button 3 Max ADC',    min: 0, max: 4095, type: 'int' },
-    { id: 'btnNoPress', name: 'No-Press Threshold',  min: 0, max: 4095, type: 'int' },
+    { id: 'btnNoPress', name: 'No-Press Threshold',  min: 0, max: 4096, type: 'int' },
   ];
   for (const f of fields) {
     const el = document.getElementById(f.id);
