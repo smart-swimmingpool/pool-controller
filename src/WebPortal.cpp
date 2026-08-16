@@ -40,6 +40,10 @@
 #include "Version.h"
 #include "LogCapture.hpp"
 
+#ifdef NORVI_AE01_R
+#include "NorviButtonHandler.hpp"
+#endif
+
 namespace PoolController {
 
 // File-scoped state for streaming LittleFS upload (used by handleFsUploadStream)
@@ -666,6 +670,13 @@ void WebPortal::apiGetConfig() {
   settingsObj["timezone"] = ConfigManager::getSettings().timezoneIndex;
   settingsObj["time_loss_green_hours"] = ConfigManager::getSettings().timeLossGreenHours;
   settingsObj["time_loss_red_hours"] = ConfigManager::getSettings().timeLossRedHours;
+  settingsObj["btn1_min"] = ConfigManager::getSettings().btn1Min;
+  settingsObj["btn1_max"] = ConfigManager::getSettings().btn1Max;
+  settingsObj["btn2_min"] = ConfigManager::getSettings().btn2Min;
+  settingsObj["btn2_max"] = ConfigManager::getSettings().btn2Max;
+  settingsObj["btn3_min"] = ConfigManager::getSettings().btn3Min;
+  settingsObj["btn3_max"] = ConfigManager::getSettings().btn3Max;
+  settingsObj["btn_no_press"] = ConfigManager::getSettings().btnNoPress;
   settingsObj["timer_start_hour"] = operationModeNode.getTimerSetting().timerStartHour;
   settingsObj["timer_start_min"] = operationModeNode.getTimerSetting().timerStartMinutes;
   settingsObj["timer_end_hour"] = operationModeNode.getTimerSetting().timerEndHour;
@@ -750,11 +761,31 @@ void WebPortal::apiSaveConfig() {
       ConfigManager::getSettings().tempCircFactor = server_.arg("circ_factor").toInt();
     if (server_.hasArg("circ_max_runtime"))
       ConfigManager::getSettings().tempCircMaxRuntime = server_.arg("circ_max_runtime").toInt();
+    if (server_.hasArg("btn1_min"))
+      ConfigManager::getSettings().btn1Min = server_.arg("btn1_min").toInt();
+    if (server_.hasArg("btn1_max"))
+      ConfigManager::getSettings().btn1Max = server_.arg("btn1_max").toInt();
+    if (server_.hasArg("btn2_min"))
+      ConfigManager::getSettings().btn2Min = server_.arg("btn2_min").toInt();
+    if (server_.hasArg("btn2_max"))
+      ConfigManager::getSettings().btn2Max = server_.arg("btn2_max").toInt();
+    if (server_.hasArg("btn3_min"))
+      ConfigManager::getSettings().btn3Min = server_.arg("btn3_min").toInt();
+    if (server_.hasArg("btn3_max"))
+      ConfigManager::getSettings().btn3Max = server_.arg("btn3_max").toInt();
+    if (server_.hasArg("btn_no_press"))
+      ConfigManager::getSettings().btnNoPress = server_.arg("btn_no_press").toInt();
     ConfigManager::getSettings().timezoneIndex = server_.arg("timezone").toInt();
     ConfigManager::getSettings().timeLossGreenHours = server_.arg("green").toInt();
     ConfigManager::getSettings().timeLossRedHours = server_.arg("red").toInt();
 
     ConfigManager::save();
+
+#ifdef NORVI_AE01_R
+    // Apply button thresholds to the running handler immediately so the
+    // new values take effect without a reboot (P2 review fix).
+    NorviButtonHandler::applySettings();
+#endif
 
     // Apply timezone change to running clock immediately (P2)
     setTimezoneIndex(ConfigManager::getSettings().timezoneIndex);

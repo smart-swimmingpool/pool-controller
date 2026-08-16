@@ -307,6 +307,54 @@
     </div>
   </div>
 
+  <h2>🔘 Button Thresholds (NORVI)</h2>
+  <div class="telemetry-grid">
+    <div class="input-group">
+      <label for="btn1Min">Button 1 Min ADC</label>
+      <input type="number" id="btn1Min" min="0" max="4095" step="1" value="3100">
+      <span class="input-hint">Lower bound of Button 1 range · Measured: ~3275–3456</span>
+    </div>
+    <div class="input-group">
+      <label for="btn1Max">Button 1 Max ADC</label>
+      <input type="number" id="btn1Max" min="0" max="4095" step="1" value="3520">
+      <span class="input-hint">Upper bound of Button 1 range</span>
+    </div>
+  </div>
+  <div class="telemetry-grid">
+    <div class="input-group">
+      <label for="btn2Min">Button 2 Min ADC</label>
+      <input type="number" id="btn2Min" min="0" max="4095" step="1" value="3520">
+      <span class="input-hint">Lower bound of Button 2 range · Measured: ~3579–3765</span>
+    </div>
+    <div class="input-group">
+      <label for="btn2Max">Button 2 Max ADC</label>
+      <input type="number" id="btn2Max" min="0" max="4095" step="1" value="3880">
+      <span class="input-hint">Upper bound of Button 2 range</span>
+    </div>
+  </div>
+  <div class="telemetry-grid">
+    <div class="input-group">
+      <label for="btn3Min">Button 3 Min ADC</label>
+      <input type="number" id="btn3Min" min="0" max="4095" step="1" value="3880">
+      <span class="input-hint">Lower bound of Button 3 range · Measured: ~4095 (full scale)</span>
+    </div>
+    <div class="input-group">
+      <label for="btn3Max">Button 3 Max ADC</label>
+      <input type="number" id="btn3Max" min="0" max="4095" step="1" value="4095">
+      <span class="input-hint">Upper bound of Button 3 range</span>
+    </div>
+  </div>
+  <div class="telemetry-grid">
+    <div class="input-group">
+      <label for="btnNoPress">No-Press Threshold</label>
+      <input type="number" id="btnNoPress" min="0" max="4096" step="1" value="4096">
+      <span class="input-hint">Values above this are ignored · 4096 = no-op (S3 reads full scale)</span>
+    </div>
+    <div class="input-group" style="visibility:hidden;">
+      <div style="height:1px;"></div>
+    </div>
+  </div>
+
   <h2>⏱️ Timer Schedule</h2>
   <div class="telemetry-grid">
     <div class="input-group">
