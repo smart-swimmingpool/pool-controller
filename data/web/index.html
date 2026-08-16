@@ -39,6 +39,25 @@
   </div>
 </div>
 
+<!-- Calibration Modal (guided wizard) -->
+<div id="calibrationModal" style="display: none; position: fixed; inset: 0; z-index: 100; background: rgba(6,18,30,0.85); backdrop-filter: blur(8px); align-items: center; justify-content: center; padding: 2rem;">
+  <div style="background: var(--glass-bg); border: 1px solid var(--panel-border); border-radius: 16px; padding: 2rem; max-width: 420px; width: 100%;">
+    <h2 style="color: #00e5ff; text-align: center; margin: 0 0 0.25rem; font-size: 1.4rem;">🎯 Button Calibration</h2>
+    <p id="calibStepText" style="color: var(--text-muted); text-align: center; margin-bottom: 1rem; font-size: 0.9rem;">Release all buttons — measuring resting level</p>
+    <div style="text-align: center; margin-bottom: 1rem;">
+      <span id="calibLiveAdc" style="font-size: 2rem; font-weight: 700; color: #e2f0f7;">—</span>
+      <span style="color: var(--text-muted); font-size: 0.85rem;"> ADC</span>
+    </div>
+    <div id="calibProgress" style="display: flex; justify-content: space-between; margin-bottom: 1.5rem; font-size: 0.8rem; color: var(--text-muted);">
+      <span id="calibP0">Resting</span>
+      <span id="calibP1">Button 1</span>
+      <span id="calibP2">Button 2</span>
+      <span id="calibP3">Button 3</span>
+    </div>
+    <button onclick="cancelCalibration()" style="width: 100%; padding: 0.6rem; background: transparent; border: 1px solid var(--panel-border); border-radius: 8px; color: var(--text-muted); font-size: 0.85rem; cursor: pointer;">Cancel</button>
+  </div>
+</div>
+
 <!-- Bottom Tab Bar (iOS 26 Style) -->
 <nav class="tab-bar" id="tabBar">
   <button class="tab-bar-item active" data-tab="dashboard" onclick="switchTab('dashboard')">
@@ -349,6 +368,15 @@
       <label for="btnNoPress">No-Press Threshold</label>
       <input type="number" id="btnNoPress" min="0" max="4096" step="1" value="4096">
       <span class="input-hint">Values above this are ignored · 4096 = no-op (S3 reads full scale)</span>
+    </div>
+    <div class="input-group" style="visibility:hidden;">
+      <div style="height:1px;"></div>
+    </div>
+  </div>
+  <div class="telemetry-grid">
+    <div class="input-group">
+      <button type="button" onclick="startCalibration()" style="width: 100%; padding: 0.75rem; background: linear-gradient(135deg, #00b4d8, #00e5ff); border: none; border-radius: 8px; color: #000; font-weight: 600; font-size: 1rem; cursor: pointer;">🎯 Start Calibration</button>
+      <span class="input-hint">Guided wizard: press and hold each button in turn to measure its ADC level</span>
     </div>
     <div class="input-group" style="visibility:hidden;">
       <div style="height:1px;"></div>

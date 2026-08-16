@@ -651,6 +651,55 @@ async function saveControllerSettings() {
   }
 }
 
+// ── Button Calibration Wizard ──
+
+let calibPollTimer = null;
+
+function showCalibrationModal() {
+  document.getElementById('calibrationModal').style.display = 'flex';
+}
+
+function closeCalibrationModal() {
+  document.getElementById('calibrationModal').style.display = 'none';
+  if (calibPollTimer) { clearInterval(calibPollTimer); calibPollTimer = null; }
+}
+
+async function startCalibration() {
+  const res = await fetch('/api/calibrate/start', { method: 'POST' });
+  if (!res.ok) { alert('Calibration could not be started.'); return; }
+  showCalibrationModal();
+  calibPollTimer = setInterval(pollCalibrationStatus, 500);
+  pollCalibrationStatus();
+}
+
+async function pollCalibrationStatus() {
+  const res = await fetch('/api/calibrate/status');
+  if (!res.ok) return;
+  const st = await res.json();
+  document.getElementById('calibStepText').textContent = st.message || '';
+  document.getElementById('calibLiveAdc').textContent = st.live_adc;
+
+  const steps = ['calibP0', 'calibP1', 'calibP2', 'calibP3'];
+  const active = st.step; // 1=RESTING, 2=BTN1, 3=BTN2, 4=BTN3, 5=DONE, 6=ERROR
+  steps.forEach((id, i) => {
+    const el = document.getElementById(id);
+    el.style.color = (i + 1 === active) ? '#00e5ff' : (i + 1 < active ? '#4ade80' : 'var(--text-muted)');
+  });
+
+  if (st.step === 5) { // DONE
+    closeCalibrationModal();
+    loadConfig(); // refresh threshold fields
+  } else if (st.step === 6) { // ERROR
+    closeCalibrationModal();
+    alert('Calibration failed: ' + (st.message || 'unknown error'));
+  }
+}
+
+async function cancelCalibration() {
+  await fetch('/api/calibrate/cancel', { method: 'POST' });
+  closeCalibrationModal();
+}
+
 // ── Save Time Settings (Time Tab) ──
 
 async function saveTimeSettings() {
