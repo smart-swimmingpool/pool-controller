@@ -52,6 +52,8 @@ NorviButtonHandler::ButtonLongPressCallback NorviButtonHandler::cbButton3Long_ =
 
 uint32_t NorviButtonHandler::pressStartMs_ = 0;
 uint32_t NorviButtonHandler::releasePendingMs_ = 0;
+bool NorviButtonHandler::calibWasActive_ = false;
+bool NorviButtonHandler::suppressCallbacks_ = false;
 
 // ADC thresholds — defaults are the 2026-08-16 calibrated values; begin()
 // overwrites them from ConfigManager (NVS) so they are user-configurable.
@@ -71,6 +73,9 @@ void NorviButtonHandler::begin() {
   pinMode(PIN_BUTTON_ADC, INPUT);
 
   applySettings();
+
+  calibWasActive_ = false;
+  suppressCallbacks_ = false;
 
   // Take an initial sample to let the ADC stabilise
   analogRead(PIN_BUTTON_ADC);
@@ -100,9 +105,64 @@ void NorviButtonHandler::applySettings() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 void NorviButtonHandler::loop() {
+  const bool calibActive = CalibrationManager::isActive();
+
+  // Enhanced ADC stability check: only accept values that are stable for 150ms
+  static uint16_t lastStableAdc_ = 0;
+  static uint32_t lastStableTime_ = 0;
+
+  // Calibration just finished (DONE/ERROR): the user may still be holding
+  // the button from the last wizard step. Reset press tracking and keep
+  // callbacks suppressed until the ADC returns to the no-press range for
+  // the debounce interval, so the held press cannot fire its callback.
+  if (!calibActive && calibWasActive_) {
+    suppressCallbacks_ = true;
+    currentButton_ = Button::NONE;
+    stableButton_ = Button::NONE;
+    pressStartMs_ = 0;
+    releasePendingMs_ = 0;
+    lastChangeMs_ = millis();
+    LOG_DEBUG("Calibration finished — callbacks suppressed until all buttons released\n");
+  }
+  calibWasActive_ = calibActive;
+
   // Suppress button handling while calibration is running — the wizard
   // owns the ADC input and button presses must not trigger actions.
-  if (CalibrationManager::isActive()) {
+  if (calibActive) {
+    return;
+  }
+
+  // While suppression is armed, keep sampling so the release can be
+  // detected, but never fire callbacks.
+  if (suppressCallbacks_) {
+    const uint32_t now = millis();
+    if (now - lastSampleMs_ < SAMPLE_INTERVAL_MS) {
+      return;
+    }
+    lastSampleMs_ = now;
+    const uint16_t rawAdc = analogRead(PIN_BUTTON_ADC);
+    if (detectButton(rawAdc) == Button::NONE) {
+      if (releasePendingMs_ == 0) {
+        releasePendingMs_ = now;
+      } else if (now - releasePendingMs_ >= DEBOUNCE_MS) {
+        // Confirmed all-buttons-released — re-enable callbacks and
+        // re-baseline the filter so stale button-level samples cannot
+        // produce a spurious press.
+        suppressCallbacks_ = false;
+        releasePendingMs_ = 0;
+        for (uint8_t i = 0; i < ADC_FILTER_SIZE; i++) {
+          adcSamples_[i] = rawAdc;
+        }
+        adcSampleIndex_ = 0;
+        lastFilteredAdc_ = rawAdc;
+        lastStableAdc_ = rawAdc;
+        lastStableTime_ = now;
+        lastRaw_ = rawAdc;
+        LOG_DEBUG("All buttons released — callbacks re-enabled\n");
+      }
+    } else {
+      releasePendingMs_ = 0;
+    }
     return;
   }
 
@@ -116,10 +176,6 @@ void NorviButtonHandler::loop() {
 
   // Read ADC
   uint16_t rawAdc = analogRead(PIN_BUTTON_ADC);
-
-  // Enhanced ADC stability check: only accept values that are stable for 150ms
-  static uint16_t lastStableAdc_ = 0;
-  static uint32_t lastStableTime_ = 0;
 
   // Fast-attack: a genuine press/release changes the button range — even
   // when the ADC delta is small (no-press ~2700 → S1 ~3400 = 700). Base the
