@@ -32,18 +32,22 @@ include_directories(
 )
 
 # ── Wrappers ──────────────────────────────────────────────────────────────
-# WebPortal, MqttPublisher, and Timer include class headers whose mock layout
-# differs from production.  Compiling from wrappers/ avoids GCC's
-# "current-file-directory first" rule for #include "..." so the mock headers
-# take effect.
+# WebPortal, MqttPublisher, Timer, and CalibrationManager include class
+# headers whose mock layout differs from production.  Compiling from
+# wrappers/ avoids GCC's "current-file-directory first" rule for
+# #include "..." so the mock headers take effect.
 file(COPY ${PROJ_ROOT}/src/WebPortal.cpp     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/wrappers)
 file(COPY ${PROJ_ROOT}/src/MqttPublisher.cpp DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/wrappers)
 file(COPY ${PROJ_ROOT}/src/Timer.cpp         DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/wrappers)
+file(COPY ${PROJ_ROOT}/src/CalibrationManager.cpp DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/wrappers)
+file(COPY ${PROJ_ROOT}/src/NorviButtonHandler.cpp DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/wrappers)
 
 set(WRAPPER_SOURCES
   ${CMAKE_CURRENT_BINARY_DIR}/wrappers/WebPortal.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/wrappers/MqttPublisher.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/wrappers/Timer.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/wrappers/CalibrationManager.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/wrappers/NorviButtonHandler.cpp
 )
 
 # ── Service classes ───────────────────────────────────────────────────────
@@ -58,8 +62,6 @@ set(SERVICE_SOURCES
   ${PROJ_ROOT}/src/LocalSettingsMenu.cpp
 ${PROJ_ROOT}/src/Ky040Decoder.cpp
   ${PROJ_ROOT}/src/OlimexEncoderHandler.cpp
-  ${PROJ_ROOT}/src/NorviButtonHandler.cpp
-  ${PROJ_ROOT}/src/CalibrationManager.cpp
 )
 
 # Mock sources (compiled once)
