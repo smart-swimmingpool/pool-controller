@@ -30,24 +30,24 @@ class CalibrationManager {
 public:
   /** @brief User-facing calibration steps. COMPUTE/SAVE are internal. */
   enum class Step : std::uint8_t {
-    IDLE = 0,   ///< Not calibrating
-    RESTING,    ///< Measure resting level (no button pressed)
-    BTN1,       ///< Measure Button 1 level
-    BTN2,       ///< Measure Button 2 level
-    BTN3,       ///< Measure Button 3 level
-    DONE,       ///< Calibration finished, thresholds saved
-    ERROR       ///< Calibration failed (message in status)
+    IDLE = 0,  ///< Not calibrating
+    RESTING,   ///< Measure resting level (no button pressed)
+    BTN1,      ///< Measure Button 1 level
+    BTN2,      ///< Measure Button 2 level
+    BTN3,      ///< Measure Button 3 level
+    DONE,      ///< Calibration finished, thresholds saved
+    ERROR      ///< Calibration failed (message in status)
   };
 
   /** @brief Snapshot of the calibration state for the web UI. */
   struct CalibrationStatus {
     Step step = Step::IDLE;
-    uint16_t liveAdc = 0;      ///< Current filtered ADC reading
-    uint16_t restingLevel = 0; ///< Measured resting level (0 until measured)
-    uint16_t s1 = 0;           ///< Measured Button 1 level (0 until measured)
-    uint16_t s2 = 0;           ///< Measured Button 2 level (0 until measured)
-    uint16_t s3 = 0;           ///< Measured Button 3 level (0 until measured)
-    const char* message = "";  ///< Instruction or error text
+    uint16_t liveAdc = 0;       ///< Current filtered ADC reading
+    uint16_t restingLevel = 0;  ///< Measured resting level (0 until measured)
+    uint16_t s1 = 0;            ///< Measured Button 1 level (0 until measured)
+    uint16_t s2 = 0;            ///< Measured Button 2 level (0 until measured)
+    uint16_t s3 = 0;            ///< Measured Button 3 level (0 until measured)
+    const char *message = "";   ///< Instruction or error text
   };
 
   /** @brief Initialize the calibration manager. */
@@ -75,12 +75,10 @@ public:
   static void setTimeForTest(uint32_t (*fn)());
 
 private:
-  enum class State : std::uint8_t {
-    IDLE, RESTING, BTN1, BTN2, BTN3, COMPUTE, SAVE, DONE, ERROR
-  };
+  enum class State : std::uint8_t { IDLE, RESTING, BTN1, BTN2, BTN3, COMPUTE, SAVE, DONE, ERROR };
 
   static void enterState(State s);
-  static void handleMeasurementStep(State step, uint16_t previousLevel, uint16_t& outLevel);
+  static void handleMeasurementStep(State step, uint16_t previousLevel, uint16_t &outLevel);
   static void computeThresholds();
   static void saveThresholds();
   static uint16_t readAdc();

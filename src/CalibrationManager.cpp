@@ -97,7 +97,7 @@ void CalibrationManager::loop() {
 
 // ═══════════════════════════════════════════════════════════════════════════
 
-void CalibrationManager::handleMeasurementStep(State step, uint16_t previousLevel, uint16_t& outLevel) {
+void CalibrationManager::handleMeasurementStep(State step, uint16_t previousLevel, uint16_t &outLevel) {
   const uint32_t t = now();
 
   if (!sampling_) {
@@ -113,12 +113,10 @@ void CalibrationManager::handleMeasurementStep(State step, uint16_t previousLeve
 
     const uint16_t reading = readAdc();
     const bool differsFromPrevious =
-        (previousLevel == 0) || (reading > previousLevel + MIN_LEVEL_GAP) ||
-        (reading < previousLevel - MIN_LEVEL_GAP);
+      (previousLevel == 0) || (reading > previousLevel + MIN_LEVEL_GAP) || (reading < previousLevel - MIN_LEVEL_GAP);
 
     if (differsFromPrevious &&
-        (stableCount_ == 0 ||
-         (reading > lastReading_ - STABILITY_WINDOW && reading < lastReading_ + STABILITY_WINDOW))) {
+      (stableCount_ == 0 || (reading > lastReading_ - STABILITY_WINDOW && reading < lastReading_ + STABILITY_WINDOW))) {
       stableCount_++;
       lastReading_ = reading;
     } else {
@@ -177,9 +175,8 @@ void CalibrationManager::computeThresholds() {
   const uint16_t s3 = status_.s3;
 
   // Sanity checks: strictly ascending with minimum gaps, S3 within ADC range
-  if (!(resting < s1 && s1 < s2 && s2 < s3) ||
-      (s1 - resting < MIN_LEVEL_GAP) || (s2 - s1 < MIN_LEVEL_GAP) || (s3 - s2 < MIN_LEVEL_GAP) ||
-      s3 > 4095) {
+  if (!(resting < s1 && s1 < s2 && s2 < s3) || (s1 - resting < MIN_LEVEL_GAP) || (s2 - s1 < MIN_LEVEL_GAP) ||
+    (s3 - s2 < MIN_LEVEL_GAP) || s3 > 4095) {
     status_.step = Step::ERROR;
     status_.message = "Levels not ascending or too close — please re-run calibration";
     state_ = State::ERROR;
@@ -187,13 +184,13 @@ void CalibrationManager::computeThresholds() {
     return;
   }
 
-  auto& s = ConfigManager::getSettings();
+  auto &s = ConfigManager::getSettings();
   s.btn1Min = (resting + s1) / 2;
   s.btn1Max = (s1 + s2) / 2;
   s.btn2Min = (s1 + s2) / 2;
   s.btn2Max = (s2 + s3) / 2;
   s.btn3Min = (s2 + s3) / 2;
-  s.btn3Max = 4095;   // full scale stays
+  s.btn3Max = 4095;     // full scale stays
   s.btnNoPress = 4096;  // sentinel stays
 
   state_ = State::SAVE;
@@ -213,11 +210,9 @@ void CalibrationManager::saveThresholds() {
   status_.step = Step::DONE;
   status_.message = "Calibration complete — thresholds saved";
   state_ = State::DONE;
-  LOG_INFO("✓ Calibration complete: btn1=%u-%u btn2=%u-%u btn3=%u-%u noPress=%u\n",
-    ConfigManager::getSettings().btn1Min, ConfigManager::getSettings().btn1Max,
-    ConfigManager::getSettings().btn2Min, ConfigManager::getSettings().btn2Max,
-    ConfigManager::getSettings().btn3Min, ConfigManager::getSettings().btn3Max,
-    ConfigManager::getSettings().btnNoPress);
+  LOG_INFO("✓ Calibration complete: btn1=%u-%u btn2=%u-%u btn3=%u-%u noPress=%u\n", ConfigManager::getSettings().btn1Min,
+    ConfigManager::getSettings().btn1Max, ConfigManager::getSettings().btn2Min, ConfigManager::getSettings().btn2Max,
+    ConfigManager::getSettings().btn3Min, ConfigManager::getSettings().btn3Max, ConfigManager::getSettings().btnNoPress);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -263,13 +258,26 @@ void CalibrationManager::enterState(State s) {
   stableCount_ = 0;
   lastReading_ = 0;
   switch (s) {
-  case State::RESTING: status_.step = Step::RESTING; break;
-  case State::BTN1:    status_.step = Step::BTN1;    break;
-  case State::BTN2:    status_.step = Step::BTN2;    break;
-  case State::BTN3:    status_.step = Step::BTN3;    break;
-  case State::DONE:    status_.step = Step::DONE;    break;
-  case State::ERROR:   status_.step = Step::ERROR;   break;
-  default: break;
+  case State::RESTING:
+    status_.step = Step::RESTING;
+    break;
+  case State::BTN1:
+    status_.step = Step::BTN1;
+    break;
+  case State::BTN2:
+    status_.step = Step::BTN2;
+    break;
+  case State::BTN3:
+    status_.step = Step::BTN3;
+    break;
+  case State::DONE:
+    status_.step = Step::DONE;
+    break;
+  case State::ERROR:
+    status_.step = Step::ERROR;
+    break;
+  default:
+    break;
   }
 }
 
