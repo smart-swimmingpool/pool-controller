@@ -553,6 +553,13 @@ function validateSettings() {
     { id: 'tempCircThreshold',  name: 'Circ. Temp Threshold',   min: 0,   max: 40,   type: 'float' },
     { id: 'tempCircFactor',     name: 'Circ. Temp Factor',      min: 0,   max: 120,  type: 'int' },
     { id: 'tempCircMaxRuntime', name: 'Circ. Max Runtime',      min: 60,  max: 1440, type: 'int' },
+    { id: 'btn1Min',    name: 'Button 1 Min ADC',    min: 0, max: 4095, type: 'int' },
+    { id: 'btn1Max',    name: 'Button 1 Max ADC',    min: 0, max: 4095, type: 'int' },
+    { id: 'btn2Min',    name: 'Button 2 Min ADC',    min: 0, max: 4095, type: 'int' },
+    { id: 'btn2Max',    name: 'Button 2 Max ADC',    min: 0, max: 4095, type: 'int' },
+    { id: 'btn3Min',    name: 'Button 3 Min ADC',    min: 0, max: 4095, type: 'int' },
+    { id: 'btn3Max',    name: 'Button 3 Max ADC',    min: 0, max: 4095, type: 'int' },
+    { id: 'btnNoPress', name: 'No-Press Threshold',  min: 0, max: 4095, type: 'int' },
   ];
   for (const f of fields) {
     const el = document.getElementById(f.id);
@@ -571,6 +578,19 @@ function validateSettings() {
       el.focus();
       return false;
     }
+  }
+  // Button ADC thresholds must form coherent, non-overlapping ranges
+  const btnVal = (id) => parseInt(document.getElementById(id).value, 10);
+  const b1Min = btnVal('btn1Min'), b1Max = btnVal('btn1Max');
+  const b2Min = btnVal('btn2Min'), b2Max = btnVal('btn2Max');
+  const b3Min = btnVal('btn3Min'), b3Max = btnVal('btn3Max');
+  if (b1Min >= b1Max || b2Min >= b2Max || b3Min >= b3Max) {
+    alert('Each button Min must be less than its Max.');
+    return false;
+  }
+  if (b1Max > b2Min || b2Max > b3Min) {
+    alert('Button ADC ranges must not overlap.');
+    return false;
   }
   return true;
 }
