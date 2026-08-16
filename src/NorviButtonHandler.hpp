@@ -63,6 +63,13 @@ public:
   static void begin();
 
   /**
+   * @brief Reload ADC thresholds from ConfigManager (NVS).
+   * Called after settings changes so new thresholds apply to the running
+   * handler without a reboot.
+   */
+  static void applySettings();
+
+  /**
    * @brief Sample and debounce buttons.
    * Must be called regularly from PoolController::loop().
    */

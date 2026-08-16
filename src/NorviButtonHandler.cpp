@@ -69,14 +69,7 @@ void NorviButtonHandler::begin() {
 
   pinMode(PIN_BUTTON_ADC, INPUT);
 
-  // Load configurable ADC thresholds from NVS (defaults = calibrated values)
-  THRESH_BTN1_MIN = ConfigManager::getSettings().btn1Min;
-  THRESH_BTN1_MAX = ConfigManager::getSettings().btn1Max;
-  THRESH_BTN2_MIN = ConfigManager::getSettings().btn2Min;
-  THRESH_BTN2_MAX = ConfigManager::getSettings().btn2Max;
-  THRESH_BTN3_MIN = ConfigManager::getSettings().btn3Min;
-  THRESH_BTN3_MAX = ConfigManager::getSettings().btn3Max;
-  THRESH_NO_PRESS = ConfigManager::getSettings().btnNoPress;
+  applySettings();
 
   // Take an initial sample to let the ADC stabilise
   analogRead(PIN_BUTTON_ADC);
@@ -88,6 +81,19 @@ void NorviButtonHandler::begin() {
   LOG_INFO("  ◦ Button 2 ADC range: %u–%u\n", THRESH_BTN2_MIN, THRESH_BTN2_MAX);
   LOG_INFO("  ◦ Button 3 ADC range: %u–%u\n", THRESH_BTN3_MIN, THRESH_BTN3_MAX);
   LOG_INFO("✓ NorviButtonHandler initialized\n");
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+
+void NorviButtonHandler::applySettings() {
+  // Load configurable ADC thresholds from NVS (defaults = calibrated values)
+  THRESH_BTN1_MIN = ConfigManager::getSettings().btn1Min;
+  THRESH_BTN1_MAX = ConfigManager::getSettings().btn1Max;
+  THRESH_BTN2_MIN = ConfigManager::getSettings().btn2Min;
+  THRESH_BTN2_MAX = ConfigManager::getSettings().btn2Max;
+  THRESH_BTN3_MIN = ConfigManager::getSettings().btn3Min;
+  THRESH_BTN3_MAX = ConfigManager::getSettings().btn3Max;
+  THRESH_NO_PRESS = ConfigManager::getSettings().btnNoPress;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

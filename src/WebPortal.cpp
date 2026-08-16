@@ -40,6 +40,10 @@
 #include "Version.h"
 #include "LogCapture.hpp"
 
+#ifdef NORVI_AE01_R
+#include "NorviButtonHandler.hpp"
+#endif
+
 namespace PoolController {
 
 // File-scoped state for streaming LittleFS upload (used by handleFsUploadStream)
@@ -776,6 +780,12 @@ void WebPortal::apiSaveConfig() {
     ConfigManager::getSettings().timeLossRedHours = server_.arg("red").toInt();
 
     ConfigManager::save();
+
+#ifdef NORVI_AE01_R
+    // Apply button thresholds to the running handler immediately so the
+    // new values take effect without a reboot (P2 review fix).
+    NorviButtonHandler::applySettings();
+#endif
 
     // Apply timezone change to running clock immediately (P2)
     setTimezoneIndex(ConfigManager::getSettings().timezoneIndex);
