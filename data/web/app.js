@@ -589,6 +589,13 @@ async function saveControllerSettings() {
   const circFactor = document.getElementById('tempCircFactor').value;
   const circMaxRuntime = document.getElementById('tempCircMaxRuntime').value;
   const tz = document.getElementById('timezone').value;
+  const btn1Min = document.getElementById('btn1Min').value;
+  const btn1Max = document.getElementById('btn1Max').value;
+  const btn2Min = document.getElementById('btn2Min').value;
+  const btn2Max = document.getElementById('btn2Max').value;
+  const btn3Min = document.getElementById('btn3Min').value;
+  const btn3Max = document.getElementById('btn3Max').value;
+  const btnNoPress = document.getElementById('btnNoPress').value;
 
   // Validate time fields included alongside pool fields
   const green = parseInt(document.getElementById('timeLossGreen').value, 10);
@@ -608,7 +615,7 @@ async function saveControllerSettings() {
   const res = await fetch('/api/config', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: 'type=settings&mode=' + mode + '&interval=' + interval + '&max_pool=' + maxPool + '&min_solar=' + minSolar + '&hysteresis=' + hysteresis + '&circ_threshold=' + circThreshold + '&circ_factor=' + circFactor + '&circ_max_runtime=' + circMaxRuntime + '&timezone=' + tz + '&green=' + green + '&red=' + red + timerParams() + '&ntp_server=' + ntpServer
+    body: 'type=settings&mode=' + mode + '&interval=' + interval + '&max_pool=' + maxPool + '&min_solar=' + minSolar + '&hysteresis=' + hysteresis + '&circ_threshold=' + circThreshold + '&circ_factor=' + circFactor + '&circ_max_runtime=' + circMaxRuntime + '&timezone=' + tz + '&green=' + green + '&red=' + red + timerParams() + '&ntp_server=' + ntpServer + '&btn1_min=' + btn1Min + '&btn1_max=' + btn1Max + '&btn2_min=' + btn2Min + '&btn2_max=' + btn2Max + '&btn3_min=' + btn3Min + '&btn3_max=' + btn3Max + '&btn_no_press=' + btnNoPress
   });
   if (res.status === 200) {
     document.getElementById('poolThreshold').textContent = 'max ' + parseFloat(maxPool).toFixed(1) + '°C';
@@ -729,6 +736,13 @@ async function loadConfig() {
     document.getElementById('ntpServer').value = data.ntp.server;
     document.getElementById('timeLossGreen').value = data.settings.time_loss_green_hours;
     document.getElementById('timeLossRed').value = data.settings.time_loss_red_hours;
+    document.getElementById('btn1Min').value = data.settings.btn1_min;
+    document.getElementById('btn1Max').value = data.settings.btn1_max;
+    document.getElementById('btn2Min').value = data.settings.btn2_min;
+    document.getElementById('btn2Max').value = data.settings.btn2_max;
+    document.getElementById('btn3Min').value = data.settings.btn3_min;
+    document.getElementById('btn3Max').value = data.settings.btn3_max;
+    document.getElementById('btnNoPress').value = data.settings.btn_no_press;
     const pad2 = (n) => n.toString().padStart(2, '0');
     document.getElementById('timerStart').value = pad2(data.settings.timer_start_hour) + ':' + pad2(data.settings.timer_start_min);
     document.getElementById('timerEnd').value = pad2(data.settings.timer_end_hour) + ':' + pad2(data.settings.timer_end_min);

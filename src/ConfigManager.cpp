@@ -68,6 +68,13 @@ static constexpr const char *kSetRed = "set_red";
 static constexpr const char *kSetCircThresh = "set_circth";
 static constexpr const char *kSetCircFactor = "set_circfa";
 static constexpr const char *kSetCircMax = "set_circmx";
+static constexpr const char *kSetBtn1Min = "set_btn1min";
+static constexpr const char *kSetBtn1Max = "set_btn1max";
+static constexpr const char *kSetBtn2Min = "set_btn2min";
+static constexpr const char *kSetBtn2Max = "set_btn2max";
+static constexpr const char *kSetBtn3Min = "set_btn3min";
+static constexpr const char *kSetBtn3Max = "set_btn3max";
+static constexpr const char *kSetBtnNoPress = "set_btnnop";
 static constexpr const char *kAdmPass = "adm_pass";
 static constexpr const char *kCfgConfigured = "cfg_configured";
 
@@ -108,6 +115,13 @@ bool ConfigManager::load() {
   settings_.tempCircThreshold = prefs.getDouble(kSetCircThresh, 24.0);
   settings_.tempCircFactor = prefs.getUShort(kSetCircFactor, 30);
   settings_.tempCircMaxRuntime = prefs.getUShort(kSetCircMax, 720);
+  settings_.btn1Min = prefs.getUShort(kSetBtn1Min, 3100);
+  settings_.btn1Max = prefs.getUShort(kSetBtn1Max, 3520);
+  settings_.btn2Min = prefs.getUShort(kSetBtn2Min, 3520);
+  settings_.btn2Max = prefs.getUShort(kSetBtn2Max, 3880);
+  settings_.btn3Min = prefs.getUShort(kSetBtn3Min, 3880);
+  settings_.btn3Max = prefs.getUShort(kSetBtn3Max, 4095);
+  settings_.btnNoPress = prefs.getUShort(kSetBtnNoPress, 4096);
 
   adminPasswordHash_ = prefs.getString(kAdmPass, kDefaultPasswordHash);
   configured_ = prefs.getBool(kCfgConfigured, false);
@@ -147,6 +161,13 @@ bool ConfigManager::save() {
   prefs.putDouble(kSetCircThresh, settings_.tempCircThreshold);
   prefs.putUShort(kSetCircFactor, settings_.tempCircFactor);
   prefs.putUShort(kSetCircMax, settings_.tempCircMaxRuntime);
+  prefs.putUShort(kSetBtn1Min, settings_.btn1Min);
+  prefs.putUShort(kSetBtn1Max, settings_.btn1Max);
+  prefs.putUShort(kSetBtn2Min, settings_.btn2Min);
+  prefs.putUShort(kSetBtn2Max, settings_.btn2Max);
+  prefs.putUShort(kSetBtn3Min, settings_.btn3Min);
+  prefs.putUShort(kSetBtn3Max, settings_.btn3Max);
+  prefs.putUShort(kSetBtnNoPress, settings_.btnNoPress);
 
   prefs.putString(kAdmPass, adminPasswordHash_);
   prefs.putBool(kCfgConfigured, configured_);

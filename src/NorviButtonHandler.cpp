@@ -19,6 +19,7 @@
 
 #include <Arduino.h>
 #include "Config.hpp"
+#include "ConfigManager.hpp"
 #include "LogCapture.hpp"
 
 namespace PoolController {
@@ -51,12 +52,31 @@ NorviButtonHandler::ButtonLongPressCallback NorviButtonHandler::cbButton3Long_ =
 uint32_t NorviButtonHandler::pressStartMs_ = 0;
 uint32_t NorviButtonHandler::releasePendingMs_ = 0;
 
+// ADC thresholds — defaults are the 2026-08-16 calibrated values; begin()
+// overwrites them from ConfigManager (NVS) so they are user-configurable.
+uint16_t NorviButtonHandler::THRESH_BTN1_MIN{3100};
+uint16_t NorviButtonHandler::THRESH_BTN1_MAX{3520};
+uint16_t NorviButtonHandler::THRESH_BTN2_MIN{3520};
+uint16_t NorviButtonHandler::THRESH_BTN2_MAX{3880};
+uint16_t NorviButtonHandler::THRESH_BTN3_MIN{3880};
+uint16_t NorviButtonHandler::THRESH_BTN3_MAX{4095};
+uint16_t NorviButtonHandler::THRESH_NO_PRESS{4096};
+
 // ═══════════════════════════════════════════════════════════════════════════
 
 void NorviButtonHandler::begin() {
   LOG_INFO("• NorviButtonHandler initializing on ADC GPIO%d...\n", PIN_BUTTON_ADC);
 
   pinMode(PIN_BUTTON_ADC, INPUT);
+
+  // Load configurable ADC thresholds from NVS (defaults = calibrated values)
+  THRESH_BTN1_MIN = ConfigManager::getSettings().btn1Min;
+  THRESH_BTN1_MAX = ConfigManager::getSettings().btn1Max;
+  THRESH_BTN2_MIN = ConfigManager::getSettings().btn2Min;
+  THRESH_BTN2_MAX = ConfigManager::getSettings().btn2Max;
+  THRESH_BTN3_MIN = ConfigManager::getSettings().btn3Min;
+  THRESH_BTN3_MAX = ConfigManager::getSettings().btn3Max;
+  THRESH_NO_PRESS = ConfigManager::getSettings().btnNoPress;
 
   // Take an initial sample to let the ADC stabilise
   analogRead(PIN_BUTTON_ADC);
@@ -89,7 +109,7 @@ void NorviButtonHandler::loop() {
   static uint32_t lastStableTime_ = 0;
 
   // Fast-attack: a genuine press/release changes the button range — even
-  // when the ADC delta is small (no-press 3800 → S3 3700 = 100). Base the
+  // when the ADC delta is small (no-press ~2700 → S1 ~3400 = 700). Base the
   // re-initialization on button-range transitions so every valid press is
   // caught within one sample instead of a full moving-average window. The
   // transition also restarts the stability window, so a single-sample glitch
