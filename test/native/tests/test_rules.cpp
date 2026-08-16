@@ -228,6 +228,8 @@ int run_rule_tests() {
   {
     test_begin("PumpTimer", "wrap-past-midnight extension keeps pump ON");
 
+    int suiteFailed = 0;
+
     PumpTimerHarness timer;
     TimerSetting ts;
     ts.timerStartHour = 16;
@@ -240,6 +242,7 @@ int run_rule_tests() {
     bool on = timer.checkPoolPumpTimer(40.0f);
     bool extSet = (timer.getActiveEndMinutes() == 1680);
     rc = (on && extSet) ? 0 : 1;
+    suiteFailed |= rc;
     if (rc == 0) {
       test_pass(__FILE__, __LINE__);
       passed++;
@@ -253,6 +256,7 @@ int run_rule_tests() {
     setWallClock(20, 30);  // past base end, still inside extended window
     on = timer.checkPoolPumpTimer(40.0f);
     rc = (on) ? 0 : 1;
+    suiteFailed |= rc;
     if (rc == 0) {
       test_pass(__FILE__, __LINE__);
       passed++;
@@ -264,6 +268,7 @@ int run_rule_tests() {
     setWallClock(2, 0, 1);  // 02:00 next day, still inside extended window
     on = timer.checkPoolPumpTimer(40.0f);
     rc = (on) ? 0 : 1;
+    suiteFailed |= rc;
     if (rc == 0) {
       test_pass(__FILE__, __LINE__);
       passed++;
@@ -275,6 +280,7 @@ int run_rule_tests() {
     setWallClock(4, 30, 1);  // 04:30 next day → extension expired
     on = timer.checkPoolPumpTimer(40.0f);
     rc = (!on && timer.getActiveEndMinutes() == 0) ? 0 : 1;
+    suiteFailed |= rc;
     if (rc == 0) {
       test_pass(__FILE__, __LINE__);
       passed++;
@@ -285,7 +291,7 @@ int run_rule_tests() {
       failed++;
     }
 
-    test_suite_end("PumpTimer::wrap_past_midnight", rc == 0 ? 4 : 0, rc != 0 ? 1 : 0);
+    test_suite_end("PumpTimer::wrap_past_midnight", suiteFailed == 0 ? 4 : 0, suiteFailed != 0 ? 1 : 0);
   }
 
   // ── Test: same-day extension still works (no regression) ──
@@ -293,6 +299,8 @@ int run_rule_tests() {
   // extended = 480 + 720 = 1200 (20:00, no wrap).
   {
     test_begin("PumpTimer", "same-day extension keeps pump ON");
+
+    int suiteFailed = 0;
 
     PumpTimerHarness timer;
     TimerSetting ts;
@@ -306,6 +314,7 @@ int run_rule_tests() {
     bool on = timer.checkPoolPumpTimer(28.0f);
     bool extSet = (timer.getActiveEndMinutes() == 1200);
     rc = (on && extSet) ? 0 : 1;
+    suiteFailed |= rc;
     if (rc == 0) {
       test_pass(__FILE__, __LINE__);
       passed++;
@@ -319,6 +328,7 @@ int run_rule_tests() {
     setWallClock(19, 0);  // past base end, inside extended window (until 20:00)
     on = timer.checkPoolPumpTimer(28.0f);
     rc = (on) ? 0 : 1;
+    suiteFailed |= rc;
     if (rc == 0) {
       test_pass(__FILE__, __LINE__);
       passed++;
@@ -330,6 +340,7 @@ int run_rule_tests() {
     setWallClock(20, 30);  // past extended end → extension expired
     on = timer.checkPoolPumpTimer(28.0f);
     rc = (!on && timer.getActiveEndMinutes() == 0) ? 0 : 1;
+    suiteFailed |= rc;
     if (rc == 0) {
       test_pass(__FILE__, __LINE__);
       passed++;
@@ -340,7 +351,7 @@ int run_rule_tests() {
       failed++;
     }
 
-    test_suite_end("PumpTimer::same_day", rc == 0 ? 3 : 0, rc != 0 ? 1 : 0);
+    test_suite_end("PumpTimer::same_day", suiteFailed == 0 ? 3 : 0, suiteFailed != 0 ? 1 : 0);
   }
 
   // ── Test: base timer crossing midnight without extension (no regression) ──
@@ -348,6 +359,8 @@ int run_rule_tests() {
   // Window must still be active at e.g. 02:00 and inactive at 12:00.
   {
     test_begin("PumpTimer", "midnight-crossing base timer without extension");
+
+    int suiteFailed = 0;
 
     PumpTimerHarness timer;
     TimerSetting ts;
@@ -360,6 +373,7 @@ int run_rule_tests() {
     setWallClock(2, 0);  // inside base window (after midnight)
     bool on = timer.checkPoolPumpTimer(20.0f);
     rc = (on) ? 0 : 1;
+    suiteFailed |= rc;
     if (rc == 0) {
       test_pass(__FILE__, __LINE__);
       passed++;
@@ -371,6 +385,7 @@ int run_rule_tests() {
     setWallClock(12, 0);  // outside base window
     on = timer.checkPoolPumpTimer(20.0f);
     rc = (!on) ? 0 : 1;
+    suiteFailed |= rc;
     if (rc == 0) {
       test_pass(__FILE__, __LINE__);
       passed++;
@@ -379,7 +394,7 @@ int run_rule_tests() {
       failed++;
     }
 
-    test_suite_end("PumpTimer::base_crosses_midnight", rc == 0 ? 2 : 0, rc != 0 ? 1 : 0);
+    test_suite_end("PumpTimer::base_crosses_midnight", suiteFailed == 0 ? 2 : 0, suiteFailed != 0 ? 1 : 0);
   }
 
   // ── Test: base timer crossing midnight WITH extension (no regression) ──
@@ -387,6 +402,8 @@ int run_rule_tests() {
   // extended = 1320 + 660 = 1980 → 09:00 next day (wraps).
   {
     test_begin("PumpTimer", "midnight-crossing base timer with extension");
+
+    int suiteFailed = 0;
 
     PumpTimerHarness timer;
     TimerSetting ts;
@@ -400,6 +417,7 @@ int run_rule_tests() {
     bool on = timer.checkPoolPumpTimer(30.0f);
     bool extSet = (timer.getActiveEndMinutes() == 1980);
     rc = (on && extSet) ? 0 : 1;
+    suiteFailed |= rc;
     if (rc == 0) {
       test_pass(__FILE__, __LINE__);
       passed++;
@@ -413,6 +431,7 @@ int run_rule_tests() {
     setWallClock(8, 0, 1);  // next day 08:00, inside extended window (until 09:00)
     on = timer.checkPoolPumpTimer(30.0f);
     rc = (on) ? 0 : 1;
+    suiteFailed |= rc;
     if (rc == 0) {
       test_pass(__FILE__, __LINE__);
       passed++;
@@ -424,6 +443,7 @@ int run_rule_tests() {
     setWallClock(10, 0, 1);  // next day 10:00 → extension expired
     on = timer.checkPoolPumpTimer(30.0f);
     rc = (!on) ? 0 : 1;
+    suiteFailed |= rc;
     if (rc == 0) {
       test_pass(__FILE__, __LINE__);
       passed++;
@@ -432,7 +452,7 @@ int run_rule_tests() {
       failed++;
     }
 
-    test_suite_end("PumpTimer::crossing_with_extension", rc == 0 ? 3 : 0, rc != 0 ? 1 : 0);
+    test_suite_end("PumpTimer::crossing_with_extension", suiteFailed == 0 ? 3 : 0, suiteFailed != 0 ? 1 : 0);
   }
 
   // ── Test: full-day extension (max runtime 1440) expires at the next cycle ──
