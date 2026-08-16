@@ -196,22 +196,54 @@ void CalibrationManager::computeThresholds() {
     return;
   }
 
-  auto &s = ConfigManager::getSettings();
-  s.btn1Min = (resting + s1) / 2;
-  s.btn1Max = (s1 + s2) / 2;
-  s.btn2Min = (s1 + s2) / 2;
-  s.btn2Max = (s2 + s3) / 2;
-  s.btn3Min = (s2 + s3) / 2;
-  s.btn3Max = 4095;     // full scale stays
-  s.btnNoPress = 4096;  // sentinel stays
-
   state_ = State::SAVE;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
 
 void CalibrationManager::saveThresholds() {
+  auto &s = ConfigManager::getSettings();
+
+  // Snapshot the previous thresholds so they can be restored if persistence
+  // fails — the live Settings must not expose values that were never saved.
+  const uint16_t prevBtn1Min = s.btn1Min;
+  const uint16_t prevBtn1Max = s.btn1Max;
+  const uint16_t prevBtn2Min = s.btn2Min;
+  const uint16_t prevBtn2Max = s.btn2Max;
+  const uint16_t prevBtn3Min = s.btn3Min;
+  const uint16_t prevBtn3Max = s.btn3Max;
+  const uint16_t prevBtnNoPress = s.btnNoPress;
+
+  // Compute the new thresholds into temporaries first.
+  const uint16_t resting = status_.restingLevel;
+  const uint16_t s1 = status_.s1;
+  const uint16_t s2 = status_.s2;
+  const uint16_t s3 = status_.s3;
+  const uint16_t btn1Min = (resting + s1) / 2;
+  const uint16_t btn1Max = (s1 + s2) / 2;
+  const uint16_t btn2Min = (s1 + s2) / 2;
+  const uint16_t btn2Max = (s2 + s3) / 2;
+  const uint16_t btn3Min = (s2 + s3) / 2;
+
+  // Commit to the live Settings so save() persists them…
+  s.btn1Min = btn1Min;
+  s.btn1Max = btn1Max;
+  s.btn2Min = btn2Min;
+  s.btn2Max = btn2Max;
+  s.btn3Min = btn3Min;
+  s.btn3Max = 4095;     // full scale stays
+  s.btnNoPress = 4096;  // sentinel stays
+
   if (!ConfigManager::save()) {
+    // …and restore the previous values if persistence failed.
+    s.btn1Min = prevBtn1Min;
+    s.btn1Max = prevBtn1Max;
+    s.btn2Min = prevBtn2Min;
+    s.btn2Max = prevBtn2Max;
+    s.btn3Min = prevBtn3Min;
+    s.btn3Max = prevBtn3Max;
+    s.btnNoPress = prevBtnNoPress;
+
     status_.step = Step::ERROR;
     status_.message = "Failed to save thresholds — please retry";
     state_ = State::ERROR;
@@ -222,9 +254,8 @@ void CalibrationManager::saveThresholds() {
   status_.step = Step::DONE;
   status_.message = "Calibration complete — thresholds saved";
   state_ = State::DONE;
-  LOG_INFO("✓ Calibration complete: btn1=%u-%u btn2=%u-%u btn3=%u-%u noPress=%u\n", ConfigManager::getSettings().btn1Min,
-    ConfigManager::getSettings().btn1Max, ConfigManager::getSettings().btn2Min, ConfigManager::getSettings().btn2Max,
-    ConfigManager::getSettings().btn3Min, ConfigManager::getSettings().btn3Max, ConfigManager::getSettings().btnNoPress);
+  LOG_INFO("✓ Calibration complete: btn1=%u-%u btn2=%u-%u btn3=%u-%u noPress=%u\n", s.btn1Min, s.btn1Max, s.btn2Min, s.btn2Max,
+    s.btn3Min, s.btn3Max, s.btnNoPress);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

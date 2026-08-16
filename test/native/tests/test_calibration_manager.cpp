@@ -227,12 +227,30 @@ static int test_save_failure_error() {
   holdLevel(3400, 2000);
   holdLevel(3700, 4000);
 
+  // Snapshot the live thresholds before the failed save
+  auto &s = PoolController::ConfigManager::getSettings();
+  const uint16_t prevBtn1Min = s.btn1Min;
+  const uint16_t prevBtn1Max = s.btn1Max;
+  const uint16_t prevBtn2Min = s.btn2Min;
+  const uint16_t prevBtn2Max = s.btn2Max;
+  const uint16_t prevBtn3Min = s.btn3Min;
+  const uint16_t prevBtn3Max = s.btn3Max;
+  const uint16_t prevBtnNoPress = s.btnNoPress;
+
   // Force save failure before the final step completes → ERROR state
   PoolController::ConfigManager::_saveFails = true;
   holdLevel(4095, 6000);
   PoolController::ConfigManager::_saveFails = false;
 
   ASSERT_EQ(CalibrationManager::getStatus().step, CalibrationManager::Step::ERROR);
+  // Live Settings must be untouched when persistence fails
+  ASSERT_EQ(s.btn1Min, prevBtn1Min);
+  ASSERT_EQ(s.btn1Max, prevBtn1Max);
+  ASSERT_EQ(s.btn2Min, prevBtn2Min);
+  ASSERT_EQ(s.btn2Max, prevBtn2Max);
+  ASSERT_EQ(s.btn3Min, prevBtn3Min);
+  ASSERT_EQ(s.btn3Max, prevBtn3Max);
+  ASSERT_EQ(s.btnNoPress, prevBtnNoPress);
   return 0;
 }
 
