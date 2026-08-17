@@ -51,7 +51,8 @@ public:
   static void setConfigured(bool configured) { _configured = configured; }
   static bool begin() { return true; }
   static bool load() { return true; }
-  static bool save() { return true; }
+  static bool save() { return !_saveFails; }
+  static bool _saveFails;  // test hook
   static void reset() {
     _adminPasswordHash =  // gitleaks:allow  SHA-256("admin")
         F("8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918");

@@ -130,6 +130,12 @@ private:
   static void apiFsUpload();
   /** @brief Streaming upload handler for /api/fs/upload multipart file data. */
   static void handleFsUploadStream();
+  /** @brief POST /api/calibrate/start — start the NORVI button calibration wizard. */
+  static void apiCalibrateStart();
+  /** @brief GET /api/calibrate/status — return calibration status as JSON. */
+  static void apiCalibrateStatus();
+  /** @brief POST /api/calibrate/cancel — cancel a running calibration. */
+  static void apiCalibrateCancel();
 
   static WebServer server_;
   static DNSServer dnsServer_;

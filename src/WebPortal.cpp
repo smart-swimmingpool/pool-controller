@@ -42,6 +42,7 @@
 
 #ifdef NORVI_AE01_R
 #include "NorviButtonHandler.hpp"
+#include "CalibrationManager.hpp"
 #endif
 
 namespace PoolController {
@@ -211,6 +212,25 @@ void WebPortal::setupRoutes() {
       return;
     apiSaveConfig();
   });
+
+#ifdef NORVI_AE01_R
+  // Button calibration wizard (NORVI)
+  server_.on("/api/calibrate/start", HTTP_POST, []() {
+    if (!handleAuthentication())
+      return;
+    apiCalibrateStart();
+  });
+  server_.on("/api/calibrate/status", HTTP_GET, []() {
+    if (!handleAuthentication())
+      return;
+    apiCalibrateStatus();
+  });
+  server_.on("/api/calibrate/cancel", HTTP_POST, []() {
+    if (!handleAuthentication())
+      return;
+    apiCalibrateCancel();
+  });
+#endif
   server_.on("/api/mode", HTTP_POST, []() {
     if (!handleAuthentication())
       return;
@@ -465,6 +485,11 @@ void WebPortal::apiGetStatus() {
   doc["local_ip"] = NetworkManager::getLocalIP();
   doc["fw_version"] = FW_VERSION;
   doc["authenticated"] = isClientAuthenticated();
+#ifdef NORVI_AE01_R
+  doc["norvi"] = true;
+#else
+  doc["norvi"] = false;
+#endif
 
   // Current date/time in configured timezone
   TimeChangeRule *tcr;
@@ -867,6 +892,38 @@ void WebPortal::apiSaveConfig() {
 
   server_.send(400, "text/plain", "Invalid Config Request");
 }
+
+#ifdef NORVI_AE01_R
+// ── Button calibration (NORVI) ────────────────────────────────────────────
+
+void WebPortal::apiCalibrateStart() {
+  if (!CalibrationManager::start()) {
+    server_.send(409, "text/plain", "Calibration already running");
+    return;
+  }
+  server_.send(200, "text/plain", "OK");
+}
+
+void WebPortal::apiCalibrateStatus() {
+  const auto st = CalibrationManager::getStatus();
+  JsonDocument doc;
+  doc["step"] = static_cast<int>(st.step);
+  doc["live_adc"] = st.liveAdc;
+  doc["resting"] = st.restingLevel;
+  doc["s1"] = st.s1;
+  doc["s2"] = st.s2;
+  doc["s3"] = st.s3;
+  doc["message"] = st.message;
+  String json;
+  serializeJson(doc, json);
+  server_.send(200, "application/json", json);
+}
+
+void WebPortal::apiCalibrateCancel() {
+  CalibrationManager::cancel();
+  server_.send(200, "text/plain", "OK");
+}
+#endif  // NORVI_AE01_R
 
 void WebPortal::apiSetMode() {
   if (!server_.hasArg("mode")) {

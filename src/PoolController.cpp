@@ -41,6 +41,7 @@
 #ifdef NORVI_AE01_R
 #include "NorviOledDisplay.hpp"
 #include "NorviButtonHandler.hpp"
+#include "CalibrationManager.hpp"
 #endif
 
 #if defined(OLIMEX_ESP32_C6_EVB) && defined(HAS_LOCAL_TFT_UI)
@@ -294,6 +295,7 @@ auto PoolControllerContext::setup() -> void {
   // Initialize NORVI-specific peripherals (OLED display + front buttons)
   NorviOledDisplay::begin();
   NorviButtonHandler::begin();
+  CalibrationManager::begin();
 
   // Wire button callbacks (S1=UP, S2=DOWN, S3=ACTION)
   // ── S1 (UP) ───────────────────────────────────────────────────────────
@@ -500,6 +502,7 @@ auto PoolControllerContext::loop() -> void {
   // Update NORVI OLED display and read front-panel buttons
   NorviOledDisplay::loop();
   NorviButtonHandler::loop();
+  CalibrationManager::loop();
 #endif
 
   // Run drivers & logic rules

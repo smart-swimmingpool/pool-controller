@@ -178,6 +178,15 @@ private:
   /// committed to `currentButton_` after DEBOUNCE_MS.
   static uint32_t releasePendingMs_;
 
+  /// True while calibration was active on the previous loop() call.
+  /// Used to detect the calibration-finish transition.
+  static bool calibWasActive_;
+
+  /// While set, callbacks stay suppressed until a confirmed
+  /// all-buttons-released state is observed (armed when calibration
+  /// finishes while a button is still held).
+  static bool suppressCallbacks_;
+
   // ── ADC thresholds (12-bit, 0–4095) ──────────────────────────────────
   // Calibrated from live measurements on the NORVI AE01-R (2026-08-16):
   //   No press: ~2610–2990 (oscillates; must map to NONE)

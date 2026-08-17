@@ -39,6 +39,38 @@
   </div>
 </div>
 
+<!-- Calibration Modal (guided wizard) -->
+<div id="calibrationModal" style="display: none; position: fixed; inset: 0; z-index: 100; background: rgba(6,18,30,0.85); backdrop-filter: blur(8px); align-items: center; justify-content: center; padding: 2rem;">
+  <div style="background: var(--glass-bg); border: 1px solid var(--panel-border); border-radius: 16px; padding: 2rem; max-width: 420px; width: 100%;">
+    <h2 style="color: #00e5ff; text-align: center; margin: 0 0 0.5rem; font-size: 1.4rem;">🎯 Button Calibration</h2>
+    <p class="calib-guide">Four measurements run one after another. Keep the button pressed until its step turns green.</p>
+
+    <!-- Current action: what to do right now -->
+    <div class="calib-action">
+      <span id="calibStateChip" class="calib-chip calib-chip-wait">Waiting</span>
+      <div id="calibActionHeadline" class="calib-headline">Release all buttons</div>
+      <p id="calibStepText" class="calib-detail">Release all buttons — measuring resting level</p>
+      <p id="calibNextUp" class="calib-nextup">Next: hold Button 1</p>
+    </div>
+
+    <!-- Step progress -->
+    <div class="calib-progress">
+      <div class="calib-step active" id="calibP0"><span class="calib-step-dot">1</span><span class="calib-step-label">Resting</span></div>
+      <div class="calib-step" id="calibP1"><span class="calib-step-dot">2</span><span class="calib-step-label">Button 1</span></div>
+      <div class="calib-step" id="calibP2"><span class="calib-step-dot">3</span><span class="calib-step-label">Button 2</span></div>
+      <div class="calib-step" id="calibP3"><span class="calib-step-dot">4</span><span class="calib-step-label">Button 3</span></div>
+    </div>
+
+    <!-- Live ADC meter -->
+    <div class="calib-meter">
+      <div class="calib-meter-bar"><div id="calibMeterFill" class="calib-meter-fill"></div></div>
+      <div class="calib-meter-readout"><span id="calibLiveAdc">—</span><span class="calib-meter-unit">ADC</span></div>
+    </div>
+
+    <button onclick="cancelCalibration()" class="calib-cancel">Cancel</button>
+  </div>
+</div>
+
 <!-- Bottom Tab Bar (iOS 26 Style) -->
 <nav class="tab-bar" id="tabBar">
   <button class="tab-bar-item active" data-tab="dashboard" onclick="switchTab('dashboard')">
@@ -349,6 +381,15 @@
       <label for="btnNoPress">No-Press Threshold</label>
       <input type="number" id="btnNoPress" min="0" max="4096" step="1" value="4096">
       <span class="input-hint">Values above this are ignored · 4096 = no-op (S3 reads full scale)</span>
+    </div>
+    <div class="input-group" style="visibility:hidden;">
+      <div style="height:1px;"></div>
+    </div>
+  </div>
+  <div class="telemetry-grid" id="calibrationSection">
+    <div class="input-group">
+      <button type="button" onclick="startCalibration()" style="width: 100%; padding: 0.75rem; background: linear-gradient(135deg, #00b4d8, #00e5ff); border: none; border-radius: 8px; color: #000; font-weight: 600; font-size: 1rem; cursor: pointer;">🎯 Start Calibration</button>
+      <span class="input-hint">About a minute · Release, then press and hold Button 1, 2, 3 in turn</span>
     </div>
     <div class="input-group" style="visibility:hidden;">
       <div style="height:1px;"></div>

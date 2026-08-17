@@ -61,6 +61,13 @@ async function loadTelemetry() {
       document.getElementById('solarThreshold').textContent = 'min ' + data.temp_min_solar.toFixed(1) + '°C';
     }
 
+    // NORVI capability: hide the calibration wizard on non-NORVI firmware
+    // (the /api/calibrate/* routes are compiled out there).
+    const calibSection = document.getElementById('calibrationSection');
+    if (calibSection) {
+      calibSection.style.display = data.norvi ? '' : 'none';
+    }
+
     // Pumpen — Toggle-Switches aktualisieren
     if (data.pool_pump != null) {
       setPumpSwitch('pool', data.pool_pump);
@@ -648,6 +655,200 @@ async function saveControllerSettings() {
     document.getElementById('solarThreshold').textContent = 'min ' + parseFloat(minSolar).toFixed(1) + '°C';
     alert('✓ Pool settings saved!');
     highlightMode(mode);
+  }
+}
+
+// ── Button Calibration Wizard ──
+
+let calibPollTimer = null;
+
+function showCalibrationModal() {
+  document.getElementById('calibrationModal').style.display = 'flex';
+}
+
+function closeCalibrationModal() {
+  document.getElementById('calibrationModal').style.display = 'none';
+  if (calibPollTimer) { clearInterval(calibPollTimer); calibPollTimer = null; }
+  if (calibCloseTimer) { clearTimeout(calibCloseTimer); calibCloseTimer = null; }
+  calibMsgPending = null;
+  calibMsgShownAt = 0;
+}
+
+function startCalibrationPolling() {
+  // Guard against duplicate poll loops when the start button is activated
+  // twice before the first request completes.
+  if (calibPollTimer) { clearInterval(calibPollTimer); }
+  calibPollTimer = setInterval(pollCalibrationStatus, 500);
+  pollCalibrationStatus();
+}
+
+async function startCalibration() {
+  const res = await fetch('/api/calibrate/start', { method: 'POST' });
+  // handleAuthentication() serves the login page with HTTP 200 when the
+  // session expired, so verify an actual API response first.
+  const type = res.headers.get('content-type') || '';
+  if (type.includes('text/html')) {
+    showLoginForm();
+    alert('Session expired — please log in again.');
+    return;
+  }
+  if (res.status === 409) {
+    // Calibration is already running on the device (e.g. after a page
+    // reload or a lost start response) — resume the running wizard so the
+    // user can watch progress or cancel it instead of being stuck.
+    showCalibrationModal();
+    startCalibrationPolling();
+    return;
+  }
+  if (!res.ok) { alert('Calibration could not be started.'); return; }
+  showCalibrationModal();
+  startCalibrationPolling();
+}
+
+// ── Calibration wizard UI state ──
+
+const CALIB_STEP_HEADLINES = {
+  1: 'Release all buttons',
+  2: 'Press and hold Button 1',
+  3: 'Press and hold Button 2',
+  4: 'Press and hold Button 3',
+  5: 'Calibration complete',
+  6: 'Calibration failed'
+};
+
+const CALIB_NEXT_UP = {
+  1: 'Next: hold Button 1',
+  2: 'Next: hold Button 2',
+  3: 'Next: hold Button 3',
+  4: 'Then the levels are computed and saved automatically.'
+};
+
+// Keep every status text readable: a new message is only shown once the
+// previous one has been on screen for at least MIN_MSG_MS milliseconds.
+const CALIB_MIN_MSG_MS = 1200;
+let calibMsgShownAt = 0;
+let calibMsgPending = null;
+let calibCloseTimer = null;
+
+function showCalibrationMessage(text) {
+  const el = document.getElementById('calibStepText');
+  if (!el) return;
+  const now = Date.now();
+  if (now - calibMsgShownAt < CALIB_MIN_MSG_MS) {
+    // Current text still on screen — remember the newest one, promote later
+    calibMsgPending = text;
+    return;
+  }
+  if (calibMsgPending) { text = calibMsgPending; calibMsgPending = null; }
+  if (text !== el.textContent) {
+    el.textContent = text;
+    calibMsgShownAt = now;
+  }
+}
+
+function calibPhase(message) {
+  if (!message) return 'waiting';
+  if (message.includes('Computing')) return 'saving';
+  if (message.includes('sampling')) return 'sampling';
+  if (message.includes('try again') || message.includes('too close') || message.includes('changed')) return 'retry';
+  if (message.includes('complete')) return 'done';
+  return 'waiting';
+}
+
+function updateCalibrationUi(st) {
+  const phase = calibPhase(st.message || '');
+  const step = st.step;
+
+  // Bold instruction headline for the current action
+  let headline = CALIB_STEP_HEADLINES[step] || 'Calibration';
+  if (phase === 'saving') {
+    headline = 'Computing thresholds…';
+  } else if (phase === 'retry') {
+    headline = 'Try again — hold steady';
+  } else if (phase === 'sampling' && step >= 2 && step <= 4) {
+    headline = 'Keep holding Button ' + (step - 1);
+  } else if (phase === 'sampling' && step === 1) {
+    headline = 'Hold steady…';
+  }
+  const headlineEl = document.getElementById('calibActionHeadline');
+  if (headlineEl) headlineEl.textContent = headline;
+
+  // State chip
+  const chipLabels = { waiting: 'Waiting', sampling: 'Measuring', saving: 'Saving', retry: 'Retry', done: 'Done', error: 'Error' };
+  const chip = document.getElementById('calibStateChip');
+  if (chip) {
+    chip.textContent = chipLabels[phase] || chipLabels.waiting;
+    chip.className = 'calib-chip calib-chip-' + phase;
+  }
+
+  // Firmware detail line (throttled so it stays readable)
+  showCalibrationMessage(st.message || '');
+
+  // What happens next
+  const nextUp = document.getElementById('calibNextUp');
+  if (nextUp) nextUp.textContent = CALIB_NEXT_UP[step] || '';
+
+  // Live ADC meter (0-4095)
+  document.getElementById('calibLiveAdc').textContent = st.live_adc;
+  const fill = document.getElementById('calibMeterFill');
+  if (fill) {
+    fill.style.width = Math.min(100, Math.round((st.live_adc / 4095) * 100)) + '%';
+    fill.classList.toggle('sampling', phase === 'sampling');
+  }
+
+  // Step progress: current highlighted, completed marked with a check
+  const steps = ['calibP0', 'calibP1', 'calibP2', 'calibP3'];
+  steps.forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const done = (i + 1) < step;
+    const active = (i + 1) === step;
+    el.classList.toggle('active', active);
+    el.classList.toggle('done', done);
+    const dot = el.querySelector('.calib-step-dot');
+    if (dot) dot.textContent = done ? '✓' : (i + 1);
+  });
+}
+
+async function pollCalibrationStatus() {
+  const res = await fetch('/api/calibrate/status');
+  if (!res.ok) return;
+  // The login page is served with HTTP 200 on session expiry — stop
+  // polling instead of trying to parse HTML as JSON.
+  const type = res.headers.get('content-type') || '';
+  if (type.includes('text/html')) {
+    if (calibPollTimer) { clearInterval(calibPollTimer); calibPollTimer = null; }
+    showLoginForm();
+    alert('Session expired — please log in again to continue calibration.');
+    return;
+  }
+  const st = await res.json();
+  updateCalibrationUi(st);
+
+  if (st.step === 5) { // DONE — show the success state briefly, then close
+    if (!calibCloseTimer) {
+      calibCloseTimer = setTimeout(() => {
+        calibCloseTimer = null;
+        closeCalibrationModal();
+        loadConfig(); // refresh threshold fields
+      }, 1500);
+    }
+  } else if (st.step === 6) { // ERROR
+    closeCalibrationModal();
+    alert('Calibration failed: ' + (st.message || 'unknown error'));
+  }
+}
+
+async function cancelCalibration() {
+  const res = await fetch('/api/calibrate/cancel', { method: 'POST' });
+  // handleAuthentication() serves the login page with HTTP 200 when the
+  // session expired, so verify an actual API response before closing.
+  const type = res.headers.get('content-type') || '';
+  if (res.ok && !type.includes('text/html')) {
+    closeCalibrationModal();
+  } else {
+    showLoginForm();
+    alert('Session expired — please log in again to cancel calibration.');
   }
 }
 

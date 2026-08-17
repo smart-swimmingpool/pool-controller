@@ -258,5 +258,37 @@ int run_webportal_json_tests() {
     passed++;
   }
 
+  // ── Test: calibration status JSON ──
+  {
+    test_begin("WebPortal::apiCalibrateStatus", "returns JSON with all fields");
+
+    JsonDocument doc;
+    doc["step"] = 1;
+    doc["live_adc"] = 2700;
+    doc["resting"] = 0;
+    doc["s1"] = 0;
+    doc["s2"] = 0;
+    doc["s3"] = 0;
+    doc["message"] = "Release all buttons — measuring resting level";
+
+    int errs = 0;
+    const char *requiredKeys[] = {"step", "live_adc", "resting", "s1", "s2", "s3", "message"};
+    for (auto key : requiredKeys) {
+      if (!doc.containsKey(key)) {
+        char msg[128];
+        snprintf(msg, sizeof(msg), "Missing required key: %s", key);
+        test_fail(__FILE__, __LINE__, msg);
+        errs++;
+      }
+    }
+    ASSERT_TRUE(doc["step"].is<int>());
+    ASSERT_TRUE(doc["live_adc"].is<int>());
+    ASSERT_TRUE(doc["message"].is<const char *>());
+
+    test_suite_end("WebPortal::apiCalibrateStatus", errs == 0 ? 3 : 0, errs);
+    passed += (errs == 0) ? 1 : 0;
+    failed += errs;
+  }
+
   return passed + failed;
 }
