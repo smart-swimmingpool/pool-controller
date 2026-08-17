@@ -338,18 +338,38 @@ void WebPortal::setupRoutes() {
   server_.collectHeaders(headerkeys, 1);
 }
 
+// Serve a LittleFS web asset, preferring a pre-compressed .gz variant (created
+// by scripts/gzip-web-assets.sh before upload). Falls back to the plain file
+// when no .gz is present, so deployments without the script keep working.
+bool WebPortal::serveWebFile(const char* path, const char* contentType, const char* cacheControl) {
+  char gzPath[64];
+  snprintf(gzPath, sizeof(gzPath), "%s.gz", path);
+
+  File f = LittleFS.open(gzPath, "r");
+  if (f) {
+    server_.sendHeader("Cache-Control", cacheControl);
+    server_.sendHeader("Content-Encoding", "gzip");
+    server_.streamFile(f, contentType);
+    f.close();
+    return true;
+  }
+
+  f = LittleFS.open(path, "r");
+  if (f) {
+    server_.sendHeader("Cache-Control", cacheControl);
+    server_.streamFile(f, contentType);
+    f.close();
+    return true;
+  }
+  return false;
+}
+
 void WebPortal::handleRoot() {
   // Dashboard is always served — interactive controls are gated by the frontend
   // based on the "authenticated" field from /api/status.
-  File f = LittleFS.open("/web/index.html", "r");
-  if (f) {
-    // Entry point: always revalidate so freshly uploaded assets are picked up.
-    // The service worker provides the instant-load cache for repeat visits.
-    server_.sendHeader("Cache-Control", "no-cache");
-    server_.streamFile(f, "text/html");
-    f.close();
-    return;
-  }
+  // Entry point: always revalidate so freshly uploaded assets are picked up.
+  // The service worker provides the instant-load cache for repeat visits.
+  if (serveWebFile("/web/index.html", "text/html", "no-cache")) return;
 
   // No PROGMEM fallback — tell user to upload web assets
   String html = R"HTML(
@@ -369,59 +389,29 @@ h1{color:#00e5ff;margin-bottom:0.5rem}a{color:#48cae4}</style>
 }
 
 void WebPortal::handleStyleCss() {
-  File f = LittleFS.open("/web/style.css", "r");
-  if (f) {
-    server_.sendHeader("Cache-Control", "public, max-age=3600");
-    server_.streamFile(f, "text/css");
-    f.close();
-    return;
-  }
+  if (serveWebFile("/web/style.css", "text/css", "public, max-age=3600")) return;
   server_.send(404, "text/plain", "Not Found");
 }
 
 void WebPortal::handleAppJs() {
-  File f = LittleFS.open("/web/app.js", "r");
-  if (f) {
-    server_.sendHeader("Cache-Control", "public, max-age=3600");
-    server_.streamFile(f, "application/javascript");
-    f.close();
-    return;
-  }
+  if (serveWebFile("/web/app.js", "application/javascript", "public, max-age=3600")) return;
   server_.send(404, "text/plain", "Not Found");
 }
 
 void WebPortal::handleManifestJson() {
-  File f = LittleFS.open("/web/manifest.json", "r");
-  if (f) {
-    server_.sendHeader("Cache-Control", "public, max-age=3600");
-    server_.streamFile(f, "application/manifest+json");
-    f.close();
-    return;
-  }
+  if (serveWebFile("/web/manifest.json", "application/manifest+json", "public, max-age=3600")) return;
   server_.send(404, "text/plain", "Not Found");
 }
 
 void WebPortal::handleSwJs() {
-  File f = LittleFS.open("/web/sw.js", "r");
-  if (f) {
-    // Never cache the service worker script — browsers must check for updates
-    // on every navigation so new cache versions take effect promptly.
-    server_.sendHeader("Cache-Control", "no-cache");
-    server_.streamFile(f, "application/javascript");
-    f.close();
-    return;
-  }
+  // Never cache the service worker script — browsers must check for updates
+  // on every navigation so new cache versions take effect promptly.
+  if (serveWebFile("/web/sw.js", "application/javascript", "no-cache")) return;
   server_.send(404, "text/plain", "Not Found");
 }
 
 void WebPortal::handleIconSvg() {
-  File f = LittleFS.open("/web/icon.svg", "r");
-  if (f) {
-    server_.sendHeader("Cache-Control", "public, max-age=3600");
-    server_.streamFile(f, "image/svg+xml");
-    f.close();
-    return;
-  }
+  if (serveWebFile("/web/icon.svg", "image/svg+xml", "public, max-age=3600")) return;
   server_.send(404, "text/plain", "Not Found");
 }
 
