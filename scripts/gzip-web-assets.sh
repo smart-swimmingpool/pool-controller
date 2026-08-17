@@ -20,6 +20,6 @@ for f in index.html style.css app.js sw.js manifest.json icon.svg; do
     echo "skip $f (missing)"
     continue
   fi
-  gzip -n -9 -c "$f" > "$f.gz"
-  echo "gzipped $f ($(wc -c < "$f") -> $(wc -c < "$f.gz") bytes)"
+  gzip -n -9 -c "$f" >"$f.gz"
+  echo "gzipped $f ($(wc -c <"$f") -> $(wc -c <"$f.gz") bytes)"
 done
