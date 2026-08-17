@@ -316,6 +316,13 @@ function updateAuthUI() {
     }
   }
 
+  // Config save buttons must stay disabled while /api/config is loading:
+  // the loops above re-enable every tab control on each telemetry poll and
+  // would otherwise undo setConfigSavesDisabled() before the load finishes.
+  if (isAuthenticated && configLoadsInFlight > 0) {
+    setConfigSavesDisabled(true);
+  }
+
   // System / WiFi / MQTT / Logs / Sensors tabs: fully hide when not authenticated. Never
   // force-show here — that previously used `''` (empty string), which falls back
   // to the CSS default `display:block`, making the tab visible again on every 2s
