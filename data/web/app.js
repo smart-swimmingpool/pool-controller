@@ -977,8 +977,10 @@ function setConfigSavesDisabled(disabled) {
 async function loadConfig() {
   configLoadsInFlight++;
   setConfigSavesDisabled(true);
+  let ok = false;
   try {
     const res = await fetch('/api/config');
+    if (!res.ok) throw new Error('config request failed: ' + res.status);
     const data = await res.json();
 
     document.getElementById('wifiSsid').value = data.wifi.ssid;
@@ -1011,11 +1013,15 @@ async function loadConfig() {
     document.getElementById('poolThreshold').textContent = 'max ' + data.settings.temp_max_pool.toFixed(1) + '°C';
     document.getElementById('solarThreshold').textContent = 'min ' + data.settings.temp_min_solar.toFixed(1) + '°C';
     highlightMode(data.settings.op_mode);
+    ok = true;
   } catch (e) {
-    // Silent
+    // Transient failure — keep the save buttons disabled and reset the
+    // lazy-load guard so the next tab activation retries, instead of
+    // leaving markup defaults editable without a loaded config.
+    configLoaded = false;
   } finally {
     configLoadsInFlight--;
-    if (configLoadsInFlight === 0) {
+    if (configLoadsInFlight === 0 && ok) {
       setConfigSavesDisabled(false);
     }
   }
