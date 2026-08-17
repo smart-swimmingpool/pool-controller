@@ -1333,6 +1333,18 @@ void WebPortal::handleFsUploadStream() {
       LittleFS.mkdir("/web");
     }
 
+    // Invalidate a stale pre-compressed sibling: serveWebFile() prefers the
+    // .gz variant, so uploading a newer plain asset must not leave an old
+    // .gz in place (it would be served forever). The .gz is re-created by
+    // the next upload of the compressed variant.
+    if (!path.endsWith(".gz")) {
+      String gzPath = path + ".gz";
+      if (LittleFS.exists(gzPath)) {
+        LittleFS.remove(gzPath);
+        LOG_INFO("FS Upload: removed stale \"%s\"\n", gzPath.c_str());
+      }
+    }
+
     fsUploadFile = LittleFS.open(path, "w");
     if (!fsUploadFile) {
       LOG_ERROR("FS Upload: failed to open \"%s\" for writing\n", path.c_str());
