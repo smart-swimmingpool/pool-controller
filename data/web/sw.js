@@ -55,12 +55,15 @@ self.addEventListener('fetch', (event) => {
 
   event.respondWith(
     caches.match(event.request).then((cached) => {
-      // Navigation fallback: serve the cached app shell for any HTML request
-      // that is not cached under its exact URL. Promise.resolve() normalizes
-      // the cache hit (a Response) and the fallback lookup (a Promise) into
-      // one chainable promise.
+      // Navigation fallback: serve the cached app shell for dashboard routes
+      // (/, /index.html) that are not cached under their exact URL. Other
+      // server-rendered routes (e.g. /login) must not be replaced by the
+      // dashboard shell — they fall through to the network fetch below.
+      // Promise.resolve() normalizes the cache hit (a Response) and the
+      // fallback lookup (a Promise) into one chainable promise.
+      const isDashboardRoute = url.pathname === '/' || url.pathname === '/index.html';
       const cacheHit = cached || (
-        event.request.headers.get('Accept')?.includes('text/html')
+        isDashboardRoute && event.request.headers.get('Accept')?.includes('text/html')
           ? caches.match('/')
           : undefined
       );
