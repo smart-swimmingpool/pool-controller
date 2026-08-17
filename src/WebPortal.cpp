@@ -1339,8 +1339,8 @@ void WebPortal::handleFsUploadStream() {
     // the next upload of the compressed variant.
     if (!path.endsWith(".gz")) {
       String gzPath = path + ".gz";
-      if (LittleFS.exists(gzPath)) {
-        LittleFS.remove(gzPath);
+      if (LittleFS.exists(gzPath.c_str())) {
+        LittleFS.remove(gzPath.c_str());
         LOG_INFO("FS Upload: removed stale \"%s\"\n", gzPath.c_str());
       }
     }
