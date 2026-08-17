@@ -56,14 +56,16 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((cached) => {
       // Navigation fallback: serve the cached app shell for any HTML request
-      // that is not cached under its exact URL.
+      // that is not cached under its exact URL. Promise.resolve() normalizes
+      // the cache hit (a Response) and the fallback lookup (a Promise) into
+      // one chainable promise.
       const cacheHit = cached || (
         event.request.headers.get('Accept')?.includes('text/html')
           ? caches.match('/')
-          : Promise.resolve(undefined)
+          : undefined
       );
 
-      return cacheHit.then((hit) => {
+      return Promise.resolve(cacheHit).then((hit) => {
         // Background refresh: fetch from network bypassing the HTTP cache
         // (so freshly uploaded assets are picked up), then update the cache.
         const networkFetch = fetch(event.request, { cache: 'no-store' })
