@@ -21,6 +21,18 @@ function switchTab(tabName) {
   // Close more menu if open
   const moreMenu = document.getElementById('moreMenu');
   if (moreMenu) moreMenu.style.display = 'none';
+
+  // Lazy-load tab data on first activation instead of at page load: the
+  // single-threaded device server would otherwise queue config/sensor
+  // requests behind the dashboard telemetry poll on every page open.
+  if (!configLoaded && ['pool', 'time', 'wifi', 'mqtt', 'system'].includes(tabName)) {
+    configLoaded = true;
+    loadConfig();
+  }
+  if (!sensorsLoaded && tabName === 'sensors') {
+    sensorsLoaded = true;
+    loadSensors();
+  }
 }
 
 function toggleMoreMenu() {
@@ -38,6 +50,8 @@ console.log('[pool] app.js loaded, version=2026-06-05');
 
 let isAuthenticated = false;
 let hasAutoSwitchedToWifi = false;  // one-shot guard so AP-mode redirect doesn't fight user navigation
+let configLoaded = false;   // lazy-load guard: /api/config fetched on first admin tab activation
+let sensorsLoaded = false;  // lazy-load guard: /api/sensors fetched on first Sensors tab activation
 
 async function loadTelemetry() {
   try {
@@ -1359,8 +1373,8 @@ updateAuthUI = function() {
 setInterval(loadTelemetry, 2000);
 setInterval(loadLogs, 2000);
 
-window.onload = function() {
-  loadTelemetry();
-  loadConfig();
-  loadSensors();
-};
+// The script is deferred, so the DOM is fully parsed at this point. Start the
+// telemetry loop immediately instead of waiting for window.onload (which waits
+// for every resource, including the async stylesheet). Config and sensor data
+// are lazy-loaded on first tab activation (see switchTab).
+loadTelemetry();
