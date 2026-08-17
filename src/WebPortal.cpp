@@ -341,7 +341,7 @@ void WebPortal::setupRoutes() {
 // Serve a LittleFS web asset, preferring a pre-compressed .gz variant (created
 // by scripts/gzip-web-assets.sh before upload). Falls back to the plain file
 // when no .gz is present, so deployments without the script keep working.
-bool WebPortal::serveWebFile(const char* path, const char* contentType, const char* cacheControl) {
+bool WebPortal::serveWebFile(const char *path, const char *contentType, const char *cacheControl) {
   char gzPath[64];
   snprintf(gzPath, sizeof(gzPath), "%s.gz", path);
 
@@ -369,7 +369,8 @@ void WebPortal::handleRoot() {
   // based on the "authenticated" field from /api/status.
   // Entry point: always revalidate so freshly uploaded assets are picked up.
   // The service worker provides the instant-load cache for repeat visits.
-  if (serveWebFile("/web/index.html", "text/html", "no-cache")) return;
+  if (serveWebFile("/web/index.html", "text/html", "no-cache"))
+    return;
 
   // No PROGMEM fallback — tell user to upload web assets
   String html = R"HTML(
@@ -389,29 +390,34 @@ h1{color:#00e5ff;margin-bottom:0.5rem}a{color:#48cae4}</style>
 }
 
 void WebPortal::handleStyleCss() {
-  if (serveWebFile("/web/style.css", "text/css", "public, max-age=3600")) return;
+  if (serveWebFile("/web/style.css", "text/css", "public, max-age=3600"))
+    return;
   server_.send(404, "text/plain", "Not Found");
 }
 
 void WebPortal::handleAppJs() {
-  if (serveWebFile("/web/app.js", "application/javascript", "public, max-age=3600")) return;
+  if (serveWebFile("/web/app.js", "application/javascript", "public, max-age=3600"))
+    return;
   server_.send(404, "text/plain", "Not Found");
 }
 
 void WebPortal::handleManifestJson() {
-  if (serveWebFile("/web/manifest.json", "application/manifest+json", "public, max-age=3600")) return;
+  if (serveWebFile("/web/manifest.json", "application/manifest+json", "public, max-age=3600"))
+    return;
   server_.send(404, "text/plain", "Not Found");
 }
 
 void WebPortal::handleSwJs() {
   // Never cache the service worker script — browsers must check for updates
   // on every navigation so new cache versions take effect promptly.
-  if (serveWebFile("/web/sw.js", "application/javascript", "no-cache")) return;
+  if (serveWebFile("/web/sw.js", "application/javascript", "no-cache"))
+    return;
   server_.send(404, "text/plain", "Not Found");
 }
 
 void WebPortal::handleIconSvg() {
-  if (serveWebFile("/web/icon.svg", "image/svg+xml", "public, max-age=3600")) return;
+  if (serveWebFile("/web/icon.svg", "image/svg+xml", "public, max-age=3600"))
+    return;
   server_.send(404, "text/plain", "Not Found");
 }
 
