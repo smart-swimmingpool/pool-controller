@@ -52,6 +52,7 @@ let isAuthenticated = false;
 let hasAutoSwitchedToWifi = false;  // one-shot guard so AP-mode redirect doesn't fight user navigation
 let configLoaded = false;   // lazy-load guard: /api/config fetched on first admin tab activation
 let sensorsLoaded = false;  // lazy-load guard: /api/sensors fetched on first Sensors tab activation
+let configLoadsInFlight = 0;  // >0 while /api/config is loading; config save buttons stay disabled
 
 async function loadTelemetry() {
   try {
@@ -955,7 +956,20 @@ async function factoryReset() {
 
 // ── Load Config ──
 
+// Config save buttons stay disabled while /api/config is loading, so a save
+// cannot submit markup defaults for fields not yet populated by the response.
+const CONFIG_SAVE_BUTTONS = ['btnSaveWiFi', 'btnSaveMqtt', 'btnSavePool', 'btnSaveTime', 'btnSavePassword'];
+
+function setConfigSavesDisabled(disabled) {
+  CONFIG_SAVE_BUTTONS.forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) btn.disabled = disabled;
+  });
+}
+
 async function loadConfig() {
+  configLoadsInFlight++;
+  setConfigSavesDisabled(true);
   try {
     const res = await fetch('/api/config');
     const data = await res.json();
@@ -992,6 +1006,11 @@ async function loadConfig() {
     highlightMode(data.settings.op_mode);
   } catch (e) {
     // Silent
+  } finally {
+    configLoadsInFlight--;
+    if (configLoadsInFlight === 0) {
+      setConfigSavesDisabled(false);
+    }
   }
 }
 
