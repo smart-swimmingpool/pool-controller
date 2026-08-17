@@ -160,10 +160,21 @@ void CalibrationManager::handleMeasurementStep(State step, uint16_t previousLeve
     sampleSum_ += reading;
     sampleCount_++;
     if (sampleCount_ >= SAMPLE_COUNT) {
-      outLevel = static_cast<uint16_t>(sampleSum_ / SAMPLE_COUNT);
+      const uint16_t average = static_cast<uint16_t>(sampleSum_ / SAMPLE_COUNT);
       sampling_ = false;
       stableCount_ = 0;
       stepStartMs_ = t;
+
+      // Revalidate the averaged level against the previous measurement:
+      // samples may drift within the stability window and produce an
+      // average below the minimum gap, which would otherwise fail the
+      // final sanity check in computeThresholds() and abort the wizard.
+      if (previousLevel != 0 && average < previousLevel + MIN_LEVEL_GAP) {
+        status_.message = "Level too close to the previous one — please try again";
+        LOG_WARN("Calibration average %u below minimum gap, retrying step\n", average);
+        return;  // stay in this state; the wait phase restarts
+      }
+      outLevel = average;
 
       switch (step) {
       case State::RESTING:

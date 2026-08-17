@@ -154,6 +154,47 @@ static int test_sample_spacing_gate() {
   return 0;
 }
 
+static int test_average_below_gap_retries_step() {
+  CalibrationManager::setAdcReadForTest(fakeAdc);
+  CalibrationManager::setTimeForTest(fakeTime);
+  g_adc = 2700;
+  g_now = 0;
+  CalibrationManager::begin();
+  CalibrationManager::start();
+
+  auto holdLevel = [](uint16_t level, uint32_t startMs) {
+    g_adc = level;
+    for (uint32_t t = startMs; t < startMs + 1500; t += 50) {
+      g_now = t;
+      CalibrationManager::loop();
+    }
+  };
+
+  holdLevel(2700, 0);  // resting → BTN1 at t=1100
+
+  // BTN1: wait phase accepts 2800 (exactly at the minimum gap boundary),
+  // then the samples drift down to 2790 — still inside the stability
+  // window, but the average lands below previousLevel + MIN_LEVEL_GAP.
+  g_adc = 2800;
+  for (uint32_t t = 2000; t <= 2100; t += 50) {  // wait t=2000..2100 → sampling
+    g_now = t;
+    CalibrationManager::loop();
+  }
+  g_adc = 2790;
+  for (uint32_t t = 2150; t < 3150; t += 50) {  // 20 samples t=2150..3100 → completes
+    g_now = t;
+    CalibrationManager::loop();
+  }
+  ASSERT_EQ(CalibrationManager::getStatus().step, CalibrationManager::Step::BTN1);
+  ASSERT_EQ(CalibrationManager::getStatus().s1, 0);
+
+  // Press again well above the gap → completes normally
+  holdLevel(2900, 3500);
+  ASSERT_EQ(CalibrationManager::getStatus().step, CalibrationManager::Step::BTN2);
+  ASSERT_EQ(CalibrationManager::getStatus().s1, 2900);
+  return 0;
+}
+
 static int test_sample_restart_on_level_change() {
   CalibrationManager::setAdcReadForTest(fakeAdc);
   CalibrationManager::setTimeForTest(fakeTime);
@@ -302,12 +343,13 @@ int run_calibration_manager_tests() {
   failures += test_full_calibration_saves_thresholds();
   failures += test_sample_spacing_gate();
   failures += test_sample_restart_on_level_change();
+  failures += test_average_below_gap_retries_step();
   failures += test_release_level_rejected();
   failures += test_exact_minimum_gap_accepted();
   failures += test_save_failure_error();
-  test_suite_end("CalibrationManager", 10 - failures, failures);
+  test_suite_end("CalibrationManager", 11 - failures, failures);
   if (failures == 0) {
-    printf("  CalibrationManager Tests: 10 passed, 0 failed\n");
+    printf("  CalibrationManager Tests: 11 passed, 0 failed\n");
   }
   return failures;
 }
