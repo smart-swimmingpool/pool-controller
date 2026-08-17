@@ -681,6 +681,14 @@ function startCalibrationPolling() {
 
 async function startCalibration() {
   const res = await fetch('/api/calibrate/start', { method: 'POST' });
+  // handleAuthentication() serves the login page with HTTP 200 when the
+  // session expired, so verify an actual API response first.
+  const type = res.headers.get('content-type') || '';
+  if (type.includes('text/html')) {
+    showLoginForm();
+    alert('Session expired — please log in again.');
+    return;
+  }
   if (res.status === 409) {
     // Calibration is already running on the device (e.g. after a page
     // reload or a lost start response) — resume the running wizard so the
@@ -697,6 +705,15 @@ async function startCalibration() {
 async function pollCalibrationStatus() {
   const res = await fetch('/api/calibrate/status');
   if (!res.ok) return;
+  // The login page is served with HTTP 200 on session expiry — stop
+  // polling instead of trying to parse HTML as JSON.
+  const type = res.headers.get('content-type') || '';
+  if (type.includes('text/html')) {
+    if (calibPollTimer) { clearInterval(calibPollTimer); calibPollTimer = null; }
+    showLoginForm();
+    alert('Session expired — please log in again to continue calibration.');
+    return;
+  }
   const st = await res.json();
   document.getElementById('calibStepText').textContent = st.message || '';
   document.getElementById('calibLiveAdc').textContent = st.live_adc;
