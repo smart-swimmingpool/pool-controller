@@ -523,3 +523,134 @@ input:focus, select:focus {
   color: var(--accent-blue);
 }
 #btnClearLogs { outline: none; }
+
+/* ── Calibration wizard ──────────────────────────────────────────────── */
+
+.calib-action { text-align: center; margin-bottom: 1.25rem; }
+
+.calib-guide {
+  color: var(--text-muted);
+  text-align: center;
+  font-size: 0.85rem;
+  margin: 0 0 1.25rem;
+}
+
+.calib-nextup {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  margin: 0.5rem 0 0;
+  font-style: italic;
+}
+
+.calib-chip {
+  display: inline-block;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid var(--panel-border);
+  color: var(--text-muted);
+  margin-bottom: 0.6rem;
+}
+
+.calib-chip-sampling { color: #00e5ff; border-color: rgba(0, 229, 255, 0.45); animation: calib-pulse 1.2s ease-in-out infinite; }
+.calib-chip-saving { color: #00e5ff; border-color: rgba(0, 229, 255, 0.45); }
+.calib-chip-retry { color: #f59e0b; border-color: rgba(245, 158, 11, 0.45); }
+.calib-chip-done { color: #4ade80; border-color: rgba(74, 222, 128, 0.45); }
+.calib-chip-error { color: #ef4444; border-color: rgba(239, 68, 68, 0.45); }
+
+@keyframes calib-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+.calib-headline {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #e2f0f7;
+  margin: 0 0 0.35rem;
+}
+
+.calib-detail { color: var(--text-muted); margin: 0; font-size: 0.85rem; }
+
+.calib-progress { display: flex; justify-content: space-between; margin-bottom: 1.25rem; }
+
+.calib-step { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; min-width: 0; }
+
+.calib-step-dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--panel-border);
+  color: var(--text-muted);
+}
+
+.calib-step-label { font-size: 0.72rem; color: var(--text-muted); }
+
+.calib-step.active .calib-step-dot {
+  background: rgba(0, 229, 255, 0.15);
+  border-color: #00e5ff;
+  color: #00e5ff;
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.35);
+}
+
+.calib-step.active .calib-step-label { color: #00e5ff; font-weight: 600; }
+
+.calib-step.done .calib-step-dot {
+  background: rgba(74, 222, 128, 0.15);
+  border-color: #4ade80;
+  color: #4ade80;
+}
+
+.calib-step.done .calib-step-label { color: #4ade80; }
+
+.calib-meter { margin-bottom: 1.25rem; }
+
+.calib-meter-bar {
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--panel-border);
+}
+
+.calib-meter-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #00b4d8, #00e5ff);
+  transition: width 0.12s linear;
+}
+
+.calib-meter-fill.sampling { animation: calib-pulse 0.9s ease-in-out infinite; }
+
+.calib-meter-readout {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-top: 0.4rem;
+  font-size: 0.85rem;
+}
+
+.calib-meter-readout #calibLiveAdc { font-weight: 700; color: #e2f0f7; }
+.calib-meter-unit { color: var(--text-muted); }
+
+.calib-cancel {
+  width: 100%;
+  padding: 0.6rem;
+  background: transparent;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.calib-cancel:hover { color: #e2f0f7; border-color: rgba(226, 240, 247, 0.35); }

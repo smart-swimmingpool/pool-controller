@@ -669,6 +669,9 @@ function showCalibrationModal() {
 function closeCalibrationModal() {
   document.getElementById('calibrationModal').style.display = 'none';
   if (calibPollTimer) { clearInterval(calibPollTimer); calibPollTimer = null; }
+  if (calibCloseTimer) { clearTimeout(calibCloseTimer); calibCloseTimer = null; }
+  calibMsgPending = null;
+  calibMsgShownAt = 0;
 }
 
 function startCalibrationPolling() {
@@ -702,6 +705,111 @@ async function startCalibration() {
   startCalibrationPolling();
 }
 
+// ── Calibration wizard UI state ──
+
+const CALIB_STEP_HEADLINES = {
+  1: 'Release all buttons',
+  2: 'Press and hold Button 1',
+  3: 'Press and hold Button 2',
+  4: 'Press and hold Button 3',
+  5: 'Calibration complete',
+  6: 'Calibration failed'
+};
+
+const CALIB_NEXT_UP = {
+  1: 'Next: hold Button 1',
+  2: 'Next: hold Button 2',
+  3: 'Next: hold Button 3',
+  4: 'Then the levels are computed and saved automatically.'
+};
+
+// Keep every status text readable: a new message is only shown once the
+// previous one has been on screen for at least MIN_MSG_MS milliseconds.
+const CALIB_MIN_MSG_MS = 1200;
+let calibMsgShownAt = 0;
+let calibMsgPending = null;
+let calibCloseTimer = null;
+
+function showCalibrationMessage(text) {
+  const el = document.getElementById('calibStepText');
+  if (!el) return;
+  const now = Date.now();
+  if (now - calibMsgShownAt < CALIB_MIN_MSG_MS) {
+    // Current text still on screen — remember the newest one, promote later
+    calibMsgPending = text;
+    return;
+  }
+  if (calibMsgPending) { text = calibMsgPending; calibMsgPending = null; }
+  if (text !== el.textContent) {
+    el.textContent = text;
+    calibMsgShownAt = now;
+  }
+}
+
+function calibPhase(message) {
+  if (!message) return 'waiting';
+  if (message.includes('Computing')) return 'saving';
+  if (message.includes('sampling')) return 'sampling';
+  if (message.includes('try again') || message.includes('too close') || message.includes('changed')) return 'retry';
+  if (message.includes('complete')) return 'done';
+  return 'waiting';
+}
+
+function updateCalibrationUi(st) {
+  const phase = calibPhase(st.message || '');
+  const step = st.step;
+
+  // Bold instruction headline for the current action
+  let headline = CALIB_STEP_HEADLINES[step] || 'Calibration';
+  if (phase === 'saving') {
+    headline = 'Computing thresholds…';
+  } else if (phase === 'retry') {
+    headline = 'Try again — hold steady';
+  } else if (phase === 'sampling' && step >= 2 && step <= 4) {
+    headline = 'Keep holding Button ' + (step - 1);
+  } else if (phase === 'sampling' && step === 1) {
+    headline = 'Hold steady…';
+  }
+  const headlineEl = document.getElementById('calibActionHeadline');
+  if (headlineEl) headlineEl.textContent = headline;
+
+  // State chip
+  const chipLabels = { waiting: 'Waiting', sampling: 'Measuring', saving: 'Saving', retry: 'Retry', done: 'Done', error: 'Error' };
+  const chip = document.getElementById('calibStateChip');
+  if (chip) {
+    chip.textContent = chipLabels[phase] || chipLabels.waiting;
+    chip.className = 'calib-chip calib-chip-' + phase;
+  }
+
+  // Firmware detail line (throttled so it stays readable)
+  showCalibrationMessage(st.message || '');
+
+  // What happens next
+  const nextUp = document.getElementById('calibNextUp');
+  if (nextUp) nextUp.textContent = CALIB_NEXT_UP[step] || '';
+
+  // Live ADC meter (0-4095)
+  document.getElementById('calibLiveAdc').textContent = st.live_adc;
+  const fill = document.getElementById('calibMeterFill');
+  if (fill) {
+    fill.style.width = Math.min(100, Math.round((st.live_adc / 4095) * 100)) + '%';
+    fill.classList.toggle('sampling', phase === 'sampling');
+  }
+
+  // Step progress: current highlighted, completed marked with a check
+  const steps = ['calibP0', 'calibP1', 'calibP2', 'calibP3'];
+  steps.forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const done = (i + 1) < step;
+    const active = (i + 1) === step;
+    el.classList.toggle('active', active);
+    el.classList.toggle('done', done);
+    const dot = el.querySelector('.calib-step-dot');
+    if (dot) dot.textContent = done ? '✓' : (i + 1);
+  });
+}
+
 async function pollCalibrationStatus() {
   const res = await fetch('/api/calibrate/status');
   if (!res.ok) return;
@@ -715,19 +823,16 @@ async function pollCalibrationStatus() {
     return;
   }
   const st = await res.json();
-  document.getElementById('calibStepText').textContent = st.message || '';
-  document.getElementById('calibLiveAdc').textContent = st.live_adc;
+  updateCalibrationUi(st);
 
-  const steps = ['calibP0', 'calibP1', 'calibP2', 'calibP3'];
-  const active = st.step; // 1=RESTING, 2=BTN1, 3=BTN2, 4=BTN3, 5=DONE, 6=ERROR
-  steps.forEach((id, i) => {
-    const el = document.getElementById(id);
-    el.style.color = (i + 1 === active) ? '#00e5ff' : (i + 1 < active ? '#4ade80' : 'var(--text-muted)');
-  });
-
-  if (st.step === 5) { // DONE
-    closeCalibrationModal();
-    loadConfig(); // refresh threshold fields
+  if (st.step === 5) { // DONE — show the success state briefly, then close
+    if (!calibCloseTimer) {
+      calibCloseTimer = setTimeout(() => {
+        calibCloseTimer = null;
+        closeCalibrationModal();
+        loadConfig(); // refresh threshold fields
+      }, 1500);
+    }
   } else if (st.step === 6) { // ERROR
     closeCalibrationModal();
     alert('Calibration failed: ' + (st.message || 'unknown error'));
