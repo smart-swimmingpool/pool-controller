@@ -343,6 +343,9 @@ void WebPortal::handleRoot() {
   // based on the "authenticated" field from /api/status.
   File f = LittleFS.open("/web/index.html", "r");
   if (f) {
+    // Entry point: always revalidate so freshly uploaded assets are picked up.
+    // The service worker provides the instant-load cache for repeat visits.
+    server_.sendHeader("Cache-Control", "no-cache");
     server_.streamFile(f, "text/html");
     f.close();
     return;
@@ -368,6 +371,7 @@ h1{color:#00e5ff;margin-bottom:0.5rem}a{color:#48cae4}</style>
 void WebPortal::handleStyleCss() {
   File f = LittleFS.open("/web/style.css", "r");
   if (f) {
+    server_.sendHeader("Cache-Control", "public, max-age=3600");
     server_.streamFile(f, "text/css");
     f.close();
     return;
@@ -378,6 +382,7 @@ void WebPortal::handleStyleCss() {
 void WebPortal::handleAppJs() {
   File f = LittleFS.open("/web/app.js", "r");
   if (f) {
+    server_.sendHeader("Cache-Control", "public, max-age=3600");
     server_.streamFile(f, "application/javascript");
     f.close();
     return;
@@ -388,6 +393,7 @@ void WebPortal::handleAppJs() {
 void WebPortal::handleManifestJson() {
   File f = LittleFS.open("/web/manifest.json", "r");
   if (f) {
+    server_.sendHeader("Cache-Control", "public, max-age=3600");
     server_.streamFile(f, "application/manifest+json");
     f.close();
     return;
@@ -398,6 +404,9 @@ void WebPortal::handleManifestJson() {
 void WebPortal::handleSwJs() {
   File f = LittleFS.open("/web/sw.js", "r");
   if (f) {
+    // Never cache the service worker script — browsers must check for updates
+    // on every navigation so new cache versions take effect promptly.
+    server_.sendHeader("Cache-Control", "no-cache");
     server_.streamFile(f, "application/javascript");
     f.close();
     return;
@@ -408,6 +417,7 @@ void WebPortal::handleSwJs() {
 void WebPortal::handleIconSvg() {
   File f = LittleFS.open("/web/icon.svg", "r");
   if (f) {
+    server_.sendHeader("Cache-Control", "public, max-age=3600");
     server_.streamFile(f, "image/svg+xml");
     f.close();
     return;

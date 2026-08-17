@@ -1,6 +1,10 @@
-// Pool Controller — Service Worker v1
-// Cache name includes date for easy version bumps
-const CACHE = 'pool-ctrl-v1';
+// Pool Controller — Service Worker v2
+// Strategy: stale-while-revalidate for static assets.
+//   - First visit: fetch from network, populate cache.
+//   - Repeat visits: serve instantly from cache, refresh in background.
+//   - API calls: always network (no stale data).
+// Bump CACHE when deploying changed assets to force a clean slate.
+const CACHE = 'pool-ctrl-v2';
 const STATIC_ASSETS = [
   '/',
   '/style.css',
@@ -8,6 +12,8 @@ const STATIC_ASSETS = [
   '/manifest.json',
   '/icon.svg'
 ];
+
+const OFFLINE_HTML = '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Pool Controller — Offline</title><style>body{background:#06121e;color:#8aadc4;font-family:system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;text-align:center;line-height:1.6}h1{color:#00e5ff}p{color:#8aadc4}</style></head><body><h1>Pool Controller</h1><p>⚠️ Device is currently offline.<br>The dashboard will resume automatically when the connection is restored.</p></body></html>';
 
 // ── Install: pre-cache critical files ──
 self.addEventListener('install', (event) => {
@@ -31,7 +37,7 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// ── Fetch: network-first with cache fallback ──
+// ── Fetch: stale-while-revalidate ──
 self.addEventListener('fetch', (event) => {
   // Only handle GET requests
   if (event.request.method !== 'GET') return;
@@ -47,30 +53,39 @@ self.addEventListener('fetch', (event) => {
   // Skip non-HTTP(S) schemes (e.g., chrome-extension://)
   if (!url.protocol.startsWith('http')) return;
 
-  // Network-first strategy: try network, fall back to cache
   event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        // Cache successful responses for future offline use
-        if (response && response.status === 200) {
-          const clone = response.clone();
-          caches.open(CACHE).then((cache) => cache.put(event.request, clone));
-        }
-        return response;
-      })
-      .catch(() => {
-        // Offline — serve from cache
-        return caches.match(event.request).then((cached) => {
-          if (cached) return cached;
-          // If not in cache and offline, return a minimal offline page
-          if (event.request.headers.get('Accept')?.includes('text/html')) {
-            return new Response(
-              '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Pool Controller — Offline</title><style>body{background:#06121e;color:#8aadc4;font-family:system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;text-align:center;line-height:1.6}h1{color:#00e5ff}p{color:#8aadc4}</style></head><body><h1>Pool Controller</h1><p>⚠️ Device is currently offline.<br>The dashboard will resume automatically when the connection is restored.</p></body></html>',
-              { headers: { 'Content-Type': 'text/html; charset=utf-8' } }
-            );
-          }
-          return new Response('Offline', { status: 503 });
-        });
-      })
+    caches.match(event.request).then((cached) => {
+      // Navigation fallback: serve the cached app shell for any HTML request
+      // that is not cached under its exact URL.
+      const cacheHit = cached || (
+        event.request.headers.get('Accept')?.includes('text/html')
+          ? caches.match('/')
+          : Promise.resolve(undefined)
+      );
+
+      return cacheHit.then((hit) => {
+        // Background refresh: fetch from network bypassing the HTTP cache
+        // (so freshly uploaded assets are picked up), then update the cache.
+        const networkFetch = fetch(event.request, { cache: 'no-store' })
+          .then((response) => {
+            if (response && response.status === 200) {
+              const clone = response.clone();
+              caches.open(CACHE).then((cache) => cache.put(event.request, clone));
+            }
+            return response;
+          })
+          .catch(() => {
+            // Offline — fall back to cache, then to a minimal offline page.
+            if (hit) return hit;
+            if (event.request.headers.get('Accept')?.includes('text/html')) {
+              return new Response(OFFLINE_HTML, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+            }
+            return new Response('Offline', { status: 503 });
+          });
+
+        // Serve the cached copy immediately when available.
+        return hit || networkFetch;
+      });
+    })
   );
 });
