@@ -316,11 +316,12 @@ function updateAuthUI() {
     }
   }
 
-  // Config save buttons must stay disabled while /api/config is loading:
-  // the loops above re-enable every tab control on each telemetry poll and
-  // would otherwise undo setConfigSavesDisabled() before the load finishes.
+  // Config fields and save buttons must stay disabled while /api/config is
+  // loading: the loops above re-enable every tab control on each telemetry
+  // poll and would otherwise undo setConfigFieldsDisabled() before the load
+  // finishes.
   if (isAuthenticated && configLoadsInFlight > 0) {
-    setConfigSavesDisabled(true);
+    setConfigFieldsDisabled(true);
   }
 
   // System / WiFi / MQTT / Logs / Sensors tabs: fully hide when not authenticated. Never
@@ -965,9 +966,19 @@ async function factoryReset() {
 
 // Config save buttons stay disabled while /api/config is loading, so a save
 // cannot submit markup defaults for fields not yet populated by the response.
-const CONFIG_SAVE_BUTTONS = ['btnSaveWiFi', 'btnSaveMqtt', 'btnSavePool', 'btnSaveTime', 'btnSavePassword'];
+// Config fields and save buttons stay disabled while /api/config is loading:
+// a save must not submit markup defaults, and a late response must not
+// overwrite edits entered before the load finished.
+const CONFIG_FIELD_SELECTOR = '#tab-pool input, #tab-pool select, #tab-pool button, ' +
+  '#tab-time input, #tab-time select, #tab-time button, ' +
+  '#tab-wifi input, #tab-wifi select, #tab-wifi button, ' +
+  '#tab-mqtt input, #tab-mqtt select, #tab-mqtt button';
+const CONFIG_SAVE_BUTTONS = ['btnSavePassword'];  // system tab save is outside the field tabs
 
-function setConfigSavesDisabled(disabled) {
+function setConfigFieldsDisabled(disabled) {
+  for (const el of document.querySelectorAll(CONFIG_FIELD_SELECTOR)) {
+    el.disabled = disabled;
+  }
   CONFIG_SAVE_BUTTONS.forEach(id => {
     const btn = document.getElementById(id);
     if (btn) btn.disabled = disabled;
@@ -976,7 +987,7 @@ function setConfigSavesDisabled(disabled) {
 
 async function loadConfig() {
   configLoadsInFlight++;
-  setConfigSavesDisabled(true);
+  setConfigFieldsDisabled(true);
   let ok = false;
   try {
     const res = await fetch('/api/config');
@@ -1022,7 +1033,7 @@ async function loadConfig() {
   } finally {
     configLoadsInFlight--;
     if (configLoadsInFlight === 0 && ok) {
-      setConfigSavesDisabled(false);
+      setConfigFieldsDisabled(false);
     }
   }
 }
