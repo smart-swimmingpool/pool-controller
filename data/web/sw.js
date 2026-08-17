@@ -68,11 +68,15 @@ self.addEventListener('fetch', (event) => {
       return Promise.resolve(cacheHit).then((hit) => {
         // Background refresh: fetch from network bypassing the HTTP cache
         // (so freshly uploaded assets are picked up), then update the cache.
+        // The cache write is awaited so the promise below only settles once
+        // the refresh is fully persisted.
         const networkFetch = fetch(event.request, { cache: 'no-store' })
           .then((response) => {
             if (response && response.status === 200) {
               const clone = response.clone();
-              caches.open(CACHE).then((cache) => cache.put(event.request, clone));
+              return caches.open(CACHE)
+                .then((cache) => cache.put(event.request, clone))
+                .then(() => response);
             }
             return response;
           })
@@ -84,6 +88,10 @@ self.addEventListener('fetch', (event) => {
             }
             return new Response('Offline', { status: 503 });
           });
+
+        // Keep the worker alive until the background refresh completes so
+        // freshly uploaded assets are not left stale across reloads.
+        event.waitUntil(networkFetch);
 
         // Serve the cached copy immediately when available.
         return hit || networkFetch;
