@@ -347,8 +347,8 @@ bool WebPortal::serveWebFile(const char* path, const char* contentType, const ch
 
   File f = LittleFS.open(gzPath, "r");
   if (f) {
+    // streamFile() sets Content-Encoding: gzip automatically for .gz files.
     server_.sendHeader("Cache-Control", cacheControl);
-    server_.sendHeader("Content-Encoding", "gzip");
     server_.streamFile(f, contentType);
     f.close();
     return true;
