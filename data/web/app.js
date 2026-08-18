@@ -317,10 +317,10 @@ function updateAuthUI() {
   }
 
   // Config fields and save buttons must stay disabled while /api/config is
-  // loading: the loops above re-enable every tab control on each telemetry
-  // poll and would otherwise undo setConfigFieldsDisabled() before the load
-  // finishes.
-  if (isAuthenticated && configLoadsInFlight > 0) {
+  // loading (or failed to load): the loops above re-enable every tab control
+  // on each telemetry poll and would otherwise undo setConfigFieldsDisabled()
+  // before the load finishes — or expose markup defaults after a failure.
+  if (isAuthenticated && (configLoadsInFlight > 0 || !configLoaded)) {
     setConfigFieldsDisabled(true);
   }
 
