@@ -19,8 +19,24 @@
   <link rel="icon" type="image/svg+xml" href="/icon.svg">
   <link rel="mask-icon" href="/icon.svg" color="#00e5ff">
 
-  <!-- Styles -->
-  <link rel="stylesheet" href="/style.css">
+  <!-- Critical first-paint styles: the page renders themed immediately instead
+       of a white screen while /style.css is fetched from the device. The full
+       theme loads asynchronously below and overrides these base rules. -->
+  <style>
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #06121e 0%, #0a1e2f 50%, #06121e 100%);
+      color: #e2f0f7;
+      font-family: 'Inter', system-ui, sans-serif;
+      min-height: 100vh;
+    }
+  </style>
+
+  <!-- Styles — loaded asynchronously so it never blocks first paint.
+       The media="print" trick lets the browser download without blocking;
+       onload switches it to all media. -->
+  <link rel="stylesheet" href="/style.css" media="print" onload="this.onload=null;this.media='all'">
+  <noscript><link rel="stylesheet" href="/style.css"></noscript>
 </head>
 <body>
 <h1 style="margin-bottom: 0.1rem;">Pool Controller</h1>
@@ -245,7 +261,7 @@
     <label for="wifiPass">WLAN Password</label>
     <input type="password" id="wifiPass" placeholder="Enter WiFi password">
   </div>
-  <button class="btn btn-primary" onclick="saveWiFi()">Save WiFi settings</button>
+  <button class="btn btn-primary" onclick="saveWiFi()" id="btnSaveWiFi">Save WiFi settings</button>
 </div>
 
 <!-- MQTT Tab -->
@@ -267,7 +283,7 @@
     <label for="mqttPass">MQTT Password</label>
     <input type="password" id="mqttPass" placeholder="Optional">
   </div>
-  <button class="btn btn-primary" onclick="saveMqtt()" style="margin-top: 1.5rem;">Save MQTT configuration</button>
+  <button class="btn btn-primary" onclick="saveMqtt()" id="btnSaveMqtt" style="margin-top: 1.5rem;">Save MQTT configuration</button>
 </div>
 
 <!-- Pool Settings Tab -->
@@ -410,7 +426,7 @@
     </div>
   </div>
 
-  <button class="btn btn-primary" onclick="saveControllerSettings()">Save Pool Settings</button>
+  <button class="btn btn-primary" onclick="saveControllerSettings()" id="btnSavePool">Save Pool Settings</button>
 </div>
 
 <!-- Time Settings Tab -->
@@ -456,7 +472,7 @@
     </div>
   </div>
 
-  <button class="btn btn-primary" onclick="saveTimeSettings()">Save Time Settings</button>
+  <button class="btn btn-primary" onclick="saveTimeSettings()" id="btnSaveTime">Save Time Settings</button>
 </div>
 
 <!-- Sensors Tab (DS18B20 Mapping) -->
@@ -517,7 +533,7 @@
     <label for="adminPassConfirm">Confirm New Password</label>
     <input type="password" id="adminPassConfirm" placeholder="Confirm new password">
   </div>
-  <button class="btn btn-primary" onclick="savePassword()" style="margin-bottom: 2rem;">Update Security Password</button>
+  <button class="btn btn-primary" onclick="savePassword()" id="btnSavePassword" style="margin-bottom: 2rem;">Update Security Password</button>
 
   <h2>Firmware Version</h2>
   <div class="telemetry-grid" style="grid-template-columns: repeat(2, 1fr);">
@@ -614,7 +630,7 @@
   <div id="logConsoleEmpty" style="display:none; text-align:center; padding:2rem; color:var(--text-muted); font-size:0.85rem; opacity:0.5;">— No log entries yet —</div>
 </div>
 
-<script src="/app.js"></script>
+<script src="/app.js" defer></script>
 
 <!-- Service Worker Registration -->
 <script>

@@ -90,6 +90,8 @@ private:
   static void handleSwJs();
   /** @brief Serve icon.svg for PWA (LittleFS). */
   static void handleIconSvg();
+  /** @brief Serve a LittleFS web asset, preferring a pre-compressed .gz variant. */
+  static bool serveWebFile(const char *path, const char *contentType, const char *cacheControl);
 
   // ── REST API Handlers ──
   /** @brief GET /api/status — return JSON with all telemetry data. */

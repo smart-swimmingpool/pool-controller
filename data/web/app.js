@@ -21,6 +21,18 @@ function switchTab(tabName) {
   // Close more menu if open
   const moreMenu = document.getElementById('moreMenu');
   if (moreMenu) moreMenu.style.display = 'none';
+
+  // Lazy-load tab data on first activation instead of at page load: the
+  // single-threaded device server would otherwise queue config/sensor
+  // requests behind the dashboard telemetry poll on every page open.
+  if (!configLoaded && ['pool', 'time', 'wifi', 'mqtt', 'system'].includes(tabName)) {
+    configLoaded = true;
+    loadConfig();
+  }
+  if (!sensorsLoaded && tabName === 'sensors') {
+    sensorsLoaded = true;
+    loadSensors();
+  }
 }
 
 function toggleMoreMenu() {
@@ -38,6 +50,9 @@ console.log('[pool] app.js loaded, version=2026-06-05');
 
 let isAuthenticated = false;
 let hasAutoSwitchedToWifi = false;  // one-shot guard so AP-mode redirect doesn't fight user navigation
+let configLoaded = false;   // lazy-load guard: /api/config fetched on first admin tab activation
+let sensorsLoaded = false;  // lazy-load guard: /api/sensors fetched on first Sensors tab activation
+let configLoadsInFlight = 0;  // >0 while /api/config is loading; config save buttons stay disabled
 
 async function loadTelemetry() {
   try {
@@ -299,6 +314,14 @@ function updateAuthUI() {
       el.style.opacity = '';
       el.style.cursor = '';
     }
+  }
+
+  // Config fields and save buttons must stay disabled while /api/config is
+  // loading (or failed to load): the loops above re-enable every tab control
+  // on each telemetry poll and would otherwise undo setConfigFieldsDisabled()
+  // before the load finishes — or expose markup defaults after a failure.
+  if (isAuthenticated && (configLoadsInFlight > 0 || !configLoaded)) {
+    setConfigFieldsDisabled(true);
   }
 
   // System / WiFi / MQTT / Logs / Sensors tabs: fully hide when not authenticated. Never
@@ -941,9 +964,34 @@ async function factoryReset() {
 
 // ── Load Config ──
 
+// Config save buttons stay disabled while /api/config is loading, so a save
+// cannot submit markup defaults for fields not yet populated by the response.
+// Config fields and save buttons stay disabled while /api/config is loading:
+// a save must not submit markup defaults, and a late response must not
+// overwrite edits entered before the load finished.
+const CONFIG_FIELD_SELECTOR = '#tab-pool input, #tab-pool select, #tab-pool button, ' +
+  '#tab-time input, #tab-time select, #tab-time button, ' +
+  '#tab-wifi input, #tab-wifi select, #tab-wifi button, ' +
+  '#tab-mqtt input, #tab-mqtt select, #tab-mqtt button';
+const CONFIG_SAVE_BUTTONS = ['btnSavePassword'];  // system tab save is outside the field tabs
+
+function setConfigFieldsDisabled(disabled) {
+  for (const el of document.querySelectorAll(CONFIG_FIELD_SELECTOR)) {
+    el.disabled = disabled;
+  }
+  CONFIG_SAVE_BUTTONS.forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) btn.disabled = disabled;
+  });
+}
+
 async function loadConfig() {
+  configLoadsInFlight++;
+  setConfigFieldsDisabled(true);
+  let ok = false;
   try {
     const res = await fetch('/api/config');
+    if (!res.ok) throw new Error('config request failed: ' + res.status);
     const data = await res.json();
 
     document.getElementById('wifiSsid').value = data.wifi.ssid;
@@ -976,8 +1024,17 @@ async function loadConfig() {
     document.getElementById('poolThreshold').textContent = 'max ' + data.settings.temp_max_pool.toFixed(1) + '°C';
     document.getElementById('solarThreshold').textContent = 'min ' + data.settings.temp_min_solar.toFixed(1) + '°C';
     highlightMode(data.settings.op_mode);
+    ok = true;
   } catch (e) {
-    // Silent
+    // Transient failure — keep the save buttons disabled and reset the
+    // lazy-load guard so the next tab activation retries, instead of
+    // leaving markup defaults editable without a loaded config.
+    configLoaded = false;
+  } finally {
+    configLoadsInFlight--;
+    if (configLoadsInFlight === 0 && ok) {
+      setConfigFieldsDisabled(false);
+    }
   }
 }
 
@@ -1104,6 +1161,7 @@ let loadedMapping = { solar: null, pool: null };
 async function loadSensors() {
   try {
     const res = await fetch('/api/sensors');
+    if (!res.ok) throw new Error('sensors request failed: ' + res.status);
     const data = await res.json();
 
     const solarAddr = data.mapping.solar || null;
@@ -1139,9 +1197,17 @@ async function loadSensors() {
     buildRadioGroup('poolRadioGroup', devices, solarAddr, poolAddr, 'pool');
 
     updateSensorSaveBar();
+
+    // Only mark the guard loaded on success so a failed request retries on
+    // the next tab activation instead of being skipped forever.
+    sensorsLoaded = true;
   } catch (e) {
+    // Transient failure — reset the guard for a retry on the next tab
+    // activation and offer an inline refresh control.
+    sensorsLoaded = false;
     document.getElementById('sensorList').innerHTML =
-      '<div style="padding: 1rem; text-align: center; color: var(--danger); font-size: 0.85rem;">Failed to load sensors: ' + e.message + '</div>';
+      '<div style="padding: 1rem; text-align: center; color: var(--danger); font-size: 0.85rem;">Failed to load sensors: ' + e.message +
+      ' <button class="btn" onclick="loadSensors()" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; margin-left: 0.5rem;">🔄 Retry</button></div>';
   }
 }
 
@@ -1359,8 +1425,8 @@ updateAuthUI = function() {
 setInterval(loadTelemetry, 2000);
 setInterval(loadLogs, 2000);
 
-window.onload = function() {
-  loadTelemetry();
-  loadConfig();
-  loadSensors();
-};
+// The script is deferred, so the DOM is fully parsed at this point. Start the
+// telemetry loop immediately instead of waiting for window.onload (which waits
+// for every resource, including the async stylesheet). Config and sensor data
+// are lazy-loaded on first tab activation (see switchTab).
+loadTelemetry();

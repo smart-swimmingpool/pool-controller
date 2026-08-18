@@ -338,15 +338,39 @@ void WebPortal::setupRoutes() {
   server_.collectHeaders(headerkeys, 1);
 }
 
+// Serve a LittleFS web asset, preferring a pre-compressed .gz variant (created
+// by scripts/gzip-web-assets.sh before upload). Falls back to the plain file
+// when no .gz is present, so deployments without the script keep working.
+bool WebPortal::serveWebFile(const char *path, const char *contentType, const char *cacheControl) {
+  char gzPath[64];
+  snprintf(gzPath, sizeof(gzPath), "%s.gz", path);
+
+  File f = LittleFS.open(gzPath, "r");
+  if (f) {
+    // streamFile() sets Content-Encoding: gzip automatically for .gz files.
+    server_.sendHeader("Cache-Control", cacheControl);
+    server_.streamFile(f, contentType);
+    f.close();
+    return true;
+  }
+
+  f = LittleFS.open(path, "r");
+  if (f) {
+    server_.sendHeader("Cache-Control", cacheControl);
+    server_.streamFile(f, contentType);
+    f.close();
+    return true;
+  }
+  return false;
+}
+
 void WebPortal::handleRoot() {
   // Dashboard is always served — interactive controls are gated by the frontend
   // based on the "authenticated" field from /api/status.
-  File f = LittleFS.open("/web/index.html", "r");
-  if (f) {
-    server_.streamFile(f, "text/html");
-    f.close();
+  // Entry point: always revalidate so freshly uploaded assets are picked up.
+  // The service worker provides the instant-load cache for repeat visits.
+  if (serveWebFile("/web/index.html", "text/html", "no-cache"))
     return;
-  }
 
   // No PROGMEM fallback — tell user to upload web assets
   String html = R"HTML(
@@ -366,52 +390,34 @@ h1{color:#00e5ff;margin-bottom:0.5rem}a{color:#48cae4}</style>
 }
 
 void WebPortal::handleStyleCss() {
-  File f = LittleFS.open("/web/style.css", "r");
-  if (f) {
-    server_.streamFile(f, "text/css");
-    f.close();
+  if (serveWebFile("/web/style.css", "text/css", "public, max-age=3600"))
     return;
-  }
   server_.send(404, "text/plain", "Not Found");
 }
 
 void WebPortal::handleAppJs() {
-  File f = LittleFS.open("/web/app.js", "r");
-  if (f) {
-    server_.streamFile(f, "application/javascript");
-    f.close();
+  if (serveWebFile("/web/app.js", "application/javascript", "public, max-age=3600"))
     return;
-  }
   server_.send(404, "text/plain", "Not Found");
 }
 
 void WebPortal::handleManifestJson() {
-  File f = LittleFS.open("/web/manifest.json", "r");
-  if (f) {
-    server_.streamFile(f, "application/manifest+json");
-    f.close();
+  if (serveWebFile("/web/manifest.json", "application/manifest+json", "public, max-age=3600"))
     return;
-  }
   server_.send(404, "text/plain", "Not Found");
 }
 
 void WebPortal::handleSwJs() {
-  File f = LittleFS.open("/web/sw.js", "r");
-  if (f) {
-    server_.streamFile(f, "application/javascript");
-    f.close();
+  // Never cache the service worker script — browsers must check for updates
+  // on every navigation so new cache versions take effect promptly.
+  if (serveWebFile("/web/sw.js", "application/javascript", "no-cache"))
     return;
-  }
   server_.send(404, "text/plain", "Not Found");
 }
 
 void WebPortal::handleIconSvg() {
-  File f = LittleFS.open("/web/icon.svg", "r");
-  if (f) {
-    server_.streamFile(f, "image/svg+xml");
-    f.close();
+  if (serveWebFile("/web/icon.svg", "image/svg+xml", "public, max-age=3600"))
     return;
-  }
   server_.send(404, "text/plain", "Not Found");
 }
 
@@ -1325,6 +1331,18 @@ void WebPortal::handleFsUploadStream() {
     // Ensure the /web/ directory exists
     if (!LittleFS.exists("/web")) {
       LittleFS.mkdir("/web");
+    }
+
+    // Invalidate a stale pre-compressed sibling: serveWebFile() prefers the
+    // .gz variant, so uploading a newer plain asset must not leave an old
+    // .gz in place (it would be served forever). The .gz is re-created by
+    // the next upload of the compressed variant.
+    if (!path.endsWith(".gz")) {
+      String gzPath = path + ".gz";
+      if (LittleFS.exists(gzPath.c_str())) {
+        LittleFS.remove(gzPath.c_str());
+        LOG_INFO("FS Upload: removed stale \"%s\"\n", gzPath.c_str());
+      }
     }
 
     fsUploadFile = LittleFS.open(path, "w");
