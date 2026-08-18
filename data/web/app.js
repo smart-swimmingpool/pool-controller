@@ -1161,6 +1161,7 @@ let loadedMapping = { solar: null, pool: null };
 async function loadSensors() {
   try {
     const res = await fetch('/api/sensors');
+    if (!res.ok) throw new Error('sensors request failed: ' + res.status);
     const data = await res.json();
 
     const solarAddr = data.mapping.solar || null;
@@ -1196,9 +1197,17 @@ async function loadSensors() {
     buildRadioGroup('poolRadioGroup', devices, solarAddr, poolAddr, 'pool');
 
     updateSensorSaveBar();
+
+    // Only mark the guard loaded on success so a failed request retries on
+    // the next tab activation instead of being skipped forever.
+    sensorsLoaded = true;
   } catch (e) {
+    // Transient failure — reset the guard for a retry on the next tab
+    // activation and offer an inline refresh control.
+    sensorsLoaded = false;
     document.getElementById('sensorList').innerHTML =
-      '<div style="padding: 1rem; text-align: center; color: var(--danger); font-size: 0.85rem;">Failed to load sensors: ' + e.message + '</div>';
+      '<div style="padding: 1rem; text-align: center; color: var(--danger); font-size: 0.85rem;">Failed to load sensors: ' + e.message +
+      ' <button class="btn" onclick="loadSensors()" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; margin-left: 0.5rem;">🔄 Retry</button></div>';
   }
 }
 
