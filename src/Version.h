@@ -10,7 +10,7 @@
 #define VERSION_H
 
 #ifndef FW_VERSION
-#define FW_VERSION "4.2.1"  // x-release-please-version
+#define FW_VERSION "5.0.0"  // x-release-please-version
 #endif
 
 #endif  // VERSION_H
