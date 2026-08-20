@@ -169,33 +169,40 @@ async function loadTelemetry() {
     updateAuthUI();
 
     // ── Pool & Time Tab (read-only params from /api/status) ──
-    const statusFields = [
-      ['loopInterval', data.loop_interval],
-      ['tempMaxPool', data.temp_max_pool],
-      ['tempMinSolar', data.temp_min_solar],
-      ['tempHysteresis', data.temp_hysteresis],
-      ['tempCircThreshold', data.temp_circ_threshold],
-      ['tempCircFactor', data.temp_circ_factor],
-      ['tempCircMaxRuntime', data.temp_circ_max_runtime],
-      ['timezone', data.timezone],
-      ['timeLossGreen', data.time_loss_green_hours],
-      ['timeLossRed', data.time_loss_red_hours],
-      ['ntpServer', data.ntp_server],
-    ];
-    for (const [id, val] of statusFields) {
-      if (val != null) {
-        const el = document.getElementById(id);
-        if (el) el.value = val;
+    // Only populate these form fields when NOT authenticated: /api/config is
+    // the authoritative source once logged in (loadConfig fills them), and a
+    // telemetry poll here would otherwise overwrite the user's in-progress
+    // edits every 2 seconds. When unauthenticated the fields are disabled,
+    // so this read-only display is harmless.
+    if (!isAuthenticated) {
+      const statusFields = [
+        ['loopInterval', data.loop_interval],
+        ['tempMaxPool', data.temp_max_pool],
+        ['tempMinSolar', data.temp_min_solar],
+        ['tempHysteresis', data.temp_hysteresis],
+        ['tempCircThreshold', data.temp_circ_threshold],
+        ['tempCircFactor', data.temp_circ_factor],
+        ['tempCircMaxRuntime', data.temp_circ_max_runtime],
+        ['timezone', data.timezone],
+        ['timeLossGreen', data.time_loss_green_hours],
+        ['timeLossRed', data.time_loss_red_hours],
+        ['ntpServer', data.ntp_server],
+      ];
+      for (const [id, val] of statusFields) {
+        if (val != null) {
+          const el = document.getElementById(id);
+          if (el) el.value = val;
+        }
       }
-    }
 
-    // Timer start/end fields on Pool tab
-    if (data.timer_start_h != null) {
-      const pad2 = (n) => n.toString().padStart(2, '0');
-      const stEl = document.getElementById('timerStart');
-      if (stEl) stEl.value = pad2(data.timer_start_h) + ':' + pad2(data.timer_start_m);
-      const etEl = document.getElementById('timerEnd');
-      if (etEl) etEl.value = pad2(data.timer_end_h) + ':' + pad2(data.timer_end_m);
+      // Timer start/end fields on Pool tab
+      if (data.timer_start_h != null) {
+        const pad2 = (n) => n.toString().padStart(2, '0');
+        const stEl = document.getElementById('timerStart');
+        if (stEl) stEl.value = pad2(data.timer_start_h) + ':' + pad2(data.timer_start_m);
+        const etEl = document.getElementById('timerEnd');
+        if (etEl) etEl.value = pad2(data.timer_end_h) + ':' + pad2(data.timer_end_m);
+      }
     }
 
     // AP-Mode: WiFi-Tab anzeigen (nur einmalig — nicht bei jedem Poll erzwingen,
