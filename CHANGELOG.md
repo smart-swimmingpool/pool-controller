@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [5.0.1](https://github.com/smart-swimmingpool/pool-controller/compare/v5.0.0...v5.0.1) (2026-08-20)
+
+
+### Bug Fixes
+
+* **web:** stop telemetry poll from overwriting config edits ([#185](https://github.com/smart-swimmingpool/pool-controller/issues/185)) ([71ee560](https://github.com/smart-swimmingpool/pool-controller/commit/71ee560ae18c8539bf23de4c54c4ca71ab645e69))
+
 ## [5.0.0](https://github.com/smart-swimmingpool/pool-controller/compare/v4.2.1...v5.0.0) (2026-08-18)
 
 
