@@ -59,7 +59,7 @@ Pinbelegung ausgewählt, die die belegten und reinen-Eingang-Pins vermeidet:
 | `PIN_DS_SOLAR`    |    **GPIO25**     | DS18B20 — Solar-Kollektortemperatur         |          Erweiterungsport Pin 1          |
 | `PIN_DS_POOL`     |    **GPIO25**     | DS18B20 — Pool-Wassertemperatur             | Shared Bus auf GPIO25 (Erweiterungsport) |
 | `PIN_RELAY_POOL`  |  **GPIO14** (R0)  | Relais — Pool-Umwälzpumpe                   |             Relaisausgang 0              |
-| `PIN_RELAY_SOLAR` |  **GPIO33** (R5)  | Relais — Solarheizungspumpe                 |             Relaisausgang 5              |
+| `PIN_RELAY_SOLAR` |  **GPIO13** (R2)  | Relais — Solarheizungspumpe (R1→R5→R2)      |             Relaisausgang 2              |
 | `PIN_LED_STATUS`  | **GPIO27** (T0.1) | Status-LED (extern, über Transistorausgang) |          Transistorausgang 0.1           |
 | `PIN_OLED_SDA`    |    **GPIO16**     | I2C SDA — eingebautes 0,96" OLED (SSD1306)  |               Intern (I2C)               |
 | `PIN_OLED_SCL`    |    **GPIO17**     | I2C SCL — eingebautes 0,96" OLED (SSD1306)  |               Intern (I2C)               |
@@ -210,33 +210,39 @@ kommt zum Einsatz.
    Ein 4,7kΩ-Widerstand zwischen DATA (Pin 1) und 3,3V (Pin 7) reicht.
    Dupont-Kabel: 3× Female-Female (rot/gelb/schwarz).
 
- ─── RELAISAUSGÄNGE (eingebaut) ───────────────────────────────────────
+   ─── RELAISAUSGÄNGE (eingebaut) ───────────────────────────────────────
 
    ╔══════════════════════════════════════════════════════════════════════╗
-   ║  ⚠ WICHTIG — Grenze bei Motorlast                                  ║
+   ║  ⚠ WICHTIG — Motorlast beachten                                    ║
    ║                                                                     ║
-   ║  Die NORVI-Bordrelais sind für **5A ohmsche Last** ausgelegt       ║
-   ║  (Glühlampen, Heizungen, Signallasten). Eine **Pumpe ist eine       ║
-   ║  induktive Motorlast** mit 5–10× höherem Einschaltstrom, der die    ║
-   ║  Relaiskontakte nach einigen hundert Schaltspielen verschweißt.     ║
+   ║  Die NORVI-Bordrelais sind für **5A ohmsche Last** ausgelegt.       ║
+   ║  Eine Pumpe ist eine Motorlast mit Einschaltstrom, der Relais-      ║
+   ║  kontakte nach wiederholtem Schalten verschweißen kann.             ║
    ║                                                                     ║
-   ║  **Standard-Konfiguration:** Die NORVI-Relais ausschließlich als    ║
-   ║  **Steuerrelais für externe Hutschienen-Schütze** verwenden. Das    ║
-   ║  Schütz schaltet die 230V-Pumpe; das NORVI-Relais schaltet nur die  ║
-   ║  24V-Spule des Schützes (~20mA). Das ist verscheißfrei für die      ║
-   ║  gesamte Lebensdauer der Anlage.                                    ║
+   ║  **Standard-Konfiguration:** NORVI-Relais als **Steuerrelais für    ║
+   ║  externe Hutschienen-Schütze** verwenden (siehe Schütz-Schaltung    ║
+   ║  unten). Das ist verscheißfrei für die gesamte Lebensdauer.         ║
+   ║                                                                     ║
+   ║  **Für Kleinstpumpen (<100W, z. B. ECM-Solarpumpen):** direkt       ║
+   ║  verdrahten mit **RC-Snubber** (100nF + 100Ω, X2) dämpft Abschalt-  ║
+   ║  Lichtbögen, begrenzt aber **nicht** den Einschaltstrom — zur       ║
+   ║  Vermeidung von Verschweißung das **Schütz** (oder NTC) verwenden.  ║
    ║                                                                     ║
    ║  Siehe → **[Schütz-Schaltung für Pumpen](contactor-guide.de.md)**   ║
    ╚══════════════════════════════════════════════════════════════════════╝
 
-   NORVI Relaisausgang 0 (GPIO14):  Steuersignal → Schütz Pool A1
-   NORVI Relaisausgang 5 (GPIO33):  Steuersignal → Schütz Solar A1
+   NORVI Relaisausgang 0 (GPIO14):  Steuerung → Pool-Pumpe (via Schütz oder direkt <100W)
+   NORVI Relaisausgang 2 (GPIO13):  Steuerung → Solar-Pumpe (via Schütz oder direkt mit Einschaltstrombegrenzer)
+
+   L (Außenleiter) ─── RCD ─── MCB ──┬── Relais COM0 ── NO0 ── Pumpe L
+                                      └── Relais COM2 ── NO2 ── Pumpe L
+   N (Neutral) ──────────────────────────── Neutralleiter ── Pumpen N
 
    ── Standard-Verdrahtung (mit Schützen) ─────────────────────────────
 
    24V DC (+) ──┬── NORVI R0 COM ── NO ──┬── Ext. Schütz Pool A1 ── A2 ──┬── GND
                  │                        │                               │
-                 ├── NORVI R5 COM ── NO ──┤── Ext. Schütz Solar A1 ── A2 ──┤
+                 ├── NORVI R2 COM ── NO ──┤── Ext. Schütz Solar A1 ── A2 ──┤
                  │                        │                               │
                  └───── NORVI 24V IN ─────┘                               │
                                                                           │
@@ -249,40 +255,32 @@ kommt zum Einsatz.
                                       └── Schütz Pool 1-2 ─── Poolpumpe L
    N (Neutral) ──────────────────────────── Neutralleiter ── Beide Pumpen N
 
-   ── Alternative: Direktverdrahtung (nur ohmsche Last) ────────────────
+   ── Alternative: Direktverdrahtung (ohmsche / Kleinstlast) ──────────
 
-   Falls du **keine Motorlast** schaltest (Heizstäbe, LED-Beleuchtung,
-   Ventile, Signallampen), können die NORVI-Relais direkt verdrahtet
-   werden. Sie sind Schließer (SPST), ausgelegt für 5A/250V AC.
+   Für **Nicht-Motorlasten** (Heizstäbe, Ventile, Signallampen) oder
+   **Kleinst-EcmPumpen (<100W) mit Einschaltstrombegrenzer** können die
+   NORVI-Relais direkt verdrahtet werden. Sie sind Schließer (SPST), 5A/250V AC.
 
-   L (Außenleiter) ─── RCD ─── MCB ──┬── NORVI COM0 ── NO0 ── Ohmsche Last
-                                      └── NORVI COM5 ── NO5 ── Ohmsche Last
+   L (Außenleiter) ─── RCD ─── MCB ──┬── NORVI COM0 ── NO0 ── Last
+                                      └── NORVI COM2 ── NO2 ── Last
    N (Neutral) ──────────────────────────── Neutralleiter ── Last N
 
-   > **Schließe Pumpen oder andere induktive Motorlasten niemals direkt
-   > an die NORVI-Relais an.** Die Kontakte werden unter dem
-   > Einschaltstrom versagen (verschweißen). Verwende externe Schütze
-   > wie oben gezeigt.
+   > **Für Pumpen (Motorlasten):** Externe Schütze wie oben verwenden.
+   > Direktverdrahtung von Motorlasten führt zu Kontaktverschweißung;
+   > ein RC-Snubber verhindert das nicht.
 
    ── Feldbericht ──────────────────────────────────────────────────────
 
-   In einer Feldinstallation wurde eine Solarpumpe (300–600W) zuerst an
-   Relaisausgang 1 (GPIO12, R1) betrieben. Nach einigen hundert
-   Schaltvorgängen hatte R1 einen verschweißten Kontakt — das Relais
-   klickte hörbar, aber der NO-Kontakt öffnete nie. Die Pumpe wurde
-   auf Relaisausgang 5 (GPIO33, R5) umgeklemmt, der Wochen später
-   denselben Fehler zeigte. Relaisausgang 0 (GPIO14, Poolpumpe)
-   arbeitete währenddessen fehlerfrei, weil die Poolpumpe andere
-   Motoreigenschaften hat (geringerer Einschaltstrom, Kondensator-
-   oder Sanftanlauf).
-
-   **Gemeinsamer Faktor: die Motorlast der Solarpumpe, nicht die
-   Relais-Hardware.**
-
-   Siehe die [Schütz-Schaltung für Pumpen](contactor-guide.de.md) für
-   die dauerhaft zuverlässige Lösung.
-
-   ⚡ Relais-Polarität: Im Gegensatz zu externen Relaismodulen (die typischerweise
+   In einer Feldinstallation wurde eine Solarpumpe an Relaisausgang 1
+   (GPIO12, R1) betrieben. Nach einigen hundert Schaltspielen hatte R1
+   einen verschweißten Kontakt — Relais hörbar, aber NO-Kontakt öffnete
+   nie. Umverdrahtung auf R5 (GPIO33) zeigte denselben Fehler. R0
+   (GPIO14, Poolpumpe) lief weiter (andere Motorkennlinie). Die
+   Solarpumpe ist jetzt auf R2 (GPIO13) konfiguriert. Für diese Last ist
+   ein **Schütz** (oder Einschaltstrombegrenzer) empfohlen — ein RC-Snubber
+   parallel zu den R2-Kontakten verhindert das Verschweißen nicht.
+   Im Gegensatz zu externen Relaismodulen (die
+   typischerweise
    active-LOW sind: LOW = EIN, HIGH = AUS) sind die eingebauten NORVI-Relais
    **active-HIGH**: `HIGH` auf dem GPIO-Pin erregt die Relaisspule (Schließer
    schließt), `LOW` entregt sie (Schließer öffnet).
@@ -381,7 +379,7 @@ der ESP32 werden gemeinsam aus dieser Spannung versorgt.
 | **Relais-Strom** | 5V an Relaismodul             | Integriert (24V → Relaisspulen)                     |
 | **Relais-Polarität** | Active-LOW (LOW = EIN)   | **Active-HIGH** (HIGH = EIN)                        |
 | **Sensor-Pins**  | GPIO32, GPIO33           | GPIO25 (Exp Port), GPIO5 (löten)                    |
-| **Relais-Pins**  | GPIO25, GPIO26           | GPIO14 (R0), GPIO33 (R5)                            |
+| **Relais-Pins**  | GPIO25, GPIO26           | GPIO14 (R0), GPIO13 (R2)                            |
 | **Status-LED**   | Eingebaut (GPIO2)        | Extern über GPIO27 (T0.1)                           |
 | **OLED-Display** | Keines                   | Eingebaut 0,96" (SSD1306) — 4 Info-Seiten + QR-Code |
 | **Drucktaster**  | BOOT-Taster (GPIO0)      | 3 Fronttaster — Seiten & Modi                       |
@@ -437,12 +435,12 @@ pio run -e norvi_ae01_r -t uploadfs
 | :----: | ------------------------------------------ | :--------------------------: |
 |   0    | NRST (PWM beim Boot)                       |              ❌              |
 |   1    | RS-485 TX (mit USB geteilt)                |              ❌              |
-|   2    | Relaisausgang 4 / Eingebaute LED           |              ❌              |
+| **2**  | **Relaisausgang 4 / Eingebaute LED**    |              ❌              |
 |   3    | RS-485 RX (mit USB geteilt)                |              ❌              |
 |   4    | RS-485 Flusskontrolle                      |              ❌              |
 | **5**  | **— (freier GPIO, kein NORVI-Peripherie)** | ✅ **DS18B20 Pool (löten)**  |
-|   12   | Relaisausgang 1 (vermeiden — siehe Hinweis oben) |              ❌              |
-|   13   | Relaisausgang 2                            |              ❌              |
+|   12   | Relaisausgang 1 (verschweißt — R2 verwenden) |              ❌              |
+| **13** | **Relaisausgang 2**                        |   ✅ **Solar-Pumpe (R2)**    |
 |   14   | **Relaisausgang 0**                        |        ✅ Pool-Pumpe         |
 |   15   | Relaisausgang 3                            |              ❌              |
 |   16   | **I2C SDA** (OLED-Display)                 |       ✅ OLED-Display        |
@@ -457,7 +455,7 @@ pio run -e norvi_ae01_r -t uploadfs
 |   26   | Transistorausgang 0.0                      |          ❌ (frei)           |
 |   27   | **Transistorausgang 0.1**                  |    ✅ Status-LED (extern)    |
 | **32** | **Analogeingang / Taster**                 |       ✅ 3 Fronttaster       |
-| **33** | **Relaisausgang 5**                        |       ✅ Solar-Pumpe         |
+|   33   | Relaisausgang 5                            |              ❌              |
 |   34   | Digitaleingang 2 (nur Eingang)             |              ❌              |
 |   35   | Digitaleingang 3 (nur Eingang)             |              ❌              |
 |   38   | —                                          |              ❌              |

@@ -36,11 +36,11 @@ namespace PoolController {
  * ~50 ms intervals, applies hysteresis for noise rejection, and fires
  * callbacks on press events.
  *
- * Default thresholds (12-bit ADC, 0–4095):
- *   Button 1:     200 – 1200
- *   Button 2:    1400 – 2500
- *   Button 3:    2700 – 3700
- *   No press:    > 3800
+ * Calibrated thresholds (12-bit ADC, 0–4095) from live measurements:
+ *   No press:    < 3100   (resting level oscillates ~2610–2990)
+ *   Button 1:    3100 – 3520
+ *   Button 2:    3520 – 3880
+ *   Button 3:    3880 – 4095
  */
 class NorviButtonHandler {
 public:
@@ -61,6 +61,13 @@ public:
    * Configures GPIO32 as analog input and samples once to stabilize the ADC.
    */
   static void begin();
+
+  /**
+   * @brief Reload ADC thresholds from ConfigManager (NVS).
+   * Called after settings changes so new thresholds apply to the running
+   * handler without a reboot.
+   */
+  static void applySettings();
 
   /**
    * @brief Sample and debounce buttons.
@@ -117,6 +124,18 @@ private:
    */
   static Button detectButton(uint16_t raw);
 
+  /**
+   * @brief Fire the short-press callback once the debounce interval elapsed.
+   * Runs on every sample once a press is pending — including while the ADC
+   * re-stabilizes after a release — so a short press is not swallowed by
+   * the release stabilization path.
+   */
+  static void evaluateShortPress(uint32_t now);
+
+  /// Fires the long-press callback once after LONG_PRESS_MS.
+  /// @return true if the callback consumed the press (skip short press).
+  static bool evaluateLongPress(uint32_t now);
+
   /// Debounce interval (ms) — ignores samples within this window.
   static constexpr uint32_t DEBOUNCE_MS{80};
 
@@ -154,17 +173,39 @@ private:
   /// Timestamp when the current button was first pressed.
   static uint32_t pressStartMs_;
 
-  // ── ADC thresholds (12-bit, 0–4095) ──────────────────────────────────
-  // These are typical ranges for the NORVI AE01-R resistor ladder.
-  // Adjust if needed based on serial debug output.
+  /// Timestamp when a confirmed press was first observed released (ms).
+  /// Non-zero while the release is being debounced; the release is
+  /// committed to `currentButton_` after DEBOUNCE_MS.
+  static uint32_t releasePendingMs_;
 
-  static constexpr uint16_t THRESH_BTN1_MIN{200};
-  static constexpr uint16_t THRESH_BTN1_MAX{1200};
-  static constexpr uint16_t THRESH_BTN2_MIN{1400};
-  static constexpr uint16_t THRESH_BTN2_MAX{2500};
-  static constexpr uint16_t THRESH_BTN3_MIN{2700};
-  static constexpr uint16_t THRESH_BTN3_MAX{3700};
-  static constexpr uint16_t THRESH_NO_PRESS{3800};
+  /// True while calibration was active on the previous loop() call.
+  /// Used to detect the calibration-finish transition.
+  static bool calibWasActive_;
+
+  /// While set, callbacks stay suppressed until a confirmed
+  /// all-buttons-released state is observed (armed when calibration
+  /// finishes while a button is still held).
+  static bool suppressCallbacks_;
+
+  // ── ADC thresholds (12-bit, 0–4095) ──────────────────────────────────
+  // Calibrated from live measurements on the NORVI AE01-R (2026-08-16):
+  //   No press: ~2610–2990 (oscillates; must map to NONE)
+  //   Button 1: ~3275–3456
+  //   Button 2: ~3579–3765
+  //   Button 3: ~4095 (full scale)
+  // The resistor ladder pulls the ADC pin UP toward VCC on press.
+  // Boundaries sit at the midpoints between adjacent levels.
+  // THRESH_NO_PRESS is a no-op (4096 > ADC max) — S3 reads full scale.
+  // Values are loaded from ConfigManager (NVS) in begin(); the defaults
+  // below are the calibrated values and can be overridden via the web UI.
+
+  static uint16_t THRESH_BTN1_MIN;
+  static uint16_t THRESH_BTN1_MAX;
+  static uint16_t THRESH_BTN2_MIN;
+  static uint16_t THRESH_BTN2_MAX;
+  static uint16_t THRESH_BTN3_MIN;
+  static uint16_t THRESH_BTN3_MAX;
+  static uint16_t THRESH_NO_PRESS;
 };
 
 }  // namespace PoolController

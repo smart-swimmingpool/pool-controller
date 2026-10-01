@@ -13,6 +13,8 @@
 #include <WebServer.h>
 #include <DNSServer.h>
 
+#include "LogCapture.hpp"
+
 namespace PoolController {
 
 /**
@@ -59,6 +61,12 @@ public:
   /** @brief Get login lockout duration in milliseconds. */
   static uint32_t getLoginLockoutMs() { return kLoginLockoutMs; }
 
+  // ── Log view helper (public for testing) ──
+  /** @brief Serialize LogCapture entries as the /api/logs JSON payload.
+   *         @param epoch boot epoch of the client's cursor (see LogCapture::epoch()).
+   *         @return bytes written (0 on error / empty buffer). */
+  static size_t buildLogsJson(uint32_t since, uint32_t epoch, size_t count, LogLevel minLevel, char *buf, size_t bufSize);
+
 private:
   /** @brief Register all HTTP routes, handlers, and static asset paths. */
   static void setupRoutes();
@@ -82,10 +90,16 @@ private:
   static void handleSwJs();
   /** @brief Serve icon.svg for PWA (LittleFS). */
   static void handleIconSvg();
+  /** @brief Serve a LittleFS web asset, preferring a pre-compressed .gz variant. */
+  static bool serveWebFile(const char *path, const char *contentType, const char *cacheControl);
 
   // ── REST API Handlers ──
   /** @brief GET /api/status — return JSON with all telemetry data. */
   static void apiGetStatus();
+  /** @brief GET /api/logs — return JSON with captured log entries (unauthenticated, read-only). */
+  static void apiGetLogs();
+  /** @brief POST /api/logs/clear — empty the LogCapture ring buffer (authenticated). */
+  static void apiClearLogs();
   /** @brief GET /api/wifi/scan — return JSON list of visible WiFi networks. */
   static void apiScanWiFi();
   /** @brief GET /api/config — return current configuration as JSON. */
@@ -118,6 +132,12 @@ private:
   static void apiFsUpload();
   /** @brief Streaming upload handler for /api/fs/upload multipart file data. */
   static void handleFsUploadStream();
+  /** @brief POST /api/calibrate/start — start the NORVI button calibration wizard. */
+  static void apiCalibrateStart();
+  /** @brief GET /api/calibrate/status — return calibration status as JSON. */
+  static void apiCalibrateStatus();
+  /** @brief POST /api/calibrate/cancel — cancel a running calibration. */
+  static void apiCalibrateCancel();
 
   static WebServer server_;
   static DNSServer dnsServer_;

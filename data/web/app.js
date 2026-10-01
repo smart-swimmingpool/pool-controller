@@ -12,7 +12,7 @@ function switchTab(tabName) {
 
   // Update bottom tab bar active state.
   // Tabs under "More" (wifi, mqtt, system, about) keep "more" highlighted.
-  const moreTabs = ['wifi', 'mqtt', 'system', 'about'];
+  const moreTabs = ['logs', 'wifi', 'mqtt', 'system', 'about'];
   const barTab = moreTabs.includes(tabName) ? 'more' : tabName;
   document.querySelectorAll('.tab-bar-item').forEach(item => {
     item.classList.toggle('active', item.dataset.tab === barTab);
@@ -21,6 +21,18 @@ function switchTab(tabName) {
   // Close more menu if open
   const moreMenu = document.getElementById('moreMenu');
   if (moreMenu) moreMenu.style.display = 'none';
+
+  // Lazy-load tab data on first activation instead of at page load: the
+  // single-threaded device server would otherwise queue config/sensor
+  // requests behind the dashboard telemetry poll on every page open.
+  if (!configLoaded && ['pool', 'time', 'wifi', 'mqtt', 'system'].includes(tabName)) {
+    configLoaded = true;
+    loadConfig();
+  }
+  if (!sensorsLoaded && tabName === 'sensors') {
+    sensorsLoaded = true;
+    loadSensors();
+  }
 }
 
 function toggleMoreMenu() {
@@ -38,6 +50,9 @@ console.log('[pool] app.js loaded, version=2026-06-05');
 
 let isAuthenticated = false;
 let hasAutoSwitchedToWifi = false;  // one-shot guard so AP-mode redirect doesn't fight user navigation
+let configLoaded = false;   // lazy-load guard: /api/config fetched on first admin tab activation
+let sensorsLoaded = false;  // lazy-load guard: /api/sensors fetched on first Sensors tab activation
+let configLoadsInFlight = 0;  // >0 while /api/config is loading; config save buttons stay disabled
 
 async function loadTelemetry() {
   try {
@@ -59,6 +74,13 @@ async function loadTelemetry() {
     }
     if (data.temp_min_solar != null) {
       document.getElementById('solarThreshold').textContent = 'min ' + data.temp_min_solar.toFixed(1) + '°C';
+    }
+
+    // NORVI capability: hide the calibration wizard on non-NORVI firmware
+    // (the /api/calibrate/* routes are compiled out there).
+    const calibSection = document.getElementById('calibrationSection');
+    if (calibSection) {
+      calibSection.style.display = data.norvi ? '' : 'none';
     }
 
     // Pumpen — Toggle-Switches aktualisieren
@@ -147,33 +169,40 @@ async function loadTelemetry() {
     updateAuthUI();
 
     // ── Pool & Time Tab (read-only params from /api/status) ──
-    const statusFields = [
-      ['loopInterval', data.loop_interval],
-      ['tempMaxPool', data.temp_max_pool],
-      ['tempMinSolar', data.temp_min_solar],
-      ['tempHysteresis', data.temp_hysteresis],
-      ['tempCircThreshold', data.temp_circ_threshold],
-      ['tempCircFactor', data.temp_circ_factor],
-      ['tempCircMaxRuntime', data.temp_circ_max_runtime],
-      ['timezone', data.timezone],
-      ['timeLossGreen', data.time_loss_green_hours],
-      ['timeLossRed', data.time_loss_red_hours],
-      ['ntpServer', data.ntp_server],
-    ];
-    for (const [id, val] of statusFields) {
-      if (val != null) {
-        const el = document.getElementById(id);
-        if (el) el.value = val;
+    // Only populate these form fields when NOT authenticated: /api/config is
+    // the authoritative source once logged in (loadConfig fills them), and a
+    // telemetry poll here would otherwise overwrite the user's in-progress
+    // edits every 2 seconds. When unauthenticated the fields are disabled,
+    // so this read-only display is harmless.
+    if (!isAuthenticated) {
+      const statusFields = [
+        ['loopInterval', data.loop_interval],
+        ['tempMaxPool', data.temp_max_pool],
+        ['tempMinSolar', data.temp_min_solar],
+        ['tempHysteresis', data.temp_hysteresis],
+        ['tempCircThreshold', data.temp_circ_threshold],
+        ['tempCircFactor', data.temp_circ_factor],
+        ['tempCircMaxRuntime', data.temp_circ_max_runtime],
+        ['timezone', data.timezone],
+        ['timeLossGreen', data.time_loss_green_hours],
+        ['timeLossRed', data.time_loss_red_hours],
+        ['ntpServer', data.ntp_server],
+      ];
+      for (const [id, val] of statusFields) {
+        if (val != null) {
+          const el = document.getElementById(id);
+          if (el) el.value = val;
+        }
       }
-    }
 
-    // Timer start/end fields on Pool tab
-    if (data.timer_start_h != null) {
-      const pad2 = (n) => n.toString().padStart(2, '0');
-      const stEl = document.getElementById('timerStart');
-      if (stEl) stEl.value = pad2(data.timer_start_h) + ':' + pad2(data.timer_start_m);
-      const etEl = document.getElementById('timerEnd');
-      if (etEl) etEl.value = pad2(data.timer_end_h) + ':' + pad2(data.timer_end_m);
+      // Timer start/end fields on Pool tab
+      if (data.timer_start_h != null) {
+        const pad2 = (n) => n.toString().padStart(2, '0');
+        const stEl = document.getElementById('timerStart');
+        if (stEl) stEl.value = pad2(data.timer_start_h) + ':' + pad2(data.timer_start_m);
+        const etEl = document.getElementById('timerEnd');
+        if (etEl) etEl.value = pad2(data.timer_end_h) + ':' + pad2(data.timer_end_m);
+      }
     }
 
     // AP-Mode: WiFi-Tab anzeigen (nur einmalig — nicht bei jedem Poll erzwingen,
@@ -262,10 +291,10 @@ function updateAuthUI() {
   const sensorsTabBtn = document.querySelector('.tab-bar-item[data-tab="sensors"]');
   if (sensorsTabBtn) sensorsTabBtn.style.display = isAuthenticated ? '' : 'none';
 
-  // More menu: hide admin items (wifi, mqtt, system)
+  // More menu: hide admin items (wifi, mqtt, system, logs)
   for (const item of document.querySelectorAll('.more-sheet-item')) {
     const text = item.textContent.trim().toLowerCase();
-    if (text === 'wifi' || text === 'mqtt' || text.startsWith('system') || text.startsWith('🔒')) {
+    if (text === 'wifi' || text === 'mqtt' || text.startsWith('system') || text.startsWith('🔒') || text.includes('logs')) {
       item.style.display = isAuthenticated ? '' : 'none';
     }
   }
@@ -294,12 +323,20 @@ function updateAuthUI() {
     }
   }
 
-  // System / WiFi / MQTT / Sensors tabs: fully hide when not authenticated. Never
+  // Config fields and save buttons must stay disabled while /api/config is
+  // loading (or failed to load): the loops above re-enable every tab control
+  // on each telemetry poll and would otherwise undo setConfigFieldsDisabled()
+  // before the load finishes — or expose markup defaults after a failure.
+  if (isAuthenticated && (configLoadsInFlight > 0 || !configLoaded)) {
+    setConfigFieldsDisabled(true);
+  }
+
+  // System / WiFi / MQTT / Logs / Sensors tabs: fully hide when not authenticated. Never
   // force-show here — that previously used `''` (empty string), which falls back
   // to the CSS default `display:block`, making the tab visible again on every 2s
   // poll regardless of which tab switchTab() had actually activated (the reported
   // "always jumps back to WiFi Settings" bug).
-  for (const id of ['tab-system', 'tab-wifi', 'tab-mqtt']) {
+  for (const id of ['tab-system', 'tab-wifi', 'tab-mqtt', 'tab-logs']) {
     const el = document.getElementById(id);
     if (el && !isAuthenticated) el.style.display = 'none';
   }
@@ -553,6 +590,13 @@ function validateSettings() {
     { id: 'tempCircThreshold',  name: 'Circ. Temp Threshold',   min: 0,   max: 40,   type: 'float' },
     { id: 'tempCircFactor',     name: 'Circ. Temp Factor',      min: 0,   max: 120,  type: 'int' },
     { id: 'tempCircMaxRuntime', name: 'Circ. Max Runtime',      min: 60,  max: 1440, type: 'int' },
+    { id: 'btn1Min',    name: 'Button 1 Min ADC',    min: 0, max: 4095, type: 'int' },
+    { id: 'btn1Max',    name: 'Button 1 Max ADC',    min: 0, max: 4095, type: 'int' },
+    { id: 'btn2Min',    name: 'Button 2 Min ADC',    min: 0, max: 4095, type: 'int' },
+    { id: 'btn2Max',    name: 'Button 2 Max ADC',    min: 0, max: 4095, type: 'int' },
+    { id: 'btn3Min',    name: 'Button 3 Min ADC',    min: 0, max: 4095, type: 'int' },
+    { id: 'btn3Max',    name: 'Button 3 Max ADC',    min: 0, max: 4095, type: 'int' },
+    { id: 'btnNoPress', name: 'No-Press Threshold',  min: 0, max: 4096, type: 'int' },
   ];
   for (const f of fields) {
     const el = document.getElementById(f.id);
@@ -572,6 +616,25 @@ function validateSettings() {
       return false;
     }
   }
+  // Button ADC thresholds must form coherent, non-overlapping ranges
+  const btnVal = (id) => parseInt(document.getElementById(id).value, 10);
+  const b1Min = btnVal('btn1Min'), b1Max = btnVal('btn1Max');
+  const b2Min = btnVal('btn2Min'), b2Max = btnVal('btn2Max');
+  const b3Min = btnVal('btn3Min'), b3Max = btnVal('btn3Max');
+  if (b1Min >= b1Max || b2Min >= b2Max || b3Min >= b3Max) {
+    alert('Each button Min must be less than its Max.');
+    return false;
+  }
+  if (b1Max > b2Min || b2Max > b3Min) {
+    alert('Button ADC ranges must not overlap.');
+    return false;
+  }
+  // No-press threshold must sit above every button range, otherwise
+  // detectButton() checks THRESH_NO_PRESS first and masks those readings as NONE.
+  if (btnVal('btnNoPress') <= b3Max) {
+    alert('No-Press Threshold must be above all button ranges.');
+    return false;
+  }
   return true;
 }
 
@@ -589,6 +652,13 @@ async function saveControllerSettings() {
   const circFactor = document.getElementById('tempCircFactor').value;
   const circMaxRuntime = document.getElementById('tempCircMaxRuntime').value;
   const tz = document.getElementById('timezone').value;
+  const btn1Min = document.getElementById('btn1Min').value;
+  const btn1Max = document.getElementById('btn1Max').value;
+  const btn2Min = document.getElementById('btn2Min').value;
+  const btn2Max = document.getElementById('btn2Max').value;
+  const btn3Min = document.getElementById('btn3Min').value;
+  const btn3Max = document.getElementById('btn3Max').value;
+  const btnNoPress = document.getElementById('btnNoPress').value;
 
   // Validate time fields included alongside pool fields
   const green = parseInt(document.getElementById('timeLossGreen').value, 10);
@@ -608,13 +678,207 @@ async function saveControllerSettings() {
   const res = await fetch('/api/config', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: 'type=settings&mode=' + mode + '&interval=' + interval + '&max_pool=' + maxPool + '&min_solar=' + minSolar + '&hysteresis=' + hysteresis + '&circ_threshold=' + circThreshold + '&circ_factor=' + circFactor + '&circ_max_runtime=' + circMaxRuntime + '&timezone=' + tz + '&green=' + green + '&red=' + red + timerParams() + '&ntp_server=' + ntpServer
+    body: 'type=settings&mode=' + mode + '&interval=' + interval + '&max_pool=' + maxPool + '&min_solar=' + minSolar + '&hysteresis=' + hysteresis + '&circ_threshold=' + circThreshold + '&circ_factor=' + circFactor + '&circ_max_runtime=' + circMaxRuntime + '&timezone=' + tz + '&green=' + green + '&red=' + red + timerParams() + '&ntp_server=' + ntpServer + '&btn1_min=' + btn1Min + '&btn1_max=' + btn1Max + '&btn2_min=' + btn2Min + '&btn2_max=' + btn2Max + '&btn3_min=' + btn3Min + '&btn3_max=' + btn3Max + '&btn_no_press=' + btnNoPress
   });
   if (res.status === 200) {
     document.getElementById('poolThreshold').textContent = 'max ' + parseFloat(maxPool).toFixed(1) + '°C';
     document.getElementById('solarThreshold').textContent = 'min ' + parseFloat(minSolar).toFixed(1) + '°C';
     alert('✓ Pool settings saved!');
     highlightMode(mode);
+  }
+}
+
+// ── Button Calibration Wizard ──
+
+let calibPollTimer = null;
+
+function showCalibrationModal() {
+  document.getElementById('calibrationModal').style.display = 'flex';
+}
+
+function closeCalibrationModal() {
+  document.getElementById('calibrationModal').style.display = 'none';
+  if (calibPollTimer) { clearInterval(calibPollTimer); calibPollTimer = null; }
+  if (calibCloseTimer) { clearTimeout(calibCloseTimer); calibCloseTimer = null; }
+  calibMsgPending = null;
+  calibMsgShownAt = 0;
+}
+
+function startCalibrationPolling() {
+  // Guard against duplicate poll loops when the start button is activated
+  // twice before the first request completes.
+  if (calibPollTimer) { clearInterval(calibPollTimer); }
+  calibPollTimer = setInterval(pollCalibrationStatus, 500);
+  pollCalibrationStatus();
+}
+
+async function startCalibration() {
+  const res = await fetch('/api/calibrate/start', { method: 'POST' });
+  // handleAuthentication() serves the login page with HTTP 200 when the
+  // session expired, so verify an actual API response first.
+  const type = res.headers.get('content-type') || '';
+  if (type.includes('text/html')) {
+    showLoginForm();
+    alert('Session expired — please log in again.');
+    return;
+  }
+  if (res.status === 409) {
+    // Calibration is already running on the device (e.g. after a page
+    // reload or a lost start response) — resume the running wizard so the
+    // user can watch progress or cancel it instead of being stuck.
+    showCalibrationModal();
+    startCalibrationPolling();
+    return;
+  }
+  if (!res.ok) { alert('Calibration could not be started.'); return; }
+  showCalibrationModal();
+  startCalibrationPolling();
+}
+
+// ── Calibration wizard UI state ──
+
+const CALIB_STEP_HEADLINES = {
+  1: 'Release all buttons',
+  2: 'Press and hold Button 1',
+  3: 'Press and hold Button 2',
+  4: 'Press and hold Button 3',
+  5: 'Calibration complete',
+  6: 'Calibration failed'
+};
+
+const CALIB_NEXT_UP = {
+  1: 'Next: hold Button 1',
+  2: 'Next: hold Button 2',
+  3: 'Next: hold Button 3',
+  4: 'Then the levels are computed and saved automatically.'
+};
+
+// Keep every status text readable: a new message is only shown once the
+// previous one has been on screen for at least MIN_MSG_MS milliseconds.
+const CALIB_MIN_MSG_MS = 1200;
+let calibMsgShownAt = 0;
+let calibMsgPending = null;
+let calibCloseTimer = null;
+
+function showCalibrationMessage(text) {
+  const el = document.getElementById('calibStepText');
+  if (!el) return;
+  const now = Date.now();
+  if (now - calibMsgShownAt < CALIB_MIN_MSG_MS) {
+    // Current text still on screen — remember the newest one, promote later
+    calibMsgPending = text;
+    return;
+  }
+  if (calibMsgPending) { text = calibMsgPending; calibMsgPending = null; }
+  if (text !== el.textContent) {
+    el.textContent = text;
+    calibMsgShownAt = now;
+  }
+}
+
+function calibPhase(message) {
+  if (!message) return 'waiting';
+  if (message.includes('Computing')) return 'saving';
+  if (message.includes('sampling')) return 'sampling';
+  if (message.includes('try again') || message.includes('too close') || message.includes('changed')) return 'retry';
+  if (message.includes('complete')) return 'done';
+  return 'waiting';
+}
+
+function updateCalibrationUi(st) {
+  const phase = calibPhase(st.message || '');
+  const step = st.step;
+
+  // Bold instruction headline for the current action
+  let headline = CALIB_STEP_HEADLINES[step] || 'Calibration';
+  if (phase === 'saving') {
+    headline = 'Computing thresholds…';
+  } else if (phase === 'retry') {
+    headline = 'Try again — hold steady';
+  } else if (phase === 'sampling' && step >= 2 && step <= 4) {
+    headline = 'Keep holding Button ' + (step - 1);
+  } else if (phase === 'sampling' && step === 1) {
+    headline = 'Hold steady…';
+  }
+  const headlineEl = document.getElementById('calibActionHeadline');
+  if (headlineEl) headlineEl.textContent = headline;
+
+  // State chip
+  const chipLabels = { waiting: 'Waiting', sampling: 'Measuring', saving: 'Saving', retry: 'Retry', done: 'Done', error: 'Error' };
+  const chip = document.getElementById('calibStateChip');
+  if (chip) {
+    chip.textContent = chipLabels[phase] || chipLabels.waiting;
+    chip.className = 'calib-chip calib-chip-' + phase;
+  }
+
+  // Firmware detail line (throttled so it stays readable)
+  showCalibrationMessage(st.message || '');
+
+  // What happens next
+  const nextUp = document.getElementById('calibNextUp');
+  if (nextUp) nextUp.textContent = CALIB_NEXT_UP[step] || '';
+
+  // Live ADC meter (0-4095)
+  document.getElementById('calibLiveAdc').textContent = st.live_adc;
+  const fill = document.getElementById('calibMeterFill');
+  if (fill) {
+    fill.style.width = Math.min(100, Math.round((st.live_adc / 4095) * 100)) + '%';
+    fill.classList.toggle('sampling', phase === 'sampling');
+  }
+
+  // Step progress: current highlighted, completed marked with a check
+  const steps = ['calibP0', 'calibP1', 'calibP2', 'calibP3'];
+  steps.forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const done = (i + 1) < step;
+    const active = (i + 1) === step;
+    el.classList.toggle('active', active);
+    el.classList.toggle('done', done);
+    const dot = el.querySelector('.calib-step-dot');
+    if (dot) dot.textContent = done ? '✓' : (i + 1);
+  });
+}
+
+async function pollCalibrationStatus() {
+  const res = await fetch('/api/calibrate/status');
+  if (!res.ok) return;
+  // The login page is served with HTTP 200 on session expiry — stop
+  // polling instead of trying to parse HTML as JSON.
+  const type = res.headers.get('content-type') || '';
+  if (type.includes('text/html')) {
+    if (calibPollTimer) { clearInterval(calibPollTimer); calibPollTimer = null; }
+    showLoginForm();
+    alert('Session expired — please log in again to continue calibration.');
+    return;
+  }
+  const st = await res.json();
+  updateCalibrationUi(st);
+
+  if (st.step === 5) { // DONE — show the success state briefly, then close
+    if (!calibCloseTimer) {
+      calibCloseTimer = setTimeout(() => {
+        calibCloseTimer = null;
+        closeCalibrationModal();
+        loadConfig(); // refresh threshold fields
+      }, 1500);
+    }
+  } else if (st.step === 6) { // ERROR
+    closeCalibrationModal();
+    alert('Calibration failed: ' + (st.message || 'unknown error'));
+  }
+}
+
+async function cancelCalibration() {
+  const res = await fetch('/api/calibrate/cancel', { method: 'POST' });
+  // handleAuthentication() serves the login page with HTTP 200 when the
+  // session expired, so verify an actual API response before closing.
+  const type = res.headers.get('content-type') || '';
+  if (res.ok && !type.includes('text/html')) {
+    closeCalibrationModal();
+  } else {
+    showLoginForm();
+    alert('Session expired — please log in again to cancel calibration.');
   }
 }
 
@@ -707,9 +971,34 @@ async function factoryReset() {
 
 // ── Load Config ──
 
+// Config save buttons stay disabled while /api/config is loading, so a save
+// cannot submit markup defaults for fields not yet populated by the response.
+// Config fields and save buttons stay disabled while /api/config is loading:
+// a save must not submit markup defaults, and a late response must not
+// overwrite edits entered before the load finished.
+const CONFIG_FIELD_SELECTOR = '#tab-pool input, #tab-pool select, #tab-pool button, ' +
+  '#tab-time input, #tab-time select, #tab-time button, ' +
+  '#tab-wifi input, #tab-wifi select, #tab-wifi button, ' +
+  '#tab-mqtt input, #tab-mqtt select, #tab-mqtt button';
+const CONFIG_SAVE_BUTTONS = ['btnSavePassword'];  // system tab save is outside the field tabs
+
+function setConfigFieldsDisabled(disabled) {
+  for (const el of document.querySelectorAll(CONFIG_FIELD_SELECTOR)) {
+    el.disabled = disabled;
+  }
+  CONFIG_SAVE_BUTTONS.forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) btn.disabled = disabled;
+  });
+}
+
 async function loadConfig() {
+  configLoadsInFlight++;
+  setConfigFieldsDisabled(true);
+  let ok = false;
   try {
     const res = await fetch('/api/config');
+    if (!res.ok) throw new Error('config request failed: ' + res.status);
     const data = await res.json();
 
     document.getElementById('wifiSsid').value = data.wifi.ssid;
@@ -729,14 +1018,30 @@ async function loadConfig() {
     document.getElementById('ntpServer').value = data.ntp.server;
     document.getElementById('timeLossGreen').value = data.settings.time_loss_green_hours;
     document.getElementById('timeLossRed').value = data.settings.time_loss_red_hours;
+    document.getElementById('btn1Min').value = data.settings.btn1_min;
+    document.getElementById('btn1Max').value = data.settings.btn1_max;
+    document.getElementById('btn2Min').value = data.settings.btn2_min;
+    document.getElementById('btn2Max').value = data.settings.btn2_max;
+    document.getElementById('btn3Min').value = data.settings.btn3_min;
+    document.getElementById('btn3Max').value = data.settings.btn3_max;
+    document.getElementById('btnNoPress').value = data.settings.btn_no_press;
     const pad2 = (n) => n.toString().padStart(2, '0');
     document.getElementById('timerStart').value = pad2(data.settings.timer_start_hour) + ':' + pad2(data.settings.timer_start_min);
     document.getElementById('timerEnd').value = pad2(data.settings.timer_end_hour) + ':' + pad2(data.settings.timer_end_min);
     document.getElementById('poolThreshold').textContent = 'max ' + data.settings.temp_max_pool.toFixed(1) + '°C';
     document.getElementById('solarThreshold').textContent = 'min ' + data.settings.temp_min_solar.toFixed(1) + '°C';
     highlightMode(data.settings.op_mode);
+    ok = true;
   } catch (e) {
-    // Silent
+    // Transient failure — keep the save buttons disabled and reset the
+    // lazy-load guard so the next tab activation retries, instead of
+    // leaving markup defaults editable without a loaded config.
+    configLoaded = false;
+  } finally {
+    configLoadsInFlight--;
+    if (configLoadsInFlight === 0 && ok) {
+      setConfigFieldsDisabled(false);
+    }
   }
 }
 
@@ -863,6 +1168,7 @@ let loadedMapping = { solar: null, pool: null };
 async function loadSensors() {
   try {
     const res = await fetch('/api/sensors');
+    if (!res.ok) throw new Error('sensors request failed: ' + res.status);
     const data = await res.json();
 
     const solarAddr = data.mapping.solar || null;
@@ -898,9 +1204,17 @@ async function loadSensors() {
     buildRadioGroup('poolRadioGroup', devices, solarAddr, poolAddr, 'pool');
 
     updateSensorSaveBar();
+
+    // Only mark the guard loaded on success so a failed request retries on
+    // the next tab activation instead of being skipped forever.
+    sensorsLoaded = true;
   } catch (e) {
+    // Transient failure — reset the guard for a retry on the next tab
+    // activation and offer an inline refresh control.
+    sensorsLoaded = false;
     document.getElementById('sensorList').innerHTML =
-      '<div style="padding: 1rem; text-align: center; color: var(--danger); font-size: 0.85rem;">Failed to load sensors: ' + e.message + '</div>';
+      '<div style="padding: 1rem; text-align: center; color: var(--danger); font-size: 0.85rem;">Failed to load sensors: ' + e.message +
+      ' <button class="btn" onclick="loadSensors()" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; margin-left: 0.5rem;">🔄 Retry</button></div>';
   }
 }
 
@@ -1001,12 +1315,125 @@ async function saveSensorMapping() {
   }
 }
 
+// ── Log Console ──
+
+var lastLogSeq = 0;
+var lastLogBoot = 0;
+var logLevelFilter = 'info';
+// Generation token: bumped on every request, filter change and clear.
+// Responses carrying an older token are discarded, so a slow in-flight
+// poll cannot append stale/duplicate entries or overwrite lastLogSeq
+// after a newer poll, filter switch or clear has happened.
+var logReqToken = 0;
+// Serializes polls: fetch() responses taking longer than the 2s tick must not
+// start a second concurrent poll (whose response would bump the token and
+// discard the first one — leaving the console stuck until the next clear).
+var logPollInFlight = false;
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function loadLogs() {
+  // Only poll while the Logs tab is actually visible: the unconditional 2s
+  // timer used to keep appending DOM nodes (and fetching) in hidden tabs,
+  // growing the document by tens of thousands of nodes per day.
+  if (document.visibilityState !== 'visible') return;
+  var logTab = document.getElementById('tab-logs');
+  if (!logTab || logTab.style.display === 'none') return;
+
+  // Never overlap polls: a slow response would otherwise be superseded by the
+  // next tick's request (token bump) and discarded, stalling the console until
+  // a clear or filter change. The next tick resumes after this one settles.
+  if (logPollInFlight) return;
+
+  var wasAtBottom, consoleEl = document.getElementById('logConsole');
+  if (!consoleEl) return;
+  wasAtBottom = consoleEl.scrollTop + consoleEl.clientHeight >= consoleEl.scrollHeight - 40;
+  var token = ++logReqToken;
+  logPollInFlight = true;
+  // boot = epoch of the cursor: after a reboot the server forces a full dump
+  // (entries 1..N) even when the new seq is already past our stored cursor.
+  fetch('/api/logs?since=' + lastLogSeq + '&boot=' + lastLogBoot + '&count=200&level=' + logLevelFilter)
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (token !== logReqToken) return;  // superseded by a newer poll/filter/clear
+      var empty = document.getElementById('logConsoleEmpty');
+      // Boot change: the server re-sent the whole new-boot ring, so the old
+      // pre-reboot lines are stale — drop them instead of appending on top.
+      if (data.boot !== lastLogBoot) {
+        consoleEl.textContent = '';
+      }
+      if (!data.entries || data.entries.length === 0) {
+        if (!consoleEl.hasChildNodes()) empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+      data.entries.forEach(function(entry) {
+        var line = document.createElement('div');
+        line.className = 'log-entry log-' + entry.level;
+        line.textContent = entry.msg;
+        consoleEl.appendChild(line);
+      });
+      // Evict oldest entries beyond the client-side cap so an always-open
+      // dashboard cannot grow the log DOM without bound.
+      while (consoleEl.childNodes.length > 500) {
+        consoleEl.removeChild(consoleEl.firstChild);
+      }
+      lastLogSeq = data.next;
+      lastLogBoot = data.boot;
+      if (wasAtBottom && data.entries.length > 0) {
+        consoleEl.scrollTop = consoleEl.scrollHeight;
+      }
+    })
+    .catch(function() { /* silent */ })
+    .finally(function() {
+      logPollInFlight = false;
+    });
+}
+
+function clearLogs() {
+  logReqToken++;  // invalidate any in-flight poll — it must not repopulate the console
+  fetch('/api/logs/clear', { method: 'POST' }).then(function() {
+    var c = document.getElementById('logConsole');
+    if (c) c.textContent = '';
+    var e = document.getElementById('logConsoleEmpty');
+    if (e) e.style.display = 'block';
+    lastLogSeq = 0;
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.log-chip').forEach(function(chip) {
+    chip.addEventListener('click', function() {
+      logReqToken++;  // discard in-flight responses from the previous filter
+      document.querySelectorAll('.log-chip').forEach(function(c) { c.classList.remove('active'); });
+      this.classList.add('active');
+      logLevelFilter = this.dataset.level;
+      lastLogSeq = 0;
+      var c = document.getElementById('logConsole');
+      if (c) c.textContent = '';
+      var e = document.getElementById('logConsoleEmpty');
+      if (e) e.style.display = 'none';
+      loadLogs();
+    });
+  });
+});
+
+var _origUpdateAuthUI = (typeof updateAuthUI === 'function') ? updateAuthUI : function(){};
+updateAuthUI = function() {
+  _origUpdateAuthUI();
+  var clearBtn = document.getElementById('btnClearLogs');
+  if (clearBtn) clearBtn.style.display = isAuthenticated ? 'inline-block' : 'none';
+};
+
 // ── Init ──
 
 setInterval(loadTelemetry, 2000);
+setInterval(loadLogs, 2000);
 
-window.onload = function() {
-  loadTelemetry();
-  loadConfig();
-  loadSensors();
-};
+// The script is deferred, so the DOM is fully parsed at this point. Start the
+// telemetry loop immediately instead of waiting for window.onload (which waits
+// for every resource, including the async stylesheet). Config and sensor data
+// are lazy-loaded on first tab activation (see switchTab).
+loadTelemetry();

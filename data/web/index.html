@@ -19,8 +19,24 @@
   <link rel="icon" type="image/svg+xml" href="/icon.svg">
   <link rel="mask-icon" href="/icon.svg" color="#00e5ff">
 
-  <!-- Styles -->
-  <link rel="stylesheet" href="/style.css">
+  <!-- Critical first-paint styles: the page renders themed immediately instead
+       of a white screen while /style.css is fetched from the device. The full
+       theme loads asynchronously below and overrides these base rules. -->
+  <style>
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #06121e 0%, #0a1e2f 50%, #06121e 100%);
+      color: #e2f0f7;
+      font-family: 'Inter', system-ui, sans-serif;
+      min-height: 100vh;
+    }
+  </style>
+
+  <!-- Styles — loaded asynchronously so it never blocks first paint.
+       The media="print" trick lets the browser download without blocking;
+       onload switches it to all media. -->
+  <link rel="stylesheet" href="/style.css" media="print" onload="this.onload=null;this.media='all'">
+  <noscript><link rel="stylesheet" href="/style.css"></noscript>
 </head>
 <body>
 <h1 style="margin-bottom: 0.1rem;">Pool Controller</h1>
@@ -36,6 +52,38 @@
       <button type="submit" style="width: 100%; padding: 0.75rem; margin-top: 1rem; background: linear-gradient(135deg, #00b4d8, #00e5ff); border: none; border-radius: 8px; color: #000; font-weight: 600; font-size: 1rem; cursor: pointer;">Unlock Console</button>
     </form>
     <button onclick="closeLoginForm()" style="width: 100%; padding: 0.6rem; margin-top: 0.5rem; background: transparent; border: 1px solid var(--panel-border); border-radius: 8px; color: var(--text-muted); font-size: 0.85rem; cursor: pointer;">Cancel</button>
+  </div>
+</div>
+
+<!-- Calibration Modal (guided wizard) -->
+<div id="calibrationModal" style="display: none; position: fixed; inset: 0; z-index: 100; background: rgba(6,18,30,0.85); backdrop-filter: blur(8px); align-items: center; justify-content: center; padding: 2rem;">
+  <div style="background: var(--glass-bg); border: 1px solid var(--panel-border); border-radius: 16px; padding: 2rem; max-width: 420px; width: 100%;">
+    <h2 style="color: #00e5ff; text-align: center; margin: 0 0 0.5rem; font-size: 1.4rem;">🎯 Button Calibration</h2>
+    <p class="calib-guide">Four measurements run one after another. Keep the button pressed until its step turns green.</p>
+
+    <!-- Current action: what to do right now -->
+    <div class="calib-action">
+      <span id="calibStateChip" class="calib-chip calib-chip-wait">Waiting</span>
+      <div id="calibActionHeadline" class="calib-headline">Release all buttons</div>
+      <p id="calibStepText" class="calib-detail">Release all buttons — measuring resting level</p>
+      <p id="calibNextUp" class="calib-nextup">Next: hold Button 1</p>
+    </div>
+
+    <!-- Step progress -->
+    <div class="calib-progress">
+      <div class="calib-step active" id="calibP0"><span class="calib-step-dot">1</span><span class="calib-step-label">Resting</span></div>
+      <div class="calib-step" id="calibP1"><span class="calib-step-dot">2</span><span class="calib-step-label">Button 1</span></div>
+      <div class="calib-step" id="calibP2"><span class="calib-step-dot">3</span><span class="calib-step-label">Button 2</span></div>
+      <div class="calib-step" id="calibP3"><span class="calib-step-dot">4</span><span class="calib-step-label">Button 3</span></div>
+    </div>
+
+    <!-- Live ADC meter -->
+    <div class="calib-meter">
+      <div class="calib-meter-bar"><div id="calibMeterFill" class="calib-meter-fill"></div></div>
+      <div class="calib-meter-readout"><span id="calibLiveAdc">—</span><span class="calib-meter-unit">ADC</span></div>
+    </div>
+
+    <button onclick="cancelCalibration()" class="calib-cancel">Cancel</button>
   </div>
 </div>
 
@@ -68,6 +116,9 @@
   <div class="more-sheet-overlay" onclick="toggleMoreMenu()"></div>
   <div class="more-sheet-panel">
     <div class="more-sheet-handle"></div>
+    <div class="more-sheet-item" onclick="switchTab('logs')">
+      <span class="more-sheet-icon">📜</span> Logs
+    </div>
     <div class="more-sheet-item" onclick="switchTab('wifi')">
       <span class="more-sheet-icon">📶</span> WiFi
     </div>
@@ -210,7 +261,7 @@
     <label for="wifiPass">WLAN Password</label>
     <input type="password" id="wifiPass" placeholder="Enter WiFi password">
   </div>
-  <button class="btn btn-primary" onclick="saveWiFi()">Save WiFi settings</button>
+  <button class="btn btn-primary" onclick="saveWiFi()" id="btnSaveWiFi">Save WiFi settings</button>
 </div>
 
 <!-- MQTT Tab -->
@@ -232,7 +283,7 @@
     <label for="mqttPass">MQTT Password</label>
     <input type="password" id="mqttPass" placeholder="Optional">
   </div>
-  <button class="btn btn-primary" onclick="saveMqtt()" style="margin-top: 1.5rem;">Save MQTT configuration</button>
+  <button class="btn btn-primary" onclick="saveMqtt()" id="btnSaveMqtt" style="margin-top: 1.5rem;">Save MQTT configuration</button>
 </div>
 
 <!-- Pool Settings Tab -->
@@ -304,6 +355,63 @@
     </div>
   </div>
 
+  <h2>🔘 Button Thresholds (NORVI)</h2>
+  <div class="telemetry-grid">
+    <div class="input-group">
+      <label for="btn1Min">Button 1 Min ADC</label>
+      <input type="number" id="btn1Min" min="0" max="4095" step="1" value="3100">
+      <span class="input-hint">Lower bound of Button 1 range · Measured: ~3275–3456</span>
+    </div>
+    <div class="input-group">
+      <label for="btn1Max">Button 1 Max ADC</label>
+      <input type="number" id="btn1Max" min="0" max="4095" step="1" value="3520">
+      <span class="input-hint">Upper bound of Button 1 range</span>
+    </div>
+  </div>
+  <div class="telemetry-grid">
+    <div class="input-group">
+      <label for="btn2Min">Button 2 Min ADC</label>
+      <input type="number" id="btn2Min" min="0" max="4095" step="1" value="3520">
+      <span class="input-hint">Lower bound of Button 2 range · Measured: ~3579–3765</span>
+    </div>
+    <div class="input-group">
+      <label for="btn2Max">Button 2 Max ADC</label>
+      <input type="number" id="btn2Max" min="0" max="4095" step="1" value="3880">
+      <span class="input-hint">Upper bound of Button 2 range</span>
+    </div>
+  </div>
+  <div class="telemetry-grid">
+    <div class="input-group">
+      <label for="btn3Min">Button 3 Min ADC</label>
+      <input type="number" id="btn3Min" min="0" max="4095" step="1" value="3880">
+      <span class="input-hint">Lower bound of Button 3 range · Measured: ~4095 (full scale)</span>
+    </div>
+    <div class="input-group">
+      <label for="btn3Max">Button 3 Max ADC</label>
+      <input type="number" id="btn3Max" min="0" max="4095" step="1" value="4095">
+      <span class="input-hint">Upper bound of Button 3 range</span>
+    </div>
+  </div>
+  <div class="telemetry-grid">
+    <div class="input-group">
+      <label for="btnNoPress">No-Press Threshold</label>
+      <input type="number" id="btnNoPress" min="0" max="4096" step="1" value="4096">
+      <span class="input-hint">Values above this are ignored · 4096 = no-op (S3 reads full scale)</span>
+    </div>
+    <div class="input-group" style="visibility:hidden;">
+      <div style="height:1px;"></div>
+    </div>
+  </div>
+  <div class="telemetry-grid" id="calibrationSection">
+    <div class="input-group">
+      <button type="button" onclick="startCalibration()" style="width: 100%; padding: 0.75rem; background: linear-gradient(135deg, #00b4d8, #00e5ff); border: none; border-radius: 8px; color: #000; font-weight: 600; font-size: 1rem; cursor: pointer;">🎯 Start Calibration</button>
+      <span class="input-hint">About a minute · Release, then press and hold Button 1, 2, 3 in turn</span>
+    </div>
+    <div class="input-group" style="visibility:hidden;">
+      <div style="height:1px;"></div>
+    </div>
+  </div>
+
   <h2>⏱️ Timer Schedule</h2>
   <div class="telemetry-grid">
     <div class="input-group">
@@ -318,7 +426,7 @@
     </div>
   </div>
 
-  <button class="btn btn-primary" onclick="saveControllerSettings()">Save Pool Settings</button>
+  <button class="btn btn-primary" onclick="saveControllerSettings()" id="btnSavePool">Save Pool Settings</button>
 </div>
 
 <!-- Time Settings Tab -->
@@ -364,7 +472,7 @@
     </div>
   </div>
 
-  <button class="btn btn-primary" onclick="saveTimeSettings()">Save Time Settings</button>
+  <button class="btn btn-primary" onclick="saveTimeSettings()" id="btnSaveTime">Save Time Settings</button>
 </div>
 
 <!-- Sensors Tab (DS18B20 Mapping) -->
@@ -425,7 +533,7 @@
     <label for="adminPassConfirm">Confirm New Password</label>
     <input type="password" id="adminPassConfirm" placeholder="Confirm new password">
   </div>
-  <button class="btn btn-primary" onclick="savePassword()" style="margin-bottom: 2rem;">Update Security Password</button>
+  <button class="btn btn-primary" onclick="savePassword()" id="btnSavePassword" style="margin-bottom: 2rem;">Update Security Password</button>
 
   <h2>Firmware Version</h2>
   <div class="telemetry-grid" style="grid-template-columns: repeat(2, 1fr);">
@@ -510,7 +618,19 @@
   </div>
 </div>
 
-<script src="/app.js"></script>
+<!-- ── Log Console Tab ── -->
+<div id="tab-logs" class="tab-content" style="display:none;">
+  <div style="display:flex; gap:0.5rem; align-items:center; margin-bottom:0.75rem; flex-wrap:wrap;">
+    <button class="log-chip active" data-level="info">Alle</button>
+    <button class="log-chip" data-level="warning">Warnungen</button>
+    <button class="log-chip" data-level="error">Fehler</button>
+    <button id="btnClearLogs" style="display:none; margin-left:auto; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:8px; padding:0.35rem 0.9rem; font-size:0.75rem; color:#ef4444; cursor:pointer;" onclick="clearLogs()">🗑 Clear</button>
+  </div>
+  <div id="logConsole"></div>
+  <div id="logConsoleEmpty" style="display:none; text-align:center; padding:2rem; color:var(--text-muted); font-size:0.85rem; opacity:0.5;">— No log entries yet —</div>
+</div>
+
+<script src="/app.js" defer></script>
 
 <!-- Service Worker Registration -->
 <script>

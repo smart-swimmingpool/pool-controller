@@ -11,14 +11,15 @@
 #include <Arduino.h>
 #include <cmath>  // For isnan()
 
+#include "LogCapture.hpp"
+
 RuleBoost::RuleBoost(RelayModuleNode *solarRelay, RelayModuleNode *poolRelay) {
   _solarRelay = solarRelay;
   _poolRelay = poolRelay;
 }
 
 void RuleBoost::loop() {
-  Serial.print(cIndent);
-  Serial.println(F("§ RuleBoost: loop"));
+  LOG_INFO("%s§ RuleBoost: loop\n", cIndent);
 
   // Check for invalid temperatures (NaN from sensor disconnect)
   float poolTemp = getPoolTemperature();
@@ -27,8 +28,7 @@ void RuleBoost::loop() {
   // Safety: Turn off solar if any temperature is invalid
   if (isnan(poolTemp) || isnan(solarTemp)) {
     if (_solarRelay->getSwitch()) {
-      Serial.print(cIndent);
-      Serial.println(F("§ RuleBoost: Invalid temperature sensor. Switch solar off for safety"));
+      LOG_INFO("%s§ RuleBoost: Invalid temperature sensor. Switch solar off for safety\n", cIndent);
       _solarRelay->setSwitch(false);
     }
     return;
@@ -38,26 +38,22 @@ void RuleBoost::loop() {
     if (_solarRelay->getSwitch()) {
       // solar is ON — check if it should turn OFF
       if (poolTemp > getPoolMaxTemperature()) {
-        Serial.print(cIndent);
-        Serial.println(F("§ RuleBoost: Maximum pool temp reached. Switch solar off"));
+        LOG_INFO("%s§ RuleBoost: Maximum pool temp reached. Switch solar off\n", cIndent);
         _solarRelay->setSwitch(false);
       } else if (poolTemp > (solarTemp + getTemperatureHysteresis())) {
-        Serial.print(cIndent);
-        Serial.println(F("§ RuleBoost: Pool temp reaches solar temp. Switch solar off"));
+        LOG_INFO("%s§ RuleBoost: Pool temp reaches solar temp. Switch solar off\n", cIndent);
         _solarRelay->setSwitch(false);
       }
     } else {
       // solar is OFF — check if it should turn ON
       if ((poolTemp < (getPoolMaxTemperature() - getTemperatureHysteresis())) &&
         (poolTemp < (solarTemp - getTemperatureHysteresis()))) {
-        Serial.print(cIndent);
-        Serial.println(F("§ RuleBoost: below max. Temperature. Switch solar on"));
+        LOG_INFO("%s§ RuleBoost: below max. Temperature. Switch solar on\n", cIndent);
         _solarRelay->setSwitch(true);
       }
     }
   } else {
-    Serial.print(cIndent);
-    Serial.println(F("§ RuleBoost: pool pump is disabled."));
+    LOG_INFO("%s§ RuleBoost: pool pump is disabled.\n", cIndent);
     if (_solarRelay->getSwitch()) {
       _solarRelay->setSwitch(false);
     }

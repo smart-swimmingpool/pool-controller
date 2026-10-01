@@ -9,10 +9,11 @@
 
 #include "RuleManu.hpp"
 #include <Arduino.h>
+#include "LogCapture.hpp"
 
 RuleManu::RuleManu() {}
 
 void RuleManu::loop() {
   // no ruling if manual
-  Serial.println(F("  ◦ § RuleManu: loop"));
+  LOG_INFO("  ◦ § RuleManu: loop\n");
 }

@@ -2,7 +2,7 @@
 title: Home Assistant Integration
 summary: Pool Controller Home Assistant integration — automatic MQTT Discovery entities, sensor/switch/number/select/time domains, Lovelace dashboard YAML, migration from legacy configs
 date: "2026-06-06"
-lastmod: "2026-06-06"
+lastmod: "2026-07-31"
 draft: false
 toc: true
 type: docs
@@ -59,12 +59,59 @@ produces `sensor.<prefix>_pool_temperature`). Replace `<prefix>` with your devic
 | `text` | `ntp_server` | config | NTP server address |
 | `update` | `firmware` | config | Firmware update entity |
 | `climate` | `pool_thermostat` | config | Pool thermostat (HVAC mode + target temp) |
+| `event` | `logs` | diagnostic | Log event stream (MQTT event entity, see [Log Events](#log-events)) |
 
 > **Entity IDs** in HA are generated from the MQTT discovery `name` field. The entity_id will be
 > `sensor.<device_prefix>_pool_temperature` etc. — where `<device_prefix>` is typically
 > `pool_controller` (from the device name). Check **Developer Tools → Entities** and filter by
 > "pool" to find your actual IDs. Replace `pool_controller` in the dashboard YAML with your
 > device prefix if it differs.
+
+### Log Events
+
+The controller exposes an [MQTT event entity](https://www.home-assistant.io/integrations/event.mqtt/)
+(`event.pool_controller_logs` — object ID `logs`) that updates its state whenever a log-worthy
+event occurs: mode changes, pump on/off, WiFi/MQTT connectivity, and warning/error log entries.
+See [MQTT Configuration → Events (Log stream)](../mqtt-configuration.md#events-log-stream) for the
+full topic and payload reference.
+
+The event entity keeps the last event type in its `event_type` attribute and merges every
+additional payload field as an attribute (e.g. `message`).
+
+#### Logbook Automation
+
+Write every event to the HA logbook:
+
+```yaml
+automation:
+  - alias: "Pool Controller — log events to logbook"
+    triggers:
+      - trigger: event.received
+        target:
+          entity_id: event.pool_controller_logs
+        options:
+          event_type:
+            - MODE_CHANGED
+            - PUMP_ON
+            - PUMP_OFF
+            - WIFI_CONNECTED
+            - WIFI_DISCONNECTED
+            - MQTT_CONNECTED
+            - MQTT_DISCONNECTED
+            - LOG_WARN
+            - LOG_ERROR
+    actions:
+      - action: logbook.log
+        data:
+          name: "Pool Controller"
+          message: "{{ state_attr('event.pool_controller_logs', 'event_type') }}"
+          entity_id: event.pool_controller_logs
+```
+
+The `event.received` trigger (Home Assistant 2026.7+) fires when the entity receives a matching
+event type; see the [event received trigger documentation](https://www.home-assistant.io/triggers/event.received/).
+Trim the `event_type` list to the events you care about, and adjust the entity ID to your device
+prefix if it differs (Developer Tools → Entities, filter by "pool").
 
 ## Lovelace Dashboard
 

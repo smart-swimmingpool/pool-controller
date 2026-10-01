@@ -13,6 +13,7 @@
 #include "RuleBoost.hpp"
 #include "Utils.hpp"
 #include "StateManager.hpp"
+#include "LogCapture.hpp"
 
 // Static member definition
 bool OperationModeNode::_suppressPersist = false;
@@ -85,11 +86,11 @@ void OperationModeNode::addRule(Rule *rule) {
 }
 
 Rule *OperationModeNode::getRule() {
-  Serial.printf("getRule: mode = %s\n", _mode.c_str());
+  LOG_DEBUG("getRule: mode = %s\n", _mode.c_str());
 
   for (size_t i = 0; i < _ruleVec.size(); i++) {
     if (_mode.equals(_ruleVec[i]->getMode())) {
-      Serial.printf("getRule: Active Rule: %s\n", _ruleVec[i]->getMode());
+      LOG_DEBUG("getRule: Active Rule: %s\n", _ruleVec[i]->getMode());
 
       // Update ruleset properties
       _ruleVec[i]->setPoolMaxTemperature(getPoolMaxTemperature());
@@ -112,39 +113,52 @@ Rule *OperationModeNode::getRule() {
 }
 
 bool OperationModeNode::setMode(String mode) {
+  return setMode(mode, "unspecified");
+}
+
+bool OperationModeNode::setMode(String mode, const char *source) {
+  if (source == nullptr) {
+    source = "unspecified";
+  }
   if (mode.equals(STATUS_AUTO) || mode.equals(STATUS_MANU) || mode.equals(STATUS_BOOST) || mode.equals(STATUS_TIMER)) {
-    // Reset temperature-based runtime extension on mode change
-    for (auto &rule : _ruleVec) {
-      rule->resetTemperatureExtension();
+    if (!_mode.equals(mode)) {
+      // Reset temperature-based runtime extension on mode change
+      for (auto &rule : _ruleVec) {
+        rule->resetTemperatureExtension();
+      }
+      PoolController::LogCapture::logEvent("MODE_CHANGED", "Mode changed %s -> %s (source=%s, persist=%s)", _mode.c_str(),
+        mode.c_str(), source, _suppressPersist ? "no" : "yes");
+      _mode = mode;
+      LOG_DEBUG("set mode: %s (source=%s)\n", _mode.c_str(), source);
+      if (!_suppressPersist)
+        saveState();
+    } else {
+      LOG_INFO("Mode set requested: %s -> %s (source=%s, changed=no, persist=no)\n", _mode.c_str(), mode.c_str(), source);
     }
-    _mode = mode;
-    Serial.printf("set mode: %s\n", _mode.c_str());
-    if (!_suppressPersist)
-      saveState();
     return true;
   } else {
-    Serial.printf("✖ UNDEFINED Mode: %s. Current unchanged mode: %s\n", mode.c_str(), _mode.c_str());
+    LOG_ERROR("✖ UNDEFINED Mode: %s. Current unchanged mode: %s (source=%s)\n", mode.c_str(), _mode.c_str(), source);
     return false;
   }
 }
 
 void OperationModeNode::begin() {
-  Serial.printf("• OperationMode Node '%s' initialized.\n", _id);
+  LOG_INFO("• OperationMode Node '%s' initialized.\n", _id);
 }
 
 void OperationModeNode::loop() {
   if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval)) {
     _lastMeasurement = millis();
-    Serial.println("〽 OperationalMode update rule");
+    LOG_DEBUG("〽 OperationalMode update rule\n");
 
     // Check time synchronization status
     static bool lastTimeSyncState = isTimeSyncValid();
     bool currentTimeSyncState = isTimeSyncValid();
 
     if (!currentTimeSyncState && lastTimeSyncState) {
-      Serial.println("  ⚠ WARNING: NTP time sync failed! Using cached estimate.");
+      LOG_WARN("  ⚠ WARNING: NTP time sync failed! Using cached estimate.\n");
     } else if (currentTimeSyncState && !lastTimeSyncState) {
-      Serial.println("  ✓ NTP time sync recovered.");
+      LOG_INFO("  ✓ NTP time sync recovered.\n");
     }
     lastTimeSyncState = currentTimeSyncState;
 
@@ -153,15 +167,14 @@ void OperationModeNode::loop() {
     if (rule != nullptr) {
       rule->loop();
     } else {
-      Serial.printf("  ✖ no rule defined for mode: %s. Falling back to manual.\n", _mode.c_str());
-      _mode = STATUS_MANU;
-      saveState();
+      LOG_ERROR("  ✖ no rule defined for mode: %s. Falling back to manual (source=rule-fallback:no-rule).\n", _mode.c_str());
+      setMode(STATUS_MANU, "rule-fallback:no-rule");
     }
   }
 }
 
 bool OperationModeNode::handleHomeAssistantCommand(const char *property, const char *value) {
-  Serial.printf("  ◦ HA command -> property '%s' value = %s\n", property, value);
+  LOG_DEBUG("  ◦ HA command -> property '%s' value = %s\n", property, value);
   bool retval = applyProperty(String(property), String(value));
   _lastMeasurement = 0;  // Trigger instant loop evaluation
   return retval;
@@ -171,10 +184,10 @@ bool OperationModeNode::applyProperty(const String &property, const String &valu
   bool retval = false;
 
   if (property.equalsIgnoreCase("mode")) {
-    Serial.printf("  ✔ set operational mode: %s\n", value.c_str());
-    retval = this->setMode(value);
+    LOG_INFO("  ✔ set operational mode: %s\n", value.c_str());
+    retval = this->setMode(value, "ha:command");
   } else if (property.equalsIgnoreCase("hysteresis")) {
-    Serial.printf("  ✔ hysteresis: %s\n", value.c_str());
+    LOG_INFO("  ✔ hysteresis: %s\n", value.c_str());
     float newValue;
     if (parseFloat(value, newValue, 0.0f, 10.0f)) {
       if (newValue != _hysteresis) {
@@ -183,10 +196,10 @@ bool OperationModeNode::applyProperty(const String &property, const String &valu
       }
       retval = true;
     } else {
-      Serial.printf("  ✖ Invalid hysteresis value (must be 0-10): %s\n", value.c_str());
+      LOG_ERROR("  ✖ Invalid hysteresis value (must be 0-10): %s\n", value.c_str());
     }
   } else if (property.equalsIgnoreCase("solar-min-temp")) {
-    Serial.printf("  ✔ solar min temp: %s\n", value.c_str());
+    LOG_INFO("  ✔ solar min temp: %s\n", value.c_str());
     float newValue;
     if (parseFloat(value, newValue, 0.0f, 60.0f)) {
       if (newValue != _solarMinTemp) {
@@ -195,10 +208,10 @@ bool OperationModeNode::applyProperty(const String &property, const String &valu
       }
       retval = true;
     } else {
-      Serial.printf("  ✖ Invalid solar min temp (must be 0-60°C): %s\n", value.c_str());
+      LOG_ERROR("  ✖ Invalid solar min temp (must be 0-60°C): %s\n", value.c_str());
     }
   } else if (property.equalsIgnoreCase("pool-max-temp")) {
-    Serial.printf("  ✔ pool max temp: %s\n", value.c_str());
+    LOG_INFO("  ✔ pool max temp: %s\n", value.c_str());
     float newValue;
     if (parseFloat(value, newValue, 0.0f, 40.0f)) {
       if (newValue != _poolMaxTemp) {
@@ -207,7 +220,7 @@ bool OperationModeNode::applyProperty(const String &property, const String &valu
       }
       retval = true;
     } else {
-      Serial.printf("  ✖ Invalid pool max temp (must be 0-60°C): %s\n", value.c_str());
+      LOG_ERROR("  ✖ Invalid pool max temp (must be 0-60°C): %s\n", value.c_str());
     }
   } else if (property.equalsIgnoreCase("timer-start-h")) {
     TimerSetting timerSetting = getTimerSetting();
@@ -219,7 +232,7 @@ bool OperationModeNode::applyProperty(const String &property, const String &valu
       }
       retval = true;
     } else {
-      Serial.printf("  ✖ Invalid start hour (must be 0-23): %s\n", value.c_str());
+      LOG_ERROR("  ✖ Invalid start hour (must be 0-23): %s\n", value.c_str());
     }
   } else if (property.equalsIgnoreCase("timer-start-min")) {
     TimerSetting timerSetting = getTimerSetting();
@@ -231,7 +244,7 @@ bool OperationModeNode::applyProperty(const String &property, const String &valu
       }
       retval = true;
     } else {
-      Serial.printf("  ✖ Invalid start minutes (must be 0-59): %s\n", value.c_str());
+      LOG_ERROR("  ✖ Invalid start minutes (must be 0-59): %s\n", value.c_str());
     }
   } else if (property.equalsIgnoreCase("timer-end-h")) {
     TimerSetting timerSetting = getTimerSetting();
@@ -243,7 +256,7 @@ bool OperationModeNode::applyProperty(const String &property, const String &valu
       }
       retval = true;
     } else {
-      Serial.printf("  ✖ Invalid end hour (must be 0-23): %s\n", value.c_str());
+      LOG_ERROR("  ✖ Invalid end hour (must be 0-23): %s\n", value.c_str());
     }
   } else if (property.equalsIgnoreCase("timer-end-min")) {
     TimerSetting timerSetting = getTimerSetting();
@@ -255,7 +268,7 @@ bool OperationModeNode::applyProperty(const String &property, const String &valu
       }
       retval = true;
     } else {
-      Serial.printf("  ✖ Invalid end minutes (must be 0-59): %s\n", value.c_str());
+      LOG_ERROR("  ✖ Invalid end minutes (must be 0-59): %s\n", value.c_str());
     }
   } else if (property.equalsIgnoreCase("timezone")) {
     int tzIndex = value.toInt();
@@ -263,7 +276,7 @@ bool OperationModeNode::applyProperty(const String &property, const String &valu
       setTimezoneIndex(tzIndex);
       retval = true;
     } else {
-      Serial.printf("  ✖ Invalid timezone index: %d\n", tzIndex);
+      LOG_ERROR("  ✖ Invalid timezone index: %d\n", tzIndex);
     }
   }
 
@@ -278,6 +291,8 @@ void OperationModeNode::loadState() {
     _mode = savedMode;
   }
 
+  LOG_INFO("✓ Operational mode loaded from persistent storage: %s (source=loadState)\n", _mode.c_str());
+
   _poolMaxTemp = StateManager::loadFloat("poolMaxTemp", 28.5f);
   _solarMinTemp = StateManager::loadFloat("solarMinTemp", 55.0f);
   _hysteresis = StateManager::loadFloat("hysteresis", 1.0f);
@@ -287,7 +302,7 @@ void OperationModeNode::loadState() {
   _timerSetting.timerEndHour = StateManager::loadInt("timerEndH", 17);
   _timerSetting.timerEndMinutes = StateManager::loadInt("timerEndM", 30);
 
-  Serial.println("✓ Operational mode state loaded from persistent storage.");
+  LOG_INFO("✓ Operational mode state loaded from persistent storage.\n");
 }
 
 void OperationModeNode::saveState() {

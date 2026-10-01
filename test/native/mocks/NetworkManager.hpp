@@ -20,7 +20,15 @@ public:
   static String getLocalIP() { return String("192.168.1.100"); }
 
   static bool publish(const char *topic, const char *payload, bool retained = false) {
-    return _mqttClient.publish(topic, 1, retained, payload) > 0;
+    if (!_publishOk) return false;
+    bool ok = _mqttClient.publish(topic, 1, retained, payload) > 0;
+    if (_publishHook && _publishHookTopic == topic) {
+      auto hook = std::move(_publishHook);  // one-shot: prevents recursion
+      _publishHook = nullptr;
+      _publishHookTopic.clear();
+      hook();
+    }
+    return ok;
   }
   static bool subscribe(const char *topic) { return _mqttClient.subscribe(topic) > 0; }
 
@@ -37,6 +45,19 @@ public:
   static void setMqttConnected(bool v) { _mqttConnected = v; }
   static void setApMode(bool v) { _apMode = v; }
   static void setWiFiRSSI(int rssi) { _wifiRssi = rssi; }
+  // Simulate AsyncMqttClient refusing to enqueue (publish returns false).
+  static void setPublishOk(bool ok) { _publishOk = ok; }
+  // One-shot hook fired when the next publish() targets `topic` — lets a test
+  // simulate a reentrant publishStates() from the AsyncMqttClient callback
+  // path while an export on that topic is already in progress.
+  static void setPublishHook(const char *topic, std::function<void()> cb) {
+    _publishHookTopic = topic ? topic : "";
+    _publishHook = std::move(cb);
+  }
+  static void clearPublishHook() {
+    _publishHook = nullptr;
+    _publishHookTopic.clear();
+  }
 
   static AsyncMqttClient &getClient() { return _mqttClient; }
 
@@ -46,6 +67,9 @@ private:
   static bool _mqttConnected;
   static bool _apMode;
   static int _wifiRssi;
+  static bool _publishOk;
+  static std::function<void()> _publishHook;
+  static std::string _publishHookTopic;
 };
 
 } // namespace PoolController

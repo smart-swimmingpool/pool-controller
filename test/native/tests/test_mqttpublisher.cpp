@@ -11,6 +11,7 @@
 
 #include "AsyncMqttClient.h"
 #include "MqttPublisher.hpp"
+#include "LogCapture.hpp"
 #include "ConfigManager.hpp"
 #include "NetworkManager.hpp"
 #include "DallasTemperatureNode.hpp"
@@ -315,19 +316,68 @@ int run_mqttpublisher_tests() {
     MqttPublisher::handleMqttMessage(const_cast<char *>("homeassistant/select/pool-controller/mode/set"),
       const_cast<char *>("boost"), AsyncMqttClientMessageProperties{0, false, false}, 5, 0, 5);
 
-    // The mode should have been set to "boost"
+    // The mode should have been set to "boost" and tagged with its MQTT source.
     std::string mode = operationModeNode.getMode().c_str();
-    rc = (mode == "boost") ? 0 : 1;
-    if (rc == 0) {
+    int missing = 0;
+    if (mode == "boost") {
       test_pass(__FILE__, __LINE__);
-      passed++;
     } else {
       char msg[64];
       snprintf(msg, sizeof(msg), "Expected mode=boost, got %s", mode.c_str());
       test_fail(__FILE__, __LINE__, msg);
-      failed++;
+      missing++;
     }
-    test_suite_end("MqttPublisher::handle_mode_command", rc == 0 ? 1 : 0, rc != 0 ? 1 : 0);
+    if (strcmp(operationModeNode.getLastModeSource(), "mqtt:mode/set") == 0) {
+      test_pass(__FILE__, __LINE__);
+    } else {
+      test_fail(__FILE__, __LINE__, "Mode source not tagged as mqtt:mode/set");
+      missing++;
+    }
+
+    rc = (missing == 0) ? 0 : 1;
+    if (rc == 0)
+      passed++;
+    else
+      failed++;
+    test_suite_end("MqttPublisher::handle_mode_command", missing == 0 ? 1 : 0, missing);
+  }
+
+  // ── Test: Handle MQTT climate commands with mode source tags ──
+  {
+    test_begin("MqttPublisher", "handle climate mode/preset commands tags source");
+
+    operationModeNode.setMode("auto");
+    AsyncMqttClientMessageProperties props{0, false, false};
+
+    char modeTopic[] = "homeassistant/climate/pool-controller/thermostat/mode/set";
+    char modePayload[] = "heat";
+    MqttPublisher::handleMqttMessage(modeTopic, modePayload, props, strlen(modePayload), 0, strlen(modePayload));
+
+    int missing = 0;
+    if (strcmp(operationModeNode.getLastModeSource(), "mqtt:thermostat/mode") == 0) {
+      test_pass(__FILE__, __LINE__);
+    } else {
+      test_fail(__FILE__, __LINE__, "Climate mode source not tagged as mqtt:thermostat/mode");
+      missing++;
+    }
+
+    char presetTopic[] = "homeassistant/climate/pool-controller/thermostat/preset/set";
+    char presetPayload[] = "schedule";
+    MqttPublisher::handleMqttMessage(presetTopic, presetPayload, props, strlen(presetPayload), 0, strlen(presetPayload));
+
+    if (strcmp(operationModeNode.getLastModeSource(), "mqtt:thermostat/preset") == 0) {
+      test_pass(__FILE__, __LINE__);
+    } else {
+      test_fail(__FILE__, __LINE__, "Climate preset source not tagged as mqtt:thermostat/preset");
+      missing++;
+    }
+
+    rc = (missing == 0) ? 0 : 1;
+    if (rc == 0)
+      passed++;
+    else
+      failed++;
+    test_suite_end("MqttPublisher::handle_climate_mode_sources", missing == 0 ? 1 : 0, missing);
   }
 
   // ── Test: Handle MQTT pump command in manual mode ──
@@ -503,6 +553,425 @@ int run_mqttpublisher_tests() {
       failed++;
     }
     test_suite_end("MqttPublisher::preset_state_none", rc == 0 ? 1 : 0, rc != 0 ? 1 : 0);
+  }
+
+  // ── Test: Event-entity discovery payload ──
+  // Task 5: publishEventDiscovery("logs", ...) must announce the HA MQTT
+  // "event" component with the curated event_types whitelist.
+  {
+    test_begin("MqttPublisher::publishEventDiscovery", "event entity with platform and event_types");
+
+    mqttCapture.clear();
+    NetworkManager::setMqttConnected(true);
+    MqttPublisher::begin();
+    MqttPublisher::publishDiscovery();
+
+    const MqttMessage *cfg = mqttCapture.findPublished("homeassistant/event/pool-controller/logs/config");
+    int missing = 0;
+    if (cfg == nullptr) {
+      test_fail(__FILE__, __LINE__, "Missing event discovery config topic");
+      missing++;
+    } else {
+      JsonDocument doc;
+      DeserializationError err = deserializeJson(doc, cfg->payload);
+      if (err) {
+        char buf[128];
+        snprintf(buf, sizeof(buf), "Event config is not valid JSON: %s", err.c_str());
+        test_fail(__FILE__, __LINE__, buf);
+        missing++;
+      } else {
+        // platform must be "event" (HA event component)
+        if (strcmp(doc["platform"] | "", "event") != 0) {
+          test_fail(__FILE__, __LINE__, "event config platform != 'event'");
+          missing++;
+        } else
+          test_pass(__FILE__, __LINE__);  // NOLINT
+        // state_topic must point at the event state topic
+        if (strcmp(doc["state_topic"] | "", "homeassistant/event/pool-controller/logs/state") != 0) {
+          test_fail(__FILE__, __LINE__, "event config state_topic mismatch");
+          missing++;
+        } else
+          test_pass(__FILE__, __LINE__);  // NOLINT
+        if (!doc.containsKey("availability_topic")) {
+          test_fail(__FILE__, __LINE__, "event config missing availability_topic");
+          missing++;
+        } else
+          test_pass(__FILE__, __LINE__);  // NOLINT
+        // event_types must contain the curated whitelist (LOG_WARN + MODE_CHANGED probe)
+        JsonArray types = doc["event_types"];
+        bool hasWarn = false;
+        bool hasMode = false;
+        for (JsonVariant t : types) {
+          if (strcmp(t | "", "LOG_WARN") == 0)
+            hasWarn = true;
+          if (strcmp(t | "", "MODE_CHANGED") == 0)
+            hasMode = true;
+        }
+        if (!hasWarn) {
+          test_fail(__FILE__, __LINE__, "event_types missing LOG_WARN");
+          missing++;
+        } else
+          test_pass(__FILE__, __LINE__);  // NOLINT
+        if (!hasMode) {
+          test_fail(__FILE__, __LINE__, "event_types missing MODE_CHANGED");
+          missing++;
+        } else
+          test_pass(__FILE__, __LINE__);  // NOLINT
+        if (!cfg->retained) {
+          test_fail(__FILE__, __LINE__, "event config must be retained");
+          missing++;
+        } else
+          test_pass(__FILE__, __LINE__);  // NOLINT
+      }
+    }
+
+    rc = (missing == 0) ? 0 : 1;
+    if (rc == 0)
+      passed++;
+    else
+      failed++;
+    test_suite_end("MqttPublisher::publishEventDiscovery", missing == 0 ? 1 : 0, missing);
+  }
+
+  // ── Test: Export pump exports WARN entries as LOG_WARN events ──
+  // Task 5: WARN/ERROR entries without marker → {"event_type":"LOG_WARN",...}
+  // on the event state topic, plus a JSON-line on the raw pool-controller/log topic.
+  {
+    test_begin("MqttPublisher::publishStates", "exports WARN entry as LOG_WARN event");
+
+    mqttCapture.clear();
+    NetworkManager::setMqttConnected(true);
+    LogCapture::begin();
+    MqttPublisher::begin();
+
+    LogCapture::log(LogLevel::Warning, "solar pump overheated");
+    MqttPublisher::publishStates();
+
+    int missing = 0;
+    const MqttMessage *ev = mqttCapture.findPublished("homeassistant/event/pool-controller/logs/state");
+    if (ev == nullptr) {
+      test_fail(__FILE__, __LINE__, "No event state published for WARN entry");
+      missing++;
+    } else {
+      JsonDocument doc;
+      DeserializationError err = deserializeJson(doc, ev->payload);
+      if (err) {
+        test_fail(__FILE__, __LINE__, "Event state is not valid JSON");
+        missing++;
+      } else {
+        if (strcmp(doc["event_type"] | "", "LOG_WARN") != 0) {
+          test_fail(__FILE__, __LINE__, "event_type != LOG_WARN for WARN entry");
+          missing++;
+        } else
+          test_pass(__FILE__, __LINE__);  // NOLINT
+        const char *msg = doc["message"];
+        if (msg == nullptr || strstr(msg, "overheated") == nullptr) {
+          test_fail(__FILE__, __LINE__, "event message missing WARN body");
+          missing++;
+        } else
+          test_pass(__FILE__, __LINE__);  // NOLINT
+      }
+    }
+
+    // Raw topic for external tools: {"seq":…,"t":…,"level":…,"msg":…}
+    const MqttMessage *raw = mqttCapture.findPublished("pool-controller/log");
+    if (raw == nullptr) {
+      test_fail(__FILE__, __LINE__, "Raw pool-controller/log topic not published");
+      missing++;
+    } else {
+      JsonDocument doc;
+      DeserializationError err = deserializeJson(doc, raw->payload);
+      if (err) {
+        test_fail(__FILE__, __LINE__, "Raw log line is not valid JSON");
+        missing++;
+      } else {
+        if ((doc["seq"] | 0u) == 0u) {
+          test_fail(__FILE__, __LINE__, "Raw log line missing seq");
+          missing++;
+        } else
+          test_pass(__FILE__, __LINE__);  // NOLINT
+        if (strcmp(doc["level"] | "", "warning") != 0) {
+          test_fail(__FILE__, __LINE__, "Raw log line level != warning");
+          missing++;
+        } else
+          test_pass(__FILE__, __LINE__);  // NOLINT
+        const char *msg = doc["msg"];
+        if (msg == nullptr || strstr(msg, "overheated") == nullptr) {
+          test_fail(__FILE__, __LINE__, "Raw log line missing message");
+          missing++;
+        } else
+          test_pass(__FILE__, __LINE__);  // NOLINT
+      }
+    }
+
+    rc = (missing == 0) ? 0 : 1;
+    if (rc == 0)
+      passed++;
+    else
+      failed++;
+    test_suite_end("MqttPublisher::export_warn_event", missing == 0 ? 1 : 0, missing);
+  }
+
+  // ── Test: WARN/ERROR emitted BEFORE MqttPublisher::begin() is preserved ──
+  // The export watermark starts at seq 0 (beginning of the current boot), so
+  // boot-loop errors, ConfigManager failures, and WPS/SSID warnings logged
+  // before the publisher starts are still exported — not permanently dropped.
+  {
+    test_begin("MqttPublisher::publishStates", "pre-publisher WARN is exported");
+
+    mqttCapture.clear();
+    NetworkManager::setMqttConnected(true);
+    LogCapture::begin();
+    LogCapture::log(LogLevel::Warning, "no SSID configured");
+    MqttPublisher::begin();
+
+    MqttPublisher::publishStates();
+
+    const MqttMessage *ev = mqttCapture.findPublished("homeassistant/event/pool-controller/logs/state");
+    const MqttMessage *raw = mqttCapture.findPublished("pool-controller/log");
+
+    rc = (ev != nullptr && raw != nullptr) ? 0 : 1;
+    if (rc == 0) {
+      JsonDocument doc;
+      DeserializationError err = deserializeJson(doc, ev->payload);
+      if (err || strcmp(doc["event_type"] | "", "LOG_WARN") != 0) {
+        test_fail(__FILE__, __LINE__, "pre-publisher WARN not exported as LOG_WARN");
+        rc = 1;
+      } else
+        test_pass(__FILE__, __LINE__);  // NOLINT
+    } else {
+      test_fail(__FILE__, __LINE__, "pre-publisher WARN must be exported via MQTT");
+    }
+    if (rc == 0)
+      passed++;
+    else
+      failed++;
+    test_suite_end("MqttPublisher::export_pre_publisher_warn", rc == 0 ? 1 : 0, rc != 0 ? 1 : 0);
+  }
+
+  // ── Test: Info entries are NOT exported ──
+  // Task 5 volume control: only WARN/ERROR and curated events cross MQTT.
+  {
+    test_begin("MqttPublisher::publishStates", "Info entries are not exported");
+
+    mqttCapture.clear();
+    NetworkManager::setMqttConnected(true);
+    LogCapture::begin();
+    MqttPublisher::begin();
+
+    LogCapture::log(LogLevel::Info, "normal heartbeat");
+    MqttPublisher::publishStates();
+
+    const MqttMessage *ev = mqttCapture.findPublished("homeassistant/event/pool-controller/logs/state");
+    const MqttMessage *raw = mqttCapture.findPublished("pool-controller/log");
+
+    rc = (ev == nullptr && raw == nullptr) ? 0 : 1;
+    if (rc == 0) {
+      test_pass(__FILE__, __LINE__);
+      passed++;
+    } else {
+      test_fail(__FILE__, __LINE__, "Info entry must not be exported via MQTT");
+      failed++;
+    }
+    test_suite_end("MqttPublisher::export_no_info", rc == 0 ? 1 : 0, rc != 0 ? 1 : 0);
+  }
+
+  // ── Test: Export pump dedup — second call without new entries publishes nothing ──
+  {
+    test_begin("MqttPublisher::publishStates", "no duplicate export on second call");
+
+    mqttCapture.clear();
+    NetworkManager::setMqttConnected(true);
+    LogCapture::begin();
+    MqttPublisher::begin();
+
+    LogCapture::log(LogLevel::Error, "boom");
+    MqttPublisher::publishStates();
+
+    int firstCount = 0;
+    for (const auto &m : mqttCapture.published) {
+      if (m.topic == "homeassistant/event/pool-controller/logs/state")
+        firstCount++;
+    }
+
+    mqttCapture.clear();
+    MqttPublisher::publishStates();
+    const MqttMessage *ev2 = mqttCapture.findPublished("homeassistant/event/pool-controller/logs/state");
+    const MqttMessage *raw2 = mqttCapture.findPublished("pool-controller/log");
+
+    rc = (firstCount == 1 && ev2 == nullptr && raw2 == nullptr) ? 0 : 1;
+    if (rc == 0) {
+      test_pass(__FILE__, __LINE__);
+      passed++;
+    } else {
+      test_fail(__FILE__, __LINE__, "publishStates re-exported already-exported entries");
+      failed++;
+    }
+    test_suite_end("MqttPublisher::export_dedup", rc == 0 ? 1 : 0, rc != 0 ? 1 : 0);
+  }
+
+  // ── Test: failed publish keeps the watermark → entry is retried next pass ──
+  // Task 5: NetworkManager::publish() can return false (MQTT queue refused /
+  // disconnected mid-burst). The watermark must NOT advance past such an
+  // entry, otherwise the event is dropped permanently.
+  {
+    test_begin("MqttPublisher::publishStates", "failed publish does not advance watermark");
+
+    mqttCapture.clear();
+    NetworkManager::setMqttConnected(true);
+    NetworkManager::setPublishOk(false);  // simulate AsyncMqttClient refusing to enqueue
+    LogCapture::begin();
+    MqttPublisher::begin();
+
+    LogCapture::log(LogLevel::Error, "queued when broker back");
+    MqttPublisher::publishStates();
+
+    // No event may be marked exported while publish fails.
+    const MqttMessage *ev = mqttCapture.findPublished("homeassistant/event/pool-controller/logs/state");
+    bool clean = (ev == nullptr);
+
+    // Broker accepts again → the same entry must now be exported (retry).
+    NetworkManager::setPublishOk(true);
+    mqttCapture.clear();
+    MqttPublisher::publishStates();
+    const MqttMessage *ev2 = mqttCapture.findPublished("homeassistant/event/pool-controller/logs/state");
+    const MqttMessage *raw2 = mqttCapture.findPublished("pool-controller/log");
+
+    rc = (clean && ev2 != nullptr && raw2 != nullptr) ? 0 : 1;
+    if (rc == 0) {
+      test_pass(__FILE__, __LINE__);
+      passed++;
+    } else {
+      char msg[160];
+      snprintf(msg, sizeof(msg), "clean=%d ev2=%s raw2=%s (no retry)", clean ? 1 : 0,
+        ev2 != nullptr ? ev2->payload.c_str() : "NULL", raw2 != nullptr ? raw2->payload.c_str() : "NULL");
+      test_fail(__FILE__, __LINE__, msg);
+      failed++;
+    }
+    test_suite_end("MqttPublisher::export_retry_publish_fail", rc == 0 ? 1 : 0, rc != 0 ? 1 : 0);
+  }
+
+  // ── Test: reentrant export (AsyncTCP callback path) is skipped by the guard ──
+  // handleMqttMessage → publishStates() can run on the AsyncTCP task while the
+  // loop task is mid-exportLogEvents(). Both share the static snapshot buffer
+  // and the watermark; the guard must make the nested export a no-op so the
+  // event is published exactly once and the watermark is not regressed.
+  {
+    test_begin("MqttPublisher::publishStates", "reentrant export during publish is skipped");
+
+    mqttCapture.clear();
+    NetworkManager::setMqttConnected(true);
+    LogCapture::begin();
+    MqttPublisher::begin();
+
+    LogCapture::log(LogLevel::Warning, "reentrant guard probe");
+    // Fire one nested publishStates() from inside the export's event-state
+    // publish — simulates the AsyncTCP callback task preempting the loop task.
+    bool hookFired = false;
+    NetworkManager::setPublishHook("homeassistant/event/pool-controller/logs/state", [&hookFired]() {
+      hookFired = true;
+      MqttPublisher::publishStates();
+    });
+    MqttPublisher::publishStates();
+
+    int missing = 0;
+    if (!hookFired) {
+      test_fail(__FILE__, __LINE__, "publish hook did not fire mid-export");
+      missing++;
+    }
+
+    // The WARN event must be exported exactly once (nested call deferred).
+    size_t evCount = 0, rawCount = 0;
+    for (const auto &m : mqttCapture.published) {
+      if (m.topic == "homeassistant/event/pool-controller/logs/state")
+        evCount++;
+      if (m.topic == "pool-controller/log")
+        rawCount++;
+    }
+    if (evCount != 1) {
+      test_fail(__FILE__, __LINE__, "event state published != 1 times (nested export interleaved)");
+      missing++;
+    } else
+      test_pass(__FILE__, __LINE__);  // NOLINT
+    if (rawCount != 1) {
+      test_fail(__FILE__, __LINE__, "raw log topic published != 1 times (nested export interleaved)");
+      missing++;
+    } else
+      test_pass(__FILE__, __LINE__);  // NOLINT
+
+    // Watermark must not have regressed: a follow-up pass publishes nothing new.
+    NetworkManager::clearPublishHook();
+    MqttPublisher::publishStates();
+    size_t evAfter = 0;
+    for (const auto &m : mqttCapture.published)
+      if (m.topic == "homeassistant/event/pool-controller/logs/state")
+        evAfter++;
+    if (evAfter != 1) {
+      test_fail(__FILE__, __LINE__, "watermark regressed — follow-up pass re-exported event");
+      missing++;
+    } else
+      test_pass(__FILE__, __LINE__);  // NOLINT
+
+    rc = (missing == 0) ? 0 : 1;
+    if (rc == 0)
+      passed++;
+    else
+      failed++;
+    test_suite_end("MqttPublisher::export_reentrancy_guard", missing == 0 ? 1 : 0, missing);
+  }
+
+  // ── Test: logEvent marker becomes event_type on the event state topic ──
+  // Task 5: LogCapture::logEvent("[MODE_CHANGED] ...") → event_type=MODE_CHANGED.
+  // Info-level events are NOT mirrored to the raw topic (raw is WARN/ERROR only).
+  {
+    test_begin("MqttPublisher::publishStates", "logEvent marker exported as event_type");
+
+    mqttCapture.clear();
+    NetworkManager::setMqttConnected(true);
+    LogCapture::begin();
+    MqttPublisher::begin();
+
+    LogCapture::logEvent("MODE_CHANGED", "switched to auto");
+    MqttPublisher::publishStates();
+
+    int missing = 0;
+    const MqttMessage *ev = mqttCapture.findPublished("homeassistant/event/pool-controller/logs/state");
+    if (ev == nullptr) {
+      test_fail(__FILE__, __LINE__, "No event state published for logEvent");
+      missing++;
+    } else {
+      JsonDocument doc;
+      DeserializationError err = deserializeJson(doc, ev->payload);
+      if (err) {
+        test_fail(__FILE__, __LINE__, "Event state is not valid JSON");
+        missing++;
+      } else {
+        if (strcmp(doc["event_type"] | "", "MODE_CHANGED") != 0) {
+          test_fail(__FILE__, __LINE__, "event_type != MODE_CHANGED");
+          missing++;
+        } else
+          test_pass(__FILE__, __LINE__);  // NOLINT
+        if (strcmp(doc["message"] | "", "switched to auto") != 0) {
+          test_fail(__FILE__, __LINE__, "event message mismatch");
+          missing++;
+        } else
+          test_pass(__FILE__, __LINE__);  // NOLINT
+      }
+    }
+
+    const MqttMessage *raw = mqttCapture.findPublished("pool-controller/log");
+    if (raw != nullptr) {
+      test_fail(__FILE__, __LINE__, "Info-level event must not be mirrored to raw topic");
+      missing++;
+    } else
+      test_pass(__FILE__, __LINE__);  // NOLINT
+
+    rc = (missing == 0) ? 0 : 1;
+    if (rc == 0)
+      passed++;
+    else
+      failed++;
+    test_suite_end("MqttPublisher::export_event_marker", missing == 0 ? 1 : 0, missing);
   }
 
   return passed + failed;

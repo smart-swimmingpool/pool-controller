@@ -38,6 +38,12 @@
 #include "SystemMonitor.hpp"
 #include "TimeClientHelper.hpp"
 #include "Version.h"
+#include "LogCapture.hpp"
+
+#ifdef NORVI_AE01_R
+#include "NorviButtonHandler.hpp"
+#include "CalibrationManager.hpp"
+#endif
 
 namespace PoolController {
 
@@ -60,7 +66,7 @@ constexpr uint16_t WebPortal::kDnsPort;
 
 bool WebPortal::begin() {
   if (!LittleFS.begin(false)) {
-    Serial.println("✖ LittleFS mount failed — static web assets may be unavailable");
+    LOG_ERROR("✖ LittleFS mount failed — static web assets may be unavailable\n");
   }
 
   setupRoutes();
@@ -69,12 +75,12 @@ bool WebPortal::begin() {
   if (NetworkManager::isApMode()) {
     dnsServer_.setErrorReplyCode(DNSReplyCode::NoError);
     dnsServer_.start(kDnsPort, "*", WiFi.softAPIP());
-    Serial.println("✓ Captive Portal DNS running.");
+    LOG_INFO("✓ Captive Portal DNS running.\n");
     dnsServerStarted_ = true;
   }
 
   server_.begin();
-  Serial.println("✓ Web Server running on port 80.");
+  LOG_INFO("✓ Web Server running on port 80.\n");
 
   // Initialize CSRF token
   generateCsrfToken();
@@ -87,7 +93,7 @@ void WebPortal::loop() {
     if (!dnsServerStarted_) {
       dnsServer_.setErrorReplyCode(DNSReplyCode::NoError);
       dnsServer_.start(kDnsPort, "*", WiFi.softAPIP());
-      Serial.println("✓ Captive Portal DNS running.");
+      LOG_INFO("✓ Captive Portal DNS running.\n");
       dnsServerStarted_ = true;
     }
     dnsServer_.processNextRequest();
@@ -96,7 +102,7 @@ void WebPortal::loop() {
 
   // Session timeout checking
   if (activeSessionToken_.length() > 0 && (millis() - sessionStartTime_ > kSessionTimeoutMs)) {
-    Serial.println("Session timed out.");
+    LOG_WARN("Session timed out.\n");
     activeSessionToken_ = "";
   }
 }
@@ -206,6 +212,25 @@ void WebPortal::setupRoutes() {
       return;
     apiSaveConfig();
   });
+
+#ifdef NORVI_AE01_R
+  // Button calibration wizard (NORVI)
+  server_.on("/api/calibrate/start", HTTP_POST, []() {
+    if (!handleAuthentication())
+      return;
+    apiCalibrateStart();
+  });
+  server_.on("/api/calibrate/status", HTTP_GET, []() {
+    if (!handleAuthentication())
+      return;
+    apiCalibrateStatus();
+  });
+  server_.on("/api/calibrate/cancel", HTTP_POST, []() {
+    if (!handleAuthentication())
+      return;
+    apiCalibrateCancel();
+  });
+#endif
   server_.on("/api/mode", HTTP_POST, []() {
     if (!handleAuthentication())
       return;
@@ -256,6 +281,14 @@ void WebPortal::setupRoutes() {
     apiSaveSensorMapping();
   });
 
+  // Log view — GET is unauthenticated (read-only), clear remains authenticated.
+  server_.on("/api/logs", HTTP_GET, apiGetLogs);
+  server_.on("/api/logs/clear", HTTP_POST, []() {
+    if (!handleAuthentication())
+      return;
+    apiClearLogs();
+  });
+
   // LittleFS file upload (for OTA-safe web asset deployment)
   server_.on(
     "/api/fs/upload", HTTP_POST,
@@ -281,7 +314,7 @@ void WebPortal::setupRoutes() {
         return;
       HTTPUpload &upload = server_.upload();
       if (upload.status == UPLOAD_FILE_START) {
-        Serial.printf("Signed OTA Update Starting: %s\n", upload.filename.c_str());
+        LOG_INFO("Signed OTA Update Starting: %s\n", upload.filename.c_str());
         if (!Update.begin(UPDATE_SIZE_UNKNOWN)) {
           Update.printError(Serial);
         }
@@ -291,7 +324,7 @@ void WebPortal::setupRoutes() {
         }
       } else if (upload.status == UPLOAD_FILE_END) {
         if (Update.end(true)) {
-          Serial.printf("Signed OTA Update Success: %u bytes\n", upload.totalSize);
+          LOG_INFO("Signed OTA Update Success: %u bytes\n", upload.totalSize);
         } else {
           Update.printError(Serial);
         }
@@ -305,15 +338,39 @@ void WebPortal::setupRoutes() {
   server_.collectHeaders(headerkeys, 1);
 }
 
+// Serve a LittleFS web asset, preferring a pre-compressed .gz variant (created
+// by scripts/gzip-web-assets.sh before upload). Falls back to the plain file
+// when no .gz is present, so deployments without the script keep working.
+bool WebPortal::serveWebFile(const char *path, const char *contentType, const char *cacheControl) {
+  char gzPath[64];
+  snprintf(gzPath, sizeof(gzPath), "%s.gz", path);
+
+  File f = LittleFS.open(gzPath, "r");
+  if (f) {
+    // streamFile() sets Content-Encoding: gzip automatically for .gz files.
+    server_.sendHeader("Cache-Control", cacheControl);
+    server_.streamFile(f, contentType);
+    f.close();
+    return true;
+  }
+
+  f = LittleFS.open(path, "r");
+  if (f) {
+    server_.sendHeader("Cache-Control", cacheControl);
+    server_.streamFile(f, contentType);
+    f.close();
+    return true;
+  }
+  return false;
+}
+
 void WebPortal::handleRoot() {
   // Dashboard is always served — interactive controls are gated by the frontend
   // based on the "authenticated" field from /api/status.
-  File f = LittleFS.open("/web/index.html", "r");
-  if (f) {
-    server_.streamFile(f, "text/html");
-    f.close();
+  // Entry point: always revalidate so freshly uploaded assets are picked up.
+  // The service worker provides the instant-load cache for repeat visits.
+  if (serveWebFile("/web/index.html", "text/html", "no-cache"))
     return;
-  }
 
   // No PROGMEM fallback — tell user to upload web assets
   String html = R"HTML(
@@ -333,52 +390,34 @@ h1{color:#00e5ff;margin-bottom:0.5rem}a{color:#48cae4}</style>
 }
 
 void WebPortal::handleStyleCss() {
-  File f = LittleFS.open("/web/style.css", "r");
-  if (f) {
-    server_.streamFile(f, "text/css");
-    f.close();
+  if (serveWebFile("/web/style.css", "text/css", "public, max-age=3600"))
     return;
-  }
   server_.send(404, "text/plain", "Not Found");
 }
 
 void WebPortal::handleAppJs() {
-  File f = LittleFS.open("/web/app.js", "r");
-  if (f) {
-    server_.streamFile(f, "application/javascript");
-    f.close();
+  if (serveWebFile("/web/app.js", "application/javascript", "public, max-age=3600"))
     return;
-  }
   server_.send(404, "text/plain", "Not Found");
 }
 
 void WebPortal::handleManifestJson() {
-  File f = LittleFS.open("/web/manifest.json", "r");
-  if (f) {
-    server_.streamFile(f, "application/manifest+json");
-    f.close();
+  if (serveWebFile("/web/manifest.json", "application/manifest+json", "public, max-age=3600"))
     return;
-  }
   server_.send(404, "text/plain", "Not Found");
 }
 
 void WebPortal::handleSwJs() {
-  File f = LittleFS.open("/web/sw.js", "r");
-  if (f) {
-    server_.streamFile(f, "application/javascript");
-    f.close();
+  // Never cache the service worker script — browsers must check for updates
+  // on every navigation so new cache versions take effect promptly.
+  if (serveWebFile("/web/sw.js", "application/javascript", "no-cache"))
     return;
-  }
   server_.send(404, "text/plain", "Not Found");
 }
 
 void WebPortal::handleIconSvg() {
-  File f = LittleFS.open("/web/icon.svg", "r");
-  if (f) {
-    server_.streamFile(f, "image/svg+xml");
-    f.close();
+  if (serveWebFile("/web/icon.svg", "image/svg+xml", "public, max-age=3600"))
     return;
-  }
   server_.send(404, "text/plain", "Not Found");
 }
 
@@ -452,6 +491,11 @@ void WebPortal::apiGetStatus() {
   doc["local_ip"] = NetworkManager::getLocalIP();
   doc["fw_version"] = FW_VERSION;
   doc["authenticated"] = isClientAuthenticated();
+#ifdef NORVI_AE01_R
+  doc["norvi"] = true;
+#else
+  doc["norvi"] = false;
+#endif
 
   // Current date/time in configured timezone
   TimeChangeRule *tcr;
@@ -509,6 +553,99 @@ void WebPortal::apiGetStatus() {
   }
 }
 
+// ── Log view (REST /api/logs) ──────────────────────────────────────────────
+
+size_t WebPortal::buildLogsJson(uint32_t since, uint32_t epoch, size_t count, LogLevel minLevel, char *buf, size_t bufSize) {
+  if (buf == nullptr || bufSize == 0) {
+    return 0;
+  }
+
+  // Copy entries out of the ring into a fixed array (snapshot consistency —
+  // getEntries reads under the log mutex). Static: no stack pressure.
+  static LogEntry entries[LogCapture::LOG_BUFFER_ENTRIES];
+  size_t n = LogCapture::getEntries(since, epoch, count, minLevel, entries, LogCapture::LOG_BUFFER_ENTRIES);
+
+  JsonDocument doc;
+  doc["ok"] = true;
+  // The client echoes the boot epoch it last saw; a mismatch with the current
+  // boot tells it to discard its cursor even when the new sequence has already
+  // grown past it. Always report the CURRENT epoch, not the requested one.
+  doc["boot"] = LogCapture::epoch();
+  // getEntries() treats `since` as an exclusive cursor (skips entry.seq <= since),
+  // so next must be the highest sequence actually consumed, not lastSeq()+1:
+  // a cursor of lastSeq()+1 would skip the entry whose seq equals that value on
+  // the next poll, and truncated responses would jump past unreturned entries.
+  // With no entries, keep the previous cursor (no progress, nothing skipped).
+  doc["next"] = (n > 0) ? entries[n - 1].seq : since;
+
+  JsonArray arr = doc["entries"].to<JsonArray>();
+  for (size_t i = 0; i < n; ++i) {
+    JsonObject obj = arr.add<JsonObject>();
+    obj["seq"] = entries[i].seq;
+    obj["t"] = entries[i].uptimeMs;
+    obj["level"] = LogCapture::levelName(entries[i].level);
+    obj["msg"] = entries[i].message;
+  }
+
+  size_t jsonLength = serializeJson(doc, buf, bufSize);
+  // Signal truncation (buffer too small) instead of returning broken JSON
+  if (jsonLength >= bufSize) {
+    return 0;
+  }
+  return jsonLength;
+}
+
+void WebPortal::apiGetLogs() {
+  uint32_t since = 0;
+  // Omitted boot parameter = current boot: the documented since-polling flow
+  // keeps working incrementally. Only clients that explicitly send a boot epoch
+  // get reboot detection (a stale epoch forces a full dump).
+  uint32_t epoch = LogCapture::epoch();
+  size_t count = 200;
+  LogLevel minLevel = LogLevel::Info;
+
+  if (server_.hasArg("since")) {
+    since = static_cast<uint32_t>(atol(server_.arg("since").c_str()));
+  }
+  if (server_.hasArg("boot")) {
+    // Parse as unsigned 32-bit: esp_random() produces values above LONG_MAX
+    // on roughly half of boots, which atol() would overflow (→ stale epoch →
+    // full ring + duplicate entries on every poll). strtoul reconstructs the
+    // full uint32 range; on invalid input we keep the current boot (safe
+    // fallback that preserves incremental since-polling).
+    char *end = nullptr;
+    const unsigned long v = strtoul(server_.arg("boot").c_str(), &end, 10);
+    if (end != server_.arg("boot").c_str() && v <= UINT32_MAX) {
+      epoch = static_cast<uint32_t>(v);
+    }
+  }
+  if (server_.hasArg("count")) {
+    long c = atol(server_.arg("count").c_str());
+    if (c > 0 && c <= 500) {
+      count = static_cast<size_t>(c);
+    }
+  }
+  if (server_.hasArg("level")) {
+    minLevel = LogCapture::parseLevel(server_.arg("level").c_str());
+  }
+
+  // Serialize directly to a pre-allocated buffer to minimize String usage.
+  // Worst case: LOG_BUFFER_ENTRIES entries x ~140 bytes each + envelope.
+  // Use a static buffer to avoid heap fragmentation.
+  static char jsonBuffer[16384];
+  size_t jsonLength = buildLogsJson(since, epoch, count, minLevel, jsonBuffer, sizeof(jsonBuffer));
+  if (jsonLength > 0) {
+    server_.send(200, "application/json", jsonBuffer);
+  } else {
+    server_.send(500, "text/plain", "JSON serialization error");
+  }
+}
+
+void WebPortal::apiClearLogs() {
+  LogCapture::clear();
+  server_.send(200, "application/json", "{\"ok\":true}");
+}
+
 void WebPortal::apiScanWiFi() {
   int n = WiFi.scanNetworks();
   JsonDocument doc;
@@ -564,6 +701,13 @@ void WebPortal::apiGetConfig() {
   settingsObj["timezone"] = ConfigManager::getSettings().timezoneIndex;
   settingsObj["time_loss_green_hours"] = ConfigManager::getSettings().timeLossGreenHours;
   settingsObj["time_loss_red_hours"] = ConfigManager::getSettings().timeLossRedHours;
+  settingsObj["btn1_min"] = ConfigManager::getSettings().btn1Min;
+  settingsObj["btn1_max"] = ConfigManager::getSettings().btn1Max;
+  settingsObj["btn2_min"] = ConfigManager::getSettings().btn2Min;
+  settingsObj["btn2_max"] = ConfigManager::getSettings().btn2Max;
+  settingsObj["btn3_min"] = ConfigManager::getSettings().btn3Min;
+  settingsObj["btn3_max"] = ConfigManager::getSettings().btn3Max;
+  settingsObj["btn_no_press"] = ConfigManager::getSettings().btnNoPress;
   settingsObj["timer_start_hour"] = operationModeNode.getTimerSetting().timerStartHour;
   settingsObj["timer_start_min"] = operationModeNode.getTimerSetting().timerStartMinutes;
   settingsObj["timer_end_hour"] = operationModeNode.getTimerSetting().timerEndHour;
@@ -648,11 +792,31 @@ void WebPortal::apiSaveConfig() {
       ConfigManager::getSettings().tempCircFactor = server_.arg("circ_factor").toInt();
     if (server_.hasArg("circ_max_runtime"))
       ConfigManager::getSettings().tempCircMaxRuntime = server_.arg("circ_max_runtime").toInt();
+    if (server_.hasArg("btn1_min"))
+      ConfigManager::getSettings().btn1Min = server_.arg("btn1_min").toInt();
+    if (server_.hasArg("btn1_max"))
+      ConfigManager::getSettings().btn1Max = server_.arg("btn1_max").toInt();
+    if (server_.hasArg("btn2_min"))
+      ConfigManager::getSettings().btn2Min = server_.arg("btn2_min").toInt();
+    if (server_.hasArg("btn2_max"))
+      ConfigManager::getSettings().btn2Max = server_.arg("btn2_max").toInt();
+    if (server_.hasArg("btn3_min"))
+      ConfigManager::getSettings().btn3Min = server_.arg("btn3_min").toInt();
+    if (server_.hasArg("btn3_max"))
+      ConfigManager::getSettings().btn3Max = server_.arg("btn3_max").toInt();
+    if (server_.hasArg("btn_no_press"))
+      ConfigManager::getSettings().btnNoPress = server_.arg("btn_no_press").toInt();
     ConfigManager::getSettings().timezoneIndex = server_.arg("timezone").toInt();
     ConfigManager::getSettings().timeLossGreenHours = server_.arg("green").toInt();
     ConfigManager::getSettings().timeLossRedHours = server_.arg("red").toInt();
 
     ConfigManager::save();
+
+#ifdef NORVI_AE01_R
+    // Apply button thresholds to the running handler immediately so the
+    // new values take effect without a reboot (P2 review fix).
+    NorviButtonHandler::applySettings();
+#endif
 
     // Apply timezone change to running clock immediately (P2)
     setTimezoneIndex(ConfigManager::getSettings().timezoneIndex);
@@ -670,7 +834,7 @@ void WebPortal::apiSaveConfig() {
     operationModeNode.setMeasurementInterval(ConfigManager::getSettings().loopInterval);
 
     // Propagate changes directly into runtime parameters
-    operationModeNode.setMode(ConfigManager::getSettings().opMode.c_str());
+    operationModeNode.setMode(ConfigManager::getSettings().opMode.c_str(), "web:settings");
     operationModeNode.setPoolMaxTemperature(ConfigManager::getSettings().tempMaxPool);
     operationModeNode.setSolarMinTemperature(ConfigManager::getSettings().tempMinSolar);
     operationModeNode.setTemperatureHysteresis(ConfigManager::getSettings().tempHysteresis);
@@ -735,6 +899,38 @@ void WebPortal::apiSaveConfig() {
   server_.send(400, "text/plain", "Invalid Config Request");
 }
 
+#ifdef NORVI_AE01_R
+// ── Button calibration (NORVI) ────────────────────────────────────────────
+
+void WebPortal::apiCalibrateStart() {
+  if (!CalibrationManager::start()) {
+    server_.send(409, "text/plain", "Calibration already running");
+    return;
+  }
+  server_.send(200, "text/plain", "OK");
+}
+
+void WebPortal::apiCalibrateStatus() {
+  const auto st = CalibrationManager::getStatus();
+  JsonDocument doc;
+  doc["step"] = static_cast<int>(st.step);
+  doc["live_adc"] = st.liveAdc;
+  doc["resting"] = st.restingLevel;
+  doc["s1"] = st.s1;
+  doc["s2"] = st.s2;
+  doc["s3"] = st.s3;
+  doc["message"] = st.message;
+  String json;
+  serializeJson(doc, json);
+  server_.send(200, "application/json", json);
+}
+
+void WebPortal::apiCalibrateCancel() {
+  CalibrationManager::cancel();
+  server_.send(200, "text/plain", "OK");
+}
+#endif  // NORVI_AE01_R
+
 void WebPortal::apiSetMode() {
   if (!server_.hasArg("mode")) {
     server_.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Missing mode\"}");
@@ -742,7 +938,7 @@ void WebPortal::apiSetMode() {
   }
 
   String mode = server_.arg("mode");
-  if (operationModeNode.setMode(mode)) {
+  if (operationModeNode.setMode(mode, "web:apiSetMode")) {
     ConfigManager::getSettings().opMode = mode;
     ConfigManager::save();
     server_.send(200, "application/json", "{\"status\":\"ok\",\"mode\":\"" + mode + "\"}");
@@ -1116,19 +1312,19 @@ void WebPortal::handleFsUploadStream() {
       path = upload.filename;
     }
     if (path.length() == 0) {
-      Serial.println("FS Upload: missing path argument — aborting");
+      LOG_WARN("FS Upload: missing path argument — aborting\n");
       return;
     }
 
     // Security: only allow files under /web/
     if (!path.startsWith("/web/")) {
-      Serial.printf("FS Upload: path \"%s\" not under /web/ — rejected\n", path.c_str());
+      LOG_WARN("FS Upload: path \"%s\" not under /web/ — rejected\n", path.c_str());
       return;
     }
 
     // Security: prevent path traversal
     if (path.indexOf("..") != -1) {
-      Serial.printf("FS Upload: path traversal detected: \"%s\"\n", path.c_str());
+      LOG_WARN("FS Upload: path traversal detected: \"%s\"\n", path.c_str());
       return;
     }
 
@@ -1137,13 +1333,25 @@ void WebPortal::handleFsUploadStream() {
       LittleFS.mkdir("/web");
     }
 
+    // Invalidate a stale pre-compressed sibling: serveWebFile() prefers the
+    // .gz variant, so uploading a newer plain asset must not leave an old
+    // .gz in place (it would be served forever). The .gz is re-created by
+    // the next upload of the compressed variant.
+    if (!path.endsWith(".gz")) {
+      String gzPath = path + ".gz";
+      if (LittleFS.exists(gzPath.c_str())) {
+        LittleFS.remove(gzPath.c_str());
+        LOG_INFO("FS Upload: removed stale \"%s\"\n", gzPath.c_str());
+      }
+    }
+
     fsUploadFile = LittleFS.open(path, "w");
     if (!fsUploadFile) {
-      Serial.printf("FS Upload: failed to open \"%s\" for writing\n", path.c_str());
+      LOG_ERROR("FS Upload: failed to open \"%s\" for writing\n", path.c_str());
       return;
     }
 
-    Serial.printf("FS Upload: started \"%s\" (%u bytes)\n", path.c_str(), upload.totalSize);
+    LOG_INFO("FS Upload: started \"%s\" (%u bytes)\n", path.c_str(), upload.totalSize);
 
   } else if (upload.status == UPLOAD_FILE_WRITE) {
     if (fsUploadFile) {
@@ -1153,7 +1361,7 @@ void WebPortal::handleFsUploadStream() {
   } else if (upload.status == UPLOAD_FILE_END) {
     if (fsUploadFile) {
       fsUploadFile.close();
-      Serial.printf("FS Upload: finished \"%s\" (%u bytes)\n", upload.filename.c_str(), upload.totalSize);
+      LOG_INFO("FS Upload: finished \"%s\" (%u bytes)\n", upload.filename.c_str(), upload.totalSize);
     }
   }
 }

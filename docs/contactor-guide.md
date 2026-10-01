@@ -12,6 +12,19 @@ menu:
     weight: 65
 ---
 
+> **⚠️ Note:** ECM pumps (electronically commutated motors <100W) have
+> large input capacitors that cause a brief high charging peak (10–20A
+> for microseconds) each time the relay closes. Over many cycles this
+> capacitive inrush can micro-weld relay contacts. An **RC snubber**
+> (100nF + 100Ω, **X2-rated capacitor**) across the relay contact
+> suppresses turn-off transients/arcs, but it does **not** limit the
+> closing inrush — it cannot prevent contact welding on capacitive
+> loads. For ECM pumps use the **contactor** wiring below, or an
+> inrush limiter (NTC) / a relay rated for capacitive loads.
+>
+> The contactor solution below is intended for larger pumps (>300W) or
+> inductive loads where running current exceeds 2A.
+
 ## Overview
 
 This document explains why the built-in relays of the NORVI AE01-R (and other
@@ -48,12 +61,13 @@ the controller showing OFF.
 
 ### Field Report
 
-In one field installation this failure occurred sequentially on two different
-relay outputs (R1, then R5) of the same NORVI unit, both switching the same
-solar pump (300–600W). The common factor was **the pump load**, not the relay
-or driver circuit. The identical R0 channel (pool pump) showed no failure —
-likely because the pool pump is a different type (capacitor-start with soft
-start, switched less frequently, or lower power).
+In one field installation this failure occurred on two different relay outputs
+(R1, then R5) of the same NORVI AE01-R, both switching the same solar pump.
+The pump turned out to be a **6–28W ECM type** (Lowara Artiga ECO AUTO+) —
+well within the relay rating, yet contacts welded. The cause is capacitive
+inrush from the ECM's input capacitors (~10–20A peak for microseconds each
+switch-on). The identical R0 channel (pool pump, Speck BADU Magic II/6 450W
+asynchronous motor) showed no failure.
 
 ---
 
@@ -63,17 +77,19 @@ A **contactor** is a heavy-duty relay built for motor loads. The NORVI relay
 switches only the **contactor's coil** (a few mA at 24V DC) — the contactor's
 main contacts handle the 230V AC load.
 
-```
- NORVI Relay            Contactor (external)           Pump
- ┌──────────┐          ┌────────────────────┐      ┌────────┐
- │          │  24V DC  │  A1 (+)            │      │        │
- │ COM ─────┼──────────┤  (coil)            │      │        │
- │          │          │          A2 (-) ───┼── GND│        │
- │ NO  ─────┼──────┐   │                    │      │        │
- └──────────┘      │   │ 1 (L-input) ───────┤─── 2 │        │
-                   │   └────────────────────┘      │  L-N  │
- 230V L ───────────┘                               └────────┘
- 230V N ─────────────────────────────────────────────┘
+ ```
+  NORVI Relay            Contactor (external)           Pump
+  ┌──────────┐          ┌────────────────────┐      ┌────────┐
+  │          │  24V DC  │  A1 (+)            │      │        │
+  │ COM ─────┼──────────┤  (coil)            │      │        │
+  │          │          │          A2 (-) ───┼── GND│        │
+  │ NO  ─────┼──────┐   │                    │      │        │
+  └──────────┘      │   │ 1 (L-input) ───────┤─── 2 │        │
+                    │   └────────────────────┘      │  L-N  │
+  24V DC (+) ───────┘                               └────────┘
+  230V L (via contactor) ─────────────────────────────┘
+  230V N ─────────────────────────────────────────────────┘
+  GND ────────────────────────────────────────────────────┘
 ```
 
 ### Benefits
@@ -129,13 +145,13 @@ For maximum space saving:
 ### 24V Control Circuit
 
 ```
-24V DC (+) ──┬── NORVI R0 COM ── NO ──┬── Contactor Pool A1 ── A2 ──┬── GND
-             │                        │                            │
-             ├── NORVI R5 COM ── NO ──┤── Contactor Solar A1 ── A2 ──┤
-             │                        │                            │
-             └───── NORVI 24V IN ─────┘                            │
-                                                                   │
-GND ───────────────────────────────────────────────────────────────┘
+ 24V DC (+) ──┬── NORVI R0 COM ── NO ──┬── Contactor Pool A1 ── A2 ──┬── GND
+              │                        │                            │
+              ├── NORVI R2 COM ── NO ──┤── Contactor Solar A1 ── A2 ──┤
+              │                        │                            │
+              └───── NORVI 24V IN ─────┘                            │
+                                                                    │
+ GND ───────────────────────────────────────────────────────────────┘
 ```
 
 **Flyback diodes 1N4007** across each contactor coil:
@@ -184,12 +200,12 @@ Always protect the 230V side with an RCD (30mA) and MCB (B10A or appropriate).
 
 ### 2. Wiring
 
-**Step 1: 24V Control Circuit**
+ **Step 1: 24V Control Circuit**
 
 1. **24V DC (+) to NORVI relay COM** — bridge from NORVI 24V terminal to
-   COM-R0 and COM-R5
+   COM-R0 and COM-R2
 2. **NORVI relay NO to contactor A1** — R0-NO → Pool contactor A1,
-   R5-NO → Solar contactor A1
+   R2-NO → Solar contactor A1
 3. **Contactor A2 to GND** — both A2 to GND bus
 4. **Flyback diode** — 1N4007 across A1/A2 of each contactor
    (cathode to A1, anode to A2)

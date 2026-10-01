@@ -9,6 +9,7 @@
 
 #include <sys/time.h>  // For settimeofday
 
+#include "LogCapture.hpp"
 #include "NetworkManager.hpp"
 #include "TimeClientHelper.hpp"
 
@@ -150,9 +151,9 @@ void syncSystemClock() {
     tv.tv_sec = ntpTime;
     tv.tv_usec = 0;
     settimeofday(&tv, nullptr);
-    Serial.printf("Time: System clock set to %ld\n", ntpTime);
+    LOG_INFO("Time: System clock set to %ld\n", ntpTime);
   } else {
-    Serial.println("Time: Cannot set system clock - NTP time not valid");
+    LOG_WARN("Time: Cannot set system clock - NTP time not valid\n");
   }
 }
 

@@ -10,6 +10,7 @@
 #include "Timer.hpp"
 #include "TimeClientHelper.hpp"
 #include "ConfigManager.hpp"
+#include "LogCapture.hpp"
 
 /**
  * Get current date/time, with validation
@@ -87,7 +88,7 @@ uint16_t calculateEffectiveEndMinutes(uint16_t baseStartMinutes, uint16_t baseEn
   // Calculate new end minutes (add runtime to start, can wrap past midnight)
   uint16_t extended = baseStartMinutes + totalRuntime;
 
-  Serial.printf("  → TempCirc: %.1f°C, base=%umin, extra=%umin, total=%umin, end=%02d:%02d\n", poolTemp, baseRuntime, extra,
+  LOG_INFO("  → TempCirc: %.1f°C, base=%umin, extra=%umin, total=%umin, end=%02d:%02d\n", poolTemp, baseRuntime, extra,
     totalRuntime, (extended / 60) % 24, extended % 60);
 
   return extended;

@@ -8,9 +8,12 @@
  */
 
 #include "ConfigManager.hpp"
-#include "Version.h"
+
 #include <Preferences.h>
 #include <mbedtls/md.h>
+
+#include "LogCapture.hpp"
+#include "Version.h"
 
 namespace PoolController {
 
@@ -65,20 +68,27 @@ static constexpr const char *kSetRed = "set_red";
 static constexpr const char *kSetCircThresh = "set_circth";
 static constexpr const char *kSetCircFactor = "set_circfa";
 static constexpr const char *kSetCircMax = "set_circmx";
+static constexpr const char *kSetBtn1Min = "set_btn1min";
+static constexpr const char *kSetBtn1Max = "set_btn1max";
+static constexpr const char *kSetBtn2Min = "set_btn2min";
+static constexpr const char *kSetBtn2Max = "set_btn2max";
+static constexpr const char *kSetBtn3Min = "set_btn3min";
+static constexpr const char *kSetBtn3Max = "set_btn3max";
+static constexpr const char *kSetBtnNoPress = "set_btnnop";
 static constexpr const char *kAdmPass = "adm_pass";
 static constexpr const char *kCfgConfigured = "cfg_configured";
 
 // ── Lifecycle ──
 
 bool ConfigManager::begin() {
-  Serial.println("✓ NVS config namespace opened");
+  LOG_INFO("✓ NVS config namespace opened\n");
   return load();
 }
 
 bool ConfigManager::load() {
   Preferences prefs;
   if (!prefs.begin(kNvsNamespace, true)) {  // read-only mode
-    Serial.println("✖ Failed to open NVS config namespace");
+    LOG_ERROR("✖ Failed to open NVS config namespace\n");
     reset();
     return false;
   }
@@ -105,20 +115,27 @@ bool ConfigManager::load() {
   settings_.tempCircThreshold = prefs.getDouble(kSetCircThresh, 24.0);
   settings_.tempCircFactor = prefs.getUShort(kSetCircFactor, 30);
   settings_.tempCircMaxRuntime = prefs.getUShort(kSetCircMax, 720);
+  settings_.btn1Min = prefs.getUShort(kSetBtn1Min, 3100);
+  settings_.btn1Max = prefs.getUShort(kSetBtn1Max, 3520);
+  settings_.btn2Min = prefs.getUShort(kSetBtn2Min, 3520);
+  settings_.btn2Max = prefs.getUShort(kSetBtn2Max, 3880);
+  settings_.btn3Min = prefs.getUShort(kSetBtn3Min, 3880);
+  settings_.btn3Max = prefs.getUShort(kSetBtn3Max, 4095);
+  settings_.btnNoPress = prefs.getUShort(kSetBtnNoPress, 4096);
 
   adminPasswordHash_ = prefs.getString(kAdmPass, kDefaultPasswordHash);
   configured_ = prefs.getBool(kCfgConfigured, false);
 
   prefs.end();
 
-  Serial.println("✓ Configuration loaded from NVS");
+  LOG_INFO("✓ Configuration loaded from NVS\n");
   return true;
 }
 
 bool ConfigManager::save() {
   Preferences prefs;
   if (!prefs.begin(kNvsNamespace, false)) {  // read-write mode
-    Serial.println("✖ Failed to open NVS config namespace for writing");
+    LOG_ERROR("✖ Failed to open NVS config namespace for writing\n");
     return false;
   }
 
@@ -144,13 +161,20 @@ bool ConfigManager::save() {
   prefs.putDouble(kSetCircThresh, settings_.tempCircThreshold);
   prefs.putUShort(kSetCircFactor, settings_.tempCircFactor);
   prefs.putUShort(kSetCircMax, settings_.tempCircMaxRuntime);
+  prefs.putUShort(kSetBtn1Min, settings_.btn1Min);
+  prefs.putUShort(kSetBtn1Max, settings_.btn1Max);
+  prefs.putUShort(kSetBtn2Min, settings_.btn2Min);
+  prefs.putUShort(kSetBtn2Max, settings_.btn2Max);
+  prefs.putUShort(kSetBtn3Min, settings_.btn3Min);
+  prefs.putUShort(kSetBtn3Max, settings_.btn3Max);
+  prefs.putUShort(kSetBtnNoPress, settings_.btnNoPress);
 
   prefs.putString(kAdmPass, adminPasswordHash_);
   prefs.putBool(kCfgConfigured, configured_);
 
   prefs.end();
 
-  Serial.println("✓ Configuration saved to NVS");
+  LOG_INFO("✓ Configuration saved to NVS\n");
   return true;
 }
 
@@ -169,7 +193,7 @@ void ConfigManager::reset() {
   adminPasswordHash_ = kDefaultPasswordHash;  // Reset to default "admin" password
   configured_ = false;
 
-  Serial.println("✓ Configuration reset to factory defaults");
+  LOG_INFO("✓ Configuration reset to factory defaults\n");
 }
 
 // ── Boot Version Tracking ──
@@ -183,16 +207,16 @@ void ConfigManager::logOtaTransition() {
 
   if (previousVersion.isEmpty()) {
     // First boot ever — nothing to compare
-    Serial.printf("ℹ First boot — firmware version %s\n", runningVersion.c_str());
+    LOG_INFO("ℹ First boot — firmware version %s\n", runningVersion.c_str());
   } else if (previousVersion != runningVersion) {
     // Version changed — OTA update just happened
-    Serial.printf("◉ OTA UPDATE DETECTED: %s → %s\n", previousVersion.c_str(), runningVersion.c_str());
+    LOG_INFO("◉ OTA UPDATE DETECTED: %s → %s\n", previousVersion.c_str(), runningVersion.c_str());
 
     // Update stored version to match running version
     prefs.putString("fw_version", runningVersion);
   } else {
     // Normal boot — same version
-    Serial.printf("ℹ Normal boot — firmware %s (no OTA change)\n", runningVersion.c_str());
+    LOG_INFO("ℹ Normal boot — firmware %s (no OTA change)\n", runningVersion.c_str());
   }
 
   prefs.end();
@@ -220,10 +244,10 @@ void ConfigManager::saveSensorMapping(const uint8_t solarAddr[8], const uint8_t 
   char buf[17];
   snprintf(buf, sizeof(buf), "%02X%02X%02X%02X%02X%02X%02X%02X", solarAddr[0], solarAddr[1], solarAddr[2], solarAddr[3],
     solarAddr[4], solarAddr[5], solarAddr[6], solarAddr[7]);
-  Serial.printf("✓ Sensor mapping saved: Solar [%s]", buf);
+  LOG_INFO("✓ Sensor mapping saved: Solar [%s]", buf);
   snprintf(buf, sizeof(buf), "%02X%02X%02X%02X%02X%02X%02X%02X", poolAddr[0], poolAddr[1], poolAddr[2], poolAddr[3], poolAddr[4],
     poolAddr[5], poolAddr[6], poolAddr[7]);
-  Serial.printf(", Pool [%s]\n", buf);
+  LOG_INFO(", Pool [%s]\n", buf);
 }
 
 bool ConfigManager::loadSensorMapping(uint8_t solarAddr[8], uint8_t poolAddr[8]) {

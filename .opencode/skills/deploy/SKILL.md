@@ -22,6 +22,8 @@ keywords:
   - version bump
   - ausrollen
   - flashen
+  - olimex esp32 c6 evb
+  - pioarduino
 ---
 
 # Deploy — Pool Controller
@@ -38,12 +40,18 @@ serial flash, web filesystem upload, OTA update, and semver release management.
 │  - format    │    │  -e norvi    │    │  Serial:             │    │  - version check│
 │  - version   │    │              │    │    flash + uploadfs  │    │  - web UI       │
 └─────────────┘    └──────────────┘    │    OTA:               │    └─────────────────┘
-                                       │    1. flash firmware  │
-                                       │    2. upload web fs   │
-                                       │       via /api/fs/    │
-                                       │       upload (6 files)│
-                                       └──────────────────────┘
+                                        │    1. flash firmware  │
+                                        │    2. upload web fs   │
+                                        │       via /api/fs/    │
+                                        │       upload (6 files)│
+                                        └──────────────────────┘
 ```
+
+## Olimex local UI note
+
+- The Olimex ESP32-C6-EVB local TFT UI is separate from the browser/LittleFS web UI.
+- For C6 build/deploy work, use the pinned pioarduino environment and a separate `PLATFORMIO_CORE_DIR` from upstream ESP32/NORVI builds.
+- The QR page points to `http://pool-controller.local`; do not confuse it with the web dashboard assets in `data/web/`.
 
 ## Prerequisites
 
@@ -261,6 +269,7 @@ curl -b /tmp/ota-cookie.txt -X POST http://<device-ip>/api/fs/upload \
 ```
 
 Response `200 OK` means the file was written to LittleFS. The endpoint:
+
 - Requires authentication (valid session cookie)
 - Only allows paths under `/web/` (security)
 - Blocks path traversal (`..`)
@@ -272,13 +281,13 @@ Response `200 OK` means the file was written to LittleFS. The endpoint:
 
 ### OTA troubleshooting
 
-| Symptom                              | Fix                                                    |
-| ------------------------------------ | ------------------------------------------------------ |
-| `HTTP 401` on upload                 | Session expired — re-login (cookie valid 10 min)       |
-| `HTTP 429` on login                  | Too many failed attempts — wait for lockout to expire  |
-| `curl: (7) Failed to connect`        | Device unreachable — check WiFi, ping the IP/hostname  |
-| Upload succeeds but device stays off | Wait ~30s for reboot, then check `/api/status` uptime  |
-| Device doesn't boot after OTA        | Serial flash a known-good firmware (see Rollback)      |
+| Symptom                              | Fix                                                   |
+| ------------------------------------ | ----------------------------------------------------- |
+| `HTTP 401` on upload                 | Session expired — re-login (cookie valid 10 min)      |
+| `HTTP 429` on login                  | Too many failed attempts — wait for lockout to expire |
+| `curl: (7) Failed to connect`        | Device unreachable — check WiFi, ping the IP/hostname |
+| Upload succeeds but device stays off | Wait ~30s for reboot, then check `/api/status` uptime |
+| Device doesn't boot after OTA        | Serial flash a known-good firmware (see Rollback)     |
 
 ## CI/CD Pipeline (GitHub Actions)
 

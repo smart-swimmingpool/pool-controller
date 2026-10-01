@@ -2,7 +2,7 @@
 title: Software Guide
 summary: Software development guide for the Pool Controller — PlatformIO build environment, library dependencies, REST API reference, web interface, and code architecture overview
 date: "2020-05-28"
-lastmod: "2020-06-02"
+lastmod: "2026-07-31"
 draft: false
 toc: true
 type: docs
@@ -71,6 +71,8 @@ management dashboard. It runs in two modes:
 | `GET /api/restart`       | Yes    | Reboot the ESP32                                                               |
 | `GET /api/factory_reset` | Yes    | Wipe config file, reboot into AP setup mode                                    |
 | `POST /api/update`       | Yes    | OTA firmware update (signed .bin upload)                                       |
+| `GET /api/logs`          | ❌ No  | Ring-buffered log entries (`since`/`count`/`level` filters)                    |
+| `POST /api/logs/clear`   | Yes    | Clear the log ring buffer                                                      |
 
 ### Using the REST API Directly
 
@@ -92,6 +94,36 @@ curl -b "session=$SESSION" -X POST \
   -d "type=settings&mode=auto&max_pool=30.0&min_solar=55.0&hysteresis=1.0" \
   http://<controller-ip>/api/config
 ```
+
+#### Log View API
+
+The controller keeps a ring buffer of recent log entries and exposes them over REST:
+
+```bash
+# Read log entries (no authentication needed)
+curl "http://<controller-ip>/api/logs?since=0&count=200&level=info"
+```
+
+| Parameter | Default | Description                                        |
+| --------- | ------- | -------------------------------------------------- |
+| `since`   | `0`     | Only entries with `seq` greater than this value    |
+| `count`   | `200`   | Maximum number of entries (1–500)                  |
+| `level`   | `info`  | Minimum log level: `debug`, `info`, `warning`, `error`, `critical` |
+
+Response:
+
+```json
+{
+  "next": 43,
+  "entries": [
+    {"seq": 42, "t": 123456, "level": "warning", "msg": "SAFE MODE — ignoring relay ON request"}
+  ]
+}
+```
+
+- `next` is the next sequence number to pass as `since` for incremental polling
+- `t` is the entry uptime in milliseconds
+- `POST /api/logs/clear` (authenticated) empties the buffer and returns `{"ok": true}`
 
 ### Authentication
 

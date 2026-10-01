@@ -32,6 +32,7 @@ set(PRODUCTION_SOURCES
   ${PROJ_ROOT}/src/RuleBoost.cpp
   ${PROJ_ROOT}/src/RuleTimer.cpp
   ${PROJ_ROOT}/src/Timer.cpp
+  ${PROJ_ROOT}/src/LogCapture.cpp
 )
 
 set(STUB_SOURCES

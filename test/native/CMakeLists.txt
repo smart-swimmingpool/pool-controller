@@ -32,33 +32,38 @@ include_directories(
 )
 
 # ── Wrappers ──────────────────────────────────────────────────────────────
-# WebPortal, MqttPublisher, and Timer include class headers whose mock layout
-# differs from production.  Compiling from wrappers/ avoids GCC's
-# "current-file-directory first" rule for #include "..." so the mock headers
-# take effect.
-file(COPY ${PROJ_ROOT}/src/WebPortal.cpp     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/wrappers)
+# WebPortal, MqttPublisher, Timer, and CalibrationManager include class
+# headers whose mock layout differs from production. Compiling from
+# wrappers/ avoids GCC's "current-file-directory first" rule for
+# #include "..." so the mock headers take effect.
+file(COPY ${PROJ_ROOT}/src/WebPortal.cpp DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/wrappers)
 file(COPY ${PROJ_ROOT}/src/MqttPublisher.cpp DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/wrappers)
-file(COPY ${PROJ_ROOT}/src/Timer.cpp         DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/wrappers)
+file(COPY ${PROJ_ROOT}/src/Timer.cpp DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/wrappers)
+file(COPY ${PROJ_ROOT}/src/CalibrationManager.cpp DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/wrappers)
+file(COPY ${PROJ_ROOT}/src/NorviButtonHandler.cpp DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/wrappers)
 
 set(WRAPPER_SOURCES
   ${CMAKE_CURRENT_BINARY_DIR}/wrappers/WebPortal.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/wrappers/MqttPublisher.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/wrappers/Timer.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/wrappers/CalibrationManager.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/wrappers/NorviButtonHandler.cpp
 )
 
 # ── Service classes ───────────────────────────────────────────────────────
-# Compiled from src/ directly (their own headers are in src/, so they find
-# the production header first — only Arduino-level mocks are needed).
 set(SERVICE_SOURCES
   ${PROJ_ROOT}/src/StateManager.cpp
   ${PROJ_ROOT}/src/DegradationManager.cpp
   ${PROJ_ROOT}/src/SystemMonitor.cpp
   ${PROJ_ROOT}/src/OtaUpdater.cpp
+  ${PROJ_ROOT}/src/LogCapture.cpp
+  ${PROJ_ROOT}/src/LocalSettingsMenu.cpp
+  ${PROJ_ROOT}/src/Ky040Decoder.cpp
+  ${PROJ_ROOT}/src/OlimexEncoderHandler.cpp
   ${PROJ_ROOT}/src/TelemetryQueue.cpp
   ${PROJ_ROOT}/src/SensorSlots.cpp
 )
 
-# Mock sources (compiled once)
 set(MOCK_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/mocks/captures.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mocks/NetworkManager.cpp
@@ -68,7 +73,6 @@ set(MOCK_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/mocks/CoreScheduler.cpp
 )
 
-# Test sources
 set(TEST_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_main.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_rules.cpp
@@ -78,6 +82,11 @@ set(TEST_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_security.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_state_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_timer.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_logcapture.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_webportal_logs.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_local_settings_menu.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_ky040_decoder.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_calibration_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_telemetry_queue.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_sensor_slots.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_core_scheduler.cpp
@@ -97,8 +106,5 @@ target_include_directories(test_runner PRIVATE
   ${CMAKE_CURRENT_BINARY_DIR}/wrappers
 )
 
-# Link gcov
 target_link_libraries(test_runner gcov)
-
-# Test command
 add_test(NAME pool_controller_test COMMAND test_runner)

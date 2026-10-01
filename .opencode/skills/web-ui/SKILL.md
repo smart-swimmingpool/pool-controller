@@ -22,11 +22,15 @@ keywords:
   - pool dashboard
   - telemetry
   - hot reload
+  - olimex local tft ui
+  - qrcode page
 ---
 
 # Web UI — Pool Controller
 
 Web interface development for the ESP32 pool-controller. The UI lives in two layers: **LittleFS** (editable at runtime) and **PROGMEM** (embedded fallback in the firmware binary).
+
+> **Note:** The Olimex local TFT UI is a separate on-device interface (Adafruit GFX + ILI9341/ST7789) and is not the browser/LittleFS dashboard.
 
 > **🔍 Code Search**: Use `semble search "LittleFS.open"` or `semble search "kPortalPageHtml"` to find the fallback architecture. See `Agents.md` §7 for full `semble` usage.
 
