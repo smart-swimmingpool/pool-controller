@@ -65,7 +65,7 @@ const char *const *getTimezoneLabelList() {
   static const char *labels[] = {"UTC", "Europe/Berlin", nullptr};
   return labels;
 }
-int getTimezoneIndexFromLabel(const String &) {
+int getTimezoneIndexFromLabel(const char *) {
   return 0;
 }
 String getFormattedTime(time_t) {

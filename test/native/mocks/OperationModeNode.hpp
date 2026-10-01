@@ -19,6 +19,7 @@ public:
   void loop() {}
 
   String getMode() const { return String(_mode.c_str()); }
+  const char *getModeCStr() const { return _mode.c_str(); }
   bool setMode(String mode) { return setMode(mode, "unspecified"); }
   bool setMode(String mode, const char *source) {
     _lastModeSource = source != nullptr ? source : "unspecified";

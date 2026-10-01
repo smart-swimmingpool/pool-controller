@@ -428,6 +428,84 @@ int run_mqttpublisher_tests() {
     test_suite_end("MqttPublisher::commands_deferred_to_loop", missing == 0 ? 1 : 0, missing);
   }
 
+  // ── Test: queued commands are processed in bounded batches per loop iteration (#195) ──
+  {
+    test_begin("MqttPublisher", "processPendingCommands handles a bounded number of commands");
+
+    operationModeNode.setMode("auto");
+    AsyncMqttClientMessageProperties props{0, false, false};
+    char topic[] = "homeassistant/select/pool-controller/mode/set";
+    const char *modes[] = {"manu", "boost", "timer"};
+    for (const char *mode : modes) {
+      char payload[8];
+      snprintf(payload, sizeof(payload), "%s", mode);
+      MqttPublisher::onMqttMessage(topic, payload, props, strlen(payload), 0, strlen(payload));
+    }
+
+    int missing = 0;
+    MqttPublisher::processPendingCommands();
+    // kMaxCommandsPerLoop == 2: "manu" and "boost" applied, "timer" still queued
+    if (MqttPublisher::kMaxCommandsPerLoop == 2 && operationModeNode.getMode() == "boost") {
+      test_pass(__FILE__, __LINE__);
+    } else {
+      test_fail(__FILE__, __LINE__, "Expected exactly kMaxCommandsPerLoop commands in the first pass");
+      missing++;
+    }
+    MqttPublisher::processPendingCommands();
+    if (operationModeNode.getMode() == "timer") {
+      test_pass(__FILE__, __LINE__);
+    } else {
+      test_fail(__FILE__, __LINE__, "Remaining command was not handled in the next pass");
+      missing++;
+    }
+    operationModeNode.setMode("auto");
+
+    rc = (missing == 0) ? 0 : 1;
+    if (rc == 0)
+      passed++;
+    else
+      failed++;
+    test_suite_end("MqttPublisher::commands_bounded_per_loop", missing == 0 ? 1 : 0, missing);
+  }
+
+  // ── Test: char-based parser handles timer payloads like the former String parser ──
+  {
+    test_begin("MqttPublisher", "timer-start payload HH:MM:SS is parsed without String");
+
+    AsyncMqttClientMessageProperties props{0, false, false};
+    char topic[] = "homeassistant/time/pool-controller/timer-start/set";
+    char payload[] = "07:45:00";
+    MqttPublisher::handleMqttMessage(topic, payload, props, strlen(payload), 0, strlen(payload));
+    TimerSetting ts = operationModeNode.getTimerSetting();
+    int missing = 0;
+    if (ts.timerStartHour == 7 && ts.timerStartMinutes == 45) {
+      test_pass(__FILE__, __LINE__);
+    } else {
+      test_fail(__FILE__, __LINE__, "timer-start 07:45:00 not applied");
+      missing++;
+    }
+
+    // Oversized payloads are ignored instead of being truncated
+    char big[200];
+    memset(big, '1', sizeof(big) - 1);
+    big[sizeof(big) - 1] = '\0';
+    MqttPublisher::handleMqttMessage(topic, big, props, strlen(big), 0, strlen(big));
+    ts = operationModeNode.getTimerSetting();
+    if (ts.timerStartHour == 7 && ts.timerStartMinutes == 45) {
+      test_pass(__FILE__, __LINE__);
+    } else {
+      test_fail(__FILE__, __LINE__, "Oversized payload changed the timer");
+      missing++;
+    }
+
+    rc = (missing == 0) ? 0 : 1;
+    if (rc == 0)
+      passed++;
+    else
+      failed++;
+    test_suite_end("MqttPublisher::timer_payload_char_parser", missing == 0 ? 1 : 0, missing);
+  }
+
   // ── Test: Handle MQTT pump command in manual mode ──
   {
     test_begin("MqttPublisher", "handle pump command in manual mode");

@@ -56,11 +56,15 @@ public:
   static void onMqttMessage(
     char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total);
 
-  /// Handle all queued MQTT commands. Call from the loop task only.
+  /// Maximum number of queued commands handled per loop iteration.
+  static constexpr size_t kMaxCommandsPerLoop = 2;
+
+  /// Handle up to kMaxCommandsPerLoop queued MQTT commands. Call from the loop task only.
   static void processPendingCommands();
 
   // ── Command validation (public for testing) ──
   /** @brief Validate a command against a whitelist. */
+  static bool isValidCommand(const char *value, const char *const validCommands[], size_t count);
   static bool isValidCommand(const String &value, const char *const validCommands[], size_t count);
 
 private:
