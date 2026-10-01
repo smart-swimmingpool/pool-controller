@@ -98,12 +98,36 @@ static int test_reset_forgets_history() {
   return 0;
 }
 
+// Regression (review #208): continuity must not cross a sensor failure
+static int test_power_on_after_failure_hot_collector() {
+  test_begin("TemperatureFilter", "82 -> -127 -> 85 does not accept 85 immediately");
+  TemperatureReadingFilter filter;
+  ASSERT_TRUE(filter.apply(82.0f) == Action::ACCEPT);
+  ASSERT_TRUE(filter.apply(-127.0f) == Action::REJECT);
+  ASSERT_TRUE(filter.apply(85.0f) == Action::REJECT);  // no valid previous value to hold
+  ASSERT_TRUE(filter.apply(85.0f) == Action::REJECT);
+  ASSERT_TRUE(filter.apply(85.0f) == Action::ACCEPT);  // confirmed by consecutive reads
+  return 0;
+}
+
+static int test_power_on_after_failure_normal() {
+  test_begin("TemperatureFilter", "25 -> -127 -> 85 rejects 85, next real value accepted");
+  TemperatureReadingFilter filter;
+  ASSERT_TRUE(filter.apply(25.0f) == Action::ACCEPT);
+  ASSERT_TRUE(filter.apply(-127.0f) == Action::REJECT);
+  ASSERT_TRUE(filter.apply(85.0f) == Action::REJECT);
+  ASSERT_TRUE(filter.apply(25.2f) == Action::ACCEPT);
+  ASSERT_TRUE(filter.apply(85.0f) == Action::HOLD);  // valid sequence again
+  return 0;
+}
+
 int run_temperature_filter_tests() {
   int passed = 0;
   int failed = 0;
   int (*tests[])() = {test_normal_values_accepted, test_invalid_values_rejected, test_power_on_value_held,
     test_power_on_value_without_history_rejected, test_power_on_value_confirmed_by_repetition,
-    test_power_on_value_continuing_hot_collector, test_reset_forgets_history};
+    test_power_on_value_continuing_hot_collector, test_reset_forgets_history, test_power_on_after_failure_hot_collector,
+    test_power_on_after_failure_normal};
   for (auto test : tests) {
     if (test() == 0) {
       passed++;

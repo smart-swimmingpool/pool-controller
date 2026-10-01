@@ -13,6 +13,10 @@
  *   85 °C, so the value is only accepted when it continues a nearby previous
  *   reading or is confirmed by consecutive reads; otherwise the previous
  *   temperature is held.
+ * - A rejected reading interrupts the valid sequence: continuity is not
+ *   carried across a sensor failure, because a reconnect is exactly when the
+ *   power-on value appears. HOLD is therefore only returned while the
+ *   previous temperature is still valid.
  *
  * Header-only and hardware-independent for native unit tests.
  */
@@ -40,7 +44,7 @@ public:
 
   Action apply(float raw) {
     if (std::isnan(raw) || raw < kMinValidC || raw > kMaxValidC) {
-      powerOnReads_ = 0;
+      reset();
       return Action::REJECT;
     }
     if (raw == kPowerOnResetC) {
