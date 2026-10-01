@@ -11,12 +11,28 @@ static int g_testsFailed = 0;
 static int g_assertionsPassed = 0;
 static int g_assertionsFailed = 0;
 
-void test_begin(const char *suite, const char *name) { printf("  TEST  %s :: %s\n", suite, name); }
-void test_pass(const char *file, int line) { g_assertionsPassed++; printf("    ✓ %s:%d\n", file, line); }
-void test_fail(const char *file, int line, const char *msg) { g_assertionsFailed++; printf("    ✗ %s:%d: %s\n", file, line, msg); }
+void test_begin(const char *suite, const char *name) {
+  printf("  TEST  %s :: %s\n", suite, name);
+}
+
+void test_pass(const char *file, int line) {
+  g_assertionsPassed++;
+  printf("    ✓ %s:%d\n", file, line);
+}
+
+void test_fail(const char *file, int line, const char *msg) {
+  g_assertionsFailed++;
+  printf("    ✗ %s:%d: %s\n", file, line, msg);
+}
+
 void test_suite_end(const char *name, int passed, int failed) {
-  if (failed == 0) { printf("  ✓ SUITE %s (%d passed)\n", name, passed); g_testsPassed++; }
-  else { printf("  ✗ SUITE %s (%d passed, %d failed)\n", name, passed, failed); g_testsFailed++; }
+  if (failed == 0) {
+    printf("  ✓ SUITE %s (%d passed)\n", name, passed);
+    g_testsPassed++;
+  } else {
+    printf("  ✗ SUITE %s (%d passed, %d failed)\n", name, passed, failed);
+    g_testsFailed++;
+  }
 }
 
 extern int run_rule_tests();
