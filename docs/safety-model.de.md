@@ -141,9 +141,13 @@ und das System kann Korrekturmaßnahmen ergreifen.
 
 ### Sensor-Auto-Wiederherstellung
 
-- Fehlerhafter DS18B20-Leseversuch löst schnelles Nachfragen aus (5s statt 300s)
-- Nach 3 erfolgreichen Leseversuchen zurück zum normalen Intervall
-- Verhindert unnötige Warnungen durch kurzzeitige Sensor-Aussetzer
+- Fehlerhafter DS18B20-Leseversuch löst schnelles Nachfragen aus (5s statt Messintervall)
+- Zurück zum normalen Intervall, sobald ein gültiger Messwert vorliegt
+- Plausibilitätsfilter: Werte außerhalb von -55…125 °C gelten als Fehlmessung
+- Der Einschaltwert 85,0 °C (nach einer Spannungsspitze) wird ignoriert und der letzte Wert gehalten,
+  außer er schließt an einen Messwert nahe 85 °C an oder tritt dreimal hintereinander auf
+- Nach 3 Fehlmessungen in Folge wird der OneWire-Bus neu durchsucht, sodass ein wieder angeschlossener
+  oder getauschter Fühler ohne Neustart gefunden wird
 
 ### NTP-Graceful-Degradation
 
