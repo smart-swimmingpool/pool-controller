@@ -12,6 +12,8 @@
 
 #include <ArduinoJson.h>
 #include <Preferences.h>
+#include <cmath>
+#include <cstdlib>
 #include <memory>
 
 #include "ConfigManager.hpp"
@@ -992,6 +994,26 @@ void MqttPublisher::publishSensorMappingDiscovery() {
   LOG_INFO("• HA: Sensor mapping select entities published (%u options)\n", solarOptCount);
 }
 
+// Parse a numeric MQTT payload strictly: the whole payload must be a finite
+// number within [minVal, maxVal]. String::toFloat() would silently turn a
+// non-numeric payload into 0.0, which is inside most valid ranges.
+static bool parseFloatInRange(const String &value, float minVal, float maxVal, float &out) {
+  const char *text = value.c_str();
+  char *end = nullptr;
+  float parsed = strtof(text, &end);
+  if (end == text) {
+    return false;  // no digits at all
+  }
+  while (*end == ' ') {
+    end++;
+  }
+  if (*end != '\0' || !std::isfinite(parsed) || parsed < minVal || parsed > maxVal) {
+    return false;
+  }
+  out = parsed;
+  return true;
+}
+
 // Helper function to check if MQTT authentication is configured
 static bool isMqttAuthenticated() {
   // Check if MQTT connection is using authentication
@@ -1096,7 +1118,20 @@ void MqttPublisher::handleMqttMessage(
   }
 
   if (top.endsWith("/thermostat/temperature/set")) {
-    float val = value.toFloat();
+    // MQTT authentication is optional, but if configured, we check it
+    if (shouldEnforceMqttAuth() && !isMqttAuthenticated()) {
+      LOG_WARN("MQTT: Config command rejected - MQTT authentication required\n");
+      publishStates();
+      return;
+    }
+
+    // Same limits as pool-max-temp: this value becomes the maximum pool temperature
+    float val = 0.0f;
+    if (!parseFloatInRange(value, 0.0f, 40.0f, val)) {
+      LOG_WARN("MQTT: Invalid climate target temperature: %s\n", value.c_str());
+      publishStates();
+      return;
+    }
     LOG_INFO("MQTT: Climate target temperature → %.1f\n", val);
     operationModeNode.setPoolMaxTemperature(val);
     ConfigManager::getSettings().tempMaxPool = val;
@@ -1159,10 +1194,10 @@ void MqttPublisher::handleMqttMessage(
       return;
     }
 
-    float val = value.toFloat();
-    // Always validate range for security
-    if (val < 0.0f || val > 40.0f) {
-      LOG_WARN("MQTT: Invalid pool-max-temp value: %.1f\n", val);
+    float val = 0.0f;
+    // Always validate format and range for security
+    if (!parseFloatInRange(value, 0.0f, 40.0f, val)) {
+      LOG_WARN("MQTT: Invalid pool-max-temp value: %s\n", value.c_str());
       publishStates();
       return;
     }
@@ -1177,10 +1212,10 @@ void MqttPublisher::handleMqttMessage(
       return;
     }
 
-    float val = value.toFloat();
-    // Always validate range for security
-    if (val < 0.0f || val > 100.0f) {
-      LOG_WARN("MQTT: Invalid solar-min-temp value: %.1f\n", val);
+    float val = 0.0f;
+    // Always validate format and range for security
+    if (!parseFloatInRange(value, 0.0f, 100.0f, val)) {
+      LOG_WARN("MQTT: Invalid solar-min-temp value: %s\n", value.c_str());
       publishStates();
       return;
     }
@@ -1195,10 +1230,10 @@ void MqttPublisher::handleMqttMessage(
       return;
     }
 
-    float val = value.toFloat();
-    // Always validate range for security
-    if (val < 0.0f || val > 10.0f) {
-      LOG_WARN("MQTT: Invalid hysteresis value: %.1f\n", val);
+    float val = 0.0f;
+    // Always validate format and range for security
+    if (!parseFloatInRange(value, 0.0f, 10.0f, val)) {
+      LOG_WARN("MQTT: Invalid hysteresis value: %s\n", value.c_str());
       publishStates();
       return;
     }
@@ -1206,8 +1241,8 @@ void MqttPublisher::handleMqttMessage(
     ConfigManager::getSettings().tempHysteresis = val;
     ConfigManager::save();
   } else if (top.endsWith("/temp-circ-threshold/set")) {
-    float val = value.toFloat();
-    if (val >= 0.0f && val <= 40.0f) {
+    float val = 0.0f;
+    if (parseFloatInRange(value, 0.0f, 40.0f, val)) {
       ConfigManager::getSettings().tempCircThreshold = val;
       ConfigManager::save();
     }
