@@ -380,6 +380,85 @@ int run_mqttpublisher_tests() {
     test_suite_end("MqttPublisher::handle_climate_mode_sources", missing == 0 ? 1 : 0, missing);
   }
 
+  // ── Test: Climate target temperature is validated (#197) ──
+  {
+    test_begin("MqttPublisher", "climate target temperature rejects invalid values");
+
+    AsyncMqttClientMessageProperties props{0, false, false};
+    char topic[] = "homeassistant/climate/pool-controller/thermostat/temperature/set";
+    ConfigManager::getSettings().tempMaxPool = 28.0f;
+
+    const char *invalid[] = {"60", "40.5", "-1", "abc", "", "28abc", "nan", "inf"};
+    int missing = 0;
+    for (const char *payload : invalid) {
+      char buf[16];
+      snprintf(buf, sizeof(buf), "%s", payload);
+      MqttPublisher::handleMqttMessage(topic, buf, props, strlen(buf), 0, strlen(buf));
+      if (ConfigManager::getSettings().tempMaxPool != 28.0f) {
+        char msg[96];
+        snprintf(msg, sizeof(msg), "Invalid payload '%s' changed tempMaxPool", payload);
+        test_fail(__FILE__, __LINE__, msg);
+        ConfigManager::getSettings().tempMaxPool = 28.0f;
+        missing++;
+      } else {
+        test_pass(__FILE__, __LINE__);
+      }
+    }
+
+    char valid[] = "30.5";
+    MqttPublisher::handleMqttMessage(topic, valid, props, strlen(valid), 0, strlen(valid));
+    if (ConfigManager::getSettings().tempMaxPool == 30.5f) {
+      test_pass(__FILE__, __LINE__);
+    } else {
+      test_fail(__FILE__, __LINE__, "Valid climate target temperature 30.5 was not applied");
+      missing++;
+    }
+    ConfigManager::getSettings().tempMaxPool = 28.0f;
+
+    rc = (missing == 0) ? 0 : 1;
+    if (rc == 0)
+      passed++;
+    else
+      failed++;
+    test_suite_end("MqttPublisher::climate_temperature_validation", missing == 0 ? 1 : 0, missing);
+  }
+
+  // ── Test: Numeric setpoints reject non-numeric payloads ──
+  {
+    test_begin("MqttPublisher", "pool-max-temp rejects non-numeric payload");
+
+    AsyncMqttClientMessageProperties props{0, false, false};
+    char topic[] = "homeassistant/number/pool-controller/pool-max-temp/set";
+    ConfigManager::getSettings().tempMaxPool = 28.0f;
+
+    int missing = 0;
+    char garbage[] = "abc";
+    MqttPublisher::handleMqttMessage(topic, garbage, props, strlen(garbage), 0, strlen(garbage));
+    if (ConfigManager::getSettings().tempMaxPool == 28.0f) {
+      test_pass(__FILE__, __LINE__);
+    } else {
+      test_fail(__FILE__, __LINE__, "Non-numeric pool-max-temp changed tempMaxPool");
+      missing++;
+    }
+
+    char valid[] = "27";
+    MqttPublisher::handleMqttMessage(topic, valid, props, strlen(valid), 0, strlen(valid));
+    if (ConfigManager::getSettings().tempMaxPool == 27.0f) {
+      test_pass(__FILE__, __LINE__);
+    } else {
+      test_fail(__FILE__, __LINE__, "Valid pool-max-temp 27 was not applied");
+      missing++;
+    }
+    ConfigManager::getSettings().tempMaxPool = 28.0f;
+
+    rc = (missing == 0) ? 0 : 1;
+    if (rc == 0)
+      passed++;
+    else
+      failed++;
+    test_suite_end("MqttPublisher::setpoint_numeric_validation", missing == 0 ? 1 : 0, missing);
+  }
+
   // ── Test: Handle MQTT pump command in manual mode ──
   {
     test_begin("MqttPublisher", "handle pump command in manual mode");
