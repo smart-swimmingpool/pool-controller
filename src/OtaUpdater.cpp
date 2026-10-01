@@ -21,6 +21,7 @@
 #include "SystemMonitor.hpp"
 #include "TimeClientHelper.hpp"
 #include "LogCapture.hpp"
+#include "OtaDownloadGuard.hpp"
 
 namespace PoolController {
 
@@ -64,6 +65,7 @@ String OtaUpdater::releaseUrl_;
 String OtaUpdater::downloadUrl_;
 bool OtaUpdater::updateAvailable_ = false;
 bool OtaUpdater::updateInProgress_ = false;
+std::atomic<bool> OtaUpdater::updateRequested_{false};
 int OtaUpdater::progress_ = 0;
 String OtaUpdater::statusMessage_;
 unsigned long OtaUpdater::lastCheckTime_ = 0;
@@ -77,7 +79,21 @@ void OtaUpdater::begin() {
   statusMessage_ = "Idle";
 }
 
+void OtaUpdater::requestUpdate() {
+  updateRequested_ = true;
+}
+
+bool OtaUpdater::isUpdateRequested() {
+  return updateRequested_.load();
+}
+
 void OtaUpdater::loop() {
+  // Run a requested update on the loop task (requests come from other tasks)
+  if (updateRequested_.exchange(false)) {
+    startUpdate();
+    return;
+  }
+
   // Periodic check when WiFi is connected and no update is in progress
   if (NetworkManager::isWiFiConnected() && !updateInProgress_) {
     unsigned long now = millis();
@@ -483,9 +499,23 @@ bool OtaUpdater::downloadAndApply(const String &url) {
   uint8_t buffer[kOtaBufferSize];
   int totalRead = 0;
 
+  // The loop feeds the task watchdog, so a stalled connection must be
+  // detected here — otherwise the controller would wait forever.
+  OtaDownloadGuard guard(millis(), kDownloadStallTimeoutMs, kDownloadTotalTimeoutMs);
+
   while (http.connected() && totalRead < totalSize) {
     // Feed watchdog to prevent 30s timeout reset during long downloads
     PoolController::SystemMonitor::feedWatchdog();
+
+    OtaDownloadGuard::Status guardStatus = guard.check(millis());
+    if (guardStatus != OtaDownloadGuard::Status::OK) {
+      LOG_ERROR("OTA: Download %s at byte %d of %d — aborting\n",
+        guardStatus == OtaDownloadGuard::Status::STALLED ? "stalled" : "timed out", totalRead, totalSize);
+      statusMessage_ = guardStatus == OtaDownloadGuard::Status::STALLED ? "Error: Download stalled" : "Error: Download timed out";
+      Update.end(false);
+      http.end();
+      return false;
+    }
 
     size_t available = stream->available();
     if (available == 0) {
@@ -498,6 +528,7 @@ bool OtaUpdater::downloadAndApply(const String &url) {
       delay(10);
       continue;
     }
+    guard.onData(millis());
 
     size_t written = Update.write(buffer, read);
     if (written != read) {
