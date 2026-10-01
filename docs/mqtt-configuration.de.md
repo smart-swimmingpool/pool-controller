@@ -162,7 +162,7 @@ Ein gebrauchsfertiges Lovelace-Dashboard-Beispiel mit:
 
 ist verfügbar in:
 
-- [`docs/home-assistant-dashboard-pool.yaml`](home-assistant-dashboard-pool.yaml)
+- [`docs/home-assistant/dashboard.yaml`](home-assistant/dashboard.yaml)
 
 ## Migration von Homie (Vor v3.3.0)
 
