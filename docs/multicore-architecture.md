@@ -55,6 +55,12 @@ dynamic task creation at runtime, no heap growth).
 | PublishTask | 0 | 1 | 4 KB | all builds |
 | DisplayTask | 0 | 1 | 3 KB | NORVI only (`#ifdef NORVI_AE01_R`) |
 
+If a task cannot be created (heap exhausted at boot), `CoreScheduler` does not
+continue silently: a missing SensorTask or PublishTask restarts the controller —
+the rules must not run on stale temperatures. If the failure persists, the
+boot-loop detection forces safe mode (all relays off). A missing DisplayTask is
+logged and the controller continues without OLED rendering.
+
 FreeRTOS priorities only matter within a core: the I/O tasks yield via
 `vTaskDelay` and stay below the WiFi-stack tasks on Core 0, so they never preempt
 the control loop on Core 1.
@@ -62,7 +68,7 @@ the control loop on Core 1.
 ## Data flow
 
 ```text
-SensorTask (Core 0) ── lock-free slots ──▶ control loop (Core 1): rules/relays/watchdog
+SensorTask (Core 0) ── sensor slots ────▶ control loop (Core 1): rules/relays/watchdog
 SensorTask ── status ────────────────────▶ DegradationManager (Core 1)
 control loop ── update() + render request ─▶ DisplayTask (Core 0, NORVI)
 button scan stays on the control loop (Core 1) — callbacks mutate loop singletons
@@ -72,10 +78,11 @@ control loop ── async network/OTA ──────── (unchanged, Core 
 
 Every cross-task data path is **single-writer**:
 
-- Sensor values: lock-free slots (atomic/single-word) — SensorTask writes, control
-  loop reads.
-- Display state: `volatile` render-request flag — control loop requests, DisplayTask
-  renders (word-sized access is atomic on ESP32).
+- Sensor values: sensor slots — SensorTask writes, control loop and display read.
+  Value and found flag are copied together under a short critical section (portMUX),
+  so readers always get a consistent snapshot of one measurement.
+- Sensor status and display flags: `std::atomic` — `volatile` gives neither
+  inter-core visibility nor ordering.
 - Button input: stays on the control loop — button callbacks mutate control-loop
   singletons (`operationModeNode`, `poolPumpNode`), so scanning on Core 0 would
   violate the single-writer rule. The OLED *rendering* (blocking I2C work) is what

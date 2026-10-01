@@ -5,7 +5,9 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <atomic>
 #include <cmath>
+#include <thread>
 
 #include "SensorSlots.hpp"
 
@@ -106,6 +108,38 @@ int run_sensor_slots_tests() {
     ASSERT_FALSE(SensorSlots::isFound(SensorId::POOL));
 
     test_suite_end("SensorSlots::independent", 1, 0);
+    passed++;
+  }
+
+  // ── Test: concurrent reader never sees a mixed value/found pair (review #170) ──
+  {
+    test_begin("SensorSlots", "snapshot is consistent under concurrent writes");
+
+    SensorSlots::reset();
+    std::atomic<bool> stop{false};
+    std::thread writer([&stop] {
+      bool valid = true;
+      while (!stop.load()) {
+        if (valid) {
+          SensorSlots::write(SensorId::POOL, 25.0f, true);
+        } else {
+          SensorSlots::write(SensorId::POOL, NAN, false);
+        }
+        valid = !valid;
+      }
+    });
+    int mixed = 0;
+    for (int i = 0; i < 200000; i++) {
+      SensorSlots::Reading r = SensorSlots::snapshot(SensorId::POOL);
+      if (r.found == std::isnan(r.value)) {
+        mixed++;
+      }
+    }
+    stop = true;
+    writer.join();
+    ASSERT_EQ(mixed, 0);
+
+    test_suite_end("SensorSlots::snapshot_consistent", 1, 0);
     passed++;
   }
 

@@ -46,8 +46,8 @@ static void drawProgressBar();
 // ═══════════════════════════════════════════════════════════════════════════
 
 NorviOledDisplay::Page NorviOledDisplay::currentPage_ = Page::MAIN;
-volatile uint32_t NorviOledDisplay::lastUpdateMs_ = 0;
-volatile bool NorviOledDisplay::forceRedraw_ = true;
+std::atomic<uint32_t> NorviOledDisplay::lastUpdateMs_{0};
+std::atomic<bool> NorviOledDisplay::forceRedraw_{true};
 
 uint32_t NorviOledDisplay::lastButtonPressMs_ = 0;
 
@@ -343,7 +343,10 @@ void NorviOledDisplay::update() {
 
 void NorviOledDisplay::render() {
   // ── Throttle redraw rate ────────────────────────────────────────────
-  if (!forceRedraw_ && (millis() - lastUpdateMs_ < UPDATE_INTERVAL_MS)) {
+  // exchange() so a redraw requested by the control loop between check and
+  // reset is not lost
+  const bool forced = forceRedraw_.exchange(false);
+  if (!forced && (millis() - lastUpdateMs_ < UPDATE_INTERVAL_MS)) {
     return;
   }
 
@@ -351,7 +354,6 @@ void NorviOledDisplay::render() {
   updateBurnInOffset();
 
   lastUpdateMs_ = millis();
-  forceRedraw_ = false;
 
   drawPage();
   drawProgressBar();
@@ -722,9 +724,10 @@ void NorviOledDisplay::drawMainPage() {
   // ── Pool temperature ────────────────────────────────────────────────────
   display.setTextSize(2);
   dspCursor(TX, 0);
-  if (SensorSlots::isFound(SensorId::POOL)) {
+  const SensorSlots::Reading poolReading = SensorSlots::snapshot(SensorId::POOL);
+  if (poolReading.found) {
     char buf[8];
-    Utils::floatToString(SensorSlots::read(SensorId::POOL), buf, sizeof(buf), 1);
+    Utils::floatToString(poolReading.value, buf, sizeof(buf), 1);
     display.print(buf);
     drawDegC(2);
   } else {
@@ -742,9 +745,10 @@ void NorviOledDisplay::drawMainPage() {
   // ── Solar temperature ──────────────────────────────────────────────────
   display.setTextSize(2);
   dspCursor(TX, 28);
-  if (SensorSlots::isFound(SensorId::SOLAR)) {
+  const SensorSlots::Reading solarReading = SensorSlots::snapshot(SensorId::SOLAR);
+  if (solarReading.found) {
     char buf[8];
-    Utils::floatToString(SensorSlots::read(SensorId::SOLAR), buf, sizeof(buf), 1);
+    Utils::floatToString(solarReading.value, buf, sizeof(buf), 1);
     display.print(buf);
     drawDegC(2);
   } else {

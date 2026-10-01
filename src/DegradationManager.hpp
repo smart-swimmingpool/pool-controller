@@ -11,6 +11,8 @@
 
 #include <Arduino.h>
 
+#include <atomic>
+
 namespace PoolController {
 
 enum class DegradationLevel : uint8_t {
@@ -33,14 +35,13 @@ public:
   static void unforceSafeMode();
 
 private:
-  // Cross-core status: SensorTask writes on Core 0, control loop reads on Core 1.
-  // Kept volatile here to preserve PR #170 semantics during the main merge;
-  // the review finding to replace this with proper synchronization remains open.
-  static volatile bool sensorsEverReported_;
+  // Cross-core status: SensorTask writes on Core 0, control loop reads on
+  // Core 1. std::atomic gives the inter-core visibility volatile does not.
+  static std::atomic<bool> sensorsEverReported_;
   static DegradationLevel currentLevel_;
   static DegradationLevel previousLevel_;
-  static volatile bool poolSensorOk_;
-  static volatile bool solarSensorOk_;
+  static std::atomic<bool> poolSensorOk_;
+  static std::atomic<bool> solarSensorOk_;
   static bool forcedSafeMode_;
   static unsigned long lastEvaluationMs_;
 

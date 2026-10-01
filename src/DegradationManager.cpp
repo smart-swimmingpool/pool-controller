@@ -19,10 +19,10 @@ namespace PoolController {
 
 DegradationLevel DegradationManager::currentLevel_ = DegradationLevel::NORMAL;
 DegradationLevel DegradationManager::previousLevel_ = DegradationLevel::NORMAL;
-volatile bool DegradationManager::poolSensorOk_ = false;
-volatile bool DegradationManager::solarSensorOk_ = false;
+std::atomic<bool> DegradationManager::poolSensorOk_{false};
+std::atomic<bool> DegradationManager::solarSensorOk_{false};
 bool DegradationManager::forcedSafeMode_ = false;
-volatile bool DegradationManager::sensorsEverReported_ = false;
+std::atomic<bool> DegradationManager::sensorsEverReported_{false};
 unsigned long DegradationManager::lastEvaluationMs_ = 0;
 
 void DegradationManager::begin() {

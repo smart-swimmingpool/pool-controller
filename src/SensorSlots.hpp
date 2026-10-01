@@ -21,33 +21,39 @@ enum class SensorId : uint8_t {
 };
 
 /**
- * @brief Fixed, lock-free slots for sensor values.
+ * @brief Fixed slots for sensor values shared across tasks.
  *
  * Single writer (SensorTask on Core 0), multiple readers (control loop,
- * display). Uses `volatile` word-sized fields: on ESP32 aligned 32-bit
- * reads/writes are atomic, so readers may see one-cycle-stale but never
- * torn values — acceptable for temperature telemetry.
+ * display). Value and found flag are written and read together under a
+ * short critical section (portMUX on ESP32, std::mutex in native tests), so
+ * readers always see a consistent snapshot of one measurement. `volatile`
+ * would give neither inter-core ordering nor a consistent pair.
  */
 class SensorSlots {
 public:
+  /** @brief A consistent value/found pair of one measurement. */
+  struct Reading {
+    float value;  ///< °C, NAN if unknown
+    bool found;   ///< Sensor present and reading valid
+  };
+
   /** @brief Reset all slots to NaN / not-found (tests only). */
   static void reset();
 
   /** @brief Writer: publish a new value. */
   static void write(SensorId id, float value, bool found);
 
+  /** @brief Reader: value and found flag of the same measurement. */
+  static Reading snapshot(SensorId id);
+
   /** @brief Reader: get the latest value (°C, NAN if unknown). */
-  static float read(SensorId id);
+  static float read(SensorId id) { return snapshot(id).value; }
 
   /** @brief Reader: check whether the sensor is currently found. */
-  static bool isFound(SensorId id);
+  static bool isFound(SensorId id) { return snapshot(id).found; }
 
 private:
-  struct Slot {
-    volatile float value;
-    volatile bool found;
-  };
-  static Slot slots_[static_cast<uint8_t>(SensorId::COUNT)];
+  static Reading slots_[static_cast<uint8_t>(SensorId::COUNT)];
 };
 
 }  // namespace PoolController

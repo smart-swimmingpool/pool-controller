@@ -3,40 +3,67 @@
 
 /**
  * @file SensorSlots.cpp
- * @brief Lock-free temperature slot implementation.
+ * @brief Cross-task temperature slots with consistent snapshots.
  */
 
 #include "SensorSlots.hpp"
 
 #include <cmath>
 
+#if defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
+#include <freertos/FreeRTOS.h>
+#include <freertos/portmacro.h>
+#else
+#include <mutex>
+#endif
+
 namespace PoolController {
 
-SensorSlots::Slot SensorSlots::slots_[static_cast<uint8_t>(SensorId::COUNT)] = {
+namespace {
+#if defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
+portMUX_TYPE slotsMux = portMUX_INITIALIZER_UNLOCKED;
+inline void lockSlots() {
+  portENTER_CRITICAL(&slotsMux);
+}
+inline void unlockSlots() {
+  portEXIT_CRITICAL(&slotsMux);
+}
+#else
+std::mutex slotsMutex;
+inline void lockSlots() {
+  slotsMutex.lock();
+}
+inline void unlockSlots() {
+  slotsMutex.unlock();
+}
+#endif
+}  // namespace
+
+SensorSlots::Reading SensorSlots::slots_[static_cast<uint8_t>(SensorId::COUNT)] = {
   {NAN, false},
   {NAN, false},
   {NAN, false},
 };
 
 void SensorSlots::reset() {
+  lockSlots();
   for (auto &slot : slots_) {
-    slot.value = NAN;
-    slot.found = false;
+    slot = {NAN, false};
   }
+  unlockSlots();
 }
 
 void SensorSlots::write(SensorId id, float value, bool found) {
-  Slot &slot = slots_[static_cast<uint8_t>(id)];
-  slot.value = value;
-  slot.found = found;
+  lockSlots();
+  slots_[static_cast<uint8_t>(id)] = {value, found};
+  unlockSlots();
 }
 
-float SensorSlots::read(SensorId id) {
-  return slots_[static_cast<uint8_t>(id)].value;
-}
-
-bool SensorSlots::isFound(SensorId id) {
-  return slots_[static_cast<uint8_t>(id)].found;
+SensorSlots::Reading SensorSlots::snapshot(SensorId id) {
+  lockSlots();
+  Reading reading = slots_[static_cast<uint8_t>(id)];
+  unlockSlots();
+  return reading;
 }
 
 }  // namespace PoolController

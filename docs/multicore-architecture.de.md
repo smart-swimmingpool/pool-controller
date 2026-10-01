@@ -55,6 +55,12 @@ Alle I/O-Tasks werden in `setup()` vom `CoreScheduler` erzeugt und bleiben stati
 | PublishTask | 0 | 1 | 4 KB | allen Builds |
 | DisplayTask | 0 | 1 | 3 KB | nur NORVI (`#ifdef NORVI_AE01_R`) |
 
+Kann ein Task nicht erzeugt werden (Heap beim Start erschöpft), läuft der
+`CoreScheduler` nicht stillschweigend weiter: Fehlt SensorTask oder PublishTask, startet
+der Controller neu — die Regeln dürfen nicht mit veralteten Temperaturen arbeiten.
+Bleibt der Fehler bestehen, erzwingt die Boot-Loop-Erkennung den Safe-Mode (alle Relais
+aus). Ein fehlender DisplayTask wird protokolliert, der Controller läuft ohne OLED-Ausgabe weiter.
+
 FreeRTOS-Prioritäten gelten nur innerhalb eines Kerns: Die I/O-Tasks geben per
 `vTaskDelay` nach und bleiben unterhalb der WiFi-Stack-Tasks auf Kern 0 — sie können
 die Regelschleife auf Kern 1 also nie verdrängen.
@@ -62,7 +68,7 @@ die Regelschleife auf Kern 1 also nie verdrängen.
 ## Datenfluss
 
 ```text
-SensorTask (Kern 0) ── lock-free Slots ──▶ Regelschleife (Kern 1): Regeln/Relais/Watchdog
+SensorTask (Kern 0) ── Sensor-Slots ────▶ Regelschleife (Kern 1): Regeln/Relais/Watchdog
 SensorTask ── Status ────────────────────▶ DegradationManager (Kern 1)
 Regelschleife ── update() + Render-Anforderung ─▶ DisplayTask (Kern 0, NORVI)
 Tasterabfrage bleibt in der Regelschleife (Kern 1) — Callbacks mutieren Loop-Singletons
@@ -72,9 +78,11 @@ Regelschleife ── asynchrones Netzwerk/OTA ── (unverändert, Kern 1)
 
 Jeder task-übergreifende Datenpfad ist **Single-Writer**:
 
-- Sensorwerte: lock-free Slots (atomar/ein Wort) — SensorTask schreibt, Regelschleife liest.
-- Display-Zustand: `volatile`-Render-Anforderungs-Flag — Regelschleife fordert an,
-  DisplayTask rendert (Wortzugriff ist auf dem ESP32 atomar).
+- Sensorwerte: Sensor-Slots — SensorTask schreibt, Regelschleife und Display lesen.
+  Wert und Gefunden-Flag werden zusammen in einem kurzen kritischen Abschnitt (portMUX)
+  kopiert, Leser erhalten immer einen konsistenten Stand einer Messung.
+- Sensorstatus und Display-Flags: `std::atomic` — `volatile` sorgt weder für
+  Sichtbarkeit zwischen den Kernen noch für Reihenfolge.
 - Taster-Eingaben: bleiben in der Regelschleife — die Taster-Callbacks mutieren
   Loop-Singletons (`operationModeNode`, `poolPumpNode`); eine Abfrage auf Kern 0
   würde die Single-Writer-Regel verletzen. Ausgelagert ist nur das OLED-*Rendering*

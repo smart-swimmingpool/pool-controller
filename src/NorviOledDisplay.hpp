@@ -27,6 +27,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <cstdint>
 #include <cstddef>
 
@@ -225,11 +226,10 @@ private:
 
   static Page currentPage_;
   // Written by the control loop (Core 1) and read/reset by DisplayTask
-  // (Core 0): word-sized access is atomic on ESP32, so a one-cycle-stale
-  // redraw decision is acceptable.
-  static volatile uint32_t lastUpdateMs_;
+  // (Core 0): std::atomic for inter-core visibility and ordering.
+  static std::atomic<uint32_t> lastUpdateMs_;
   static constexpr uint32_t UPDATE_INTERVAL_MS{2000};
-  static volatile bool forceRedraw_;
+  static std::atomic<bool> forceRedraw_;
 
   // ── Idle auto-return ─────────────────────────────────────────────────
   static uint32_t lastButtonPressMs_;
