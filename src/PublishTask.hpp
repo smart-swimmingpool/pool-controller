@@ -24,8 +24,8 @@ namespace PoolController {
  */
 class PublishTask {
 public:
-  /** @brief Create and start the task pinned to the given core. */
-  static void start(uint8_t priority, uint16_t stackBytes, BaseType_t core);
+  /** @brief Create and start the task pinned to the given core. @return false if it could not be created. */
+  static bool start(uint8_t priority, uint16_t stackBytes, BaseType_t core);
 
   /** @brief Log the task's stack high-water mark. */
   static void logStackWatermark();

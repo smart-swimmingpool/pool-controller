@@ -39,8 +39,8 @@ void publishTaskFunc(void *) {
   }
 }
 
-void PublishTask::start(uint8_t priority, uint16_t stackBytes, BaseType_t core) {
-  xTaskCreatePinnedToCore(publishTaskFunc, "publish", stackBytes, nullptr, priority, &publishTaskHandle, core);
+bool PublishTask::start(uint8_t priority, uint16_t stackBytes, BaseType_t core) {
+  return xTaskCreatePinnedToCore(publishTaskFunc, "publish", stackBytes, nullptr, priority, &publishTaskHandle, core) == pdPASS;
 }
 
 void PublishTask::logStackWatermark() {
