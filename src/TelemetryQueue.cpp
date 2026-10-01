@@ -12,7 +12,7 @@ namespace PoolController {
 
 bool TelemetryQueue::enqueue(PublishRequestKind kind) {
   const size_t tail = tail_.load(std::memory_order_relaxed);
-  const size_t next = (tail + 1) % (CAPACITY + 1);
+  const size_t next = (tail + 1) % SLOTS;
   if (next == head_.load(std::memory_order_acquire)) {
     return false;  // full
   }
@@ -27,14 +27,14 @@ bool TelemetryQueue::dequeue(PublishRequestKind &kind) {
     return false;  // empty
   }
   kind = items_[head];
-  head_.store((head + 1) % (CAPACITY + 1), std::memory_order_release);
+  head_.store((head + 1) % SLOTS, std::memory_order_release);
   return true;
 }
 
 size_t TelemetryQueue::count() const {
   const size_t head = head_.load(std::memory_order_acquire);
   const size_t tail = tail_.load(std::memory_order_acquire);
-  return (tail + CAPACITY + 1 - head) % (CAPACITY + 1);
+  return (tail + SLOTS - head) % SLOTS;
 }
 
 void TelemetryQueue::reset() {

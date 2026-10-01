@@ -131,6 +131,36 @@ int run_telemetry_queue_tests() {
     passed++;
   }
 
+  // ── Test: wrap-around keeps indices inside the storage (review #170) ──
+  // fill -> dequeue -> enqueue -> drain, several rounds so head and tail pass
+  // the last slot. With ASan an out-of-bounds slot access fails this test.
+  {
+    test_begin("TelemetryQueue", "wrap-around stays in bounds and keeps FIFO order");
+
+    TelemetryQueue queue;
+    for (int round = 0; round < 3; round++) {
+      for (size_t i = 0; i < TelemetryQueue::CAPACITY; i++) {
+        ASSERT_TRUE(queue.enqueue(i % 2 == 0 ? PublishRequestKind::STATES : PublishRequestKind::DISCOVERY));
+      }
+      PublishRequestKind kind;
+      ASSERT_TRUE(queue.dequeue(kind));
+      ASSERT_TRUE(kind == PublishRequestKind::STATES);
+      ASSERT_TRUE(queue.enqueue(PublishRequestKind::DISCOVERY));
+      ASSERT_EQ(queue.count(), TelemetryQueue::CAPACITY);
+      for (size_t i = 1; i < TelemetryQueue::CAPACITY; i++) {
+        ASSERT_TRUE(queue.dequeue(kind));
+        ASSERT_TRUE(kind == (i % 2 == 0 ? PublishRequestKind::STATES : PublishRequestKind::DISCOVERY));
+      }
+      ASSERT_TRUE(queue.dequeue(kind));
+      ASSERT_TRUE(kind == PublishRequestKind::DISCOVERY);
+      ASSERT_FALSE(queue.dequeue(kind));
+      ASSERT_EQ(queue.count(), 0u);
+    }
+
+    test_suite_end("TelemetryQueue::wrap_around", 1, 0);
+    passed++;
+  }
+
   (void)failed;
   return 0;
 }
