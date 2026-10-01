@@ -61,8 +61,8 @@ private:
   /// [0, CAPACITY] and the storage needs CAPACITY + 1 slots.
   static constexpr size_t SLOTS = CAPACITY + 1;
 
-  std::atomic<size_t> head_{0};      ///< Consumer index (only consumer writes)
-  std::atomic<size_t> tail_{0};      ///< Producer index (only producer writes)
+  std::atomic<size_t> head_{0};           ///< Consumer index (only consumer writes)
+  std::atomic<size_t> tail_{0};           ///< Producer index (only producer writes)
   PublishRequestKind items_[SLOTS] = {};  ///< Fixed ring storage
 };
 
