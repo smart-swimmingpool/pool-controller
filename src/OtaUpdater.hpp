@@ -11,6 +11,9 @@
 
 #include <Arduino.h>
 
+#include <atomic>
+#include <memory>
+
 namespace PoolController {
 
 /**
@@ -36,7 +39,7 @@ public:
   /// True if a newer release was found on GitHub.
   static bool isUpdateAvailable();
 
-  /// True while downloading and flashing.
+  /// True while downloading and flashing (until reboot or failure).
   static bool isUpdateInProgress();
 
   /// Current running firmware version (FW_VERSION).
@@ -60,8 +63,18 @@ public:
   /// Check GitHub for a newer release. Returns true if update available.
   static bool checkForUpdate();
 
-  /// Start the OTA download + flash. Returns true if started.
+  /// Start the OTA update: connect and request the firmware (bounded by the
+  /// client timeout), then return. The body is streamed by loop(), one
+  /// bounded step per iteration, so the control loop keeps running.
+  /// Returns true if the download started. Call only from the loop task.
   static bool startUpdate();
+
+  /// Request an OTA update from another task (e.g. the MQTT callback on the
+  /// AsyncTCP task). The update is started by loop() on the loop task.
+  static void requestUpdate();
+
+  /// True while a requested update has not yet been started by loop().
+  static bool isUpdateRequested();
 
   // ── Space and Size Verification ──
 
@@ -86,7 +99,10 @@ private:
   static bool isNewerVersion(const String &current, const String &latest);
 
   // ── OTA ──
-  static bool downloadAndApply(const String &url);
+  struct DownloadContext;
+  static bool beginDownload(const String &url);
+  static void stepDownload();
+  static void failUpdate(const char *message);
 
   // ── State ──
   static String currentVersion_;
@@ -95,6 +111,8 @@ private:
   static String downloadUrl_;
   static bool updateAvailable_;
   static bool updateInProgress_;
+  static std::atomic<bool> updateRequested_;
+  static std::unique_ptr<DownloadContext> download_;
   static int progress_;
   static String statusMessage_;
   static unsigned long lastCheckTime_;
@@ -105,8 +123,10 @@ private:
   static constexpr unsigned long kClockSyncBackoffMs = 5UL * 60UL * 1000UL;  // 5 minutes backoff
   static constexpr uint8_t kMaxClockSyncRetries = 3;
   static constexpr int kOtaBufferSize = 4096;
-  static constexpr float kSpaceSafetyMargin = 0.15f;    // 15% safety margin for OTA
-  static constexpr size_t kMinFreeSpace = 1024 * 1024;  // 1MB minimum free space
+  static constexpr uint32_t kDownloadStallTimeoutMs = 30UL * 1000UL;         // abort after 30 s without data
+  static constexpr uint32_t kDownloadTotalTimeoutMs = 10UL * 60UL * 1000UL;  // abort after 10 min overall
+  static constexpr float kSpaceSafetyMargin = 0.15f;                         // 15% safety margin for OTA
+  static constexpr size_t kMinFreeSpace = 1024 * 1024;                       // 1MB minimum free space
 };
 
 }  // namespace PoolController

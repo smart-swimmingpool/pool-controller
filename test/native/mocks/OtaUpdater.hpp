@@ -18,6 +18,11 @@ public:
   static String getReleaseUrl() { return String(""); }
   static void startUpdate() {}
 
+  // Declared only: these link against the real implementation in
+  // src/OtaUpdater.cpp (compiled into the test runner as a service source).
+  static void requestUpdate();
+  static bool isUpdateRequested();
+
   // Flash space checking (added for security tests)
   static bool hasSufficientSpace(size_t firmwareSize) {
     // Simulate: 4MB available, 15% safety margin, 1MB minimum

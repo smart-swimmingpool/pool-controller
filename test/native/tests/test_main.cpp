@@ -111,6 +111,8 @@ extern int run_webportal_logs_tests();
 extern int run_local_settings_menu_tests();
 extern int run_ky040_decoder_tests();
 extern int run_calibration_manager_tests();
+extern int run_ota_download_guard_tests();
+extern int run_ota_download_session_tests();
 
 int main() {
   printf("\n══════════════════════════════════════════════════\n");
@@ -130,6 +132,8 @@ int main() {
   total += run_local_settings_menu_tests();
   total += run_ky040_decoder_tests();
   total += run_calibration_manager_tests();
+  total += run_ota_download_guard_tests();
+  total += run_ota_download_session_tests();
 
   printf("\n══════════════════════════════════════════════════\n");
   printf("  Results: %d suites passed, %d suites failed\n", g_testsPassed, g_testsFailed);

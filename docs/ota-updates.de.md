@@ -50,6 +50,10 @@ Die Firmware wird bei jedem GitHub-Release automatisch gebaut und veröffentlich
 3. Klicken, um die neueste Firmware direkt von GitHub herunterzuladen und zu flashen
 4. Der Fortschritt wird in der UI angezeigt; das Gerät startet nach Abschluss neu
 
+Der Download läuft in kleinen Schritten in der Hauptschleife, Pumpen, Regeln und Fühler arbeiten
+während der Übertragung weiter. Ein Download wird abgebrochen (und kann wiederholt werden), wenn
+30 Sekunden lang keine Daten ankommen oder er insgesamt länger als 10 Minuten dauert.
+
 ### Methode 3: PlatformIO Seriell-Upload
 
 Für die Entwicklung:

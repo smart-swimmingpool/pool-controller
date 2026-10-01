@@ -1044,8 +1044,10 @@ void MqttPublisher::handleMqttMessage(
     }
 
     if (value == "INSTALL") {
-      LOG_INFO("MQTT: Firmware update triggered from Home Assistant\n");
-      OtaUpdater::startUpdate();
+      LOG_INFO("MQTT: Firmware update requested from Home Assistant\n");
+      // Only request it here: this callback runs on the AsyncTCP task; the
+      // download is started and streamed step by step by OtaUpdater::loop().
+      OtaUpdater::requestUpdate();
     }
     return;
   }

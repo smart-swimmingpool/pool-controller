@@ -11,6 +11,7 @@
 
 #include "AsyncMqttClient.h"
 #include "MqttPublisher.hpp"
+#include "OtaUpdater.hpp"
 #include "LogCapture.hpp"
 #include "ConfigManager.hpp"
 #include "NetworkManager.hpp"
@@ -378,6 +379,40 @@ int run_mqttpublisher_tests() {
     else
       failed++;
     test_suite_end("MqttPublisher::handle_climate_mode_sources", missing == 0 ? 1 : 0, missing);
+  }
+
+  // ── Test: Firmware INSTALL only requests the update (#196) ──
+  {
+    test_begin("MqttPublisher", "firmware INSTALL is deferred to the loop task");
+
+    AsyncMqttClientMessageProperties props{0, false, false};
+    char topic[] = "homeassistant/update/pool-controller/firmware-update/set";
+    char payload[] = "INSTALL";
+    int missing = 0;
+    if (!OtaUpdater::isUpdateRequested()) {
+      test_pass(__FILE__, __LINE__);
+    } else {
+      test_fail(__FILE__, __LINE__, "Update unexpectedly requested before INSTALL");
+      missing++;
+    }
+
+    MqttPublisher::handleMqttMessage(topic, payload, props, strlen(payload), 0, strlen(payload));
+
+    // The request stays pending until OtaUpdater::loop() picks it up on the
+    // loop task — the MQTT callback itself must not start the download.
+    if (OtaUpdater::isUpdateRequested()) {
+      test_pass(__FILE__, __LINE__);
+    } else {
+      test_fail(__FILE__, __LINE__, "INSTALL must only request the update (requestUpdate), not start it");
+      missing++;
+    }
+
+    rc = (missing == 0) ? 0 : 1;
+    if (rc == 0)
+      passed++;
+    else
+      failed++;
+    test_suite_end("MqttPublisher::firmware_install_deferred", missing == 0 ? 1 : 0, missing);
   }
 
   // ── Test: Handle MQTT pump command in manual mode ──
