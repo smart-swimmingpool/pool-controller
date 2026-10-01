@@ -57,10 +57,14 @@ keywords:
 
 **Location**: `SystemMonitor.hpp:72-105`
 
-| Threshold | Value               | Action                    |
-| --------- | ------------------- | ------------------------- |
-| Warning   | <16384 bytes (16KB) | Log warning once          |
-| Critical  | <8192 bytes (8KB)   | Immediate `ESP.restart()` |
+| Threshold | Value               | Action                                                                      |
+| --------- | ------------------- | --------------------------------------------------------------------------- |
+| Low       | <16384 bytes (16KB) | Log warning once, safe mode (`CRITICAL`); reboot if it persists for 5 min |
+| Critical  | <8192 bytes (8KB)   | Immediate `ESP.restart()`                                                   |
+
+**Persistent low memory**: `SystemMonitor::lowMemoryTimer` (`PersistentConditionTimer` from
+`DegradationPolicy.hpp`) reboots after `LOW_MEMORY_REBOOT_AFTER_MS` (5 min) below 16KB without
+interruption. Safe mode switches all relays off, so the controller must not stay there indefinitely.
 
 **Check interval**: Every 10 seconds in `loop()`.
 
@@ -108,7 +112,12 @@ Then reboot — serial should show:
 | `NO_WIFI`   | 1     | WiFi/MQTT lost, local operation still works            |
 | `NO_TIME`   | 2     | NTP sync lost, timer scheduling degraded               |
 | `NO_SENSOR` | 3     | Temperature sensor failure, cautious defaults          |
-| `CRITICAL`  | 4     | Multiple failures or critically low memory → safe mode |
+| `CRITICAL`  | 4     | Low memory (<16KB) or forced (boot-loop) → safe mode   |
+
+**Classification**: `classifyDegradation()` in `DegradationPolicy.hpp` (pure, unit-tested).
+Only low memory leads to `CRITICAL`. WiFi, time and sensor problems — also in combination — never
+enter safe mode, because safe mode switches the filter pump off. The worst single condition wins
+(`NO_SENSOR` > `NO_TIME` > `NO_WIFI`). Do not reintroduce "multiple failures → CRITICAL" (#194).
 
 **Evaluation**: `DegradationManager::evaluate()` runs every 5 seconds (`EVALUATION_INTERVAL_MS`).
 
