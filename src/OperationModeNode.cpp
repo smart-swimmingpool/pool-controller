@@ -11,42 +11,13 @@
 #include "RuleManu.hpp"
 #include "RuleAuto.hpp"
 #include "RuleBoost.hpp"
+#include "SettingValidation.hpp"
 #include "Utils.hpp"
 #include "StateManager.hpp"
 #include "LogCapture.hpp"
 
 // Static member definition
 bool OperationModeNode::_suppressPersist = false;
-
-// Helper: Validate and parse float value from string
-static bool parseFloat(const String &value, float &result, float minVal, float maxVal) {
-  if (value.length() == 0)
-    return false;
-
-  bool hasDigit = false;
-  bool hasDot = false;
-  for (unsigned int i = 0; i < value.length(); i++) {
-    char c = value.charAt(i);
-    if (c == '-' || c == '+') {
-      if (i != 0)
-        return false;
-    } else if (c == '.') {
-      if (hasDot)
-        return false;
-      hasDot = true;
-    } else if (c >= '0' && c <= '9') {
-      hasDigit = true;
-    } else {
-      return false;
-    }
-  }
-
-  if (!hasDigit)
-    return false;
-
-  result = value.toFloat();
-  return (result >= minVal && result <= maxVal);
-}
 
 // Helper: Validate and parse int value from string
 static bool parseInt(const String &value, int &result, int minVal, int maxVal) {
@@ -189,7 +160,7 @@ bool OperationModeNode::applyProperty(const String &property, const String &valu
   } else if (property.equalsIgnoreCase("hysteresis")) {
     LOG_INFO("  ✔ hysteresis: %s\n", value.c_str());
     float newValue;
-    if (parseFloat(value, newValue, 0.0f, 10.0f)) {
+    if (PoolController::parseFloatInRange(value.c_str(), PoolController::SettingLimits::kHysteresis, newValue)) {
       if (newValue != _hysteresis) {
         _hysteresis = newValue;
         saveState();
@@ -201,26 +172,26 @@ bool OperationModeNode::applyProperty(const String &property, const String &valu
   } else if (property.equalsIgnoreCase("solar-min-temp")) {
     LOG_INFO("  ✔ solar min temp: %s\n", value.c_str());
     float newValue;
-    if (parseFloat(value, newValue, 0.0f, 60.0f)) {
+    if (PoolController::parseFloatInRange(value.c_str(), PoolController::SettingLimits::kSolarMinTemp, newValue)) {
       if (newValue != _solarMinTemp) {
         _solarMinTemp = newValue;
         saveState();
       }
       retval = true;
     } else {
-      LOG_ERROR("  ✖ Invalid solar min temp (must be 0-60°C): %s\n", value.c_str());
+      LOG_ERROR("  ✖ Invalid solar min temp (must be 0-100°C): %s\n", value.c_str());
     }
   } else if (property.equalsIgnoreCase("pool-max-temp")) {
     LOG_INFO("  ✔ pool max temp: %s\n", value.c_str());
     float newValue;
-    if (parseFloat(value, newValue, 0.0f, 40.0f)) {
+    if (PoolController::parseFloatInRange(value.c_str(), PoolController::SettingLimits::kPoolMaxTemp, newValue)) {
       if (newValue != _poolMaxTemp) {
         _poolMaxTemp = newValue;
         saveState();
       }
       retval = true;
     } else {
-      LOG_ERROR("  ✖ Invalid pool max temp (must be 0-60°C): %s\n", value.c_str());
+      LOG_ERROR("  ✖ Invalid pool max temp (must be 0-40°C): %s\n", value.c_str());
     }
   } else if (property.equalsIgnoreCase("timer-start-h")) {
     TimerSetting timerSetting = getTimerSetting();

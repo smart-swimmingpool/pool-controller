@@ -12,7 +12,6 @@
 
 #include <ArduinoJson.h>
 #include <Preferences.h>
-#include <cmath>
 #include <cstdlib>
 #include <memory>
 
@@ -24,6 +23,7 @@
 #include "OtaUpdater.hpp"
 #include "OperationModeNode.hpp"
 #include "RelayModuleNode.hpp"
+#include "SettingValidation.hpp"
 #include "TimeClientHelper.hpp"
 #include "Version.h"
 #include "LogCapture.hpp"
@@ -370,8 +370,8 @@ void MqttPublisher::publishClimateDiscovery() {
   doc["action_topic"] = actionTopic.build("climate", "thermostat", "/action/state");
 
   // Temp range
-  doc["min_temp"] = 0.0;
-  doc["max_temp"] = 40.0;
+  doc["min_temp"] = SettingLimits::kPoolMaxTemp.min;
+  doc["max_temp"] = SettingLimits::kPoolMaxTemp.max;
   doc["temp_step"] = 0.5;
 
   // Preset modes (sub-modes: manual/schedule/boost)
@@ -528,15 +528,16 @@ void MqttPublisher::publishDiscovery() {
 
   // ── Configuration (entity_category: "config") ──
   // Parameter Numbers
-  publishNumberDiscovery(
-    "pool-max-temp", "Maximum Pool Temperature", 0.0, 40.0, 0.1, "°C", "mdi:thermometer-chevron-up", "config");
-  publishNumberDiscovery(
-    "solar-min-temp", "Minimum Solar Temperature", 0.0, 100.0, 0.1, "°C", "mdi:thermometer-chevron-down", "config");
-  publishNumberDiscovery("hysteresis", "Temperature Hysteresis", 0.0, 10.0, 0.1, "K", "mdi:delta", "config");
+  publishNumberDiscovery("pool-max-temp", "Maximum Pool Temperature", SettingLimits::kPoolMaxTemp.min,
+    SettingLimits::kPoolMaxTemp.max, 0.1, "°C", "mdi:thermometer-chevron-up", "config");
+  publishNumberDiscovery("solar-min-temp", "Minimum Solar Temperature", SettingLimits::kSolarMinTemp.min,
+    SettingLimits::kSolarMinTemp.max, 0.1, "°C", "mdi:thermometer-chevron-down", "config");
+  publishNumberDiscovery("hysteresis", "Temperature Hysteresis", SettingLimits::kHysteresis.min, SettingLimits::kHysteresis.max,
+    0.1, "K", "mdi:delta", "config");
 
   // Temperature-based circulation parameters
-  publishNumberDiscovery(
-    "temp-circ-threshold", "Circulation Temperature Threshold", 0.0, 40.0, 0.5, "°C", "mdi:thermometer-auto", "config");
+  publishNumberDiscovery("temp-circ-threshold", "Circulation Temperature Threshold", SettingLimits::kTempCircThreshold.min,
+    SettingLimits::kTempCircThreshold.max, 0.5, "°C", "mdi:thermometer-auto", "config");
   publishNumberDiscovery(
     "temp-circ-factor", "Circulation Temperature Factor", 0.0, 120.0, 5.0, "min/°C", "mdi:plus-minus", "config");
   publishNumberDiscovery(
@@ -994,26 +995,6 @@ void MqttPublisher::publishSensorMappingDiscovery() {
   LOG_INFO("• HA: Sensor mapping select entities published (%u options)\n", solarOptCount);
 }
 
-// Parse a numeric MQTT payload strictly: the whole payload must be a finite
-// number within [minVal, maxVal]. String::toFloat() would silently turn a
-// non-numeric payload into 0.0, which is inside most valid ranges.
-static bool parseFloatInRange(const String &value, float minVal, float maxVal, float &out) {
-  const char *text = value.c_str();
-  char *end = nullptr;
-  float parsed = strtof(text, &end);
-  if (end == text) {
-    return false;  // no digits at all
-  }
-  while (*end == ' ') {
-    end++;
-  }
-  if (*end != '\0' || !std::isfinite(parsed) || parsed < minVal || parsed > maxVal) {
-    return false;
-  }
-  out = parsed;
-  return true;
-}
-
 // Helper function to check if MQTT authentication is configured
 static bool isMqttAuthenticated() {
   // Check if MQTT connection is using authentication
@@ -1127,7 +1108,7 @@ void MqttPublisher::handleMqttMessage(
 
     // Same limits as pool-max-temp: this value becomes the maximum pool temperature
     float val = 0.0f;
-    if (!parseFloatInRange(value, 0.0f, 40.0f, val)) {
+    if (!parseFloatInRange(value.c_str(), SettingLimits::kPoolMaxTemp, val)) {
       LOG_WARN("MQTT: Invalid climate target temperature: %s\n", value.c_str());
       publishStates();
       return;
@@ -1196,7 +1177,7 @@ void MqttPublisher::handleMqttMessage(
 
     float val = 0.0f;
     // Always validate format and range for security
-    if (!parseFloatInRange(value, 0.0f, 40.0f, val)) {
+    if (!parseFloatInRange(value.c_str(), SettingLimits::kPoolMaxTemp, val)) {
       LOG_WARN("MQTT: Invalid pool-max-temp value: %s\n", value.c_str());
       publishStates();
       return;
@@ -1214,7 +1195,7 @@ void MqttPublisher::handleMqttMessage(
 
     float val = 0.0f;
     // Always validate format and range for security
-    if (!parseFloatInRange(value, 0.0f, 100.0f, val)) {
+    if (!parseFloatInRange(value.c_str(), SettingLimits::kSolarMinTemp, val)) {
       LOG_WARN("MQTT: Invalid solar-min-temp value: %s\n", value.c_str());
       publishStates();
       return;
@@ -1232,7 +1213,7 @@ void MqttPublisher::handleMqttMessage(
 
     float val = 0.0f;
     // Always validate format and range for security
-    if (!parseFloatInRange(value, 0.0f, 10.0f, val)) {
+    if (!parseFloatInRange(value.c_str(), SettingLimits::kHysteresis, val)) {
       LOG_WARN("MQTT: Invalid hysteresis value: %s\n", value.c_str());
       publishStates();
       return;
@@ -1242,7 +1223,7 @@ void MqttPublisher::handleMqttMessage(
     ConfigManager::save();
   } else if (top.endsWith("/temp-circ-threshold/set")) {
     float val = 0.0f;
-    if (parseFloatInRange(value, 0.0f, 40.0f, val)) {
+    if (parseFloatInRange(value.c_str(), SettingLimits::kTempCircThreshold, val)) {
       ConfigManager::getSettings().tempCircThreshold = val;
       ConfigManager::save();
     }
