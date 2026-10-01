@@ -64,8 +64,13 @@ void DegradationManager::evaluate() {
   }
 }
 
-DegradationLevel DegradationManager::getLevel() { return currentLevel_; }
-bool DegradationManager::isSafe() { return currentLevel_ >= DegradationLevel::CRITICAL; }
+DegradationLevel DegradationManager::getLevel() {
+  return currentLevel_;
+}
+
+bool DegradationManager::isSafe() {
+  return currentLevel_ >= DegradationLevel::CRITICAL;
+}
 
 void DegradationManager::forceSafeMode() {
   forcedSafeMode_ = true;
