@@ -1045,8 +1045,8 @@ void MqttPublisher::handleMqttMessage(
 
     if (value == "INSTALL") {
       LOG_INFO("MQTT: Firmware update requested from Home Assistant\n");
-      // Only request it here: this callback runs on the AsyncTCP task, the
-      // blocking download must run on the loop task (OtaUpdater::loop()).
+      // Only request it here: this callback runs on the AsyncTCP task; the
+      // download is started and streamed step by step by OtaUpdater::loop().
       OtaUpdater::requestUpdate();
     }
     return;

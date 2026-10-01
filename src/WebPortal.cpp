@@ -1121,8 +1121,8 @@ void WebPortal::apiUpdateInstall() {
   // Send immediate response before update starts
   server_.send(200, "application/json", "{\"status\":\"started\"}");
 
+  // Connects and returns; the firmware is streamed by OtaUpdater::loop()
   OtaUpdater::startUpdate();
-  // If we return here, the update failed (success reboots)
 }
 
 // ── Sensor mapping helpers ─────────────────────────────────────────────
