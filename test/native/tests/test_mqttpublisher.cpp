@@ -380,6 +380,54 @@ int run_mqttpublisher_tests() {
     test_suite_end("MqttPublisher::handle_climate_mode_sources", missing == 0 ? 1 : 0, missing);
   }
 
+  // ── Test: MQTT callback only queues; the loop task applies the command (#195) ──
+  {
+    test_begin("MqttPublisher", "MQTT callback defers commands to the loop task");
+
+    operationModeNode.setMode("auto");
+    AsyncMqttClientMessageProperties props{0, false, false};
+    char topic[] = "homeassistant/select/pool-controller/mode/set";
+    char payload[] = "manu";
+
+    // Callback (AsyncTCP task in production) must not change state itself
+    MqttPublisher::onMqttMessage(topic, payload, props, strlen(payload), 0, strlen(payload));
+    int missing = 0;
+    if (operationModeNode.getMode() == "auto") {
+      test_pass(__FILE__, __LINE__);
+    } else {
+      test_fail(__FILE__, __LINE__, "onMqttMessage changed the mode directly on the MQTT task");
+      missing++;
+    }
+
+    // Loop task processes the queue
+    MqttPublisher::processPendingCommands();
+    if (operationModeNode.getMode() == "manu") {
+      test_pass(__FILE__, __LINE__);
+    } else {
+      test_fail(__FILE__, __LINE__, "processPendingCommands did not apply the queued mode command");
+      missing++;
+    }
+
+    // Chunked messages are not queued
+    char chunk[] = "boost";
+    MqttPublisher::onMqttMessage(topic, chunk, props, strlen(chunk), 0, strlen(chunk) + 10);
+    MqttPublisher::processPendingCommands();
+    if (operationModeNode.getMode() == "manu") {
+      test_pass(__FILE__, __LINE__);
+    } else {
+      test_fail(__FILE__, __LINE__, "Incomplete (chunked) message was applied");
+      missing++;
+    }
+    operationModeNode.setMode("auto");
+
+    rc = (missing == 0) ? 0 : 1;
+    if (rc == 0)
+      passed++;
+    else
+      failed++;
+    test_suite_end("MqttPublisher::commands_deferred_to_loop", missing == 0 ? 1 : 0, missing);
+  }
+
   // ── Test: Handle MQTT pump command in manual mode ──
   {
     test_begin("MqttPublisher", "handle pump command in manual mode");

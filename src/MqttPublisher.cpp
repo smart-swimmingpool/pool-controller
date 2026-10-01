@@ -25,15 +25,19 @@
 #include "TimeClientHelper.hpp"
 #include "Version.h"
 #include "LogCapture.hpp"
+#include "MqttCommandQueue.hpp"
 
 namespace PoolController {
 
 String MqttPublisher::deviceId_ = "";
 std::uint32_t MqttPublisher::s_lastExportedSeq = 0;
 
-// Reentrancy guard for the log-event export (see exportLogEvents). AsyncMqttClient
-// callbacks (handleMqttMessage → publishStates) run on the AsyncTCP task, which can
-// preempt the loop task mid-export; both paths share the static snapshot buffer and
+// Hand-over of incoming MQTT commands from the AsyncTCP task to the loop task
+static MqttCommandQueue s_commandQueue;
+
+// Reentrancy guard for the log-event export (see exportLogEvents). MQTT commands are
+// now handled on the loop task (processPendingCommands), but the guard is kept so a
+// future caller on another task cannot corrupt the shared snapshot buffer and
 // s_lastExportedSeq. Native tests (no ESP32 macros) compile the guard to a no-op.
 #if defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
 #include <freertos/FreeRTOS.h>
@@ -64,8 +68,9 @@ void MqttPublisher::begin() {
 
   LOG_INFO("✓ HA Discovery Device ID set to: %s\n", deviceId_.c_str());
 
-  // Register callback in NetworkManager
-  NetworkManager::setMqttCallback(handleMqttMessage);
+  // Register callback in NetworkManager. The callback runs on the AsyncTCP
+  // task and only queues the message; processPendingCommands() handles it.
+  NetworkManager::setMqttCallback(onMqttMessage);
 }
 
 void MqttPublisher::addDeviceInfo(JsonDocument &doc) {
@@ -1016,6 +1021,36 @@ static bool shouldEnforceMqttAuth() {
   // Users can enable it by setting a username in MQTT config
   // In the future, this could be made configurable via settings
   return false;  // Made optional as per user request
+}
+
+void MqttPublisher::onMqttMessage(
+  char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total) {
+  (void)properties;
+  // Only complete single-chunk messages are supported (HA commands are tiny)
+  if (index != 0 || len != total) {
+    LOG_WARN(
+      "MQTT: Ignoring chunked message on %s (%u of %u bytes)\n", topic, static_cast<unsigned>(len), static_cast<unsigned>(total));
+    return;
+  }
+
+  switch (s_commandQueue.push(topic, payload, len)) {
+  case MqttCommandQueue::PushResult::OK:
+    break;
+  case MqttCommandQueue::PushResult::FULL:
+    LOG_WARN("MQTT: Command queue full — dropping message on %s\n", topic);
+    break;
+  case MqttCommandQueue::PushResult::TOO_LARGE:
+    LOG_WARN("MQTT: Message too large — dropping message on %s\n", topic);
+    break;
+  }
+}
+
+void MqttPublisher::processPendingCommands() {
+  MqttCommandQueue::Message msg;
+  while (s_commandQueue.pop(msg)) {
+    AsyncMqttClientMessageProperties properties{};
+    handleMqttMessage(msg.topic, msg.payload, properties, msg.payloadLen, 0, msg.payloadLen);
+  }
 }
 
 void MqttPublisher::handleMqttMessage(
