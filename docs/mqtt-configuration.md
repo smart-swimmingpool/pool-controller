@@ -161,7 +161,7 @@ A ready-to-use Lovelace dashboard example with:
 
 is available in:
 
-- [`docs/home-assistant-dashboard-pool.yaml`](home-assistant-dashboard-pool.yaml)
+- [`docs/home-assistant/dashboard.yaml`](home-assistant/dashboard.yaml)
 
 ## Migration from Homie (Pre-v3.3.0)
 

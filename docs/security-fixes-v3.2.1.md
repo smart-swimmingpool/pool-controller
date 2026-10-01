@@ -808,8 +808,6 @@ For questions or issues related to these security fixes:
 - **Security Issues**: Open a confidential issue at [GitHub
   Security](https://github.com/smart-swimmingpool/pool-controller/security)
 - **General Issues**: Open an issue at [GitHub Issues](https://github.com/smart-swimmingpool/pool-controller/issues)
-- **Discussions**: Join the discussion at [GitHub
-  Discussions](https://github.com/smart-swimmingpool/smart-swimmingpool.github.io/discussions)
 
 ---
 

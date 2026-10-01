@@ -374,7 +374,7 @@ _Beispielaufbau auf einem Breadboard_
    - Gehe zu **Dashboard → Bearbeiten**.
    - Füge die **Pool Controller-Entitäten** hinzu (z. B. Temperatursensoren, Schalter für Pumpen).
    - **Beispiel-Dashboard:**
-     - [Lovelace Dashboard für Pool Controller](https://github.com/smart-swimmingpool/pool-controller/blob/main/docs/home-assistant-dashboard-pool.yaml)
+     - [Lovelace Dashboard für Pool Controller](https://github.com/smart-swimmingpool/pool-controller/blob/main/docs/home-assistant/dashboard.yaml)
 
 ---
 

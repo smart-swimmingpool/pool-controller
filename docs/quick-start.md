@@ -6,8 +6,8 @@ weight: 10
 ---
 
 **Target audience:** DIY enthusiasts with **basic electronics knowledge** (soldering, GPIO, MQTT).
-**Time required:** ~4\u20136 hours (including parts sourcing).
-**Cost:** ~45\u201375\u20ac (excluding pumps and pool infrastructure).
+**Time required:** ~4–6 hours (including parts sourcing).
+**Cost:** ~45–75€ (excluding pumps and pool infrastructure).
 
 This guide walks you through **every step** to get your Pool Controller up and running, from ordering parts to integrating with your smart home.
 
@@ -31,9 +31,9 @@ This guide walks you through **every step** to get your Pool Controller up and r
 
 ---
 
-## \ud83d\udce6 Step 1: Order Parts
+## 📦 Step 1: Order Parts
 
-### \ud83d\uded2 Shopping List (BOM)
+### 🛒 Shopping List (BOM)
 
 Use the following table to order all required components.
 
@@ -41,20 +41,20 @@ Use the following table to order all required components.
 
 | # | Component | Qty | Approx. Cost | Notes | Recommended Links |
 |---|-----------|:---:|:------------:|-------|------------------|
-| 1 | ESP32 Development Board (e.g., ESP32 DevKit V1, NodeMCU-32S) | 1 | 10\u201315\u20ac | **Must have 4MB+ flash** | [Amazon DE](https://www.amazon.de/s?k=ESP32+DevKit+V1), [Reichelt](https://www.reichelt.de/) |
-| 2 | DS18B20 Temperature Sensor (waterproof, stainless steel, 1m cable) | 2 | 8\u201312\u20ac | One for pool, one for solar collector | [Amazon DE](https://www.amazon.de/s?k=DS18B20+wasserfest), [AliExpress](https://www.aliexpress.com/) |
-| 3 | 2-Channel 5V Relay Module (with optocoupler isolation) | 1 | 5\u20138\u20ac | **Must be active-high trigger!** (relay activates when GPIO signal is HIGH) | [Amazon DE](https://www.amazon.de/s?k=2+Channel+5V+Relay+Module), [Reichelt](https://www.reichelt.de/) |
-| 4 | Resistor 4.7k\u03a9 (\u00bcW, metal film) | 2 | < 1\u20ac | Pull-up for OneWire data lines | [Reichelt](https://www.reichelt.de/), [Conrad](https://www.conrad.de/) |
-| 5 | Breadboard + jumper wires (for prototyping) **OR** Perfboard + pin headers (for permanent build) | 1 | 3\u20138\u20ac | Breadboard for testing, perfboard for final build | [Amazon DE](https://www.amazon.de/s?k=breadboard), [Reichelt](https://www.reichelt.de/) |
-| 6 | USB Power Supply 5V/\u22651A (e.g., phone charger) | 1 | 5\u201310\u20ac | Powers ESP32 + relay module | Any USB charger |
-| 7 | Hookup wire (0.14\u20130.5mm², various colors) | — | 3\u20135\u20ac | For permanent wiring | [Reichelt](https://www.reichelt.de/) |
-| 8 | Enclosure (IP54+ for outdoor use) | 1 | 5\u201310\u20ac | Optional but recommended | [Amazon DE](https://www.amazon.de/s?k=IP54+Geh\u00e4use), [Reichelt](https://www.reichelt.de/) |
-| 9 | Screw terminals (2-pin, 5mm pitch) | 4\u20136 | 2\u20133\u20ac | For removable connections | [Reichelt](https://www.reichelt.de/) |
-| **Total** | | | **~45\u201375\u20ac** | Without pumps/pool infrastructure | |
+| 1 | ESP32 Development Board (e.g., ESP32 DevKit V1, NodeMCU-32S) | 1 | 10–15€ | **Must have 4MB+ flash** | [Amazon DE](https://www.amazon.de/s?k=ESP32+DevKit+V1), [Reichelt](https://www.reichelt.de/) |
+| 2 | DS18B20 Temperature Sensor (waterproof, stainless steel, 1m cable) | 2 | 8–12€ | One for pool, one for solar collector | [Amazon DE](https://www.amazon.de/s?k=DS18B20+wasserfest), [AliExpress](https://www.aliexpress.com/) |
+| 3 | 2-Channel 5V Relay Module (with optocoupler isolation) | 1 | 5–8€ | **Must be active-high trigger!** (relay activates when GPIO signal is HIGH) | [Amazon DE](https://www.amazon.de/s?k=2+Channel+5V+Relay+Module), [Reichelt](https://www.reichelt.de/) |
+| 4 | Resistor 4.7kΩ (¼W, metal film) | 2 | < 1€ | Pull-up for OneWire data lines | [Reichelt](https://www.reichelt.de/), [Conrad](https://www.conrad.de/) |
+| 5 | Breadboard + jumper wires (for prototyping) **OR** Perfboard + pin headers (for permanent build) | 1 | 3–8€ | Breadboard for testing, perfboard for final build | [Amazon DE](https://www.amazon.de/s?k=breadboard), [Reichelt](https://www.reichelt.de/) |
+| 6 | USB Power Supply 5V/≥1A (e.g., phone charger) | 1 | 5–10€ | Powers ESP32 + relay module | Any USB charger |
+| 7 | Hookup wire (0.14–0.5mm², various colors) | — | 3–5€ | For permanent wiring | [Reichelt](https://www.reichelt.de/) |
+| 8 | Enclosure (IP54+ for outdoor use) | 1 | 5–10€ | Optional but recommended | [Amazon DE](https://www.amazon.de/s?k=IP54+Gehäuse), [Reichelt](https://www.reichelt.de/) |
+| 9 | Screw terminals (2-pin, 5mm pitch) | 4–6 | 2–3€ | For removable connections | [Reichelt](https://www.reichelt.de/) |
+| **Total** | | | **~45–75€** | Without pumps/pool infrastructure | |
 
 > **ℹ Note:** The relay module **must** be **active-high** (relay ON when GPIO = HIGH). Many cheap modules are active-low by default but have a jumper to switch the logic. Verify this before permanent installation!
 
-### \ud83d\udd0c ESP32 Board Selection
+### 🔌 ESP32 Board Selection
 
 **Recommended boards:**
 - **ESP32 DevKit V1** — Most common, widely available
@@ -67,7 +67,7 @@ Use the following table to order all required components.
 
 **Verification:** Check that your board has the **ESP32-WROOM-32** module and **4MB+ flash memory**.
 
-### \ud83c\udf10 Relay Module Selection
+### 🌐 Relay Module Selection
 
 **Critical:** The relay module **must** have **optocoupler isolation** for safety and **active-high logic** for compatibility with the firmware.
 
@@ -86,13 +86,13 @@ Use the following table to order all required components.
 
 ---
 
-## \ud83d\udd0c Step 2: Assemble Hardware
+## 🔌 Step 2: Assemble Hardware
 
-### \ud83d\udccc Required Tools
+### 📌 Required Tools
 
 | Tool | Purpose | Notes |
 |------|---------|-------|
-| Soldering iron | Soldering components | 320\u2013350\u00b0C for leaded solder |
+| Soldering iron | Soldering components | 320–350°C for leaded solder |
 | Solder | Electrical connections | Leaded recommended for beginners |
 | Flux | Improve solder flow | Rosin-core flux |
 | Wire cutters/strippers | Cut and strip wires | For hookup wire |
@@ -130,7 +130,7 @@ ESP32 Development Board
    - Ensure all pins are properly inserted
 
 2. **Add pull-up resistors**
-   - Insert 4.7k\u0019 resistors between 3.3V rail and GPIO32, GPIO33
+   - Insert 4.7kΩ resistors between 3.3V rail and GPIO32, GPIO33
    - These are required for DS18B20 sensor communication
 
 3. **Connect DS18B20 sensors**
@@ -185,9 +185,9 @@ ESP32 Development Board
 
 ---
 
-## \u26a1 Step 3: Connect to Pumps and Sensors
+## ⚡ Step 3: Connect to Pumps and Sensors
 
-### \u26a1 Relay Wiring (230V AC)
+### ⚡ Relay Wiring (230V AC)
 
 > **⚠️ WARNING: Mains voltage! Disconnect power before wiring!**
 
@@ -211,7 +211,7 @@ Relay COM ----- Mains L (Phase)
 - Keep **low-voltage wiring (ESP32, sensors) physically separate** from mains wiring
 - Use **cable glands** for outdoor installations
 
-### \ud83c\udf21️ DS18B20 Sensor Installation
+### 🌡️ DS18B20 Sensor Installation
 
 **Pool Sensor:**
 - Place sensor in pool water, **away from direct sunlight**
@@ -251,7 +251,7 @@ Relay COM ----- Mains L (Phase)
    cd pool-controller
    ```
 
-### \u26a1 Connect ESP32 to Computer
+### ⚡ Connect ESP32 to Computer
 
 1. Connect ESP32 to computer via **USB cable** (data-capable, not charge-only)
 2. Check that device is detected:
@@ -261,7 +261,7 @@ Relay COM ----- Mains L (Phase)
 
 3. **Note the serial port** for the next step
 
-### \u26a1 Build and Flash
+### ⚡ Build and Flash
 
 #### Using PlatformIO CLI
 ```bash
@@ -452,9 +452,9 @@ for ready-to-use `.things` and `.items` examples.
 
 ---
 
-## \ud83c\udf00 Step 8: Final Installation
+## 🌀 Step 8: Final Installation
 
-### \ud83c\udf00 Enclosure
+### 🌀 Enclosure
 
 1. **Choose enclosure**
    - **IP54+ rating** for outdoor use
@@ -470,10 +470,10 @@ for ready-to-use `.things` and `.items` examples.
    - Label all screw terminals
    - Create a **wiring diagram** for future reference
 
-### \ud83c\udf00 Power Supply
+### 🌀 Power Supply
 
 1. **Choose power supply**
-   - **USB phone charger** (5V/\u22651A) for indoor use
+   - **USB phone charger** (5V/≥1A) for indoor use
    - **Outdoor-rated power supply** for external installation
    - **USB power bank** for temporary setup
 
@@ -481,7 +481,7 @@ for ready-to-use `.things` and `.items` examples.
    - Use **surge protector** for outdoor installations
    - Consider **UPS** for power failure protection
 
-### \ud83c\udf00 Location
+### 🌀 Location
 
 1. **Indoor installation** (recommended)
    - Protect from weather
@@ -496,11 +496,11 @@ for ready-to-use `.things` and `.items` examples.
 
 ---
 
-## \ud83d\udc89 Next Steps
+## 💉 Next Steps
 
 Now that your Pool Controller is up and running, explore these advanced features:
 
-### \u26a1 Automation
+### ⚡ Automation
 
 - **Set up automation rules** in Home Assistant/openHAB
 - **Temperature-based control:** Turn on solar heating when pool is cold
@@ -527,7 +527,7 @@ automation:
         entity_id: switch.pool_controller_solar_pump
 ```
 
-### \u26a1 Monitoring
+### ⚡ Monitoring
 
 - **Set up Grafana dashboard** for historical data
 - **Configure alerts** for abnormal conditions
@@ -535,7 +535,7 @@ automation:
 
 **Grafana Dashboard:** [smart-swimmingpool/grafana-dashboard](https://github.com/smart-swimmingpool/grafana-dashboard)
 
-### \u26a1 Advanced Configuration
+### ⚡ Advanced Configuration
 
 - **Adjust temperature thresholds** for your climate
 - **Configure circulation schedules** based on pool usage
@@ -546,9 +546,9 @@ automation:
 
 ---
 
-## \ud83d\ude4f Tips for Success
+## 🙏 Tips for Success
 
-### \u26a1 Best Practices
+### ⚡ Best Practices
 
 1. **Start with breadboard prototyping** before permanent installation
 2. **Test each component individually** before connecting everything
@@ -558,16 +558,16 @@ automation:
 6. **Test in AP mode first** before configuring WiFi/MQTT
 7. **Monitor serial output** during initial setup
 
-### \u26a1 Common Pitfalls
+### ⚡ Common Pitfalls
 
 1. **Active-low vs active-high relays** — Verify your relay logic!
 2. **Missing pull-up resistors** — DS18B20 sensors won't work without them
-3. **Insufficient power supply** — Use 5V/\u22651A for ESP32 + relay
+3. **Insufficient power supply** — Use 5V/≥1A for ESP32 + relay
 4. **WiFi range issues** — Ensure good signal at installation location
 5. **MQTT broker not running** — Verify broker is accessible from ESP32
 6. **Mains wiring errors** — Always use RCD and verify with electrician
 
-### \u26a1 Maintenance
+### ⚡ Maintenance
 
 1. **Regularly check connections** for corrosion or loose wires
 2. **Clean DS18B20 sensors** periodically (especially pool sensor)
@@ -577,7 +577,7 @@ automation:
 
 ---
 
-## \ud83d\udce2 Need Help?
+## 📢 Need Help?
 
 If you encounter issues:
 
@@ -593,9 +593,9 @@ If you encounter issues:
 
 ---
 
-## \ud83d\udcbb Additional Resources
+## 💻 Additional Resources
 
-### \u26a1 Documentation
+### ⚡ Documentation
 
 - [Hardware Guide](hardware-guide.md) — Detailed assembly instructions
 - [Users Guide](users-guide.md) — Operation modes and web interface
@@ -604,7 +604,7 @@ If you encounter issues:
 - [OTA Updates](ota-updates.md) — Remote firmware updates
 - [Software Guide](software-guide.md) — Development and build process
 
-### \u26a1 External Resources
+### ⚡ External Resources
 
 - [PlatformIO Documentation](https://docs.platformio.org/) — Build system
 - [ESP32 Datasheet](https://www.espressif.com/en/products/socs/esp32) — Microcontroller
@@ -613,7 +613,7 @@ If you encounter issues:
 - [Home Assistant MQTT Discovery](https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery) — Smart home integration
 - [Electrical Safety](https://www.electricalsafetyfirst.org.uk/) — General safety guidelines
 
-### \u26a1 Community
+### ⚡ Community
 
 - [GitHub Discussions](https://github.com/smart-swimmingpool/smart-swimmingpool.github.io/discussions) — Ask questions, share ideas
 - [Home Assistant Community](https://community.home-assistant.io/) — Smart home discussions
