@@ -23,6 +23,7 @@
 #include <esp_idf_version.h>
 #include <esp_task_wdt.h>
 
+#include "DegradationPolicy.hpp"
 #include "LogCapture.hpp"
 
 namespace PoolController {
@@ -34,10 +35,15 @@ class SystemMonitor {
 private:
   static constexpr uint32_t LOW_MEMORY_THRESHOLD = 16384;
   static constexpr uint32_t CRITICAL_MEMORY_THRESHOLD = 8192;
+  // Below LOW_MEMORY_THRESHOLD the DegradationManager enters safe mode (all
+  // relays off). Reboot if that state persists, so the pumps are not left off
+  // indefinitely while the heap hovers between the two thresholds.
+  static constexpr uint32_t LOW_MEMORY_REBOOT_AFTER_MS = 5UL * 60UL * 1000UL;
 
   static uint32_t lastMemoryCheck;
   static uint32_t minFreeHeap;
   static bool lowMemoryWarning;
+  static PersistentConditionTimer lowMemoryTimer;
 
 public:
   /**
@@ -108,6 +114,15 @@ public:
       lowMemoryWarning = true;
     } else if (freeHeap >= LOW_MEMORY_THRESHOLD && lowMemoryWarning) {
       lowMemoryWarning = false;
+    }
+
+    // Persistently low memory — reboot instead of staying in safe mode
+    if (lowMemoryTimer.update(now, freeHeap < LOW_MEMORY_THRESHOLD, LOW_MEMORY_REBOOT_AFTER_MS)) {
+      LOG_ERROR("Low memory (%d bytes) persisted for %lu s. Rebooting...\n", freeHeap,
+        static_cast<unsigned long>(LOW_MEMORY_REBOOT_AFTER_MS / 1000UL));
+      Serial.flush();
+      delay(1000);
+      ESP.restart();
     }
   }
 

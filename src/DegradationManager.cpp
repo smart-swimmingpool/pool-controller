@@ -149,7 +149,7 @@ void DegradationManager::onTransition() {
 
   case DegradationLevel::NO_TIME:
     LOG_WARN("⚠ NTP time sync lost — timer scheduling degraded\n");
-    LOG_WARN("  Timer mode falls back to auto mode\n");
+    LOG_WARN("  Timer schedule unavailable — filter pump stays on in auto/timer mode\n");
     break;
 
   case DegradationLevel::NO_SENSOR:
@@ -158,25 +158,12 @@ void DegradationManager::onTransition() {
     break;
 
   case DegradationLevel::CRITICAL:
-    // Log the concrete reason for entering safe mode. Priority mirrors
-    // evaluateLevel(): forced (boot-loop) > low memory > multiple failures.
+    // Log the concrete reason for entering safe mode: forced (boot-loop)
+    // or critically low memory — see classifyDegradation().
     if (forcedSafeMode_) {
       LOG_ERROR("✖ SAFE MODE — reason: boot-loop detected (safe mode forced)\n");
-    } else if (!SystemMonitor::isHealthy()) {
-      LOG_ERROR("✖ SAFE MODE — reason: critically low free heap (%.1f KB)\n", ESP.getFreeHeap() / 1024.0f);
     } else {
-      LOG_ERROR("✖ SAFE MODE — reason: multiple concurrent failures\n");
-      if (!NetworkManager::isWiFiConnected()) {
-        LOG_ERROR("    - WiFi/MQTT disconnected\n");
-      }
-      // NTP loss while WiFi is down is a consequence, not an independent
-      // failure — mirror the counting logic in evaluateLevel().
-      if (NetworkManager::isWiFiConnected() && getTimeDegradation() == TimeDegradation::RED) {
-        LOG_ERROR("    - NTP time sync lost\n");
-      }
-      if (sensorsEverReported_ && !(poolSensorOk_ && solarSensorOk_)) {
-        LOG_ERROR("    - temperature sensor fault\n");
-      }
+      LOG_ERROR("✖ SAFE MODE — reason: critically low free heap (%.1f KB)\n", ESP.getFreeHeap() / 1024.0f);
     }
     LOG_ERROR("  Entering safe mode — all relays off\n");
     // De-energize both relays immediately (P1 review fix)
@@ -193,53 +180,20 @@ void DegradationManager::onTransition() {
 }
 
 DegradationLevel DegradationManager::evaluateLevel() {
-  // Gather system health signals
   bool wifiOk = NetworkManager::isWiFiConnected();
 
-  // If time is RED (lost) but WiFi is up, try an NTP sync immediately.
-  // The Time library only syncs every SYNC_INTERVAL (3600s), so without
-  // this the system could stay in NO_TIME for an hour after NTP recovers.
+  // Trigger an NTP retry when WiFi is up but time is RED
   if (wifiOk && (getTimeDegradation() == TimeDegradation::RED)) {
     forceNtpUpdate();
   }
 
-  // Time is OK for GREEN + YELLOW (millis() estimate is usable up to 24h)
   bool timeOk = (getTimeDegradation() != TimeDegradation::RED);
   bool memoryOk = SystemMonitor::isHealthy();
   bool sensorOk = sensorsEverReported_ ? (poolSensorOk_ && solarSensorOk_) : true;  // Both probes must be healthy
 
-  // Count active failures (memory failure = CRITICAL immediately).
-  // Time loss without WiFi is a consequence, not an independent failure —
-  // counting both would escalate a plain WiFi outage to CRITICAL.
-  uint8_t failureCount = 0;
-  if (!wifiOk)
-    failureCount++;
-  if (!timeOk && wifiOk)
-    failureCount++;
-  if (!sensorOk)
-    failureCount++;
-
-  // --- Decision logic ---
-
-  // Memory critical → always CRITICAL (may reboot soon anyway)
-  if (!memoryOk) {
-    return DegradationLevel::CRITICAL;
-  }
-
-  // Multiple concurrent failures → CRITICAL
-  if (failureCount >= 2) {
-    return DegradationLevel::CRITICAL;
-  }
-
-  // Single failures — return the most specific level
-  if (!sensorOk)
-    return DegradationLevel::NO_SENSOR;
-  if (!timeOk)
-    return DegradationLevel::NO_TIME;
-  if (!wifiOk)
-    return DegradationLevel::NO_WIFI;
-
-  return DegradationLevel::NORMAL;
+  // Combinations of WiFi/time/sensor problems are not a reason to stop the
+  // filter pump — see classifyDegradation().
+  return classifyDegradation(wifiOk, timeOk, sensorOk, memoryOk);
 }
 
 }  // namespace PoolController

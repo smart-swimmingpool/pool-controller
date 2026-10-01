@@ -132,9 +132,16 @@ corrective action.
 - At **critical threshold** (8 KB free heap):
   - Warning logged
   - Graceful auto-reboot initiated
-- At **warning threshold** (15 KB free heap):
+- At **warning threshold** (16 KB free heap):
   - Warning logged
-  - No reboot — system continues monitoring
+  - Safe mode (relays off) while the heap stays below the threshold
+  - Auto-reboot if the heap stays below the threshold for 5 minutes
+
+### Degradation Without Safe Mode
+
+WiFi, NTP or temperature sensor problems — also several at the same time — do **not** enter safe mode.
+The filter pump keeps running on its schedule (or continuously while the time is unknown); the solar pump
+is switched off by the rules when temperature readings are invalid.
 
 ### Sensor Auto-Recovery
 
