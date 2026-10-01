@@ -138,9 +138,14 @@ corrective action.
 
 ### Sensor Auto-Recovery
 
-- DS18B20 read failure triggers fast re-polling (5s instead of 300s)
-- After 3 consecutive successful reads, back to normal interval
-- Prevents unnecessary alerts from transient sensor glitches
+- DS18B20 read failure triggers fast re-polling (5s instead of the measurement interval)
+- Back to the normal interval as soon as a valid reading arrives
+- Plausibility filter: readings outside -55…125 °C are treated as failures
+- The 85.0 °C power-on value (after a supply glitch) is ignored and the last temperature is kept,
+  unless it continues a reading close to 85 °C or repeats three times in a row. Right after a failed
+  reading there is no valid temperature to keep, so 85.0 °C counts as failure until it is confirmed
+- After 3 consecutive failed readings the OneWire bus is rescanned, so a reconnected or replaced
+  sensor is found again without a reboot
 
 ### NTP Graceful Degradation
 

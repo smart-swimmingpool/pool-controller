@@ -213,32 +213,10 @@ void DallasTemperatureNode::loop() {
         PoolController::SystemMonitor::feedWatchdog();
 
         // Master reads its own sensor
-        float newTemp = activeSensor->getTempC(deviceAddress_);
-        if (newTemp == DEVICE_DISCONNECTED_C) {
-          LOG_ERROR("  ✖ Solar sensor disconnected - setting to NaN\n");
-          _temperature = NAN;
-          _sensorFound = false;
-          PoolController::DegradationManager::reportSensorStatus(_id, false);
-        } else {
-          _temperature = newTemp;
-          _sensorFound = true;
-          PoolController::DegradationManager::reportSensorStatus(_id, true);
-          LOG_DEBUG("  ◦ Solar Temp = %.1f°C\n", _temperature);
-        }
+        handleReading(activeSensor->getTempC(deviceAddress_));
       } else {
         // Slave: read from the conversion the master already triggered
-        float newTemp = activeSensor->getTempC(deviceAddress_);
-        if (newTemp == DEVICE_DISCONNECTED_C) {
-          LOG_ERROR("  ✖ Pool sensor disconnected - setting to NaN\n");
-          _temperature = NAN;
-          _sensorFound = false;
-          PoolController::DegradationManager::reportSensorStatus(_id, false);
-        } else {
-          _temperature = newTemp;
-          _sensorFound = true;
-          PoolController::DegradationManager::reportSensorStatus(_id, true);
-          LOG_DEBUG("  ◦ Pool Temp = %.1f°C\n", _temperature);
-        }
+        handleReading(activeSensor->getTempC(deviceAddress_));
       }
     } else if (numberOfDevices > 0) {
       // ── Dedicated bus mode (standard) ──────────────────────────────────
@@ -251,18 +229,7 @@ void DallasTemperatureNode::loop() {
       for (uint8_t i = 0; i < numberOfDevices; i++) {
         DeviceAddress tempDeviceAddress;
         if (activeSensor->getAddress(tempDeviceAddress, i)) {
-          float newTemp = activeSensor->getTempC(tempDeviceAddress);
-          if (newTemp == DEVICE_DISCONNECTED_C) {
-            LOG_ERROR("  ✖ Sensor disconnected - setting to NaN\n");
-            _temperature = NAN;
-            _sensorFound = false;
-            PoolController::DegradationManager::reportSensorStatus(_id, false);
-          } else {
-            _temperature = newTemp;
-            _sensorFound = true;
-            PoolController::DegradationManager::reportSensorStatus(_id, true);
-            LOG_DEBUG("  ◦ Temp = %.1f°C\n", _temperature);
-          }
+          handleReading(activeSensor->getTempC(tempDeviceAddress));
         }
       }
     } else {
@@ -289,6 +256,55 @@ void DallasTemperatureNode::loop() {
         }
       }
     }
+  }
+}
+
+void DallasTemperatureNode::handleReading(float raw) {
+  switch (filter_.apply(raw)) {
+  case PoolController::TemperatureReadingFilter::Action::ACCEPT:
+    _temperature = raw;
+    _sensorFound = true;
+    consecutiveFailures_ = 0;
+    PoolController::DegradationManager::reportSensorStatus(_id, true);
+    LOG_DEBUG("  ◦ %s = %.1f°C\n", _id, _temperature);
+    break;
+
+  case PoolController::TemperatureReadingFilter::Action::HOLD:
+    // DS18B20 power-on value after a supply glitch — keep the last temperature
+    LOG_WARN("  ⚠ %s: ignoring 85.0°C power-on value, keeping %.1f°C\n", _id, _temperature);
+    break;
+
+  case PoolController::TemperatureReadingFilter::Action::REJECT:
+    if (raw == DEVICE_DISCONNECTED_C) {
+      LOG_ERROR("  ✖ %s: sensor disconnected - setting to NaN\n", _id);
+    } else {
+      LOG_ERROR("  ✖ %s: implausible reading %.1f°C - setting to NaN\n", _id, raw);
+    }
+    _temperature = NAN;
+    _sensorFound = false;
+    PoolController::DegradationManager::reportSensorStatus(_id, false);
+    if (consecutiveFailures_ < UINT8_MAX) {
+      consecutiveFailures_++;
+    }
+    if (consecutiveFailures_ >= RESCAN_AFTER_FAILURES) {
+      rescanBus();
+    }
+    break;
+  }
+}
+
+void DallasTemperatureNode::rescanBus() {
+  DallasTemperature *activeSensor = sharedSensor_ ? sharedSensor_ : &sensor;
+  LOG_WARN("  ⚠ %s: %u failed readings — rescanning bus\n", _id, consecutiveFailures_);
+  consecutiveFailures_ = 0;
+  filter_.reset();
+
+  activeSensor->begin();
+  numberOfDevices = activeSensor->getDeviceCount();
+  if (numberOfDevices > 0) {
+    resolveFilter();
+  } else {
+    _sensorFound = false;
   }
 }
 

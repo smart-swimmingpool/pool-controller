@@ -13,6 +13,8 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
+#include "TemperatureReadingFilter.hpp"
+
 /**
  * @brief Reads temperature from a DS18B20 sensor on a OneWire bus.
  *
@@ -104,7 +106,8 @@ public:
 private:
   static const int MIN_INTERVAL = 10;  // in seconds (more granular loop support)
   static const int MEASUREMENT_INTERVAL = 300;
-  static const int RECOVERY_INTERVAL = 5;  // seconds
+  static const int RECOVERY_INTERVAL = 5;          // seconds
+  static const uint8_t RESCAN_AFTER_FAILURES = 3;  // failed reads before the bus is rescanned
 
   const char *_id;
   const char *_name;
@@ -114,6 +117,8 @@ private:
   bool _sensorFound = false;
 
   float _temperature = NAN;
+  PoolController::TemperatureReadingFilter filter_;  ///< Plausibility filter (85 °C power-on, range)
+  uint8_t consecutiveFailures_ = 0;                  ///< Failed reads since the last valid one
 
   // Own OneWire bus (dedicated mode) or nullptr (shared mode)
   OneWire oneWire;
@@ -135,6 +140,14 @@ private:
    *  Called by begin(), setAddressFilter(), and clearAddressFilter().
    *  @return true if the device was found, false if fallback was used. */
   bool resolveFilter();
+
+  /** @brief Apply the plausibility filter to a raw reading and update the
+   *  temperature and sensor health; rescans the bus after repeated failures. */
+  void handleReading(float raw);
+
+  /** @brief Rescan the bus and re-resolve this node's sensor address
+   *  (e.g. after the sensor was disconnected or replaced). */
+  void rescanBus();
 
   /** @brief Format a DeviceAddress as a hex string. */
   void address2String(const DeviceAddress deviceAddress, char *buffer, size_t size) const;
