@@ -52,7 +52,7 @@ time_t getTimeFor(int index, TimeChangeRule **tcr);
 String getTimeInfoFor(int index);
 const char *const *getTimezoneLabelList();
 int getTimezoneLabelCount();
-int getTimezoneIndexFromLabel(const String &label);
+int getTimezoneIndexFromLabel(const char *label);
 String getFormattedTime(time_t rawTime);
 void setTimezoneIndex(int index);
 int getTimezoneIndex();

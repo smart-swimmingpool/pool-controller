@@ -94,7 +94,7 @@ const char *const *getTimezoneLabelList() {
 int getTimezoneLabelCount() {
   return 0;
 }
-int getTimezoneIndexFromLabel(const String &) {
+int getTimezoneIndexFromLabel(const char *) {
   return 0;
 }
 String getFormattedTime(time_t) {

@@ -36,6 +36,8 @@ public:
   bool setMode(String mode);
   bool setMode(String mode, const char *source);
   String getMode() const { return _mode; }
+  /// Current mode without copying (valid until the mode changes).
+  const char *getModeCStr() const { return _mode.c_str(); }
 
   void addRule(Rule *rule);
   Rule *getRule();
