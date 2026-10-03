@@ -25,8 +25,7 @@ void CoreScheduler::begin() {
   const BaseType_t core0 = PRO_CPU_NUM;
 
   if (!SensorTask::start(TASK_PRIORITY_SENSOR, TASK_STACK_SENSOR, core0)) {
-    LOG_ERROR("✖ SensorTask could not be created (free heap %u B) — restarting\n",
-      static_cast<unsigned>(ESP.getFreeHeap()));
+    LOG_ERROR("✖ SensorTask could not be created (free heap %u B) — restarting\n", static_cast<unsigned>(ESP.getFreeHeap()));
     Serial.flush();
     // A persistent failure is caught by boot-loop detection and forces safe mode.
     ESP.restart();
