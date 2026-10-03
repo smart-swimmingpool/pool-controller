@@ -26,9 +26,9 @@ extern ESP32TemperatureNode ctrlTemperatureNode;
 
 namespace {
 TaskHandle_t sensorTaskHandle = nullptr;
-uint32_t lastSolarReadingMs = 0;
+uint32_t lastDallasReadingMs = 0;
 uint32_t lastControllerReadingMs = 0;
-constexpr uint32_t CONVERSION_DELAY_MS = 800;  // 12-bit DS18B20 conversion
+constexpr uint32_t CONVERSION_DELAY_MS = 800;  // >= 12-bit DS18B20 conversion
 }  // namespace
 
 void sensorTaskFunc(void *) {
@@ -37,14 +37,20 @@ void sensorTaskFunc(void *) {
   for (;;) {
     const uint32_t now = millis();
 
-    // One cycle for both DS18B20 nodes on the solar interval.
-    const unsigned long solarInterval = solarTemperatureNode.getMeasurementInterval();
-    if (now - lastSolarReadingMs >= solarInterval * 1000UL) {
-      lastSolarReadingMs = now;
+    // Both Dallas nodes are measured in one cycle. Preserve the old recovery
+    // behavior by using the shorter effective interval whenever either node is
+    // missing/invalid (RECOVERY_INTERVAL = 5 s).
+    const unsigned long solarInterval = solarTemperatureNode.getEffectiveMeasurementInterval();
+    const unsigned long poolInterval = poolTemperatureNode.getEffectiveMeasurementInterval();
+    const unsigned long dallasInterval = (solarInterval < poolInterval) ? solarInterval : poolInterval;
+
+    if (now - lastDallasReadingMs >= dallasInterval * 1000UL) {
+      lastDallasReadingMs = now;
       Serial.println("〽 SensorTask: reading Dallas sensors");
-      // Starts the conversion on every bus (shared or dedicated topology)
+      // DallasTemperature is configured with waitForConversion=false in
+      // DallasTemperatureNode::begin(), so the conversion starts immediately
+      // and this task yields while the sensors convert.
       runDallasMeasurementCycle(solarTemperatureNode, poolTemperatureNode, [watchdogRegistered] {
-        // Yield while the conversion runs — never block the control loop.
         vTaskDelay(pdMS_TO_TICKS(CONVERSION_DELAY_MS));
         if (watchdogRegistered) {
           SystemMonitor::feedWatchdogFromTask();

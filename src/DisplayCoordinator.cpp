@@ -3,7 +3,7 @@
 
 /**
  * @file DisplayCoordinator.cpp
- * @brief Non-blocking hand-off between NORVI button/UI state and OLED rendering.
+ * @brief Serialized NORVI button/UI state and OLED rendering on Core 1.
  */
 
 #include "DisplayCoordinator.hpp"
@@ -15,7 +15,6 @@
 #include <freertos/semphr.h>
 
 #include "ConfigManager.hpp"
-#include "DisplayTask.hpp"
 #include "NetworkManager.hpp"
 #include "Nodes.hpp"
 #include "NorviButtonHandler.hpp"
@@ -170,7 +169,9 @@ void DisplayCoordinator::begin() {
 }
 
 void DisplayCoordinator::loop() {
-  // Button sampling must never wait for OLED I/O. Callbacks only enqueue.
+  // Button sampling, state transitions and rendering all remain on Core 1.
+  // This preserves the single-writer rule for operationModeNode, relay state,
+  // NetworkManager and ConfigManager which are read while drawing pages.
   NorviButtonHandler::loop();
 
   if (stateMutex == nullptr || xSemaphoreTake(stateMutex, 0) != pdTRUE) {
@@ -182,7 +183,7 @@ void DisplayCoordinator::loop() {
     processEvent(event);
   }
   NorviOledDisplay::update();
-  DisplayTask::requestRender();
+  NorviOledDisplay::render();
 
   xSemaphoreGive(stateMutex);
 }
@@ -192,8 +193,8 @@ void DisplayCoordinator::render() {
     return;
   }
 
-  // Core 0 may wait for the very short Core-1 state update, but Core 1 never
-  // waits for OLED rendering; it simply defers UI state work to the next loop.
+  // Kept as a serialized compatibility entry point. CoreScheduler no longer
+  // creates a separate DisplayTask, so production rendering happens in loop().
   if (xSemaphoreTake(stateMutex, portMAX_DELAY) == pdTRUE) {
     NorviOledDisplay::render();
     xSemaphoreGive(stateMutex);

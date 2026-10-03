@@ -3,7 +3,7 @@
 
 /**
  * @file CoreScheduler.cpp
- * @brief Task creation for the Core-0 I/O tasks.
+ * @brief Core-0 sensor task launcher and Core-1 telemetry service.
  */
 
 #include "CoreScheduler.hpp"
@@ -13,12 +13,10 @@
 #include <freertos/task.h>
 
 #include "LogCapture.hpp"
-#include "PublishTask.hpp"
+#include "MqttPublisher.hpp"
+#include "OtaUpdater.hpp"
 #include "SensorTask.hpp"
-#include "TaskStartupPolicy.hpp"
-#ifdef NORVI_AE01_R
-#include "DisplayTask.hpp"
-#endif
+#include "TelemetryQueue.hpp"
 
 namespace PoolController {
 
@@ -26,42 +24,39 @@ void CoreScheduler::begin() {
   // Core 0 = PRO_CPU_NUM (I/O core); Core 1 = APP_CPU_NUM (control loop).
   const BaseType_t core0 = PRO_CPU_NUM;
 
-  const bool sensorStarted = SensorTask::start(TASK_PRIORITY_SENSOR, TASK_STACK_SENSOR, core0);
-  const bool publishStarted = PublishTask::start(TASK_PRIORITY_PUBLISH, TASK_STACK_PUBLISH, core0);
-#ifdef NORVI_AE01_R
-  const bool displayStarted = DisplayTask::start(TASK_PRIORITY_DISPLAY, TASK_STACK_DISPLAY, core0);
-#else
-  const bool displayStarted = true;  // no display task on this board
-#endif
-
-  switch (decideTaskStartupAction(sensorStarted, publishStarted, displayStarted)) {
-  case TaskStartupAction::CONTINUE:
-    break;
-  case TaskStartupAction::CONTINUE_DEGRADED:
-    LOG_ERROR("✖ DisplayTask could not be created (free heap %u B) — continuing without OLED rendering\n",
+  if (!SensorTask::start(TASK_PRIORITY_SENSOR, TASK_STACK_SENSOR, core0)) {
+    LOG_ERROR("✖ SensorTask could not be created (free heap %u B) — restarting\n",
       static_cast<unsigned>(ESP.getFreeHeap()));
-    break;
-  case TaskStartupAction::RESTART:
-    LOG_ERROR("✖ Critical task could not be created (sensor: %s, publish: %s, free heap %u B) — restarting\n",
-      sensorStarted ? "ok" : "FAILED", publishStarted ? "ok" : "FAILED", static_cast<unsigned>(ESP.getFreeHeap()));
     Serial.flush();
-    // A persistent failure is caught by the boot-loop detection (safe mode).
+    // A persistent failure is caught by boot-loop detection and forces safe mode.
     ESP.restart();
-    break;
   }
 }
 
 void CoreScheduler::logStackWatermarks() {
+  // This method is invoked from PoolController::loop() on Core 1. Drain the
+  // request queue here so MqttPublisher never races the mutable control model.
+  PublishRequestKind kind;
+  while (TelemetryQueue::instance().dequeue(kind)) {
+    // Preserve the previous OTA behavior: requests are drained but not sent
+    // while the updater owns the network path.
+    if (OtaUpdater::isUpdateInProgress()) {
+      continue;
+    }
+
+    if (kind == PublishRequestKind::DISCOVERY) {
+      MqttPublisher::publishDiscovery();
+    } else {
+      MqttPublisher::publishStates();
+    }
+  }
+
   static uint32_t lastLog = 0;
   if (millis() - lastLog < 60000) {
     return;
   }
   lastLog = millis();
   SensorTask::logStackWatermark();
-  PublishTask::logStackWatermark();
-#ifdef NORVI_AE01_R
-  DisplayTask::logStackWatermark();
-#endif
 }
 
 }  // namespace PoolController
