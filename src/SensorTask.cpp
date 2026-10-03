@@ -42,7 +42,7 @@ void sensorTaskFunc(void *) {
     // missing/invalid (RECOVERY_INTERVAL = 5 s).
     const unsigned long solarInterval = solarTemperatureNode.getEffectiveMeasurementInterval();
     const unsigned long poolInterval = poolTemperatureNode.getEffectiveMeasurementInterval();
-    const unsigned long dallasInterval = (solarInterval < poolInterval) ? solarInterval : poolInterval;
+    const unsigned long dallasInterval = selectDallasCycleInterval(solarInterval, poolInterval);
 
     if (now - lastDallasReadingMs >= dallasInterval * 1000UL) {
       lastDallasReadingMs = now;

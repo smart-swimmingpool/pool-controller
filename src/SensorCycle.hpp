@@ -20,6 +20,11 @@
 
 namespace PoolController {
 
+/** @brief Select the shorter interval so either missing sensor keeps fast recovery. */
+constexpr unsigned long selectDallasCycleInterval(unsigned long solarInterval, unsigned long poolInterval) {
+  return (solarInterval < poolInterval) ? solarInterval : poolInterval;
+}
+
 template <typename Node, typename WaitFn> void runDallasMeasurementCycle(Node &solar, Node &pool, WaitFn waitForConversion) {
   solar.beginMeasurement();
   pool.beginMeasurement();

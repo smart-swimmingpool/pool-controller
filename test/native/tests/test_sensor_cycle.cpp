@@ -3,9 +3,7 @@
 
 /**
  * @file test_sensor_cycle.cpp
- * @brief Tests for runDallasMeasurementCycle() — every bus must have a
- *        conversion started before its sensors are read, for the shared
- *        (NORVI) and the dedicated (esp32dev) topology (review #170).
+ * @brief Tests for Dallas measurement-cycle ordering and recovery scheduling.
  */
 
 #include <cstdio>
@@ -30,16 +28,12 @@ extern void test_suite_end(const char *name, int passed, int failed);
 
 namespace {
 
-// A OneWire bus: counts conversion requests and remembers whether a
-// conversion was running when a sensor on it was read.
 struct FakeBus {
   int conversions = 0;
   int readsWithConversion = 0;
   int readsWithoutConversion = 0;
 };
 
-// Mirrors DallasTemperatureNode: on a shared bus only the master starts the
-// conversion; on a dedicated bus every node starts its own.
 struct FakeNode {
   FakeBus *bus;
   bool shared;
@@ -107,10 +101,18 @@ static int test_reads_happen_after_wait() {
   return 0;
 }
 
+static int test_recovery_interval_wins() {
+  test_begin("SensorCycle", "missing sensor keeps five-second recovery cadence");
+  ASSERT_EQ(PoolController::selectDallasCycleInterval(10UL, 5UL), 5UL);
+  ASSERT_EQ(PoolController::selectDallasCycleInterval(5UL, 10UL), 5UL);
+  ASSERT_EQ(PoolController::selectDallasCycleInterval(10UL, 10UL), 10UL);
+  return 0;
+}
+
 int run_sensor_cycle_tests() {
   int passed = 0;
   int failed = 0;
-  int (*tests[])() = {test_dedicated_buses, test_shared_bus, test_reads_happen_after_wait};
+  int (*tests[])() = {test_dedicated_buses, test_shared_bus, test_reads_happen_after_wait, test_recovery_interval_wins};
   for (auto test : tests) {
     if (test() == 0) {
       passed++;
