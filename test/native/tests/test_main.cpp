@@ -1,23 +1,11 @@
 /**
  * @file test_main.cpp
  * @brief Main test runner — entry point for all native C++ tests.
- *
- * Compiles and runs all pool-controller unit tests natively (x86_64)
- * using mocked ESP32/Arduino headers. Coverage is collected via gcov.
- *
- * Build:
- *   cd test/native && mkdir -p build && cd build
- *   cmake .. && make && ./test_runner
- *
- * Coverage:
- *   gcovr --root ../.. --filter 'src/' .
- *   # or: lcov --capture --directory . --output-file coverage.info
  */
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
-// Test counters
 static int g_testsPassed = 0;
 static int g_testsFailed = 0;
 static int g_assertionsPassed = 0;
@@ -47,62 +35,11 @@ void test_suite_end(const char *name, int passed, int failed) {
   }
 }
 
-// Assertion macros
-#define ASSERT_TRUE(cond)                                     \
-  do {                                                        \
-    if (!(cond)) {                                            \
-      test_fail(__FILE__, __LINE__, "Expected true: " #cond); \
-      return 1;                                               \
-    }                                                         \
-    test_pass(__FILE__, __LINE__);                            \
-  } while (0)
-
-#define ASSERT_FALSE(cond) ASSERT_TRUE(!(cond))
-
-#define ASSERT_EQ(a, b)                                                                                          \
-  do {                                                                                                           \
-    auto _a = (a);                                                                                               \
-    auto _b = (b);                                                                                               \
-    if (_a != _b) {                                                                                              \
-      char _msg[256];                                                                                            \
-      snprintf(_msg, sizeof(_msg), "Expected %s == %s: got %lld vs %lld", #a, #b, (long long)_a, (long long)_b); \
-      test_fail(__FILE__, __LINE__, _msg);                                                                       \
-      return 1;                                                                                                  \
-    }                                                                                                            \
-    test_pass(__FILE__, __LINE__);                                                                               \
-  } while (0)
-
-#define ASSERT_STREQ(a, b)                                                                            \
-  do {                                                                                                \
-    const char *_a = (a);                                                                             \
-    const char *_b = (b);                                                                             \
-    if (strcmp(_a, _b) != 0) {                                                                        \
-      char _msg[256];                                                                                 \
-      snprintf(_msg, sizeof(_msg), "Expected strcmp(%s, %s) == 0: got '%s' vs '%s'", #a, #b, _a, _b); \
-      test_fail(__FILE__, __LINE__, _msg);                                                            \
-      return 1;                                                                                       \
-    }                                                                                                 \
-    test_pass(__FILE__, __LINE__);                                                                    \
-  } while (0)
-
-#define ASSERT_NEAR(a, b, eps)                                                                             \
-  do {                                                                                                     \
-    float _a = (a);                                                                                        \
-    float _b = (b);                                                                                        \
-    if (fabs(_a - _b) > (eps)) {                                                                           \
-      char _msg[256];                                                                                      \
-      snprintf(_msg, sizeof(_msg), "Expected |%s - %s| < %f: got %f vs %f", #a, #b, (float)(eps), _a, _b); \
-      test_fail(__FILE__, __LINE__, _msg);                                                                 \
-      return 1;                                                                                            \
-    }                                                                                                      \
-    test_pass(__FILE__, __LINE__);                                                                         \
-  } while (0)
-
-// Suite declarations
 extern int run_rule_tests();
 extern int run_config_manager_tests();
 extern int run_webportal_json_tests();
 extern int run_mqttpublisher_tests();
+extern int run_mqtt_command_queue_tests();
 extern int run_security_tests();
 extern int run_state_manager_tests();
 extern int run_timer_tests();
@@ -111,7 +48,12 @@ extern int run_webportal_logs_tests();
 extern int run_local_settings_menu_tests();
 extern int run_ky040_decoder_tests();
 extern int run_calibration_manager_tests();
-extern int run_mqtt_command_queue_tests();
+extern int run_telemetry_queue_tests();
+extern int run_sensor_slots_tests();
+extern int run_sensor_cycle_tests();
+extern int run_task_startup_policy_tests();
+extern int run_core_scheduler_tests();
+extern int run_degradation_manager_tests();
 
 int main() {
   printf("\n══════════════════════════════════════════════════\n");
@@ -123,6 +65,7 @@ int main() {
   total += run_config_manager_tests();
   total += run_webportal_json_tests();
   total += run_mqttpublisher_tests();
+  total += run_mqtt_command_queue_tests();
   total += run_security_tests();
   total += run_state_manager_tests();
   total += run_timer_tests();
@@ -131,7 +74,13 @@ int main() {
   total += run_local_settings_menu_tests();
   total += run_ky040_decoder_tests();
   total += run_calibration_manager_tests();
-  total += run_mqtt_command_queue_tests();
+  total += run_telemetry_queue_tests();
+  total += run_sensor_slots_tests();
+  total += run_sensor_cycle_tests();
+  total += run_task_startup_policy_tests();
+  total += run_core_scheduler_tests();
+  total += run_degradation_manager_tests();
+  (void)total;
 
   printf("\n══════════════════════════════════════════════════\n");
   printf("  Results: %d suites passed, %d suites failed\n", g_testsPassed, g_testsFailed);

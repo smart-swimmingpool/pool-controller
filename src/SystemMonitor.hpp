@@ -9,15 +9,6 @@
 
 #pragma once
 
-/**
- * Watchdog and Memory Monitor for 24/7 Operation
- *
- * Monitors memory usage and automatically reboots if memory gets critically low.
- * Provides watchdog functionality to detect system hangs.
- *
- * ESP8266 support was removed in v3.2.0.
- */
-
 #include <Arduino.h>
 #include <Preferences.h>
 #include <esp_idf_version.h>
@@ -27,9 +18,6 @@
 
 namespace PoolController {
 
-/**
- * Memory and Watchdog Monitor
- */
 class SystemMonitor {
 private:
   static constexpr uint32_t LOW_MEMORY_THRESHOLD = 16384;
@@ -40,15 +28,6 @@ private:
   static bool lowMemoryWarning;
 
 public:
-  /**
-   * Initialize system monitor and watchdog.
-   * ESP32 TWDT: 30-second timeout, panic on timeout.
-   *
-   * ESP-IDF 5.x changed the WDT API to use a config struct, and the Arduino
-   * framework pre-initialises the TWDT before setup() runs.  Use
-   * esp_task_wdt_reconfigure() on ESP-IDF ≥ 5 so we can adjust the timeout
-   * without failing with ESP_ERR_INVALID_STATE.
-   */
   static void begin() {
     lastMemoryCheck = 0;
     minFreeHeap = ESP.getFreeHeap();
@@ -64,35 +43,36 @@ public:
 #else
     esp_task_wdt_init(30, true);
 #endif
-    esp_task_wdt_add(NULL);
+    registerCurrentTaskWithWatchdog();
   }
 
-  /**
-   * Feed the watchdog — call this regularly in main loop
-   */
+  /** Subscribe the calling FreeRTOS task to the task watchdog. */
+  static bool registerCurrentTaskWithWatchdog() {
+    const esp_err_t err = esp_task_wdt_add(NULL);
+    if (err == ESP_OK) {
+      return true;
+    }
+    LOG_ERROR("Task watchdog registration failed: 0x%x\n", static_cast<unsigned>(err));
+    return false;
+  }
+
   static void feedWatchdog() { esp_task_wdt_reset(); }
 
-  /**
-   * Check memory status and reboot if critically low.
-   * Call this periodically (e.g., every 10 seconds).
-   */
+  /** Feed the watchdog from a task that registered itself successfully. */
+  static void feedWatchdogFromTask() { esp_task_wdt_reset(); }
+
   static void checkMemory() {
     uint32_t now = millis();
-
-    // Check every 10 seconds
     if (now - lastMemoryCheck < 10000) {
       return;
     }
     lastMemoryCheck = now;
 
     uint32_t freeHeap = ESP.getFreeHeap();
-
-    // Track minimum heap
     if (freeHeap < minFreeHeap) {
       minFreeHeap = freeHeap;
     }
 
-    // Critical memory — reboot immediately
     if (freeHeap < CRITICAL_MEMORY_THRESHOLD) {
       LOG_ERROR("CRITICAL: Free heap %d bytes < %d bytes. Rebooting...\n", freeHeap, CRITICAL_MEMORY_THRESHOLD);
       Serial.flush();
@@ -100,24 +80,17 @@ public:
       ESP.restart();
     }
 
-    // Low memory — log warning
     if (freeHeap < LOW_MEMORY_THRESHOLD && !lowMemoryWarning) {
-      LOG_WARN("WARNING: Low memory detected. Free heap: %d bytes "
-               "(min: %d)\n",
-        freeHeap, minFreeHeap);
+      LOG_WARN("WARNING: Low memory detected. Free heap: %d bytes (min: %d)\n", freeHeap, minFreeHeap);
       lowMemoryWarning = true;
     } else if (freeHeap >= LOW_MEMORY_THRESHOLD && lowMemoryWarning) {
       lowMemoryWarning = false;
     }
   }
 
-  /** Get current free heap */
   static uint32_t getFreeHeap() { return ESP.getFreeHeap(); }
-
-  /** Get minimum free heap since boot */
   static uint32_t getMinFreeHeap() { return minFreeHeap; }
 
-  /** Force a reboot */
   static void reboot() {
     LOG_INFO("System reboot requested\n");
     Serial.flush();
@@ -125,37 +98,16 @@ public:
     ESP.restart();
   }
 
-  /** Get uptime in seconds */
   static uint32_t getUptimeSeconds() { return millis() / 1000; }
-
-  /** Check if system is healthy */
   static bool isHealthy() { return ESP.getFreeHeap() >= LOW_MEMORY_THRESHOLD; }
 
-  // --- Boot-loop detection (P8) ---
-
-  /** Number of consecutive boots before safe mode activates */
   static constexpr uint8_t BOOT_LOOP_MAX_COUNT = 3;
+  static constexpr uint32_t BOOT_LOOP_CLEAR_AFTER_SEC = 300;
 
-  /** Minimum uptime (seconds) before clearing the boot-loop counter */
-  static constexpr uint32_t BOOT_LOOP_CLEAR_AFTER_SEC = 300;  // 5 min
-
-  /**
-   * Detect boot-loop pattern.
-   * Call this as early as possible in setup(), before MQTT/network initializes.
-   *
-   * Increments a persistent boot counter in NVS on every boot.
-   * Returns true when BOOT_LOOP_MAX_COUNT consecutive boots have occurred
-   * without a reset (which happens after stable uptime in loop()).
-   *
-   * The counter is reset to 0 by clearBootLoopCounter(), called from
-   * PoolController::loop() after BOOT_LOOP_CLEAR_AFTER_SEC of stable operation.
-   */
   static bool detectBootLoop() {
     Preferences prefs;
     prefs.begin("sysmon", false);
-
     int bootCount = prefs.getInt("bootCount", 0) + 1;
-
     LOG_INFO("  Boot counter: %d\n", bootCount);
 
     bool isBootLoop = (bootCount >= BOOT_LOOP_MAX_COUNT);
@@ -166,15 +118,9 @@ public:
 
     prefs.putInt("bootCount", bootCount);
     prefs.end();
-
     return isBootLoop;
   }
 
-  /**
-   * Clear the boot-loop counter.
-   * Called from PoolController::loop() after BOOT_LOOP_CLEAR_AFTER_SEC seconds
-   * of stable operation to indicate a healthy boot.
-   */
   static void clearBootLoopCounter() {
     Preferences prefs;
     prefs.begin("sysmon", false);
