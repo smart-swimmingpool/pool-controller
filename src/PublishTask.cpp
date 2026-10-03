@@ -15,6 +15,7 @@
 #include "TelemetryQueue.hpp"
 #include "MqttPublisher.hpp"
 #include "OtaUpdater.hpp"
+#include "SystemMonitor.hpp"
 
 namespace PoolController {
 
@@ -23,6 +24,8 @@ TaskHandle_t publishTaskHandle = nullptr;
 }  // namespace
 
 void publishTaskFunc(void *) {
+  const bool watchdogRegistered = SystemMonitor::registerCurrentTaskWithWatchdog();
+
   for (;;) {
     PublishRequestKind kind;
     while (TelemetryQueue::instance().dequeue(kind)) {
@@ -34,6 +37,12 @@ void publishTaskFunc(void *) {
           MqttPublisher::publishStates();
         }
       }
+      if (watchdogRegistered) {
+        SystemMonitor::feedWatchdogFromTask();
+      }
+    }
+    if (watchdogRegistered) {
+      SystemMonitor::feedWatchdogFromTask();
     }
     vTaskDelay(pdMS_TO_TICKS(50));
   }

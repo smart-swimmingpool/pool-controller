@@ -32,6 +32,8 @@ constexpr uint32_t CONVERSION_DELAY_MS = 800;  // 12-bit DS18B20 conversion
 }  // namespace
 
 void sensorTaskFunc(void *) {
+  const bool watchdogRegistered = SystemMonitor::registerCurrentTaskWithWatchdog();
+
   for (;;) {
     const uint32_t now = millis();
 
@@ -41,11 +43,12 @@ void sensorTaskFunc(void *) {
       lastSolarReadingMs = now;
       Serial.println("〽 SensorTask: reading Dallas sensors");
       // Starts the conversion on every bus (shared or dedicated topology)
-      runDallasMeasurementCycle(solarTemperatureNode, poolTemperatureNode, [] {
+      runDallasMeasurementCycle(solarTemperatureNode, poolTemperatureNode, [watchdogRegistered] {
         // Yield while the conversion runs — never block the control loop.
         vTaskDelay(pdMS_TO_TICKS(CONVERSION_DELAY_MS));
-        // Feed from the task context so long I/O waits can't starve the WDT.
-        SystemMonitor::feedWatchdogFromTask();
+        if (watchdogRegistered) {
+          SystemMonitor::feedWatchdogFromTask();
+        }
       });
     }
 
@@ -56,6 +59,9 @@ void sensorTaskFunc(void *) {
       ctrlTemperatureNode.loop();
     }
 
+    if (watchdogRegistered) {
+      SystemMonitor::feedWatchdogFromTask();
+    }
     vTaskDelay(pdMS_TO_TICKS(100));
   }
 }

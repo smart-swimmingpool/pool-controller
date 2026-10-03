@@ -14,19 +14,30 @@
 
 #include <atomic>
 
-#include "NorviOledDisplay.hpp"
+#include "DisplayCoordinator.hpp"
+#include "SystemMonitor.hpp"
 
 namespace PoolController {
 
 namespace {
 TaskHandle_t displayTaskHandle = nullptr;
 std::atomic<bool> renderRequested{false};
+constexpr uint32_t FALLBACK_RENDER_INTERVAL_MS = 2000;
 }  // namespace
 
 void displayTaskFunc(void *) {
+  const bool watchdogRegistered = SystemMonitor::registerCurrentTaskWithWatchdog();
+  uint32_t lastRenderMs = millis();
+
   for (;;) {
-    if (renderRequested.exchange(false) || (millis() % 2000 < 50)) {
-      NorviOledDisplay::render();
+    const uint32_t now = millis();
+    const bool requested = renderRequested.exchange(false, std::memory_order_acq_rel);
+    if (requested || now - lastRenderMs >= FALLBACK_RENDER_INTERVAL_MS) {
+      lastRenderMs = now;
+      DisplayCoordinator::render();
+    }
+    if (watchdogRegistered) {
+      SystemMonitor::feedWatchdogFromTask();
     }
     vTaskDelay(pdMS_TO_TICKS(100));
   }
@@ -37,7 +48,7 @@ bool DisplayTask::start(uint8_t priority, uint16_t stackBytes, BaseType_t core) 
 }
 
 void DisplayTask::requestRender() {
-  renderRequested = true;
+  renderRequested.store(true, std::memory_order_release);
 }
 
 void DisplayTask::logStackWatermark() {

@@ -41,9 +41,7 @@
 #include "TelemetryQueue.hpp"
 
 #ifdef NORVI_AE01_R
-#include "NorviOledDisplay.hpp"
-#include "NorviButtonHandler.hpp"
-#include "DisplayTask.hpp"
+#include "DisplayCoordinator.hpp"
 #endif
 
 #include "Config.hpp"
@@ -147,9 +145,7 @@ PoolControllerContext::PoolControllerContext() {
   Self = this;
 }
 
-/**
- * @brief Destroy the context and clear the instance pointer.
- */
+/** @brief Destroy the context and clear the instance pointer. */
 PoolControllerContext::~PoolControllerContext() {
   assert(Self);
   Self = nullptr;
@@ -220,8 +216,6 @@ auto PoolControllerContext::initializeController() -> void {
 
 #ifdef NORVI_AE01_R
   // Initialize the shared OneWire bus before individual node begin() calls.
-  // Both DS18B20 sensors live on the same GPIO25 bus — the shared sensor
-  // instance scans all devices and each node reads by device index.
   sharedDallasSensor.begin();
 #endif
 
@@ -240,7 +234,6 @@ auto PoolControllerContext::initializeController() -> void {
   operationModeNode.setTemperatureHysteresis(ConfigManager::getSettings().tempHysteresis);
 
   // TimerSetting is loaded from NVS by OperationModeNode::begin() — no override needed
-
   operationModeNode.setPoolTemperatureNode(&poolTemperatureNode);
   operationModeNode.setSolarTemperatureNode(&solarTemperatureNode);
 
@@ -253,124 +246,22 @@ auto PoolControllerContext::initializeController() -> void {
   _lastMeasurement = 0;
 }
 
-/**
- * @brief Full initialization sequence called once at boot.
- *
- * Order:
- *   1. StateManager (NVS), SystemMonitor, DegradationManager
- *   2. Boot-loop detection — forces safe mode if detected
- *   3. ConfigManager (LittleFS config.json)
- *   4. NetworkManager (WiFi + MQTT)
- *   5. WebPortal (HTTP server + captive portal)
- *   6. MqttPublisher (HA Discovery)
- *   7. OtaUpdater (GitHub release check)
- *   8. initializeController() — pins, nodes, rules
- *   9. Load persisted operational state from NVS
- */
+/** @brief Full initialization sequence called once at boot. */
 auto PoolControllerContext::setup() -> void {
-  // Initialize Preferences (NVS), System Monitor and Degradation tracker
   StateManager::begin();
   SystemMonitor::begin();
   DegradationManager::begin();
 
-  // Initialize Status-LED with Homie-compatible blink codes
   StatusLed::begin();
 
-  // Load persistent sensor address mapping from NVS early.
-  // Must run before NorviOledDisplay::begin() so that first-boot detection
-  // (needsSensorMapping) correctly checks whether sensors are assigned.
+  // Load mapping before the display first-boot flow evaluates it.
   loadSensorAddressMapping();
-
-  // Initialize persisted config (WiFi, MQTT, NTP, settings).
-  // Must run before NorviOledDisplay::begin() for needsWiFiSetup() check.
   ConfigManager::begin();
 
 #ifdef NORVI_AE01_R
-  // Initialize NORVI-specific peripherals (OLED display + front buttons)
-  NorviOledDisplay::begin();
-  NorviButtonHandler::begin();
-
-  // Wire button callbacks (S1=UP, S2=DOWN, S3=ACTION)
-  // ── S1 (UP) ───────────────────────────────────────────────────────────
-  NorviButtonHandler::onButton1Press([]() {
-    if (NorviOledDisplay::isMenuActive()) {
-      NorviOledDisplay::menuPrevious();
-    } else if (NorviOledDisplay::isSelectSensorStep()) {
-      NorviOledDisplay::setupSelectPrevious();
-      NorviOledDisplay::requestRedraw();
-    } else if (NorviOledDisplay::isSelectRoleStep()) {
-      NorviOledDisplay::setupSelectSolar();
-      NorviOledDisplay::requestRedraw();
-    } else {
-      NorviOledDisplay::previousPage();
-    }
-  });
-  // ── S2 (DOWN) ─────────────────────────────────────────────────────────
-  NorviButtonHandler::onButton2Press([]() {
-    if (NorviOledDisplay::isMenuActive()) {
-      NorviOledDisplay::menuNext();
-    } else if (NorviOledDisplay::isSelectSensorStep()) {
-      NorviOledDisplay::setupSelectNext();
-      NorviOledDisplay::requestRedraw();
-    } else if (NorviOledDisplay::isSelectRoleStep()) {
-      NorviOledDisplay::setupSelectPool();
-      NorviOledDisplay::requestRedraw();
-    } else {
-      NorviOledDisplay::nextPage();
-    }
-  });
-  // ── S3 (CONFIRM) ──────────────────────────────────────────────────────
-  NorviButtonHandler::onButton3Press([]() {
-    if (NorviOledDisplay::isMenuActive()) {
-      // Execute selected menu action, then return to MAIN
-      NorviOledDisplay::Page prevPage = NorviOledDisplay::getCurrentPage();
-      switch (NorviOledDisplay::getMenuSelection()) {
-      case NorviOledDisplay::MenuItem::MODE: {
-        // Cycle operation mode
-        const String &currentMode = operationModeNode.getMode();
-        if (currentMode == "auto") {
-          operationModeNode.setMode("manu");
-        } else if (currentMode == "manu") {
-          operationModeNode.setMode("boost");
-        } else if (currentMode == "boost") {
-          operationModeNode.setMode("timer");
-        } else {
-          operationModeNode.setMode("auto");
-        }
-        Serial.printf("→ Mode switched to: %s\n", operationModeNode.getMode().c_str());
-        break;
-      }
-      case NorviOledDisplay::MenuItem::PUMP:
-        // Toggle pool pump
-        poolPumpNode.setSwitch(!poolPumpNode.getSwitch());
-        Serial.printf("→ Pump toggled: %s\n", poolPumpNode.getSwitch() ? "ON" : "OFF");
-        break;
-      case NorviOledDisplay::MenuItem::EXIT:
-        // No action — just exit
-        break;
-      }
-      NorviOledDisplay::exitMenu();
-    } else if (NorviOledDisplay::getCurrentPage() == NorviOledDisplay::Page::MAIN) {
-      // MAIN page: open action menu
-      NorviOledDisplay::enterMenu();
-    } else if (NorviOledDisplay::getCurrentPage() == NorviOledDisplay::Page::SENSOR_SETUP) {
-      // Sensor setup: advance the wizard
-      NorviOledDisplay::confirmAction();
-    }
-    // Other info pages: S3 intentionally does nothing
-  });
-  // ── S3 long-press: save sensor mapping & reboot ───────────────────────
-  NorviButtonHandler::onButton3LongPress([]() -> bool {
-    if (NorviOledDisplay::isMappingComplete()) {
-      uint8_t solarAddr[8], poolAddr[8];
-      NorviOledDisplay::getMapping(solarAddr, poolAddr);
-      ConfigManager::saveSensorMapping(solarAddr, poolAddr);
-      Serial.println("→ Sensor mapping saved — rebooting...");
-      NetworkManager::restart();
-      return true;
-    }
-    return false;
-  });
+  // Own all NORVI UI state transitions through one coordinator. Button
+  // callbacks stay on Core 1; OLED rendering remains on Core 0.
+  DisplayCoordinator::begin();
 #endif
 
   // --- Boot-loop detection ---
@@ -379,7 +270,6 @@ auto PoolControllerContext::setup() -> void {
     Serial.println("✖ SAFE MODE ACTIVE — all relays forced OFF");
     DegradationManager::forceSafeMode();
 
-    // Clear stored relay states
     Preferences prefs;
     prefs.begin("pool-pump", false);
     prefs.clear();
@@ -389,22 +279,12 @@ auto PoolControllerContext::setup() -> void {
     prefs.end();
   }
 
-  // Start WiFi/WPS and MQTT services
   NetworkManager::begin();
-
-  // Start Captive Setup Web Portal
   WebPortal::begin();
-
-  // Start Home Assistant Discovery stack
   MqttPublisher::begin();
-
-  // Start OTA update checker
   OtaUpdater::begin();
 
-  // Suppress NVS persistence during setup initialization
   OperationModeNode::suppressPersist(true);
-
-  // Initialize core drivers and parameters
   initializeController();
 
   // Print address mapping status after node begin() resolved the filters
@@ -417,11 +297,7 @@ auto PoolControllerContext::setup() -> void {
   }
 
   OperationModeNode::suppressPersist(false);
-
-  // Load operational settings from NVS Preferences
   operationModeNode.loadState();
-
-  // OTA safety: detect version transition and verify config integrity
   ConfigManager::logOtaTransition();
 
   // Start Core-0 I/O tasks (sensors, display, publish).
@@ -430,26 +306,10 @@ auto PoolControllerContext::setup() -> void {
   Serial.printf("✓ Controller setup completed. Free heap: %u B\n", ESP.getFreeHeap());
 }
 
-/**
- * @brief Main control loop — runs every iteration of Arduino loop().
- *
- * Order:
- *   1. Feed watchdog + check free memory (SystemMonitor)
- *   2. Evaluate degradation levels (DegradationManager)
- *   3. Clear boot-loop counter after 5 min stable uptime
- *   4. Run managers: NetworkManager, WebPortal, OtaUpdater
- *   5. Run nodes: relays, operation mode (triggers rule engine)
- *      — temperature sensors run in SensorTask on Core 0 (see SensorTask.cpp)
- *   6. Publish HA Discovery + states on MQTT (re)connect
- *   7. Periodically publish telemetry states to MQTT (every loopInterval s)
- *   8. Log Core-0 task stack watermarks (throttled)
- */
+/** @brief Main control loop — temperature acquisition and I/O run on worker tasks. */
 auto PoolControllerContext::loop() -> void {
-  // Feed watchdog and check memory thresholds
   SystemMonitor::feedWatchdog();
   SystemMonitor::checkMemory();
-
-  // Evaluate degradation levels and health
   DegradationManager::evaluate();
 
   // Stable bootloop counter cleanup after 5 minutes
@@ -467,14 +327,12 @@ auto PoolControllerContext::loop() -> void {
     lastBootClear = millis();
   }
 
-  // Run managers
+  // Network callback only queues commands; state mutations are serialized here.
   NetworkManager::loop();
-  // Handle MQTT commands received on the AsyncTCP task (state changes only on the loop task)
   MqttPublisher::processPendingCommands();
   WebPortal::loop();
   OtaUpdater::loop();
 
-  // --- Status-LED: Pattern an Systemzustand anpassen (Homie-Convention) ---
   if (OtaUpdater::isUpdateInProgress()) {
     StatusLed::setPattern(StatusLedPattern::OTA_UPDATE);
   } else if (bootLoopDetected_ || DegradationManager::isSafe()) {
@@ -491,22 +349,17 @@ auto PoolControllerContext::loop() -> void {
   StatusLed::loop();
 
 #ifdef NORVI_AE01_R
-  // Advance display state machine (Core 1) and request render on DisplayTask (Core 0).
-  NorviOledDisplay::update();
-  DisplayTask::requestRender();
-  NorviButtonHandler::loop();
+  DisplayCoordinator::loop();
 #endif
 
-  // Run drivers & logic rules
   poolPumpNode.loop();
   solarPumpNode.loop();
   operationModeNode.loop();
 
-  // Handle Home Assistant Connection State transition
+  // Handle Home Assistant connection transition.
   static bool wasMqttConnected = false;
-  bool currentMqttState = NetworkManager::isMqttConnected();
+  const bool currentMqttState = NetworkManager::isMqttConnected();
   if (currentMqttState && !wasMqttConnected) {
-    // Freshly connected to MQTT: publish Discovery and States via PublishTask.
     TelemetryQueue::instance().enqueue(PublishRequestKind::DISCOVERY);
     TelemetryQueue::instance().enqueue(PublishRequestKind::STATES);
     wasMqttConnected = true;
@@ -514,13 +367,12 @@ auto PoolControllerContext::loop() -> void {
     wasMqttConnected = false;
   }
 
-  // Periodically enqueue telemetry publish to HA (P4) — serialization runs on Core 0.
+  // Periodically enqueue telemetry; serialization runs on PublishTask/Core 0.
   if (currentMqttState && Utils::shouldMeasure(_lastMeasurement, _measurementInterval)) {
     _lastMeasurement = millis();
     TelemetryQueue::instance().enqueue(PublishRequestKind::STATES);
   }
 
-  // Log Core-0 task stack high-water marks (throttled inside).
   CoreScheduler::logStackWatermarks();
 }
 
