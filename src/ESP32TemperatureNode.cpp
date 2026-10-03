@@ -55,7 +55,8 @@ auto readInternalTemperatureCelsius(float &temperatureCelsius) -> bool {
 ESP32TemperatureNode::ESP32TemperatureNode(const char *id, const char *name, const int measurementInterval) {
   _id = id;
   _name = name;
-  _measurementInterval.store((measurementInterval > MIN_INTERVAL) ? measurementInterval : MIN_INTERVAL, std::memory_order_relaxed);
+  _measurementInterval.store(
+    (measurementInterval > MIN_INTERVAL) ? measurementInterval : MIN_INTERVAL, std::memory_order_relaxed);
   _lastMeasurement = millis();
   _temperature = NAN;
 }

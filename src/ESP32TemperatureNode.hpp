@@ -33,9 +33,7 @@ class ESP32TemperatureNode {
 public:
   ESP32TemperatureNode(const char *id, const char *name, const int measurementInterval = MEASUREMENT_INTERVAL);
 
-  float getTemperature() const {
-    return PoolController::SensorSlots::read(PoolController::SensorId::CONTROLLER);
-  }
+  float getTemperature() const { return PoolController::SensorSlots::read(PoolController::SensorId::CONTROLLER); }
   void setMeasurementInterval(unsigned long interval) { _measurementInterval.store(interval, std::memory_order_relaxed); }
   unsigned long getMeasurementInterval() const { return _measurementInterval.load(std::memory_order_relaxed); }
 
