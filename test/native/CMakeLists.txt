@@ -79,6 +79,7 @@ set(TEST_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_config_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_webportal_json.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mqttpublisher.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mqtt_command_queue.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_security.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_state_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_timer.cpp

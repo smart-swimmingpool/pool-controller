@@ -469,6 +469,8 @@ auto PoolControllerContext::loop() -> void {
 
   // Run managers
   NetworkManager::loop();
+  // Handle MQTT commands received on the AsyncTCP task (state changes only on the loop task)
+  MqttPublisher::processPendingCommands();
   WebPortal::loop();
   OtaUpdater::loop();
 

@@ -9,6 +9,8 @@
 
 #include <sys/time.h>  // For settimeofday
 
+#include <cstring>
+
 #include "LogCapture.hpp"
 #include "NetworkManager.hpp"
 #include "TimeClientHelper.hpp"
@@ -233,9 +235,11 @@ int getTimezoneLabelCount() {
   return kTzLabelCount;
 }
 
-int getTimezoneIndexFromLabel(const String &label) {
+int getTimezoneIndexFromLabel(const char *label) {
+  if (label == nullptr)
+    return -1;
   for (int i = 0; i < kTzLabelCount; i++) {
-    if (label == kTzLabels[i])
+    if (strcmp(label, kTzLabels[i]) == 0)
       return i;
   }
   return -1;
