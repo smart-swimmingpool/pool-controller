@@ -1,8 +1,8 @@
 ---
 title: Multicore Architecture
-summary: How the firmware uses both ESP32 cores — dedicated I/O tasks (sensors, display, MQTT telemetry) on Core 0 and a deterministic control loop on Core 1
+summary: How the firmware isolates blocking sensor I/O on ESP32 Core 0 while keeping mutable controller state serialized on Core 1
 date: "2026-08-01"
-lastmod: "2026-08-01"
+lastmod: "2026-10-03"
 draft: false
 toc: true
 type: docs
@@ -17,95 +17,98 @@ menu:
 
 ## Overview
 
-The ESP32 has two Xtensa LX6 cores, but a single-loop Arduino sketch only uses one:
-the WiFi/BT stack runs on Core 0 and the Arduino `loop()` on Core 1. Everything
-else — sensor reads, display updates, rules, network, MQTT — runs serially inside
-`loop()`.
-
-The firmware restructures this into a **task architecture with explicit core
-separation**:
+The firmware uses an explicit ownership model instead of moving every I/O operation to the second core.
+The safety-critical controller model remains single-writer on the Arduino loop task, while the blocking
+DS18B20 conversion is isolated on Core 0.
 
 | Core | Role | Contents |
 | ---- | ---- | -------- |
-| **Core 0** (PRO_CPU) | I/O core | SensorTask (DS18B20 + internal temp), DisplayTask (OLED rendering, NORVI only), PublishTask (MQTT telemetry serialization) |
-| **Core 1** (APP_CPU) | Control core | Arduino `loop()`: watchdog, degradation, rules, relays, StatusLED, async network managers, OTA, front-panel button scan |
+| **Core 0** (PRO_CPU) | Sensor I/O | `SensorTask`: DS18B20 conversion/readout and internal ESP32 temperature |
+| **Core 1** (APP_CPU) | Control and stateful I/O | Arduino `loop()`: watchdog, degradation, rules, relays, StatusLED, network/OTA, MQTT serialization, front-panel UI and OLED rendering |
 
-## Why
+## Why this boundary
 
-Blocking work used to stall the entire control loop. The most expensive operation is
-the DS18B20 temperature conversion (`requestTemperatures()`), which blocks for about
-**750 ms** at 12-bit resolution. During that time the watchdog feeding, rule
-evaluation, and relay actuation all wait.
+A 12-bit DS18B20 conversion can take roughly 750 ms. Running it in the Arduino loop stalls rule
+evaluation, watchdog handling and relay decisions. `SensorTask` removes that blocking conversion from
+the control loop.
 
-Moving that I/O to dedicated tasks on Core 0 gives three benefits:
-
-1. **Low loop latency** — the control loop stays in the low millisecond range.
-2. **Isolation** — a hung sensor bus or I2C display can no longer block the
-   safety-critical control logic on Core 1.
-3. **Headroom** — capacity for future features (more sensors, web UI, logging).
+MQTT serialization and OLED rendering are intentionally kept on Core 1. Both read mutable controller
+state such as operation mode, rules, relay state and configuration. Running those readers concurrently
+with the control loop would create cross-core data races around objects such as Arduino `String` and
+rule state. Keeping them on the owning task is simpler and safer than protecting the complete object
+graph with locks.
 
 ## Task model
 
-All I/O tasks are created in `setup()` by the `CoreScheduler` and stay static (no
-dynamic task creation at runtime, no heap growth).
+`CoreScheduler` creates one required worker task:
 
-| Task | Core | Priority | Stack | Runs on |
+| Task | Core | Priority | Stack | Purpose |
 | ---- | ---- | -------- | ----- | ------- |
-| SensorTask | 0 | 2 | 6 KB | all builds |
-| PublishTask | 0 | 1 | 4 KB | all builds |
-| DisplayTask | 0 | 1 | 3 KB | NORVI only (`#ifdef NORVI_AE01_R`) |
+| `SensorTask` | 0 | 2 | 6 KB | DS18B20 and internal temperature acquisition |
 
-If a task cannot be created (heap exhausted at boot), `CoreScheduler` does not
-continue silently: a missing SensorTask or PublishTask restarts the controller —
-the rules must not run on stale temperatures. If the failure persists, the
-boot-loop detection forces safe mode (all relays off). A missing DisplayTask is
-logged and the controller continues without OLED rendering.
+If `SensorTask` cannot be created, the controller restarts. A persistent failure is handled by the
+existing boot-loop detection and safe-mode path.
 
-FreeRTOS priorities only matter within a core: the I/O tasks yield via
-`vTaskDelay` and stay below the WiFi-stack tasks on Core 0, so they never preempt
-the control loop on Core 1.
+MQTT requests still use `TelemetryQueue`, but the queue is drained from `PoolController::loop()` via
+`CoreScheduler::logStackWatermarks()`. This preserves request coalescing/ordering while ensuring that
+`MqttPublisher` executes on the same Core-1 task that owns the mutable controller model.
+
+The NORVI display follows the same rule: button handling, UI state transitions and OLED rendering are
+serialized on Core 1 by `DisplayCoordinator`.
+
+## Sensor ownership
+
+After startup, `SensorTask` is the exclusive owner of `OneWire` and `DallasTemperature` operations.
+Core-1 code never scans or reads the bus directly.
+
+`DallasTemperatureNode` therefore exposes two cross-core channels:
+
+- Measurements are published through `SensorSlots`.
+- Sensor discovery metadata and selected ROM addresses are copied into a small cached snapshot guarded
+  by a short atomic lock. Web and MQTT code read only this cache.
+
+Runtime sensor-mapping changes are stored as pending configuration. `SensorTask` applies them at the
+start of a later measurement cycle, so calls from WebPortal or MQTT never execute OneWire transactions
+on Core 1.
+
+## DS18B20 measurement cycle
+
+`DallasTemperature` is configured with `setWaitForConversion(false)`. A measurement cycle is:
+
+1. Start conversions on the required bus or buses.
+2. Yield `SensorTask` for 800 ms.
+3. Read the completed values.
+4. Publish the result to `SensorSlots` and refresh the discovery cache.
+
+This avoids the former double wait where `requestTemperatures()` blocked internally and the worker then
+waited another 800 ms.
+
+If either Dallas sensor is missing or invalid, the common cycle uses the shorter 5-second recovery
+interval. Once both sensors are valid, the configured `loopInterval` applies again.
 
 ## Data flow
 
 ```text
-SensorTask (Core 0) ── sensor slots ────▶ control loop (Core 1): rules/relays/watchdog
-SensorTask ── status ────────────────────▶ DegradationManager (Core 1)
-control loop ── update() + render request ─▶ DisplayTask (Core 0, NORVI)
-button scan stays on the control loop (Core 1) — callbacks mutate loop singletons
-control loop ── telemetry queue ─────────▶ PublishTask (Core 0) ──▶ MQTT
-control loop ── async network/OTA ──────── (unchanged, Core 1)
+SensorTask (Core 0) ── SensorSlots ──────▶ control loop (Core 1): rules / relays
+SensorTask (Core 0) ── discovery cache ──▶ WebPortal / MQTT / UI (Core 1)
+control loop (Core 1) ── TelemetryQueue ─▶ MQTT serialization (Core 1)
+DisplayCoordinator: input + state + render ───────────────────▶ Core 1
 ```
 
-Every cross-task data path is **single-writer**:
-
-- Sensor values: sensor slots — SensorTask writes, control loop and display read.
-  Value and found flag are copied together under a short critical section (portMUX),
-  so readers always get a consistent snapshot of one measurement.
-- Sensor status and display flags: `std::atomic` — `volatile` gives neither
-  inter-core visibility nor ordering.
-- Button input: stays on the control loop — button callbacks mutate control-loop
-  singletons (`operationModeNode`, `poolPumpNode`), so scanning on Core 0 would
-  violate the single-writer rule. The OLED *rendering* (blocking I2C work) is what
-  runs on Core 0.
-- Telemetry: fixed-capacity SPSC ring buffer — control loop enqueues, PublishTask
-  serializes and publishes.
-
-The MQTT *connection* and the web/OTA managers stay on the control loop — they are
-already non-blocking (`AsyncMqttClient`, async web server). Only the telemetry
-serialization (JSON build, HA Discovery payloads) is offloaded to PublishTask.
+The important rule is ownership: hardware bus state belongs to `SensorTask`; mutable controller state
+belongs to the control loop. Cross-core communication uses bounded snapshots instead of shared mutable
+objects.
 
 ## Reliability
 
-- The control loop keeps feeding the task watchdog; I/O tasks feed it during long
-  waits (DS18B20 conversion, OTA pause).
-- `SystemMonitor` reports task stack high-water marks so stack sizing is visible in
-  logs and degradation.
-- Safe mode and degradation semantics are unchanged — sensor faults are reported to
-  `DegradationManager` over a thread-safe status channel.
-- During OTA, PublishTask pauses publishing but keeps draining its queue.
+- Sensor values and found-state are transferred consistently through `SensorSlots`.
+- `DegradationManager` uses atomic cross-core status flags.
+- `SensorTask` registers with and feeds the task watchdog.
+- Stack high-water logging remains available for the worker task.
+- OTA handling and MQTT state mutation stay serialized on Core 1.
 
 ## Design document
 
-The full design, including the thread-safety audit of the existing singletons,
-migration phases, risks, and success criteria, lives in
+The original design and migration plan remain available under
 [`docs/superpowers/specs/2026-08-01-multicore-task-architecture-design.md`](../superpowers/specs/2026-08-01-multicore-task-architecture-design.md).
+The implementation deliberately narrows the final cross-core boundary after the concurrency review.
