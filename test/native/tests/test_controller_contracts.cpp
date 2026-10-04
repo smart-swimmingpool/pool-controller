@@ -119,9 +119,8 @@ static int test_commands_cover_runtime_controller_settings() {
   test_begin("ControllerContracts", "commands cover mutable runtime controller settings");
   const ControllerCommandType types[] = {ControllerCommandType::SET_LOOP_INTERVAL, ControllerCommandType::SET_TIMEZONE,
     ControllerCommandType::SET_TIME_LOSS_GREEN_HOURS, ControllerCommandType::SET_TIME_LOSS_RED_HOURS,
-    ControllerCommandType::SET_BUTTON_1_MIN, ControllerCommandType::SET_BUTTON_1_MAX,
-    ControllerCommandType::SET_BUTTON_2_MIN, ControllerCommandType::SET_BUTTON_2_MAX,
-    ControllerCommandType::SET_BUTTON_3_MIN, ControllerCommandType::SET_BUTTON_3_MAX,
+    ControllerCommandType::SET_BUTTON_1_MIN, ControllerCommandType::SET_BUTTON_1_MAX, ControllerCommandType::SET_BUTTON_2_MIN,
+    ControllerCommandType::SET_BUTTON_2_MAX, ControllerCommandType::SET_BUTTON_3_MIN, ControllerCommandType::SET_BUTTON_3_MAX,
     ControllerCommandType::SET_BUTTON_NO_PRESS};
 
   ControllerCommand command{};
