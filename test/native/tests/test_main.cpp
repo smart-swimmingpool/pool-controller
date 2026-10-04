@@ -112,6 +112,7 @@ extern int run_local_settings_menu_tests();
 extern int run_ky040_decoder_tests();
 extern int run_calibration_manager_tests();
 extern int run_mqtt_command_queue_tests();
+extern int run_controller_contract_tests();
 
 int main() {
   printf("\n══════════════════════════════════════════════════\n");
@@ -132,6 +133,7 @@ int main() {
   total += run_ky040_decoder_tests();
   total += run_calibration_manager_tests();
   total += run_mqtt_command_queue_tests();
+  total += run_controller_contract_tests();
 
   printf("\n══════════════════════════════════════════════════\n");
   printf("  Results: %d suites passed, %d suites failed\n", g_testsPassed, g_testsFailed);
