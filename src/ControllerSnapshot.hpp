@@ -51,6 +51,24 @@ struct HealthSnapshot final {
   bool solarSensorValid{false};
 };
 
+/** @brief Temperature-based circulation configuration exposed to adapters. */
+struct CirculationSnapshot final {
+  float threshold{0.0F};
+  std::uint16_t factorMinutesPerDegree{0};
+  std::uint16_t maxRuntimeMinutes{0};
+};
+
+/** @brief Timer configuration and derived runtime state exposed to adapters. */
+struct TimerSnapshot final {
+  std::uint8_t startHour{0};
+  std::uint8_t startMinute{0};
+  std::uint8_t endHour{0};
+  std::uint8_t endMinute{0};
+  std::uint16_t effectiveRuntimeMinutes{0};
+  std::uint16_t circulationExtensionMinutes{0};
+  std::uint16_t activeEndMinutes{0};
+};
+
 /**
  * @brief Read-only application projection consumed by outbound adapters.
  *
@@ -61,6 +79,8 @@ struct SystemSnapshot final {
   SensorSnapshot sensors{};
   NetworkSnapshot network{};
   HealthSnapshot health{};
+  CirculationSnapshot circulation{};
+  TimerSnapshot timer{};
 
   OperationMode mode{OperationMode::AUTO};
   bool poolPumpOn{false};
