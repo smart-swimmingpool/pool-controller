@@ -28,7 +28,7 @@
 #include "Utils.hpp"
 #include "NetworkManager.hpp"
 #include "Nodes.hpp"
-#include "LogCapture.hpp"
+#include "SensorSlots.hpp"
 #include "SystemMonitor.hpp"
 #include "TimeClientHelper.hpp"
 #include "ConfigManager.hpp"
@@ -46,8 +46,8 @@ static void drawProgressBar();
 // ═══════════════════════════════════════════════════════════════════════════
 
 NorviOledDisplay::Page NorviOledDisplay::currentPage_ = Page::MAIN;
-uint32_t NorviOledDisplay::lastUpdateMs_ = 0;
-bool NorviOledDisplay::forceRedraw_ = true;
+std::atomic<uint32_t> NorviOledDisplay::lastUpdateMs_{0};
+std::atomic<bool> NorviOledDisplay::forceRedraw_{true};
 
 uint32_t NorviOledDisplay::lastButtonPressMs_ = 0;
 
@@ -262,16 +262,16 @@ static void drawScrollingText(int16_t x, int16_t y, const __FlashStringHelper *t
 // ═══════════════════════════════════════════════════════════════════════════
 
 void NorviOledDisplay::begin() {
-  LOG_INFO("• NorviOledDisplay initializing on I2C GPIO16(SDA)/GPIO17(SCL)...\n");
+  Serial.println("• NorviOledDisplay initializing on I2C GPIO16(SDA)/GPIO17(SCL)...");
 
   Wire.begin(PIN_OLED_SDA, PIN_OLED_SCL);
 
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
-    LOG_ERROR("✖ NorviOledDisplay: SSD1306 allocation failed — display disabled\n");
+    Serial.println("✖ NorviOledDisplay: SSD1306 allocation failed — display disabled");
     return;
   }
 
-  LOG_INFO("✓ NorviOledDisplay initialized (128×64, address 0x3C)\n");
+  Serial.println("✓ NorviOledDisplay initialized (128×64, address 0x3C)");
 
   // ── Splash screen ──────────────────────────────────────────────────────
   display.clearDisplay();
@@ -288,10 +288,10 @@ void NorviOledDisplay::begin() {
   // ── Determine starting page based on first-boot state ──────────────────
   if (needsWiFiSetup()) {
     currentPage_ = Page::WIFI_SETUP;
-    LOG_INFO("→ First boot: no WiFi configured — showing WIFI_SETUP page\n");
+    Serial.println("→ First boot: no WiFi configured — showing WIFI_SETUP page");
   } else if (needsSensorMapping()) {
     currentPage_ = Page::SENSOR_SETUP;
-    LOG_INFO("→ First boot: sensors not mapped — showing SENSOR_SETUP page\n");
+    Serial.println("→ First boot: sensors not mapped — showing SENSOR_SETUP page");
   } else {
     currentPage_ = Page::MAIN;
     firstBootDone_ = true;
@@ -303,10 +303,11 @@ void NorviOledDisplay::begin() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// loop() — Periodic update
+// update() — Display state machine (Core 1, non-blocking)
+// render() — OLED draw + I2C push (Core 0, DisplayTask)
 // ═══════════════════════════════════════════════════════════════════════════
 
-void NorviOledDisplay::loop() {
+void NorviOledDisplay::update() {
   const uint32_t now = millis();
 
   // ── Auto-return after idle timeout ───────────────────────────────────
@@ -320,9 +321,10 @@ void NorviOledDisplay::loop() {
     forceRedraw_ = true;
   }
 
-  // ── Long-press progress: accelerate redraw during hold ──────────────
-  float longPressProgress = NorviButtonHandler::getLongPressProgress();
-  bool isLongPressing = (longPressProgress > 0.0f);
+  // ── Long-press progress: request continuous redraw during hold ──────
+  if (NorviButtonHandler::getLongPressProgress() > 0.0f) {
+    forceRedraw_ = true;
+  }
 
   // ── Auto-return warning (5s before) ─────────────────────────────────
   // Sets file-scope autoReturnWarningMs consumed by drawFooter()
@@ -337,17 +339,21 @@ void NorviOledDisplay::loop() {
   } else {
     autoReturnWarningMs = 0;
   }
+}
 
-  // ── Throttle redraw rate (skip during long-press for smooth bar) ────
-  if (!forceRedraw_ && !isLongPressing && (now - lastUpdateMs_ < UPDATE_INTERVAL_MS)) {
+void NorviOledDisplay::render() {
+  // ── Throttle redraw rate ────────────────────────────────────────────
+  // exchange() so a redraw requested by the control loop between check and
+  // reset is not lost
+  const bool forced = forceRedraw_.exchange(false);
+  if (!forced && (millis() - lastUpdateMs_ < UPDATE_INTERVAL_MS)) {
     return;
   }
 
   // ── Burn-in offset shift ────────────────────────────────────────────
   updateBurnInOffset();
 
-  lastUpdateMs_ = now;
-  forceRedraw_ = false;
+  lastUpdateMs_ = millis();
 
   drawPage();
   drawProgressBar();
@@ -415,7 +421,7 @@ void NorviOledDisplay::confirmAction() {
       setupStep_ = SetupStep::IDLE;
       // Check if both done
       if (setupSolarDone_ && setupPoolDone_) {
-        LOG_INFO("→ Both sensors assigned — save mapping via long-press S3\n");
+        Serial.println("→ Both sensors assigned — save mapping via long-press S3");
       }
       forceRedraw_ = true;
     }
@@ -718,9 +724,10 @@ void NorviOledDisplay::drawMainPage() {
   // ── Pool temperature ────────────────────────────────────────────────────
   display.setTextSize(2);
   dspCursor(TX, 0);
-  if (poolTemperatureNode.isSensorFound()) {
+  const SensorSlots::Reading poolReading = SensorSlots::snapshot(SensorId::POOL);
+  if (poolReading.found) {
     char buf[8];
-    Utils::floatToString(poolTemperatureNode.getTemperature(), buf, sizeof(buf), 1);
+    Utils::floatToString(poolReading.value, buf, sizeof(buf), 1);
     display.print(buf);
     drawDegC(2);
   } else {
@@ -738,9 +745,10 @@ void NorviOledDisplay::drawMainPage() {
   // ── Solar temperature ──────────────────────────────────────────────────
   display.setTextSize(2);
   dspCursor(TX, 28);
-  if (solarTemperatureNode.isSensorFound()) {
+  const SensorSlots::Reading solarReading = SensorSlots::snapshot(SensorId::SOLAR);
+  if (solarReading.found) {
     char buf[8];
-    Utils::floatToString(solarTemperatureNode.getTemperature(), buf, sizeof(buf), 1);
+    Utils::floatToString(solarReading.value, buf, sizeof(buf), 1);
     display.print(buf);
     drawDegC(2);
   } else {
@@ -1314,7 +1322,7 @@ bool NorviOledDisplay::setupApplyAssignment() {
     }
     memcpy(setupSolarAddr_, addr, 8);
     setupSolarDone_ = true;
-    LOG_INFO("→ Sensor assigned as Solar\n");
+    Serial.println("→ Sensor assigned as Solar");
   } else {
     // If this address is already assigned as Solar, clear that
     if (setupSolarDone_ && memcmp(addr, setupSolarAddr_, 8) == 0) {
@@ -1323,7 +1331,7 @@ bool NorviOledDisplay::setupApplyAssignment() {
     }
     memcpy(setupPoolAddr_, addr, 8);
     setupPoolDone_ = true;
-    LOG_INFO("→ Sensor assigned as Pool\n");
+    Serial.println("→ Sensor assigned as Pool");
   }
 
   forceRedraw_ = true;

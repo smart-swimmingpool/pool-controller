@@ -27,6 +27,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <cstdint>
 #include <cstddef>
 
@@ -75,11 +76,17 @@ public:
   static void begin();
 
   /**
-   * @brief Update the display periodically.
-   * Handles auto-return to MAIN, burn-in shift, and page redraw.
-   * Must be called from PoolController::loop().
+   * @brief Advance the display state machine (page nav, auto-return, burn-in).
+   * Runs on the control loop (Core 1); cheap, non-blocking.
    */
-  static void loop();
+  static void update();
+
+  /**
+   * @brief Redraw the current page and push to the OLED over I2C.
+   * Runs on the Core-1 control task via DisplayCoordinator and reads
+   * temperatures from SensorSlots.
+   */
+  static void render();
 
   /** @brief Previous page (S1 / UP). */
   static void previousPage();
@@ -219,9 +226,10 @@ private:
   // ═════════════════════════════════════════════════════════════════════
 
   static Page currentPage_;
-  static uint32_t lastUpdateMs_;
+  // Display timing/redraw flags are serialized by DisplayCoordinator on Core 1.
+  static std::atomic<uint32_t> lastUpdateMs_;
   static constexpr uint32_t UPDATE_INTERVAL_MS{2000};
-  static bool forceRedraw_;
+  static std::atomic<bool> forceRedraw_;
 
   // ── Idle auto-return ─────────────────────────────────────────────────
   static uint32_t lastButtonPressMs_;

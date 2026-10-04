@@ -45,7 +45,9 @@ struct PoolControllerContext final {
   /**
    * @brief Run the main control loop iteration.
    * Feeds watchdog, checks memory, runs managers (network, web, OTA), updates
-   * sensor/relay nodes, evaluates rules, and publishes MQTT states periodically.
+   * relay/operation-mode nodes, evaluates rules, and publishes MQTT states
+   * periodically. Temperature sensor reads run in SensorTask on Core 0
+   * (started from setup() via CoreScheduler) and publish into SensorSlots.
    * @note Call from the Arduino loop() function indefinitely.
    */
   auto loop() -> void;

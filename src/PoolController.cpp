@@ -34,18 +34,14 @@
 #include "OtaUpdater.hpp"
 #include "Utils.hpp"
 #include "WpsProvisioner.hpp"
-#include "LogCapture.hpp"
 
 #include "StatusLed.hpp"
 
-#ifdef NORVI_AE01_R
-#include "NorviOledDisplay.hpp"
-#include "NorviButtonHandler.hpp"
-#include "CalibrationManager.hpp"
-#endif
+#include "CoreScheduler.hpp"
+#include "TelemetryQueue.hpp"
 
-#if defined(OLIMEX_ESP32_C6_EVB) && defined(HAS_LOCAL_TFT_UI)
-#include "OlimexLocalUi.hpp"
+#ifdef NORVI_AE01_R
+#include "DisplayCoordinator.hpp"
 #endif
 
 #include "Config.hpp"
@@ -65,10 +61,6 @@ DallasTemperatureNode poolTemperatureNode("pool-temp", "Pool Temperature", PIN_D
 ESP32TemperatureNode ctrlTemperatureNode("controller-temp", "Controller Temperature", TEMP_READ_INTERVAL);
 #ifdef NORVI_AE01_R
 // NORVI AE01-R uses active-HIGH relays (HIGH = relay ON, LOW = relay OFF)
-RelayModuleNode poolPumpNode("pool-pump", "Pool Pump", PIN_RELAY_POOL, false);
-RelayModuleNode solarPumpNode("solar-pump", "Solar Pump", PIN_RELAY_SOLAR, false);
-#elif defined(OLIMEX_ESP32_C6_EVB)
-// Olimex relay outputs are active-HIGH
 RelayModuleNode poolPumpNode("pool-pump", "Pool Pump", PIN_RELAY_POOL, false);
 RelayModuleNode solarPumpNode("solar-pump", "Solar Pump", PIN_RELAY_SOLAR, false);
 #else
@@ -125,21 +117,39 @@ static void loadSensorAddressMapping() {
     solarTemperatureNode.setAddressFilter(solarAddr);
     char buf[17];
     addressToString(solarAddr, buf, sizeof(buf));
-    LOG_INFO("• Sensor mapping: Solar address loaded [%s]\n", buf);
+    Serial.printf("• Sensor mapping: Solar address loaded [%s]\n", buf);
   }
 
   if (plen == 8 && !isAddressZero(poolAddr)) {
     poolTemperatureNode.setAddressFilter(poolAddr);
     char buf[17];
     addressToString(poolAddr, buf, sizeof(buf));
-    LOG_INFO("• Sensor mapping: Pool address loaded [%s]\n", buf);
+    Serial.printf("• Sensor mapping: Pool address loaded [%s]\n", buf);
   }
 
   if ((slen == 8 && !isAddressZero(solarAddr)) || (plen == 8 && !isAddressZero(poolAddr))) {
-    LOG_INFO("• Sensor mapping: address filters applied (one or both sensors)\n");
+    Serial.println("• Sensor mapping: address filters applied (one or both sensors)");
   } else {
-    LOG_WARN("• Sensor mapping: no addresses configured — using default device indices\n");
-    LOG_INFO("  ℹ To configure: long-press Button 1 → Sensor Setup page → assign sensors\n");
+    Serial.println("• Sensor mapping: no addresses configured — using default device indices");
+    Serial.println("  ℹ To configure: long-press Button 1 → Sensor Setup page → assign sensors");
+  }
+}
+
+/** @brief Service deferred MQTT publish requests on the Core-1 owner task. */
+static void serviceTelemetryQueue() {
+  PublishRequestKind kind;
+  while (TelemetryQueue::instance().dequeue(kind)) {
+    // Preserve the previous OTA behavior: requests are drained but not sent
+    // while the updater owns the network path.
+    if (OtaUpdater::isUpdateInProgress()) {
+      continue;
+    }
+
+    if (kind == PublishRequestKind::DISCOVERY) {
+      MqttPublisher::publishDiscovery();
+    } else {
+      MqttPublisher::publishStates();
+    }
   }
 }
 
@@ -153,9 +163,7 @@ PoolControllerContext::PoolControllerContext() {
   Self = this;
 }
 
-/**
- * @brief Destroy the context and clear the instance pointer.
- */
+/** @brief Destroy the context and clear the instance pointer. */
 PoolControllerContext::~PoolControllerContext() {
   assert(Self);
   Self = nullptr;
@@ -176,33 +184,33 @@ auto PoolControllerContext::initializeController() -> void {
           continue;
         }
 #endif
-        LOG_ERROR("✖ PIN CONFLICT: %s (pin %d) and %s (pin %d) use same pin!\n", pinNames[i], pins[i], pinNames[j], pins[j]);
+        Serial.printf("✖ PIN CONFLICT: %s (pin %d) and %s (pin %d) use same pin!\n", pinNames[i], pins[i], pinNames[j], pins[j]);
         pinConflict = true;
       }
     }
   }
 
   if (pinConflict) {
-    LOG_ERROR("✖ FATAL: Pin configuration conflicts detected!\n");
-    LOG_WARN("  System will reboot in 5 seconds to try and recover...\n");
+    Serial.println("✖ FATAL: Pin configuration conflicts detected!");
+    Serial.println("  System will reboot in 5 seconds to try and recover...");
     Serial.flush();
     delay(5000);
     ESP.restart();  // F27 Fix! Clean restart instead of blocking WDT loop
   } else {
-    LOG_INFO("✓ Pin configuration validated - no conflicts (optimierte Belegung)\n");
-    LOG_INFO("  Solar Temp (DS18B20): GPIO %d\n", PIN_DS_SOLAR);
+    Serial.println("✓ Pin configuration validated - no conflicts (optimierte Belegung)");
+    Serial.printf("  Solar Temp (DS18B20): GPIO %d\n", PIN_DS_SOLAR);
+    Serial.printf("  Pool Temp  (DS18B20): GPIO %d", PIN_DS_POOL);
 #ifdef NORVI_AE01_R
-    LOG_INFO("  Pool Temp  (DS18B20): GPIO %d (shared bus via GPIO25)\n", PIN_DS_POOL);
-#else
-    LOG_INFO("  Pool Temp  (DS18B20): GPIO %d\n", PIN_DS_POOL);
+    Serial.print(" (shared bus via GPIO25)");
 #endif
-    LOG_INFO("  Pool Pump  (Relay):   GPIO %d\n", PIN_RELAY_POOL);
-    LOG_INFO("  Solar Pump (Relay):   GPIO %d\n", PIN_RELAY_SOLAR);
+    Serial.println();
+    Serial.printf("  Pool Pump  (Relay):   GPIO %d\n", PIN_RELAY_POOL);
+    Serial.printf("  Solar Pump (Relay):   GPIO %d\n", PIN_RELAY_SOLAR);
+    Serial.printf("  Status LED:           GPIO %d", PIN_LED_STATUS);
 #ifdef LED_BUILTIN
-    LOG_INFO("  Status LED:           GPIO %d (LED_BUILTIN)\n", PIN_LED_STATUS);
-#else
-    LOG_INFO("  Status LED:           GPIO %d\n", PIN_LED_STATUS);
+    Serial.print(" (LED_BUILTIN)");
 #endif
+    Serial.println();
   }
 
   // Set measurement intervals and propagate to all nodes
@@ -226,8 +234,6 @@ auto PoolControllerContext::initializeController() -> void {
 
 #ifdef NORVI_AE01_R
   // Initialize the shared OneWire bus before individual node begin() calls.
-  // Both DS18B20 sensors live on the same GPIO25 bus — the shared sensor
-  // instance scans all devices and each node reads by device index.
   sharedDallasSensor.begin();
 #endif
 
@@ -240,13 +246,12 @@ auto PoolControllerContext::initializeController() -> void {
   operationModeNode.begin();
 
   // Load properties into Operation Mode
-  operationModeNode.setMode(ConfigManager::getSettings().opMode.c_str(), "boot:config");
+  operationModeNode.setMode(ConfigManager::getSettings().opMode.c_str());
   operationModeNode.setPoolMaxTemperature(ConfigManager::getSettings().tempMaxPool);
   operationModeNode.setSolarMinTemperature(ConfigManager::getSettings().tempMinSolar);
   operationModeNode.setTemperatureHysteresis(ConfigManager::getSettings().tempHysteresis);
 
   // TimerSetting is loaded from NVS by OperationModeNode::begin() — no override needed
-
   operationModeNode.setPoolTemperatureNode(&poolTemperatureNode);
   operationModeNode.setSolarTemperatureNode(&solarTemperatureNode);
 
@@ -259,134 +264,30 @@ auto PoolControllerContext::initializeController() -> void {
   _lastMeasurement = 0;
 }
 
-/**
- * @brief Full initialization sequence called once at boot.
- *
- * Order:
- *   1. StateManager (NVS), SystemMonitor, DegradationManager
- *   2. Boot-loop detection — forces safe mode if detected
- *   3. ConfigManager (LittleFS config.json)
- *   4. NetworkManager (WiFi + MQTT)
- *   5. WebPortal (HTTP server + captive portal)
- *   6. MqttPublisher (HA Discovery)
- *   7. OtaUpdater (GitHub release check)
- *   8. initializeController() — pins, nodes, rules
- *   9. Load persisted operational state from NVS
- */
+/** @brief Full initialization sequence called once at boot. */
 auto PoolControllerContext::setup() -> void {
-  // Initialize Preferences (NVS), System Monitor and Degradation tracker
   StateManager::begin();
   SystemMonitor::begin();
   DegradationManager::begin();
 
-  // Initialize Status-LED with Homie-compatible blink codes
   StatusLed::begin();
 
-  // Load persistent sensor address mapping from NVS early.
-  // Must run before NorviOledDisplay::begin() so that first-boot detection
-  // (needsSensorMapping) correctly checks whether sensors are assigned.
+  // Load mapping before the display first-boot flow evaluates it.
   loadSensorAddressMapping();
-
-  // Initialize persisted config (WiFi, MQTT, NTP, settings).
-  // Must run before NorviOledDisplay::begin() for needsWiFiSetup() check.
   ConfigManager::begin();
 
 #ifdef NORVI_AE01_R
-  // Initialize NORVI-specific peripherals (OLED display + front buttons)
-  NorviOledDisplay::begin();
-  NorviButtonHandler::begin();
-  CalibrationManager::begin();
-
-  // Wire button callbacks (S1=UP, S2=DOWN, S3=ACTION)
-  // ── S1 (UP) ───────────────────────────────────────────────────────────
-  NorviButtonHandler::onButton1Press([]() {
-    if (NorviOledDisplay::isMenuActive()) {
-      NorviOledDisplay::menuPrevious();
-    } else if (NorviOledDisplay::isSelectSensorStep()) {
-      NorviOledDisplay::setupSelectPrevious();
-      NorviOledDisplay::requestRedraw();
-    } else if (NorviOledDisplay::isSelectRoleStep()) {
-      NorviOledDisplay::setupSelectSolar();
-      NorviOledDisplay::requestRedraw();
-    } else {
-      NorviOledDisplay::previousPage();
-    }
-  });
-  // ── S2 (DOWN) ─────────────────────────────────────────────────────────
-  NorviButtonHandler::onButton2Press([]() {
-    if (NorviOledDisplay::isMenuActive()) {
-      NorviOledDisplay::menuNext();
-    } else if (NorviOledDisplay::isSelectSensorStep()) {
-      NorviOledDisplay::setupSelectNext();
-      NorviOledDisplay::requestRedraw();
-    } else if (NorviOledDisplay::isSelectRoleStep()) {
-      NorviOledDisplay::setupSelectPool();
-      NorviOledDisplay::requestRedraw();
-    } else {
-      NorviOledDisplay::nextPage();
-    }
-  });
-  // ── S3 (CONFIRM) ──────────────────────────────────────────────────────
-  NorviButtonHandler::onButton3Press([]() {
-    if (NorviOledDisplay::isMenuActive()) {
-      // Execute selected menu action, then return to MAIN
-      NorviOledDisplay::Page prevPage = NorviOledDisplay::getCurrentPage();
-      switch (NorviOledDisplay::getMenuSelection()) {
-      case NorviOledDisplay::MenuItem::MODE: {
-        // Cycle operation mode
-        const String &currentMode = operationModeNode.getMode();
-        if (currentMode == "auto") {
-          operationModeNode.setMode("manu", "button:S3/menu");
-        } else if (currentMode == "manu") {
-          operationModeNode.setMode("boost", "button:S3/menu");
-        } else if (currentMode == "boost") {
-          operationModeNode.setMode("timer", "button:S3/menu");
-        } else {
-          operationModeNode.setMode("auto", "button:S3/menu");
-        }
-        LOG_INFO("→ Mode switched to: %s\n", operationModeNode.getMode().c_str());
-        break;
-      }
-      case NorviOledDisplay::MenuItem::PUMP:
-        // Toggle pool pump
-        poolPumpNode.setSwitch(!poolPumpNode.getSwitch());
-        LOG_INFO("→ Pump toggled: %s\n", poolPumpNode.getSwitch() ? "ON" : "OFF");
-        break;
-      case NorviOledDisplay::MenuItem::EXIT:
-        // No action — just exit
-        break;
-      }
-      NorviOledDisplay::exitMenu();
-    } else if (NorviOledDisplay::getCurrentPage() == NorviOledDisplay::Page::MAIN) {
-      // MAIN page: open action menu
-      NorviOledDisplay::enterMenu();
-    } else if (NorviOledDisplay::getCurrentPage() == NorviOledDisplay::Page::SENSOR_SETUP) {
-      // Sensor setup: advance the wizard
-      NorviOledDisplay::confirmAction();
-    }
-    // Other info pages: S3 intentionally does nothing
-  });
-  // ── S3 long-press: save sensor mapping & reboot ───────────────────────
-  NorviButtonHandler::onButton3LongPress([]() -> bool {
-    if (NorviOledDisplay::isMappingComplete()) {
-      uint8_t solarAddr[8], poolAddr[8];
-      NorviOledDisplay::getMapping(solarAddr, poolAddr);
-      ConfigManager::saveSensorMapping(solarAddr, poolAddr);
-      LOG_INFO("→ Sensor mapping saved — rebooting...\n");
-      NetworkManager::restart();
-      return true;
-    }
-    return false;
-  });
+  // Button sampling, UI transitions and OLED rendering stay on the Core-1
+  // owner task through one coordinator.
+  DisplayCoordinator::begin();
 #endif
 
   // --- Boot-loop detection ---
   bootLoopDetected_ = SystemMonitor::detectBootLoop();
   if (bootLoopDetected_) {
-    LOG_ERROR("✖ SAFE MODE ACTIVE — all relays forced OFF\n");
+    Serial.println("✖ SAFE MODE ACTIVE — all relays forced OFF");
     DegradationManager::forceSafeMode();
 
-    // Clear stored relay states
     Preferences prefs;
     prefs.begin("pool-pump", false);
     prefs.clear();
@@ -396,66 +297,37 @@ auto PoolControllerContext::setup() -> void {
     prefs.end();
   }
 
-  // Start WiFi/WPS and MQTT services
   NetworkManager::begin();
-
-  // Start Captive Setup Web Portal
   WebPortal::begin();
-
-  // Start Home Assistant Discovery stack
   MqttPublisher::begin();
-
-  // Start OTA update checker
   OtaUpdater::begin();
 
-  // Suppress NVS persistence during setup initialization
   OperationModeNode::suppressPersist(true);
-
-  // Initialize core drivers and parameters
   initializeController();
 
   // Print address mapping status after node begin() resolved the filters
   if (solarTemperatureNode.hasAddressFilter() || poolTemperatureNode.hasAddressFilter()) {
     char buf[17];
     solarTemperatureNode.getDeviceAddressString(buf, sizeof(buf));
-    LOG_INFO("  ◦ Solar node → device [%s] (status: %s)\n", buf, solarTemperatureNode.isSensorFound() ? "✓" : "✖");
+    Serial.printf("  ◦ Solar node → device [%s] (status: %s)\n", buf, solarTemperatureNode.isSensorFound() ? "✓" : "✖");
     poolTemperatureNode.getDeviceAddressString(buf, sizeof(buf));
-    LOG_INFO("  ◦ Pool node  → device [%s] (status: %s)\n", buf, poolTemperatureNode.isSensorFound() ? "✓" : "✖");
+    Serial.printf("  ◦ Pool node  → device [%s] (status: %s)\n", buf, poolTemperatureNode.isSensorFound() ? "✓" : "✖");
   }
 
   OperationModeNode::suppressPersist(false);
-
-  // Load operational settings from NVS Preferences
   operationModeNode.loadState();
-
-#if defined(OLIMEX_ESP32_C6_EVB) && defined(HAS_LOCAL_TFT_UI)
-  OlimexLocalUi::begin();
-#endif
-
-  // OTA safety: detect version transition and verify config integrity
   ConfigManager::logOtaTransition();
 
-  LOG_INFO("✓ Controller setup completed. Free heap: %u B\n", ESP.getFreeHeap());
+  // Start the dedicated Core-0 sensor I/O task.
+  CoreScheduler::begin();
+
+  Serial.printf("✓ Controller setup completed. Free heap: %u B\n", ESP.getFreeHeap());
 }
 
-/**
- * @brief Main control loop — runs every iteration of Arduino loop().
- *
- * Order:
- *   1. Feed watchdog + check free memory (SystemMonitor)
- *   2. Evaluate degradation levels (DegradationManager)
- *   3. Clear boot-loop counter after 5 min stable uptime
- *   4. Run managers: NetworkManager, WebPortal, OtaUpdater
- *   5. Run nodes: sensors, relays, operation mode (triggers rule engine)
- *   6. Publish HA Discovery + states on MQTT (re)connect
- *   7. Periodically publish telemetry states to MQTT (every loopInterval s)
- */
+/** @brief Main control loop — only sensor acquisition runs on the Core-0 worker. */
 auto PoolControllerContext::loop() -> void {
-  // Feed watchdog and check memory thresholds
   SystemMonitor::feedWatchdog();
   SystemMonitor::checkMemory();
-
-  // Evaluate degradation levels and health
   DegradationManager::evaluate();
 
   // Stable bootloop counter cleanup after 5 minutes
@@ -466,21 +338,19 @@ auto PoolControllerContext::loop() -> void {
     bootCounterCleared = true;
     SystemMonitor::clearBootLoopCounter();
     if (bootLoopDetected_) {
-      LOG_INFO("→ Safe-mode: 5 min stable — boot-loop counter cleared\n");
+      Serial.println("→ Safe-mode: 5 min stable — boot-loop counter cleared");
       DegradationManager::unforceSafeMode();
       bootLoopDetected_ = false;
     }
     lastBootClear = millis();
   }
 
-  // Run managers
+  // Network callback only queues commands; state mutations are serialized here.
   NetworkManager::loop();
-  // Handle MQTT commands received on the AsyncTCP task (state changes only on the loop task)
   MqttPublisher::processPendingCommands();
   WebPortal::loop();
   OtaUpdater::loop();
 
-  // --- Status-LED: Pattern an Systemzustand anpassen (Homie-Convention) ---
   if (OtaUpdater::isUpdateInProgress()) {
     StatusLed::setPattern(StatusLedPattern::OTA_UPDATE);
   } else if (bootLoopDetected_ || DegradationManager::isSafe()) {
@@ -496,42 +366,33 @@ auto PoolControllerContext::loop() -> void {
   }
   StatusLed::loop();
 
-#if defined(OLIMEX_ESP32_C6_EVB) && defined(HAS_LOCAL_TFT_UI)
-  OlimexLocalUi::loop();
-#endif
-
 #ifdef NORVI_AE01_R
-  // Update NORVI OLED display and read front-panel buttons
-  NorviOledDisplay::loop();
-  NorviButtonHandler::loop();
-  CalibrationManager::loop();
+  DisplayCoordinator::loop();
 #endif
 
-  // Run drivers & logic rules
-  solarTemperatureNode.loop();
-  poolTemperatureNode.loop();
-  ctrlTemperatureNode.loop();
   poolPumpNode.loop();
   solarPumpNode.loop();
   operationModeNode.loop();
 
-  // Handle Home Assistant Connection State transition
+  // Handle Home Assistant connection transition.
   static bool wasMqttConnected = false;
-  bool currentMqttState = NetworkManager::isMqttConnected();
+  const bool currentMqttState = NetworkManager::isMqttConnected();
   if (currentMqttState && !wasMqttConnected) {
-    // Freshly connected to MQTT: publish Discovery and States
-    MqttPublisher::publishDiscovery();
-    MqttPublisher::publishStates();
+    TelemetryQueue::instance().enqueue(PublishRequestKind::DISCOVERY);
+    TelemetryQueue::instance().enqueue(PublishRequestKind::STATES);
     wasMqttConnected = true;
   } else if (!currentMqttState) {
     wasMqttConnected = false;
   }
 
-  // Periodically publish telemetry states to HA (P4)
+  // Periodically enqueue telemetry; serialization is serviced below on Core 1.
   if (currentMqttState && Utils::shouldMeasure(_lastMeasurement, _measurementInterval)) {
     _lastMeasurement = millis();
-    MqttPublisher::publishStates();
+    TelemetryQueue::instance().enqueue(PublishRequestKind::STATES);
   }
+
+  serviceTelemetryQueue();
+  CoreScheduler::logStackWatermarks();
 }
 
 }  // namespace PoolController
