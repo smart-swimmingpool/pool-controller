@@ -259,8 +259,8 @@ auto PoolControllerContext::setup() -> void {
   ConfigManager::begin();
 
 #ifdef NORVI_AE01_R
-  // Own all NORVI UI state transitions through one coordinator. Button
-  // callbacks stay on Core 1; OLED rendering remains on Core 0.
+  // Keep all NORVI UI state transitions and rendering on Core 1 so the
+  // display never races mutable controller, network, or configuration state.
   DisplayCoordinator::begin();
 #endif
 
@@ -300,13 +300,13 @@ auto PoolControllerContext::setup() -> void {
   operationModeNode.loadState();
   ConfigManager::logOtaTransition();
 
-  // Start Core-0 I/O tasks (sensors, display, publish).
+  // Start the exclusive Core-0 sensor I/O task.
   CoreScheduler::begin();
 
   Serial.printf("✓ Controller setup completed. Free heap: %u B\n", ESP.getFreeHeap());
 }
 
-/** @brief Main control loop — temperature acquisition and I/O run on worker tasks. */
+/** @brief Main control loop — mutable controller state and stateful I/O stay on Core 1. */
 auto PoolControllerContext::loop() -> void {
   SystemMonitor::feedWatchdog();
   SystemMonitor::checkMemory();
@@ -367,7 +367,7 @@ auto PoolControllerContext::loop() -> void {
     wasMqttConnected = false;
   }
 
-  // Periodically enqueue telemetry; serialization runs on PublishTask/Core 0.
+  // Periodically enqueue telemetry; CoreScheduler drains it on this Core-1 loop task.
   if (currentMqttState && Utils::shouldMeasure(_lastMeasurement, _measurementInterval)) {
     _lastMeasurement = millis();
     TelemetryQueue::instance().enqueue(PublishRequestKind::STATES);
