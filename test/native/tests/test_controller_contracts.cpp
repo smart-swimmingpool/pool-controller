@@ -27,6 +27,8 @@ extern void test_suite_end(const char *name, int passed, int failed);
     test_pass(__FILE__, __LINE__);                            \
   } while (0)
 
+#define ASSERT_EQ(a, b) ASSERT_TRUE((a) == (b))
+
 using PoolController::CommandSource;
 using PoolController::ControllerCommand;
 using PoolController::ControllerCommandType;
@@ -36,10 +38,10 @@ using PoolController::SystemSnapshot;
 
 static int test_operation_mode_wire_values() {
   test_begin("ControllerContracts", "operation modes preserve stable wire values");
-  ASSERT_TRUE(std::strcmp(PoolController::toString(OperationMode::AUTO), "auto") == 0);
-  ASSERT_TRUE(std::strcmp(PoolController::toString(OperationMode::MANUAL), "manu") == 0);
-  ASSERT_TRUE(std::strcmp(PoolController::toString(OperationMode::BOOST), "boost") == 0);
-  ASSERT_TRUE(std::strcmp(PoolController::toString(OperationMode::TIMER), "timer") == 0);
+  ASSERT_EQ(std::strcmp(PoolController::toString(OperationMode::AUTO), "auto"), 0);
+  ASSERT_EQ(std::strcmp(PoolController::toString(OperationMode::MANUAL), "manu"), 0);
+  ASSERT_EQ(std::strcmp(PoolController::toString(OperationMode::BOOST), "boost"), 0);
+  ASSERT_EQ(std::strcmp(PoolController::toString(OperationMode::TIMER), "timer"), 0);
   return 0;
 }
 
@@ -47,9 +49,9 @@ static int test_operation_mode_parser() {
   test_begin("ControllerContracts", "operation mode parser rejects unknown values without allocation");
   OperationMode mode = OperationMode::TIMER;
   ASSERT_TRUE(PoolController::tryParseOperationMode("auto", mode));
-  ASSERT_TRUE(mode == OperationMode::AUTO);
+  ASSERT_EQ(mode, OperationMode::AUTO);
   ASSERT_TRUE(PoolController::tryParseOperationMode("manu", mode));
-  ASSERT_TRUE(mode == OperationMode::MANUAL);
+  ASSERT_EQ(mode, OperationMode::MANUAL);
   ASSERT_TRUE(!PoolController::tryParseOperationMode("manual", mode));
   ASSERT_TRUE(!PoolController::tryParseOperationMode(nullptr, mode));
   return 0;
@@ -63,9 +65,9 @@ static int test_commands_are_fixed_size_values() {
   command.mode = OperationMode::BOOST;
 
   ControllerCommand copy = command;
-  ASSERT_TRUE(copy.type == ControllerCommandType::SET_MODE);
-  ASSERT_TRUE(copy.source == CommandSource::MQTT);
-  ASSERT_TRUE(copy.mode == OperationMode::BOOST);
+  ASSERT_EQ(copy.type, ControllerCommandType::SET_MODE);
+  ASSERT_EQ(copy.source, CommandSource::MQTT);
+  ASSERT_EQ(copy.mode, OperationMode::BOOST);
   ASSERT_TRUE(std::is_trivially_copyable<ControllerCommand>::value);
   return 0;
 }
@@ -81,9 +83,9 @@ static int test_snapshots_are_coherent_value_objects() {
 
   const SystemSnapshot copy = snapshot;
   ASSERT_TRUE(copy.sensors.pool.valid);
-  ASSERT_TRUE(copy.sensors.pool.value == 26.5F);
-  ASSERT_TRUE(copy.sensors.generation == 42U);
-  ASSERT_TRUE(copy.mode == OperationMode::AUTO);
+  ASSERT_EQ(copy.sensors.pool.value, 26.5F);
+  ASSERT_EQ(copy.sensors.generation, 42U);
+  ASSERT_EQ(copy.mode, OperationMode::AUTO);
   ASSERT_TRUE(copy.poolPumpOn);
   ASSERT_TRUE(std::is_trivially_copyable<SensorSnapshot>::value);
   ASSERT_TRUE(std::is_trivially_copyable<SystemSnapshot>::value);
