@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <type_traits>
 
@@ -21,8 +22,15 @@ struct SensorReadingSnapshot final {
   bool valid{false};
 };
 
+/** @brief Logical sensor mapping identity independent of the physical Dallas bus topology. */
+struct SensorMappingSnapshot final {
+  std::array<std::uint8_t, 8> address{};
+  bool configured{false};
+  bool found{false};
+};
+
 /**
- * @brief Temperatures produced by one acquisition generation.
+ * @brief Temperatures and role mappings produced by one acquisition generation.
  *
  * `generation` lets consumers detect a new complete measurement cycle without
  * comparing individual fields. `measuredAtMs` is the acquisition timestamp.
@@ -31,6 +39,8 @@ struct SensorSnapshot final {
   SensorReadingSnapshot pool{};
   SensorReadingSnapshot solar{};
   SensorReadingSnapshot controller{};
+  SensorMappingSnapshot poolMapping{};
+  SensorMappingSnapshot solarMapping{};
   std::uint32_t measuredAtMs{0};
   std::uint32_t generation{0};
 };
@@ -43,10 +53,18 @@ struct NetworkSnapshot final {
   std::int16_t wifiRssi{0};
 };
 
+/** @brief Three-state time quality used by the existing Web status model. */
+enum class TimeDegradationState : std::uint8_t {
+  GREEN = 0,
+  YELLOW = 1,
+  RED = 2,
+};
+
 /** @brief Safety/degradation state projected without exposing manager internals. */
 struct HealthSnapshot final {
   bool safeMode{false};
   bool timeValid{false};
+  TimeDegradationState timeDegradation{TimeDegradationState::RED};
   bool poolSensorValid{false};
   bool solarSensorValid{false};
 };
@@ -69,6 +87,21 @@ struct TimerSnapshot final {
   std::uint16_t activeEndMinutes{0};
 };
 
+/** @brief Runtime controller settings needed by status/config projections. */
+struct ControllerSettingsSnapshot final {
+  std::uint32_t loopInterval{0};
+  std::int16_t timezoneIndex{0};
+  std::uint16_t timeLossGreenHours{0};
+  std::uint16_t timeLossRedHours{0};
+  std::uint16_t button1Min{0};
+  std::uint16_t button1Max{0};
+  std::uint16_t button2Min{0};
+  std::uint16_t button2Max{0};
+  std::uint16_t button3Min{0};
+  std::uint16_t button3Max{0};
+  std::uint16_t buttonNoPress{0};
+};
+
 /**
  * @brief Read-only application projection consumed by outbound adapters.
  *
@@ -81,6 +114,7 @@ struct SystemSnapshot final {
   HealthSnapshot health{};
   CirculationSnapshot circulation{};
   TimerSnapshot timer{};
+  ControllerSettingsSnapshot settings{};
 
   OperationMode mode{OperationMode::AUTO};
   bool poolPumpOn{false};
