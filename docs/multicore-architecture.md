@@ -2,7 +2,7 @@
 title: Multicore Architecture
 summary: How the firmware isolates blocking sensor I/O on ESP32 Core 0 while keeping mutable controller state serialized on Core 1
 date: "2026-08-01"
-lastmod: "2026-10-03"
+lastmod: "2026-10-04"
 draft: false
 toc: true
 type: docs
@@ -49,12 +49,13 @@ graph with locks.
 If `SensorTask` cannot be created, the controller restarts. A persistent failure is handled by the
 existing boot-loop detection and safe-mode path.
 
-MQTT requests still use `TelemetryQueue`, but the queue is drained from `PoolController::loop()` via
-`CoreScheduler::logStackWatermarks()`. This preserves request coalescing/ordering while ensuring that
-`MqttPublisher` executes on the same Core-1 task that owns the mutable controller model.
+MQTT requests still use `TelemetryQueue`. `PoolController::loop()` drains that queue directly on Core 1
+and invokes `MqttPublisher` there. `CoreScheduler` is responsible only for `SensorTask` lifecycle and
+stack high-water logging.
 
 The NORVI display follows the same rule: button handling, UI state transitions and OLED rendering are
-serialized on Core 1 by `DisplayCoordinator`.
+serialized on Core 1 by `DisplayCoordinator`. The obsolete `PublishTask` and `DisplayTask` worker
+implementations were removed after the concurrency review narrowed the ownership boundary.
 
 ## Sensor ownership
 
@@ -107,8 +108,10 @@ objects.
 - Stack high-water logging remains available for the worker task.
 - OTA handling and MQTT state mutation stay serialized on Core 1.
 
-## Design document
+## Historical design documents
 
 The original design and migration plan remain available under
-[`docs/superpowers/specs/2026-08-01-multicore-task-architecture-design.md`](../superpowers/specs/2026-08-01-multicore-task-architecture-design.md).
-The implementation deliberately narrows the final cross-core boundary after the concurrency review.
+[`docs/superpowers/specs/2026-08-01-multicore-task-architecture-design.md`](../superpowers/specs/2026-08-01-multicore-task-architecture-design.md)
+and `docs/superpowers/plans/2026-08-01-multicore-task-architecture.md`. They document the earlier
+three-worker proposal and are retained as implementation history. This page describes the authoritative
+runtime architecture after the concurrency review.

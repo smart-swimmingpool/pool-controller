@@ -135,6 +135,24 @@ static void loadSensorAddressMapping() {
   }
 }
 
+/** @brief Service deferred MQTT publish requests on the Core-1 owner task. */
+static void serviceTelemetryQueue() {
+  PublishRequestKind kind;
+  while (TelemetryQueue::instance().dequeue(kind)) {
+    // Preserve the previous OTA behavior: requests are drained but not sent
+    // while the updater owns the network path.
+    if (OtaUpdater::isUpdateInProgress()) {
+      continue;
+    }
+
+    if (kind == PublishRequestKind::DISCOVERY) {
+      MqttPublisher::publishDiscovery();
+    } else {
+      MqttPublisher::publishStates();
+    }
+  }
+}
+
 /**
  * @brief Construct the singleton context.
  * Stores the instance pointer for internal access. All subsystems are
@@ -259,8 +277,8 @@ auto PoolControllerContext::setup() -> void {
   ConfigManager::begin();
 
 #ifdef NORVI_AE01_R
-  // Own all NORVI UI state transitions through one coordinator. Button
-  // callbacks stay on Core 1; OLED rendering remains on Core 0.
+  // Button sampling, UI transitions and OLED rendering stay on the Core-1
+  // owner task through one coordinator.
   DisplayCoordinator::begin();
 #endif
 
@@ -300,13 +318,13 @@ auto PoolControllerContext::setup() -> void {
   operationModeNode.loadState();
   ConfigManager::logOtaTransition();
 
-  // Start Core-0 I/O tasks (sensors, display, publish).
+  // Start the dedicated Core-0 sensor I/O task.
   CoreScheduler::begin();
 
   Serial.printf("✓ Controller setup completed. Free heap: %u B\n", ESP.getFreeHeap());
 }
 
-/** @brief Main control loop — temperature acquisition and I/O run on worker tasks. */
+/** @brief Main control loop — only sensor acquisition runs on the Core-0 worker. */
 auto PoolControllerContext::loop() -> void {
   SystemMonitor::feedWatchdog();
   SystemMonitor::checkMemory();
@@ -367,12 +385,13 @@ auto PoolControllerContext::loop() -> void {
     wasMqttConnected = false;
   }
 
-  // Periodically enqueue telemetry; serialization runs on PublishTask/Core 0.
+  // Periodically enqueue telemetry; serialization is serviced below on Core 1.
   if (currentMqttState && Utils::shouldMeasure(_lastMeasurement, _measurementInterval)) {
     _lastMeasurement = millis();
     TelemetryQueue::instance().enqueue(PublishRequestKind::STATES);
   }
 
+  serviceTelemetryQueue();
   CoreScheduler::logStackWatermarks();
 }
 

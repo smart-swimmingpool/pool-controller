@@ -2,7 +2,7 @@
 title: Multicore-Architektur
 summary: Wie die Firmware blockierende Sensor-I/O auf ESP32-Kern 0 isoliert und veränderlichen Controller-Zustand auf Kern 1 serialisiert
 date: "2026-08-01"
-lastmod: "2026-10-03"
+lastmod: "2026-10-04"
 draft: false
 toc: true
 type: docs
@@ -48,13 +48,13 @@ Task ist einfacher und sicherer als Locks über den gesamten Objektgraphen.
 Kann `SensorTask` nicht erzeugt werden, startet der Controller neu. Ein dauerhafter Fehler wird durch die
 bestehende Boot-Loop-Erkennung und den Safe-Mode behandelt.
 
-MQTT-Anforderungen verwenden weiterhin `TelemetryQueue`. Die Queue wird jedoch aus
-`PoolController::loop()` über `CoreScheduler::logStackWatermarks()` geleert. Dadurch bleiben Reihenfolge
-und Entkopplung erhalten, während `MqttPublisher` auf demselben Core-1-Task läuft, dem auch der mutable
-Controller-Zustand gehört.
+MQTT-Anforderungen verwenden weiterhin `TelemetryQueue`. `PoolController::loop()` leert die Queue direkt
+auf Kern 1 und ruft dort `MqttPublisher` auf. `CoreScheduler` ist ausschließlich für den Lebenszyklus von
+`SensorTask` und dessen Stack-High-Water-Logging zuständig.
 
 Beim NORVI-Display gilt dieselbe Regel: Taster, UI-Zustandsübergänge und OLED-Rendering werden durch
-`DisplayCoordinator` auf Kern 1 serialisiert.
+`DisplayCoordinator` auf Kern 1 serialisiert. Die veralteten Worker-Implementierungen `PublishTask` und
+`DisplayTask` wurden entfernt, nachdem das Concurrency-Review die Ownership-Grenze enger gezogen hat.
 
 ## Sensor-Ownership
 
@@ -108,8 +108,10 @@ Snapshots statt gemeinsam veränderter Objekte.
 - Stack-High-Water-Logging bleibt für den Worker verfügbar.
 - OTA-Verarbeitung und MQTT-Zustandsänderungen bleiben auf Kern 1 serialisiert.
 
-## Design-Dokument
+## Historische Design-Dokumente
 
 Das ursprüngliche Design und der Migrationsplan bleiben unter
 [`docs/superpowers/specs/2026-08-01-multicore-task-architecture-design.md`](../superpowers/specs/2026-08-01-multicore-task-architecture-design.md)
-erhalten. Nach dem Concurrency-Review wurde die endgültige Core-Grenze bewusst enger gefasst.
+und `docs/superpowers/plans/2026-08-01-multicore-task-architecture.md` erhalten. Sie dokumentieren den
+früheren Drei-Worker-Entwurf und bleiben als Implementierungshistorie bestehen. Diese Seite beschreibt
+die maßgebliche Laufzeitarchitektur nach dem Concurrency-Review.
