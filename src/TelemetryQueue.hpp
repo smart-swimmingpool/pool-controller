@@ -3,7 +3,7 @@
 
 /**
  * @file TelemetryQueue.hpp
- * @brief Lock-free single-producer/single-consumer queue for MQTT publish requests.
+ * @brief Bounded queue for deferred MQTT publish requests.
  */
 
 #pragma once
@@ -21,12 +21,12 @@ enum class PublishRequestKind : uint8_t {
 };
 
 /**
- * @brief SPSC (single-producer, single-consumer) ring buffer of publish requests.
+ * @brief Fixed-capacity ring buffer of publish requests.
  *
  * Non-blocking: enqueue on a full queue drops the request and returns false
  * (the periodic publish cadence simply skips a beat — safe by design).
- * Uses a classic atomic head/tail lock-free ring; safe with one writer
- * (control loop) and one reader (PublishTask).
+ * Publishing is serviced on the Core-1 control-loop task so MqttPublisher never
+ * reads mutable controller state concurrently from another core.
  */
 class TelemetryQueue {
 public:
@@ -35,25 +35,22 @@ public:
   /** @brief Construct an empty queue. */
   TelemetryQueue() { reset(); }
 
-  /**
-   * @brief Process-wide singleton used by the control loop and PublishTask.
-   * @note Static local is inline (C++17) — one instance across translation units.
-   */
+  /** @brief Process-wide queue for deferred telemetry requests. */
   static TelemetryQueue &instance() {
     static TelemetryQueue queue;
     return queue;
   }
 
-  /** @brief Producer side: enqueue a publish request. @return false if full (dropped). */
+  /** @brief Enqueue a publish request. @return false if full (dropped). */
   bool enqueue(PublishRequestKind kind);
 
-  /** @brief Consumer side: dequeue a publish request. @return false if empty. */
+  /** @brief Dequeue a publish request. @return false if empty. */
   bool dequeue(PublishRequestKind &kind);
 
   /** @brief Number of requests currently queued. */
   size_t count() const;
 
-  /** @brief Empty the queue (tests only — must not run while tasks are active). */
+  /** @brief Empty the queue (tests only — must not run while in use). */
   void reset();
 
 private:
@@ -61,8 +58,8 @@ private:
   /// [0, CAPACITY] and the storage needs CAPACITY + 1 slots.
   static constexpr size_t SLOTS = CAPACITY + 1;
 
-  std::atomic<size_t> head_{0};           ///< Consumer index (only consumer writes)
-  std::atomic<size_t> tail_{0};           ///< Producer index (only producer writes)
+  std::atomic<size_t> head_{0};
+  std::atomic<size_t> tail_{0};
   PublishRequestKind items_[SLOTS] = {};  ///< Fixed ring storage
 };
 

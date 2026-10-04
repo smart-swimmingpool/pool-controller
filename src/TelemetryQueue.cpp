@@ -3,7 +3,7 @@
 
 /**
  * @file TelemetryQueue.cpp
- * @brief SPSC publish-request ring buffer implementation.
+ * @brief Bounded publish-request ring buffer implementation.
  */
 
 #include "TelemetryQueue.hpp"

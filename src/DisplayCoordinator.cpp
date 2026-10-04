@@ -11,8 +11,6 @@
 #ifdef NORVI_AE01_R
 
 #include <Arduino.h>
-#include <freertos/FreeRTOS.h>
-#include <freertos/semphr.h>
 
 #include "ConfigManager.hpp"
 #include "NetworkManager.hpp"
@@ -34,9 +32,6 @@ constexpr size_t EVENT_CAPACITY = 8;
 UiEvent eventQueue[EVENT_CAPACITY]{};
 size_t eventHead = 0;
 size_t eventCount = 0;
-
-StaticSemaphore_t stateMutexStorage;
-SemaphoreHandle_t stateMutex = nullptr;
 
 void enqueueEvent(UiEvent event) {
   if (eventCount >= EVENT_CAPACITY) {
@@ -150,12 +145,6 @@ void processEvent(UiEvent event) {
 }  // namespace
 
 void DisplayCoordinator::begin() {
-  stateMutex = xSemaphoreCreateMutexStatic(&stateMutexStorage);
-  if (stateMutex == nullptr) {
-    Serial.println("✖ DisplayCoordinator: failed to create state mutex");
-    return;
-  }
-
   NorviOledDisplay::begin();
   NorviButtonHandler::begin();
 
@@ -169,36 +158,18 @@ void DisplayCoordinator::begin() {
 }
 
 void DisplayCoordinator::loop() {
-  // Button sampling, state transitions and rendering all remain on Core 1.
-  // This preserves the single-writer rule for operationModeNode, relay state,
-  // NetworkManager and ConfigManager which are read while drawing pages.
+  // Button sampling, state transitions and rendering all run on the Arduino
+  // control-loop task. This preserves single-writer ownership of mutable UI,
+  // operation-mode, relay, network and configuration state.
   NorviButtonHandler::loop();
-
-  if (stateMutex == nullptr || xSemaphoreTake(stateMutex, 0) != pdTRUE) {
-    return;
-  }
 
   UiEvent event;
   while (dequeueEvent(event)) {
     processEvent(event);
   }
+
   NorviOledDisplay::update();
   NorviOledDisplay::render();
-
-  xSemaphoreGive(stateMutex);
-}
-
-void DisplayCoordinator::render() {
-  if (stateMutex == nullptr) {
-    return;
-  }
-
-  // Kept as a serialized compatibility entry point. CoreScheduler no longer
-  // creates a separate DisplayTask, so production rendering happens in loop().
-  if (xSemaphoreTake(stateMutex, portMAX_DELAY) == pdTRUE) {
-    NorviOledDisplay::render();
-    xSemaphoreGive(stateMutex);
-  }
 }
 
 }  // namespace PoolController
@@ -208,7 +179,6 @@ void DisplayCoordinator::render() {
 namespace PoolController {
 void DisplayCoordinator::begin() {}
 void DisplayCoordinator::loop() {}
-void DisplayCoordinator::render() {}
 }  // namespace PoolController
 
 #endif

@@ -51,7 +51,6 @@ extern int run_calibration_manager_tests();
 extern int run_telemetry_queue_tests();
 extern int run_sensor_slots_tests();
 extern int run_sensor_cycle_tests();
-extern int run_task_startup_policy_tests();
 extern int run_core_scheduler_tests();
 extern int run_degradation_manager_tests();
 
@@ -77,7 +76,6 @@ int main() {
   total += run_telemetry_queue_tests();
   total += run_sensor_slots_tests();
   total += run_sensor_cycle_tests();
-  total += run_task_startup_policy_tests();
   total += run_core_scheduler_tests();
   total += run_degradation_manager_tests();
   (void)total;

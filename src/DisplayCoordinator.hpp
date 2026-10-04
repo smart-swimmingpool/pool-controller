@@ -3,7 +3,7 @@
 
 /**
  * @file DisplayCoordinator.hpp
- * @brief Serializes NORVI UI state between the control loop and DisplayTask.
+ * @brief Owns NORVI button, UI-state and OLED rendering on Core 1.
  */
 
 #pragma once
@@ -12,14 +12,11 @@ namespace PoolController {
 
 class DisplayCoordinator {
 public:
-  /** Initialize the OLED, button callbacks, and state synchronization. */
+  /** Initialize the OLED and front-panel button callbacks. */
   static void begin();
 
-  /** Poll buttons and advance UI state without ever blocking the control loop. */
+  /** Poll buttons, apply UI events and render on the control-loop task. */
   static void loop();
-
-  /** Render from DisplayTask while owning the UI state. */
-  static void render();
 };
 
 }  // namespace PoolController
