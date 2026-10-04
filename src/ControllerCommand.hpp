@@ -36,6 +36,9 @@ enum class ControllerCommandType : std::uint8_t {
   SET_POOL_MAX_TEMPERATURE,
   SET_SOLAR_MIN_TEMPERATURE,
   SET_TEMPERATURE_HYSTERESIS,
+  SET_TEMPERATURE_CIRCULATION_THRESHOLD,
+  SET_TEMPERATURE_CIRCULATION_FACTOR,
+  SET_TEMPERATURE_CIRCULATION_MAX_RUNTIME,
   SET_TIMER,
   SET_SENSOR_MAPPING,
   CLEAR_SENSOR_MAPPING,
@@ -47,9 +50,10 @@ enum class ControllerCommandType : std::uint8_t {
 /**
  * @brief Fixed-size command payload suitable for a bounded FreeRTOS queue.
  *
- * Only the fields relevant for `type` are interpreted. The intentionally flat
- * layout avoids heap allocations and makes commands cheap to copy between
- * callback/task boundaries.
+ * Only the fields relevant for `type` are interpreted. Numeric controller
+ * settings use `value`; integer-only settings are validated by the application
+ * handler before being applied. The intentionally flat layout avoids heap
+ * allocations and makes commands cheap to copy between callback/task boundaries.
  */
 struct ControllerCommand final {
   ControllerCommandType type{ControllerCommandType::SET_MODE};
