@@ -29,14 +29,14 @@ enum class OperationMode : std::uint8_t {
 /** @brief Stable external representation used by MQTT, Web API and NVS. */
 constexpr const char *toString(OperationMode mode) noexcept {
   switch (mode) {
-    case OperationMode::AUTO:
-      return "auto";
-    case OperationMode::MANUAL:
-      return "manu";
-    case OperationMode::BOOST:
-      return "boost";
-    case OperationMode::TIMER:
-      return "timer";
+  case OperationMode::AUTO:
+    return "auto";
+  case OperationMode::MANUAL:
+    return "manu";
+  case OperationMode::BOOST:
+    return "boost";
+  case OperationMode::TIMER:
+    return "timer";
   }
   return "auto";
 }
