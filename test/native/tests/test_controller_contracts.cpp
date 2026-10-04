@@ -72,14 +72,45 @@ static int test_commands_are_fixed_size_values() {
   return 0;
 }
 
+static int test_commands_cover_circulation_settings() {
+  test_begin("ControllerContracts", "command contract covers all temperature circulation setters");
+  ControllerCommand command{};
+
+  command.type = ControllerCommandType::SET_TEMPERATURE_CIRCULATION_THRESHOLD;
+  command.value = 24.5F;
+  ASSERT_EQ(command.type, ControllerCommandType::SET_TEMPERATURE_CIRCULATION_THRESHOLD);
+  ASSERT_EQ(command.value, 24.5F);
+
+  command.type = ControllerCommandType::SET_TEMPERATURE_CIRCULATION_FACTOR;
+  command.value = 45.0F;
+  ASSERT_EQ(command.type, ControllerCommandType::SET_TEMPERATURE_CIRCULATION_FACTOR);
+  ASSERT_EQ(command.value, 45.0F);
+
+  command.type = ControllerCommandType::SET_TEMPERATURE_CIRCULATION_MAX_RUNTIME;
+  command.value = 360.0F;
+  ASSERT_EQ(command.type, ControllerCommandType::SET_TEMPERATURE_CIRCULATION_MAX_RUNTIME);
+  ASSERT_EQ(command.value, 360.0F);
+  return 0;
+}
+
 static int test_snapshots_are_coherent_value_objects() {
-  test_begin("ControllerContracts", "snapshots carry generation and application projection");
+  test_begin("ControllerContracts", "snapshots carry complete adapter-facing application projection");
   SystemSnapshot snapshot{};
   snapshot.sensors.pool.value = 26.5F;
   snapshot.sensors.pool.valid = true;
   snapshot.sensors.generation = 42;
   snapshot.mode = OperationMode::AUTO;
   snapshot.poolPumpOn = true;
+  snapshot.circulation.threshold = 23.0F;
+  snapshot.circulation.factorMinutesPerDegree = 30;
+  snapshot.circulation.maxRuntimeMinutes = 480;
+  snapshot.timer.startHour = 8;
+  snapshot.timer.startMinute = 15;
+  snapshot.timer.endHour = 18;
+  snapshot.timer.endMinute = 45;
+  snapshot.timer.effectiveRuntimeMinutes = 210;
+  snapshot.timer.circulationExtensionMinutes = 30;
+  snapshot.timer.activeEndMinutes = 1155;
 
   const SystemSnapshot copy = snapshot;
   ASSERT_TRUE(copy.sensors.pool.valid);
@@ -87,6 +118,14 @@ static int test_snapshots_are_coherent_value_objects() {
   ASSERT_EQ(copy.sensors.generation, 42U);
   ASSERT_EQ(copy.mode, OperationMode::AUTO);
   ASSERT_TRUE(copy.poolPumpOn);
+  ASSERT_EQ(copy.circulation.threshold, 23.0F);
+  ASSERT_EQ(copy.circulation.factorMinutesPerDegree, 30U);
+  ASSERT_EQ(copy.circulation.maxRuntimeMinutes, 480U);
+  ASSERT_EQ(copy.timer.startHour, 8U);
+  ASSERT_EQ(copy.timer.endMinute, 45U);
+  ASSERT_EQ(copy.timer.effectiveRuntimeMinutes, 210U);
+  ASSERT_EQ(copy.timer.circulationExtensionMinutes, 30U);
+  ASSERT_EQ(copy.timer.activeEndMinutes, 1155U);
   ASSERT_TRUE(std::is_trivially_copyable<SensorSnapshot>::value);
   ASSERT_TRUE(std::is_trivially_copyable<SystemSnapshot>::value);
   return 0;
@@ -96,7 +135,7 @@ int run_controller_contract_tests() {
   int passed = 0;
   int failed = 0;
   int (*tests[])() = {test_operation_mode_wire_values, test_operation_mode_parser, test_commands_are_fixed_size_values,
-    test_snapshots_are_coherent_value_objects};
+    test_commands_cover_circulation_settings, test_snapshots_are_coherent_value_objects};
   for (auto test : tests) {
     if (test() == 0) {
       passed++;
