@@ -30,7 +30,7 @@ enum class SensorRole : std::uint8_t {
   POOL,
 };
 
-/** @brief Commands that may mutate application state. */
+/** @brief Commands that may mutate runtime controller state or controller settings. */
 enum class ControllerCommandType : std::uint8_t {
   SET_MODE,
   SET_POOL_MAX_TEMPERATURE,
@@ -39,7 +39,19 @@ enum class ControllerCommandType : std::uint8_t {
   SET_TEMPERATURE_CIRCULATION_THRESHOLD,
   SET_TEMPERATURE_CIRCULATION_FACTOR,
   SET_TEMPERATURE_CIRCULATION_MAX_RUNTIME,
-  SET_TIMER,
+  SET_TIMER_START,
+  SET_TIMER_END,
+  SET_LOOP_INTERVAL,
+  SET_TIMEZONE,
+  SET_TIME_LOSS_GREEN_HOURS,
+  SET_TIME_LOSS_RED_HOURS,
+  SET_BUTTON_1_MIN,
+  SET_BUTTON_1_MAX,
+  SET_BUTTON_2_MIN,
+  SET_BUTTON_2_MAX,
+  SET_BUTTON_3_MIN,
+  SET_BUTTON_3_MAX,
+  SET_BUTTON_NO_PRESS,
   SET_SENSOR_MAPPING,
   CLEAR_SENSOR_MAPPING,
   SET_POOL_PUMP_MANUAL,
@@ -50,10 +62,15 @@ enum class ControllerCommandType : std::uint8_t {
 /**
  * @brief Fixed-size command payload suitable for a bounded FreeRTOS queue.
  *
- * Only the fields relevant for `type` are interpreted. Numeric controller
- * settings use `value`; integer-only settings are validated by the application
- * handler before being applied. The intentionally flat layout avoids heap
- * allocations and makes commands cheap to copy between callback/task boundaries.
+ * Only the fields relevant for `type` are interpreted. Decimal settings use
+ * `value`, integer settings use `integerValue`, and timer start/end commands
+ * use `hour`/`minute`. Values are validated by the Core-1 application handler
+ * before being applied. The intentionally flat layout avoids heap allocations
+ * and makes commands cheap to copy between callback/task boundaries.
+ *
+ * Provisioning/authentication data such as WiFi/MQTT credentials and passwords
+ * is deliberately not transported through this general controller command
+ * queue; those secrets remain owned by dedicated configuration/auth services.
  */
 struct ControllerCommand final {
   ControllerCommandType type{ControllerCommandType::SET_MODE};
@@ -61,12 +78,11 @@ struct ControllerCommand final {
 
   OperationMode mode{OperationMode::AUTO};
   float value{0.0F};
+  std::int32_t integerValue{0};
   bool enabled{false};
 
-  std::uint8_t startHour{0};
-  std::uint8_t startMinute{0};
-  std::uint8_t endHour{0};
-  std::uint8_t endMinute{0};
+  std::uint8_t hour{0};
+  std::uint8_t minute{0};
 
   SensorRole sensorRole{SensorRole::SOLAR};
   std::array<std::uint8_t, 8> sensorAddress{};
