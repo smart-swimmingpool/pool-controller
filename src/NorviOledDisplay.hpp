@@ -83,7 +83,8 @@ public:
 
   /**
    * @brief Redraw the current page and push to the OLED over I2C.
-   * Runs on DisplayTask (Core 0). Reads temps from SensorSlots.
+   * Runs on the Core-1 control task via DisplayCoordinator and reads
+   * temperatures from SensorSlots.
    */
   static void render();
 
@@ -225,8 +226,7 @@ private:
   // ═════════════════════════════════════════════════════════════════════
 
   static Page currentPage_;
-  // Written by the control loop (Core 1) and read/reset by DisplayTask
-  // (Core 0): std::atomic for inter-core visibility and ordering.
+  // Display timing/redraw flags are serialized by DisplayCoordinator on Core 1.
   static std::atomic<uint32_t> lastUpdateMs_;
   static constexpr uint32_t UPDATE_INTERVAL_MS{2000};
   static std::atomic<bool> forceRedraw_;
