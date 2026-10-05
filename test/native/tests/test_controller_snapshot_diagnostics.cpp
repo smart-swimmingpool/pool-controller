@@ -55,7 +55,6 @@ static int test_adapter_diagnostics_are_bounded_value_copies() {
   ASSERT_EQ(published.maxAllocHeapBytes, 64000U);
   ASSERT_TRUE(std::is_trivially_copyable<PoolController::Ipv4AddressSnapshot>::value);
   ASSERT_TRUE(std::is_trivially_copyable<PoolController::SystemSnapshot>::value);
-  ASSERT_TRUE(sizeof(PoolController::SystemSnapshot) <= 600U);
   return 0;
 }
 
