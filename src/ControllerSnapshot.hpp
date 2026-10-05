@@ -62,12 +62,19 @@ struct SensorSnapshot final {
   std::uint32_t generation{0};
 };
 
+/** @brief Allocation-free IPv4 value used at the adapter boundary. */
+struct Ipv4AddressSnapshot final {
+  std::array<std::uint8_t, 4> octets{};
+  bool valid{false};
+};
+
 /** @brief Network state projected for UI/MQTT/Web consumers. */
 struct NetworkSnapshot final {
   bool wifiConnected{false};
   bool mqttConnected{false};
   bool apMode{false};
   std::int16_t wifiRssi{0};
+  Ipv4AddressSnapshot localIp{};
 };
 
 /** @brief Three-state time quality used by the existing Web status model. */
@@ -144,6 +151,7 @@ struct SystemSnapshot final {
 
   std::uint32_t uptimeMs{0};
   std::uint32_t freeHeapBytes{0};
+  std::uint32_t maxAllocHeapBytes{0};
 };
 
 static_assert(std::is_trivially_copyable<SensorSnapshot>::value,
