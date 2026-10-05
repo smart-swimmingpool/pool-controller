@@ -168,6 +168,7 @@ branches after the foundation merges; #218 already contains queue/store code and
   adopted.
 - This PR introduces no active instances/call-site changes, so production RAM/Flash/CPU behavior remains unchanged. Reverting its contract commit
   is sufficient before adoption; after adoption, dependent consumers must be reverted together.
+- Known extensions deliberately deferred out of this PR are tracked in #222: current-epoch projection, `minFreeHeapBytes`, active SSID, batch semantics for the full Web settings form, and a bounded mode-audit origin discriminator. They must be decided before #218 adopts these read models; epoch and min-heap additions exceed the current 600-byte `SystemSnapshot` guard (596 bytes used), so that guard gets revised with the extension, not silently.
 
 ## Concurrency invariants
 
