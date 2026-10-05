@@ -94,8 +94,8 @@ void test_suite_end(const char *name, int passed, int failed) {
       snprintf(_msg, sizeof(_msg), "Expected |%s - %s| < %f: got %f vs %f", #a, #b, (float)(eps), _a, _b); \
       test_fail(__FILE__, __LINE__, _msg);                                                                 \
       return 1;                                                                                            \
-    }                                                                                                     \
-    test_pass(__FILE__, __LINE__);                                                                        \
+    }                                                                                                      \
+    test_pass(__FILE__, __LINE__);                                                                         \
   } while (0)
 
 // Suite declarations
