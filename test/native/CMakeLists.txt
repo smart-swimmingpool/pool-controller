@@ -90,6 +90,7 @@ set(TEST_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_calibration_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mqtt_command_queue.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_controller_contracts.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_controller_snapshot_diagnostics.cpp
 )
 
 add_executable(test_runner
