@@ -63,3 +63,22 @@ as one coherent value by the acquisition owner.
 
 - **WHEN** the next complete acquisition generation has no detected devices
 - **THEN** its zero-count inventory SHALL replace the old inventory rather than retaining stale entries
+
+### Requirement: Adapter diagnostics are snapshot-owned
+
+The immutable read model SHALL carry all adapter-facing runtime diagnostics needed to preserve existing Web, MQTT and local-display output.
+`NetworkSnapshot` SHALL contain an allocation-free IPv4 value with explicit validity, and `SystemSnapshot` SHALL contain both total free heap and
+maximum allocatable heap. Outbound adapters SHALL consume these values from the snapshot rather than calling `NetworkManager`, `WiFi` or `ESP`
+directly.
+
+#### Scenario: Station or access-point address is published
+
+- **WHEN** the snapshot producer has a valid local IPv4 address for the active station or access-point mode
+- **THEN** it SHALL copy all four octets into `NetworkSnapshot::localIp` and mark the address valid
+- **AND** later adapter formatting SHALL NOT require access to mutable network state
+
+#### Scenario: Heap fragmentation diagnostic is published
+
+- **WHEN** the application publishes a `SystemSnapshot`
+- **THEN** `freeHeapBytes` and `maxAllocHeapBytes` SHALL represent the same producer generation
+- **AND** Web/MQTT consumers SHALL be able to preserve their existing diagnostics without direct `ESP` access
