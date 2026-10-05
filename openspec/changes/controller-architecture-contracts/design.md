@@ -19,7 +19,7 @@ commands and consume immutable snapshots; only the application runtime mutates d
 - preserve existing MQTT/Web/NVS operation-mode values
 - cover all currently supported runtime controller mutations before adapter migration
 - preserve independent timer-start and timer-end update semantics
-- project all currently published timer, sensor-mapping, time-degradation and runtime controller-setting state before adapter migration
+- project all currently published timer, sensor-mapping, time-degradation, network/heap diagnostics and runtime controller-setting state before adapter migration
 - avoid heap allocation in the new boundary types
 - permit native tests without Arduino headers
 - remain compatible with the firmware C++ toolchain, not only the C++17 native-test toolchain
@@ -106,6 +106,12 @@ empty/full value representation and independent copies.
 - runtime controller settings, including bounded NTP server text, used by Web/config/status projections
 - three-state time degradation (`GREEN`, `YELLOW`, `RED`) in addition to the coarse time-valid flag
 - sensor role mappings and configured/found state, plus the detected-device inventory
+- local IPv4 as four octets plus explicit validity, independent of `String`, `WiFi` and `NetworkManager`
+- total free heap and maximum allocatable heap so fragmentation diagnostics do not require direct `ESP` access
+
+The snapshot producer selects the same effective address as the existing status path: the SoftAP address in AP mode, otherwise the station local
+address. It marks the value invalid when no meaningful address is available. Formatting the four octets into JSON or display text is an adapter
+responsibility and happens only after the immutable copy crosses the ownership boundary.
 
 Following PRs will build these snapshots on the owning task and hand copies to MQTT, Web and display code.
 
@@ -123,8 +129,8 @@ between the pure control engine and the Dallas bus refactor.
 | Stage | PR | Smallest merge gate / remaining work |
 | --- | --- | --- |
 | Contract | #214 | These value types, native boundary tests and OpenSpec; no production migration. |
-| Transport | #216 and #217 | Update to the completed contract; verify long NTP value copies, repeated relative FIFO actions, and full 20-device snapshot replacement/concurrent reads. Check larger copy/critical-section budgets. Neither PR needs the other. |
-| Adapter adoption | #218 | Already has a handler and typed MQTT runtime parsing at `059681e`; retain this work. Add NTP dispatch/application/projection, relative actions and policies, Web/local UI producers, complete snapshot publication and all read-side migrations. Its current checked task claiming a complete handler must be revisited for the added variants. |
+| Transport | #216 and #217 | Update to the completed contract; verify long NTP value copies, repeated relative FIFO actions, full 20-device snapshot replacement/concurrent reads and the 596-byte diagnostics-complete snapshot. Check larger copy/critical-section budgets. Neither PR needs the other. |
+| Adapter adoption | #218 | Already has a handler and typed MQTT runtime parsing at `059681e`; retain this work. Add NTP dispatch/application/projection, relative actions and policies, Web/local UI producers, complete snapshot publication including local IP/max-alloc heap, and all read-side migrations. Its current checked task claiming a complete handler must be revisited for the added variants. |
 | Pure control | #219 | After #218, extract decisions and central safety/actuator policy; verify all four modes, timers and relative manual actions without changing behavior. Current PR is a specification draft. |
 | Sensor ownership | #220 | After #214 and #170, replace the temporary sensor projection bridge with DallasBus/role separation. Can proceed independently of #219. Verify shared/dedicated buses on real hardware. Current PR is a specification draft. |
 | Composition | #221 | After #218, #219 and #220, remove global ownership and isolate board construction; avoid moving coupled globals into a new directory. Current PR is a specification draft. |
@@ -146,15 +152,17 @@ branches after the foundation merges; #218 already contains queue/store code and
 ## Verification and resource impact
 
 - Native contract tests cover NTP lengths 0/1/127/128, null and embedded-NUL input, invalid raw buffers, unchanged output on rejection,
-  command/snapshot copy ownership, relative action identity and mode policy, empty/full inventory and invalid readings.
+  command/snapshot copy ownership, relative action identity and mode policy, empty/full inventory, invalid readings, local IPv4 copy semantics
+  and both heap diagnostics.
 - #218 must add real handler/queue regressions: two accepted toggles restore the original state when safety permits; two cycles advance twice and
   four cycles wrap even without a snapshot refresh; Web rejects outside manual mode; Olimex mode-entry plus toggle is atomic; NORVI keeps its
   mode. An overflowed action must be explicitly rejected, not silently lost.
 - Native C++11 compilation checks the headers independently of Arduino; normal native tests run with AddressSanitizer. All three firmware builds,
   MegaLinter and CodeQL remain CI gates.
-- On the native GCC ABI, `ControllerCommand` is 156 bytes, `SensorSnapshot` 376 bytes and `SystemSnapshot` 584 bytes. The 16-entry queue in #216
-  stores 2496 payload bytes (2048 more than before); each system snapshot copy/store grows by 452 bytes. There is no heap allocation in these
-  values. Firmware ABI sizes, critical-section duration and task stack margins must be checked when transports are adopted.
+- On the native GCC ABI, `ControllerCommand` is 156 bytes, `SensorSnapshot` 376 bytes and `SystemSnapshot` 596 bytes. The 16-entry queue in #216
+  stores 2496 payload bytes (2048 more than before); each system snapshot copy/store grows by 464 bytes over the pre-contract read model. There
+  is no heap allocation in these values. Firmware ABI sizes, critical-section duration and task stack margins must be checked when transports are
+  adopted.
 - This PR introduces no active instances/call-site changes, so production RAM/Flash/CPU behavior remains unchanged. Reverting its contract commit
   is sufficient before adoption; after adoption, dependent consumers must be reverted together.
 
@@ -164,4 +172,5 @@ branches after the foundation merges; #218 already contains queue/store code and
 - Mutable controller/domain state is owned by the Core-1 loop task.
 - Cross-core communication uses bounded snapshots/commands only.
 - No adapter may directly mutate shared nodes or runtime controller settings from callback tasks.
+- No outbound adapter may query mutable network/runtime diagnostics directly once `SystemSnapshot` adoption begins.
 - Provisioning/authentication secrets use dedicated services rather than the general controller command queue.
