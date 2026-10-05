@@ -110,5 +110,6 @@ struct ControllerCommand final {
 
 static_assert(std::is_trivially_copyable<ControllerCommand>::value,
   "ControllerCommand must remain trivially copyable for fixed-size task queues");
+static_assert(sizeof(ControllerCommand) <= 160, "Review the 16-entry queue RAM budget before expanding ControllerCommand");
 
 }  // namespace PoolController

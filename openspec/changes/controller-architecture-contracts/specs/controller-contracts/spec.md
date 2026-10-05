@@ -2,7 +2,9 @@
 
 ### Requirement: Bounded NTP runtime configuration
 
-The controller contract SHALL carry an owned NTP server value in both `SET_NTP_SERVER` and `ControllerSettingsSnapshot`. The value SHALL hold 1..127 non-NUL bytes plus a terminator without dynamic allocation. Invalid input SHALL be rejected without truncation or mutation of the previous value. Core 1 SHALL own application of accepted updates; the time service SHALL own NTP client lifecycle.
+The controller contract SHALL carry an owned NTP server value in both `SET_NTP_SERVER` and `ControllerSettingsSnapshot`. The value SHALL hold
+1..127 non-NUL bytes plus a terminator without dynamic allocation. Invalid input SHALL be rejected without truncation or mutation of the previous
+value. Core 1 SHALL own application of accepted updates; the time service SHALL own NTP client lifecycle.
 
 #### Scenario: Callback buffer lifetime ends
 
@@ -17,7 +19,9 @@ The controller contract SHALL carry an owned NTP server value in both `SET_NTP_S
 
 ### Requirement: Relative actions survive delayed snapshot publication
 
-The contract SHALL represent pool-pump toggle, solar-pump toggle and mode-cycle actions separately from absolute setters. The owner SHALL evaluate each accepted relative action against its current state in FIFO order. Adapters SHALL NOT derive an absolute target from a cached snapshot or coalesce repeated actions.
+The contract SHALL represent pool-pump toggle, solar-pump toggle and mode-cycle actions separately from absolute setters. The owner SHALL
+evaluate each accepted relative action against its current state in FIFO order. Adapters SHALL NOT derive an absolute target from a cached
+snapshot or coalesce repeated actions.
 
 #### Scenario: Two queued toggles
 
@@ -39,7 +43,9 @@ The contract SHALL represent pool-pump toggle, solar-pump toggle and mode-cycle 
 
 ### Requirement: Coherent detected-device inventory
 
-`SensorSnapshot` SHALL represent up to 20 detected devices across all physical buses, including unassigned devices. Each entry SHALL contain the ROM address and a temperature with independent validity. Inventory, logical mappings, measurements, generation and timestamp SHALL be published as one coherent value by the acquisition owner.
+`SensorSnapshot` SHALL represent up to 20 detected devices across all physical buses, including unassigned devices. Each entry SHALL contain the
+ROM address and a temperature with independent validity. Inventory, logical mappings, measurements, generation and timestamp SHALL be published
+as one coherent value by the acquisition owner.
 
 #### Scenario: Full inventory with an unreadable device
 

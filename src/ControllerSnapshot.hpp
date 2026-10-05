@@ -150,5 +150,7 @@ static_assert(std::is_trivially_copyable<SensorSnapshot>::value,
   "SensorSnapshot must remain trivially copyable for bounded snapshot transport");
 static_assert(std::is_trivially_copyable<SystemSnapshot>::value,
   "SystemSnapshot must remain trivially copyable for bounded snapshot transport");
+static_assert(sizeof(SensorSnapshot) <= 384, "Review sensor transport RAM/stack budgets before expanding SensorSnapshot");
+static_assert(sizeof(SystemSnapshot) <= 600, "Review snapshot copy/critical-section budgets before expanding SystemSnapshot");
 
 }  // namespace PoolController

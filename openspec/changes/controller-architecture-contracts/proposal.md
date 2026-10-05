@@ -2,7 +2,9 @@
 
 ## Why
 
-The controller currently exposes mutable global nodes and static managers directly to MQTT, Web and local UI code. PR #170 improves the multicore ownership boundary, but the application still lacks explicit contracts for commands and read-only state. Without those contracts, future refactoring would continue to couple adapters to concrete nodes and would make cross-task access difficult to reason
+The controller currently exposes mutable global nodes and static managers directly to MQTT, Web and local UI code. PR #170 improves the multicore
+ownership boundary, but the application still lacks explicit contracts for commands and read-only state. Without those contracts, future
+refactoring would continue to couple adapters to concrete nodes and would make cross-task access difficult to reason
 about.
 
 ## What changes
@@ -15,7 +17,8 @@ about.
 - keep the new types independent of Arduino, MQTT, Web, display and hardware drivers
 - add native tests for parsing, compatibility and value semantics
 
-This change deliberately does not switch existing production call sites yet. It establishes stable contracts that following PRs can adopt incrementally.
+This change deliberately does not switch existing production call sites yet. It establishes stable contracts that following PRs can adopt
+incrementally.
 
 ## Impact
 
