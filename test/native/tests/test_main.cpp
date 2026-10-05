@@ -94,8 +94,8 @@ void test_suite_end(const char *name, int passed, int failed) {
       snprintf(_msg, sizeof(_msg), "Expected |%s - %s| < %f: got %f vs %f", #a, #b, (float)(eps), _a, _b); \
       test_fail(__FILE__, __LINE__, _msg);                                                                 \
       return 1;                                                                                            \
-    }                                                                                                      \
-    test_pass(__FILE__, __LINE__);                                                                         \
+    }                                                                                                     \
+    test_pass(__FILE__, __LINE__);                                                                        \
   } while (0)
 
 // Suite declarations
@@ -113,6 +113,7 @@ extern int run_ky040_decoder_tests();
 extern int run_calibration_manager_tests();
 extern int run_mqtt_command_queue_tests();
 extern int run_controller_contract_tests();
+extern int run_controller_snapshot_diagnostics_tests();
 
 int main() {
   printf("\n══════════════════════════════════════════════════\n");
@@ -134,6 +135,7 @@ int main() {
   total += run_calibration_manager_tests();
   total += run_mqtt_command_queue_tests();
   total += run_controller_contract_tests();
+  total += run_controller_snapshot_diagnostics_tests();
 
   printf("\n══════════════════════════════════════════════════\n");
   printf("  Results: %d suites passed, %d suites failed\n", g_testsPassed, g_testsFailed);
