@@ -29,8 +29,34 @@ struct NtpServerValue final {
     return true;
   }
 
-  /** @brief Check raw queued values before treating them as C strings. */
-  bool valid() const noexcept { return text[0] != '\0' && std::memchr(text.data(), '\0', text.size()) != nullptr; }
+  /**
+   * @brief Check raw queued values before treating them as C strings.
+   *
+   * Accepts only the canonical layout produced by assign() or by zero-filled
+   * default construction: a nonempty prefix of non-NUL bytes, the first NUL
+   * terminator, and only zero bytes after it.
+   */
+  bool valid() const noexcept {
+    if (text[0] == '\0') {
+      return false;
+    }
+    const void *terminator = std::memchr(text.data(), '\0', text.size());
+    if (terminator == nullptr) {
+      return false;
+    }
+    const char *firstNul = static_cast<const char *>(terminator);
+    return allZero(firstNul + 1, static_cast<std::size_t>(text.data() + text.size() - firstNul - 1));
+  }
+
+  /** @brief True when every byte in the given range is NUL. */
+  static bool allZero(const char *begin, std::size_t length) noexcept {
+    for (std::size_t i = 0; i < length; ++i) {
+      if (begin[i] != '\0') {
+        return false;
+      }
+    }
+    return true;
+  }
 };
 
 }  // namespace PoolController

@@ -63,7 +63,9 @@ only some timer fields, without requiring an adapter to read stale state and syn
 
 `SET_NTP_SERVER` owns an `NtpServerValue` (128 bytes including the NUL terminator), shared with `ControllerSettingsSnapshot::ntpServer`.
 `assign()` accepts 1..127 bytes, rejects null/empty/oversized/embedded-NUL inputs without modifying the previous value, and never truncates. The
-handler must check `valid()` before using a queued value as a C string. NTP is a runtime setting, not a secret: Core 1 validates/persists it and
+handler must check `valid()` before using a queued value as a C string. `valid()` accepts only the canonical layout `assign()` produces: a nonempty
+prefix of non-NUL bytes, the first NUL terminator, and only zero bytes after it; raw queued values with a terminator followed by nonzero bytes are
+rejected. NTP is a runtime setting, not a secret: Core 1 validates/persists it and
 asks the time service to reconfigure. The time service owns client lifecycle and networking; adapters do not mutate `ConfigManager::getNtp()`.
 
 The bound matches the existing MQTT setter (`0 < len < 128`). The legacy Web setter and persisted strings are currently unbounded. Before
@@ -151,7 +153,8 @@ branches after the foundation merges; #218 already contains queue/store code and
 
 ## Verification and resource impact
 
-- Native contract tests cover NTP lengths 0/1/127/128, null and embedded-NUL input, invalid raw buffers, unchanged output on rejection,
+- Native contract tests cover NTP lengths 0/1/127/128, null and embedded-NUL input, invalid raw buffers including noncanonical queued values,
+  unchanged output on rejection,
   command/snapshot copy ownership, relative action identity and mode policy, empty/full inventory, invalid readings, local IPv4 copy semantics
   and both heap diagnostics.
 - #218 must add real handler/queue regressions: two accepted toggles restore the original state when safety permits; two cycles advance twice and

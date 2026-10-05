@@ -167,6 +167,23 @@ static int test_ntp_text_boundaries() {
   ASSERT_TRUE(server.valid());
   server.text.fill('x');
   ASSERT_TRUE(!server.valid());
+
+  // Noncanonical raw queued values must be rejected: a terminator followed by
+  // nonzero bytes is not a value assign() could have produced.
+  PoolController::NtpServerValue raw{};
+  ASSERT_TRUE(!raw.valid());
+  const char noncanonical[] = {'a', '\0', 'b'};
+  std::memcpy(raw.text.data(), noncanonical, sizeof(noncanonical));
+  ASSERT_TRUE(!raw.valid());
+  raw.text.fill('a');
+  ASSERT_TRUE(!raw.valid());
+  raw.text[127] = '\0';
+  ASSERT_TRUE(raw.valid());
+  raw.text[0] = '\0';
+  raw.text[1] = 'a';
+  ASSERT_TRUE(!raw.valid());
+  ASSERT_TRUE(raw.assign("pool.ntp.org", 12));
+  ASSERT_TRUE(raw.valid());
   return 0;
 }
 
