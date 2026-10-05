@@ -133,6 +133,133 @@ static int test_commands_cover_runtime_controller_settings() {
   return 0;
 }
 
+static int test_ntp_text_boundaries() {
+  test_begin("ControllerContracts", "NTP text rejects malformed input without truncation or mutation");
+  PoolController::NtpServerValue server{};
+  ASSERT_TRUE(!server.valid());
+  ASSERT_TRUE(!server.assign(nullptr, 5));
+  ASSERT_TRUE(!server.assign("", 0));
+
+  // A callback buffer need not be NUL terminated. All 127 bytes must survive.
+  std::array<char, 128> input{};
+  input.fill('a');
+  ASSERT_TRUE(server.assign(input.data(), 127));
+  ASSERT_TRUE(server.valid());
+  ASSERT_EQ(server.text[126], 'a');
+  ASSERT_EQ(server.text[127], '\0');
+  const auto previous = server.text;
+  ASSERT_TRUE(!server.assign(input.data(), 128));
+  ASSERT_TRUE(!server.assign(input.data(), 10000));
+  ASSERT_TRUE(!server.assign(nullptr, 1));
+  ASSERT_TRUE(!server.assign("", 0));
+  const char embeddedNul[] = {'a', '\0', 'b'};
+  ASSERT_TRUE(!server.assign(embeddedNul, sizeof(embeddedNul)));
+  ASSERT_EQ(server.text, previous);
+
+  ASSERT_TRUE(server.assign("pool.ntp.org", 12));
+  ASSERT_EQ(std::strcmp(server.text.data(), "pool.ntp.org"), 0);
+  for (std::size_t i = 12; i < server.text.size(); ++i) {
+    ASSERT_EQ(server.text[i], '\0');
+  }
+  ASSERT_TRUE(server.assign(server.text.data() + 5, 7));
+  ASSERT_EQ(std::strcmp(server.text.data(), "ntp.org"), 0);
+  ASSERT_TRUE(server.assign("x", 1));
+  ASSERT_TRUE(server.valid());
+  server.text.fill('x');
+  ASSERT_TRUE(!server.valid());
+  return 0;
+}
+
+static int test_ntp_command_and_snapshot_own_text() {
+  test_begin("ControllerContracts", "NTP command and snapshot own independent bounded text");
+  ControllerCommand command{};
+  command.type = ControllerCommandType::SET_NTP_SERVER;
+  command.source = CommandSource::WEB;
+  char callbackBuffer[] = "pool.ntp.org";
+  ASSERT_TRUE(command.ntpServer.assign(callbackBuffer, sizeof(callbackBuffer) - 1));
+  callbackBuffer[0] = 'X';
+
+  const ControllerCommand queued = command;
+  SystemSnapshot snapshot{};
+  snapshot.settings.ntpServer = queued.ntpServer;
+  const SystemSnapshot published = snapshot;
+  ASSERT_TRUE(command.ntpServer.assign("time.example", 12));
+  ASSERT_TRUE(snapshot.settings.ntpServer.assign("time.example", 12));
+  ASSERT_EQ(queued.type, ControllerCommandType::SET_NTP_SERVER);
+  ASSERT_EQ(queued.source, CommandSource::WEB);
+  ASSERT_EQ(std::strcmp(queued.ntpServer.text.data(), "pool.ntp.org"), 0);
+  ASSERT_EQ(published.settings.ntpServer.text, queued.ntpServer.text);
+  ASSERT_TRUE(published.settings.ntpServer.valid());
+  ASSERT_TRUE(std::is_trivially_copyable<PoolController::NtpServerValue>::value);
+  return 0;
+}
+
+static int test_relative_commands_preserve_intent() {
+  test_begin("ControllerContracts", "relative actions remain distinct from absolute setters in value transport");
+  const ControllerCommandType relative[] = {
+    ControllerCommandType::TOGGLE_POOL_PUMP, ControllerCommandType::TOGGLE_SOLAR_PUMP, ControllerCommandType::CYCLE_MODE};
+  const ControllerCommandType absolute[] = {
+    ControllerCommandType::SET_POOL_PUMP_MANUAL, ControllerCommandType::SET_SOLAR_PUMP_MANUAL, ControllerCommandType::SET_MODE};
+  for (std::size_t i = 0; i < 3; ++i) {
+    ControllerCommand action{};
+    action.type = relative[i];
+    action.source = CommandSource::LOCAL_UI;
+    const std::array<ControllerCommand, 2> pending{{action, action}};
+    ASSERT_TRUE(pending[0].type != absolute[i]);
+    ASSERT_EQ(pending[0].type, relative[i]);
+    ASSERT_EQ(pending[1].type, relative[i]);
+    ASSERT_EQ(pending[1].source, CommandSource::LOCAL_UI);
+  }
+  ControllerCommand toggle{};
+  toggle.type = ControllerCommandType::TOGGLE_POOL_PUMP;
+  ASSERT_EQ(toggle.toggleModePolicy, PoolController::PumpToggleModePolicy::REQUIRE_MANUAL);
+  toggle.toggleModePolicy = PoolController::PumpToggleModePolicy::ENTER_MANUAL;
+  const auto olimex = toggle;
+  toggle.toggleModePolicy = PoolController::PumpToggleModePolicy::KEEP_MODE;
+  ASSERT_EQ(olimex.toggleModePolicy, PoolController::PumpToggleModePolicy::ENTER_MANUAL);
+  ASSERT_EQ(toggle.toggleModePolicy, PoolController::PumpToggleModePolicy::KEEP_MODE);
+  // Live-state execution and two-toggle/four-cycle regressions belong to the
+  // command handler in #218; this PR only establishes the transport contract.
+  return 0;
+}
+
+static int test_detected_inventory_capacity_and_copy() {
+  test_begin("ControllerContracts", "sensor inventory preserves all 20 devices and independent reading validity");
+  SensorSnapshot sensors{};
+  ASSERT_EQ(sensors.detectedCount, 0U);
+  ASSERT_EQ(sensors.detected.size(), 20U);
+  ASSERT_TRUE(!sensors.detected[0].temperature.valid);
+  // The inventory includes devices that have not been assigned to either role.
+  ASSERT_TRUE(!sensors.poolMapping.configured);
+  ASSERT_TRUE(!sensors.solarMapping.configured);
+  sensors.generation = 23;
+  sensors.measuredAtMs = 4567;
+  for (std::size_t i = 0; i < sensors.detected.size(); ++i) {
+    auto &device = sensors.detected[i];
+    device.address = {0x28, 1, 2, 3, 4, 5, 6, static_cast<std::uint8_t>(i)};
+    device.temperature.value = 20.0F + static_cast<float>(i);
+    device.temperature.valid = i % 2 == 0;
+    ++sensors.detectedCount;
+  }
+  SystemSnapshot snapshot{};
+  snapshot.sensors = sensors;
+  const auto published = snapshot;
+  sensors = SensorSnapshot{};
+  snapshot = SystemSnapshot{};
+  ASSERT_EQ(published.sensors.detectedCount, 20U);
+  ASSERT_EQ(published.sensors.generation, 23U);
+  ASSERT_EQ(published.sensors.measuredAtMs, 4567U);
+  for (std::size_t i = 0; i < published.sensors.detectedCount; ++i) {
+    const auto &device = published.sensors.detected[i];
+    ASSERT_EQ(device.address[0], 0x28U);
+    ASSERT_EQ(device.address[7], i);
+    ASSERT_EQ(device.temperature.value, 20.0F + static_cast<float>(i));
+    ASSERT_EQ(device.temperature.valid, i % 2 == 0);
+  }
+  ASSERT_EQ(snapshot.sensors.detectedCount, 0U);
+  return 0;
+}
+
 static int test_snapshots_are_coherent_value_objects() {
   test_begin("ControllerContracts", "snapshots carry complete adapter-facing application projection");
   SystemSnapshot snapshot{};
@@ -197,7 +324,8 @@ int run_controller_contract_tests() {
   int failed = 0;
   int (*tests[])() = {test_operation_mode_wire_values, test_operation_mode_parser, test_commands_are_fixed_size_values,
     test_commands_cover_circulation_settings, test_timer_commands_preserve_partial_updates,
-    test_commands_cover_runtime_controller_settings, test_snapshots_are_coherent_value_objects};
+    test_commands_cover_runtime_controller_settings, test_ntp_text_boundaries, test_ntp_command_and_snapshot_own_text,
+    test_relative_commands_preserve_intent, test_detected_inventory_capacity_and_copy, test_snapshots_are_coherent_value_objects};
   for (auto test : tests) {
     if (test() == 0) {
       passed++;

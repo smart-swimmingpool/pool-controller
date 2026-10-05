@@ -13,6 +13,7 @@
 #include <type_traits>
 
 #include "OperationMode.hpp"
+#include "NtpServerValue.hpp"
 
 namespace PoolController {
 
@@ -28,6 +29,13 @@ enum class CommandSource : std::uint8_t {
 enum class SensorRole : std::uint8_t {
   SOLAR,
   POOL,
+};
+
+/** @brief Existing toggle use cases; applied atomically by the state owner. */
+enum class PumpToggleModePolicy : std::uint8_t {
+  REQUIRE_MANUAL,  ///< Web: reject outside manual mode.
+  KEEP_MODE,       ///< NORVI menu: toggle without changing the current mode.
+  ENTER_MANUAL,    ///< Olimex UI: enter manual mode, then toggle the live relay.
 };
 
 /** @brief Commands that may mutate runtime controller state or controller settings. */
@@ -57,6 +65,10 @@ enum class ControllerCommandType : std::uint8_t {
   SET_POOL_PUMP_MANUAL,
   SET_SOLAR_PUMP_MANUAL,
   FACTORY_RESET,
+  SET_NTP_SERVER,
+  TOGGLE_POOL_PUMP,
+  TOGGLE_SOLAR_PUMP,
+  CYCLE_MODE,
 };
 
 /**
@@ -67,6 +79,12 @@ enum class ControllerCommandType : std::uint8_t {
  * use `hour`/`minute`. Values are validated by the Core-1 application handler
  * before being applied. The intentionally flat layout avoids heap allocations
  * and makes commands cheap to copy between callback/task boundaries.
+ * `SET_NTP_SERVER` uses `ntpServer`; the handler rejects invalid text before
+ * persisting it and asking the time service to apply the change.
+ * Toggle/cycle commands carry relative intent, ignoring `enabled`/`mode`.
+ * They must be evaluated in FIFO order against live owner state, never against
+ * an adapter snapshot. Toggles use `toggleModePolicy` to preserve the existing
+ * Web/NORVI/Olimex mode behavior as one action. Safety checks apply at execution.
  *
  * Provisioning/authentication data such as WiFi/MQTT credentials and passwords
  * is deliberately not transported through this general controller command
@@ -86,6 +104,8 @@ struct ControllerCommand final {
 
   SensorRole sensorRole{SensorRole::SOLAR};
   std::array<std::uint8_t, 8> sensorAddress{};
+  NtpServerValue ntpServer{};
+  PumpToggleModePolicy toggleModePolicy{PumpToggleModePolicy::REQUIRE_MANUAL};
 };
 
 static_assert(std::is_trivially_copyable<ControllerCommand>::value,

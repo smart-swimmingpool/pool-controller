@@ -13,7 +13,15 @@
 - [x] Project runtime controller settings through `SystemSnapshot`.
 - [x] Preserve GREEN/YELLOW/RED time degradation in the health read model.
 - [x] Assert command/snapshot value types remain trivially copyable.
-- [x] Add native tests for compatibility and copy semantics.
+- [x] Add bounded NTP-server command and settings projection with explicit non-truncating copy/validation.
+- [x] Represent relative pool/solar pump toggles and mode cycling independently of adapter snapshots.
+- [x] Preserve Web/NORVI/Olimex toggle mode policy as a single owner action.
+- [x] Project the detected inventory with a 20-device cap, ROMs and independent temperature validity.
+- [x] Add native tests for compatibility, text boundaries, full/empty inventory and copy semantics.
+- [x] Document the minimal dependency graph, current #218 progress, #170 ownership gate and sensor projection bridge.
+- [ ] In #216/#217, verify the expanded payloads and transport resource budgets.
+- [ ] In #218, validate Web/legacy NTP input without silent truncation and complete owner/adapter regressions.
+- [ ] In #218/#220, verify both-bus inventory aggregation, deduplication, overflow and rescan replacement on the owning task.
 - [x] Register native tests in CMake/test runner.
 - [ ] Adopt typed commands in MQTT/Web/local UI in a follow-up change.
 - [ ] Adopt `SystemSnapshot` in MQTT/Web/display in a follow-up change.

@@ -9,10 +9,12 @@
 #pragma once
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <type_traits>
 
 #include "OperationMode.hpp"
+#include "NtpServerValue.hpp"
 
 namespace PoolController {
 
@@ -29,11 +31,24 @@ struct SensorMappingSnapshot final {
   bool found{false};
 };
 
+/** @brief One discovered ROM, including unassigned or currently unreadable devices. */
+struct DetectedSensorSnapshot final {
+  std::array<std::uint8_t, 8> address{};
+  SensorReadingSnapshot temperature{};
+};
+
+/** @brief Existing Web inventory / MQTT select-option limit, across all buses. */
+constexpr std::size_t kMaxDetectedSensors = 20;
+
 /**
  * @brief Temperatures and role mappings produced by one acquisition generation.
  *
  * `generation` lets consumers detect a new complete measurement cycle without
  * comparing individual fields. `measuredAtMs` is the acquisition timestamp.
+ * The sensor owner deduplicates ROMs across buses and publishes at most 20
+ * entries, including unassigned devices, from the same acquisition generation.
+ * Only [0, detectedCount) is populated; detectedCount must not exceed capacity.
+ * Invalid temperatures retain their address for discovery and selection.
  */
 struct SensorSnapshot final {
   SensorReadingSnapshot pool{};
@@ -41,6 +56,8 @@ struct SensorSnapshot final {
   SensorReadingSnapshot controller{};
   SensorMappingSnapshot poolMapping{};
   SensorMappingSnapshot solarMapping{};
+  std::array<DetectedSensorSnapshot, kMaxDetectedSensors> detected{};
+  std::uint8_t detectedCount{0};
   std::uint32_t measuredAtMs{0};
   std::uint32_t generation{0};
 };
@@ -89,6 +106,7 @@ struct TimerSnapshot final {
 
 /** @brief Runtime controller settings needed by status/config projections. */
 struct ControllerSettingsSnapshot final {
+  NtpServerValue ntpServer{};
   std::uint32_t loopInterval{0};
   std::int16_t timezoneIndex{0};
   std::uint16_t timeLossGreenHours{0};

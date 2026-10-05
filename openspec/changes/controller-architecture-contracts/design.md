@@ -48,9 +48,17 @@ Conversion helpers use ordinary `inline` functions rather than C++14-style `cons
 
 Decimal controller settings use `value`; integer-only settings use `integerValue`. The application handler validates range and semantic constraints before applying either field.
 
-The command set covers the existing runtime mutations required by MQTT/Web/local UI: mode, temperature setpoints, hysteresis, temperature-circulation settings, loop interval, timezone, time-loss thresholds, NORVI button thresholds, sensor mapping and manual relay commands.
+The command set covers the existing runtime mutations required by MQTT/Web/local UI: mode, temperature setpoints, hysteresis, temperature-circulation settings, loop interval, timezone, NTP server, time-loss thresholds, NORVI button thresholds, sensor mapping, absolute manual relay commands and relative pump/mode actions.
 
 Timer start and timer end are separate commands. This preserves the current APIs where MQTT updates start/end independently and Web may submit only some timer fields, without requiring an adapter to read stale state and synthesize a complete timer value.
+
+`SET_NTP_SERVER` owns an `NtpServerValue` (128 bytes including the NUL terminator), shared with `ControllerSettingsSnapshot::ntpServer`. `assign()` accepts 1..127 bytes, rejects null/empty/oversized/embedded-NUL inputs without modifying the previous value, and never truncates. The handler must check `valid()` before using a queued value as a C string. NTP is a runtime setting, not a secret: Core 1 validates/persists it and asks the time service to reconfigure. The time service owns client lifecycle and networking; adapters do not mutate `ConfigManager::getNtp()`.
+
+The bound matches the existing MQTT setter (`0 < len < 128`). The legacy Web setter and persisted strings are currently unbounded. Before migrating them in #218, validate new Web input explicitly and report an error for out-of-contract values; do not silently truncate or replace an oversized legacy NVS value. Such a legacy value must remain intact behind an immutable time-configuration service projection until explicitly corrected. This PR changes no existing call sites or stored values.
+
+`TOGGLE_POOL_PUMP`, `TOGGLE_SOLAR_PUMP` and `CYCLE_MODE` encode relative intent. The handler evaluates every accepted action in FIFO order against its current state, ignoring the absolute `enabled`/`mode` payload fields. No adapter may synthesize these actions from a possibly stale snapshot, and a queue must not coalesce repeated actions. The cycle remains `auto -> manu -> boost -> timer -> auto`.
+
+`PumpToggleModePolicy` preserves the existing use cases explicitly: Web uses `REQUIRE_MANUAL`, NORVI uses `KEEP_MODE`, Olimex uses `ENTER_MANUAL`. The latter enters manual mode and toggles the then-current relay in one handler operation, avoiding a partially accepted two-command submission. The owner rechecks policy and safety at execution; the policy cannot bypass safety overrides. Default commands require manual mode. Absolute MQTT ON/OFF commands remain unchanged.
 
 The eventual command queue is bounded. Adapters must never hold references into mutable controller objects.
 
@@ -58,13 +66,17 @@ The eventual command queue is bounded. Adapters must never hold references into 
 
 `SensorSnapshot` represents one coherent acquisition generation and includes a generation counter and timestamp. It also carries pool/solar mapping identity: configured address, configured state and found state. This lets MQTT preserve sensor-select and sensor-found entities without touching Dallas nodes.
 
+It also carries `detected`, a fixed array of 20 `DetectedSensorSnapshot` values, and `detectedCount` in 0..20. Each entry owns its 8-byte ROM and a temperature with an independent validity flag. The list includes unassigned and unreadable devices. Only `[0, detectedCount)` is populated. The acquisition owner enumerates both physical buses, deduplicates ROMs (including a shared bus), keeps at most 20 in deterministic scan order, and publishes inventory, role mappings, readings, generation and timestamp together. Invalid readings retain their ROM; Web omits the temperature as today, and MQTT can still offer that address. On a rescan, a fresh value replaces the entire old inventory, including a zero-device result. Adapters never initiate Dallas reads.
+
+The shared cap is 20 devices total, not 20 per role or per bus. Overflow does not increase the count or overwrite storage. Producer regression tests for deduplication, the 21st device, both bus topologies and rescan replacement are required in #218/#220; this contract PR tests the empty/full value representation and independent copies.
+
 `SystemSnapshot` is a projection for outbound adapters. It contains values, not references or pointers to mutable nodes. The read model includes:
 
 - timer schedule, effective runtime, circulation extension and active extended end time
 - temperature-circulation configuration
-- runtime controller settings used by Web/config/status projections
+- runtime controller settings, including bounded NTP server text, used by Web/config/status projections
 - three-state time degradation (`GREEN`, `YELLOW`, `RED`) in addition to the coarse time-valid flag
-- sensor role mappings and configured/found state
+- sensor role mappings and configured/found state, plus the detected-device inventory
 
 Following PRs will build these snapshots on the owning task and hand copies to MQTT, Web and display code.
 
@@ -74,13 +86,30 @@ This change introduces contracts, not a broad virtual-interface hierarchy. Hardw
 
 ## Migration sequence
 
-1. introduce these contracts
-2. move all runtime MQTT/Web/local-UI mutations to a typed command queue
-3. publish `SystemSnapshot` from the Core-1 application runtime
-4. migrate MQTT/Web/display reads away from `Nodes.hpp` and mutable runtime config
-5. make the control engine return decisions instead of writing relays directly
-6. replace global node/service ownership with an explicit composition root
-7. isolate board-specific construction in the platform layer
+The minimal dependency graph is `#214 -> {#216, #217} -> #218 -> #219`, with `#220` depending on `#214` and the sensor ownership boundary in `#170`; `#221` waits for `#218`, `#219` and `#220`. Queue and snapshot store can be reviewed independently. There is no intrinsic dependency between the pure control engine and the Dallas bus refactor.
+
+| Stage | PR | Smallest merge gate / remaining work |
+| --- | --- | --- |
+| Contract | #214 | These value types, native boundary tests and OpenSpec; no production migration. |
+| Transport | #216 and #217 | Update to the completed contract; verify long NTP value copies, repeated relative FIFO actions, and full 20-device snapshot replacement/concurrent reads. Check larger copy/critical-section budgets. Neither PR needs the other. |
+| Adapter adoption | #218 | Already has a handler and typed MQTT runtime parsing at `059681e`; retain this work. Add NTP dispatch/application/projection, relative actions and policies, Web/local UI producers, complete snapshot publication and all read-side migrations. Its current checked task claiming a complete handler must be revisited for the added variants. |
+| Pure control | #219 | After #218, extract decisions and central safety/actuator policy; verify all four modes, timers and relative manual actions without changing behavior. Current PR is a specification draft. |
+| Sensor ownership | #220 | After #214 and #170, replace the temporary sensor projection bridge with DallasBus/role separation. Can proceed independently of #219. Verify shared/dedicated buses on real hardware. Current PR is a specification draft. |
+| Composition | #221 | After #218, #219 and #220, remove global ownership and isolate board construction; avoid moving coupled globals into a new directory. Current PR is a specification draft. |
+
+`#170` is still an open draft at `3f00319` (inspection on 2026-10-05); sensor-task ownership is not yet present on main. It is not a prerequisite for merging these unused contracts or #216/#217. Before #218 enables cross-task sensor reads/mapping writes, integrate and verify #170's ownership boundary. Core 1 must request mapping/rescan work through that boundary, never call OneWire/Dallas itself after sensor startup. On single-core boards, the same ownership rule applies even when tasks share a core.
+
+To avoid making the whole #220 refactor a prerequisite for #218, first project the existing sensor owner's cached discovery/measurement generation into `SensorSnapshot`. This bridge must enumerate both buses and enforce the same inventory invariants; it cannot assemble a snapshot by reading live Dallas objects from Core 1. #220 then replaces internals behind the stable contract. If no such bridge is provided, #220 becomes a hard predecessor of #218's sensor-read migration.
+
+A conservative serial merge order is therefore **#214, #216, #217, #218, #219, #220, #221**, with #170 integrated before enabling the sensor-dependent part of #218. #216/#217 may swap; #220 may move earlier once its ownership and hardware gates are satisfied. Reconcile stacked branches after the foundation merges; #218 already contains queue/store code and must not reintroduce duplicate implementations.
+
+## Verification and resource impact
+
+- Native contract tests cover NTP lengths 0/1/127/128, null and embedded-NUL input, invalid raw buffers, unchanged output on rejection, command/snapshot copy ownership, relative action identity and mode policy, empty/full inventory and invalid readings.
+- #218 must add real handler/queue regressions: two accepted toggles restore the original state when safety permits; two cycles advance twice and four cycles wrap even without a snapshot refresh; Web rejects outside manual mode; Olimex mode-entry plus toggle is atomic; NORVI keeps its mode. An overflowed action must be explicitly rejected, not silently lost.
+- Native C++11 compilation checks the headers independently of Arduino; normal native tests run with AddressSanitizer. All three firmware builds, MegaLinter and CodeQL remain CI gates.
+- On the native GCC ABI, `ControllerCommand` is 156 bytes, `SensorSnapshot` 376 bytes and `SystemSnapshot` 584 bytes. The 16-entry queue in #216 stores 2496 payload bytes (2048 more than before); each system snapshot copy/store grows by 452 bytes. There is no heap allocation in these values. Firmware ABI sizes, critical-section duration and task stack margins must be checked when transports are adopted.
+- This PR introduces no active instances/call-site changes, so production RAM/Flash/CPU behavior remains unchanged. Reverting its contract commit is sufficient before adoption; after adoption, dependent consumers must be reverted together.
 
 ## Concurrency invariants
 

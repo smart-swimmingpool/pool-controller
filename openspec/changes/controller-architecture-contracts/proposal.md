@@ -9,6 +9,8 @@ about.
 
 - introduce a typed `OperationMode` while preserving the existing external wire values
 - introduce a fixed-size, trivially-copyable `ControllerCommand` contract for inbound adapter requests
+- cover NTP command/read values, relative pump toggles with explicit mode policy, and relative mode cycling
+- preserve the 20-device discovery inventory with address and reading validity
 - introduce `SensorSnapshot` and `SystemSnapshot` read models for outbound adapters
 - keep the new types independent of Arduino, MQTT, Web, display and hardware drivers
 - add native tests for parsing, compatibility and value semantics
