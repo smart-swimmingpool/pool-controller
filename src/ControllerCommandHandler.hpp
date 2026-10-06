@@ -17,6 +17,14 @@ class RelayModuleNode;
 
 namespace PoolController {
 
+/** @brief Optional resolved owner state returned to synchronous adapters. */
+struct ControllerCommandResult final {
+  bool hasMode{false};
+  OperationMode mode{OperationMode::AUTO};
+  bool hasPumpState{false};
+  bool pumpState{false};
+};
+
 /**
  * @brief Applies validated runtime commands to the legacy controller model.
  *
@@ -43,7 +51,8 @@ public:
    * @brief Apply one command on the owning application task.
    * @return true if the command was accepted and applied, false if invalid.
    */
-  bool handle(const ControllerCommand &command);
+  bool handle(const ControllerCommand &command) { return handle(command, nullptr); }
+  bool handle(const ControllerCommand &command, ControllerCommandResult *result);
 
 private:
   static const char *sourceName(CommandSource source);

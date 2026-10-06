@@ -30,6 +30,20 @@ bool inRange(float value, float minimum, float maximum) {
   return value >= minimum && value <= maximum;
 }
 
+OperationMode nextOperationMode(OperationMode current) {
+  switch (current) {
+  case OperationMode::AUTO:
+    return OperationMode::MANUAL;
+  case OperationMode::MANUAL:
+    return OperationMode::BOOST;
+  case OperationMode::BOOST:
+    return OperationMode::TIMER;
+  case OperationMode::TIMER:
+    return OperationMode::AUTO;
+  }
+  return OperationMode::AUTO;
+}
+
 }  // namespace
 
 const char *ControllerCommandHandler::sourceName(CommandSource source) {
@@ -76,7 +90,7 @@ bool ControllerCommandHandler::applySensorMapping(const ControllerCommand &comma
   return true;
 }
 
-bool ControllerCommandHandler::handle(const ControllerCommand &command) {
+bool ControllerCommandHandler::handle(const ControllerCommand &command, ControllerCommandResult *result) {
   auto &settings = ConfigManager::getSettings();
 
   switch (command.type) {
@@ -85,7 +99,30 @@ bool ControllerCommandHandler::handle(const ControllerCommand &command) {
       return false;
     }
     settings.opMode = toString(command.mode);
-    return saveSettings();
+    if (!saveSettings()) {
+      return false;
+    }
+    if (result != nullptr) {
+      result->hasMode = true;
+      result->mode = command.mode;
+    }
+    return true;
+
+  case ControllerCommandType::CYCLE_MODE: {
+    const OperationMode next = nextOperationMode(dependencies_.operationMode.getTypedMode());
+    if (!dependencies_.operationMode.setMode(next, sourceName(command.source))) {
+      return false;
+    }
+    settings.opMode = toString(next);
+    if (!saveSettings()) {
+      return false;
+    }
+    if (result != nullptr) {
+      result->hasMode = true;
+      result->mode = next;
+    }
+    return true;
+  }
 
   case ControllerCommandType::SET_POOL_MAX_TEMPERATURE:
     if (!inRange(command.value, 0.0F, 40.0F)) {
@@ -263,6 +300,34 @@ bool ControllerCommandHandler::handle(const ControllerCommand &command) {
       dependencies_.solarPump.setSwitch(command.enabled);
     }
     return true;
+
+  case ControllerCommandType::TOGGLE_POOL_PUMP:
+  case ControllerCommandType::TOGGLE_SOLAR_PUMP: {
+    const OperationMode currentMode = dependencies_.operationMode.getTypedMode();
+    if (command.toggleModePolicy == PumpToggleModePolicy::REQUIRE_MANUAL && currentMode != OperationMode::MANUAL) {
+      LOG_WARN("Controller command: Web pump toggle rejected outside manual mode\n");
+      return false;
+    }
+    if (command.toggleModePolicy == PumpToggleModePolicy::ENTER_MANUAL && currentMode != OperationMode::MANUAL) {
+      if (!dependencies_.operationMode.setMode(OperationMode::MANUAL, sourceName(command.source))) {
+        return false;
+      }
+      settings.opMode = toString(OperationMode::MANUAL);
+      if (!saveSettings()) {
+        return false;
+      }
+    }
+
+    RelayModuleNode &pump =
+      command.type == ControllerCommandType::TOGGLE_POOL_PUMP ? dependencies_.poolPump : dependencies_.solarPump;
+    const bool newState = !pump.getSwitch();
+    pump.setSwitch(newState);
+    if (result != nullptr) {
+      result->hasPumpState = true;
+      result->pumpState = newState;
+    }
+    return true;
+  }
 
   case ControllerCommandType::FACTORY_RESET: {
     static const char *const kOperationalNamespaces[] = {"pool-pump", "solar-pump", "pool-controller"};

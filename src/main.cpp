@@ -19,6 +19,7 @@
 #include "MqttRuntimeCommandAdapter.hpp"
 #include "Nodes.hpp"
 #include "PoolController.hpp"
+#include "WebPortal.hpp"
 
 /** @brief Singleton context owning the existing controller lifecycle. */
 static PoolController::PoolControllerContext context{};
@@ -36,6 +37,10 @@ PoolController::ControllerCommandHandler &controllerCommandHandler() {
     PoolController::poolTemperatureNode, PoolController::ctrlTemperatureNode};
   static PoolController::ControllerCommandHandler handler(dependencies);
   return handler;
+}
+
+bool dispatchWebCommand(const PoolController::ControllerCommand &command, PoolController::ControllerCommandResult *result) {
+  return controllerCommandHandler().handle(command, result);
 }
 
 PoolController::MqttRuntimeCommandAdapter &mqttRuntimeCommandAdapter() {
@@ -80,6 +85,7 @@ auto setup() -> void {
   // export watermark sees the pre-boot sequence. Serial is already up here.
   PoolController::LogCapture::begin();
 
+  PoolController::WebPortal::setCommandDispatcher(dispatchWebCommand);
   context.setup();
 
   // MqttPublisher::begin() is part of context.setup(). Replace its callback
