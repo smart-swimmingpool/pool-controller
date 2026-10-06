@@ -10,6 +10,8 @@ public:
   void setTemperature(float t) { _temperature = t; }
   const char *getId() const { return _id; }
   void setMeasurementInterval(unsigned long interval) { _measurementInterval = interval; }
+  unsigned long getMeasurementInterval() const { return _measurementInterval; }
+
 private:
   const char *_id;
   const char *_name;
