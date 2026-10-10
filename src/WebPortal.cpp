@@ -52,6 +52,7 @@ static File fsUploadFile;
 
 WebServer WebPortal::server_(80);
 DNSServer WebPortal::dnsServer_;
+WebPortal::CommandDispatcher WebPortal::commandDispatcher_ = nullptr;
 bool WebPortal::dnsServerStarted_ = false;
 String WebPortal::activeSessionToken_ = "";
 String WebPortal::csrfToken_ = "";
@@ -937,14 +938,37 @@ void WebPortal::apiSetMode() {
     return;
   }
 
-  String mode = server_.arg("mode");
-  if (operationModeNode.setMode(mode, "web:apiSetMode")) {
-    ConfigManager::getSettings().opMode = mode;
-    ConfigManager::save();
-    server_.send(200, "application/json", "{\"status\":\"ok\",\"mode\":\"" + mode + "\"}");
+  const String requestedMode = server_.arg("mode");
+  ControllerCommand command{};
+  command.source = CommandSource::WEB;
+
+  if (requestedMode == "cycle") {
+    command.type = ControllerCommandType::CYCLE_MODE;
   } else {
-    server_.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Invalid mode\"}");
+    OperationMode parsedMode;
+    if (!tryParseOperationMode(requestedMode.c_str(), parsedMode)) {
+      server_.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Invalid mode\"}");
+      return;
+    }
+    command.type = ControllerCommandType::SET_MODE;
+    command.mode = parsedMode;
   }
+
+  ControllerCommandResult result{};
+  if (commandDispatcher_ == nullptr || !commandDispatcher_(command, &result)) {
+    server_.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Invalid mode\"}");
+    return;
+  }
+
+  const char *resolvedMode = requestedMode.c_str();
+  if (command.type == ControllerCommandType::CYCLE_MODE) {
+    if (!result.hasMode) {
+      server_.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Missing command result\"}");
+      return;
+    }
+    resolvedMode = toString(result.mode);
+  }
+  server_.send(200, "application/json", "{\"status\":\"ok\",\"mode\":\"" + String(resolvedMode) + "\"}");
 }
 
 void WebPortal::apiTogglePump() {
@@ -953,27 +977,30 @@ void WebPortal::apiTogglePump() {
     return;
   }
 
-  // Only allow pump toggling in manual mode
-  if (operationModeNode.getMode() != "manu") {
-    server_.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Pump control only available in manual mode\"}");
-    return;
-  }
-
-  String pump = server_.arg("pump");
-  bool newState;
-
+  const String pump = server_.arg("pump");
+  ControllerCommand command{};
+  command.source = CommandSource::WEB;
+  command.toggleModePolicy = PumpToggleModePolicy::REQUIRE_MANUAL;
   if (pump == "pool") {
-    newState = !poolPumpNode.getSwitch();
-    poolPumpNode.setSwitch(newState);
+    command.type = ControllerCommandType::TOGGLE_POOL_PUMP;
   } else if (pump == "solar") {
-    newState = !solarPumpNode.getSwitch();
-    solarPumpNode.setSwitch(newState);
+    command.type = ControllerCommandType::TOGGLE_SOLAR_PUMP;
   } else {
     server_.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Invalid pump. Use 'pool' or 'solar'\"}");
     return;
   }
 
-  String json = "{\"status\":\"ok\",\"state\":" + String(newState ? "true" : "false") + "}";
+  ControllerCommandResult result{};
+  if (commandDispatcher_ == nullptr || !commandDispatcher_(command, &result)) {
+    server_.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Pump control only available in manual mode\"}");
+    return;
+  }
+  if (!result.hasPumpState) {
+    server_.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Missing command result\"}");
+    return;
+  }
+
+  String json = "{\"status\":\"ok\",\"state\":" + String(result.pumpState ? "true" : "false") + "}";
   server_.send(200, "application/json", json);
 }
 

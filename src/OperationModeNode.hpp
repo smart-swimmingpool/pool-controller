@@ -14,6 +14,7 @@
 #include <memory>
 
 #include "DallasTemperatureNode.hpp"
+#include "OperationMode.hpp"
 #include "Rule.hpp"
 #include "Timer.hpp"
 #include "TimeClientHelper.hpp"
@@ -33,11 +34,14 @@ public:
   void setMeasurementInterval(uint32_t interval) { _measurementInterval = interval; }
   uint32_t getMeasurementInterval() const { return _measurementInterval; }
 
+  // String overloads remain as protocol/persistence compatibility adapters.
   bool setMode(String mode);
   bool setMode(String mode, const char *source);
-  String getMode() const { return _mode; }
-  /// Current mode without copying (valid until the mode changes).
-  const char *getModeCStr() const { return _mode.c_str(); }
+  bool setMode(PoolController::OperationMode mode, const char *source = "unspecified");
+
+  String getMode() const { return String(PoolController::toString(_mode)); }
+  const char *getModeCStr() const { return PoolController::toString(_mode); }
+  PoolController::OperationMode getTypedMode() const { return _mode; }
 
   void addRule(Rule *rule);
   Rule *getRule();
@@ -97,7 +101,7 @@ private:
   const char *_id;
   const char *_name;
 
-  String _mode = STATUS_AUTO;
+  PoolController::OperationMode _mode = PoolController::OperationMode::AUTO;
   float _poolMaxTemp = 28.5f;
   float _solarMinTemp = 55.0f;
   float _hysteresis = 1.0f;
