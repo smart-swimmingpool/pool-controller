@@ -169,8 +169,8 @@ int run_web_runtime_command_tests() {
   PoolController::WebPortal::begin();
   int passed = 0;
   int failed = 0;
-  int (*tests[])() = {test_mode_validation, test_absolute_mode, test_cycle_mode, test_pump_validation,
-    test_relative_pumps, test_owner_rejection, test_adapter_does_not_mutate_nodes};
+  int (*tests[])() = {test_mode_validation, test_absolute_mode, test_cycle_mode, test_pump_validation, test_relative_pumps,
+    test_owner_rejection, test_adapter_does_not_mutate_nodes};
   for (auto test : tests) {
     if (test() == 0) {
       ++passed;
