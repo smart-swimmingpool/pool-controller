@@ -25,6 +25,7 @@
 - [ ] In #218, validate Web/legacy NTP input without silent truncation and complete owner/adapter regressions.
 - [ ] In #218/#220, verify both-bus inventory aggregation, deduplication, overflow and rescan replacement on the owning task.
 - [x] Register native tests in CMake/test runner.
+- [x] Store operation mode internally as the typed enum while preserving String compatibility at boundaries.
 - [ ] Adopt typed commands in MQTT/Web/local UI in a follow-up change.
 - [ ] Adopt `SystemSnapshot` in MQTT/Web/display in a follow-up change.
 - [ ] Replace direct rule-to-relay writes with application decisions in a follow-up change.
