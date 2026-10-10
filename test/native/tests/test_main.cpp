@@ -114,6 +114,7 @@ extern int run_calibration_manager_tests();
 extern int run_mqtt_command_queue_tests();
 extern int run_controller_contract_tests();
 extern int run_controller_snapshot_diagnostics_tests();
+extern int run_controller_snapshot_store_tests();
 extern int run_controller_command_queue_tests();
 
 int main() {
@@ -137,6 +138,7 @@ int main() {
   total += run_mqtt_command_queue_tests();
   total += run_controller_contract_tests();
   total += run_controller_snapshot_diagnostics_tests();
+  total += run_controller_snapshot_store_tests();
   total += run_controller_command_queue_tests();
 
   printf("\n══════════════════════════════════════════════════\n");
