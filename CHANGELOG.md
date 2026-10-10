@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [5.0.2](https://github.com/smart-swimmingpool/pool-controller/compare/v5.0.1...v5.0.2) (2026-10-10)
+
+
+### Bug Fixes
+
+* **mqtt:** handle MQTT commands on the loop task ([#209](https://github.com/smart-swimmingpool/pool-controller/issues/209)) ([040ac78](https://github.com/smart-swimmingpool/pool-controller/commit/040ac7822c365d6d4699cea7c48ad2e1c61ed292))
+
 ## [5.0.1](https://github.com/smart-swimmingpool/pool-controller/compare/v5.0.0...v5.0.1) (2026-08-20)
 
 
