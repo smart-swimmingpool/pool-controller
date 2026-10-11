@@ -30,7 +30,7 @@ bool ConfigManager::loadSensorMapping(uint8_t solarAddr[8], uint8_t poolAddr[8])
   memset(poolAddr, 0, 8);
   if (_sensorSolarValid) memcpy(solarAddr, _sensorSolarAddr, 8);
   if (_sensorPoolValid) memcpy(poolAddr, _sensorPoolAddr, 8);
-  return _sensorSolarValid && _sensorPoolValid;
+  return _sensorSolarValid || _sensorPoolValid;
 }
 
 void ConfigManager::seedSensorMappingForTest(
