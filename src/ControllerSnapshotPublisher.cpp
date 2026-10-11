@@ -56,10 +56,44 @@ SensorMappingSnapshot mappingSnapshot(const std::array<std::uint8_t, 8> &configu
 
   if (mapping.configured && mapping.found) {
     const std::uint8_t *selectedAddress = node.getDeviceAddress();
-    const bool addressMatches = std::memcmp(selectedAddress, configuredAddress.data(), configuredAddress.size()) == 0;
-    mapping.found = selectedAddress != nullptr && addressMatches;
+    mapping.found = selectedAddress != nullptr &&
+                    std::memcmp(selectedAddress, configuredAddress.data(), configuredAddress.size()) == 0;
   }
   return mapping;
+}
+
+bool containsDetectedAddress(const SensorSnapshot &sensors, const std::uint8_t address[8]) {
+  for (std::uint8_t i = 0; i < sensors.detectedCount; ++i) {
+    if (std::memcmp(sensors.detected[i].address.data(), address, sensors.detected[i].address.size()) == 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
+void appendDetectedSensors(SensorSnapshot &sensors, const DallasTemperatureNode &node) {
+  const std::uint8_t deviceCount = node.getDeviceCount();
+  for (std::uint8_t index = 0; index < deviceCount && sensors.detectedCount < kMaxDetectedSensors; ++index) {
+    std::array<std::uint8_t, 8> address{};
+    if (!node.getDetectedDeviceAddress(index, address.data()) || containsDetectedAddress(sensors, address.data())) {
+      continue;
+    }
+
+    DetectedSensorSnapshot &detected = sensors.detected[sensors.detectedCount++];
+    detected.address = address;
+    const float temperature = node.getDetectedDeviceTemperature(index);
+    detected.temperature.value = temperature;
+    detected.temperature.valid = std::isfinite(temperature);
+  }
+}
+
+Ipv4AddressSnapshot ipv4Snapshot(const IPAddress &address) {
+  Ipv4AddressSnapshot snapshot{};
+  for (std::size_t i = 0; i < snapshot.octets.size(); ++i) {
+    snapshot.octets[i] = address[static_cast<int>(i)];
+    snapshot.valid = snapshot.valid || snapshot.octets[i] != 0;
+  }
+  return snapshot;
 }
 
 TimeDegradationState snapshotTimeDegradation(TimeDegradation degradation) {
@@ -93,6 +127,8 @@ void ControllerSnapshotPublisher::publish() {
   ConfigManager::loadSensorMappingCached(solarAddress.data(), poolAddress.data());
   snapshot.sensors.solarMapping = mappingSnapshot(solarAddress, dependencies_.solarTemperature);
   snapshot.sensors.poolMapping = mappingSnapshot(poolAddress, dependencies_.poolTemperature);
+  appendDetectedSensors(snapshot.sensors, dependencies_.solarTemperature);
+  appendDetectedSensors(snapshot.sensors, dependencies_.poolTemperature);
 
   // Transitional generation: this identifies complete Core-1 read-model
   // publications. Once #170 provides a coherent Core-0 acquisition snapshot,
@@ -104,6 +140,7 @@ void ControllerSnapshotPublisher::publish() {
   snapshot.network.mqttConnected = NetworkManager::isMqttConnected();
   snapshot.network.apMode = NetworkManager::isApMode();
   snapshot.network.wifiRssi = static_cast<std::int16_t>(NetworkManager::getWiFiRSSI());
+  snapshot.network.localIp = ipv4Snapshot(NetworkManager::getLocalIPAddress());
 
   snapshot.health.safeMode = DegradationManager::isSafe();
   snapshot.health.timeValid = isTimeSyncValid();
@@ -122,13 +159,16 @@ void ControllerSnapshotPublisher::publish() {
   snapshot.timer.endHour = timer.timerEndHour;
   snapshot.timer.endMinute = timer.timerEndMinutes;
 
-  Rule *activeRule = dependencies_.operationMode.getRule();
+  Rule *activeRule = dependencies_.operationMode.getRule(false);
   if (activeRule != nullptr) {
     snapshot.timer.effectiveRuntimeMinutes = activeRule->getEffectiveRuntimeMinutes();
     snapshot.timer.circulationExtensionMinutes = activeRule->getCirculationExtensionMinutes();
     snapshot.timer.activeEndMinutes = activeRule->getActiveEndMinutes();
   }
 
+  const auto &ntp = ConfigManager::getNtp();
+  const char *ntpServer = ntp.server.c_str();
+  snapshot.settings.ntpServer.assign(ntpServer, std::strlen(ntpServer));
   snapshot.settings.loopInterval = static_cast<std::uint32_t>(settings.loopInterval);
   snapshot.settings.timezoneIndex = static_cast<std::int16_t>(settings.timezoneIndex);
   snapshot.settings.timeLossGreenHours = static_cast<std::uint16_t>(settings.timeLossGreenHours);
