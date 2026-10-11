@@ -90,7 +90,7 @@ void ControllerSnapshotPublisher::publish() {
 
   std::array<std::uint8_t, 8> solarAddress{};
   std::array<std::uint8_t, 8> poolAddress{};
-  ConfigManager::loadSensorMapping(solarAddress.data(), poolAddress.data());
+  ConfigManager::loadSensorMappingCached(solarAddress.data(), poolAddress.data());
   snapshot.sensors.solarMapping = mappingSnapshot(solarAddress, dependencies_.solarTemperature);
   snapshot.sensors.poolMapping = mappingSnapshot(poolAddress, dependencies_.poolTemperature);
 
@@ -149,6 +149,7 @@ void ControllerSnapshotPublisher::publish() {
   snapshot.temperatureHysteresis = dependencies_.operationMode.getTemperatureHysteresis();
   snapshot.uptimeMs = nowMs;
   snapshot.freeHeapBytes = SystemMonitor::getFreeHeap();
+  snapshot.maxAllocHeapBytes = static_cast<std::uint32_t>(ESP.getMaxAllocHeap());
 
   dependencies_.store.publish(snapshot);
 }

@@ -49,7 +49,9 @@ struct MqttClientCapture {
   bool connected = false;
   std::function<void(bool)> onConnectCb;
   std::function<void(AsyncMqttClientDisconnectReason)> onDisconnectCb;
-  std::function<void(char*, char*, AsyncMqttClientMessageProperties, size_t, size_t, size_t)> onMessageCb;
+  std::function<void(char *, char *, AsyncMqttClientMessageProperties, size_t, size_t, size_t)> onMessageCb;
+  // Mirrors AsyncMqttClient: onMessage() APPENDS to an internal vector with no removal API.
+  std::vector<std::function<void(char *, char *, AsyncMqttClientMessageProperties, size_t, size_t, size_t)>> onMessageCbs;
 
   void clear() {
     lastServerHost.clear();
@@ -66,11 +68,13 @@ struct MqttClientCapture {
     onConnectCb = nullptr;
     onDisconnectCb = nullptr;
     onMessageCb = nullptr;
+    onMessageCbs.clear();
   }
 
   const MqttMessage *findPublished(const char *topic) const {
     for (const auto &m : published) {
-      if (m.topic == topic) return &m;
+      if (m.topic == topic)
+        return &m;
     }
     return nullptr;
   }
@@ -92,13 +96,9 @@ public:
     mqttCapture.lastPassword = password ? password : "";
   }
 
-  void setClientId(const char *id) {
-    mqttCapture.lastClientId = id;
-  }
+  void setClientId(const char *id) { mqttCapture.lastClientId = id; }
 
-  void setKeepAlive(uint16_t seconds) {
-    mqttCapture.lastKeepAlive = seconds;
-  }
+  void setKeepAlive(uint16_t seconds) { mqttCapture.lastKeepAlive = seconds; }
 
   void setWill(const char *topic, uint8_t qos, bool retain, const char *payload) {
     mqttCapture.lastWillTopic = topic;
@@ -112,9 +112,7 @@ public:
     }
   }
 
-  void disconnect() {
-    mqttCapture.connected = false;
-  }
+  void disconnect() { mqttCapture.connected = false; }
 
   uint16_t publish(const char *topic, uint8_t qos, bool retained, const char *payload) {
     MqttMessage msg;
@@ -135,20 +133,31 @@ public:
     return 1;
   }
 
-  void onConnect(std::function<void(bool sessionPresent)> callback) {
-    mqttCapture.onConnectCb = callback;
-  }
+  void onConnect(std::function<void(bool sessionPresent)> callback) { mqttCapture.onConnectCb = callback; }
 
   void onDisconnect(std::function<void(AsyncMqttClientDisconnectReason reason)> callback) {
     mqttCapture.onDisconnectCb = callback;
   }
 
-  void onMessage(std::function<void(char*, char*, AsyncMqttClientMessageProperties, size_t, size_t, size_t)> callback) {
+  void onMessage(std::function<void(char *, char *, AsyncMqttClientMessageProperties, size_t, size_t, size_t)> callback) {
     mqttCapture.onMessageCb = callback;
+    mqttCapture.onMessageCbs.push_back(callback);
   }
 
   // Test helper: simulate an incoming message
   void simulateMessage(const char *topic, const char *payload) {
+    if (!mqttCapture.onMessageCbs.empty()) {
+      AsyncMqttClientMessageProperties props;
+      size_t len = strlen(payload);
+      char *t = strdup(topic);
+      char *p = strdup(payload);
+      for (auto &cb : mqttCapture.onMessageCbs) {
+        cb(t, p, props, len, 0, len);
+      }
+      free(t);
+      free(p);
+      return;
+    }
     if (mqttCapture.onMessageCb) {
       AsyncMqttClientMessageProperties props;
       size_t len = strlen(payload);

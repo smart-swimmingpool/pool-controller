@@ -124,11 +124,28 @@ static int test_manual_pump_policy_is_enforced_after_translation() {
   return 0;
 }
 
+static int test_second_registration_replaces_first_callback() {
+  test_begin("MqttRuntimeCommandAdapter", "adapter begin() replaces instead of appending the MQTT callback");
+  AdapterFixture fixture;
+  fixture.operation.setMode(OperationMode::AUTO);
+  fixture.begin();
+  auto &client = PoolController::NetworkManager::getClient();
+  // AsyncMqttClient appends callbacks: the publisher's and the adapter's
+  // registrations must not both dispatch the same message.
+  ASSERT_EQ(PoolController::mqttCapture.onMessageCbs.size(), static_cast<size_t>(1));
+  client.simulateMessage("homeassistant/select/pool-controller/mode/set", "boost");
+  fixture.adapter.processPendingCommands();
+  // Exactly one queued translation: mode applied once, generation advanced once.
+  ASSERT_EQ(fixture.operation.getTypedMode(), OperationMode::BOOST);
+  return 0;
+}
+
 int run_mqtt_runtime_command_adapter_tests() {
   int passed = 0;
   int failed = 0;
   int (*tests[])() = {test_callback_does_not_mutate_controller_state, test_commands_remain_bounded_per_loop,
-    test_timer_start_and_end_are_independent_mqtt_commands, test_manual_pump_policy_is_enforced_after_translation};
+    test_timer_start_and_end_are_independent_mqtt_commands, test_manual_pump_policy_is_enforced_after_translation,
+    test_second_registration_replaces_first_callback};
   for (auto test : tests) {
     if (test() == 0) {
       ++passed;

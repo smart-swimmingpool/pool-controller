@@ -9,6 +9,8 @@
 
 #include "ConfigManager.hpp"
 
+#include <cstring>
+
 #include <Preferences.h>
 #include <mbedtls/md.h>
 
@@ -235,6 +237,7 @@ bool ConfigManager::verifyAdminPassword(const String &password) {
 }
 
 void ConfigManager::saveSensorMapping(const uint8_t solarAddr[8], const uint8_t poolAddr[8]) {
+  s_mappingCacheValid = false;
   Preferences prefs;
   prefs.begin("ds18b20", false);  // read-write
   prefs.putBytes("solar_adr", solarAddr, 8);
@@ -261,6 +264,26 @@ bool ConfigManager::loadSensorMapping(uint8_t solarAddr[8], uint8_t poolAddr[8])
 
   // Return true if both addresses were read successfully
   return (slen == 8 && plen == 8);
+}
+
+namespace {
+// Process-wide sensor-mapping cache so hot loops avoid NVS traffic.
+bool s_mappingCacheValid = false;
+std::uint8_t s_cachedSolarAddress[8] = {0};
+std::uint8_t s_cachedPoolAddress[8] = {0};
+}  // namespace
+
+bool ConfigManager::loadSensorMappingCached(uint8_t solarAddr[8], uint8_t poolAddr[8]) {
+  if (!s_mappingCacheValid) {
+    if (!loadSensorMapping(s_cachedSolarAddress, s_cachedPoolAddress)) {
+      memset(s_cachedSolarAddress, 0, sizeof(s_cachedSolarAddress));
+      memset(s_cachedPoolAddress, 0, sizeof(s_cachedPoolAddress));
+    }
+    s_mappingCacheValid = true;
+  }
+  memcpy(solarAddr, s_cachedSolarAddress, 8);
+  memcpy(poolAddr, s_cachedPoolAddress, 8);
+  return true;
 }
 
 /** @brief Check if an 8-byte address is all zeros. */

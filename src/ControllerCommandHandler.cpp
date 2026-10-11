@@ -71,7 +71,7 @@ bool ControllerCommandHandler::saveSettings() const {
 bool ControllerCommandHandler::applySensorMapping(const ControllerCommand &command, bool clear) {
   std::uint8_t solarAddress[8] = {0};
   std::uint8_t poolAddress[8] = {0};
-  ConfigManager::loadSensorMapping(solarAddress, poolAddress);
+  ConfigManager::loadSensorMappingCached(solarAddress, poolAddress);
 
   std::uint8_t *target = command.sensorRole == SensorRole::SOLAR ? solarAddress : poolAddress;
   for (std::size_t i = 0; i < command.sensorAddress.size(); ++i) {
@@ -94,12 +94,18 @@ bool ControllerCommandHandler::handle(const ControllerCommand &command, Controll
   auto &settings = ConfigManager::getSettings();
 
   switch (command.type) {
-  case ControllerCommandType::SET_MODE:
+  case ControllerCommandType::SET_MODE: {
+    const OperationMode previous = dependencies_.operationMode.getTypedMode();
     if (!dependencies_.operationMode.setMode(command.mode, sourceName(command.source))) {
       return false;
     }
     settings.opMode = toString(command.mode);
     if (!saveSettings()) {
+      // The mutation is not durable: roll back the runtime state so the
+      // reported rejection matches reality and no retry loop can wedge
+      // the persisted config.
+      dependencies_.operationMode.setMode(previous, sourceName(command.source));
+      settings.opMode = toString(previous);
       return false;
     }
     if (result != nullptr) {
@@ -107,14 +113,18 @@ bool ControllerCommandHandler::handle(const ControllerCommand &command, Controll
       result->mode = command.mode;
     }
     return true;
+  }
 
   case ControllerCommandType::CYCLE_MODE: {
-    const OperationMode next = nextOperationMode(dependencies_.operationMode.getTypedMode());
+    const OperationMode previous = dependencies_.operationMode.getTypedMode();
+    const OperationMode next = nextOperationMode(previous);
     if (!dependencies_.operationMode.setMode(next, sourceName(command.source))) {
       return false;
     }
     settings.opMode = toString(next);
     if (!saveSettings()) {
+      dependencies_.operationMode.setMode(previous, sourceName(command.source));
+      settings.opMode = toString(previous);
       return false;
     }
     if (result != nullptr) {
@@ -227,7 +237,8 @@ bool ControllerCommandHandler::handle(const ControllerCommand &command, Controll
     return true;
 
   case ControllerCommandType::SET_TIME_LOSS_RED_HOURS:
-    if (!inRange(command.integerValue, 1, 255)) {
+    if (!inRange(command.integerValue, 1, 72)) {
+      LOG_WARN("Controller command: red time-loss hours out of 1..72 range\n");
       return false;
     }
     settings.timeLossRedHours = command.integerValue;
@@ -282,6 +293,19 @@ bool ControllerCommandHandler::handle(const ControllerCommand &command, Controll
     return true;
   }
 
+  case ControllerCommandType::SET_NTP_SERVER: {
+    if (!command.ntpServer.valid()) {
+      LOG_WARN("Controller command: rejecting invalid NTP server\n");
+      return false;
+    }
+    ConfigManager::NtpConfig &ntp = ConfigManager::getNtp();
+    ntp.server = String(command.ntpServer.text.data());
+    if (!saveSettings()) {
+      return false;
+    }
+    timeClientSetup(command.ntpServer.text.data());
+    return true;
+  }
   case ControllerCommandType::SET_SENSOR_MAPPING:
     return applySensorMapping(command, false);
 

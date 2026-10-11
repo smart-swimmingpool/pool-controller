@@ -223,9 +223,21 @@ bool NetworkManager::subscribe(const char *topic) {
 }
 
 void NetworkManager::setMqttCallback(MqttMessageCallback callback) {
+  // AsyncMqttClient::onMessage() appends to an internal vector and offers no
+  // removal API. Register a single static dispatcher once so that later
+  // setMqttCallback() calls REPLACE the active handler instead of adding a
+  // second one (which would process every incoming message twice).
+  static bool dispatcherRegistered = false;
+  if (!dispatcherRegistered) {
+    dispatcherRegistered = true;
+    mqttClient_.onMessage([](char *topic, char *payload, AsyncMqttClientMessageProperties properties, std::size_t len,
+                            std::size_t index, std::size_t total) {
+      if (mqttCallback_ != nullptr) {
+        mqttCallback_(topic, payload, properties, len, index, total);
+      }
+    });
+  }
   mqttCallback_ = callback;
-  // AsyncMqttClient onMessage is persistent (not connection-bound)
-  mqttClient_.onMessage(callback);
 }
 
 void NetworkManager::publishOffline() {

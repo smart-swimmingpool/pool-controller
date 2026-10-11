@@ -92,6 +92,13 @@ public:
   static void saveSensorMapping(const uint8_t solarAddr[8], const uint8_t poolAddr[8]);
   /** @brief Load DS18B20 sensor address mapping from NVS. @return true if both addresses loaded. */
   static bool loadSensorMapping(uint8_t solarAddr[8], uint8_t poolAddr[8]);
+  /** @brief Load the sensor mapping through a process-wide cache.
+   *
+   * The first call reads NVS; subsequent calls serve the cached pair. The
+   * cache is invalidated by saveSensorMapping()/clearSensorMapping() so hot
+   * loops never touch NVS for unchanged mappings.
+   */
+  static bool loadSensorMappingCached(uint8_t solarAddr[8], uint8_t poolAddr[8]);
 
   // ── Boot Version Tracking ──
   /// Call once after loading config to log OTA transition status.
