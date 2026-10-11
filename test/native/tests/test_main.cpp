@@ -120,6 +120,8 @@ extern int run_controller_command_queue_tests();
 extern int run_controller_command_handler_tests();
 extern int run_mqtt_runtime_command_adapter_tests();
 extern int run_controller_snapshot_publisher_tests();
+extern int run_degradation_manager_tests();
+extern int run_ota_updater_tests();
 
 int main() {
   printf("\n══════════════════════════════════════════════════\n");
@@ -148,6 +150,8 @@ int main() {
   total += run_controller_command_handler_tests();
   total += run_mqtt_runtime_command_adapter_tests();
   total += run_controller_snapshot_publisher_tests();
+  total += run_degradation_manager_tests();
+  total += run_ota_updater_tests();
 
   printf("\n══════════════════════════════════════════════════\n");
   printf("  Results: %d suites passed, %d suites failed\n", g_testsPassed, g_testsFailed);

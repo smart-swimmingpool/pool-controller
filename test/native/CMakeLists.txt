@@ -98,6 +98,8 @@ set(TEST_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_controller_command_queue.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_controller_command_handler.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mqtt_runtime_command_adapter.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_degradation_manager.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_ota_updater.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_controller_snapshot_publisher.cpp
 )
 
