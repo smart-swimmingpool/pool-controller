@@ -63,10 +63,18 @@ public:
   // ── Sensor Address Mapping ──
   static void saveSensorMapping(const uint8_t solarAddr[8], const uint8_t poolAddr[8]);
   static bool loadSensorMapping(uint8_t solarAddr[8], uint8_t poolAddr[8]);
-  // Tests never touch NVS: the cached variant behaves like loadSensorMapping().
+  // Mirror the production cache's current all-or-nothing behavior so the
+  // partial-mapping regression test fails until the production fix lands.
   static bool loadSensorMappingCached(uint8_t solarAddr[8], uint8_t poolAddr[8]) {
-    return loadSensorMapping(solarAddr, poolAddr);
+    if (!loadSensorMapping(solarAddr, poolAddr)) {
+      std::memset(solarAddr, 0, 8);
+      std::memset(poolAddr, 0, 8);
+      return false;
+    }
+    return true;
   }
+  static void seedSensorMappingForTest(
+    const uint8_t solarAddr[8], bool solarPresent, const uint8_t poolAddr[8], bool poolPresent);
 
   static Settings &getSettings() { return _settings; }
   static WiFiConfig &getWiFi() { return _wifi; }
@@ -97,7 +105,8 @@ private:
 
   static uint8_t _sensorSolarAddr[8];
   static uint8_t _sensorPoolAddr[8];
-  static bool _sensorMappingValid;
+  static bool _sensorSolarValid;
+  static bool _sensorPoolValid;
 
   // Simple hash function for mock (not cryptographic, just for testing)
   static String hashPassword(const String &password) {
