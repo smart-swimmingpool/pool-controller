@@ -85,28 +85,33 @@ static int test_persistence_failure_rolls_back_setpoints() {
   settings.tempMaxPool = 28.0F;
   settings.tempMinSolar = 35.0F;
   settings.tempHysteresis = 1.0F;
-  PoolController::ConfigManager::_saveFails = true;
-
   ControllerCommand command{};
   command.type = ControllerCommandType::SET_POOL_MAX_TEMPERATURE;
   command.value = 30.0F;
-  ASSERT_TRUE(!fixture.handler.handle(command));
+  PoolController::ConfigManager::_saveFails = true;
+  const bool poolAccepted = fixture.handler.handle(command);
+  PoolController::ConfigManager::_saveFails = false;
+  ASSERT_TRUE(!poolAccepted);
   ASSERT_EQ(fixture.operation.getPoolMaxTemperature(), 28.0F);
   ASSERT_EQ(settings.tempMaxPool, 28.0F);
 
   command.type = ControllerCommandType::SET_SOLAR_MIN_TEMPERATURE;
   command.value = 45.0F;
-  ASSERT_TRUE(!fixture.handler.handle(command));
+  PoolController::ConfigManager::_saveFails = true;
+  const bool solarAccepted = fixture.handler.handle(command);
+  PoolController::ConfigManager::_saveFails = false;
+  ASSERT_TRUE(!solarAccepted);
   ASSERT_EQ(fixture.operation.getSolarMinTemperature(), 35.0F);
   ASSERT_EQ(settings.tempMinSolar, 35.0F);
 
   command.type = ControllerCommandType::SET_TEMPERATURE_HYSTERESIS;
   command.value = 2.0F;
-  ASSERT_TRUE(!fixture.handler.handle(command));
+  PoolController::ConfigManager::_saveFails = true;
+  const bool hysteresisAccepted = fixture.handler.handle(command);
+  PoolController::ConfigManager::_saveFails = false;
+  ASSERT_TRUE(!hysteresisAccepted);
   ASSERT_EQ(fixture.operation.getTemperatureHysteresis(), 1.0F);
   ASSERT_EQ(settings.tempHysteresis, 1.0F);
-
-  PoolController::ConfigManager::_saveFails = false;
   return 0;
 }
 
