@@ -26,7 +26,8 @@ public:
   bool setMode(String mode) { return setMode(mode, "unspecified"); }
   bool setMode(String mode, const char *source) {
     PoolController::OperationMode parsed{};
-    if (!PoolController::tryParseOperationMode(mode.c_str(), parsed)) return false;
+    if (!PoolController::tryParseOperationMode(mode.c_str(), parsed))
+      return false;
     return setMode(parsed, source);
   }
   bool setMode(PoolController::OperationMode mode) { return setMode(mode, "unspecified"); }

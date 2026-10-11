@@ -6,13 +6,27 @@
 #include "TimeLib.h"
 
 // tm conversion helpers — shadow the declarations in TimeLib.h (mock).
-inline int year(time_t t) { return 2026; }
-inline int month(time_t t) { return 6; }
-inline int day(time_t t) { return 13; }
-inline int hour(time_t t) { return 14; }
-inline int minute(time_t t) { return 30; }
-inline int second(time_t t) { return 0; }
-inline int weekday(time_t t) { return 6; }
+inline int year(time_t t) {
+  return 2026;
+}
+inline int month(time_t t) {
+  return 6;
+}
+inline int day(time_t t) {
+  return 13;
+}
+inline int hour(time_t t) {
+  return 14;
+}
+inline int minute(time_t t) {
+  return 30;
+}
+inline int second(time_t t) {
+  return 0;
+}
+inline int weekday(time_t t) {
+  return 6;
+}
 
 bool isTimeSyncValid();
 int getTzCount();
