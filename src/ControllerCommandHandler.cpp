@@ -134,29 +134,53 @@ bool ControllerCommandHandler::handle(const ControllerCommand &command, Controll
     return true;
   }
 
-  case ControllerCommandType::SET_POOL_MAX_TEMPERATURE:
+  case ControllerCommandType::SET_POOL_MAX_TEMPERATURE: {
     if (!inRange(command.value, 0.0F, 40.0F)) {
       return false;
     }
+    const float previousRuntime = dependencies_.operationMode.getPoolMaxTemperature();
+    const auto previousSetting = settings.tempMaxPool;
     dependencies_.operationMode.setPoolMaxTemperature(command.value);
     settings.tempMaxPool = command.value;
-    return saveSettings();
+    if (!saveSettings()) {
+      dependencies_.operationMode.setPoolMaxTemperature(previousRuntime);
+      settings.tempMaxPool = previousSetting;
+      return false;
+    }
+    return true;
+  }
 
-  case ControllerCommandType::SET_SOLAR_MIN_TEMPERATURE:
+  case ControllerCommandType::SET_SOLAR_MIN_TEMPERATURE: {
     if (!inRange(command.value, 0.0F, 100.0F)) {
       return false;
     }
+    const float previousRuntime = dependencies_.operationMode.getSolarMinTemperature();
+    const auto previousSetting = settings.tempMinSolar;
     dependencies_.operationMode.setSolarMinTemperature(command.value);
     settings.tempMinSolar = command.value;
-    return saveSettings();
+    if (!saveSettings()) {
+      dependencies_.operationMode.setSolarMinTemperature(previousRuntime);
+      settings.tempMinSolar = previousSetting;
+      return false;
+    }
+    return true;
+  }
 
-  case ControllerCommandType::SET_TEMPERATURE_HYSTERESIS:
+  case ControllerCommandType::SET_TEMPERATURE_HYSTERESIS: {
     if (!inRange(command.value, 0.0F, 10.0F)) {
       return false;
     }
+    const float previousRuntime = dependencies_.operationMode.getTemperatureHysteresis();
+    const auto previousSetting = settings.tempHysteresis;
     dependencies_.operationMode.setTemperatureHysteresis(command.value);
     settings.tempHysteresis = command.value;
-    return saveSettings();
+    if (!saveSettings()) {
+      dependencies_.operationMode.setTemperatureHysteresis(previousRuntime);
+      settings.tempHysteresis = previousSetting;
+      return false;
+    }
+    return true;
+  }
 
   case ControllerCommandType::SET_TEMPERATURE_CIRCULATION_THRESHOLD:
     if (!inRange(command.value, 0.0F, 40.0F)) {
@@ -226,7 +250,8 @@ bool ControllerCommandHandler::handle(const ControllerCommand &command, Controll
     return true;
 
   case ControllerCommandType::SET_TIME_LOSS_GREEN_HOURS:
-    if (!inRange(command.integerValue, 0, 255)) {
+    if (!inRange(command.integerValue, 1, 255)) {
+      LOG_WARN("Controller command: green time-loss hours out of 1..255 range\n");
       return false;
     }
     settings.timeLossGreenHours = command.integerValue;
