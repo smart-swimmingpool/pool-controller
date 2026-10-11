@@ -67,6 +67,7 @@ static int test_complete_runtime_state_is_projected() {
   settings.btn3Min = 3871;
   settings.btn3Max = 4094;
   settings.btnNoPress = 4096;
+  PoolController::ConfigManager::getNtp().server = "time.example.test";
 
   fixture.operation.setMode(OperationMode::BOOST);
   fixture.operation.setPoolMaxTemperature(29.5F);
@@ -98,6 +99,7 @@ static int test_complete_runtime_state_is_projected() {
   PoolController::NetworkManager::setMqttConnected(true);
   PoolController::NetworkManager::setApMode(false);
   PoolController::NetworkManager::setWiFiRSSI(-61);
+  PoolController::NetworkManager::setLocalIP(IPAddress(192, 168, 50, 23));
 
   fixture.publisher.publish();
 
@@ -127,6 +129,11 @@ static int test_complete_runtime_state_is_projected() {
   ASSERT_TRUE(snapshot.network.mqttConnected);
   ASSERT_TRUE(!snapshot.network.apMode);
   ASSERT_EQ(snapshot.network.wifiRssi, -61);
+  ASSERT_TRUE(snapshot.network.localIp.valid);
+  ASSERT_EQ(snapshot.network.localIp.octets[0], 192);
+  ASSERT_EQ(snapshot.network.localIp.octets[1], 168);
+  ASSERT_EQ(snapshot.network.localIp.octets[2], 50);
+  ASSERT_EQ(snapshot.network.localIp.octets[3], 23);
   ASSERT_TRUE(!snapshot.health.safeMode);
   ASSERT_TRUE(snapshot.health.timeValid);
   ASSERT_EQ(snapshot.health.timeDegradation, TimeDegradationState::GREEN);
@@ -145,6 +152,8 @@ static int test_complete_runtime_state_is_projected() {
   ASSERT_EQ(snapshot.settings.timezoneIndex, 3);
   ASSERT_EQ(snapshot.settings.timeLossGreenHours, 2);
   ASSERT_EQ(snapshot.settings.timeLossRedHours, 18);
+  ASSERT_TRUE(snapshot.settings.ntpServer.valid());
+  ASSERT_EQ(std::strcmp(snapshot.settings.ntpServer.text.data(), "time.example.test"), 0);
   ASSERT_EQ(snapshot.settings.button1Min, 3010);
   ASSERT_EQ(snapshot.settings.button3Max, 4094);
   ASSERT_EQ(snapshot.settings.buttonNoPress, 4096);
@@ -173,6 +182,37 @@ static int test_mapping_found_requires_selected_configured_address() {
   return 0;
 }
 
+static int test_detected_inventory_is_published_and_deduplicated() {
+  test_begin("ControllerSnapshotPublisher", "detected Dallas inventory is deduplicated across buses");
+  SnapshotFixture fixture;
+
+  const std::uint8_t sharedAddress[8] = {0x28, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7};
+  const std::uint8_t poolOnlyAddress[8] = {0x28, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7};
+  fixture.solarTemperature.setDetectedDevice(0, sharedAddress, 48.5F);
+  fixture.poolTemperature.setDetectedDevice(0, sharedAddress, 48.0F);
+  fixture.poolTemperature.setDetectedDevice(1, poolOnlyAddress, 26.0F);
+
+  fixture.publisher.publish();
+  SystemSnapshot snapshot{};
+  ASSERT_TRUE(fixture.store.read(snapshot));
+  ASSERT_EQ(snapshot.sensors.detectedCount, 2);
+  ASSERT_EQ(std::memcmp(snapshot.sensors.detected[0].address.data(), sharedAddress, 8), 0);
+  ASSERT_EQ(snapshot.sensors.detected[0].temperature.value, 48.5F);
+  ASSERT_TRUE(snapshot.sensors.detected[0].temperature.valid);
+  ASSERT_EQ(std::memcmp(snapshot.sensors.detected[1].address.data(), poolOnlyAddress, 8), 0);
+  ASSERT_EQ(snapshot.sensors.detected[1].temperature.value, 26.0F);
+  ASSERT_TRUE(snapshot.sensors.detected[1].temperature.valid);
+  return 0;
+}
+
+static int test_snapshot_rule_projection_avoids_verbose_lookup() {
+  test_begin("ControllerSnapshotPublisher", "snapshot rule projection does not use verbose rule lookup");
+  SnapshotFixture fixture;
+  fixture.publisher.publish();
+  ASSERT_EQ(fixture.operation.getVerboseRuleLookupCount(), 0U);
+  return 0;
+}
+
 static int test_generation_advances_per_complete_publication() {
   test_begin("ControllerSnapshotPublisher", "read-model generation advances atomically per publish");
   SnapshotFixture fixture;
@@ -193,6 +233,7 @@ int run_controller_snapshot_publisher_tests() {
   int passed = 0;
   int failed = 0;
   int (*tests[])() = {test_complete_runtime_state_is_projected, test_mapping_found_requires_selected_configured_address,
+    test_detected_inventory_is_published_and_deduplicated, test_snapshot_rule_projection_avoids_verbose_lookup,
     test_generation_advances_per_complete_publication};
   for (auto test : tests) {
     if (test() == 0) {
