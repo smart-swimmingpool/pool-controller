@@ -182,6 +182,19 @@ static int test_mapping_found_requires_selected_configured_address() {
   return 0;
 }
 
+static int test_ntp_server_is_projected() {
+  test_begin("ControllerSnapshotPublisher", "configured NTP server is projected into snapshot");
+  SnapshotFixture fixture;
+  PoolController::ConfigManager::getNtp().server = "ntp.snapshot.test";
+
+  fixture.publisher.publish();
+  SystemSnapshot snapshot{};
+  ASSERT_TRUE(fixture.store.read(snapshot));
+  ASSERT_TRUE(snapshot.settings.ntpServer.valid());
+  ASSERT_EQ(std::strcmp(snapshot.settings.ntpServer.text.data(), "ntp.snapshot.test"), 0);
+  return 0;
+}
+
 static int test_detected_inventory_is_published_and_deduplicated() {
   test_begin("ControllerSnapshotPublisher", "detected Dallas inventory is deduplicated across buses");
   SnapshotFixture fixture;
@@ -233,8 +246,8 @@ int run_controller_snapshot_publisher_tests() {
   int passed = 0;
   int failed = 0;
   int (*tests[])() = {test_complete_runtime_state_is_projected, test_mapping_found_requires_selected_configured_address,
-    test_detected_inventory_is_published_and_deduplicated, test_snapshot_rule_projection_avoids_verbose_lookup,
-    test_generation_advances_per_complete_publication};
+    test_ntp_server_is_projected, test_detected_inventory_is_published_and_deduplicated,
+    test_snapshot_rule_projection_avoids_verbose_lookup, test_generation_advances_per_complete_publication};
   for (auto test : tests) {
     if (test() == 0) {
       ++passed;
