@@ -64,15 +64,8 @@ public:
   // ── Sensor Address Mapping ──
   static void saveSensorMapping(const uint8_t solarAddr[8], const uint8_t poolAddr[8]);
   static bool loadSensorMapping(uint8_t solarAddr[8], uint8_t poolAddr[8]);
-  // Mirror the production cache's current all-or-nothing behavior so the
-  // partial-mapping regression test fails until the production fix lands.
   static bool loadSensorMappingCached(uint8_t solarAddr[8], uint8_t poolAddr[8]) {
-    if (!loadSensorMapping(solarAddr, poolAddr)) {
-      std::memset(solarAddr, 0, 8);
-      std::memset(poolAddr, 0, 8);
-      return false;
-    }
-    return true;
+    return loadSensorMapping(solarAddr, poolAddr);
   }
   static void seedSensorMappingForTest(
     const uint8_t solarAddr[8], bool solarPresent, const uint8_t poolAddr[8], bool poolPresent);
