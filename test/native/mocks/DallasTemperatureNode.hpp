@@ -1,6 +1,7 @@
 #pragma once
 #include "Arduino.h"
 #include "DallasTemperature.h"
+#include <cstring>
 
 class DallasTemperatureNode {
 public:
@@ -22,11 +23,25 @@ public:
   unsigned long getMeasurementInterval() const { return _measurementInterval; }
   void setMeasurementInterval(unsigned long interval) { _measurementInterval = interval; }
 
-  void setAddressFilter(const DeviceAddress) {}
-  void clearAddressFilter() {}
-  bool hasAddressFilter() const { return false; }
+  void setAddressFilter(const DeviceAddress address) {
+    std::memcpy(_filterAddress, address, sizeof(_filterAddress));
+    _hasFilter = true;
+  }
+  void clearAddressFilter() {
+    std::memset(_filterAddress, 0, sizeof(_filterAddress));
+    _hasFilter = false;
+  }
+  bool hasAddressFilter() const { return _hasFilter; }
+  const uint8_t *getDeviceAddress() const { return _filterAddress; }
 
-  void getDeviceAddressString(char *buf, size_t size) const { snprintf(buf, size, "NONE"); }
+  void getDeviceAddressString(char *buf, size_t size) const {
+    if (!_hasFilter) {
+      snprintf(buf, size, "NONE");
+      return;
+    }
+    snprintf(buf, size, "%02X%02X%02X%02X%02X%02X%02X%02X", _filterAddress[0], _filterAddress[1], _filterAddress[2],
+      _filterAddress[3], _filterAddress[4], _filterAddress[5], _filterAddress[6], _filterAddress[7]);
+  }
   bool getDetectedDeviceAddress(uint8_t, DeviceAddress) const { return false; }
   float getDetectedDeviceTemperature(uint8_t) const { return 0.0f; }
 
@@ -38,4 +53,6 @@ private:
   unsigned long _lastMeasurement = 0;
   bool _sensorFound = false;
   float _temperature = 25.0f;
+  bool _hasFilter = false;
+  DeviceAddress _filterAddress{};
 };

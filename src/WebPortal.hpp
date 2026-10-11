@@ -13,6 +13,7 @@
 #include <WebServer.h>
 #include <DNSServer.h>
 
+#include "ControllerCommandHandler.hpp"
 #include "LogCapture.hpp"
 
 namespace PoolController {
@@ -28,6 +29,12 @@ namespace PoolController {
 class WebPortal {
 public:
   WebPortal() = default;
+
+  using CommandDispatcher = bool (*)(const ControllerCommand &, ControllerCommandResult *);
+  static void setCommandDispatcher(CommandDispatcher dispatcher) { commandDispatcher_ = dispatcher; }
+#if !defined(ESP32) && !defined(ARDUINO_ARCH_ESP32)
+  static bool invokeRouteForTest(const char *uri, int method) { return server_.invokeRoute(uri, method); }
+#endif
 
   /** @brief Start the HTTP server and optional DNS captive portal. @return true if server started successfully. */
   static bool begin();
@@ -141,6 +148,7 @@ private:
 
   static WebServer server_;
   static DNSServer dnsServer_;
+  static CommandDispatcher commandDispatcher_;
   static bool dnsServerStarted_;
 
   static String activeSessionToken_;
