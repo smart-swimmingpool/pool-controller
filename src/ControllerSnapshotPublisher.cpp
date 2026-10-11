@@ -56,8 +56,8 @@ SensorMappingSnapshot mappingSnapshot(const std::array<std::uint8_t, 8> &configu
 
   if (mapping.configured && mapping.found) {
     const std::uint8_t *selectedAddress = node.getDeviceAddress();
-    mapping.found = selectedAddress != nullptr &&
-                    std::memcmp(selectedAddress, configuredAddress.data(), configuredAddress.size()) == 0;
+    mapping.found =
+      selectedAddress != nullptr && std::memcmp(selectedAddress, configuredAddress.data(), configuredAddress.size()) == 0;
   }
   return mapping;
 }
