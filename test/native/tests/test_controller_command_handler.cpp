@@ -261,11 +261,10 @@ static int test_factory_reset_owns_runtime_reset_mutation() {
 int run_controller_command_handler_tests() {
   int passed = 0;
   int failed = 0;
-  int (*tests[])() = {test_mode_and_setpoint_are_applied_through_one_handler,
-    test_persistence_failure_rolls_back_setpoints, test_green_time_loss_rejects_zero, test_timer_updates_are_independent,
-    test_manual_pump_guard_is_application_policy, test_sensor_mapping_is_persisted_and_applied,
-    test_setting_missing_sensor_role_preserves_existing_mapping, test_loop_interval_updates_all_runtime_nodes,
-    test_factory_reset_owns_runtime_reset_mutation};
+  int (*tests[])() = {test_mode_and_setpoint_are_applied_through_one_handler, test_persistence_failure_rolls_back_setpoints,
+    test_green_time_loss_rejects_zero, test_timer_updates_are_independent, test_manual_pump_guard_is_application_policy,
+    test_sensor_mapping_is_persisted_and_applied, test_setting_missing_sensor_role_preserves_existing_mapping,
+    test_loop_interval_updates_all_runtime_nodes, test_factory_reset_owns_runtime_reset_mutation};
   for (auto test : tests) {
     if (test() == 0) {
       ++passed;
