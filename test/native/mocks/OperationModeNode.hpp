@@ -38,7 +38,9 @@ public:
   }
   const char *getLastModeSource() const { return _lastModeSource.c_str(); }
 
-  Rule *getRule() {
+  Rule *getRule() { return getRule(true); }
+  Rule *getRule(bool emitDebugLogs) {
+    if (emitDebugLogs) ++_verboseRuleLookups;
     if (_mode == PoolController::OperationMode::AUTO)
       return &_autoRule;
     if (_mode == PoolController::OperationMode::MANUAL)
@@ -49,6 +51,8 @@ public:
       return &_timerRule;
     return nullptr;
   }
+
+  unsigned int getVerboseRuleLookupCount() const { return _verboseRuleLookups; }
 
   float getPoolMaxTemperature() const { return _poolMaxTemperature; }
   float getSolarMinTemperature() const { return _solarMinTemperature; }
@@ -76,6 +80,7 @@ private:
   float _temperatureHysteresis = 1.0f;
   TimerSetting _timer;
   unsigned long _measurementInterval = 300;
+  unsigned int _verboseRuleLookups = 0;
   RuleAuto _autoRule;
   RuleManu _manuRule;
   RuleBoost _boostRule;
