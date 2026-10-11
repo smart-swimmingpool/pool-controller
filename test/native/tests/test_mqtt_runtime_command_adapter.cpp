@@ -124,6 +124,8 @@ static int test_manual_pump_policy_is_enforced_after_translation() {
   return 0;
 }
 
+extern MqttClientCapture mqttCapture;
+
 static int test_second_registration_replaces_first_callback() {
   test_begin("MqttRuntimeCommandAdapter", "adapter begin() replaces instead of appending the MQTT callback");
   AdapterFixture fixture;
@@ -132,7 +134,7 @@ static int test_second_registration_replaces_first_callback() {
   auto &client = PoolController::NetworkManager::getClient();
   // AsyncMqttClient appends callbacks: the publisher's and the adapter's
   // registrations must not both dispatch the same message.
-  ASSERT_EQ(PoolController::mqttCapture.onMessageCbs.size(), static_cast<size_t>(1));
+  ASSERT_EQ(mqttCapture.onMessageCbs.size(), static_cast<size_t>(1));
   client.simulateMessage("homeassistant/select/pool-controller/mode/set", "boost");
   fixture.adapter.processPendingCommands();
   // Exactly one queued translation: mode applied once, generation advanced once.
