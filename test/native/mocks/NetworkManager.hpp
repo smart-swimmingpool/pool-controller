@@ -33,12 +33,12 @@ public:
   static bool subscribe(const char *topic) { return _mqttClient.subscribe(topic) > 0; }
 
   static void setMqttCallback(MqttMessageCallback cb) {
-    // Mirrors the real NetworkManager: register one dispatcher on the
-    // client so a later setMqttCallback() replaces the active handler
-    // instead of appending a second callback.
-    static bool dispatcherRegistered = false;
-    if (!dispatcherRegistered) {
-      dispatcherRegistered = true;
+    // Mirrors the real NetworkManager: a single dispatcher is registered
+    // on the client so a later setMqttCallback() replaces the active
+    // handler instead of appending a second callback. Re-register after
+    // mqttCapture.clear() wiped previous registrations.
+    _mqttCallback = cb;
+    if (mqttCapture.onMessageCbs.empty()) {
       _mqttClient.onMessage([](char *topic, char *payload, AsyncMqttClientMessageProperties properties,
                                size_t len, size_t index, size_t total) {
         if (_mqttCallback) {
@@ -46,7 +46,6 @@ public:
         }
       });
     }
-    _mqttCallback = cb;
   }
 
   static void disconnectMqtt() { _mqttClient.disconnect(); _mqttConnected = false; }
