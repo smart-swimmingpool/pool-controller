@@ -74,6 +74,57 @@ static int test_mode_and_setpoint_are_applied_through_one_handler() {
   return 0;
 }
 
+static int test_persistence_failure_rolls_back_setpoints() {
+  test_begin("ControllerCommandHandler", "failed persistence rolls back setpoints and hysteresis");
+  HandlerFixture fixture;
+  auto &settings = PoolController::ConfigManager::getSettings();
+
+  fixture.operation.setPoolMaxTemperature(28.0F);
+  fixture.operation.setSolarMinTemperature(35.0F);
+  fixture.operation.setTemperatureHysteresis(1.0F);
+  settings.tempMaxPool = 28.0F;
+  settings.tempMinSolar = 35.0F;
+  settings.tempHysteresis = 1.0F;
+  PoolController::ConfigManager::_saveFails = true;
+
+  ControllerCommand command{};
+  command.type = ControllerCommandType::SET_POOL_MAX_TEMPERATURE;
+  command.value = 30.0F;
+  ASSERT_TRUE(!fixture.handler.handle(command));
+  ASSERT_EQ(fixture.operation.getPoolMaxTemperature(), 28.0F);
+  ASSERT_EQ(settings.tempMaxPool, 28.0F);
+
+  command.type = ControllerCommandType::SET_SOLAR_MIN_TEMPERATURE;
+  command.value = 45.0F;
+  ASSERT_TRUE(!fixture.handler.handle(command));
+  ASSERT_EQ(fixture.operation.getSolarMinTemperature(), 35.0F);
+  ASSERT_EQ(settings.tempMinSolar, 35.0F);
+
+  command.type = ControllerCommandType::SET_TEMPERATURE_HYSTERESIS;
+  command.value = 2.0F;
+  ASSERT_TRUE(!fixture.handler.handle(command));
+  ASSERT_EQ(fixture.operation.getTemperatureHysteresis(), 1.0F);
+  ASSERT_EQ(settings.tempHysteresis, 1.0F);
+
+  PoolController::ConfigManager::_saveFails = false;
+  return 0;
+}
+
+static int test_green_time_loss_rejects_zero() {
+  test_begin("ControllerCommandHandler", "green time-loss threshold rejects zero hours");
+  HandlerFixture fixture;
+  auto &settings = PoolController::ConfigManager::getSettings();
+  settings.timeLossGreenHours = 2;
+
+  ControllerCommand command{};
+  command.type = ControllerCommandType::SET_TIME_LOSS_GREEN_HOURS;
+  command.integerValue = 0;
+
+  ASSERT_TRUE(!fixture.handler.handle(command));
+  ASSERT_EQ(settings.timeLossGreenHours, 2);
+  return 0;
+}
+
 static int test_timer_updates_are_independent() {
   test_begin("ControllerCommandHandler", "timer start and end updates preserve the opposite half");
   HandlerFixture fixture;
@@ -182,7 +233,8 @@ static int test_factory_reset_owns_runtime_reset_mutation() {
 int run_controller_command_handler_tests() {
   int passed = 0;
   int failed = 0;
-  int (*tests[])() = {test_mode_and_setpoint_are_applied_through_one_handler, test_timer_updates_are_independent,
+  int (*tests[])() = {test_mode_and_setpoint_are_applied_through_one_handler,
+    test_persistence_failure_rolls_back_setpoints, test_green_time_loss_rejects_zero, test_timer_updates_are_independent,
     test_manual_pump_guard_is_application_policy, test_sensor_mapping_is_persisted_and_applied,
     test_loop_interval_updates_all_runtime_nodes, test_factory_reset_owns_runtime_reset_mutation};
   for (auto test : tests) {
