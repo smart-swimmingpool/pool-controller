@@ -44,6 +44,9 @@ struct AdapterFixture {
   MqttRuntimeCommandAdapter adapter{handler};
 
   void begin() {
+    // AsyncMqttClient appends callbacks with no removal API: clear stale
+    // registrations from previous fixtures before wiring this instance.
+    mqttCapture.clear();
     PoolController::MqttPublisher::begin();
     adapter.begin();
   }
