@@ -239,6 +239,7 @@ bool ConfigManager::verifyAdminPassword(const String &password) {
 namespace {
 // Process-wide sensor-mapping cache so hot loops avoid NVS traffic.
 bool s_mappingCacheValid = false;
+bool s_mappingCacheHasMapping = false;
 std::uint8_t s_cachedSolarAddress[8] = {0};
 std::uint8_t s_cachedPoolAddress[8] = {0};
 }  // namespace
@@ -286,14 +287,13 @@ bool ConfigManager::loadSensorMapping(uint8_t solarAddr[8], uint8_t poolAddr[8])
 }
 
 bool ConfigManager::loadSensorMappingCached(uint8_t solarAddr[8], uint8_t poolAddr[8]) {
-  bool hasMapping = true;
   if (!s_mappingCacheValid) {
-    hasMapping = loadSensorMapping(s_cachedSolarAddress, s_cachedPoolAddress);
+    s_mappingCacheHasMapping = loadSensorMapping(s_cachedSolarAddress, s_cachedPoolAddress);
     s_mappingCacheValid = true;
   }
   memcpy(solarAddr, s_cachedSolarAddress, 8);
   memcpy(poolAddr, s_cachedPoolAddress, 8);
-  return hasMapping;
+  return s_mappingCacheHasMapping;
 }
 
 /** @brief Check if an 8-byte address is all zeros. */
