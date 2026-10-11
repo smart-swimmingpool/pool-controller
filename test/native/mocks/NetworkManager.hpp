@@ -17,7 +17,8 @@ public:
   static bool isApMode() { return _apMode; }
 
   static int getWiFiRSSI() { return _wifiRssi; }
-  static String getLocalIP() { return String("192.168.1.100"); }
+  static IPAddress getLocalIPAddress() { return _localIp; }
+  static String getLocalIP() { return getLocalIPAddress().toString(); }
 
   static bool publish(const char *topic, const char *payload, bool retained = false) {
     if (!_publishOk) return false;
@@ -57,6 +58,7 @@ public:
   static void setMqttConnected(bool v) { _mqttConnected = v; }
   static void setApMode(bool v) { _apMode = v; }
   static void setWiFiRSSI(int rssi) { _wifiRssi = rssi; }
+  static void setLocalIP(const IPAddress &ip) { _localIp = ip; }
   // Simulate AsyncMqttClient refusing to enqueue (publish returns false).
   static void setPublishOk(bool ok) { _publishOk = ok; }
   // One-shot hook fired when the next publish() targets `topic` — lets a test
@@ -79,6 +81,7 @@ private:
   static bool _mqttConnected;
   static bool _apMode;
   static int _wifiRssi;
+  static IPAddress _localIp;
   static bool _publishOk;
   static std::function<void()> _publishHook;
   static std::string _publishHookTopic;
