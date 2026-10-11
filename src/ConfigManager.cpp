@@ -261,29 +261,39 @@ void ConfigManager::saveSensorMapping(const uint8_t solarAddr[8], const uint8_t 
 }
 
 bool ConfigManager::loadSensorMapping(uint8_t solarAddr[8], uint8_t poolAddr[8]) {
+  memset(solarAddr, 0, 8);
+  memset(poolAddr, 0, 8);
+
   Preferences prefs;
-  prefs.begin("ds18b20", true);  // read-only
+  if (!prefs.begin("ds18b20", true)) {
+    return false;
+  }
 
-  size_t slen = prefs.getBytes("solar_adr", solarAddr, 8);
-  size_t plen = prefs.getBytes("pool_adr", poolAddr, 8);
-
+  const size_t slen = prefs.getBytes("solar_adr", solarAddr, 8);
+  const size_t plen = prefs.getBytes("pool_adr", poolAddr, 8);
   prefs.end();
 
-  // Return true if both addresses were read successfully
-  return (slen == 8 && plen == 8);
+  if (slen != 8) {
+    memset(solarAddr, 0, 8);
+  }
+  if (plen != 8) {
+    memset(poolAddr, 0, 8);
+  }
+
+  // A role may be configured independently. Missing roles remain zeroed so
+  // callers can safely update one mapping without erasing the other.
+  return slen == 8 || plen == 8;
 }
 
 bool ConfigManager::loadSensorMappingCached(uint8_t solarAddr[8], uint8_t poolAddr[8]) {
+  bool hasMapping = true;
   if (!s_mappingCacheValid) {
-    if (!loadSensorMapping(s_cachedSolarAddress, s_cachedPoolAddress)) {
-      memset(s_cachedSolarAddress, 0, sizeof(s_cachedSolarAddress));
-      memset(s_cachedPoolAddress, 0, sizeof(s_cachedPoolAddress));
-    }
+    hasMapping = loadSensorMapping(s_cachedSolarAddress, s_cachedPoolAddress);
     s_mappingCacheValid = true;
   }
   memcpy(solarAddr, s_cachedSolarAddress, 8);
   memcpy(poolAddr, s_cachedPoolAddress, 8);
-  return true;
+  return hasMapping;
 }
 
 /** @brief Check if an 8-byte address is all zeros. */
