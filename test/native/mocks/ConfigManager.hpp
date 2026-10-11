@@ -63,6 +63,10 @@ public:
   // ── Sensor Address Mapping ──
   static void saveSensorMapping(const uint8_t solarAddr[8], const uint8_t poolAddr[8]);
   static bool loadSensorMapping(uint8_t solarAddr[8], uint8_t poolAddr[8]);
+  // Tests never touch NVS: the cached variant behaves like loadSensorMapping().
+  static bool loadSensorMappingCached(uint8_t solarAddr[8], uint8_t poolAddr[8]) {
+    return loadSensorMapping(solarAddr, poolAddr);
+  }
 
   static Settings &getSettings() { return _settings; }
   static WiFiConfig &getWiFi() { return _wifi; }

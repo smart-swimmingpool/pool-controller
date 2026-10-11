@@ -298,7 +298,7 @@ bool ControllerCommandHandler::handle(const ControllerCommand &command, Controll
       LOG_WARN("Controller command: rejecting invalid NTP server\n");
       return false;
     }
-    ConfigManager::NtpConfig &ntp = ConfigManager::getNtp();
+    NtpConfig &ntp = ConfigManager::getNtp();
     ntp.server = String(command.ntpServer.text.data());
     if (!saveSettings()) {
       return false;
