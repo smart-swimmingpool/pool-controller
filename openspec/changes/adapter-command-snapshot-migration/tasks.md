@@ -9,7 +9,11 @@
 - [x] Keep provisioning/authentication secrets and specialized calibration workflows behind their dedicated service boundaries.
 - [x] Publish `SystemSnapshot` from the Core-1 owner after state updates.
 - [x] Populate sensor mapping address/configured/found state in the snapshot.
+- [x] Preserve independently configured sensor mappings when the other role is absent.
+- [x] Populate detected-sensor inventory, local IPv4 state and configured NTP server in the snapshot.
 - [x] Populate GREEN/YELLOW/RED time degradation and runtime controller settings in the snapshot.
+- [x] Keep failed persisted runtime mutations atomic by rolling back owner state and settings.
+- [x] Keep snapshot publication free of active-rule debug-log side effects.
 - [ ] Migrate MQTT state/discovery reads to snapshot values where applicable.
 - [ ] Migrate Web status/config read paths to snapshot values where applicable.
 - [ ] Migrate OLED/TFT read paths to snapshot values.
