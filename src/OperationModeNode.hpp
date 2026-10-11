@@ -45,6 +45,7 @@ public:
 
   void addRule(Rule *rule);
   Rule *getRule();
+  Rule *getRule(bool emitDebugLogs);
 
   void setPoolTemperatureNode(DallasTemperatureNode *node) { _currentPoolTempNode = node; }
   void setSolarTemperatureNode(DallasTemperatureNode *node) { _currentSolarTempNode = node; }
