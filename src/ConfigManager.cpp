@@ -236,6 +236,13 @@ bool ConfigManager::verifyAdminPassword(const String &password) {
   return adminPasswordHash_ == hash;
 }
 
+namespace {
+// Process-wide sensor-mapping cache so hot loops avoid NVS traffic.
+bool s_mappingCacheValid = false;
+std::uint8_t s_cachedSolarAddress[8] = {0};
+std::uint8_t s_cachedPoolAddress[8] = {0};
+}  // namespace
+
 void ConfigManager::saveSensorMapping(const uint8_t solarAddr[8], const uint8_t poolAddr[8]) {
   s_mappingCacheValid = false;
   Preferences prefs;
@@ -265,13 +272,6 @@ bool ConfigManager::loadSensorMapping(uint8_t solarAddr[8], uint8_t poolAddr[8])
   // Return true if both addresses were read successfully
   return (slen == 8 && plen == 8);
 }
-
-namespace {
-// Process-wide sensor-mapping cache so hot loops avoid NVS traffic.
-bool s_mappingCacheValid = false;
-std::uint8_t s_cachedSolarAddress[8] = {0};
-std::uint8_t s_cachedPoolAddress[8] = {0};
-}  // namespace
 
 bool ConfigManager::loadSensorMappingCached(uint8_t solarAddr[8], uint8_t poolAddr[8]) {
   if (!s_mappingCacheValid) {
