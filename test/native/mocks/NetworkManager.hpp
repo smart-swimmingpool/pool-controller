@@ -33,7 +33,20 @@ public:
   static bool subscribe(const char *topic) { return _mqttClient.subscribe(topic) > 0; }
 
   static void setMqttCallback(MqttMessageCallback cb) {
-    _mqttClient.onMessage(cb);
+    // Mirrors the real NetworkManager: register one dispatcher on the
+    // client so a later setMqttCallback() replaces the active handler
+    // instead of appending a second callback.
+    static bool dispatcherRegistered = false;
+    if (!dispatcherRegistered) {
+      dispatcherRegistered = true;
+      _mqttClient.onMessage([](char *topic, char *payload, AsyncMqttClientMessageProperties properties,
+                               size_t len, size_t index, size_t total) {
+        if (_mqttCallback) {
+          _mqttCallback(topic, payload, properties, len, index, total);
+        }
+      });
+    }
+    _mqttCallback = cb;
   }
 
   static void disconnectMqtt() { _mqttClient.disconnect(); _mqttConnected = false; }
@@ -70,6 +83,7 @@ private:
   static bool _publishOk;
   static std::function<void()> _publishHook;
   static std::string _publishHookTopic;
+  static MqttMessageCallback _mqttCallback;
 };
 
 } // namespace PoolController

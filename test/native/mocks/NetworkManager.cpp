@@ -10,5 +10,6 @@ int NetworkManager::_wifiRssi = -65;
 bool NetworkManager::_publishOk = true;
 std::function<void()> NetworkManager::_publishHook;
 std::string NetworkManager::_publishHookTopic;
+NetworkManager::MqttMessageCallback NetworkManager::_mqttCallback;
 
 } // namespace PoolController
