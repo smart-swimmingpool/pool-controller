@@ -223,10 +223,12 @@ int run_ota_updater_tests() {
   test_begin("OtaUpdater", "progress and status expose the OTA lifecycle");
   {
     OtaUpdater::begin();
-    ASSERT_TRUE(OtaUpdater::getCurrentVersion().length() > 0);
+    const String current = OtaUpdater::getCurrentVersion();
+    ASSERT_TRUE(current.length() > 0);
     // After a successful flash the device would reboot; in the mock the
     // in-progress flag stays set until that restart.
-    ASSERT_TRUE(OtaUpdater::getProgress() >= 0);
+    const int progress = OtaUpdater::getProgress();
+    ASSERT_TRUE(progress == 0 || progress == 100);
   }
   test_suite_end("OtaUpdater::lifecycle", 1, 0);
 
