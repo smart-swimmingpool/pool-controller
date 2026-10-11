@@ -1,6 +1,7 @@
 #pragma once
 #include "Arduino.h"
 #include "DallasTemperature.h"
+#include <array>
 #include <cstring>
 
 class DallasTemperatureNode {
@@ -17,7 +18,7 @@ public:
   void setTemperature(float t) { _temperature = t; }
   bool isSensorFound() const { return _sensorFound; }
   void setSensorFound(bool f) { _sensorFound = f; }
-  uint8_t getDeviceCount() const { return 0; }
+  uint8_t getDeviceCount() const { return _detectedCount; }
   const char *getId() const { return _id; }
   uint8_t getPin() const { return _pin; }
   unsigned long getMeasurementInterval() const { return _measurementInterval; }
@@ -42,8 +43,20 @@ public:
     snprintf(buf, size, "%02X%02X%02X%02X%02X%02X%02X%02X", _filterAddress[0], _filterAddress[1], _filterAddress[2],
       _filterAddress[3], _filterAddress[4], _filterAddress[5], _filterAddress[6], _filterAddress[7]);
   }
-  bool getDetectedDeviceAddress(uint8_t, DeviceAddress) const { return false; }
-  float getDetectedDeviceTemperature(uint8_t) const { return 0.0f; }
+  bool getDetectedDeviceAddress(uint8_t index, DeviceAddress address) const {
+    if (index >= _detectedCount) return false;
+    std::memcpy(address, _detectedAddresses[index].data(), 8);
+    return true;
+  }
+  float getDetectedDeviceTemperature(uint8_t index) const {
+    return index < _detectedCount ? _detectedTemperatures[index] : NAN;
+  }
+  void setDetectedDevice(uint8_t index, const DeviceAddress address, float temperature) {
+    if (index >= _detectedAddresses.size()) return;
+    std::memcpy(_detectedAddresses[index].data(), address, 8);
+    _detectedTemperatures[index] = temperature;
+    if (_detectedCount <= index) _detectedCount = index + 1;
+  }
 
 private:
   const char *_id;
@@ -55,4 +68,7 @@ private:
   float _temperature = 25.0f;
   bool _hasFilter = false;
   DeviceAddress _filterAddress{};
+  std::array<std::array<uint8_t, 8>, 24> _detectedAddresses{};
+  std::array<float, 24> _detectedTemperatures{};
+  uint8_t _detectedCount = 0;
 };
