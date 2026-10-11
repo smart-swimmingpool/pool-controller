@@ -224,7 +224,7 @@ int run_ota_updater_tests() {
   {
     OtaUpdater::begin();
     const String current = OtaUpdater::getCurrentVersion();
-    ASSERT_TRUE(current.length() > 0);
+    ASSERT_TRUE(!current.isEmpty());
     // After a successful flash the device would reboot; in the mock the
     // in-progress flag stays set until that restart.
     const int progress = OtaUpdater::getProgress();
