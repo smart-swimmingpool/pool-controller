@@ -90,7 +90,9 @@ public:
   // ── Sensor Address Mapping ──
   /** @brief Save DS18B20 sensor address mapping to NVS. */
   static void saveSensorMapping(const uint8_t solarAddr[8], const uint8_t poolAddr[8]);
-  /** @brief Load DS18B20 sensor address mapping from NVS. @return true if both addresses loaded. */
+  /** @brief Load DS18B20 mappings from NVS. Missing roles remain zeroed.
+   *  @return true if at least one role mapping was loaded.
+   */
   static bool loadSensorMapping(uint8_t solarAddr[8], uint8_t poolAddr[8]);
   /** @brief Load the sensor mapping through a process-wide cache.
    *
