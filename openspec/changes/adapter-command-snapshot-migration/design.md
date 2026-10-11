@@ -15,7 +15,7 @@ Local UI       -> interaction mapping -> ControllerCommandQueue
                                       -> Core-1 command handler -> state mutation
 ```
 
-The typed path covers runtime controller mutations: mode, setpoints, circulation settings, independent timer start/end updates, loop interval, timezone/time-loss thresholds, NORVI button thresholds, sensor mappings and manual relay commands.
+The typed path covers runtime controller mutations: mode, setpoints, circulation settings, independent timer start/end updates, loop interval, timezone/time-loss thresholds, NORVI button thresholds, sensor mappings and manual relay commands. A rejected command must be atomic from the owner's perspective: if persistence fails after an in-memory mutation, both runtime state and the mutable settings projection are restored before failure is returned. Sensor-role mappings are independent values, so reading or updating one missing role must never erase the other role.
 
 For synchronous Web responses, the first migration may process the typed command immediately when the handler is already executing on the owning loop task. The command handler remains the single mutation API for that runtime state.
 
@@ -28,7 +28,7 @@ Core-1 state -> SystemSnapshot -> ControllerSnapshotStore
                                -> OLED/TFT
 ```
 
-Adapters receive value copies. They do not receive node pointers or mutable runtime-config references. The snapshot must preserve the existing external projection, including timer runtime state, sensor mapping identity/configured/found state and GREEN/YELLOW/RED time degradation.
+Adapters receive value copies. They do not receive node pointers or mutable runtime-config references. The snapshot must preserve the existing external projection, including timer runtime state, sensor mapping identity/configured/found state, deduplicated detected-sensor inventory, local IPv4 state, configured NTP server and GREEN/YELLOW/RED time degradation. Snapshot publication must use read-only or quiet domain accessors so the high-frequency publication path does not create logging side effects.
 
 ## Migration order
 
