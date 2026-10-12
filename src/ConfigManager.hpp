@@ -96,9 +96,12 @@ public:
   static bool loadSensorMapping(uint8_t solarAddr[8], uint8_t poolAddr[8]);
   /** @brief Load the sensor mapping through a process-wide cache.
    *
-   * The first call reads NVS; subsequent calls serve the cached pair. The
-   * cache is invalidated by saveSensorMapping()/clearSensorMapping() so hot
-   * loops never touch NVS for unchanged mappings.
+   * The first successful call reads NVS; subsequent calls serve the cached
+   * pair. Transient NVS-open failures are not cached and are retried later.
+   * The cache is invalidated by saveSensorMapping() so hot loops never touch
+   * NVS for unchanged mappings.
+   * @return true when NVS was read successfully or a valid cache exists;
+   *         false on a transient read failure. Empty mappings are successful.
    */
   static bool loadSensorMappingCached(uint8_t solarAddr[8], uint8_t poolAddr[8]);
 
