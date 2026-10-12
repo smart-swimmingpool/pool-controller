@@ -246,6 +246,87 @@ static int test_loop_interval_updates_all_runtime_nodes() {
   return 0;
 }
 
+static int test_sensor_mapping_read_failure_does_not_overwrite_existing_role() {
+  test_begin("ControllerCommandHandler", "sensor mapping update rejects transient cache read failure");
+  HandlerFixture fixture;
+
+  const std::uint8_t empty[8] = {0};
+  const std::uint8_t existingPool[8] = {0x28, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5, 0xE6, 0xE7};
+  const std::uint8_t newSolar[8] = {0x28, 0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7};
+  PoolController::ConfigManager::seedSensorMappingForTest(empty, false, existingPool, true);
+
+  ControllerCommand command{};
+  command.type = ControllerCommandType::SET_SENSOR_MAPPING;
+  command.sensorRole = SensorRole::SOLAR;
+  std::memcpy(command.sensorAddress.data(), newSolar, 8);
+
+  PoolController::ConfigManager::_sensorMappingReadFails = true;
+  const bool accepted = fixture.handler.handle(command);
+  PoolController::ConfigManager::_sensorMappingReadFails = false;
+  ASSERT_TRUE(!accepted);
+
+  std::uint8_t savedSolar[8] = {0};
+  std::uint8_t savedPool[8] = {0};
+  ASSERT_TRUE(PoolController::ConfigManager::loadSensorMapping(savedSolar, savedPool));
+  ASSERT_EQ(std::memcmp(savedSolar, empty, 8), 0);
+  ASSERT_EQ(std::memcmp(savedPool, existingPool, 8), 0);
+  return 0;
+}
+
+static int test_loop_interval_persistence_failure_keeps_runtime_unchanged() {
+  test_begin("ControllerCommandHandler", "failed loop interval persistence leaves runtime intervals unchanged");
+  HandlerFixture fixture;
+  auto &settings = PoolController::ConfigManager::getSettings();
+  settings.loopInterval = 30;
+  fixture.solarTemperature.setMeasurementInterval(30);
+  fixture.poolTemperature.setMeasurementInterval(30);
+  fixture.controllerTemperature.setMeasurementInterval(30);
+  fixture.poolPump.setMeasurementInterval(30);
+  fixture.solarPump.setMeasurementInterval(30);
+  fixture.operation.setMeasurementInterval(30);
+
+  ControllerCommand command{};
+  command.type = ControllerCommandType::SET_LOOP_INTERVAL;
+  command.integerValue = 42;
+  PoolController::ConfigManager::_saveFails = true;
+  const bool accepted = fixture.handler.handle(command);
+  PoolController::ConfigManager::_saveFails = false;
+
+  ASSERT_TRUE(!accepted);
+  ASSERT_EQ(settings.loopInterval, 30);
+  ASSERT_EQ(fixture.solarTemperature.getMeasurementInterval(), 30UL);
+  ASSERT_EQ(fixture.poolTemperature.getMeasurementInterval(), 30UL);
+  ASSERT_EQ(fixture.controllerTemperature.getMeasurementInterval(), 30UL);
+  ASSERT_EQ(fixture.poolPump.getMeasurementInterval(), 30UL);
+  ASSERT_EQ(fixture.solarPump.getMeasurementInterval(), 30UL);
+  ASSERT_EQ(fixture.operation.getMeasurementInterval(), 30UL);
+  return 0;
+}
+
+static int test_time_loss_thresholds_preserve_ordering() {
+  test_begin("ControllerCommandHandler", "time-loss thresholds preserve 1 <= green < red <= 72");
+  HandlerFixture fixture;
+  auto &settings = PoolController::ConfigManager::getSettings();
+  settings.timeLossGreenHours = 2;
+  settings.timeLossRedHours = 24;
+
+  ControllerCommand command{};
+  command.type = ControllerCommandType::SET_TIME_LOSS_GREEN_HOURS;
+  command.integerValue = 24;
+  ASSERT_TRUE(!fixture.handler.handle(command));
+  ASSERT_EQ(settings.timeLossGreenHours, 2);
+
+  command.type = ControllerCommandType::SET_TIME_LOSS_RED_HOURS;
+  command.integerValue = 2;
+  ASSERT_TRUE(!fixture.handler.handle(command));
+  ASSERT_EQ(settings.timeLossRedHours, 24);
+
+  command.integerValue = 25;
+  ASSERT_TRUE(fixture.handler.handle(command));
+  ASSERT_EQ(settings.timeLossRedHours, 25);
+  return 0;
+}
+
 static int test_factory_reset_owns_runtime_reset_mutation() {
   test_begin("ControllerCommandHandler", "factory reset delegates configuration reset through the handler");
   HandlerFixture fixture;
@@ -264,7 +345,9 @@ int run_controller_command_handler_tests() {
   int (*tests[])() = {test_mode_and_setpoint_are_applied_through_one_handler, test_persistence_failure_rolls_back_setpoints,
     test_green_time_loss_rejects_zero, test_timer_updates_are_independent, test_manual_pump_guard_is_application_policy,
     test_sensor_mapping_is_persisted_and_applied, test_setting_missing_sensor_role_preserves_existing_mapping,
-    test_loop_interval_updates_all_runtime_nodes, test_factory_reset_owns_runtime_reset_mutation};
+    test_sensor_mapping_read_failure_does_not_overwrite_existing_role, test_loop_interval_updates_all_runtime_nodes,
+    test_loop_interval_persistence_failure_keeps_runtime_unchanged, test_time_loss_thresholds_preserve_ordering,
+    test_factory_reset_owns_runtime_reset_mutation};
   for (auto test : tests) {
     if (test() == 0) {
       ++passed;
