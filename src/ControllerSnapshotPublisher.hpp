@@ -8,7 +8,10 @@
 
 #pragma once
 
+#include <array>
 #include <cstdint>
+
+#include "ControllerSnapshot.hpp"
 
 class DallasTemperatureNode;
 class ESP32TemperatureNode;
@@ -45,7 +48,11 @@ public:
 
 private:
   Dependencies dependencies_;
+  std::array<DetectedSensorSnapshot, kMaxDetectedSensors> detectedInventory_{};
+  std::uint8_t detectedInventoryCount_{0};
+  std::uint32_t lastDetectedInventoryRefreshMs_{0};
   std::uint32_t generation_{0};
+  bool detectedInventoryInitialized_{false};
 };
 
 }  // namespace PoolController
