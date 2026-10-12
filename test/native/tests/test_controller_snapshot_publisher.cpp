@@ -218,6 +218,44 @@ static int test_detected_inventory_is_published_and_deduplicated() {
   return 0;
 }
 
+static int test_disconnected_detected_sensor_is_invalid() {
+  test_begin("ControllerSnapshotPublisher", "Dallas disconnect sentinel is not published as a valid temperature");
+  SnapshotFixture fixture;
+  const std::uint8_t address[8] = {0x28, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7};
+  fixture.solarTemperature.setDetectedDevice(0, address, DEVICE_DISCONNECTED_C);
+
+  fixture.publisher.publish();
+  SystemSnapshot snapshot{};
+  ASSERT_TRUE(fixture.store.read(snapshot));
+  ASSERT_EQ(snapshot.sensors.detectedCount, 1);
+  ASSERT_EQ(snapshot.sensors.detected[0].temperature.value, DEVICE_DISCONNECTED_C);
+  ASSERT_TRUE(!snapshot.sensors.detected[0].temperature.valid);
+  return 0;
+}
+
+static int test_detected_inventory_refresh_is_bounded() {
+  test_begin("ControllerSnapshotPublisher", "detected Dallas inventory is not polled on every snapshot");
+  SnapshotFixture fixture;
+  auto &settings = PoolController::ConfigManager::getSettings();
+  settings.loopInterval = 60;
+  const std::uint8_t address[8] = {0x28, 0xD1, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7};
+  fixture.solarTemperature.setDetectedDevice(0, address, 49.0F);
+
+  resetMillisOffsetForTest();
+  fixture.publisher.publish();
+  const uint32_t readsAfterFirstPublish = fixture.solarTemperature.getDetectedTemperatureReadCount();
+  ASSERT_TRUE(readsAfterFirstPublish > 0);
+
+  fixture.publisher.publish();
+  ASSERT_EQ(fixture.solarTemperature.getDetectedTemperatureReadCount(), readsAfterFirstPublish);
+
+  advanceMillisForTest(60000);
+  fixture.publisher.publish();
+  ASSERT_TRUE(fixture.solarTemperature.getDetectedTemperatureReadCount() > readsAfterFirstPublish);
+  resetMillisOffsetForTest();
+  return 0;
+}
+
 static int test_snapshot_rule_projection_avoids_verbose_lookup() {
   test_begin("ControllerSnapshotPublisher", "snapshot rule projection does not use verbose rule lookup");
   SnapshotFixture fixture;
@@ -247,6 +285,7 @@ int run_controller_snapshot_publisher_tests() {
   int failed = 0;
   int (*tests[])() = {test_complete_runtime_state_is_projected, test_mapping_found_requires_selected_configured_address,
     test_ntp_server_is_projected, test_detected_inventory_is_published_and_deduplicated,
+    test_disconnected_detected_sensor_is_invalid, test_detected_inventory_refresh_is_bounded,
     test_snapshot_rule_projection_avoids_verbose_lookup, test_generation_advances_per_complete_publication};
   for (auto test : tests) {
     if (test() == 0) {
