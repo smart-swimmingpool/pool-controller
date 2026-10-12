@@ -49,8 +49,10 @@ public:
     return true;
   }
   float getDetectedDeviceTemperature(uint8_t index) const {
+    ++_detectedTemperatureReadCount;
     return index < _detectedCount ? _detectedTemperatures[index] : NAN;
   }
+  uint32_t getDetectedTemperatureReadCount() const { return _detectedTemperatureReadCount; }
   void setDetectedDevice(uint8_t index, const DeviceAddress address, float temperature) {
     if (index >= _detectedAddresses.size()) return;
     std::memcpy(_detectedAddresses[index].data(), address, 8);
@@ -71,4 +73,5 @@ private:
   std::array<std::array<uint8_t, 8>, 24> _detectedAddresses{};
   std::array<float, 24> _detectedTemperatures{};
   uint8_t _detectedCount = 0;
+  mutable uint32_t _detectedTemperatureReadCount = 0;
 };
