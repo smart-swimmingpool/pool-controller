@@ -71,7 +71,10 @@ bool ControllerCommandHandler::saveSettings() const {
 bool ControllerCommandHandler::applySensorMapping(const ControllerCommand &command, bool clear) {
   std::uint8_t solarAddress[8] = {0};
   std::uint8_t poolAddress[8] = {0};
-  ConfigManager::loadSensorMappingCached(solarAddress, poolAddress);
+  if (!ConfigManager::loadSensorMappingCached(solarAddress, poolAddress)) {
+    LOG_ERROR("Controller command: failed to load sensor mapping before update\n");
+    return false;
+  }
 
   std::uint8_t *target = command.sensorRole == SensorRole::SOLAR ? solarAddress : poolAddress;
   for (std::size_t i = 0; i < command.sensorAddress.size(); ++i) {
@@ -225,18 +228,24 @@ bool ControllerCommandHandler::handle(const ControllerCommand &command, Controll
     return true;
   }
 
-  case ControllerCommandType::SET_LOOP_INTERVAL:
+  case ControllerCommandType::SET_LOOP_INTERVAL: {
     if (!inRange(command.integerValue, 1, 3600)) {
       return false;
     }
+    const auto previousSetting = settings.loopInterval;
     settings.loopInterval = command.integerValue;
+    if (!saveSettings()) {
+      settings.loopInterval = previousSetting;
+      return false;
+    }
     dependencies_.solarTemperature.setMeasurementInterval(command.integerValue);
     dependencies_.poolTemperature.setMeasurementInterval(command.integerValue);
     dependencies_.controllerTemperature.setMeasurementInterval(command.integerValue);
     dependencies_.poolPump.setMeasurementInterval(command.integerValue);
     dependencies_.solarPump.setMeasurementInterval(command.integerValue);
     dependencies_.operationMode.setMeasurementInterval(command.integerValue);
-    return saveSettings();
+    return true;
+  }
 
   case ControllerCommandType::SET_TIMEZONE:
     if (!inRange(command.integerValue, 0, getTzCount() - 1)) {
@@ -249,29 +258,35 @@ bool ControllerCommandHandler::handle(const ControllerCommand &command, Controll
     setTimezoneIndex(command.integerValue);
     return true;
 
-  case ControllerCommandType::SET_TIME_LOSS_GREEN_HOURS:
-    if (!inRange(command.integerValue, 1, 255)) {
-      LOG_WARN("Controller command: green time-loss hours out of 1..255 range\n");
+  case ControllerCommandType::SET_TIME_LOSS_GREEN_HOURS: {
+    if (!inRange(command.integerValue, 1, 71) || command.integerValue >= settings.timeLossRedHours) {
+      LOG_WARN("Controller command: green time-loss hours must satisfy 1 <= green < red <= 72\n");
       return false;
     }
+    const auto previousSetting = settings.timeLossGreenHours;
     settings.timeLossGreenHours = command.integerValue;
     if (!saveSettings()) {
+      settings.timeLossGreenHours = previousSetting;
       return false;
     }
     setTimeDegradationGreenHours(static_cast<std::uint8_t>(command.integerValue));
     return true;
+  }
 
-  case ControllerCommandType::SET_TIME_LOSS_RED_HOURS:
-    if (!inRange(command.integerValue, 1, 72)) {
-      LOG_WARN("Controller command: red time-loss hours out of 1..72 range\n");
+  case ControllerCommandType::SET_TIME_LOSS_RED_HOURS: {
+    if (!inRange(command.integerValue, 2, 72) || command.integerValue <= settings.timeLossGreenHours) {
+      LOG_WARN("Controller command: red time-loss hours must satisfy 1 <= green < red <= 72\n");
       return false;
     }
+    const auto previousSetting = settings.timeLossRedHours;
     settings.timeLossRedHours = command.integerValue;
     if (!saveSettings()) {
+      settings.timeLossRedHours = previousSetting;
       return false;
     }
     setTimeDegradationRedHours(static_cast<std::uint8_t>(command.integerValue));
     return true;
+  }
 
   case ControllerCommandType::SET_BUTTON_1_MIN:
   case ControllerCommandType::SET_BUTTON_1_MAX:
