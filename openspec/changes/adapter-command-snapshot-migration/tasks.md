@@ -11,7 +11,10 @@
 - [x] Populate sensor mapping address/configured/found state in the snapshot.
 - [x] Preserve independently configured sensor mappings when the other role is absent.
 - [x] Populate detected-sensor inventory, local IPv4 state and configured NTP server in the snapshot.
+- [x] Bound detected-sensor inventory refreshes so snapshot publication does not poll Dallas devices on every loop.
+- [x] Keep transient sensor-mapping NVS failures retryable and reject updates that cannot preserve the other role.
 - [x] Populate GREEN/YELLOW/RED time degradation and runtime controller settings in the snapshot.
+- [x] Enforce the persisted/runtime degradation invariant `1 <= green < red <= 72`.
 - [x] Keep failed persisted runtime mutations atomic by rolling back owner state and settings.
 - [x] Keep snapshot publication free of active-rule debug-log side effects.
 - [ ] Migrate MQTT state/discovery reads to snapshot values where applicable.
