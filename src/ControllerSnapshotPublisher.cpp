@@ -34,10 +34,14 @@ bool isZeroAddress(const std::array<std::uint8_t, 8> &address) {
   return true;
 }
 
+bool isValidDallasTemperature(float value) {
+  return std::isfinite(value) && value != DEVICE_DISCONNECTED_C;
+}
+
 SensorReadingSnapshot sensorReading(float value, bool found) {
   SensorReadingSnapshot reading{};
   reading.value = value;
-  reading.valid = found && std::isfinite(value);
+  reading.valid = found && isValidDallasTemperature(value);
   return reading;
 }
 
@@ -83,7 +87,7 @@ void appendDetectedSensors(SensorSnapshot &sensors, const DallasTemperatureNode 
     detected.address = address;
     const float temperature = node.getDetectedDeviceTemperature(index);
     detected.temperature.value = temperature;
-    detected.temperature.valid = std::isfinite(temperature);
+    detected.temperature.valid = isValidDallasTemperature(temperature);
   }
 }
 
@@ -113,6 +117,7 @@ TimeDegradationState snapshotTimeDegradation(TimeDegradation degradation) {
 void ControllerSnapshotPublisher::publish() {
   SystemSnapshot snapshot{};
   const std::uint32_t nowMs = millis();
+  const auto &settings = ConfigManager::getSettings();
 
   const float poolTemperature = dependencies_.poolTemperature.getTemperature();
   const float solarTemperature = dependencies_.solarTemperature.getTemperature();
@@ -127,8 +132,20 @@ void ControllerSnapshotPublisher::publish() {
   ConfigManager::loadSensorMappingCached(solarAddress.data(), poolAddress.data());
   snapshot.sensors.solarMapping = mappingSnapshot(solarAddress, dependencies_.solarTemperature);
   snapshot.sensors.poolMapping = mappingSnapshot(poolAddress, dependencies_.poolTemperature);
-  appendDetectedSensors(snapshot.sensors, dependencies_.solarTemperature);
-  appendDetectedSensors(snapshot.sensors, dependencies_.poolTemperature);
+  const std::uint32_t detectedRefreshSeconds =
+    settings.loopInterval > 0 ? static_cast<std::uint32_t>(settings.loopInterval) : 1U;
+  const std::uint32_t detectedRefreshIntervalMs = detectedRefreshSeconds * 1000U;
+  if (!detectedInventoryInitialized_ || nowMs - lastDetectedInventoryRefreshMs_ >= detectedRefreshIntervalMs) {
+    SensorSnapshot refreshedInventory{};
+    appendDetectedSensors(refreshedInventory, dependencies_.solarTemperature);
+    appendDetectedSensors(refreshedInventory, dependencies_.poolTemperature);
+    detectedInventory_ = refreshedInventory.detected;
+    detectedInventoryCount_ = refreshedInventory.detectedCount;
+    lastDetectedInventoryRefreshMs_ = nowMs;
+    detectedInventoryInitialized_ = true;
+  }
+  snapshot.sensors.detected = detectedInventory_;
+  snapshot.sensors.detectedCount = detectedInventoryCount_;
 
   // Transitional generation: this identifies complete Core-1 read-model
   // publications. Once #170 provides a coherent Core-0 acquisition snapshot,
@@ -148,7 +165,6 @@ void ControllerSnapshotPublisher::publish() {
   snapshot.health.poolSensorValid = snapshot.sensors.pool.valid;
   snapshot.health.solarSensorValid = snapshot.sensors.solar.valid;
 
-  const auto &settings = ConfigManager::getSettings();
   snapshot.circulation.threshold = settings.tempCircThreshold;
   snapshot.circulation.factorMinutesPerDegree = static_cast<std::uint16_t>(settings.tempCircFactor);
   snapshot.circulation.maxRuntimeMinutes = static_cast<std::uint16_t>(settings.tempCircMaxRuntime);
