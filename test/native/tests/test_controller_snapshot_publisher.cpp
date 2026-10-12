@@ -29,6 +29,7 @@ extern void test_suite_end(const char *name, int passed, int failed);
   } while (0)
 
 #define ASSERT_EQ(a, b) ASSERT_TRUE((a) == (b))
+#define ASSERT_GT(a, b) ASSERT_TRUE((a) > (b))
 
 using PoolController::ControllerSnapshotPublisher;
 using PoolController::ControllerSnapshotStore;
@@ -244,14 +245,14 @@ static int test_detected_inventory_refresh_is_bounded() {
   resetMillisOffsetForTest();
   fixture.publisher.publish();
   const uint32_t readsAfterFirstPublish = fixture.solarTemperature.getDetectedTemperatureReadCount();
-  ASSERT_TRUE(readsAfterFirstPublish > 0);
+  ASSERT_GT(readsAfterFirstPublish, 0U);
 
   fixture.publisher.publish();
   ASSERT_EQ(fixture.solarTemperature.getDetectedTemperatureReadCount(), readsAfterFirstPublish);
 
   advanceMillisForTest(60000);
   fixture.publisher.publish();
-  ASSERT_TRUE(fixture.solarTemperature.getDetectedTemperatureReadCount() > readsAfterFirstPublish);
+  ASSERT_GT(fixture.solarTemperature.getDetectedTemperatureReadCount(), readsAfterFirstPublish);
   resetMillisOffsetForTest();
   return 0;
 }
