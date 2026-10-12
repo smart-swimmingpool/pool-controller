@@ -239,9 +239,36 @@ bool ConfigManager::verifyAdminPassword(const String &password) {
 namespace {
 // Process-wide sensor-mapping cache so hot loops avoid NVS traffic.
 bool s_mappingCacheValid = false;
-bool s_mappingCacheHasMapping = false;
 std::uint8_t s_cachedSolarAddress[8] = {0};
 std::uint8_t s_cachedPoolAddress[8] = {0};
+
+struct SensorMappingReadResult final {
+  bool readSucceeded{false};
+  bool hasMapping{false};
+};
+
+SensorMappingReadResult readSensorMappingFromNvs(uint8_t solarAddr[8], uint8_t poolAddr[8]) {
+  memset(solarAddr, 0, 8);
+  memset(poolAddr, 0, 8);
+
+  Preferences prefs;
+  if (!prefs.begin("ds18b20", true)) {
+    return {};
+  }
+
+  const size_t solarLength = prefs.getBytes("solar_adr", solarAddr, 8);
+  const size_t poolLength = prefs.getBytes("pool_adr", poolAddr, 8);
+  prefs.end();
+
+  if (solarLength != 8) {
+    memset(solarAddr, 0, 8);
+  }
+  if (poolLength != 8) {
+    memset(poolAddr, 0, 8);
+  }
+
+  return {true, solarLength == 8 || poolLength == 8};
+}
 }  // namespace
 
 void ConfigManager::saveSensorMapping(const uint8_t solarAddr[8], const uint8_t poolAddr[8]) {
@@ -262,38 +289,28 @@ void ConfigManager::saveSensorMapping(const uint8_t solarAddr[8], const uint8_t 
 }
 
 bool ConfigManager::loadSensorMapping(uint8_t solarAddr[8], uint8_t poolAddr[8]) {
-  memset(solarAddr, 0, 8);
-  memset(poolAddr, 0, 8);
-
-  Preferences prefs;
-  if (!prefs.begin("ds18b20", true)) {
-    return false;
-  }
-
-  const size_t slen = prefs.getBytes("solar_adr", solarAddr, 8);
-  const size_t plen = prefs.getBytes("pool_adr", poolAddr, 8);
-  prefs.end();
-
-  if (slen != 8) {
-    memset(solarAddr, 0, 8);
-  }
-  if (plen != 8) {
-    memset(poolAddr, 0, 8);
-  }
-
-  // A role may be configured independently. Missing roles remain zeroed so
-  // callers can safely update one mapping without erasing the other.
-  return slen == 8 || plen == 8;
+  // Preserve the legacy return contract: true means at least one role exists.
+  return readSensorMappingFromNvs(solarAddr, poolAddr).hasMapping;
 }
 
 bool ConfigManager::loadSensorMappingCached(uint8_t solarAddr[8], uint8_t poolAddr[8]) {
   if (!s_mappingCacheValid) {
-    s_mappingCacheHasMapping = loadSensorMapping(s_cachedSolarAddress, s_cachedPoolAddress);
+    std::uint8_t solarCandidate[8] = {0};
+    std::uint8_t poolCandidate[8] = {0};
+    const SensorMappingReadResult readResult = readSensorMappingFromNvs(solarCandidate, poolCandidate);
+    if (!readResult.readSucceeded) {
+      // Do not poison the process-wide cache on a transient NVS failure.
+      memset(solarAddr, 0, 8);
+      memset(poolAddr, 0, 8);
+      return false;
+    }
+    memcpy(s_cachedSolarAddress, solarCandidate, 8);
+    memcpy(s_cachedPoolAddress, poolCandidate, 8);
     s_mappingCacheValid = true;
   }
   memcpy(solarAddr, s_cachedSolarAddress, 8);
   memcpy(poolAddr, s_cachedPoolAddress, 8);
-  return s_mappingCacheHasMapping;
+  return true;
 }
 
 /** @brief Check if an 8-byte address is all zeros. */
