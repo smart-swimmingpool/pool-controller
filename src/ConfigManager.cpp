@@ -267,7 +267,10 @@ SensorMappingReadResult readSensorMappingFromNvs(uint8_t solarAddr[8], uint8_t p
     memset(poolAddr, 0, 8);
   }
 
-  return {true, solarLength == 8 || poolLength == 8};
+  SensorMappingReadResult result;
+  result.readSucceeded = true;
+  result.hasMapping = solarLength == 8 || poolLength == 8;
+  return result;
 }
 }  // namespace
 
