@@ -11,9 +11,9 @@
 #ifdef NORVI_AE01_R
 
 #include <Arduino.h>
+#include <algorithm>
 
 #include "CalibrationManager.hpp"
-#include "ConfigManager.hpp"
 #include "NetworkManager.hpp"
 #include "Nodes.hpp"
 #include "NorviButtonHandler.hpp"
@@ -29,6 +29,15 @@ enum class UiEvent : uint8_t {
   BUTTON_3,
   BUTTON_3_LONG,
 };
+
+CommandDispatcher commandDispatcher = nullptr;
+
+ControllerCommand localCommand(ControllerCommandType type) {
+  ControllerCommand command{};
+  command.type = type;
+  command.source = CommandSource::LOCAL_UI;
+  return command;
+}
 
 constexpr size_t EVENT_CAPACITY = 8;
 UiEvent eventQueue[EVENT_CAPACITY]{};
@@ -86,24 +95,26 @@ void handleButton3() {
   if (NorviOledDisplay::isMenuActive()) {
     switch (NorviOledDisplay::getMenuSelection()) {
     case NorviOledDisplay::MenuItem::MODE: {
-      constexpr const char *kSource = "button:S3/menu";
-      const String &currentMode = operationModeNode.getMode();
-      if (currentMode == "auto") {
-        operationModeNode.setMode("manu", kSource);
-      } else if (currentMode == "manu") {
-        operationModeNode.setMode("boost", kSource);
-      } else if (currentMode == "boost") {
-        operationModeNode.setMode("timer", kSource);
+      ControllerCommandResult result{};
+      if (dispatchCommand(commandDispatcher, localCommand(ControllerCommandType::CYCLE_MODE), &result) ==
+        CommandStatus::APPLIED) {
+        LOG_INFO("→ Mode switched to: %s\n", toString(result.mode));
       } else {
-        operationModeNode.setMode("auto", kSource);
+        LOG_WARN("→ Mode change failed\n");
       }
-      LOG_INFO("→ Mode switched to: %s\n", operationModeNode.getMode().c_str());
       break;
     }
-    case NorviOledDisplay::MenuItem::PUMP:
-      poolPumpNode.setSwitch(!poolPumpNode.getSwitch());
-      LOG_INFO("→ Pump toggled: %s\n", poolPumpNode.getSwitch() ? "ON" : "OFF");
+    case NorviOledDisplay::MenuItem::PUMP: {
+      ControllerCommand toggle = localCommand(ControllerCommandType::TOGGLE_POOL_PUMP);
+      toggle.toggleModePolicy = PumpToggleModePolicy::KEEP_MODE;
+      ControllerCommandResult result{};
+      if (dispatchCommand(commandDispatcher, toggle, &result) == CommandStatus::APPLIED) {
+        LOG_INFO("→ Pump toggled: %s\n", result.pumpState ? "ON" : "OFF");
+      } else {
+        LOG_WARN("→ Pump toggle failed\n");
+      }
       break;
+    }
     case NorviOledDisplay::MenuItem::EXIT:
       break;
     }
@@ -119,7 +130,16 @@ void handleButton3Long() {
   uint8_t solarAddr[8];
   uint8_t poolAddr[8];
   NorviOledDisplay::getMapping(solarAddr, poolAddr);
-  ConfigManager::saveSensorMapping(solarAddr, poolAddr);
+  ControllerCommand mapping[2] = {
+    localCommand(ControllerCommandType::SET_SENSOR_MAPPING), localCommand(ControllerCommandType::SET_SENSOR_MAPPING)};
+  mapping[0].sensorRole = SensorRole::SOLAR;
+  std::copy(solarAddr, solarAddr + 8, mapping[0].sensorAddress.begin());
+  mapping[1].sensorRole = SensorRole::POOL;
+  std::copy(poolAddr, poolAddr + 8, mapping[1].sensorAddress.begin());
+  if (commandDispatcher == nullptr || commandDispatcher(mapping, 2, nullptr) != CommandStatus::APPLIED) {
+    LOG_ERROR("✖ Sensor mapping could not be saved\n");
+    return;
+  }
   LOG_INFO("→ Sensor mapping saved — rebooting...\n");
   NetworkManager::restart();
 }
@@ -142,6 +162,10 @@ void processEvent(UiEvent event) {
 }
 
 }  // namespace
+
+void DisplayCoordinator::setCommandDispatcher(CommandDispatcher dispatcher) {
+  commandDispatcher = dispatcher;
+}
 
 void DisplayCoordinator::begin() {
   NorviOledDisplay::begin();
@@ -185,6 +209,7 @@ void DisplayCoordinator::loop() {
 namespace PoolController {
 void DisplayCoordinator::begin() {}
 void DisplayCoordinator::loop() {}
+void DisplayCoordinator::setCommandDispatcher(CommandDispatcher) {}
 }  // namespace PoolController
 
 #endif

@@ -13,11 +13,11 @@
 #include <Arduino.h>
 
 #include "ControllerCommandHandler.hpp"
-#include "ControllerSnapshotPublisher.hpp"
-#include "ControllerSnapshotStore.hpp"
+#include "DisplayCoordinator.hpp"
 #include "LogCapture.hpp"
 #include "MqttRuntimeCommandAdapter.hpp"
 #include "Nodes.hpp"
+#include "OlimexLocalUi.hpp"
 #include "PoolController.hpp"
 #include "WebPortal.hpp"
 
@@ -32,14 +32,13 @@ namespace {
  * order dependencies while keeping ownership explicit at the composition root.
  */
 PoolController::ControllerCommandHandler &controllerCommandHandler() {
-  static PoolController::ControllerCommandHandler::Dependencies dependencies{PoolController::operationModeNode,
+  static PoolController::ControllerCommandHandler handler(PoolController::ControllerNodes{PoolController::operationModeNode,
     PoolController::poolPumpNode, PoolController::solarPumpNode, PoolController::solarTemperatureNode,
-    PoolController::poolTemperatureNode, PoolController::ctrlTemperatureNode};
-  static PoolController::ControllerCommandHandler handler(dependencies);
+    PoolController::poolTemperatureNode, PoolController::ctrlTemperatureNode});
   return handler;
 }
 
-PoolController::CommandStatus dispatchWebCommands(
+PoolController::CommandStatus dispatchControllerCommands(
   const PoolController::ControllerCommand *commands, std::size_t count, PoolController::ControllerCommandResult *result) {
   return controllerCommandHandler().execute(commands, count, result);
 }
@@ -47,19 +46,6 @@ PoolController::CommandStatus dispatchWebCommands(
 PoolController::MqttRuntimeCommandAdapter &mqttRuntimeCommandAdapter() {
   static PoolController::MqttRuntimeCommandAdapter adapter(controllerCommandHandler());
   return adapter;
-}
-
-PoolController::ControllerSnapshotStore &controllerSnapshotStore() {
-  static PoolController::ControllerSnapshotStore store;
-  return store;
-}
-
-PoolController::ControllerSnapshotPublisher &controllerSnapshotPublisher() {
-  static PoolController::ControllerSnapshotPublisher::Dependencies dependencies{PoolController::operationModeNode,
-    PoolController::poolPumpNode, PoolController::solarPumpNode, PoolController::solarTemperatureNode,
-    PoolController::poolTemperatureNode, PoolController::ctrlTemperatureNode, controllerSnapshotStore()};
-  static PoolController::ControllerSnapshotPublisher publisher(dependencies);
-  return publisher;
 }
 
 }  // namespace
@@ -86,7 +72,10 @@ auto setup() -> void {
   // export watermark sees the pre-boot sequence. Serial is already up here.
   PoolController::LogCapture::begin();
 
-  PoolController::WebPortal::setCommandDispatcher(dispatchWebCommands);
+  // Every adapter mutates controller state only through the command handler.
+  PoolController::WebPortal::setCommandDispatcher(dispatchControllerCommands);
+  PoolController::DisplayCoordinator::setCommandDispatcher(dispatchControllerCommands);
+  PoolController::OlimexLocalUi::setCommandDispatcher(dispatchControllerCommands);
 
   // Register the only MQTT callback before context.setup() starts the MQTT
   // connection, so the handler is never swapped while the AsyncTCP task may
@@ -94,20 +83,15 @@ auto setup() -> void {
   mqttRuntimeCommandAdapter().begin();
 
   context.setup();
-
-  // Publish a first immutable read model after setup established runtime state.
-  controllerSnapshotPublisher().publish();
 }
 
 /**
  * @brief Arduino loop() — runs typed adapter hand-over and controller stack.
  *
  * Runtime MQTT commands are drained on the same Arduino/Core-1 loop task that
- * owns mutable controller state. After the legacy controller loop completes,
- * one immutable read model is published for outbound adapters.
+ * owns mutable controller state.
  */
 auto loop() -> void {
   mqttRuntimeCommandAdapter().processPendingCommands();
   context.loop();
-  controllerSnapshotPublisher().publish();
 }

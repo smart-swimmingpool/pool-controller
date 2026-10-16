@@ -45,8 +45,9 @@ struct SnapshotFixture {
   DallasTemperatureNode poolTemperature{PoolController::SensorId::POOL, "pool-temp", "Pool Temperature", 4};
   ESP32TemperatureNode controllerTemperature{"controller-temp", "Controller Temperature"};
   ControllerSnapshotStore store;
-  ControllerSnapshotPublisher publisher{ControllerSnapshotPublisher::Dependencies{
-    operation, poolPump, solarPump, solarTemperature, poolTemperature, controllerTemperature, store}};
+  ControllerSnapshotPublisher publisher{
+    PoolController::ControllerNodes{operation, poolPump, solarPump, solarTemperature, poolTemperature, controllerTemperature},
+    store};
 };
 
 static int test_complete_runtime_state_is_projected() {

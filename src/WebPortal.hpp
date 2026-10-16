@@ -31,8 +31,6 @@ class WebPortal {
 public:
   WebPortal() = default;
 
-  /** @brief Runs a command batch on the controller's owning task (see ControllerCommandHandler::execute). */
-  using CommandDispatcher = CommandStatus (*)(const ControllerCommand *, std::size_t, ControllerCommandResult *);
   static void setCommandDispatcher(CommandDispatcher dispatcher) { commandDispatcher_ = dispatcher; }
 #if !defined(ESP32) && !defined(ARDUINO_ARCH_ESP32)
   static bool invokeRouteForTest(const char *uri, int method) { return server_.invokeRoute(uri, method); }

@@ -119,25 +119,25 @@ void ControllerSnapshotPublisher::publish() {
   const std::uint32_t nowMs = millis();
   const auto &settings = ConfigManager::getSettings();
 
-  const float poolTemperature = dependencies_.poolTemperature.getTemperature();
-  const float solarTemperature = dependencies_.solarTemperature.getTemperature();
-  const float controllerTemperature = dependencies_.controllerTemperature.getTemperature();
+  const float poolTemperature = nodes_.poolTemperature.getTemperature();
+  const float solarTemperature = nodes_.solarTemperature.getTemperature();
+  const float controllerTemperature = nodes_.controllerTemperature.getTemperature();
 
-  snapshot.sensors.pool = sensorReading(poolTemperature, dependencies_.poolTemperature.isSensorFound());
-  snapshot.sensors.solar = sensorReading(solarTemperature, dependencies_.solarTemperature.isSensorFound());
+  snapshot.sensors.pool = sensorReading(poolTemperature, nodes_.poolTemperature.isSensorFound());
+  snapshot.sensors.solar = sensorReading(solarTemperature, nodes_.solarTemperature.isSensorFound());
   snapshot.sensors.controller = controllerReading(controllerTemperature);
 
   std::array<std::uint8_t, 8> solarAddress{};
   std::array<std::uint8_t, 8> poolAddress{};
   ConfigManager::loadSensorMappingCached(solarAddress.data(), poolAddress.data());
-  snapshot.sensors.solarMapping = mappingSnapshot(solarAddress, dependencies_.solarTemperature);
-  snapshot.sensors.poolMapping = mappingSnapshot(poolAddress, dependencies_.poolTemperature);
+  snapshot.sensors.solarMapping = mappingSnapshot(solarAddress, nodes_.solarTemperature);
+  snapshot.sensors.poolMapping = mappingSnapshot(poolAddress, nodes_.poolTemperature);
   const std::uint32_t detectedRefreshSeconds = settings.loopInterval > 0 ? static_cast<std::uint32_t>(settings.loopInterval) : 1U;
   const std::uint32_t detectedRefreshIntervalMs = detectedRefreshSeconds * 1000U;
   if (!detectedInventoryInitialized_ || nowMs - lastDetectedInventoryRefreshMs_ >= detectedRefreshIntervalMs) {
     SensorSnapshot refreshedInventory{};
-    appendDetectedSensors(refreshedInventory, dependencies_.solarTemperature);
-    appendDetectedSensors(refreshedInventory, dependencies_.poolTemperature);
+    appendDetectedSensors(refreshedInventory, nodes_.solarTemperature);
+    appendDetectedSensors(refreshedInventory, nodes_.poolTemperature);
     detectedInventory_ = refreshedInventory.detected;
     detectedInventoryCount_ = refreshedInventory.detectedCount;
     lastDetectedInventoryRefreshMs_ = nowMs;
@@ -168,13 +168,13 @@ void ControllerSnapshotPublisher::publish() {
   snapshot.circulation.factorMinutesPerDegree = static_cast<std::uint16_t>(settings.tempCircFactor);
   snapshot.circulation.maxRuntimeMinutes = static_cast<std::uint16_t>(settings.tempCircMaxRuntime);
 
-  const TimerSetting timer = dependencies_.operationMode.getTimerSetting();
+  const TimerSetting timer = nodes_.operationMode.getTimerSetting();
   snapshot.timer.startHour = timer.timerStartHour;
   snapshot.timer.startMinute = timer.timerStartMinutes;
   snapshot.timer.endHour = timer.timerEndHour;
   snapshot.timer.endMinute = timer.timerEndMinutes;
 
-  Rule *activeRule = dependencies_.operationMode.getRule(false);
+  Rule *activeRule = nodes_.operationMode.getRule(false);
   if (activeRule != nullptr) {
     snapshot.timer.effectiveRuntimeMinutes = activeRule->getEffectiveRuntimeMinutes();
     snapshot.timer.circulationExtensionMinutes = activeRule->getCirculationExtensionMinutes();
@@ -196,17 +196,17 @@ void ControllerSnapshotPublisher::publish() {
   snapshot.settings.button3Max = settings.btn3Max;
   snapshot.settings.buttonNoPress = settings.btnNoPress;
 
-  snapshot.mode = dependencies_.operationMode.getTypedMode();
-  snapshot.poolPumpOn = dependencies_.poolPump.getSwitch();
-  snapshot.solarPumpOn = dependencies_.solarPump.getSwitch();
-  snapshot.poolMaxTemperature = dependencies_.operationMode.getPoolMaxTemperature();
-  snapshot.solarMinTemperature = dependencies_.operationMode.getSolarMinTemperature();
-  snapshot.temperatureHysteresis = dependencies_.operationMode.getTemperatureHysteresis();
+  snapshot.mode = nodes_.operationMode.getTypedMode();
+  snapshot.poolPumpOn = nodes_.poolPump.getSwitch();
+  snapshot.solarPumpOn = nodes_.solarPump.getSwitch();
+  snapshot.poolMaxTemperature = nodes_.operationMode.getPoolMaxTemperature();
+  snapshot.solarMinTemperature = nodes_.operationMode.getSolarMinTemperature();
+  snapshot.temperatureHysteresis = nodes_.operationMode.getTemperatureHysteresis();
   snapshot.uptimeMs = nowMs;
   snapshot.freeHeapBytes = SystemMonitor::getFreeHeap();
   snapshot.maxAllocHeapBytes = static_cast<std::uint32_t>(ESP.getMaxAllocHeap());
 
-  dependencies_.store.publish(snapshot);
+  store_.publish(snapshot);
 }
 
 }  // namespace PoolController

@@ -11,12 +11,8 @@
 #include <array>
 #include <cstdint>
 
+#include "ControllerNodes.hpp"
 #include "ControllerSnapshot.hpp"
-
-class DallasTemperatureNode;
-class ESP32TemperatureNode;
-class OperationModeNode;
-class RelayModuleNode;
 
 namespace PoolController {
 
@@ -28,26 +24,20 @@ class ControllerSnapshotStore;
  * The publisher is invoked only after the application loop has updated the
  * legacy runtime model. Adapters can then read a value copy from the snapshot
  * store instead of dereferencing mutable nodes and settings directly.
+ *
+ * Not wired into loop() yet: building the snapshot every cycle costs time and
+ * RAM, so it is added together with its first reader.
  */
 class ControllerSnapshotPublisher final {
 public:
-  struct Dependencies final {
-    OperationModeNode &operationMode;
-    RelayModuleNode &poolPump;
-    RelayModuleNode &solarPump;
-    DallasTemperatureNode &solarTemperature;
-    DallasTemperatureNode &poolTemperature;
-    ESP32TemperatureNode &controllerTemperature;
-    ControllerSnapshotStore &store;
-  };
-
-  explicit ControllerSnapshotPublisher(Dependencies dependencies) : dependencies_(dependencies) {}
+  ControllerSnapshotPublisher(ControllerNodes nodes, ControllerSnapshotStore &store) : nodes_(nodes), store_(store) {}
 
   /** @brief Build and atomically publish the latest application read model. */
   void publish();
 
 private:
-  Dependencies dependencies_;
+  ControllerNodes nodes_;
+  ControllerSnapshotStore &store_;
   std::array<DetectedSensorSnapshot, kMaxDetectedSensors> detectedInventory_{};
   std::uint8_t detectedInventoryCount_{0};
   std::uint32_t lastDetectedInventoryRefreshMs_{0};

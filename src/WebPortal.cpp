@@ -51,7 +51,7 @@ static File fsUploadFile;
 
 WebServer WebPortal::server_(80);
 DNSServer WebPortal::dnsServer_;
-WebPortal::CommandDispatcher WebPortal::commandDispatcher_ = nullptr;
+CommandDispatcher WebPortal::commandDispatcher_ = nullptr;
 bool WebPortal::dnsServerStarted_ = false;
 String WebPortal::activeSessionToken_ = "";
 String WebPortal::csrfToken_ = "";

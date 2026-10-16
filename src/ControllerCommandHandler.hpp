@@ -11,11 +11,7 @@
 #include <cstddef>
 
 #include "ControllerCommand.hpp"
-
-class DallasTemperatureNode;
-class ESP32TemperatureNode;
-class OperationModeNode;
-class RelayModuleNode;
+#include "ControllerNodes.hpp"
 
 namespace PoolController {
 
@@ -36,6 +32,20 @@ struct ControllerCommandResult final {
 };
 
 /**
+ * @brief Hands a command batch to the handler on the owning task.
+ *
+ * Adapters (Web, local UIs) receive it from the composition root instead of
+ * reaching the handler or the nodes directly.
+ */
+using CommandDispatcher = CommandStatus (*)(const ControllerCommand *, std::size_t, ControllerCommandResult *);
+
+/** @brief Dispatch one command; REJECTED while no dispatcher is installed. */
+inline CommandStatus dispatchCommand(
+  CommandDispatcher dispatcher, const ControllerCommand &command, ControllerCommandResult *result = nullptr) {
+  return dispatcher == nullptr ? CommandStatus::REJECTED : dispatcher(&command, 1, result);
+}
+
+/**
  * @brief Applies validated runtime commands to the legacy controller model.
  *
  * This service is the transitional application boundary between protocol
@@ -50,15 +60,7 @@ struct ControllerCommandResult final {
  */
 class ControllerCommandHandler final {
 public:
-  /** @brief Explicit legacy runtime dependencies supplied by the composition root. */
-  struct Dependencies final {
-    OperationModeNode &operationMode;
-    RelayModuleNode &poolPump;
-    RelayModuleNode &solarPump;
-    DallasTemperatureNode &solarTemperature;
-    DallasTemperatureNode &poolTemperature;
-    ESP32TemperatureNode &controllerTemperature;
-  };
+  using Dependencies = ControllerNodes;
 
   explicit ControllerCommandHandler(Dependencies dependencies) : dependencies_(dependencies) {}
 
