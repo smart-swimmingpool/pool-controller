@@ -10,6 +10,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include <cstddef>
 #include <WebServer.h>
 #include <DNSServer.h>
 
@@ -30,7 +31,8 @@ class WebPortal {
 public:
   WebPortal() = default;
 
-  using CommandDispatcher = bool (*)(const ControllerCommand &, ControllerCommandResult *);
+  /** @brief Runs a command batch on the controller's owning task (see ControllerCommandHandler::execute). */
+  using CommandDispatcher = CommandStatus (*)(const ControllerCommand *, std::size_t, ControllerCommandResult *);
   static void setCommandDispatcher(CommandDispatcher dispatcher) { commandDispatcher_ = dispatcher; }
 #if !defined(ESP32) && !defined(ARDUINO_ARCH_ESP32)
   static bool invokeRouteForTest(const char *uri, int method) { return server_.invokeRoute(uri, method); }
@@ -113,6 +115,12 @@ private:
   static void apiGetConfig();
   /** @brief POST /api/config — save configuration from JSON body. */
   static void apiSaveConfig();
+  /** @brief Settings branch of apiSaveConfig(): the form becomes one atomic command batch. */
+  static void saveSettingsForm();
+  /** @brief Hand a batch to the dispatcher; REJECTED if none is installed. */
+  static CommandStatus dispatch(const ControllerCommand *commands, std::size_t count, ControllerCommandResult *result);
+  /** @brief HTTP status code for a command outcome (200/400/409/500). */
+  static int httpStatusFor(CommandStatus status);
   /** @brief POST /api/mode — set the operation mode. */
   static void apiSetMode();
   /** @brief POST /api/pump/toggle — toggle a specific relay. */

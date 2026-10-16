@@ -219,7 +219,7 @@ void MqttPublisher::publishSelectDiscovery(const char *objectId, const char *nam
   NetworkManager::publish(cfgTopic.build("select", objectId, "/config"), payloadBuf, true);
 }
 
-void MqttPublisher::publishNumberDiscovery(const char *objectId, const char *name, double minVal, double maxVal, double step,
+void MqttPublisher::publishNumberDiscovery(const char *objectId, const char *name, const SettingRange &range, double step,
   const char *unit, const char *icon, const char *entityCategory) {
   TopicBuilder cfgTopic, stateTopic, cmdTopic;
 
@@ -229,8 +229,8 @@ void MqttPublisher::publishNumberDiscovery(const char *objectId, const char *nam
   doc["state_topic"] = stateTopic.build("number", objectId, "/state");
   doc["command_topic"] = cmdTopic.build("number", objectId, "/set");
   doc["availability_topic"] = "homeassistant/sensor/pool-controller/availability";
-  doc["min"] = minVal;
-  doc["max"] = maxVal;
+  doc["min"] = range.min;
+  doc["max"] = range.max;
   doc["step"] = step;
   doc["mode"] = "slider";
 
@@ -371,8 +371,8 @@ void MqttPublisher::publishClimateDiscovery() {
   doc["action_topic"] = actionTopic.build("climate", "thermostat", "/action/state");
 
   // Temp range
-  doc["min_temp"] = 0.0;
-  doc["max_temp"] = 40.0;
+  doc["min_temp"] = SettingLimits::kPoolMaxTemperature.min;
+  doc["max_temp"] = SettingLimits::kPoolMaxTemperature.max;
   doc["temp_step"] = 0.5;
 
   // Preset modes (sub-modes: manual/schedule/boost)
@@ -529,19 +529,20 @@ void MqttPublisher::publishDiscovery() {
 
   // ── Configuration (entity_category: "config") ──
   // Parameter Numbers
+  publishNumberDiscovery("pool-max-temp", "Maximum Pool Temperature", SettingLimits::kPoolMaxTemperature, 0.1, "°C",
+    "mdi:thermometer-chevron-up", "config");
+  publishNumberDiscovery("solar-min-temp", "Minimum Solar Temperature", SettingLimits::kSolarMinTemperature, 0.1, "°C",
+    "mdi:thermometer-chevron-down", "config");
   publishNumberDiscovery(
-    "pool-max-temp", "Maximum Pool Temperature", 0.0, 40.0, 0.1, "°C", "mdi:thermometer-chevron-up", "config");
-  publishNumberDiscovery(
-    "solar-min-temp", "Minimum Solar Temperature", 0.0, 100.0, 0.1, "°C", "mdi:thermometer-chevron-down", "config");
-  publishNumberDiscovery("hysteresis", "Temperature Hysteresis", 0.0, 10.0, 0.1, "K", "mdi:delta", "config");
+    "hysteresis", "Temperature Hysteresis", SettingLimits::kTemperatureHysteresis, 0.1, "K", "mdi:delta", "config");
 
   // Temperature-based circulation parameters
-  publishNumberDiscovery(
-    "temp-circ-threshold", "Circulation Temperature Threshold", 0.0, 40.0, 0.5, "°C", "mdi:thermometer-auto", "config");
-  publishNumberDiscovery(
-    "temp-circ-factor", "Circulation Temperature Factor", 0.0, 120.0, 5.0, "min/°C", "mdi:plus-minus", "config");
-  publishNumberDiscovery(
-    "temp-circ-max-runtime", "Circulation Maximum Runtime", 60.0, 1440.0, 15.0, "min", "mdi:timer-outline", "config");
+  publishNumberDiscovery("temp-circ-threshold", "Circulation Temperature Threshold", SettingLimits::kCirculationThreshold, 0.5,
+    "°C", "mdi:thermometer-auto", "config");
+  publishNumberDiscovery("temp-circ-factor", "Circulation Temperature Factor", SettingLimits::kCirculationFactor, 5.0, "min/°C",
+    "mdi:plus-minus", "config");
+  publishNumberDiscovery("temp-circ-max-runtime", "Circulation Maximum Runtime", SettingLimits::kCirculationMaxRuntime, 15.0,
+    "min", "mdi:timer-outline", "config");
 
   // Timer as Time entities (HH:MM:SS format)
   publishTimeDiscovery("timer-start", "Timer Start", "mdi:clock-start", "config");

@@ -39,8 +39,9 @@ PoolController::ControllerCommandHandler &controllerCommandHandler() {
   return handler;
 }
 
-bool dispatchWebCommand(const PoolController::ControllerCommand &command, PoolController::ControllerCommandResult *result) {
-  return controllerCommandHandler().handle(command, result);
+PoolController::CommandStatus dispatchWebCommands(
+  const PoolController::ControllerCommand *commands, std::size_t count, PoolController::ControllerCommandResult *result) {
+  return controllerCommandHandler().execute(commands, count, result);
 }
 
 PoolController::MqttRuntimeCommandAdapter &mqttRuntimeCommandAdapter() {
@@ -85,7 +86,7 @@ auto setup() -> void {
   // export watermark sees the pre-boot sequence. Serial is already up here.
   PoolController::LogCapture::begin();
 
-  PoolController::WebPortal::setCommandDispatcher(dispatchWebCommand);
+  PoolController::WebPortal::setCommandDispatcher(dispatchWebCommands);
 
   // Register the only MQTT callback before context.setup() starts the MQTT
   // connection, so the handler is never swapped while the AsyncTCP task may

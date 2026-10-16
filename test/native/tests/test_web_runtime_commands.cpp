@@ -8,6 +8,7 @@
 #include "Nodes.hpp"
 #include "WebPortal.hpp"
 #include "WebServer.h"
+#include "test_assert.h"
 
 extern WebServerCapture wsCapture;
 extern void test_begin(const char *suite, const char *name);
@@ -15,30 +16,41 @@ extern void test_pass(const char *file, int line);
 extern void test_fail(const char *file, int line, const char *msg);
 extern void test_suite_end(const char *name, int passed, int failed);
 
-#define ASSERT_TRUE(cond)                                     \
-  do {                                                        \
-    if (!(cond)) {                                            \
-      test_fail(__FILE__, __LINE__, "Expected true: " #cond); \
-      return 1;                                               \
-    }                                                         \
-    test_pass(__FILE__, __LINE__);                            \
-  } while (0)
-#define ASSERT_EQ(a, b) ASSERT_TRUE((a) == (b))
 #define ASSERT_STREQ(a, b) ASSERT_TRUE(std::strcmp((a), (b)) == 0)
 
 namespace {
-PoolController::ControllerCommand capturedCommand{};
+using PoolController::CommandStatus;
+using PoolController::ControllerCommand;
+using PoolController::ControllerCommandType;
+
+constexpr std::size_t kMaxCaptured = 32;
+ControllerCommand capturedCommands[kMaxCaptured]{};
+std::size_t capturedCount = 0;
+ControllerCommand &capturedCommand = capturedCommands[0];
 PoolController::ControllerCommandResult configuredResult{};
 bool dispatchCalled = false;
-bool dispatchAccepted = true;
+CommandStatus dispatchStatus = CommandStatus::APPLIED;
 
-bool captureDispatch(const PoolController::ControllerCommand &command, PoolController::ControllerCommandResult *result) {
+CommandStatus captureDispatch(
+  const ControllerCommand *commands, std::size_t count, PoolController::ControllerCommandResult *result) {
   dispatchCalled = true;
-  capturedCommand = command;
+  capturedCount = count;
+  for (std::size_t i = 0; i < count && i < kMaxCaptured; ++i) {
+    capturedCommands[i] = commands[i];
+  }
   if (result != nullptr) {
     *result = configuredResult;
   }
-  return dispatchAccepted;
+  return dispatchStatus;
+}
+
+const ControllerCommand *findCaptured(ControllerCommandType type) {
+  for (std::size_t i = 0; i < capturedCount; ++i) {
+    if (capturedCommands[i].type == type) {
+      return &capturedCommands[i];
+    }
+  }
+  return nullptr;
 }
 
 void resetRequest() {
@@ -47,7 +59,8 @@ void resetRequest() {
   PoolController::NetworkManager::setApMode(true);
   PoolController::WebPortal::setCommandDispatcher(captureDispatch);
   dispatchCalled = false;
-  dispatchAccepted = true;
+  dispatchStatus = CommandStatus::APPLIED;
+  capturedCount = 0;
   capturedCommand = {};
   configuredResult = {};
 }
@@ -135,13 +148,133 @@ int test_relative_pumps() {
 }
 
 int test_owner_rejection() {
-  test_begin("WebRuntimeCommands", "owner rejection maps to the manual-mode HTTP error");
+  test_begin("WebRuntimeCommands", "owner rejection maps to 409 with the manual-mode message");
   resetRequest();
   wsCapture.args["pump"] = "pool";
-  dispatchAccepted = false;
+  dispatchStatus = CommandStatus::REJECTED;
   ASSERT_TRUE(PoolController::WebPortal::invokeRouteForTest("/api/pump", HTTP_POST));
-  ASSERT_EQ(wsCapture.lastStatusCode, 400);
+  ASSERT_EQ(wsCapture.lastStatusCode, 409);
   ASSERT_STREQ(wsCapture.lastBody.c_str(), "{\"status\":\"error\",\"message\":\"Pump control only available in manual mode\"}");
+  return 0;
+}
+
+int test_status_codes_are_distinct() {
+  test_begin("WebRuntimeCommands", "invalid, rejected and persist failures map to 400, 409 and 500");
+  const struct {
+    CommandStatus status;
+    int httpCode;
+    const char *body;
+  } cases[] = {
+    {CommandStatus::INVALID, 400, "{\"status\":\"error\",\"message\":\"Invalid mode\"}"},
+    {CommandStatus::REJECTED, 409, "{\"status\":\"error\",\"message\":\"Mode change rejected\"}"},
+    {CommandStatus::PERSIST_FAILED, 500, "{\"status\":\"error\",\"message\":\"Failed to save mode\"}"},
+  };
+  for (const auto &c : cases) {
+    resetRequest();
+    wsCapture.args["mode"] = "boost";
+    dispatchStatus = c.status;
+    ASSERT_TRUE(PoolController::WebPortal::invokeRouteForTest("/api/mode", HTTP_POST));
+    ASSERT_EQ(wsCapture.lastStatusCode, c.httpCode);
+    ASSERT_STREQ(wsCapture.lastBody.c_str(), c.body);
+  }
+  return 0;
+}
+
+int test_settings_form_is_one_batch() {
+  test_begin("WebRuntimeCommands", "settings form becomes one atomic WEB command batch");
+  resetRequest();
+  wsCapture.args["type"] = "settings";
+  wsCapture.args["mode"] = "timer";
+  wsCapture.args["interval"] = "15";
+  wsCapture.args["max_pool"] = "27.5";
+  wsCapture.args["green"] = "3";
+  wsCapture.args["red"] = "30";
+  wsCapture.args["btn_no_press"] = "4096";
+  wsCapture.args["ntp_server"] = "time.example.org";
+  wsCapture.args["timer_start_h"] = "7";
+  ASSERT_TRUE(PoolController::WebPortal::invokeRouteForTest("/api/config", HTTP_POST));
+  ASSERT_EQ(wsCapture.lastStatusCode, 200);
+  ASSERT_EQ(capturedCount, 8U);
+  for (std::size_t i = 0; i < capturedCount; ++i) {
+    ASSERT_EQ(capturedCommands[i].source, PoolController::CommandSource::WEB);
+  }
+  const ControllerCommand *mode = findCaptured(ControllerCommandType::SET_MODE);
+  ASSERT_TRUE(mode != nullptr && mode->mode == PoolController::OperationMode::TIMER);
+  const ControllerCommand *interval = findCaptured(ControllerCommandType::SET_LOOP_INTERVAL);
+  ASSERT_TRUE(interval != nullptr && interval->integerValue == 15);
+  const ControllerCommand *maxPool = findCaptured(ControllerCommandType::SET_POOL_MAX_TEMPERATURE);
+  ASSERT_TRUE(maxPool != nullptr);
+  ASSERT_NEAR(maxPool->value, 27.5F, 0.001F);
+  const ControllerCommand *ntp = findCaptured(ControllerCommandType::SET_NTP_SERVER);
+  ASSERT_TRUE(ntp != nullptr);
+  ASSERT_STREQ(ntp->ntpServer.text.data(), "time.example.org");
+  // Only the hour was sent: the minutes keep the running timer value.
+  const ControllerCommand *timerStart = findCaptured(ControllerCommandType::SET_TIMER_START);
+  ASSERT_TRUE(timerStart != nullptr);
+  ASSERT_EQ(timerStart->hour, 7);
+  ASSERT_EQ(timerStart->minute, PoolController::operationModeNode.getTimerSetting().timerStartMinutes);
+  ASSERT_TRUE(findCaptured(ControllerCommandType::SET_TIMER_END) == nullptr);
+  return 0;
+}
+
+int test_settings_form_rejects_malformed_numbers() {
+  test_begin("WebRuntimeCommands", "a malformed settings field fails the whole form before dispatch");
+  const char *badValues[][2] = {{"max_pool", "abc"}, {"interval", "15s"}, {"timer_end_m", "300"}, {"mode", "turbo"}};
+  for (const auto &bad : badValues) {
+    resetRequest();
+    wsCapture.args["type"] = "settings";
+    wsCapture.args["hysteresis"] = "1.5";
+    wsCapture.args[bad[0]] = bad[1];
+    ASSERT_TRUE(PoolController::WebPortal::invokeRouteForTest("/api/config", HTTP_POST));
+    ASSERT_EQ(wsCapture.lastStatusCode, 400);
+    ASSERT_FALSE(dispatchCalled);
+  }
+  resetRequest();
+  wsCapture.args["type"] = "settings";
+  wsCapture.args["hysteresis"] = "1.5";
+  dispatchStatus = CommandStatus::PERSIST_FAILED;
+  ASSERT_TRUE(PoolController::WebPortal::invokeRouteForTest("/api/config", HTTP_POST));
+  ASSERT_EQ(wsCapture.lastStatusCode, 500);
+  return 0;
+}
+
+int test_factory_reset_restarts_only_when_applied() {
+  test_begin("WebRuntimeCommands", "factory reset is a command and reboots only after it was applied");
+  resetRequest();
+  const int restartsBefore = ESP.s_restartCount;
+  dispatchStatus = CommandStatus::PERSIST_FAILED;
+  ASSERT_TRUE(PoolController::WebPortal::invokeRouteForTest("/api/factory_reset", HTTP_GET));
+  ASSERT_EQ(capturedCount, 1U);
+  ASSERT_EQ(capturedCommand.type, ControllerCommandType::FACTORY_RESET);
+  ASSERT_EQ(wsCapture.lastStatusCode, 500);
+  ASSERT_EQ(ESP.s_restartCount, restartsBefore);
+
+  resetRequest();
+  ASSERT_TRUE(PoolController::WebPortal::invokeRouteForTest("/api/factory_reset", HTTP_GET));
+  ASSERT_EQ(wsCapture.lastStatusCode, 200);
+  ASSERT_EQ(ESP.s_restartCount, restartsBefore + 1);
+  return 0;
+}
+
+int test_sensor_mapping_is_a_command_batch() {
+  test_begin("WebRuntimeCommands", "sensor mapping form becomes typed mapping commands");
+  resetRequest();
+  wsCapture.args["solar_addr"] = "28aabbccddeeff11";
+  ASSERT_TRUE(PoolController::WebPortal::invokeRouteForTest("/api/sensors/map", HTTP_POST));
+  ASSERT_EQ(wsCapture.lastStatusCode, 200);
+  ASSERT_EQ(capturedCount, 1U);
+  ASSERT_EQ(capturedCommand.type, ControllerCommandType::SET_SENSOR_MAPPING);
+  ASSERT_EQ(capturedCommand.sensorRole, PoolController::SensorRole::SOLAR);
+  ASSERT_EQ(capturedCommand.sensorAddress[0], 0x28);
+  ASSERT_EQ(capturedCommand.sensorAddress[7], 0x11);
+
+  resetRequest();
+  wsCapture.args["solar_addr"] = "28AABBCCDDEEFF11";
+  wsCapture.args["pool_addr"] = "28AABBCCDDEEFFZZ";
+  ASSERT_TRUE(PoolController::WebPortal::invokeRouteForTest("/api/sensors/map", HTTP_POST));
+  ASSERT_EQ(wsCapture.lastStatusCode, 400);
+  ASSERT_STREQ(wsCapture.lastBody.c_str(), "{\"status\":\"error\",\"message\":\"Invalid pool address format\"}");
+  ASSERT_FALSE(dispatchCalled);
   return 0;
 }
 
@@ -170,7 +303,9 @@ int run_web_runtime_command_tests() {
   int passed = 0;
   int failed = 0;
   int (*tests[])() = {test_mode_validation, test_absolute_mode, test_cycle_mode, test_pump_validation, test_relative_pumps,
-    test_owner_rejection, test_adapter_does_not_mutate_nodes};
+    test_owner_rejection, test_status_codes_are_distinct, test_settings_form_is_one_batch,
+    test_settings_form_rejects_malformed_numbers, test_factory_reset_restarts_only_when_applied,
+    test_sensor_mapping_is_a_command_batch, test_adapter_does_not_mutate_nodes};
   for (auto test : tests) {
     if (test() == 0) {
       ++passed;

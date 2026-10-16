@@ -3,12 +3,10 @@
 
 #include "MqttRuntimeCommandAdapter.hpp"
 
-#include <cctype>
 #include <cstdint>
-#include <cmath>
-#include <cstdlib>
 #include <cstring>
 
+#include "CommandParsing.hpp"
 #include "ControllerCommandHandler.hpp"
 #include "LogCapture.hpp"
 #include "MqttPublisher.hpp"
@@ -20,6 +18,10 @@ namespace PoolController {
 
 namespace {
 
+using CommandParsing::parseFloatStrict;
+using CommandParsing::parseIntStrict;
+using CommandParsing::parseSensorAddress;
+
 bool topicEndsWith(const char *topic, const char *suffix) {
   const std::size_t topicLength = std::strlen(topic);
   const std::size_t suffixLength = std::strlen(suffix);
@@ -28,35 +30,6 @@ bool topicEndsWith(const char *topic, const char *suffix) {
 
 bool isDigit(char value) {
   return value >= '0' && value <= '9';
-}
-
-// The whole payload must be a number (surrounding whitespace allowed);
-// "abc" or "28abc" must not silently become 0 or 28.
-bool onlyWhitespaceFollows(const char *end) {
-  while (std::isspace(static_cast<unsigned char>(*end))) {
-    ++end;
-  }
-  return *end == '\0';
-}
-
-bool parseFloatStrict(const char *value, float &out) {
-  char *end = nullptr;
-  const float parsed = std::strtof(value, &end);
-  if (end == value || !onlyWhitespaceFollows(end) || !std::isfinite(parsed)) {
-    return false;
-  }
-  out = parsed;
-  return true;
-}
-
-bool parseIntStrict(const char *value, std::int32_t &out) {
-  char *end = nullptr;
-  const long long parsed = std::strtoll(value, &end, 10);
-  if (end == value || !onlyWhitespaceFollows(end) || parsed < INT32_MIN || parsed > INT32_MAX) {
-    return false;
-  }
-  out = static_cast<std::int32_t>(parsed);
-  return true;
 }
 
 bool parseTime(const char *value, std::size_t length, std::uint8_t &hour, std::uint8_t &minute) {
@@ -70,32 +43,6 @@ bool parseTime(const char *value, std::size_t length, std::uint8_t &hour, std::u
   }
   hour = static_cast<std::uint8_t>(parsedHour);
   minute = static_cast<std::uint8_t>(parsedMinute);
-  return true;
-}
-
-bool parseSensorAddress(const char *value, std::size_t length, std::array<std::uint8_t, 8> &address) {
-  if (length < 16) {
-    return false;
-  }
-  for (std::size_t i = 0; i < address.size(); ++i) {
-    const char hi = value[i * 2];
-    const char lo = value[i * 2 + 1];
-    const auto hexValue = [](char c) -> int {
-      if (c >= '0' && c <= '9')
-        return c - '0';
-      if (c >= 'a' && c <= 'f')
-        return 10 + c - 'a';
-      if (c >= 'A' && c <= 'F')
-        return 10 + c - 'A';
-      return -1;
-    };
-    const int high = hexValue(hi);
-    const int low = hexValue(lo);
-    if (high < 0 || low < 0) {
-      return false;
-    }
-    address[i] = static_cast<std::uint8_t>((high << 4) | low);
-  }
   return true;
 }
 

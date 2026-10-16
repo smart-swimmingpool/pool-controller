@@ -10,24 +10,15 @@
 #include "ESP32TemperatureNode.hpp"
 #include "OperationModeNode.hpp"
 #include "RelayModuleNode.hpp"
+#include "test_assert.h"
 
 extern void test_begin(const char *suite, const char *name);
 extern void test_pass(const char *file, int line);
 extern void test_fail(const char *file, int line, const char *msg);
 extern void test_suite_end(const char *name, int passed, int failed);
 
-#define ASSERT_TRUE(cond)                                     \
-  do {                                                        \
-    if (!(cond)) {                                            \
-      test_fail(__FILE__, __LINE__, "Expected true: " #cond); \
-      return 1;                                               \
-    }                                                         \
-    test_pass(__FILE__, __LINE__);                            \
-  } while (0)
-
-#define ASSERT_EQ(a, b) ASSERT_TRUE((a) == (b))
-
 using PoolController::CommandSource;
+using PoolController::CommandStatus;
 using PoolController::ControllerCommand;
 using PoolController::ControllerCommandHandler;
 using PoolController::ControllerCommandType;
@@ -339,6 +330,166 @@ static int test_factory_reset_owns_runtime_reset_mutation() {
   return 0;
 }
 
+namespace {
+/** @brief Run one command with NVS writes failing, restoring the hook afterwards. */
+CommandStatus executeWithFailingSave(ControllerCommandHandler &handler, const ControllerCommand *commands, std::size_t count) {
+  PoolController::ConfigManager::_saveFails = true;
+  const CommandStatus status = handler.execute(commands, count);
+  PoolController::ConfigManager::_saveFails = false;
+  return status;
+}
+}  // namespace
+
+static int test_status_separates_invalid_rejected_and_persist_failures() {
+  test_begin("ControllerCommandHandler", "status distinguishes invalid values, policy rejections and NVS failures");
+  HandlerFixture fixture;
+  ControllerCommand setpoint{};
+  setpoint.type = ControllerCommandType::SET_SOLAR_MIN_TEMPERATURE;
+  setpoint.value = 101.0F;
+  ASSERT_EQ(fixture.handler.execute(setpoint), CommandStatus::INVALID);
+
+  fixture.operation.setMode(OperationMode::AUTO);
+  ControllerCommand pump{};
+  pump.type = ControllerCommandType::SET_SOLAR_PUMP_MANUAL;
+  pump.enabled = true;
+  ASSERT_EQ(fixture.handler.execute(pump), CommandStatus::REJECTED);
+
+  setpoint.value = 40.0F;
+  ASSERT_EQ(executeWithFailingSave(fixture.handler, &setpoint, 1), CommandStatus::PERSIST_FAILED);
+  ASSERT_EQ(fixture.handler.execute(setpoint), CommandStatus::APPLIED);
+  return 0;
+}
+
+static int test_batch_is_all_or_nothing() {
+  test_begin("ControllerCommandHandler", "one invalid command leaves the whole batch unapplied");
+  HandlerFixture fixture;
+  auto &settings = PoolController::ConfigManager::getSettings();
+  settings.opMode = "auto";
+  settings.tempMaxPool = 28.0F;
+  settings.loopInterval = 30;
+  fixture.operation.setMode(OperationMode::AUTO);
+  fixture.operation.setPoolMaxTemperature(28.0F);
+
+  ControllerCommand batch[3]{};
+  batch[0].type = ControllerCommandType::SET_MODE;
+  batch[0].mode = OperationMode::BOOST;
+  batch[1].type = ControllerCommandType::SET_POOL_MAX_TEMPERATURE;
+  batch[1].value = 30.0F;
+  batch[2].type = ControllerCommandType::SET_LOOP_INTERVAL;
+  batch[2].integerValue = 0;  // out of range
+  ASSERT_EQ(fixture.handler.execute(batch, 3), CommandStatus::INVALID);
+  ASSERT_EQ(fixture.operation.getTypedMode(), OperationMode::AUTO);
+  ASSERT_EQ(fixture.operation.getPoolMaxTemperature(), 28.0F);
+  ASSERT_EQ(settings.opMode.compare("auto"), 0);
+  ASSERT_EQ(settings.tempMaxPool, 28.0F);
+  ASSERT_EQ(settings.loopInterval, 30);
+
+  batch[2].integerValue = 15;
+  ASSERT_EQ(fixture.handler.execute(batch, 3), CommandStatus::APPLIED);
+  ASSERT_EQ(fixture.operation.getTypedMode(), OperationMode::BOOST);
+  ASSERT_EQ(settings.tempMaxPool, 30.0F);
+  ASSERT_EQ(settings.loopInterval, 15);
+  return 0;
+}
+
+static int test_persist_failure_rolls_back_every_setting_kind() {
+  test_begin("ControllerCommandHandler", "failed persistence keeps timezone, buttons, NTP and mode unchanged");
+  HandlerFixture fixture;
+  auto &settings = PoolController::ConfigManager::getSettings();
+  auto &ntp = PoolController::ConfigManager::getNtp();
+  settings.timezoneIndex = 0;
+  settings.btn2Min = 3520;
+  settings.opMode = "auto";
+  ntp.server = "pool.ntp.org";
+  fixture.operation.setMode(OperationMode::AUTO);
+
+  ControllerCommand batch[4]{};
+  batch[0].type = ControllerCommandType::SET_TIMEZONE;
+  batch[0].integerValue = 0;
+  batch[1].type = ControllerCommandType::SET_BUTTON_2_MIN;
+  batch[1].integerValue = 3000;
+  batch[2].type = ControllerCommandType::SET_NTP_SERVER;
+  ASSERT_TRUE(batch[2].ntpServer.assign("time.example.org", 16));
+  batch[3].type = ControllerCommandType::CYCLE_MODE;
+  ASSERT_EQ(executeWithFailingSave(fixture.handler, batch, 4), CommandStatus::PERSIST_FAILED);
+  ASSERT_EQ(settings.btn2Min, 3520);
+  ASSERT_EQ(ntp.server.compare("pool.ntp.org"), 0);
+  ASSERT_EQ(settings.opMode.compare("auto"), 0);
+  ASSERT_EQ(fixture.operation.getTypedMode(), OperationMode::AUTO);
+  return 0;
+}
+
+static int test_enter_manual_toggle_is_atomic() {
+  test_begin("ControllerCommandHandler", "Olimex toggle enters manual mode and toggles only if the mode was saved");
+  HandlerFixture fixture;
+  auto &settings = PoolController::ConfigManager::getSettings();
+  settings.opMode = "auto";
+  fixture.operation.setMode(OperationMode::AUTO);
+  fixture.poolPump.setSwitch(false);
+
+  ControllerCommand toggle{};
+  toggle.type = ControllerCommandType::TOGGLE_POOL_PUMP;
+  toggle.toggleModePolicy = PoolController::PumpToggleModePolicy::ENTER_MANUAL;
+  ASSERT_EQ(executeWithFailingSave(fixture.handler, &toggle, 1), CommandStatus::PERSIST_FAILED);
+  ASSERT_EQ(fixture.operation.getTypedMode(), OperationMode::AUTO);
+  ASSERT_FALSE(fixture.poolPump.getSwitch());
+
+  PoolController::ControllerCommandResult result{};
+  ASSERT_EQ(fixture.handler.execute(toggle, &result), CommandStatus::APPLIED);
+  ASSERT_EQ(fixture.operation.getTypedMode(), OperationMode::MANUAL);
+  ASSERT_EQ(settings.opMode.compare("manu"), 0);
+  ASSERT_TRUE(fixture.poolPump.getSwitch());
+  ASSERT_TRUE(result.hasPumpState && result.pumpState);
+  return 0;
+}
+
+static int test_time_loss_bounds_can_move_together() {
+  test_begin("ControllerCommandHandler", "one batch may raise green above the old red bound");
+  HandlerFixture fixture;
+  auto &settings = PoolController::ConfigManager::getSettings();
+  settings.timeLossGreenHours = 2;
+  settings.timeLossRedHours = 24;
+
+  ControllerCommand batch[2]{};
+  batch[0].type = ControllerCommandType::SET_TIME_LOSS_GREEN_HOURS;
+  batch[0].integerValue = 30;
+  batch[1].type = ControllerCommandType::SET_TIME_LOSS_RED_HOURS;
+  batch[1].integerValue = 48;
+  ASSERT_EQ(fixture.handler.execute(batch, 2), CommandStatus::APPLIED);
+  ASSERT_EQ(settings.timeLossGreenHours, 30);
+  ASSERT_EQ(settings.timeLossRedHours, 48);
+  return 0;
+}
+
+static int test_factory_reset_keeps_relay_state_when_save_fails() {
+  test_begin("ControllerCommandHandler", "factory reset clears relay/mode NVS only after the defaults were saved");
+  HandlerFixture fixture;
+  Preferences relayState;
+  relayState.begin("pool-pump", false);
+  relayState.putString("state", "on");
+  relayState.end();
+
+  ControllerCommand reset{};
+  reset.type = ControllerCommandType::FACTORY_RESET;
+  ASSERT_EQ(executeWithFailingSave(fixture.handler, &reset, 1), CommandStatus::PERSIST_FAILED);
+  relayState.begin("pool-pump", true);
+  const bool relayStateKept = relayState.getString("state") == "on";
+  ASSERT_TRUE(relayStateKept);
+  relayState.end();
+
+  ControllerCommand batch[2]{};
+  batch[0].type = ControllerCommandType::FACTORY_RESET;
+  batch[1].type = ControllerCommandType::SET_LOOP_INTERVAL;
+  batch[1].integerValue = 10;
+  ASSERT_EQ(fixture.handler.execute(batch, 2), CommandStatus::INVALID);
+
+  ASSERT_EQ(fixture.handler.execute(reset), CommandStatus::APPLIED);
+  relayState.begin("pool-pump", true);
+  ASSERT_EQ(relayState.getString("state").length(), 0U);
+  relayState.end();
+  return 0;
+}
+
 int run_controller_command_handler_tests() {
   int passed = 0;
   int failed = 0;
@@ -347,7 +498,9 @@ int run_controller_command_handler_tests() {
     test_sensor_mapping_is_persisted_and_applied, test_setting_missing_sensor_role_preserves_existing_mapping,
     test_sensor_mapping_read_failure_does_not_overwrite_existing_role, test_loop_interval_updates_all_runtime_nodes,
     test_loop_interval_persistence_failure_keeps_runtime_unchanged, test_time_loss_thresholds_preserve_ordering,
-    test_factory_reset_owns_runtime_reset_mutation};
+    test_factory_reset_owns_runtime_reset_mutation, test_status_separates_invalid_rejected_and_persist_failures,
+    test_batch_is_all_or_nothing, test_persist_failure_rolls_back_every_setting_kind, test_enter_manual_toggle_is_atomic,
+    test_time_loss_bounds_can_move_together, test_factory_reset_keeps_relay_state_when_save_fails};
   for (auto test : tests) {
     if (test() == 0) {
       ++passed;

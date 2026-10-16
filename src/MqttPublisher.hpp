@@ -14,6 +14,8 @@
 #include <AsyncMqttClient.h>
 #include <cstdint>
 
+#include "ControllerSettingLimits.hpp"
+
 namespace PoolController {
 
 /**
@@ -68,7 +70,7 @@ private:
     const char *entityCategory = nullptr, const char *deviceClass = nullptr);
   static void publishSelectDiscovery(const char *objectId, const char *name, const char *const *options, size_t optionCount,
     const char *icon = nullptr, const char *entityCategory = nullptr);
-  static void publishNumberDiscovery(const char *objectId, const char *name, double minVal, double maxVal, double step,
+  static void publishNumberDiscovery(const char *objectId, const char *name, const SettingRange &range, double step,
     const char *unit = nullptr, const char *icon = nullptr, const char *entityCategory = nullptr);
   static void publishTimeDiscovery(
     const char *objectId, const char *name, const char *icon = nullptr, const char *entityCategory = nullptr);
