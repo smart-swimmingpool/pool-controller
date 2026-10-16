@@ -53,6 +53,10 @@ extern int run_sensor_slots_tests();
 extern int run_sensor_cycle_tests();
 extern int run_core_scheduler_tests();
 extern int run_degradation_manager_tests();
+extern int run_controller_contract_tests();
+extern int run_controller_snapshot_diagnostics_tests();
+extern int run_controller_snapshot_store_tests();
+extern int run_controller_command_queue_tests();
 
 int main() {
   printf("\n══════════════════════════════════════════════════\n");
@@ -78,6 +82,10 @@ int main() {
   total += run_sensor_cycle_tests();
   total += run_core_scheduler_tests();
   total += run_degradation_manager_tests();
+  total += run_controller_contract_tests();
+  total += run_controller_snapshot_diagnostics_tests();
+  total += run_controller_snapshot_store_tests();
+  total += run_controller_command_queue_tests();
   (void)total;
 
   printf("\n══════════════════════════════════════════════════\n");

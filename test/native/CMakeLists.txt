@@ -93,6 +93,10 @@ set(TEST_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_sensor_cycle.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_core_scheduler.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_degradation_manager.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_controller_contracts.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_controller_snapshot_diagnostics.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_controller_snapshot_store.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_controller_command_queue.cpp
 )
 
 add_executable(test_runner
