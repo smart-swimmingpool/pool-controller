@@ -541,7 +541,6 @@ int run_mqttpublisher_tests() {
     test_suite_end("MqttPublisher::firmware_install_deferred", missing == 0 ? 1 : 0, missing);
   }
 
-
   // ── Test: Handle MQTT pump command in manual mode ──
   {
     test_begin("MqttPublisher", "handle pump command in manual mode");
