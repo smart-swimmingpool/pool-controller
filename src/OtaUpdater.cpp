@@ -24,7 +24,6 @@
 #include "NetworkManager.hpp"
 #include "TimeClientHelper.hpp"
 #include "LogCapture.hpp"
-#include "OtaDownloadSession.hpp"
 
 namespace PoolController {
 
@@ -36,7 +35,7 @@ namespace PoolController {
 //   openssl s_client -connect api.github.com:443 -showcerts
 // The previously pinned ISRG Root X1 (Let's Encrypt) does NOT appear anywhere
 // in GitHub's chain and caused every OTA check/download to fail TLS
-// verification silently (fetchLatestRelease()/downloadAndApply() both
+// verification silently (fetchLatestRelease() and the firmware download both
 // returned false with no HTTP-level diagnostic beyond "connection failed").
 // Valid until 2038-01-18; if GitHub rotates its CA again, this constant
 // needs updating (see openspec/specs/github-ca-chain.spec.md for the
@@ -60,6 +59,18 @@ static const char kGitHubRootCA[] PROGMEM = "-----BEGIN CERTIFICATE-----\n"
                                             "RNZu9YO6bVi9JNlWSOrvxKJGgYhqOkbRqZtNyWHa0V1Xahg=\n"
                                             "-----END CERTIFICATE-----\n";
 
+namespace {
+
+// Pin the root CA GitHub's chain terminates at (see kGitHubRootCA above).
+// A CA bundle (setCACertBundle) is not embedded in this project yet — see
+// openspec/specs/github-ca-chain.spec.md, tasks T1/T2.
+void configureGitHubClient(WiFiClientSecure &client) {
+  client.setCACert(kGitHubRootCA);
+  client.setTimeout(10000);
+}
+
+}  // namespace
+
 // Connection, HTTP client and download progress, kept across loop()
 // iterations while the firmware streams in. Allocated only for the duration
 // of an update.
@@ -76,8 +87,7 @@ String OtaUpdater::latestVersion_;
 String OtaUpdater::releaseUrl_;
 String OtaUpdater::downloadUrl_;
 bool OtaUpdater::updateAvailable_ = false;
-bool OtaUpdater::updateInProgress_ = false;
-std::atomic<bool> OtaUpdater::updateRequested_{false};
+std::atomic<OtaUpdater::State> OtaUpdater::state_{OtaUpdater::State::IDLE};
 std::unique_ptr<OtaUpdater::DownloadContext> OtaUpdater::download_;
 int OtaUpdater::progress_ = 0;
 String OtaUpdater::statusMessage_;
@@ -89,32 +99,42 @@ uint8_t OtaUpdater::clockSyncFailCount_ = 0;
 
 void OtaUpdater::begin() {
   LOG_INFO("✓ OTA Updater initialized (current: %s)\n", currentVersion_.c_str());
+  state_ = State::IDLE;
+  progress_ = 0;
   statusMessage_ = "Idle";
 }
 
 void OtaUpdater::requestUpdate() {
-  updateRequested_ = true;
+  State expected = State::IDLE;
+  state_.compare_exchange_strong(expected, State::REQUESTED);
 }
 
 bool OtaUpdater::isUpdateRequested() {
-  return updateRequested_.load();
+  return state_.load() == State::REQUESTED;
 }
 
 void OtaUpdater::loop() {
-  // Stream a running download: one bounded step, then back to the main loop
-  if (download_) {
-    stepDownload();
+  switch (state_.load()) {
+  case State::DOWNLOADING:
+    // Stream a running download: one bounded step, then back to the main loop.
+    // After a complete flash download_ is gone and the device reboots.
+    if (download_) {
+      stepDownload();
+    }
     return;
-  }
-
-  // Start a requested update on the loop task (requests come from other tasks)
-  if (updateRequested_.exchange(false)) {
+  case State::REQUESTED:
+    state_ = State::IDLE;
     startUpdate();
     return;
+  case State::CONNECTING:
+    // Only set inside startUpdate(), which returns in another state
+    return;
+  case State::IDLE:
+    break;
   }
 
   // Periodic check when WiFi is connected and no update is in progress
-  if (NetworkManager::isWiFiConnected() && !updateInProgress_) {
+  if (NetworkManager::isWiFiConnected()) {
     unsigned long now = millis();
 
     // Check if we're in clock sync backoff period
@@ -167,7 +187,8 @@ bool OtaUpdater::isUpdateAvailable() {
 }
 
 bool OtaUpdater::isUpdateInProgress() {
-  return updateInProgress_;
+  const State state = state_.load();
+  return state == State::CONNECTING || state == State::DOWNLOADING;
 }
 
 String OtaUpdater::getCurrentVersion() {
@@ -200,7 +221,7 @@ String OtaUpdater::getStatusMessage() {
 // ── Check for Update ──
 
 bool OtaUpdater::checkForUpdate() {
-  if (updateInProgress_)
+  if (isUpdateInProgress())
     return false;
 
   statusMessage_ = "Checking for updates...";
@@ -229,7 +250,7 @@ bool OtaUpdater::checkForUpdate() {
 // ── Start Update ──
 
 bool OtaUpdater::startUpdate() {
-  if (updateInProgress_) {
+  if (isUpdateInProgress()) {
     LOG_WARN("OTA: Update already in progress\n");
     return false;
   }
@@ -260,7 +281,7 @@ bool OtaUpdater::startUpdate() {
   }
 
   // Config persists in NVS — survives OTA natively, no backup needed
-  updateInProgress_ = true;
+  state_ = State::CONNECTING;
   // Don't clear updateAvailable_ yet — preserved so UI can retry on failure (P2 review fix)
   progress_ = 0;
   statusMessage_ = "Connecting...";
@@ -272,6 +293,7 @@ bool OtaUpdater::startUpdate() {
     return false;
   }
   // The firmware is streamed by loop() — one bounded step per iteration
+  state_ = State::DOWNLOADING;
   statusMessage_ = "Downloading... 0%";
   return true;
 }
@@ -307,16 +329,7 @@ bool OtaUpdater::fetchLatestRelease() {
   }
 
   WiFiClientSecure client;
-  // Pin the actual root CA GitHub's chain terminates at (see kGitHubRootCA
-  // comment above). NOTE: `setCACertBundle(x509_crt_bundle)` was previously
-  // attempted here behind an `#if defined(x509_crt_bundle)` guard, but
-  // that symbol is never actually defined in this project (it requires
-  // generating and embedding a CA bundle binary — see
-  // openspec/specs/github-ca-chain.spec.md, tasks T1/T2, still open) — the
-  // guard was always false and silently fell back to this same single-cert
-  // path, so it was removed as dead code (YAGNI).
-  client.setCACert(kGitHubRootCA);
-  client.setTimeout(10000);
+  configureGitHubClient(client);
 
   // Build API URL
   String url = String("https://api.github.com/repos/") + GITHUB_REPO + "/releases/latest";
@@ -448,16 +461,7 @@ const char *OtaUpdater::beginDownload(const String &url) {
     LOG_ERROR("OTA: Not enough memory to start the download\n");
     return "Error: Not enough memory";
   }
-  // Pin the actual root CA GitHub's chain terminates at (see kGitHubRootCA
-  // comment above). NOTE: `setCACertBundle(x509_crt_bundle)` was previously
-  // attempted here behind an `#if defined(x509_crt_bundle)` guard, but
-  // that symbol is never actually defined in this project (it requires
-  // generating and embedding a CA bundle binary — see
-  // openspec/specs/github-ca-chain.spec.md, tasks T1/T2, still open) — the
-  // guard was always false and silently fell back to this same single-cert
-  // path, so it was removed as dead code (YAGNI).
-  ctx->client.setCACert(kGitHubRootCA);
-  ctx->client.setTimeout(10000);
+  configureGitHubClient(ctx->client);
 
   HTTPClient &http = ctx->http;
   http.begin(ctx->client, url);
@@ -520,11 +524,11 @@ const char *OtaUpdater::beginDownload(const String &url) {
 void OtaUpdater::stepDownload() {
   DownloadContext &ctx = *download_;
   uint8_t buffer[kOtaBufferSize];
-  OtaDownloadSession::Result result =
+  const OtaDownloadSession::Result result =
     ctx.session.step(*ctx.http.getStreamPtr(), Update, ctx.http.connected(), millis(), buffer, sizeof(buffer));
 
   if (result == OtaDownloadSession::Result::IN_PROGRESS) {
-    int progress = ctx.session.progressPercent();
+    const int progress = ctx.session.progressPercent();
     if (progress != progress_) {
       progress_ = progress;
       statusMessage_ = "Downloading... " + String(progress_) + "%";
@@ -532,28 +536,36 @@ void OtaUpdater::stepDownload() {
     return;
   }
 
-  size_t written = ctx.session.bytesWritten();
-  size_t total = ctx.session.totalSize();
+  const size_t written = ctx.session.bytesWritten();
+  const size_t total = ctx.session.totalSize();
   ctx.http.end();
   download_.reset();
 
   if (result == OtaDownloadSession::Result::COMPLETE) {
-    if (!Update.end(true)) {
-      LOG_ERROR("OTA: Update.end() failed: %s\n", Update.errorString());
-      failUpdate("Update failed!");
-      return;
-    }
-    LOG_INFO("OTA: Update successful! Rebooting...\n");
-    progress_ = 100;
-    statusMessage_ = "Update successful! Rebooting...";
-    updateAvailable_ = false;
-    Serial.flush();
-    NetworkManager::restart();
+    completeDownload();
+  } else {
+    abortDownload(result, written, total);
+  }
+}
+
+void OtaUpdater::completeDownload() {
+  if (!Update.end(true)) {
+    LOG_ERROR("OTA: Update.end() failed: %s\n", Update.errorString());
+    failUpdate("Update failed!");
     return;
   }
+  LOG_INFO("OTA: Update successful! Rebooting...\n");
+  progress_ = 100;
+  statusMessage_ = "Update successful! Rebooting...";
+  updateAvailable_ = false;
+  Serial.flush();
+  NetworkManager::restart();
+}
 
+void OtaUpdater::abortDownload(OtaDownloadSession::Result result, size_t written, size_t total) {
   const char *reason = "failed";
   const char *message = "Update failed!";
+  // No default: the compiler flags a new Result value that is not classified here.
   switch (result) {
   case OtaDownloadSession::Result::STALLED:
     reason = "stalled";
@@ -569,8 +581,9 @@ void OtaUpdater::stepDownload() {
   case OtaDownloadSession::Result::DISCONNECTED:
     reason = "connection closed";
     break;
-  default:
-    break;
+  case OtaDownloadSession::Result::IN_PROGRESS:
+  case OtaDownloadSession::Result::COMPLETE:
+    break;  // handled by stepDownload()
   }
   LOG_ERROR("OTA: Download %s at byte %u of %u — aborting (%s)\n", reason, static_cast<unsigned>(written),
     static_cast<unsigned>(total), Update.errorString());
@@ -579,7 +592,7 @@ void OtaUpdater::stepDownload() {
 }
 
 void OtaUpdater::failUpdate(const char *message) {
-  updateInProgress_ = false;
+  state_ = State::IDLE;
   statusMessage_ = message;
   LOG_ERROR("OTA: Update failed!\n");
   // updateAvailable_ stays true so the user can retry

@@ -14,6 +14,8 @@
 #include <atomic>
 #include <memory>
 
+#include "OtaDownloadSession.hpp"
+
 namespace PoolController {
 
 /**
@@ -63,14 +65,15 @@ public:
   /// Check GitHub for a newer release. Returns true if update available.
   static bool checkForUpdate();
 
-  /// Start the OTA update: connect and request the firmware (bounded by the
-  /// client timeout), then return. The body is streamed by loop(), one
-  /// bounded step per iteration, so the control loop keeps running.
+  /// Start the OTA update now: connect and request the firmware, then return.
+  /// The TLS connect blocks once, bounded by the client timeout; the body is
+  /// then streamed by loop(), one bounded step per iteration.
   /// Returns true if the download started. Call only from the loop task.
+  /// Web UI and MQTT use requestUpdate(); this is the step loop() runs.
   static bool startUpdate();
 
-  /// Request an OTA update from another task (e.g. the MQTT callback on the
-  /// AsyncTCP task). The update is started by loop() on the loop task.
+  /// Request an OTA update (Web UI, MQTT). loop() starts it on its next
+  /// iteration. Ignored while an update is already requested or running.
   static void requestUpdate();
 
   /// True while a requested update has not yet been started by loop().
@@ -104,7 +107,18 @@ private:
   /// @return nullptr on success, otherwise the user-facing error message.
   static const char *beginDownload(const String &url);
   static void stepDownload();
+  static void completeDownload();
+  static void abortDownload(OtaDownloadSession::Result result, size_t written, size_t total);
   static void failUpdate(const char *message);
+
+  /// Update lifecycle. REQUESTED → CONNECTING → DOWNLOADING → reboot,
+  /// or back to IDLE on failure.
+  enum class State : uint8_t {
+    IDLE,         ///< Nothing to do; periodic release checks may run
+    REQUESTED,    ///< requestUpdate() was called; loop() starts it next
+    CONNECTING,   ///< startUpdate() is connecting and validating the firmware
+    DOWNLOADING,  ///< download_ streams the firmware, one step per loop()
+  };
 
   // ── State ──
   static String currentVersion_;
@@ -112,8 +126,7 @@ private:
   static String releaseUrl_;
   static String downloadUrl_;
   static bool updateAvailable_;
-  static bool updateInProgress_;
-  static std::atomic<bool> updateRequested_;
+  static std::atomic<State> state_;
   static std::unique_ptr<DownloadContext> download_;
   static int progress_;
   static String statusMessage_;

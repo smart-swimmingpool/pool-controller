@@ -213,6 +213,36 @@ int run_ota_updater_tests() {
   }
   test_suite_end("OtaUpdater::download-happy-path", 1, 0);
 
+  test_begin("OtaUpdater", "requestUpdate is started by loop() and ignored while an update runs");
+  {
+    setUpdateAvailableState();
+    NetworkManager::setWiFiConnected(true);
+    httpCapture.httpCode = 500;
+    OtaUpdater::requestUpdate();
+    ASSERT_TRUE(OtaUpdater::isUpdateRequested());
+    ASSERT_TRUE(!OtaUpdater::isUpdateInProgress());
+    OtaUpdater::loop();
+    ASSERT_TRUE(!OtaUpdater::isUpdateRequested());
+    ASSERT_TRUE(!OtaUpdater::isUpdateInProgress());
+    ASSERT_EQ(OtaUpdater::getStatusMessage(), String("Error: Download failed"));
+
+    // A second request while a download streams must not queue a restart.
+    httpCapture.httpCode = 200;
+    httpCapture.contentSize = 128 * 1024;
+    httpCapture.responseBody.assign(4096, 'F');
+    mockStreamState.reset();
+    ASSERT_TRUE(OtaUpdater::startUpdate());
+    OtaUpdater::requestUpdate();
+    ASSERT_TRUE(OtaUpdater::isUpdateInProgress());
+    ASSERT_TRUE(!OtaUpdater::isUpdateRequested());
+    for (int i = 0; i < 1000 && OtaUpdater::getProgress() < 100; ++i) {
+      OtaUpdater::loop();
+    }
+    ASSERT_EQ(OtaUpdater::getProgress(), 100);
+    OtaUpdater::loop();  // nothing left to stream before the reboot
+  }
+  test_suite_end("OtaUpdater::request-update", 1, 0);
+
   test_begin("OtaUpdater", "progress and status expose the OTA lifecycle");
   {
     OtaUpdater::begin();
