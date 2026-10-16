@@ -28,7 +28,6 @@ extern ESP32TemperatureNode ctrlTemperatureNode;
 namespace {
 TaskHandle_t sensorTaskHandle = nullptr;
 uint32_t lastDallasReadingMs = 0;
-constexpr uint32_t CONVERSION_DELAY_MS = 800;  // >= 12-bit DS18B20 conversion
 }  // namespace
 
 void sensorTaskFunc(void *) {
@@ -51,9 +50,9 @@ void sensorTaskFunc(void *) {
       // DallasTemperatureNode::begin(), so the conversion starts immediately
       // and this task yields while the sensors convert.
       runDallasMeasurementCycle(solarTemperatureNode, poolTemperatureNode, [watchdogRegistered] {
-        vTaskDelay(pdMS_TO_TICKS(CONVERSION_DELAY_MS));
+        vTaskDelay(pdMS_TO_TICKS(DallasTemperatureNode::CONVERSION_DELAY_MS));
         if (watchdogRegistered) {
-          SystemMonitor::feedWatchdogFromTask();
+          SystemMonitor::feedWatchdog();
         }
       });
     }
@@ -62,7 +61,7 @@ void sensorTaskFunc(void *) {
     ctrlTemperatureNode.loop();
 
     if (watchdogRegistered) {
-      SystemMonitor::feedWatchdogFromTask();
+      SystemMonitor::feedWatchdog();
     }
     vTaskDelay(pdMS_TO_TICKS(100));
   }

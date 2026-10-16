@@ -299,7 +299,8 @@ public:
   static void setFreeHeapForTest(uint32_t v) { s_mockFreeHeap = v; }
   static uint32_t getMaxAllocHeap() { return 45000; }
   static uint32_t getEfuseMac() { return 0xDEADBEEF; }
-  static void restart() {}
+  static int s_restartCount;  ///< Incremented by restart() so tests can assert reboots
+  static void restart() { ++s_restartCount; }
   static uint32_t getFlashChipSize() { return 4 * 1024 * 1024; }
   static uint32_t getSketchSize() { return 1200000; }
   static uint32_t getFreeSketchSpace() { return 800000; }
