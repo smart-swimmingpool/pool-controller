@@ -4,10 +4,12 @@
 - [x] Route processed MQTT runtime commands through typed `ControllerCommand` values.
 - [x] Preserve independent MQTT timer-start and timer-end updates without stale-state reconstruction.
 - [x] Route `/api/mode` and `/api/pump` Web mutations through the same command handler using owner-resolved relative actions.
-- [ ] Route the remaining Web runtime mutations through the same command handler.
-- [ ] Route local UI runtime mutations through the same command handler.
+- [x] Route the remaining Web runtime mutations (settings form, factory reset, sensor mapping) through the same command handler.
+- [x] Route local UI runtime mutations (NORVI menu, Olimex encoder UI) through the same command handler.
+- [x] Report command outcomes as `CommandStatus` (invalid / rejected / persist failed) and apply multi-field forms as one atomic batch.
+- [x] Remove the legacy `MqttPublisher` runtime-command path so MQTT commands have a single parser.
 - [x] Keep provisioning/authentication secrets and specialized calibration workflows behind their dedicated service boundaries.
-- [x] Publish `SystemSnapshot` from the Core-1 owner after state updates.
+- [ ] Publish `SystemSnapshot` from the Core-1 owner after state updates (publisher built and tested; wired into `loop()` together with its first reader).
 - [x] Populate sensor mapping address/configured/found state in the snapshot.
 - [x] Preserve independently configured sensor mappings when the other role is absent.
 - [x] Populate detected-sensor inventory, local IPv4 state and configured NTP server in the snapshot.
