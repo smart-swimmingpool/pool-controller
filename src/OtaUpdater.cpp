@@ -267,8 +267,8 @@ bool OtaUpdater::startUpdate() {
 
   LOG_INFO("OTA: Starting download from %s\n", downloadUrl_.c_str());
 
-  if (!beginDownload(downloadUrl_)) {
-    failUpdate("Update failed!");
+  if (const char *error = beginDownload(downloadUrl_)) {
+    failUpdate(error);
     return false;
   }
   // The firmware is streamed by loop() — one bounded step per iteration
@@ -442,11 +442,11 @@ bool OtaUpdater::isNewerVersion(const String &current, const String &latest) {
 
 // ── OTA Download + Flash ──
 
-bool OtaUpdater::beginDownload(const String &url) {
+const char *OtaUpdater::beginDownload(const String &url) {
   std::unique_ptr<DownloadContext> ctx(new (std::nothrow) DownloadContext());
   if (!ctx) {
     LOG_ERROR("OTA: Not enough memory to start the download\n");
-    return false;
+    return "Error: Not enough memory";
   }
   // Pin the actual root CA GitHub's chain terminates at (see kGitHubRootCA
   // comment above). NOTE: `setCACertBundle(x509_crt_bundle)` was previously
@@ -470,14 +470,14 @@ bool OtaUpdater::beginDownload(const String &url) {
   if (httpCode != 200) {
     LOG_ERROR("OTA: Download returned HTTP %d\n", httpCode);
     http.end();
-    return false;
+    return "Error: Download failed";
   }
 
   int totalSize = http.getSize();
   if (totalSize <= 0) {
     LOG_ERROR("OTA: Invalid content size\n");
     http.end();
-    return false;
+    return "Error: Invalid firmware size";
   }
 
   // Verify firmware size is reasonable (prevents integer overflow and bad downloads)
@@ -487,23 +487,21 @@ bool OtaUpdater::beginDownload(const String &url) {
 
   if (static_cast<size_t>(totalSize) > kMaxFirmwareSize) {
     LOG_ERROR("OTA: Firmware too large: %d bytes (max %u)\n", totalSize, kMaxFirmwareSize);
-    statusMessage_ = "Error: Firmware too large";
     http.end();
-    return false;
+    return "Error: Firmware too large";
   }
 
   if (static_cast<size_t>(totalSize) < kMinFirmwareSize) {
     LOG_ERROR("OTA: Firmware too small: %d bytes (min %u)\n", totalSize, kMinFirmwareSize);
-    statusMessage_ = "Error: Firmware too small";
     http.end();
-    return false;
+    return "Error: Firmware too small";
   }
 
   // Verify we have sufficient space for this specific firmware size
   if (!hasSufficientSpace(static_cast<size_t>(totalSize))) {
     LOG_ERROR("OTA: Insufficient space for this firmware\n");
     http.end();
-    return false;
+    return kInsufficientSpaceMessage;
   }
 
   LOG_DEBUG("OTA: Download size: %d bytes\n", totalSize);
@@ -511,12 +509,12 @@ bool OtaUpdater::beginDownload(const String &url) {
   if (!Update.begin(totalSize)) {
     LOG_ERROR("OTA: Update.begin() failed: %s\n", Update.errorString());
     http.end();
-    return false;
+    return "Error: Could not start flash write";
   }
 
   ctx->session = OtaDownloadSession(millis(), static_cast<size_t>(totalSize), kDownloadStallTimeoutMs, kDownloadTotalTimeoutMs);
   download_ = std::move(ctx);
-  return true;
+  return nullptr;
 }
 
 void OtaUpdater::stepDownload() {
@@ -613,7 +611,7 @@ bool OtaUpdater::hasSufficientSpace(size_t firmwareSize) {
 
   if (availableSpace < requiredSpace) {
     LOG_ERROR("OTA: Insufficient flash space. Need %u bytes, have %u bytes\n", requiredSpace, availableSpace);
-    statusMessage_ = "Error: Insufficient flash space";
+    statusMessage_ = kInsufficientSpaceMessage;
     return false;
   }
 

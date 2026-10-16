@@ -185,23 +185,27 @@ int run_ota_updater_tests() {
   }
   test_suite_end("OtaUpdater::space", 1, 0);
 
-  test_begin("OtaUpdater", "downloadAndApply rejects implausible content sizes");
+  test_begin("OtaUpdater", "startUpdate rejects failed downloads with a specific status message");
   {
     setUpdateAvailableState();
     NetworkManager::setWiFiConnected(true);
     // HTTP 404 during download.
     httpCapture.httpCode = 404;
     ASSERT_TRUE(!OtaUpdater::startUpdate());
+    ASSERT_EQ(OtaUpdater::getStatusMessage(), String("Error: Download failed"));
     // Invalid (non-positive) content size.
     httpCapture.httpCode = 200;
     httpCapture.contentSize = 0;
     ASSERT_TRUE(!OtaUpdater::startUpdate());
+    ASSERT_EQ(OtaUpdater::getStatusMessage(), String("Error: Invalid firmware size"));
     // Far too small to be a firmware image.
     httpCapture.contentSize = 512;
     ASSERT_TRUE(!OtaUpdater::startUpdate());
+    ASSERT_EQ(OtaUpdater::getStatusMessage(), String("Error: Firmware too small"));
     // Far too large to be a firmware image.
     httpCapture.contentSize = 3 * 1024 * 1024;
     ASSERT_TRUE(!OtaUpdater::startUpdate());
+    ASSERT_EQ(OtaUpdater::getStatusMessage(), String("Error: Firmware too large"));
     ASSERT_TRUE(!OtaUpdater::isUpdateInProgress());
   }
   test_suite_end("OtaUpdater::download-guards", 1, 0);

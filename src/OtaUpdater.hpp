@@ -100,7 +100,9 @@ private:
 
   // ── OTA ──
   struct DownloadContext;
-  static bool beginDownload(const String &url);
+  /// Connect, validate the firmware size and start the flash write.
+  /// @return nullptr on success, otherwise the user-facing error message.
+  static const char *beginDownload(const String &url);
   static void stepDownload();
   static void failUpdate(const char *message);
 
@@ -127,6 +129,7 @@ private:
   static constexpr uint32_t kDownloadTotalTimeoutMs = 10UL * 60UL * 1000UL;  // abort after 10 min overall
   static constexpr float kSpaceSafetyMargin = 0.15f;                         // 15% safety margin for OTA
   static constexpr size_t kMinFreeSpace = 1024 * 1024;                       // 1MB minimum free space
+  static constexpr const char *kInsufficientSpaceMessage = "Error: Insufficient flash space";
 };
 
 }  // namespace PoolController
