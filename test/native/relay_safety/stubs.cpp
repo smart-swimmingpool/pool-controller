@@ -18,6 +18,9 @@
  */
 
 #include "Arduino.h"
+
+// Definition for the test-hook offset declared in mocks/Arduino.h.
+uint32_t g_millisOffset = 0;
 #include "ConfigManager.hpp"
 #include "DegradationManager.hpp"
 #include "TimeClientHelper.hpp"
@@ -94,7 +97,7 @@ const char *const *getTimezoneLabelList() {
 int getTimezoneLabelCount() {
   return 0;
 }
-int getTimezoneIndexFromLabel(const String &) {
+int getTimezoneIndexFromLabel(const char *) {
   return 0;
 }
 String getFormattedTime(time_t) {

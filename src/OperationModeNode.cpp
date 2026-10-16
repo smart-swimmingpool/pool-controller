@@ -86,10 +86,11 @@ void OperationModeNode::addRule(Rule *rule) {
 }
 
 Rule *OperationModeNode::getRule() {
-  LOG_DEBUG("getRule: mode = %s\n", _mode.c_str());
+  const char *mode = PoolController::toString(_mode);
+  LOG_DEBUG("getRule: mode = %s\n", mode);
 
   for (size_t i = 0; i < _ruleVec.size(); i++) {
-    if (_mode.equals(_ruleVec[i]->getMode())) {
+    if (std::strcmp(mode, _ruleVec[i]->getMode()) == 0) {
       LOG_DEBUG("getRule: Active Rule: %s\n", _ruleVec[i]->getMode());
 
       // Update ruleset properties
@@ -117,29 +118,38 @@ bool OperationModeNode::setMode(String mode) {
 }
 
 bool OperationModeNode::setMode(String mode, const char *source) {
+  PoolController::OperationMode parsedMode;
+  if (!PoolController::tryParseOperationMode(mode.c_str(), parsedMode)) {
+    LOG_ERROR("✖ UNDEFINED Mode: %s. Current unchanged mode: %s (source=%s)\n", mode.c_str(), getModeCStr(),
+      source == nullptr ? "unspecified" : source);
+    return false;
+  }
+  return setMode(parsedMode, source);
+}
+
+bool OperationModeNode::setMode(PoolController::OperationMode mode, const char *source) {
   if (source == nullptr) {
     source = "unspecified";
   }
-  if (mode.equals(STATUS_AUTO) || mode.equals(STATUS_MANU) || mode.equals(STATUS_BOOST) || mode.equals(STATUS_TIMER)) {
-    if (!_mode.equals(mode)) {
-      // Reset temperature-based runtime extension on mode change
-      for (auto &rule : _ruleVec) {
-        rule->resetTemperatureExtension();
-      }
-      PoolController::LogCapture::logEvent("MODE_CHANGED", "Mode changed %s -> %s (source=%s, persist=%s)", _mode.c_str(),
-        mode.c_str(), source, _suppressPersist ? "no" : "yes");
-      _mode = mode;
-      LOG_DEBUG("set mode: %s (source=%s)\n", _mode.c_str(), source);
-      if (!_suppressPersist)
-        saveState();
-    } else {
-      LOG_INFO("Mode set requested: %s -> %s (source=%s, changed=no, persist=no)\n", _mode.c_str(), mode.c_str(), source);
+
+  const char *oldMode = PoolController::toString(_mode);
+  const char *newMode = PoolController::toString(mode);
+  if (_mode != mode) {
+    // Reset temperature-based runtime extension on mode change
+    for (auto &rule : _ruleVec) {
+      rule->resetTemperatureExtension();
     }
-    return true;
+    constexpr const char *modeChangeFormat = "Mode changed %s -> %s (source=%s, persist=%s)";
+    const char *persist = _suppressPersist ? "no" : "yes";
+    PoolController::LogCapture::logEvent("MODE_CHANGED", modeChangeFormat, oldMode, newMode, source, persist);
+    _mode = mode;
+    LOG_DEBUG("set mode: %s (source=%s)\n", newMode, source);
+    if (!_suppressPersist)
+      saveState();
   } else {
-    LOG_ERROR("✖ UNDEFINED Mode: %s. Current unchanged mode: %s (source=%s)\n", mode.c_str(), _mode.c_str(), source);
-    return false;
+    LOG_INFO("Mode set requested: %s -> %s (source=%s, changed=no, persist=no)\n", oldMode, newMode, source);
   }
+  return true;
 }
 
 void OperationModeNode::begin() {
@@ -167,8 +177,8 @@ void OperationModeNode::loop() {
     if (rule != nullptr) {
       rule->loop();
     } else {
-      LOG_ERROR("  ✖ no rule defined for mode: %s. Falling back to manual (source=rule-fallback:no-rule).\n", _mode.c_str());
-      setMode(STATUS_MANU, "rule-fallback:no-rule");
+      LOG_ERROR("  ✖ no rule defined for mode: %s. Falling back to manual (source=rule-fallback:no-rule).\n", getModeCStr());
+      setMode(PoolController::OperationMode::MANUAL, "rule-fallback:no-rule");
     }
   }
 }
@@ -287,11 +297,12 @@ void OperationModeNode::loadState() {
   using PoolController::StateManager;
 
   String savedMode = StateManager::loadString("opmode", STATUS_AUTO);
-  if (savedMode == STATUS_AUTO || savedMode == STATUS_MANU || savedMode == STATUS_BOOST || savedMode == STATUS_TIMER) {
-    _mode = savedMode;
+  PoolController::OperationMode parsedMode;
+  if (PoolController::tryParseOperationMode(savedMode.c_str(), parsedMode)) {
+    _mode = parsedMode;
   }
 
-  LOG_INFO("✓ Operational mode loaded from persistent storage: %s (source=loadState)\n", _mode.c_str());
+  LOG_INFO("✓ Operational mode loaded from persistent storage: %s (source=loadState)\n", getModeCStr());
 
   _poolMaxTemp = StateManager::loadFloat("poolMaxTemp", 28.5f);
   _solarMinTemp = StateManager::loadFloat("solarMinTemp", 55.0f);
@@ -308,7 +319,7 @@ void OperationModeNode::loadState() {
 void OperationModeNode::saveState() {
   using PoolController::StateManager;
 
-  StateManager::saveString("opmode", _mode);
+  StateManager::saveString("opmode", String(getModeCStr()));
   StateManager::saveFloat("poolMaxTemp", _poolMaxTemp);
   StateManager::saveFloat("solarMinTemp", _solarMinTemp);
   StateManager::saveFloat("hysteresis", _hysteresis);

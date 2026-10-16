@@ -28,10 +28,11 @@
 #include "Utils.hpp"
 #include "NetworkManager.hpp"
 #include "Nodes.hpp"
-#include "LogCapture.hpp"
+#include "SensorSlots.hpp"
 #include "SystemMonitor.hpp"
 #include "TimeClientHelper.hpp"
 #include "ConfigManager.hpp"
+#include "LogCapture.hpp"
 
 namespace PoolController {
 
@@ -46,8 +47,8 @@ static void drawProgressBar();
 // ═══════════════════════════════════════════════════════════════════════════
 
 NorviOledDisplay::Page NorviOledDisplay::currentPage_ = Page::MAIN;
-uint32_t NorviOledDisplay::lastUpdateMs_ = 0;
-bool NorviOledDisplay::forceRedraw_ = true;
+std::atomic<uint32_t> NorviOledDisplay::lastUpdateMs_{0};
+std::atomic<bool> NorviOledDisplay::forceRedraw_{true};
 
 uint32_t NorviOledDisplay::lastButtonPressMs_ = 0;
 
@@ -303,10 +304,11 @@ void NorviOledDisplay::begin() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// loop() — Periodic update
+// update() — Display state machine (Core 1, non-blocking)
+// render() — OLED draw + I2C push (Core 0, DisplayTask)
 // ═══════════════════════════════════════════════════════════════════════════
 
-void NorviOledDisplay::loop() {
+void NorviOledDisplay::update() {
   const uint32_t now = millis();
 
   // ── Auto-return after idle timeout ───────────────────────────────────
@@ -320,9 +322,10 @@ void NorviOledDisplay::loop() {
     forceRedraw_ = true;
   }
 
-  // ── Long-press progress: accelerate redraw during hold ──────────────
-  float longPressProgress = NorviButtonHandler::getLongPressProgress();
-  bool isLongPressing = (longPressProgress > 0.0f);
+  // ── Long-press progress: request continuous redraw during hold ──────
+  if (NorviButtonHandler::getLongPressProgress() > 0.0f) {
+    forceRedraw_ = true;
+  }
 
   // ── Auto-return warning (5s before) ─────────────────────────────────
   // Sets file-scope autoReturnWarningMs consumed by drawFooter()
@@ -337,17 +340,21 @@ void NorviOledDisplay::loop() {
   } else {
     autoReturnWarningMs = 0;
   }
+}
 
-  // ── Throttle redraw rate (skip during long-press for smooth bar) ────
-  if (!forceRedraw_ && !isLongPressing && (now - lastUpdateMs_ < UPDATE_INTERVAL_MS)) {
+void NorviOledDisplay::render() {
+  // ── Throttle redraw rate ────────────────────────────────────────────
+  // exchange() so a redraw requested by the control loop between check and
+  // reset is not lost
+  const bool forced = forceRedraw_.exchange(false);
+  if (!forced && (millis() - lastUpdateMs_ < UPDATE_INTERVAL_MS)) {
     return;
   }
 
   // ── Burn-in offset shift ────────────────────────────────────────────
   updateBurnInOffset();
 
-  lastUpdateMs_ = now;
-  forceRedraw_ = false;
+  lastUpdateMs_ = millis();
 
   drawPage();
   drawProgressBar();
@@ -718,9 +725,10 @@ void NorviOledDisplay::drawMainPage() {
   // ── Pool temperature ────────────────────────────────────────────────────
   display.setTextSize(2);
   dspCursor(TX, 0);
-  if (poolTemperatureNode.isSensorFound()) {
+  const SensorSlots::Reading poolReading = SensorSlots::snapshot(SensorId::POOL);
+  if (poolReading.found) {
     char buf[8];
-    Utils::floatToString(poolTemperatureNode.getTemperature(), buf, sizeof(buf), 1);
+    Utils::floatToString(poolReading.value, buf, sizeof(buf), 1);
     display.print(buf);
     drawDegC(2);
   } else {
@@ -738,9 +746,10 @@ void NorviOledDisplay::drawMainPage() {
   // ── Solar temperature ──────────────────────────────────────────────────
   display.setTextSize(2);
   dspCursor(TX, 28);
-  if (solarTemperatureNode.isSensorFound()) {
+  const SensorSlots::Reading solarReading = SensorSlots::snapshot(SensorId::SOLAR);
+  if (solarReading.found) {
     char buf[8];
-    Utils::floatToString(solarTemperatureNode.getTemperature(), buf, sizeof(buf), 1);
+    Utils::floatToString(solarReading.value, buf, sizeof(buf), 1);
     display.print(buf);
     drawDegC(2);
   } else {
