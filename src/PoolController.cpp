@@ -44,7 +44,12 @@
 #include "DisplayCoordinator.hpp"
 #endif
 
+#if defined(OLIMEX_ESP32_C6_EVB) && defined(HAS_LOCAL_TFT_UI)
+#include "OlimexLocalUi.hpp"
+#endif
+
 #include "Config.hpp"
+#include "LogCapture.hpp"
 
 namespace PoolController {
 
@@ -61,6 +66,10 @@ DallasTemperatureNode poolTemperatureNode("pool-temp", "Pool Temperature", PIN_D
 ESP32TemperatureNode ctrlTemperatureNode("controller-temp", "Controller Temperature", TEMP_READ_INTERVAL);
 #ifdef NORVI_AE01_R
 // NORVI AE01-R uses active-HIGH relays (HIGH = relay ON, LOW = relay OFF)
+RelayModuleNode poolPumpNode("pool-pump", "Pool Pump", PIN_RELAY_POOL, false);
+RelayModuleNode solarPumpNode("solar-pump", "Solar Pump", PIN_RELAY_SOLAR, false);
+#elif defined(OLIMEX_ESP32_C6_EVB)
+// Olimex relay outputs are active-HIGH
 RelayModuleNode poolPumpNode("pool-pump", "Pool Pump", PIN_RELAY_POOL, false);
 RelayModuleNode solarPumpNode("solar-pump", "Solar Pump", PIN_RELAY_SOLAR, false);
 #else
@@ -117,21 +126,21 @@ static void loadSensorAddressMapping() {
     solarTemperatureNode.setAddressFilter(solarAddr);
     char buf[17];
     addressToString(solarAddr, buf, sizeof(buf));
-    Serial.printf("• Sensor mapping: Solar address loaded [%s]\n", buf);
+    LOG_INFO("• Sensor mapping: Solar address loaded [%s]\n", buf);
   }
 
   if (plen == 8 && !isAddressZero(poolAddr)) {
     poolTemperatureNode.setAddressFilter(poolAddr);
     char buf[17];
     addressToString(poolAddr, buf, sizeof(buf));
-    Serial.printf("• Sensor mapping: Pool address loaded [%s]\n", buf);
+    LOG_INFO("• Sensor mapping: Pool address loaded [%s]\n", buf);
   }
 
   if ((slen == 8 && !isAddressZero(solarAddr)) || (plen == 8 && !isAddressZero(poolAddr))) {
-    Serial.println("• Sensor mapping: address filters applied (one or both sensors)");
+    LOG_INFO("• Sensor mapping: address filters applied (one or both sensors)\n");
   } else {
-    Serial.println("• Sensor mapping: no addresses configured — using default device indices");
-    Serial.println("  ℹ To configure: long-press Button 1 → Sensor Setup page → assign sensors");
+    LOG_WARN("• Sensor mapping: no addresses configured — using default device indices\n");
+    LOG_INFO("  ℹ To configure: long-press Button 1 → Sensor Setup page → assign sensors\n");
   }
 }
 
@@ -184,33 +193,33 @@ auto PoolControllerContext::initializeController() -> void {
           continue;
         }
 #endif
-        Serial.printf("✖ PIN CONFLICT: %s (pin %d) and %s (pin %d) use same pin!\n", pinNames[i], pins[i], pinNames[j], pins[j]);
+        LOG_ERROR("✖ PIN CONFLICT: %s (pin %d) and %s (pin %d) use same pin!\n", pinNames[i], pins[i], pinNames[j], pins[j]);
         pinConflict = true;
       }
     }
   }
 
   if (pinConflict) {
-    Serial.println("✖ FATAL: Pin configuration conflicts detected!");
-    Serial.println("  System will reboot in 5 seconds to try and recover...");
+    LOG_ERROR("✖ FATAL: Pin configuration conflicts detected!\n");
+    LOG_WARN("  System will reboot in 5 seconds to try and recover...\n");
     Serial.flush();
     delay(5000);
     ESP.restart();  // F27 Fix! Clean restart instead of blocking WDT loop
   } else {
-    Serial.println("✓ Pin configuration validated - no conflicts (optimierte Belegung)");
-    Serial.printf("  Solar Temp (DS18B20): GPIO %d\n", PIN_DS_SOLAR);
-    Serial.printf("  Pool Temp  (DS18B20): GPIO %d", PIN_DS_POOL);
+    LOG_INFO("✓ Pin configuration validated - no conflicts (optimierte Belegung)\n");
+    LOG_INFO("  Solar Temp (DS18B20): GPIO %d\n", PIN_DS_SOLAR);
 #ifdef NORVI_AE01_R
-    Serial.print(" (shared bus via GPIO25)");
+    LOG_INFO("  Pool Temp  (DS18B20): GPIO %d (shared bus via GPIO25)\n", PIN_DS_POOL);
+#else
+    LOG_INFO("  Pool Temp  (DS18B20): GPIO %d\n", PIN_DS_POOL);
 #endif
-    Serial.println();
-    Serial.printf("  Pool Pump  (Relay):   GPIO %d\n", PIN_RELAY_POOL);
-    Serial.printf("  Solar Pump (Relay):   GPIO %d\n", PIN_RELAY_SOLAR);
-    Serial.printf("  Status LED:           GPIO %d", PIN_LED_STATUS);
+    LOG_INFO("  Pool Pump  (Relay):   GPIO %d\n", PIN_RELAY_POOL);
+    LOG_INFO("  Solar Pump (Relay):   GPIO %d\n", PIN_RELAY_SOLAR);
 #ifdef LED_BUILTIN
-    Serial.print(" (LED_BUILTIN)");
+    LOG_INFO("  Status LED:           GPIO %d (LED_BUILTIN)\n", PIN_LED_STATUS);
+#else
+    LOG_INFO("  Status LED:           GPIO %d\n", PIN_LED_STATUS);
 #endif
-    Serial.println();
   }
 
   // Set measurement intervals and propagate to all nodes
@@ -246,7 +255,7 @@ auto PoolControllerContext::initializeController() -> void {
   operationModeNode.begin();
 
   // Load properties into Operation Mode
-  operationModeNode.setMode(ConfigManager::getSettings().opMode.c_str());
+  operationModeNode.setMode(ConfigManager::getSettings().opMode.c_str(), "boot:config");
   operationModeNode.setPoolMaxTemperature(ConfigManager::getSettings().tempMaxPool);
   operationModeNode.setSolarMinTemperature(ConfigManager::getSettings().tempMinSolar);
   operationModeNode.setTemperatureHysteresis(ConfigManager::getSettings().tempHysteresis);
@@ -285,7 +294,7 @@ auto PoolControllerContext::setup() -> void {
   // --- Boot-loop detection ---
   bootLoopDetected_ = SystemMonitor::detectBootLoop();
   if (bootLoopDetected_) {
-    Serial.println("✖ SAFE MODE ACTIVE — all relays forced OFF");
+    LOG_ERROR("✖ SAFE MODE ACTIVE — all relays forced OFF\n");
     DegradationManager::forceSafeMode();
 
     Preferences prefs;
@@ -309,19 +318,24 @@ auto PoolControllerContext::setup() -> void {
   if (solarTemperatureNode.hasAddressFilter() || poolTemperatureNode.hasAddressFilter()) {
     char buf[17];
     solarTemperatureNode.getDeviceAddressString(buf, sizeof(buf));
-    Serial.printf("  ◦ Solar node → device [%s] (status: %s)\n", buf, solarTemperatureNode.isSensorFound() ? "✓" : "✖");
+    LOG_INFO("  ◦ Solar node → device [%s] (status: %s)\n", buf, solarTemperatureNode.isSensorFound() ? "✓" : "✖");
     poolTemperatureNode.getDeviceAddressString(buf, sizeof(buf));
-    Serial.printf("  ◦ Pool node  → device [%s] (status: %s)\n", buf, poolTemperatureNode.isSensorFound() ? "✓" : "✖");
+    LOG_INFO("  ◦ Pool node  → device [%s] (status: %s)\n", buf, poolTemperatureNode.isSensorFound() ? "✓" : "✖");
   }
 
   OperationModeNode::suppressPersist(false);
   operationModeNode.loadState();
+
+#if defined(OLIMEX_ESP32_C6_EVB) && defined(HAS_LOCAL_TFT_UI)
+  OlimexLocalUi::begin();
+#endif
+
   ConfigManager::logOtaTransition();
 
   // Start the dedicated Core-0 sensor I/O task.
   CoreScheduler::begin();
 
-  Serial.printf("✓ Controller setup completed. Free heap: %u B\n", ESP.getFreeHeap());
+  LOG_INFO("✓ Controller setup completed. Free heap: %u B\n", ESP.getFreeHeap());
 }
 
 /** @brief Main control loop — only sensor acquisition runs on the Core-0 worker. */
@@ -338,7 +352,7 @@ auto PoolControllerContext::loop() -> void {
     bootCounterCleared = true;
     SystemMonitor::clearBootLoopCounter();
     if (bootLoopDetected_) {
-      Serial.println("→ Safe-mode: 5 min stable — boot-loop counter cleared");
+      LOG_INFO("→ Safe-mode: 5 min stable — boot-loop counter cleared\n");
       DegradationManager::unforceSafeMode();
       bootLoopDetected_ = false;
     }
@@ -365,6 +379,10 @@ auto PoolControllerContext::loop() -> void {
     StatusLed::setPattern(StatusLedPattern::ONLINE);
   }
   StatusLed::loop();
+
+#if defined(OLIMEX_ESP32_C6_EVB) && defined(HAS_LOCAL_TFT_UI)
+  OlimexLocalUi::loop();
+#endif
 
 #ifdef NORVI_AE01_R
   DisplayCoordinator::loop();

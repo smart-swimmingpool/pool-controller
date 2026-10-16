@@ -14,6 +14,7 @@
 #include "DegradationManager.hpp"
 #include "SensorSlots.hpp"
 #include "Utils.hpp"
+#include "LogCapture.hpp"
 
 DallasTemperatureNode::DallasTemperatureNode(const char *id, const char *name, const uint8_t pin, const int measurementInterval) {
   _id = id;
@@ -47,13 +48,20 @@ DallasTemperatureNode::DallasTemperatureNode(
 }
 
 void DallasTemperatureNode::lockCache() const {
+#if defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
+  portENTER_CRITICAL(&cacheMux_);
+#else
   while (cacheLock_.test_and_set(std::memory_order_acquire)) {
-    yield();
   }
+#endif
 }
 
 void DallasTemperatureNode::unlockCache() const {
+#if defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
+  portEXIT_CRITICAL(&cacheMux_);
+#else
   cacheLock_.clear(std::memory_order_release);
+#endif
 }
 
 void DallasTemperatureNode::setAddressFilter(const DeviceAddress addr) {
@@ -98,12 +106,12 @@ bool DallasTemperatureNode::resolveFilter() {
         _sensorFound = true;
         char adr[18];
         address2String(addr, adr, sizeof(adr));
-        Serial.printf("  ◦ %s: filter resolved → device %d [%s] ✓\n", _id, i, adr);
+        LOG_INFO("  ◦ %s: filter resolved → device %d [%s] ✓\n", _id, i, adr);
         return true;
       }
     }
 
-    Serial.printf("  ✖ %s: filter address not found on bus! Falling back to device index %d\n", _id, deviceIndex_);
+    LOG_ERROR("  ✖ %s: filter address not found on bus! Falling back to device index %d\n", _id, deviceIndex_);
     if (activeSensor->getAddress(deviceAddress_, deviceIndex_)) {
       publishSelectedAddress();
       _sensorFound = true;
@@ -121,11 +129,11 @@ bool DallasTemperatureNode::resolveFilter() {
     _sensorFound = true;
     char adr[18];
     address2String(deviceAddress_, adr, sizeof(adr));
-    Serial.printf("  ◦ %s: no filter → device %d [%s]", _id, deviceIndex_, adr);
     if (sharedSensor_) {
-      Serial.print(" (shared bus)");
+      LOG_INFO("  ◦ %s: no filter → device %d [%s] (shared bus)\n", _id, deviceIndex_, adr);
+    } else {
+      LOG_INFO("  ◦ %s: no filter → device %d [%s]\n", _id, deviceIndex_, adr);
     }
-    Serial.println();
     return true;
   }
 
@@ -230,18 +238,18 @@ void DallasTemperatureNode::begin() {
   activeSensor->setWaitForConversion(false);
 
   numberOfDevices = activeSensor->getDeviceCount();
-  Serial.printf("• DallasTemperature: Parasite power is: %d\n", activeSensor->isParasitePowerMode());
+  LOG_INFO("• DallasTemperature: Parasite power is: %d\n", activeSensor->isParasitePowerMode());
 
   if (numberOfDevices > 0) {
     const uint8_t displayPin = sharedSensor_ ? PoolController::PIN_DS_SOLAR : _pin;
-    Serial.printf("  ◦ %d devices found on PIN %d\n", numberOfDevices, displayPin);
+    LOG_INFO("  ◦ %d devices found on PIN %d\n", numberOfDevices, displayPin);
 
     for (uint8_t i = 0; i < numberOfDevices; i++) {
       DeviceAddress addr;
       if (activeSensor->getAddress(addr, i)) {
         char adr[18];
         address2String(addr, adr, sizeof(adr));
-        Serial.printf("  ◦ PIN %d: Device %d address: %s\n", displayPin, i, adr);
+        LOG_INFO("  ◦ PIN %d: Device %d address: %s\n", displayPin, i, adr);
       }
     }
 
@@ -257,7 +265,7 @@ void DallasTemperatureNode::begin() {
     }
   } else {
     const uint8_t displayPin = sharedSensor_ ? PoolController::PIN_DS_SOLAR : _pin;
-    Serial.printf("✖ No Dallas sensors found on pin %d\n", displayPin);
+    LOG_ERROR("✖ No Dallas sensors found on pin %d\n", displayPin);
     _sensorFound = false;
     refreshDetectedSnapshot(false);
     PoolController::DegradationManager::reportSensorStatus(_id, false);
@@ -293,12 +301,12 @@ void DallasTemperatureNode::finishMeasurement() {
       _temperature = NAN;
       _sensorFound = false;
       PoolController::DegradationManager::reportSensorStatus(_id, false);
-      Serial.printf("  ✖ %s sensor disconnected - setting to NaN\n", _id);
+      LOG_ERROR("  ✖ %s sensor disconnected - setting to NaN\n", _id);
     } else {
       _temperature = newTemp;
       _sensorFound = true;
       PoolController::DegradationManager::reportSensorStatus(_id, true);
-      Serial.printf("  ◦ %s Temp = %.1f°C\n", _id, _temperature);
+      LOG_DEBUG("  ◦ %s Temp = %.1f°C\n", _id, _temperature);
     }
     PoolController::SensorSlots::write(slotId(), _temperature, _sensorFound);
     refreshDetectedSnapshot(true);
@@ -320,17 +328,17 @@ void DallasTemperatureNode::finishMeasurement() {
     _sensorFound = foundAny;
     PoolController::DegradationManager::reportSensorStatus(_id, foundAny);
     if (foundAny) {
-      Serial.printf("  ◦ %s Temp = %.1f°C\n", _id, _temperature);
+      LOG_DEBUG("  ◦ %s Temp = %.1f°C\n", _id, _temperature);
     } else {
       _temperature = NAN;
-      Serial.printf("  ✖ %s sensor disconnected - setting to NaN\n", _id);
+      LOG_ERROR("  ✖ %s sensor disconnected - setting to NaN\n", _id);
     }
     PoolController::SensorSlots::write(slotId(), _temperature, _sensorFound);
     refreshDetectedSnapshot(true);
     return;
   }
 
-  Serial.printf("No Sensor found on bus! Rescanning (%s)...\n", _id);
+  LOG_INFO("No Sensor found on bus! Rescanning (%s)...\n", _id);
   PoolController::DegradationManager::reportSensorStatus(_id, false);
   PoolController::SensorSlots::write(slotId(), NAN, false);
 
@@ -342,7 +350,7 @@ void DallasTemperatureNode::finishMeasurement() {
     if (_sensorFound) {
       PoolController::DegradationManager::reportSensorStatus(_id, true);
     }
-    Serial.printf("  ◦ %d device(s) found after rescan\n", numberOfDevices);
+    LOG_INFO("  ◦ %d device(s) found after rescan\n", numberOfDevices);
   } else {
     _sensorFound = false;
     memset(deviceAddress_, 0, sizeof(deviceAddress_));
@@ -355,7 +363,7 @@ void DallasTemperatureNode::loop() {
   const unsigned long effectiveInterval = std::isnan(_temperature) ? RECOVERY_INTERVAL : getMeasurementInterval();
   if (Utils::shouldMeasure(_lastMeasurement, effectiveInterval)) {
     _lastMeasurement = millis();
-    Serial.printf("〽 Reading Dallas sensor: %s\n", _id);
+    LOG_DEBUG("〽 Reading Dallas sensor: %s\n", _id);
     beginMeasurement();
     // Synchronous fallback for tests/non-task callers. Production uses
     // SensorTask, which yields instead of blocking the control loop.

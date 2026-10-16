@@ -16,6 +16,7 @@
 #include "ESP32TemperatureNode.hpp"
 #include "SensorCycle.hpp"
 #include "SystemMonitor.hpp"
+#include "LogCapture.hpp"
 
 namespace PoolController {
 
@@ -46,7 +47,7 @@ void sensorTaskFunc(void *) {
 
     if (now - lastDallasReadingMs >= dallasInterval * 1000UL) {
       lastDallasReadingMs = now;
-      Serial.println("〽 SensorTask: reading Dallas sensors");
+      LOG_DEBUG("〽 SensorTask: reading Dallas sensors\n");
       // DallasTemperature is configured with waitForConversion=false in
       // DallasTemperatureNode::begin(), so the conversion starts immediately
       // and this task yields while the sensors convert.
@@ -78,7 +79,7 @@ bool SensorTask::start(uint8_t priority, uint16_t stackBytes, BaseType_t core) {
 
 void SensorTask::logStackWatermark() {
   if (sensorTaskHandle != nullptr) {
-    Serial.printf("  SensorTask stack high-water: %u B\n", static_cast<unsigned>(uxTaskGetStackHighWaterMark(sensorTaskHandle)));
+    LOG_DEBUG("  SensorTask stack high-water: %u B\n", static_cast<unsigned>(uxTaskGetStackHighWaterMark(sensorTaskHandle)));
   }
 }
 

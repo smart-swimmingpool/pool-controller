@@ -15,6 +15,11 @@
 
 #include <atomic>
 
+#if defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
+#include <freertos/FreeRTOS.h>
+#include <freertos/portmacro.h>
+#endif
+
 #include "SensorSlots.hpp"
 
 /**
@@ -99,7 +104,15 @@ private:
 
   // Cross-core metadata cache. The lock only protects short memory copies;
   // OneWire operations are always performed without holding it.
+  // On ESP32 a portMUX critical section is used instead of a yield()-spinning
+  // atomic_flag: on single-core targets (ESP32-C6) the higher-priority
+  // SensorTask could otherwise spin forever on a lock held by the preempted
+  // loop task, because yield() never hands the CPU to a lower priority.
+#if defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
+  mutable portMUX_TYPE cacheMux_ = portMUX_INITIALIZER_UNLOCKED;
+#else
   mutable std::atomic_flag cacheLock_ = ATOMIC_FLAG_INIT;
+#endif
   DeviceAddress cachedSelectedAddress_{};
   DeviceAddress detectedAddresses_[MAX_DETECTED_DEVICES]{};
   float detectedTemperatures_[MAX_DETECTED_DEVICES]{};

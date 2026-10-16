@@ -17,6 +17,7 @@
 #include "Nodes.hpp"
 #include "NorviButtonHandler.hpp"
 #include "NorviOledDisplay.hpp"
+#include "LogCapture.hpp"
 
 namespace PoolController {
 namespace {
@@ -35,7 +36,7 @@ size_t eventCount = 0;
 
 void enqueueEvent(UiEvent event) {
   if (eventCount >= EVENT_CAPACITY) {
-    Serial.println("⚠ DisplayCoordinator: UI event queue full — dropping event");
+    LOG_WARN("⚠ DisplayCoordinator: UI event queue full — dropping event\n");
     return;
   }
   eventQueue[(eventHead + eventCount) % EVENT_CAPACITY] = event;
@@ -94,12 +95,12 @@ void handleButton3() {
       } else {
         operationModeNode.setMode("auto");
       }
-      Serial.printf("→ Mode switched to: %s\n", operationModeNode.getMode().c_str());
+      LOG_INFO("→ Mode switched to: %s\n", operationModeNode.getMode().c_str());
       break;
     }
     case NorviOledDisplay::MenuItem::PUMP:
       poolPumpNode.setSwitch(!poolPumpNode.getSwitch());
-      Serial.printf("→ Pump toggled: %s\n", poolPumpNode.getSwitch() ? "ON" : "OFF");
+      LOG_INFO("→ Pump toggled: %s\n", poolPumpNode.getSwitch() ? "ON" : "OFF");
       break;
     case NorviOledDisplay::MenuItem::EXIT:
       break;
@@ -121,7 +122,7 @@ void handleButton3Long() {
   uint8_t poolAddr[8];
   NorviOledDisplay::getMapping(solarAddr, poolAddr);
   ConfigManager::saveSensorMapping(solarAddr, poolAddr);
-  Serial.println("→ Sensor mapping saved — rebooting...");
+  LOG_INFO("→ Sensor mapping saved — rebooting...\n");
   NetworkManager::restart();
 }
 
