@@ -60,7 +60,6 @@ set(SERVICE_SOURCES
   ${PROJ_ROOT}/src/LocalSettingsMenu.cpp
   ${PROJ_ROOT}/src/Ky040Decoder.cpp
   ${PROJ_ROOT}/src/OlimexEncoderHandler.cpp
-  ${PROJ_ROOT}/src/TelemetryQueue.cpp
   ${PROJ_ROOT}/src/SensorSlots.cpp
 )
 
@@ -70,7 +69,7 @@ set(MOCK_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/mocks/ConfigManager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mocks/globals.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mocks/stubs.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/mocks/CoreScheduler.cpp
+  ${PROJ_ROOT}/src/CoreScheduler.cpp
 )
 
 set(TEST_SOURCES
@@ -90,7 +89,6 @@ set(TEST_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_calibration_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_ota_download_guard.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_ota_download_session.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_telemetry_queue.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_sensor_slots.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_sensor_cycle.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_core_scheduler.cpp

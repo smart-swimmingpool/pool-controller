@@ -38,11 +38,7 @@
 #include "StatusLed.hpp"
 
 #include "CoreScheduler.hpp"
-#include "TelemetryQueue.hpp"
-
-#ifdef NORVI_AE01_R
 #include "DisplayCoordinator.hpp"
-#endif
 
 #if defined(OLIMEX_ESP32_C6_EVB) && defined(HAS_LOCAL_TFT_UI)
 #include "OlimexLocalUi.hpp"
@@ -57,11 +53,13 @@ namespace PoolController {
 // Shared OneWire bus for NORVI AE01-R (both DS18B20 sensors on GPIO25)
 OneWire sharedOneWire(PIN_DS_SOLAR);
 DallasTemperature sharedDallasSensor(&sharedOneWire);
-DallasTemperatureNode solarTemperatureNode("solar-temp", "Solar Temperature", &sharedDallasSensor, 0, TEMP_READ_INTERVAL);
-DallasTemperatureNode poolTemperatureNode("pool-temp", "Pool Temperature", &sharedDallasSensor, 1, TEMP_READ_INTERVAL);
+DallasTemperatureNode solarTemperatureNode(
+  SensorId::SOLAR, "solar-temp", "Solar Temperature", &sharedDallasSensor, 0, TEMP_READ_INTERVAL);
+DallasTemperatureNode poolTemperatureNode(
+  SensorId::POOL, "pool-temp", "Pool Temperature", &sharedDallasSensor, 1, TEMP_READ_INTERVAL);
 #else
-DallasTemperatureNode solarTemperatureNode("solar-temp", "Solar Temperature", PIN_DS_SOLAR, TEMP_READ_INTERVAL);
-DallasTemperatureNode poolTemperatureNode("pool-temp", "Pool Temperature", PIN_DS_POOL, TEMP_READ_INTERVAL);
+DallasTemperatureNode solarTemperatureNode(SensorId::SOLAR, "solar-temp", "Solar Temperature", PIN_DS_SOLAR, TEMP_READ_INTERVAL);
+DallasTemperatureNode poolTemperatureNode(SensorId::POOL, "pool-temp", "Pool Temperature", PIN_DS_POOL, TEMP_READ_INTERVAL);
 #endif
 ESP32TemperatureNode ctrlTemperatureNode("controller-temp", "Controller Temperature", TEMP_READ_INTERVAL);
 #ifdef NORVI_AE01_R
@@ -144,21 +142,27 @@ static void loadSensorAddressMapping() {
   }
 }
 
-/** @brief Service deferred MQTT publish requests on the Core-1 owner task. */
-static void serviceTelemetryQueue() {
-  // While the updater owns the network path, keep requests queued instead of
+// Deferred MQTT publish requests. Requester and publisher both run in loop()
+// on the Core-1 owner task, so two flags suffice: repeated requests coalesce
+// and nothing can overflow.
+static bool discoveryPublishPending = false;
+static bool statesPublishPending = false;
+
+/** @brief Publish pending MQTT requests on the Core-1 owner task. */
+static void servicePendingPublishes() {
+  // While the updater owns the network path, keep requests pending instead of
   // dropping them, so a discovery requested on reconnect is not lost.
   if (OtaUpdater::isUpdateInProgress()) {
     return;
   }
 
-  PublishRequestKind kind;
-  while (TelemetryQueue::instance().dequeue(kind)) {
-    if (kind == PublishRequestKind::DISCOVERY) {
-      MqttPublisher::publishDiscovery();
-    } else {
-      MqttPublisher::publishStates();
-    }
+  if (discoveryPublishPending) {
+    discoveryPublishPending = false;
+    MqttPublisher::publishDiscovery();
+  }
+  if (statesPublishPending) {
+    statesPublishPending = false;
+    MqttPublisher::publishStates();
   }
 }
 
@@ -285,11 +289,9 @@ auto PoolControllerContext::setup() -> void {
   loadSensorAddressMapping();
   ConfigManager::begin();
 
-#ifdef NORVI_AE01_R
   // Button sampling, UI transitions and OLED rendering stay on the Core-1
-  // owner task through one coordinator.
+  // owner task through one coordinator (a no-op on boards without the OLED).
   DisplayCoordinator::begin();
-#endif
 
   // --- Boot-loop detection ---
   bootLoopDetected_ = SystemMonitor::detectBootLoop();
@@ -384,9 +386,7 @@ auto PoolControllerContext::loop() -> void {
   OlimexLocalUi::loop();
 #endif
 
-#ifdef NORVI_AE01_R
   DisplayCoordinator::loop();
-#endif
 
   poolPumpNode.loop();
   solarPumpNode.loop();
@@ -396,22 +396,20 @@ auto PoolControllerContext::loop() -> void {
   static bool wasMqttConnected = false;
   const bool currentMqttState = NetworkManager::isMqttConnected();
   if (currentMqttState && !wasMqttConnected) {
-    TelemetryQueue::instance().enqueue(PublishRequestKind::DISCOVERY);
-    TelemetryQueue::instance().enqueue(PublishRequestKind::STATES);
+    discoveryPublishPending = true;
+    statesPublishPending = true;
     wasMqttConnected = true;
   } else if (!currentMqttState) {
     wasMqttConnected = false;
   }
 
-  // Periodically enqueue telemetry; serialization is serviced below on Core 1.
-  // Skipped during OTA so periodic states cannot fill the queue and crowd out
-  // a pending discovery request.
-  if (currentMqttState && !OtaUpdater::isUpdateInProgress() && Utils::shouldMeasure(_lastMeasurement, _measurementInterval)) {
+  // Periodically request telemetry; it is published below on Core 1.
+  if (currentMqttState && Utils::shouldMeasure(_lastMeasurement, _measurementInterval)) {
     _lastMeasurement = millis();
-    TelemetryQueue::instance().enqueue(PublishRequestKind::STATES);
+    statesPublishPending = true;
   }
 
-  serviceTelemetryQueue();
+  servicePendingPublishes();
   CoreScheduler::logStackWatermarks();
 }
 

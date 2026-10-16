@@ -3,7 +3,7 @@
 
 /**
  * @file SensorSlots.hpp
- * @brief Lock-free temperature slots shared between SensorTask and readers.
+ * @brief Temperature slots shared between SensorTask and readers (short critical sections).
  */
 
 #pragma once

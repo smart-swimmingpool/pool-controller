@@ -48,8 +48,9 @@ Task ist einfacher und sicherer als Locks über den gesamten Objektgraphen.
 Kann `SensorTask` nicht erzeugt werden, startet der Controller neu. Ein dauerhafter Fehler wird durch die
 bestehende Boot-Loop-Erkennung und den Safe-Mode behandelt.
 
-MQTT-Anforderungen verwenden weiterhin `TelemetryQueue`. `PoolController::loop()` leert die Queue direkt
-auf Kern 1 und ruft dort `MqttPublisher` auf. `CoreScheduler` ist ausschließlich für den Lebenszyklus von
+MQTT-Publish-Anforderungen sind zwei Merker (Discovery, States) in `PoolController::loop()`. Anforderer
+und Publisher laufen beide auf Kern 1, daher ist keine Queue nötig; `MqttPublisher` wird dort aufgerufen.
+Während eines OTA-Updates bleiben die Merker gesetzt und werden danach veröffentlicht. `CoreScheduler` ist ausschließlich für den Lebenszyklus von
 `SensorTask` und dessen Stack-High-Water-Logging zuständig.
 
 Beim NORVI-Display gilt dieselbe Regel: Taster, UI-Zustandsübergänge und OLED-Rendering werden durch
@@ -92,7 +93,7 @@ konfigurierte `loopInterval`.
 ```text
 SensorTask (Kern 0) ── SensorSlots ──────▶ Regelschleife (Kern 1): Regeln / Relais
 SensorTask (Kern 0) ── Discovery-Cache ──▶ WebPortal / MQTT / UI (Kern 1)
-Regelschleife (Kern 1) ─ TelemetryQueue ─▶ MQTT-Serialisierung (Kern 1)
+Regelschleife (Kern 1) ── Merker ───────▶ MQTT-Serialisierung (Kern 1)
 DisplayCoordinator: Eingabe + Zustand + Rendering ───────────▶ Kern 1
 ```
 

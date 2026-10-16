@@ -50,7 +50,6 @@ extern int run_ky040_decoder_tests();
 extern int run_calibration_manager_tests();
 extern int run_ota_download_guard_tests();
 extern int run_ota_download_session_tests();
-extern int run_telemetry_queue_tests();
 extern int run_sensor_slots_tests();
 extern int run_sensor_cycle_tests();
 extern int run_core_scheduler_tests();
@@ -82,7 +81,6 @@ int main() {
   total += run_calibration_manager_tests();
   total += run_ota_download_guard_tests();
   total += run_ota_download_session_tests();
-  total += run_telemetry_queue_tests();
   total += run_sensor_slots_tests();
   total += run_sensor_cycle_tests();
   total += run_core_scheduler_tests();

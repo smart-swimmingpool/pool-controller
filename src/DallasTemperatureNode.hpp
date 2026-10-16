@@ -31,11 +31,11 @@
  */
 class DallasTemperatureNode {
 public:
-  DallasTemperatureNode(
-    const char *id, const char *name, const uint8_t pin, const int measurementInterval = MEASUREMENT_INTERVAL);
-
-  DallasTemperatureNode(const char *id, const char *name, DallasTemperature *sharedSensor, uint8_t deviceIndex,
+  DallasTemperatureNode(PoolController::SensorId slot, const char *id, const char *name, const uint8_t pin,
     const int measurementInterval = MEASUREMENT_INTERVAL);
+
+  DallasTemperatureNode(PoolController::SensorId slot, const char *id, const char *name, DallasTemperature *sharedSensor,
+    uint8_t deviceIndex, const int measurementInterval = MEASUREMENT_INTERVAL);
 
   const char *getId() const { return _id; }
   uint8_t getPin() const { return _pin; }
@@ -69,8 +69,10 @@ public:
   void clearAddressFilter();
   bool hasAddressFilter() const { return hasFilter_.load(std::memory_order_acquire); }
 
+  /** Minimum wait between beginMeasurement() and finishMeasurement() (12-bit DS18B20 conversion). */
+  static constexpr uint32_t CONVERSION_DELAY_MS = 800;
+
   void begin();
-  void loop();
   void beginMeasurement();
   void finishMeasurement();
 
@@ -79,13 +81,12 @@ private:
   static const int MEASUREMENT_INTERVAL = 300;
   static const int RECOVERY_INTERVAL = 5;
   static constexpr uint8_t MAX_DETECTED_DEVICES = 20;
-  static constexpr uint32_t SYNC_CONVERSION_DELAY_MS = 800;
 
+  const PoolController::SensorId slot_;
   const char *_id;
   const char *_name;
   uint8_t _pin = 0;
   std::atomic<unsigned long> _measurementInterval{MEASUREMENT_INTERVAL};
-  unsigned long _lastMeasurement;
   bool _sensorFound = false;
   float _temperature = NAN;
 
@@ -97,6 +98,8 @@ private:
   DeviceAddress filterAddr_{};
 
   DallasTemperature *sharedSensor_ = nullptr;
+  /** The bus this node reads: the shared NORVI bus or its own dedicated one. */
+  DallasTemperature *bus() { return sharedSensor_ ? sharedSensor_ : &sensor; }
   uint8_t deviceIndex_ = 0;
   bool isBusMaster_ = false;
   DeviceAddress deviceAddress_{};
@@ -126,6 +129,6 @@ private:
   void lockCache() const;
   void unlockCache() const;
 
-  PoolController::SensorId slotId() const;
+  PoolController::SensorId slotId() const { return slot_; }
   void address2String(const DeviceAddress deviceAddress, char *buffer, size_t size) const;
 };
