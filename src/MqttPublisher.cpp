@@ -70,9 +70,13 @@ void MqttPublisher::begin() {
 
   LOG_INFO("✓ HA Discovery Device ID set to: %s\n", deviceId_.c_str());
 
-  // Register callback in NetworkManager. The callback runs on the AsyncTCP
-  // task and only queues the message; processPendingCommands() handles it.
-  NetworkManager::setMqttCallback(onMqttMessage);
+  // Register callback in NetworkManager unless another handler (the typed
+  // runtime-command adapter) already claimed it before MQTT connected. The
+  // callback runs on the AsyncTCP task and only queues the message;
+  // processPendingCommands() handles it.
+  if (!NetworkManager::hasMqttCallback()) {
+    NetworkManager::setMqttCallback(onMqttMessage);
+  }
 }
 
 void MqttPublisher::addDeviceInfo(JsonDocument &doc) {

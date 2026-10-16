@@ -49,6 +49,9 @@ public:
     }
   }
 
+  static bool hasMqttCallback() { return static_cast<bool>(_mqttCallback); }
+  static void clearMqttCallback() { _mqttCallback = nullptr; }
+
   static void disconnectMqtt() { _mqttClient.disconnect(); _mqttConnected = false; }
   static void startAPMode() { _apMode = true; }
   static void restart() { ESP.restart(); }

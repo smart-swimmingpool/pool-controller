@@ -86,12 +86,14 @@ auto setup() -> void {
   PoolController::LogCapture::begin();
 
   PoolController::WebPortal::setCommandDispatcher(dispatchWebCommand);
-  context.setup();
 
-  // MqttPublisher::begin() is part of context.setup(). Replace its callback
-  // afterwards so new runtime mutations flow through typed commands. The
-  // adapter callback only copies bytes; mutation happens in loop().
+  // Claim the MQTT callback before context.setup() starts the MQTT connection,
+  // so the handler is never swapped while the AsyncTCP task may dispatch
+  // messages. MqttPublisher::begin() keeps this handler. The adapter callback
+  // only copies bytes; mutation happens in loop().
   mqttRuntimeCommandAdapter().begin();
+
+  context.setup();
 
   // Publish a first immutable read model after setup established runtime state.
   controllerSnapshotPublisher().publish();

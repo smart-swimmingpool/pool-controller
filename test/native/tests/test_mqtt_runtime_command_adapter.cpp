@@ -47,8 +47,11 @@ struct AdapterFixture {
     // AsyncMqttClient appends callbacks with no removal API: clear stale
     // registrations from previous fixtures before wiring this instance.
     mqttCapture.clear();
-    PoolController::MqttPublisher::begin();
+    PoolController::NetworkManager::clearMqttCallback();
+    // Production order (main.cpp): the adapter claims the callback before
+    // context.setup() connects MQTT and runs MqttPublisher::begin().
     adapter.begin();
+    PoolController::MqttPublisher::begin();
   }
 };
 
@@ -127,6 +130,28 @@ static int test_manual_pump_policy_is_enforced_after_translation() {
   return 0;
 }
 
+static int test_non_numeric_setpoint_payload_is_rejected() {
+  test_begin("MqttRuntimeCommandAdapter", "non-numeric setpoint payload is rejected instead of becoming 0");
+  AdapterFixture fixture;
+  fixture.operation.setPoolMaxTemperature(28.0F);
+  fixture.begin();
+  auto &client = PoolController::NetworkManager::getClient();
+  const char *topic = "homeassistant/number/pool-controller/pool-max-temp/set";
+
+  client.simulateMessage(topic, "abc");
+  fixture.adapter.processPendingCommands();
+  ASSERT_EQ(fixture.operation.getPoolMaxTemperature(), 28.0F);
+
+  client.simulateMessage(topic, "29.5abc");
+  fixture.adapter.processPendingCommands();
+  ASSERT_EQ(fixture.operation.getPoolMaxTemperature(), 28.0F);
+
+  client.simulateMessage(topic, "29.5");
+  fixture.adapter.processPendingCommands();
+  ASSERT_EQ(fixture.operation.getPoolMaxTemperature(), 29.5F);
+  return 0;
+}
+
 extern MqttClientCapture mqttCapture;
 
 static int test_second_registration_replaces_first_callback() {
@@ -145,12 +170,31 @@ static int test_second_registration_replaces_first_callback() {
   return 0;
 }
 
+static int test_publisher_begin_keeps_adapter_callback() {
+  test_begin("MqttRuntimeCommandAdapter", "MqttPublisher::begin() keeps the callback the adapter claimed first");
+  AdapterFixture fixture;
+  fixture.operation.setMode(OperationMode::AUTO);
+  fixture.begin();
+  // A second publisher begin (e.g. reconnect path) must not swap the handler
+  // while the AsyncTCP task may be dispatching messages.
+  PoolController::MqttPublisher::begin();
+  PoolController::NetworkManager::getClient().simulateMessage("homeassistant/select/pool-controller/mode/set", "boost");
+  // Only the adapter's queue may hold the message: draining the legacy
+  // publisher queue must not apply it.
+  PoolController::MqttPublisher::processPendingCommands();
+  ASSERT_EQ(fixture.operation.getTypedMode(), OperationMode::AUTO);
+  fixture.adapter.processPendingCommands();
+  ASSERT_EQ(fixture.operation.getTypedMode(), OperationMode::BOOST);
+  return 0;
+}
+
 int run_mqtt_runtime_command_adapter_tests() {
   int passed = 0;
   int failed = 0;
   int (*tests[])() = {test_callback_does_not_mutate_controller_state, test_commands_remain_bounded_per_loop,
     test_timer_start_and_end_are_independent_mqtt_commands, test_manual_pump_policy_is_enforced_after_translation,
-    test_second_registration_replaces_first_callback};
+    test_second_registration_replaces_first_callback, test_non_numeric_setpoint_payload_is_rejected,
+    test_publisher_begin_keeps_adapter_callback};
   for (auto test : tests) {
     if (test() == 0) {
       ++passed;

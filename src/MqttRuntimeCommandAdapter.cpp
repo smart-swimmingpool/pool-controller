@@ -3,6 +3,9 @@
 
 #include "MqttRuntimeCommandAdapter.hpp"
 
+#include <cctype>
+#include <cstdint>
+#include <cmath>
 #include <cstdlib>
 #include <cstring>
 
@@ -25,6 +28,35 @@ bool topicEndsWith(const char *topic, const char *suffix) {
 
 bool isDigit(char value) {
   return value >= '0' && value <= '9';
+}
+
+// The whole payload must be a number (surrounding whitespace allowed);
+// "abc" or "28abc" must not silently become 0 or 28.
+bool onlyWhitespaceFollows(const char *end) {
+  while (std::isspace(static_cast<unsigned char>(*end))) {
+    ++end;
+  }
+  return *end == '\0';
+}
+
+bool parseFloatStrict(const char *value, float &out) {
+  char *end = nullptr;
+  const float parsed = std::strtof(value, &end);
+  if (end == value || !onlyWhitespaceFollows(end) || !std::isfinite(parsed)) {
+    return false;
+  }
+  out = parsed;
+  return true;
+}
+
+bool parseIntStrict(const char *value, std::int32_t &out) {
+  char *end = nullptr;
+  const long long parsed = std::strtoll(value, &end, 10);
+  if (end == value || !onlyWhitespaceFollows(end) || parsed < INT32_MIN || parsed > INT32_MAX) {
+    return false;
+  }
+  out = static_cast<std::int32_t>(parsed);
+  return true;
 }
 
 bool parseTime(const char *value, std::size_t length, std::uint8_t &hour, std::uint8_t &minute) {
@@ -132,37 +164,49 @@ MqttRuntimeCommandAdapter::ParseResult MqttRuntimeCommandAdapter::parseRuntimeCo
 
   if (topicEndsWith(topic, "/thermostat/temperature/set") || topicEndsWith(topic, "/pool-max-temp/set")) {
     command.type = ControllerCommandType::SET_POOL_MAX_TEMPERATURE;
-    command.value = std::strtof(value, nullptr);
+    if (!parseFloatStrict(value, command.value)) {
+      return ParseResult::INVALID;
+    }
     return ParseResult::VALID;
   }
 
   if (topicEndsWith(topic, "/solar-min-temp/set")) {
     command.type = ControllerCommandType::SET_SOLAR_MIN_TEMPERATURE;
-    command.value = std::strtof(value, nullptr);
+    if (!parseFloatStrict(value, command.value)) {
+      return ParseResult::INVALID;
+    }
     return ParseResult::VALID;
   }
 
   if (topicEndsWith(topic, "/hysteresis/set")) {
     command.type = ControllerCommandType::SET_TEMPERATURE_HYSTERESIS;
-    command.value = std::strtof(value, nullptr);
+    if (!parseFloatStrict(value, command.value)) {
+      return ParseResult::INVALID;
+    }
     return ParseResult::VALID;
   }
 
   if (topicEndsWith(topic, "/temp-circ-threshold/set")) {
     command.type = ControllerCommandType::SET_TEMPERATURE_CIRCULATION_THRESHOLD;
-    command.value = std::strtof(value, nullptr);
+    if (!parseFloatStrict(value, command.value)) {
+      return ParseResult::INVALID;
+    }
     return ParseResult::VALID;
   }
 
   if (topicEndsWith(topic, "/temp-circ-factor/set")) {
     command.type = ControllerCommandType::SET_TEMPERATURE_CIRCULATION_FACTOR;
-    command.integerValue = std::atoi(value);
+    if (!parseIntStrict(value, command.integerValue)) {
+      return ParseResult::INVALID;
+    }
     return ParseResult::VALID;
   }
 
   if (topicEndsWith(topic, "/temp-circ-max-runtime/set")) {
     command.type = ControllerCommandType::SET_TEMPERATURE_CIRCULATION_MAX_RUNTIME;
-    command.integerValue = std::atoi(value);
+    if (!parseIntStrict(value, command.integerValue)) {
+      return ParseResult::INVALID;
+    }
     return ParseResult::VALID;
   }
 

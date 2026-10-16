@@ -50,6 +50,9 @@ public:
 
   /** @brief Register the MQTT message callback. */
   static void setMqttCallback(MqttMessageCallback callback);
+  // True once a handler is installed. Lets the first owner claim the callback
+  // before MQTT connects instead of swapping it while messages arrive.
+  static bool hasMqttCallback() { return mqttCallback_ != nullptr; }
   /** @brief Switch to access-point mode (captive portal). */
   static void startAPMode();
   /** @brief Publish "offline" on the HA availability topic (retained, QoS 1). */
