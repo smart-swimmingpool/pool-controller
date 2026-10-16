@@ -18,7 +18,7 @@
 
 DallasTemperatureNode::DallasTemperatureNode(
   PoolController::SensorId slot, const char *id, const char *name, const uint8_t pin, const int measurementInterval)
-  : slot_(slot) {
+    : slot_(slot) {
   _id = id;
   _name = name;
   _pin = pin;
@@ -33,7 +33,7 @@ DallasTemperatureNode::DallasTemperatureNode(
 
 DallasTemperatureNode::DallasTemperatureNode(PoolController::SensorId slot, const char *id, const char *name,
   DallasTemperature *sharedSensor, uint8_t deviceIndex, const int measurementInterval)
-  : slot_(slot) {
+    : slot_(slot) {
   _id = id;
   _name = name;
   _pin = 0;
@@ -238,9 +238,9 @@ void DallasTemperatureNode::begin() {
 
   numberOfDevices = activeSensor->getDeviceCount();
   LOG_INFO("• DallasTemperature: Parasite power is: %d\n", activeSensor->isParasitePowerMode());
+  const uint8_t displayPin = sharedSensor_ ? PoolController::PIN_DS_SOLAR : _pin;
 
   if (numberOfDevices > 0) {
-    const uint8_t displayPin = sharedSensor_ ? PoolController::PIN_DS_SOLAR : _pin;
     LOG_INFO("  ◦ %d devices found on PIN %d\n", numberOfDevices, displayPin);
 
     for (uint8_t i = 0; i < numberOfDevices; i++) {
@@ -263,7 +263,6 @@ void DallasTemperatureNode::begin() {
       PoolController::DegradationManager::reportSensorStatus(_id, true);
     }
   } else {
-    const uint8_t displayPin = sharedSensor_ ? PoolController::PIN_DS_SOLAR : _pin;
     LOG_ERROR("✖ No Dallas sensors found on pin %d\n", displayPin);
     _sensorFound = false;
     refreshDetectedSnapshot(false);
