@@ -22,15 +22,14 @@ class ControllerCommandHandler;
  * @brief Moves MQTT callback data onto the loop task and translates runtime
  * mutations into allocation-free `ControllerCommand` values.
  *
- * Commands outside the runtime-controller scope (for example OTA and NTP
- * server provisioning) are delegated to the existing MQTT implementation on
- * the loop task until their dedicated service boundaries are extracted.
+ * Commands outside the runtime-controller scope (the firmware update) are
+ * delegated to MqttPublisher::handleMqttMessage() on the loop task.
  */
 class MqttRuntimeCommandAdapter final {
 public:
   explicit MqttRuntimeCommandAdapter(ControllerCommandHandler &handler) : handler_(handler) {}
 
-  /** @brief Replace the MQTT callback with this adapter after MqttPublisher::begin(). */
+  /** @brief Register this adapter as the MQTT callback; call before MQTT connects. */
   void begin();
 
   /** @brief Drain a bounded number of queued messages on the Core-1 loop task. */

@@ -253,6 +253,14 @@ MqttRuntimeCommandAdapter::ParseResult MqttRuntimeCommandAdapter::parseRuntimeCo
     return ParseResult::VALID;
   }
 
+  if (topicEndsWith(topic, "/ntp-server/set")) {
+    command.type = ControllerCommandType::SET_NTP_SERVER;
+    if (!command.ntpServer.assign(value, message.payloadLen)) {
+      return ParseResult::INVALID;
+    }
+    return ParseResult::VALID;
+  }
+
   if (topicEndsWith(topic, "/solar-sensor/set") || topicEndsWith(topic, "/pool-sensor/set")) {
     command.sensorRole = topicEndsWith(topic, "/solar-sensor/set") ? SensorRole::SOLAR : SensorRole::POOL;
     if (std::strstr(value, "Not configured") != nullptr || message.payloadLen < 16) {
@@ -277,6 +285,11 @@ void MqttRuntimeCommandAdapter::processPendingCommands() {
     if (result == ParseResult::NOT_RUNTIME) {
       AsyncMqttClientMessageProperties properties{};
       MqttPublisher::handleMqttMessage(message.topic, message.payload, properties, message.payloadLen, 0, message.payloadLen);
+      continue;
+    }
+
+    if (!MqttPublisher::isCommandAuthorized()) {
+      LOG_WARN("MQTT runtime adapter: command on %s rejected - MQTT authentication required\n", message.topic);
       continue;
     }
 

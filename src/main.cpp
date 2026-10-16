@@ -87,10 +87,9 @@ auto setup() -> void {
 
   PoolController::WebPortal::setCommandDispatcher(dispatchWebCommand);
 
-  // Claim the MQTT callback before context.setup() starts the MQTT connection,
-  // so the handler is never swapped while the AsyncTCP task may dispatch
-  // messages. MqttPublisher::begin() keeps this handler. The adapter callback
-  // only copies bytes; mutation happens in loop().
+  // Register the only MQTT callback before context.setup() starts the MQTT
+  // connection, so the handler is never swapped while the AsyncTCP task may
+  // dispatch messages. The callback only copies bytes; mutation happens in loop().
   mqttRuntimeCommandAdapter().begin();
 
   context.setup();

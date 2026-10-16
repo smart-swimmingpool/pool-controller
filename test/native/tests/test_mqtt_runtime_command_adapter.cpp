@@ -170,8 +170,8 @@ static int test_second_registration_replaces_first_callback() {
   return 0;
 }
 
-static int test_publisher_begin_keeps_adapter_callback() {
-  test_begin("MqttRuntimeCommandAdapter", "MqttPublisher::begin() keeps the callback the adapter claimed first");
+static int test_publisher_begin_does_not_take_the_callback() {
+  test_begin("MqttRuntimeCommandAdapter", "MqttPublisher::begin() leaves the adapter as the only MQTT callback");
   AdapterFixture fixture;
   fixture.operation.setMode(OperationMode::AUTO);
   fixture.begin();
@@ -179,12 +179,41 @@ static int test_publisher_begin_keeps_adapter_callback() {
   // while the AsyncTCP task may be dispatching messages.
   PoolController::MqttPublisher::begin();
   PoolController::NetworkManager::getClient().simulateMessage("homeassistant/select/pool-controller/mode/set", "boost");
-  // Only the adapter's queue may hold the message: draining the legacy
-  // publisher queue must not apply it.
-  PoolController::MqttPublisher::processPendingCommands();
-  ASSERT_EQ(fixture.operation.getTypedMode(), OperationMode::AUTO);
   fixture.adapter.processPendingCommands();
   ASSERT_EQ(fixture.operation.getTypedMode(), OperationMode::BOOST);
+  return 0;
+}
+
+static int test_climate_topics_map_to_operation_modes() {
+  test_begin("MqttRuntimeCommandAdapter", "thermostat mode and preset topics map to operation modes");
+  AdapterFixture fixture;
+  fixture.operation.setMode(OperationMode::AUTO);
+  fixture.begin();
+  auto &client = PoolController::NetworkManager::getClient();
+
+  client.simulateMessage("homeassistant/climate/pool-controller/thermostat/mode/set", "heat");
+  fixture.adapter.processPendingCommands();
+  ASSERT_EQ(fixture.operation.getTypedMode(), OperationMode::BOOST);
+
+  client.simulateMessage("homeassistant/climate/pool-controller/thermostat/preset/set", "schedule");
+  fixture.adapter.processPendingCommands();
+  ASSERT_EQ(fixture.operation.getTypedMode(), OperationMode::TIMER);
+
+  client.simulateMessage("homeassistant/climate/pool-controller/thermostat/mode/set", "cool");
+  fixture.adapter.processPendingCommands();
+  ASSERT_EQ(fixture.operation.getTypedMode(), OperationMode::TIMER);
+  return 0;
+}
+
+static int test_ntp_server_is_a_typed_command() {
+  test_begin("MqttRuntimeCommandAdapter", "NTP server topic becomes a typed command");
+  AdapterFixture fixture;
+  fixture.begin();
+  auto &client = PoolController::NetworkManager::getClient();
+  client.simulateMessage("homeassistant/text/pool-controller/ntp-server/set", "time.example.org");
+  fixture.adapter.processPendingCommands();
+  const bool serverApplied = PoolController::ConfigManager::getNtp().server == "time.example.org";
+  ASSERT_TRUE(serverApplied);
   return 0;
 }
 
@@ -194,7 +223,8 @@ int run_mqtt_runtime_command_adapter_tests() {
   int (*tests[])() = {test_callback_does_not_mutate_controller_state, test_commands_remain_bounded_per_loop,
     test_timer_start_and_end_are_independent_mqtt_commands, test_manual_pump_policy_is_enforced_after_translation,
     test_second_registration_replaces_first_callback, test_non_numeric_setpoint_payload_is_rejected,
-    test_publisher_begin_keeps_adapter_callback};
+    test_publisher_begin_does_not_take_the_callback, test_climate_topics_map_to_operation_modes,
+    test_ntp_server_is_a_typed_command};
   for (auto test : tests) {
     if (test() == 0) {
       ++passed;

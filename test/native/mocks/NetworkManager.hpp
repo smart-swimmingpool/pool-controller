@@ -8,7 +8,7 @@ namespace PoolController {
 
 class NetworkManager {
 public:
-  using MqttMessageCallback = std::function<void(char*, char*, AsyncMqttClientMessageProperties, size_t, size_t, size_t)>;
+  using MqttMessageCallback = std::function<void(char *, char *, AsyncMqttClientMessageProperties, size_t, size_t, size_t)>;
 
   static bool begin() { return true; }
   static void loop() {}
@@ -21,7 +21,8 @@ public:
   static String getLocalIP() { return getLocalIPAddress().toString(); }
 
   static bool publish(const char *topic, const char *payload, bool retained = false) {
-    if (!_publishOk) return false;
+    if (!_publishOk)
+      return false;
     bool ok = _mqttClient.publish(topic, 1, retained, payload) > 0;
     if (_publishHook && _publishHookTopic == topic) {
       auto hook = std::move(_publishHook);  // one-shot: prevents recursion
@@ -40,19 +41,21 @@ public:
     // mqttCapture.clear() wiped previous registrations.
     _mqttCallback = cb;
     if (mqttCapture.onMessageCbs.empty()) {
-      _mqttClient.onMessage([](char *topic, char *payload, AsyncMqttClientMessageProperties properties,
-                               size_t len, size_t index, size_t total) {
-        if (_mqttCallback) {
-          _mqttCallback(topic, payload, properties, len, index, total);
-        }
-      });
+      _mqttClient.onMessage(
+        [](char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total) {
+          if (_mqttCallback) {
+            _mqttCallback(topic, payload, properties, len, index, total);
+          }
+        });
     }
   }
 
-  static bool hasMqttCallback() { return static_cast<bool>(_mqttCallback); }
   static void clearMqttCallback() { _mqttCallback = nullptr; }
 
-  static void disconnectMqtt() { _mqttClient.disconnect(); _mqttConnected = false; }
+  static void disconnectMqtt() {
+    _mqttClient.disconnect();
+    _mqttConnected = false;
+  }
   static void startAPMode() { _apMode = true; }
   static void restart() { ESP.restart(); }
 
@@ -91,4 +94,4 @@ private:
   static MqttMessageCallback _mqttCallback;
 };
 
-} // namespace PoolController
+}  // namespace PoolController

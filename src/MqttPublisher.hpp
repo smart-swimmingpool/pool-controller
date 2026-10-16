@@ -20,8 +20,8 @@ namespace PoolController {
  * @brief Publishes Home Assistant MQTT Discovery configs and telemetry states.
  *
  * On startup and MQTT (re)connect, announces all entities via HA Discovery
- * topics. Periodically publishes sensor values and relay states. Handles
- * incoming MQTT commands (mode, pump toggle, config changes).
+ * topics. Periodically publishes sensor values and relay states. Runtime
+ * commands are handled by MqttRuntimeCommandAdapter.
  */
 class MqttPublisher {
 public:
@@ -34,12 +34,11 @@ public:
   /** @brief Publish current telemetry states (temperatures, relays, mode). */
   static void publishStates();
   /**
-   * @brief Handle an incoming MQTT message from Home Assistant.
-   *
-   * Changes controller state — call only on the loop task (via
-   * processPendingCommands()), never from the MQTT client callback.
+   * @brief Handle an MQTT command outside the runtime-controller scope
+   * (firmware update). MqttRuntimeCommandAdapter forwards these from the loop
+   * task; runtime commands never reach this function.
    * @param topic   The MQTT topic the message was received on.
-   * @param payload Null-terminated payload string.
+   * @param payload Payload bytes (not NUL-terminated).
    * @param properties  Message properties (QoS, retain, dup).
    * @param len     Payload length.
    * @param index   Chunk index (0 for single-chunk messages).
@@ -48,19 +47,8 @@ public:
   static void handleMqttMessage(
     char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total);
 
-  /**
-   * MQTT client callback — runs on the AsyncTCP task. Only copies the message
-   * into the command queue; it is handled by processPendingCommands() on the
-   * loop task. Incomplete (chunked) or oversized messages are dropped.
-   */
-  static void onMqttMessage(
-    char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total);
-
-  /// Maximum number of queued commands handled per loop iteration.
-  static constexpr size_t kMaxCommandsPerLoop = 2;
-
-  /// Handle up to kMaxCommandsPerLoop queued MQTT commands. Call from the loop task only.
-  static void processPendingCommands();
+  /** @brief MQTT command policy: true when commands may change the controller. */
+  static bool isCommandAuthorized();
 
   // ── Command validation (public for testing) ──
   /** @brief Validate a command against a whitelist. */

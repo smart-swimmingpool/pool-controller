@@ -361,9 +361,9 @@ auto PoolControllerContext::loop() -> void {
     lastBootClear = millis();
   }
 
-  // Network callback only queues commands; state mutations are serialized here.
+  // MQTT commands are queued by the callback and applied by
+  // MqttRuntimeCommandAdapter::processPendingCommands() in main.cpp's loop().
   NetworkManager::loop();
-  MqttPublisher::processPendingCommands();
   WebPortal::loop();
   OtaUpdater::loop();
 
