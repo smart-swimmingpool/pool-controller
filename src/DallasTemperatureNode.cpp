@@ -14,16 +14,16 @@
 #include "SystemMonitor.hpp"
 #include "DegradationManager.hpp"
 #include "SensorSlots.hpp"
-#include "Utils.hpp"
 #include "LogCapture.hpp"
 
-DallasTemperatureNode::DallasTemperatureNode(const char *id, const char *name, const uint8_t pin, const int measurementInterval) {
+DallasTemperatureNode::DallasTemperatureNode(
+  PoolController::SensorId slot, const char *id, const char *name, const uint8_t pin, const int measurementInterval)
+  : slot_(slot) {
   _id = id;
   _name = name;
   _pin = pin;
   _measurementInterval.store(
     (measurementInterval > MIN_INTERVAL) ? measurementInterval : MIN_INTERVAL, std::memory_order_relaxed);
-  _lastMeasurement = 0;
   _temperature = NAN;
   _sensorFound = false;
 
@@ -31,14 +31,14 @@ DallasTemperatureNode::DallasTemperatureNode(const char *id, const char *name, c
   sensor.setOneWire(&oneWire);
 }
 
-DallasTemperatureNode::DallasTemperatureNode(
-  const char *id, const char *name, DallasTemperature *sharedSensor, uint8_t deviceIndex, const int measurementInterval) {
+DallasTemperatureNode::DallasTemperatureNode(PoolController::SensorId slot, const char *id, const char *name,
+  DallasTemperature *sharedSensor, uint8_t deviceIndex, const int measurementInterval)
+  : slot_(slot) {
   _id = id;
   _name = name;
   _pin = 0;
   _measurementInterval.store(
     (measurementInterval > MIN_INTERVAL) ? measurementInterval : MIN_INTERVAL, std::memory_order_relaxed);
-  _lastMeasurement = 0;
   _temperature = NAN;
   _sensorFound = false;
 
@@ -88,7 +88,7 @@ void DallasTemperatureNode::publishSelectedAddress() {
 }
 
 bool DallasTemperatureNode::resolveFilter() {
-  DallasTemperature *activeSensor = sharedSensor_ ? sharedSensor_ : &sensor;
+  DallasTemperature *activeSensor = bus();
   DeviceAddress filter{};
   const bool hasFilter = hasFilter_.load(std::memory_order_acquire);
 
@@ -152,7 +152,7 @@ void DallasTemperatureNode::applyPendingAddressFilter() {
 }
 
 void DallasTemperatureNode::refreshDetectedSnapshot(bool includeTemperatures) {
-  DallasTemperature *activeSensor = sharedSensor_ ? sharedSensor_ : &sensor;
+  DallasTemperature *activeSensor = bus();
   DeviceAddress localAddresses[MAX_DETECTED_DEVICES]{};
   float localTemperatures[MAX_DETECTED_DEVICES];
   for (float &value : localTemperatures) {
@@ -226,7 +226,7 @@ float DallasTemperatureNode::getDetectedDeviceTemperature(uint8_t index) const {
 }
 
 void DallasTemperatureNode::begin() {
-  DallasTemperature *activeSensor = sharedSensor_ ? sharedSensor_ : &sensor;
+  DallasTemperature *activeSensor = bus();
 
   if (!sharedSensor_) {
     activeSensor->begin();
@@ -275,19 +275,19 @@ void DallasTemperatureNode::begin() {
 }
 
 void DallasTemperatureNode::beginMeasurement() {
-  DallasTemperature *activeSensor = sharedSensor_ ? sharedSensor_ : &sensor;
+  DallasTemperature *activeSensor = bus();
   applyPendingAddressFilter();
 
   if (sharedSensor_ && numberOfDevices > 0) {
     if (isBusMaster_) {
-      PoolController::SystemMonitor::feedWatchdogFromTask();
+      PoolController::SystemMonitor::feedWatchdog();
       activeSensor->requestTemperatures();
-      PoolController::SystemMonitor::feedWatchdogFromTask();
+      PoolController::SystemMonitor::feedWatchdog();
     }
   } else if (numberOfDevices > 0) {
-    PoolController::SystemMonitor::feedWatchdogFromTask();
+    PoolController::SystemMonitor::feedWatchdog();
     activeSensor->requestTemperatures();
-    PoolController::SystemMonitor::feedWatchdogFromTask();
+    PoolController::SystemMonitor::feedWatchdog();
   }
 }
 
@@ -303,7 +303,7 @@ void DallasTemperatureNode::finishMeasurement() {
 
   // Both bus modes read the one device resolved for this node, so the filter
   // and failure counter always track a single sensor.
-  DallasTemperature *activeSensor = sharedSensor_ ? sharedSensor_ : &sensor;
+  DallasTemperature *activeSensor = bus();
   const bool needsRescan = handleReading(activeSensor->getTempC(deviceAddress_));
   PoolController::SensorSlots::write(slotId(), _temperature, _sensorFound);
   if (needsRescan) {
@@ -311,19 +311,6 @@ void DallasTemperatureNode::finishMeasurement() {
     rescanBus();
   }
   refreshDetectedSnapshot(!needsRescan);
-}
-
-void DallasTemperatureNode::loop() {
-  const unsigned long effectiveInterval = std::isnan(_temperature) ? RECOVERY_INTERVAL : getMeasurementInterval();
-  if (Utils::shouldMeasure(_lastMeasurement, effectiveInterval)) {
-    _lastMeasurement = millis();
-    LOG_DEBUG("〽 Reading Dallas sensor: %s\n", _id);
-    beginMeasurement();
-    // Synchronous fallback for tests/non-task callers. Production uses
-    // SensorTask, which yields instead of blocking the control loop.
-    delay(SYNC_CONVERSION_DELAY_MS);
-    finishMeasurement();
-  }
 }
 
 bool DallasTemperatureNode::handleReading(float raw) {
@@ -386,7 +373,7 @@ bool DallasTemperatureNode::targetAddress(DeviceAddress target) const {
 
 void DallasTemperatureNode::rescanBus() {
   // Runs on the task that owns the OneWire bus (SensorTask after startup).
-  DallasTemperature *activeSensor = sharedSensor_ ? sharedSensor_ : &sensor;
+  DallasTemperature *activeSensor = bus();
   consecutiveFailures_ = 0;
   filter_.reset();
 
@@ -419,10 +406,6 @@ void DallasTemperatureNode::rescanBus() {
 
   _sensorFound = false;
   LOG_WARN("  ⚠ %s: sensor still missing after rescan (%d device(s) on bus)\n", _id, numberOfDevices);
-}
-
-PoolController::SensorId DallasTemperatureNode::slotId() const {
-  return (_id[0] == 's') ? PoolController::SensorId::SOLAR : PoolController::SensorId::POOL;
 }
 
 void DallasTemperatureNode::address2String(const DeviceAddress deviceAddress, char *buffer, size_t size) const {

@@ -28,8 +28,8 @@
 using namespace PoolController;  // NOLINT(build/namespaces)
 
 // Extern nodes declared in WebPortal.cpp (provided by our mocks)
-DallasTemperatureNode solarTemperatureNode("solar-temp", "Solar Temperature", 32);
-DallasTemperatureNode poolTemperatureNode("pool-temp", "Pool Temperature", 33);
+DallasTemperatureNode solarTemperatureNode(PoolController::SensorId::SOLAR, "solar-temp", "Solar Temperature", 32);
+DallasTemperatureNode poolTemperatureNode(PoolController::SensorId::POOL, "pool-temp", "Pool Temperature", 33);
 ESP32TemperatureNode ctrlTemperatureNode("ctrl-temp", "Controller Temperature");
 RelayModuleNode poolPumpNode("pool-pump", "Pool Pump", 25);
 RelayModuleNode solarPumpNode("solar-pump", "Solar Pump", 26);

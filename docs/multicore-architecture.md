@@ -49,8 +49,9 @@ graph with locks.
 If `SensorTask` cannot be created, the controller restarts. A persistent failure is handled by the
 existing boot-loop detection and safe-mode path.
 
-MQTT requests still use `TelemetryQueue`. `PoolController::loop()` drains that queue directly on Core 1
-and invokes `MqttPublisher` there. `CoreScheduler` is responsible only for `SensorTask` lifecycle and
+MQTT publish requests are two pending flags (discovery, states) in `PoolController::loop()`. Requester
+and publisher both run on Core 1, so no queue is needed; `MqttPublisher` is invoked there. During an OTA
+update the flags stay set and are published afterwards. `CoreScheduler` is responsible only for `SensorTask` lifecycle and
 stack high-water logging.
 
 The NORVI display follows the same rule: button handling, UI state transitions and OLED rendering are
@@ -92,7 +93,7 @@ interval. Once both sensors are valid, the configured `loopInterval` applies aga
 ```text
 SensorTask (Core 0) ── SensorSlots ──────▶ control loop (Core 1): rules / relays
 SensorTask (Core 0) ── discovery cache ──▶ WebPortal / MQTT / UI (Core 1)
-control loop (Core 1) ── TelemetryQueue ─▶ MQTT serialization (Core 1)
+control loop (Core 1) ── pending flags ──▶ MQTT serialization (Core 1)
 DisplayCoordinator: input + state + render ───────────────────▶ Core 1
 ```
 

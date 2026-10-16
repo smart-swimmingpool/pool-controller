@@ -305,7 +305,7 @@ void NorviOledDisplay::begin() {
 
 // ═══════════════════════════════════════════════════════════════════════════
 // update() — Display state machine (Core 1, non-blocking)
-// render() — OLED draw + I2C push (Core 0, DisplayTask)
+// render() — OLED draw + I2C push (Core 1, called from DisplayCoordinator::loop())
 // ═══════════════════════════════════════════════════════════════════════════
 
 void NorviOledDisplay::update() {

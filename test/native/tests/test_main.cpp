@@ -50,7 +50,6 @@ extern int run_ky040_decoder_tests();
 extern int run_calibration_manager_tests();
 extern int run_temperature_filter_tests();
 extern int run_dallas_address_lookup_tests();
-extern int run_telemetry_queue_tests();
 extern int run_sensor_slots_tests();
 extern int run_sensor_cycle_tests();
 extern int run_core_scheduler_tests();
@@ -82,7 +81,6 @@ int main() {
   total += run_calibration_manager_tests();
   total += run_temperature_filter_tests();
   total += run_dallas_address_lookup_tests();
-  total += run_telemetry_queue_tests();
   total += run_sensor_slots_tests();
   total += run_sensor_cycle_tests();
   total += run_core_scheduler_tests();

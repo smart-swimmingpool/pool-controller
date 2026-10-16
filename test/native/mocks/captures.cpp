@@ -15,6 +15,7 @@ uint32_t g_millisOffset = 0;
 
 // ESP mock heap state (default mirrors the previous hardcoded value).
 uint32_t ESPClass::s_mockFreeHeap = 180000;
+int ESPClass::s_restartCount = 0;
 MockStreamState mockStreamState;
 
 const std::string &httpResponseBody() {
