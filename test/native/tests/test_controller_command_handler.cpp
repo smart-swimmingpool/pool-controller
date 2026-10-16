@@ -38,8 +38,8 @@ struct HandlerFixture {
   OperationModeNode operation{"operation-mode", "Operation Mode", 300};
   RelayModuleNode poolPump{"pool", "Pool", 1};
   RelayModuleNode solarPump{"solar", "Solar", 2};
-  DallasTemperatureNode solarTemperature{"solar-temp", "Solar Temperature", 3};
-  DallasTemperatureNode poolTemperature{"pool-temp", "Pool Temperature", 4};
+  DallasTemperatureNode solarTemperature{PoolController::SensorId::SOLAR, "solar-temp", "Solar Temperature", 3};
+  DallasTemperatureNode poolTemperature{PoolController::SensorId::POOL, "pool-temp", "Pool Temperature", 4};
   ESP32TemperatureNode controllerTemperature{"controller-temp", "Controller Temperature"};
   ControllerCommandHandler handler{ControllerCommandHandler::Dependencies{
     operation, poolPump, solarPump, solarTemperature, poolTemperature, controllerTemperature}};

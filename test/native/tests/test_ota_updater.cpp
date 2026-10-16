@@ -8,22 +8,7 @@
 #include "HTTPClient.h"
 #include "NetworkManager.hpp"
 #include "../../../src/OtaUpdater.hpp"
-
-extern void test_begin(const char *suite, const char *name);
-extern void test_pass(const char *file, int line);
-extern void test_fail(const char *file, int line, const char *msg);
-extern void test_suite_end(const char *name, int passed, int failed);
-
-#define ASSERT_TRUE(cond)                                     \
-  do {                                                        \
-    if (!(cond)) {                                            \
-      test_fail(__FILE__, __LINE__, "Expected true: " #cond); \
-      return 1;                                               \
-    }                                                         \
-    test_pass(__FILE__, __LINE__);                            \
-  } while (0)
-
-#define ASSERT_EQ(a, b) ASSERT_TRUE((a) == (b))
+#include "test_assert.h"
 
 using namespace PoolController;
 
