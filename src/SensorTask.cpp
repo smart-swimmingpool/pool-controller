@@ -28,7 +28,6 @@ extern ESP32TemperatureNode ctrlTemperatureNode;
 namespace {
 TaskHandle_t sensorTaskHandle = nullptr;
 uint32_t lastDallasReadingMs = 0;
-uint32_t lastControllerReadingMs = 0;
 constexpr uint32_t CONVERSION_DELAY_MS = 800;  // >= 12-bit DS18B20 conversion
 }  // namespace
 
@@ -59,12 +58,8 @@ void sensorTaskFunc(void *) {
       });
     }
 
-    // ESP32 internal temperature on its own interval.
-    const unsigned long ctrlInterval = ctrlTemperatureNode.getMeasurementInterval();
-    if (now - lastControllerReadingMs >= ctrlInterval * 1000UL) {
-      lastControllerReadingMs = now;
-      ctrlTemperatureNode.loop();
-    }
+    // ESP32 internal temperature: the node enforces its own interval.
+    ctrlTemperatureNode.loop();
 
     if (watchdogRegistered) {
       SystemMonitor::feedWatchdogFromTask();
