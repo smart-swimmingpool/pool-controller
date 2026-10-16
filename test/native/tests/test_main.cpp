@@ -97,5 +97,5 @@ int main() {
   printf("  Assertions: %d passed, %d failed\n", g_assertionsPassed, g_assertionsFailed);
   printf("══════════════════════════════════════════════════\n\n");
 
-  return g_testsFailed > 0 ? 1 : 0;
+  return (g_testsFailed > 0 || g_assertionsFailed > 0) ? 1 : 0;
 }

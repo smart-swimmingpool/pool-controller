@@ -146,14 +146,14 @@ static void loadSensorAddressMapping() {
 
 /** @brief Service deferred MQTT publish requests on the Core-1 owner task. */
 static void serviceTelemetryQueue() {
+  // While the updater owns the network path, keep requests queued instead of
+  // dropping them, so a discovery requested on reconnect is not lost.
+  if (OtaUpdater::isUpdateInProgress()) {
+    return;
+  }
+
   PublishRequestKind kind;
   while (TelemetryQueue::instance().dequeue(kind)) {
-    // Preserve the previous OTA behavior: requests are drained but not sent
-    // while the updater owns the network path.
-    if (OtaUpdater::isUpdateInProgress()) {
-      continue;
-    }
-
     if (kind == PublishRequestKind::DISCOVERY) {
       MqttPublisher::publishDiscovery();
     } else {
@@ -404,7 +404,9 @@ auto PoolControllerContext::loop() -> void {
   }
 
   // Periodically enqueue telemetry; serialization is serviced below on Core 1.
-  if (currentMqttState && Utils::shouldMeasure(_lastMeasurement, _measurementInterval)) {
+  // Skipped during OTA so periodic states cannot fill the queue and crowd out
+  // a pending discovery request.
+  if (currentMqttState && !OtaUpdater::isUpdateInProgress() && Utils::shouldMeasure(_lastMeasurement, _measurementInterval)) {
     _lastMeasurement = millis();
     TelemetryQueue::instance().enqueue(PublishRequestKind::STATES);
   }
