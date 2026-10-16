@@ -64,18 +64,19 @@ set(SERVICE_SOURCES
   ${PROJ_ROOT}/src/LocalSettingsMenu.cpp
   ${PROJ_ROOT}/src/Ky040Decoder.cpp
   ${PROJ_ROOT}/src/OlimexEncoderHandler.cpp
+  ${PROJ_ROOT}/src/TelemetryQueue.cpp
+  ${PROJ_ROOT}/src/SensorSlots.cpp
 )
 
-# Mock sources (compiled once)
 set(MOCK_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/mocks/captures.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mocks/NetworkManager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mocks/ConfigManager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mocks/globals.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mocks/stubs.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/mocks/CoreScheduler.cpp
 )
 
-# Test sources
 set(TEST_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_main.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_rules.cpp
@@ -83,6 +84,7 @@ set(TEST_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_webportal_json.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_web_runtime_commands.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mqttpublisher.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mqtt_command_queue.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_security.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_state_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_timer.cpp
@@ -91,15 +93,18 @@ set(TEST_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_local_settings_menu.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_ky040_decoder.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_calibration_manager.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mqtt_command_queue.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_telemetry_queue.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_sensor_slots.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_sensor_cycle.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_core_scheduler.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_degradation_manager.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_ota_updater.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_controller_contracts.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_controller_snapshot_diagnostics.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_controller_snapshot_store.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_controller_command_queue.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_controller_command_handler.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mqtt_runtime_command_adapter.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_degradation_manager.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_ota_updater.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_controller_snapshot_publisher.cpp
 )
 
@@ -116,8 +121,5 @@ target_include_directories(test_runner PRIVATE
   ${CMAKE_CURRENT_BINARY_DIR}/wrappers
 )
 
-# Link gcov
 target_link_libraries(test_runner gcov)
-
-# Test command
 add_test(NAME pool_controller_test COMMAND test_runner)

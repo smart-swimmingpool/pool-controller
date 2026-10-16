@@ -13,6 +13,8 @@ public:
 
   void begin() {}
   void loop() {}
+  void beginMeasurement() {}
+  void finishMeasurement() {}
 
   float getTemperature() const { return _temperature; }
   void setTemperature(float t) { _temperature = t; }
