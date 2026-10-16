@@ -12,6 +12,7 @@
 
 #include <Arduino.h>
 
+#include "CalibrationManager.hpp"
 #include "ConfigManager.hpp"
 #include "NetworkManager.hpp"
 #include "Nodes.hpp"
@@ -85,15 +86,16 @@ void handleButton3() {
   if (NorviOledDisplay::isMenuActive()) {
     switch (NorviOledDisplay::getMenuSelection()) {
     case NorviOledDisplay::MenuItem::MODE: {
+      constexpr const char *kSource = "button:S3/menu";
       const String &currentMode = operationModeNode.getMode();
       if (currentMode == "auto") {
-        operationModeNode.setMode("manu");
+        operationModeNode.setMode("manu", kSource);
       } else if (currentMode == "manu") {
-        operationModeNode.setMode("boost");
+        operationModeNode.setMode("boost", kSource);
       } else if (currentMode == "boost") {
-        operationModeNode.setMode("timer");
+        operationModeNode.setMode("timer", kSource);
       } else {
-        operationModeNode.setMode("auto");
+        operationModeNode.setMode("auto", kSource);
       }
       LOG_INFO("→ Mode switched to: %s\n", operationModeNode.getMode().c_str());
       break;
@@ -114,10 +116,6 @@ void handleButton3() {
 }
 
 void handleButton3Long() {
-  if (!NorviOledDisplay::isMappingComplete()) {
-    return;
-  }
-
   uint8_t solarAddr[8];
   uint8_t poolAddr[8];
   NorviOledDisplay::getMapping(solarAddr, poolAddr);
@@ -148,11 +146,17 @@ void processEvent(UiEvent event) {
 void DisplayCoordinator::begin() {
   NorviOledDisplay::begin();
   NorviButtonHandler::begin();
+  CalibrationManager::begin();
 
   NorviButtonHandler::onButton1Press([]() { enqueueEvent(UiEvent::BUTTON_1); });
   NorviButtonHandler::onButton2Press([]() { enqueueEvent(UiEvent::BUTTON_2); });
   NorviButtonHandler::onButton3Press([]() { enqueueEvent(UiEvent::BUTTON_3); });
+  // The callback's return value decides synchronously whether the short press
+  // is suppressed, so the mapping check cannot be deferred to the event queue.
   NorviButtonHandler::onButton3LongPress([]() -> bool {
+    if (!NorviOledDisplay::isMappingComplete()) {
+      return false;
+    }
     enqueueEvent(UiEvent::BUTTON_3_LONG);
     return true;
   });
@@ -163,6 +167,7 @@ void DisplayCoordinator::loop() {
   // control-loop task. This preserves single-writer ownership of mutable UI,
   // operation-mode, relay, network and configuration state.
   NorviButtonHandler::loop();
+  CalibrationManager::loop();
 
   UiEvent event;
   while (dequeueEvent(event)) {
