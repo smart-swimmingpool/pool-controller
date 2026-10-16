@@ -861,8 +861,11 @@ public:
 
   explicit SettingsFormCommands(WebServer &server) : server_(server) {}
 
+  /** @brief An empty field means "keep the current value", like a missing one. */
+  bool has(const char *arg) const { return server_.hasArg(arg) && server_.arg(arg).length() > 0; }
+
   void addMode(const char *arg) {
-    if (!server_.hasArg(arg)) {
+    if (!has(arg)) {
       return;
     }
     OperationMode mode;
@@ -875,20 +878,20 @@ public:
 
   void addFloat(const char *arg, ControllerCommandType type) {
     float value = 0.0F;
-    if (server_.hasArg(arg) && parse(arg, value)) {
+    if (has(arg) && parse(arg, value)) {
       add(type).value = value;
     }
   }
 
   void addInt(const char *arg, ControllerCommandType type) {
     std::int32_t value = 0;
-    if (server_.hasArg(arg) && parse(arg, value)) {
+    if (has(arg) && parse(arg, value)) {
       add(type).integerValue = value;
     }
   }
 
   void addTime(const char *hourArg, const char *minuteArg, ControllerCommandType type, std::uint8_t hour, std::uint8_t minute) {
-    if (!server_.hasArg(hourArg) && !server_.hasArg(minuteArg)) {
+    if (!has(hourArg) && !has(minuteArg)) {
       return;
     }
     if (!parseTimePart(hourArg, hour) || !parseTimePart(minuteArg, minute)) {
@@ -900,7 +903,7 @@ public:
   }
 
   void addNtpServer(const char *arg) {
-    if (!server_.hasArg(arg)) {
+    if (!has(arg)) {
       return;
     }
     const String server = server_.arg(arg);
@@ -935,7 +938,7 @@ private:
 
   /** @brief Missing parts keep the current value; the handler checks 0-23 / 0-59. */
   bool parseTimePart(const char *arg, std::uint8_t &part) {
-    if (!server_.hasArg(arg)) {
+    if (!has(arg)) {
       return true;
     }
     std::int32_t value = 0;

@@ -192,6 +192,7 @@ int test_settings_form_is_one_batch() {
   wsCapture.args["btn_no_press"] = "4096";
   wsCapture.args["ntp_server"] = "time.example.org";
   wsCapture.args["timer_start_h"] = "7";
+  wsCapture.args["circ_factor"] = "";  // empty means "keep", like a missing field
   ASSERT_TRUE(PoolController::WebPortal::invokeRouteForTest("/api/config", HTTP_POST));
   ASSERT_EQ(wsCapture.lastStatusCode, 200);
   ASSERT_EQ(capturedCount, 8U);
@@ -214,6 +215,7 @@ int test_settings_form_is_one_batch() {
   ASSERT_EQ(timerStart->hour, 7);
   ASSERT_EQ(timerStart->minute, PoolController::operationModeNode.getTimerSetting().timerStartMinutes);
   ASSERT_TRUE(findCaptured(ControllerCommandType::SET_TIMER_END) == nullptr);
+  ASSERT_TRUE(findCaptured(ControllerCommandType::SET_TEMPERATURE_CIRCULATION_FACTOR) == nullptr);
   return 0;
 }
 
