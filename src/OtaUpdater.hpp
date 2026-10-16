@@ -74,16 +74,16 @@ public:
   /// @return Available space in bytes.
   static size_t getAvailableFlashSpace();
 
-private:
-  // ── GitHub API ──
-  static bool fetchLatestRelease();
-
-  // ── Semver helpers ──
+  // ── Semver helpers (public for native unit tests) ──
   struct Version {
     int major = 0, minor = 0, patch = 0;
   };
   static bool parseVersion(const String &str, Version &out);
   static bool isNewerVersion(const String &current, const String &latest);
+
+private:
+  // ── GitHub API ──
+  static bool fetchLatestRelease();
 
   // ── OTA ──
   static bool downloadAndApply(const String &url);

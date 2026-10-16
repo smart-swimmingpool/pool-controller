@@ -35,6 +35,9 @@ public:
   static void publishStates();
   /**
    * @brief Handle an incoming MQTT message from Home Assistant.
+   *
+   * Changes controller state — call only on the loop task (via
+   * processPendingCommands()), never from the MQTT client callback.
    * @param topic   The MQTT topic the message was received on.
    * @param payload Null-terminated payload string.
    * @param properties  Message properties (QoS, retain, dup).
@@ -45,8 +48,23 @@ public:
   static void handleMqttMessage(
     char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total);
 
+  /**
+   * MQTT client callback — runs on the AsyncTCP task. Only copies the message
+   * into the command queue; it is handled by processPendingCommands() on the
+   * loop task. Incomplete (chunked) or oversized messages are dropped.
+   */
+  static void onMqttMessage(
+    char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total);
+
+  /// Maximum number of queued commands handled per loop iteration.
+  static constexpr size_t kMaxCommandsPerLoop = 2;
+
+  /// Handle up to kMaxCommandsPerLoop queued MQTT commands. Call from the loop task only.
+  static void processPendingCommands();
+
   // ── Command validation (public for testing) ──
   /** @brief Validate a command against a whitelist. */
+  static bool isValidCommand(const char *value, const char *const validCommands[], size_t count);
   static bool isValidCommand(const String &value, const char *const validCommands[], size_t count);
 
 private:
