@@ -119,3 +119,13 @@ jobs:
               repo: context.repo.repo,
               body: body
             });
+
+      - name: Enforce minimum line coverage (80%)
+        run: |
+          awk -F'[:,]' '
+            /^DA:/ { found++; if ($3 != "0") hit++ }
+            END {
+              pct = found ? 100 * hit / found : 0
+              printf "Line coverage: %.1f%% (%d/%d), minimum 80%%\n", pct, hit, found
+              if (pct < 80) exit 1
+            }' coverage.info
