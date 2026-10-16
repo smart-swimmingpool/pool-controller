@@ -132,9 +132,7 @@ void ControllerSnapshotPublisher::publish() {
   ConfigManager::loadSensorMappingCached(solarAddress.data(), poolAddress.data());
   snapshot.sensors.solarMapping = mappingSnapshot(solarAddress, dependencies_.solarTemperature);
   snapshot.sensors.poolMapping = mappingSnapshot(poolAddress, dependencies_.poolTemperature);
-  const std::uint32_t detectedRefreshSeconds = settings.loopInterval > 0
-    ? static_cast<std::uint32_t>(settings.loopInterval)
-    : 1U;
+  const std::uint32_t detectedRefreshSeconds = settings.loopInterval > 0 ? static_cast<std::uint32_t>(settings.loopInterval) : 1U;
   const std::uint32_t detectedRefreshIntervalMs = detectedRefreshSeconds * 1000U;
   if (!detectedInventoryInitialized_ || nowMs - lastDetectedInventoryRefreshMs_ >= detectedRefreshIntervalMs) {
     SensorSnapshot refreshedInventory{};
