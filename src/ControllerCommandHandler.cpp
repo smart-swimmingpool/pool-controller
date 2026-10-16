@@ -25,8 +25,8 @@ namespace PoolController {
 
 namespace {
 
-using Settings = std::remove_reference_t<decltype(ConfigManager::getSettings())>;
-using NtpSettings = std::remove_reference_t<decltype(ConfigManager::getNtp())>;
+using Settings = std::remove_reference<decltype(ConfigManager::getSettings())>::type;
+using NtpSettings = std::remove_reference<decltype(ConfigManager::getNtp())>::type;
 
 template <typename Field, typename Value> CommandStatus stageSetting(Field &field, Value value, const SettingRange &range) {
   if (!range.contains(static_cast<double>(value))) {
@@ -65,6 +65,9 @@ bool isValidTime(const ControllerCommand &command) {
 
 /** @brief Staged state of one batch; becomes live only after a successful save. */
 struct ControllerCommandHandler::Plan final {
+  Plan(const Settings &liveSettings, const NtpSettings &liveNtp, OperationMode liveMode)
+      : settings(liveSettings), ntp(liveNtp), mode(liveMode) {}
+
   Settings settings;
   NtpSettings ntp;
   OperationMode mode;
