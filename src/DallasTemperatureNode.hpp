@@ -128,10 +128,15 @@ private:
   void publishSelectedAddress();
 
   /** @brief Apply the plausibility filter to a raw reading and update the
-   *  temperature and sensor health; rescans the bus after repeated failures. */
-  void handleReading(float raw);
+   *  temperature and sensor health.
+   *  @return true when repeated failures call for a bus rescan. */
+  bool handleReading(float raw);
 
-  /** @brief Rescan the bus and re-resolve this node's sensor address
+  /** @brief Address this node must find on the bus: the configured filter,
+   *  else the previously resolved device. @return false if neither exists. */
+  bool targetAddress(DeviceAddress target) const;
+
+  /** @brief Rescan the bus and find this node's sensor again by address
    *  (e.g. after the sensor was disconnected or replaced). */
   void rescanBus();
 

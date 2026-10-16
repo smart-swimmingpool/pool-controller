@@ -64,9 +64,9 @@ static int test_power_on_value_held() {
 }
 
 static int test_power_on_value_without_history_rejected() {
-  test_begin("TemperatureFilter", "85 °C as first reading is rejected");
+  test_begin("TemperatureFilter", "85 °C as first reading is unconfirmed");
   TemperatureReadingFilter filter;
-  ASSERT_TRUE(filter.apply(85.0f) == Action::REJECT);
+  ASSERT_TRUE(filter.apply(85.0f) == Action::UNCONFIRMED);
   return 0;
 }
 
@@ -94,7 +94,7 @@ static int test_reset_forgets_history() {
   TemperatureReadingFilter filter;
   ASSERT_TRUE(filter.apply(84.0f) == Action::ACCEPT);
   filter.reset();
-  ASSERT_TRUE(filter.apply(85.0f) == Action::REJECT);
+  ASSERT_TRUE(filter.apply(85.0f) == Action::UNCONFIRMED);
   return 0;
 }
 
@@ -104,18 +104,18 @@ static int test_power_on_after_failure_hot_collector() {
   TemperatureReadingFilter filter;
   ASSERT_TRUE(filter.apply(82.0f) == Action::ACCEPT);
   ASSERT_TRUE(filter.apply(-127.0f) == Action::REJECT);
-  ASSERT_TRUE(filter.apply(85.0f) == Action::REJECT);  // no valid previous value to hold
-  ASSERT_TRUE(filter.apply(85.0f) == Action::REJECT);
+  ASSERT_TRUE(filter.apply(85.0f) == Action::UNCONFIRMED);  // no valid previous value to hold
+  ASSERT_TRUE(filter.apply(85.0f) == Action::UNCONFIRMED);
   ASSERT_TRUE(filter.apply(85.0f) == Action::ACCEPT);  // confirmed by consecutive reads
   return 0;
 }
 
 static int test_power_on_after_failure_normal() {
-  test_begin("TemperatureFilter", "25 -> -127 -> 85 rejects 85, next real value accepted");
+  test_begin("TemperatureFilter", "25 -> -127 -> 85 leaves 85 unconfirmed, next real value accepted");
   TemperatureReadingFilter filter;
   ASSERT_TRUE(filter.apply(25.0f) == Action::ACCEPT);
   ASSERT_TRUE(filter.apply(-127.0f) == Action::REJECT);
-  ASSERT_TRUE(filter.apply(85.0f) == Action::REJECT);
+  ASSERT_TRUE(filter.apply(85.0f) == Action::UNCONFIRMED);
   ASSERT_TRUE(filter.apply(25.2f) == Action::ACCEPT);
   ASSERT_TRUE(filter.apply(85.0f) == Action::HOLD);  // valid sequence again
   return 0;

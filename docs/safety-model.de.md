@@ -146,9 +146,12 @@ und das System kann Korrekturmaßnahmen ergreifen.
 - Plausibilitätsfilter: Werte außerhalb von -55…125 °C gelten als Fehlmessung
 - Der Einschaltwert 85,0 °C (nach einer Spannungsspitze) wird ignoriert und der letzte Wert gehalten,
   außer er schließt an einen Messwert nahe 85 °C an oder tritt dreimal hintereinander auf. Direkt nach
-  einer Fehlmessung gibt es keinen gültigen Wert zum Halten, 85,0 °C gilt dann bis zur Bestätigung als Fehlmessung
+  einer Fehlmessung gibt es keinen gültigen Wert zum Halten, 85,0 °C liefert dann bis zur Bestätigung keinen
+  Wert (zählt aber nicht als Fehlmessung)
 - Nach 3 Fehlmessungen in Folge wird der OneWire-Bus neu durchsucht, sodass ein wieder angeschlossener
-  oder getauschter Fühler ohne Neustart gefunden wird
+  oder getauschter Fühler ohne Neustart gefunden wird. Am gemeinsamen NORVI-Bus akzeptiert ein Knoten
+  dabei nur seine eigene Fühleradresse, ein fehlender Solarfühler wird also nie durch den Poolfühler
+  ersetzt; ein getauschter Fühler braucht dort eine neue Sensorzuordnung
 
 ### NTP-Graceful-Degradation
 

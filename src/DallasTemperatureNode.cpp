@@ -9,6 +9,7 @@
  */
 
 #include "DallasTemperatureNode.hpp"
+#include "DallasAddressLookup.hpp"
 #include "Config.hpp"
 #include "SystemMonitor.hpp"
 #include "DegradationManager.hpp"
@@ -98,17 +99,15 @@ bool DallasTemperatureNode::resolveFilter() {
   }
 
   if (hasFilter && numberOfDevices > 0) {
-    for (uint8_t i = 0; i < numberOfDevices; i++) {
-      DeviceAddress addr;
-      if (activeSensor->getAddress(addr, i) && memcmp(addr, filter, sizeof(DeviceAddress)) == 0) {
-        memcpy(deviceAddress_, addr, sizeof(DeviceAddress));
-        publishSelectedAddress();
-        _sensorFound = true;
-        char adr[18];
-        address2String(addr, adr, sizeof(adr));
-        LOG_INFO("  ◦ %s: filter resolved → device %d [%s] ✓\n", _id, i, adr);
-        return true;
-      }
+    uint8_t index = 0;
+    if (PoolController::findDallasDeviceByAddress(*activeSensor, numberOfDevices, filter, index)) {
+      memcpy(deviceAddress_, filter, sizeof(DeviceAddress));
+      publishSelectedAddress();
+      _sensorFound = true;
+      char adr[18];
+      address2String(filter, adr, sizeof(adr));
+      LOG_INFO("  ◦ %s: filter resolved → device %d [%s] ✓\n", _id, index, adr);
+      return true;
     }
 
     LOG_ERROR("  ✖ %s: filter address not found on bus! Falling back to device index %d\n", _id, deviceIndex_);
@@ -293,46 +292,25 @@ void DallasTemperatureNode::beginMeasurement() {
 }
 
 void DallasTemperatureNode::finishMeasurement() {
+  if (numberOfDevices == 0) {
+    LOG_INFO("No Sensor found on bus! Rescanning (%s)...\n", _id);
+    PoolController::DegradationManager::reportSensorStatus(_id, false);
+    PoolController::SensorSlots::write(slotId(), NAN, false);
+    rescanBus();
+    refreshDetectedSnapshot(false);
+    return;
+  }
+
+  // Both bus modes read the one device resolved for this node, so the filter
+  // and failure counter always track a single sensor.
   DallasTemperature *activeSensor = sharedSensor_ ? sharedSensor_ : &sensor;
-
-  if (sharedSensor_ && numberOfDevices > 0) {
-    handleReading(activeSensor->getTempC(deviceAddress_));
-    PoolController::SensorSlots::write(slotId(), _temperature, _sensorFound);
-    refreshDetectedSnapshot(true);
-    return;
+  const bool needsRescan = handleReading(activeSensor->getTempC(deviceAddress_));
+  PoolController::SensorSlots::write(slotId(), _temperature, _sensorFound);
+  if (needsRescan) {
+    LOG_WARN("  ⚠ %s: %u failed readings — rescanning bus\n", _id, static_cast<unsigned>(RESCAN_AFTER_FAILURES));
+    rescanBus();
   }
-
-  if (numberOfDevices > 0) {
-    for (uint8_t i = 0; i < numberOfDevices; i++) {
-      DeviceAddress tempDeviceAddress;
-      if (activeSensor->getAddress(tempDeviceAddress, i)) {
-        handleReading(activeSensor->getTempC(tempDeviceAddress));
-      }
-    }
-    PoolController::SensorSlots::write(slotId(), _temperature, _sensorFound);
-    refreshDetectedSnapshot(true);
-    return;
-  }
-
-  LOG_INFO("No Sensor found on bus! Rescanning (%s)...\n", _id);
-  PoolController::DegradationManager::reportSensorStatus(_id, false);
-  PoolController::SensorSlots::write(slotId(), NAN, false);
-
-  activeSensor->begin();
-  activeSensor->setWaitForConversion(false);
-  numberOfDevices = activeSensor->getDeviceCount();
-  if (numberOfDevices > 0) {
-    resolveFilter();
-    if (_sensorFound) {
-      PoolController::DegradationManager::reportSensorStatus(_id, true);
-    }
-    LOG_INFO("  ◦ %d device(s) found after rescan\n", numberOfDevices);
-  } else {
-    _sensorFound = false;
-    memset(deviceAddress_, 0, sizeof(deviceAddress_));
-    publishSelectedAddress();
-  }
-  refreshDetectedSnapshot(false);
+  refreshDetectedSnapshot(!needsRescan);
 }
 
 void DallasTemperatureNode::loop() {
@@ -348,22 +326,33 @@ void DallasTemperatureNode::loop() {
   }
 }
 
-void DallasTemperatureNode::handleReading(float raw) {
+bool DallasTemperatureNode::handleReading(float raw) {
+  using Action = PoolController::TemperatureReadingFilter::Action;
+
   switch (filter_.apply(raw)) {
-  case PoolController::TemperatureReadingFilter::Action::ACCEPT:
+  case Action::ACCEPT:
     _temperature = raw;
     _sensorFound = true;
     consecutiveFailures_ = 0;
     PoolController::DegradationManager::reportSensorStatus(_id, true);
     LOG_DEBUG("  ◦ %s = %.1f°C\n", _id, _temperature);
-    break;
+    return false;
 
-  case PoolController::TemperatureReadingFilter::Action::HOLD:
+  case Action::HOLD:
     // DS18B20 power-on value after a supply glitch — keep the last temperature
     LOG_WARN("  ⚠ %s: ignoring 85.0°C power-on value, keeping %.1f°C\n", _id, _temperature);
-    break;
+    return false;
 
-  case PoolController::TemperatureReadingFilter::Action::REJECT:
+  case Action::UNCONFIRMED:
+    // No valid value yet, but not a failed read either: waiting for the
+    // filter to confirm 85 °C must not trigger a rescan that resets it.
+    LOG_WARN("  ⚠ %s: unconfirmed 85.0°C power-on value - no temperature yet\n", _id);
+    _temperature = NAN;
+    _sensorFound = false;
+    PoolController::DegradationManager::reportSensorStatus(_id, false);
+    return false;
+
+  case Action::REJECT:
     if (raw == DEVICE_DISCONNECTED_C) {
       LOG_ERROR("  ✖ %s: sensor disconnected - setting to NaN\n", _id);
     } else {
@@ -375,30 +364,61 @@ void DallasTemperatureNode::handleReading(float raw) {
     if (consecutiveFailures_ < UINT8_MAX) {
       consecutiveFailures_++;
     }
-    if (consecutiveFailures_ >= RESCAN_AFTER_FAILURES) {
-      rescanBus();
-    }
-    break;
+    return consecutiveFailures_ >= RESCAN_AFTER_FAILURES;
   }
+  return false;
+}
+
+bool DallasTemperatureNode::targetAddress(DeviceAddress target) const {
+  static const DeviceAddress kNoAddress{};
+  if (hasFilter_.load(std::memory_order_acquire)) {
+    lockCache();
+    memcpy(target, filterAddr_, sizeof(DeviceAddress));
+    unlockCache();
+    return true;
+  }
+  if (memcmp(deviceAddress_, kNoAddress, sizeof(DeviceAddress)) != 0) {
+    memcpy(target, deviceAddress_, sizeof(DeviceAddress));
+    return true;
+  }
+  return false;
 }
 
 void DallasTemperatureNode::rescanBus() {
   // Runs on the task that owns the OneWire bus (SensorTask after startup).
   DallasTemperature *activeSensor = sharedSensor_ ? sharedSensor_ : &sensor;
-  LOG_WARN("  ⚠ %s: %u failed readings — rescanning bus\n", _id, consecutiveFailures_);
   consecutiveFailures_ = 0;
   filter_.reset();
 
   activeSensor->begin();
   activeSensor->setWaitForConversion(false);
   numberOfDevices = activeSensor->getDeviceCount();
-  if (numberOfDevices > 0) {
-    resolveFilter();
-  } else {
-    _sensorFound = false;
-    memset(deviceAddress_, 0, sizeof(deviceAddress_));
-    publishSelectedAddress();
+
+  DeviceAddress target;
+  if (!sharedSensor_ || !targetAddress(target)) {
+    // A dedicated bus belongs to this node alone, so the usual resolution
+    // (including index fallback) also picks up a replaced sensor. The same
+    // applies to a shared-bus node that never resolved a device.
+    if (numberOfDevices > 0) {
+      resolveFilter();
+    }
+    LOG_INFO("  ◦ %s: %d device(s) found after rescan\n", _id, numberOfDevices);
+    return;
   }
+
+  // On the shared bus only this node's own address may come back. An index
+  // fallback could hand the pool probe to the solar node when the solar probe
+  // has dropped off the bus.
+  memcpy(deviceAddress_, target, sizeof(DeviceAddress));
+  publishSelectedAddress();
+  uint8_t index = 0;
+  if (PoolController::findDallasDeviceByAddress(*activeSensor, numberOfDevices, target, index)) {
+    LOG_INFO("  ◦ %s: sensor found again after rescan (device %d)\n", _id, index);
+    return;
+  }
+
+  _sensorFound = false;
+  LOG_WARN("  ⚠ %s: sensor still missing after rescan (%d device(s) on bus)\n", _id, numberOfDevices);
 }
 
 PoolController::SensorId DallasTemperatureNode::slotId() const {

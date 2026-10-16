@@ -13,6 +13,9 @@
  *   85 °C, so the value is only accepted when it continues a nearby previous
  *   reading or is confirmed by consecutive reads; otherwise the previous
  *   temperature is held.
+ * - An unconfirmed 85 °C without a valid previous value yields no
+ *   temperature (UNCONFIRMED) but is not a sensor failure, so it does not
+ *   count towards a bus rescan.
  * - A rejected reading interrupts the valid sequence: continuity is not
  *   carried across a sensor failure, because a reconnect is exactly when the
  *   power-on value appears. HOLD is therefore only returned while the
@@ -31,9 +34,10 @@ namespace PoolController {
 class TemperatureReadingFilter {
 public:
   enum class Action : uint8_t {
-    ACCEPT,  ///< Use the value
-    HOLD,    ///< Transient power-on value — keep the previous temperature
-    REJECT,  ///< Invalid reading — treat like a failed read
+    ACCEPT,       ///< Use the value
+    HOLD,         ///< Transient power-on value — keep the previous temperature
+    REJECT,       ///< Invalid reading — treat like a failed read
+    UNCONFIRMED,  ///< 85 °C without a valid previous value, not yet confirmed — no value, but no failure either
   };
 
   static constexpr float kMinValidC = -55.0f;
@@ -52,7 +56,7 @@ public:
       if (!continuesPrevious) {
         powerOnReads_++;
         if (powerOnReads_ < kPowerOnConfirmReads) {
-          return std::isnan(lastAccepted_) ? Action::REJECT : Action::HOLD;
+          return std::isnan(lastAccepted_) ? Action::UNCONFIRMED : Action::HOLD;
         }
       }
     }

@@ -89,6 +89,7 @@ set(TEST_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_ky040_decoder.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_calibration_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_temperature_filter.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dallas_address_lookup.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_telemetry_queue.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_sensor_slots.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_sensor_cycle.cpp
