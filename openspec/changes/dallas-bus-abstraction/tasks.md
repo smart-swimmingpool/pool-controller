@@ -12,3 +12,13 @@
 - [ ] Verify all PlatformIO builds.
 - [ ] Verify real NORVI shared-bus hardware.
 - [ ] Verify real dedicated-bus ESP32 hardware.
+
+## Hardware gates
+
+Measured on `esp32dev`, `norvi_ae01_r` and the single-core `olimex_esp32_c6_evb`; a gate fails on any board.
+
+- [ ] Sensor reconnect: unplug and replug each probe 10 times; the temperature is invalid while it is
+  disconnected and valid again within two rescan cycles after reconnecting.
+- [ ] Role stability: across all reconnects and reboots, pool and solar roles never swap ROM addresses
+  (NORVI shared bus included).
+- [ ] Loop latency during rescan: worst-case `loop()` iteration ≤ 500 ms while a bus rescan runs (C6 included).
