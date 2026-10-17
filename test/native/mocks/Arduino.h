@@ -743,6 +743,10 @@ public:
     mockStreamState.position += len;
     return len;
   }
+  // Client::read(buf, len): non-blocking, returns the bytes handed over.
+  int read(uint8_t *buf, size_t len) {
+    return static_cast<int>(readBytes(buf, len));
+  }
   void stop() {}
   void setTimeout(uint32_t) {}
   void setNoDelay(bool) {}

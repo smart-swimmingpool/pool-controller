@@ -40,19 +40,25 @@ constexpr uint32_t kStallMs = 30000;
 constexpr uint32_t kTotalMs = 600000;
 constexpr size_t kBufferSize = 4096;
 
-// Stream with a configurable number of immediately available bytes
+// Stream with a configurable number of immediately available bytes. It
+// offers only the non-blocking Client::read(buf, len), so a call to the
+// timeout-based readBytes() would not compile.
 struct FakeStream {
   size_t availableBytes = 0;
   size_t readCalls = 0;
+  int shortReadLimit = -1;  ///< >= 0: deliver at most this many bytes per read (transport delivers less)
   int available() const { return static_cast<int>(availableBytes); }
-  size_t readBytes(uint8_t *buffer, size_t len) {
+  int read(uint8_t *buffer, size_t len) {
     readCalls++;
     size_t n = len < availableBytes ? len : availableBytes;
+    if (shortReadLimit >= 0 && n > static_cast<size_t>(shortReadLimit)) {
+      n = static_cast<size_t>(shortReadLimit);
+    }
     for (size_t i = 0; i < n; i++) {
       buffer[i] = static_cast<uint8_t>(i);
     }
     availableBytes -= n;
-    return n;
+    return static_cast<int>(n);
   }
 };
 
@@ -183,12 +189,31 @@ static int test_disconnect_and_write_error() {
   return 0;
 }
 
+static int test_short_read_does_not_wait_for_reported_bytes() {
+  test_begin("OtaDownloadSession", "a read shorter than available() returns without waiting");
+  OtaDownloadSession session(0, 1024 * 1024, kStallMs, kTotalMs);
+  FakeStream stream;
+  FakeSink sink;
+  uint8_t buffer[kBufferSize];
+  stream.availableBytes = 8192;
+
+  stream.shortReadLimit = 100;  // transport hands over less than it reported
+  ASSERT_EQ(session.step(stream, sink, true, 0, buffer, sizeof(buffer)), Result::IN_PROGRESS);
+  ASSERT_EQ(sink.written, 100U);
+
+  stream.shortReadLimit = 0;  // reported data vanished (e.g. connection interrupted)
+  ASSERT_EQ(session.step(stream, sink, true, 10, buffer, sizeof(buffer)), Result::IN_PROGRESS);
+  ASSERT_EQ(sink.written, 100U);
+  ASSERT_EQ(stream.readCalls, 2U);
+  return 0;
+}
+
 int run_ota_download_session_tests() {
   int passed = 0;
   int failed = 0;
-  int (*tests[])() = {test_step_moves_at_most_one_buffer, test_step_without_data_returns_immediately,
-    test_download_spread_over_loop_iterations, test_partial_last_chunk, test_stall_detected_across_steps, test_total_timeout,
-    test_disconnect_and_write_error};
+  int (*tests[])() = {test_short_read_does_not_wait_for_reported_bytes, test_step_moves_at_most_one_buffer,
+    test_step_without_data_returns_immediately, test_download_spread_over_loop_iterations, test_partial_last_chunk,
+    test_stall_detected_across_steps, test_total_timeout, test_disconnect_and_write_error};
   for (auto test : tests) {
     if (test() == 0) {
       passed++;

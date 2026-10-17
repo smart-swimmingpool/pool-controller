@@ -12,7 +12,7 @@
  * for data and moves at most one buffer of bytes from the stream to the
  * flash sink, so the control loop keeps running during an update.
  *
- * Templated on the stream (available()/readBytes()) and the sink (write()),
+ * Templated on the stream (available()/read(buf, len)) and the sink (write()),
  * so it is hardware-independent and covered by native unit tests.
  */
 
@@ -70,10 +70,14 @@ public:
     if (toRead > totalSize_ - written_) {
       toRead = totalSize_ - written_;
     }
-    size_t read = stream.readBytes(buffer, toRead);
-    if (read == 0) {
+    // Client::read(buf, len) returns what is buffered right now; readBytes()
+    // would wait up to the stream timeout when fewer bytes arrive than
+    // available() reported, stalling the control loop.
+    const int got = stream.read(buffer, toRead);
+    if (got <= 0) {
       return Result::IN_PROGRESS;
     }
+    const size_t read = static_cast<size_t>(got);
     guard_.onData(nowMs);
 
     if (sink.write(buffer, read) != read) {
