@@ -53,8 +53,6 @@ public:
 
   /** @brief Get number of devices from the thread-safe discovery snapshot. */
   uint8_t getDeviceCount() const;
-  /// Raw selected ROM, owned by the SensorTask. Other tasks use copySelectedAddress().
-  const uint8_t *getDeviceAddress() const { return deviceAddress_; }
   /** @brief Copy the selected ROM from the published cache (safe from any task). */
   void copySelectedAddress(DeviceAddress out) const;
   void getDeviceAddressString(char *buffer, size_t size) const;
