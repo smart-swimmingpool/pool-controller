@@ -74,6 +74,13 @@ public:
   static bool save();
   /** @brief Reset config to factory defaults and save. */
   static void reset();
+  /**
+   * @brief Write factory defaults to NVS without clearing it first.
+   * On a write error the previous in-RAM configuration is restored, so a
+   * failed reset leaves the running device unchanged.
+   * @return true when the defaults were persisted.
+   */
+  static bool resetToDefaults();
 
   static WiFiConfig &getWiFi() { return wifi_; }
   static MqttConfig &getMqtt() { return mqtt_; }
@@ -88,8 +95,8 @@ public:
   static void setConfigured(bool configured) { configured_ = configured; }
 
   // ── Sensor Address Mapping ──
-  /** @brief Save DS18B20 sensor address mapping to NVS. */
-  static void saveSensorMapping(const uint8_t solarAddr[8], const uint8_t poolAddr[8]);
+  /** @brief Save DS18B20 sensor address mapping to NVS. @return true when both roles were written. */
+  static bool saveSensorMapping(const uint8_t solarAddr[8], const uint8_t poolAddr[8]);
   /** @brief Load DS18B20 mappings from NVS. Missing roles remain zeroed.
    *  @return true if at least one role mapping was loaded.
    */

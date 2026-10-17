@@ -12,6 +12,7 @@ String ConfigManager::_adminPasswordHash =  // SHA-256("admin")
 bool ConfigManager::_configured = false;
 bool ConfigManager::_saveFails = false;
 bool ConfigManager::_sensorMappingReadFails = false;
+bool ConfigManager::_sensorMappingSaveFails = false;
 
 // ── Sensor Address Mapping ──
 uint8_t ConfigManager::_sensorSolarAddr[8] = {0};
@@ -19,11 +20,15 @@ uint8_t ConfigManager::_sensorPoolAddr[8] = {0};
 bool ConfigManager::_sensorSolarValid = false;
 bool ConfigManager::_sensorPoolValid = false;
 
-void ConfigManager::saveSensorMapping(const uint8_t solarAddr[8], const uint8_t poolAddr[8]) {
+bool ConfigManager::saveSensorMapping(const uint8_t solarAddr[8], const uint8_t poolAddr[8]) {
+  if (_sensorMappingSaveFails) {
+    return false;
+  }
   memcpy(_sensorSolarAddr, solarAddr, 8);
   memcpy(_sensorPoolAddr, poolAddr, 8);
   _sensorSolarValid = true;
   _sensorPoolValid = true;
+  return true;
 }
 
 bool ConfigManager::loadSensorMapping(uint8_t solarAddr[8], uint8_t poolAddr[8]) {

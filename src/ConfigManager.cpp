@@ -198,6 +198,35 @@ void ConfigManager::reset() {
   LOG_INFO("✓ Configuration reset to factory defaults\n");
 }
 
+bool ConfigManager::resetToDefaults() {
+  const WiFiConfig previousWifi = wifi_;
+  const MqttConfig previousMqtt = mqtt_;
+  const NtpConfig previousNtp = ntp_;
+  const ControllerSettings previousSettings = settings_;
+  const String previousAdminHash = adminPasswordHash_;
+  const bool previousConfigured = configured_;
+
+  // save() rewrites every key, so the namespace holds the defaults afterwards
+  // without the window an up-front clear() would open.
+  wifi_ = WiFiConfig{};
+  mqtt_ = MqttConfig{};
+  ntp_ = NtpConfig{};
+  settings_ = ControllerSettings{};
+  adminPasswordHash_ = kDefaultPasswordHash;
+  configured_ = false;
+  if (!save()) {
+    wifi_ = previousWifi;
+    mqtt_ = previousMqtt;
+    ntp_ = previousNtp;
+    settings_ = previousSettings;
+    adminPasswordHash_ = previousAdminHash;
+    configured_ = previousConfigured;
+    return false;
+  }
+  LOG_INFO("✓ Configuration reset to factory defaults\n");
+  return true;
+}
+
 // ── Boot Version Tracking ──
 
 void ConfigManager::logOtaTransition() {
@@ -274,13 +303,19 @@ SensorMappingReadResult readSensorMappingFromNvs(uint8_t solarAddr[8], uint8_t p
 }
 }  // namespace
 
-void ConfigManager::saveSensorMapping(const uint8_t solarAddr[8], const uint8_t poolAddr[8]) {
+bool ConfigManager::saveSensorMapping(const uint8_t solarAddr[8], const uint8_t poolAddr[8]) {
   s_mappingCacheValid = false;
   Preferences prefs;
-  prefs.begin("ds18b20", false);  // read-write
-  prefs.putBytes("solar_adr", solarAddr, 8);
-  prefs.putBytes("pool_adr", poolAddr, 8);
+  if (!prefs.begin("ds18b20", false)) {  // read-write
+    LOG_ERROR("✖ Failed to open NVS sensor-mapping namespace for writing\n");
+    return false;
+  }
+  const bool written = prefs.putBytes("solar_adr", solarAddr, 8) == 8 && prefs.putBytes("pool_adr", poolAddr, 8) == 8;
   prefs.end();
+  if (!written) {
+    LOG_ERROR("✖ Failed to write sensor mapping to NVS\n");
+    return false;
+  }
 
   char buf[17];
   snprintf(buf, sizeof(buf), "%02X%02X%02X%02X%02X%02X%02X%02X", solarAddr[0], solarAddr[1], solarAddr[2], solarAddr[3],
@@ -289,6 +324,7 @@ void ConfigManager::saveSensorMapping(const uint8_t solarAddr[8], const uint8_t 
   snprintf(buf, sizeof(buf), "%02X%02X%02X%02X%02X%02X%02X%02X", poolAddr[0], poolAddr[1], poolAddr[2], poolAddr[3], poolAddr[4],
     poolAddr[5], poolAddr[6], poolAddr[7]);
   LOG_INFO(", Pool [%s]\n", buf);
+  return true;
 }
 
 bool ConfigManager::loadSensorMapping(uint8_t solarAddr[8], uint8_t poolAddr[8]) {

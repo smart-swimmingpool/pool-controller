@@ -55,15 +55,27 @@ public:
   static bool save() { return !_saveFails; }
   static bool _saveFails;  // test hook
   static bool _sensorMappingReadFails;  // test hook
+  static bool _sensorMappingSaveFails;  // test hook
   static void reset() {
     _adminPasswordHash =  // gitleaks:allow  SHA-256("admin")
         F("8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918");
     _configured = false;
   }
+  static bool resetToDefaults() {
+    const String previousHash = _adminPasswordHash;
+    const bool previousConfigured = _configured;
+    reset();
+    if (!save()) {
+      _adminPasswordHash = previousHash;
+      _configured = previousConfigured;
+      return false;
+    }
+    return true;
+  }
   static void logOtaTransition() {}
 
   // ── Sensor Address Mapping ──
-  static void saveSensorMapping(const uint8_t solarAddr[8], const uint8_t poolAddr[8]);
+  static bool saveSensorMapping(const uint8_t solarAddr[8], const uint8_t poolAddr[8]);
   static bool loadSensorMapping(uint8_t solarAddr[8], uint8_t poolAddr[8]);
   static bool loadSensorMappingCached(uint8_t solarAddr[8], uint8_t poolAddr[8]) {
     if (_sensorMappingReadFails) {

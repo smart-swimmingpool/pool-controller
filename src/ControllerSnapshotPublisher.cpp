@@ -59,9 +59,10 @@ SensorMappingSnapshot mappingSnapshot(const std::array<std::uint8_t, 8> &configu
   mapping.found = node.isSensorFound();
 
   if (mapping.configured && mapping.found) {
-    const std::uint8_t *selectedAddress = node.getDeviceAddress();
-    mapping.found =
-      selectedAddress != nullptr && std::memcmp(selectedAddress, configuredAddress.data(), configuredAddress.size()) == 0;
+    // The SensorTask rewrites the selected ROM on Core 0; compare a locked copy.
+    DeviceAddress selectedAddress;
+    node.copySelectedAddress(selectedAddress);
+    mapping.found = std::memcmp(selectedAddress, configuredAddress.data(), configuredAddress.size()) == 0;
   }
   return mapping;
 }

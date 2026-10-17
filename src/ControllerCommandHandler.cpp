@@ -121,6 +121,21 @@ CommandStatus ControllerCommandHandler::execute(
     return CommandStatus::INVALID;
   }
 
+  // Persist everything before touching the runtime: the mapping first, then
+  // the settings. A failed settings write restores the previous mapping so a
+  // batch is either stored completely or not at all.
+  std::uint8_t previousSolar[8]{};
+  std::uint8_t previousPool[8]{};
+  if (plan.mappingChanged) {
+    if (!ConfigManager::loadSensorMappingCached(previousSolar, previousPool)) {
+      LOG_ERROR("Controller command: cannot read current sensor mapping\n");
+      return CommandStatus::PERSIST_FAILED;
+    }
+    if (!ConfigManager::saveSensorMapping(plan.solarAddress, plan.poolAddress)) {
+      LOG_ERROR("Controller command: failed to persist sensor mapping\n");
+      return CommandStatus::PERSIST_FAILED;
+    }
+  }
   if (plan.settingsChanged) {
     const Settings previousSettings = liveSettings;
     const NtpSettings previousNtp = liveNtp;
@@ -130,11 +145,11 @@ CommandStatus ControllerCommandHandler::execute(
       LOG_ERROR("Controller command: failed to persist runtime settings\n");
       liveSettings = previousSettings;
       liveNtp = previousNtp;
+      if (plan.mappingChanged && !ConfigManager::saveSensorMapping(previousSolar, previousPool)) {
+        LOG_ERROR("Controller command: could not restore previous sensor mapping\n");
+      }
       return CommandStatus::PERSIST_FAILED;
     }
-  }
-  if (plan.mappingChanged) {
-    ConfigManager::saveSensorMapping(plan.solarAddress, plan.poolAddress);
   }
 
   if (plan.modeChanged) {
@@ -393,8 +408,7 @@ void ControllerCommandHandler::togglePump(const ControllerCommand &command, Cont
 CommandStatus ControllerCommandHandler::factoryReset() {
   // Persist the defaults first: if that fails, the relay/mode namespaces are
   // left alone so the device does not end up half reset.
-  ConfigManager::reset();
-  if (!ConfigManager::save()) {
+  if (!ConfigManager::resetToDefaults()) {
     LOG_ERROR("Controller command: factory reset could not persist defaults\n");
     return CommandStatus::PERSIST_FAILED;
   }

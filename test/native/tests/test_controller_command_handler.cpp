@@ -490,6 +490,68 @@ static int test_factory_reset_keeps_relay_state_when_save_fails() {
   return 0;
 }
 
+static int test_sensor_mapping_persist_failure_leaves_runtime_unchanged() {
+  test_begin("ControllerCommandHandler", "failed mapping write is reported and not applied");
+  HandlerFixture fixture;
+  const std::uint8_t empty[8] = {0};
+  PoolController::ConfigManager::seedSensorMappingForTest(empty, false, empty, false);
+
+  ControllerCommand command{};
+  command.type = ControllerCommandType::SET_SENSOR_MAPPING;
+  command.sensorRole = SensorRole::POOL;
+  const std::uint8_t address[8] = {0x28, 0xAA, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
+  std::memcpy(command.sensorAddress.data(), address, sizeof(address));
+
+  PoolController::ConfigManager::_sensorMappingSaveFails = true;
+  const CommandStatus status = fixture.handler.execute(command);
+  PoolController::ConfigManager::_sensorMappingSaveFails = false;
+  ASSERT_EQ(status, CommandStatus::PERSIST_FAILED);
+  ASSERT_TRUE(!fixture.poolTemperature.hasAddressFilter());
+  std::uint8_t savedSolar[8] = {0};
+  std::uint8_t savedPool[8] = {0};
+  ASSERT_TRUE(!PoolController::ConfigManager::loadSensorMapping(savedSolar, savedPool));
+  return 0;
+}
+
+static int test_batch_settings_failure_restores_sensor_mapping() {
+  test_begin("ControllerCommandHandler", "settings write failure in a mapping batch restores the old mapping");
+  HandlerFixture fixture;
+  const std::uint8_t oldSolar[8] = {0x28, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01};
+  const std::uint8_t oldPool[8] = {0x28, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02};
+  PoolController::ConfigManager::seedSensorMappingForTest(oldSolar, true, oldPool, true);
+  auto &settings = PoolController::ConfigManager::getSettings();
+  settings.btn1Min = 1200;
+
+  ControllerCommand batch[2]{};
+  batch[0].type = ControllerCommandType::SET_SENSOR_MAPPING;
+  batch[0].sensorRole = SensorRole::SOLAR;
+  const std::uint8_t newSolar[8] = {0x28, 0x09, 0x09, 0x09, 0x09, 0x09, 0x09, 0x09};
+  std::memcpy(batch[0].sensorAddress.data(), newSolar, sizeof(newSolar));
+  batch[1].type = ControllerCommandType::SET_BUTTON_1_MIN;
+  batch[1].integerValue = 1000;
+
+  ASSERT_EQ(executeWithFailingSave(fixture.handler, batch, 2), CommandStatus::PERSIST_FAILED);
+  std::uint8_t savedSolar[8] = {0};
+  std::uint8_t savedPool[8] = {0};
+  ASSERT_TRUE(PoolController::ConfigManager::loadSensorMapping(savedSolar, savedPool));
+  ASSERT_EQ(std::memcmp(savedSolar, oldSolar, sizeof(oldSolar)), 0);
+  ASSERT_EQ(std::memcmp(savedPool, oldPool, sizeof(oldPool)), 0);
+  ASSERT_EQ(settings.btn1Min, 1200);
+  ASSERT_TRUE(!fixture.solarTemperature.hasAddressFilter());
+  return 0;
+}
+
+static int test_factory_reset_failure_keeps_runtime_configuration() {
+  test_begin("ControllerCommandHandler", "failed factory reset keeps the running configuration");
+  HandlerFixture fixture;
+  PoolController::ConfigManager::setConfigured(true);
+  ControllerCommand reset{};
+  reset.type = ControllerCommandType::FACTORY_RESET;
+  ASSERT_EQ(executeWithFailingSave(fixture.handler, &reset, 1), CommandStatus::PERSIST_FAILED);
+  ASSERT_TRUE(PoolController::ConfigManager::isConfigured());
+  return 0;
+}
+
 int run_controller_command_handler_tests() {
   int passed = 0;
   int failed = 0;
@@ -500,7 +562,9 @@ int run_controller_command_handler_tests() {
     test_loop_interval_persistence_failure_keeps_runtime_unchanged, test_time_loss_thresholds_preserve_ordering,
     test_factory_reset_owns_runtime_reset_mutation, test_status_separates_invalid_rejected_and_persist_failures,
     test_batch_is_all_or_nothing, test_persist_failure_rolls_back_every_setting_kind, test_enter_manual_toggle_is_atomic,
-    test_time_loss_bounds_can_move_together, test_factory_reset_keeps_relay_state_when_save_fails};
+    test_time_loss_bounds_can_move_together, test_factory_reset_keeps_relay_state_when_save_fails,
+    test_sensor_mapping_persist_failure_leaves_runtime_unchanged, test_batch_settings_failure_restores_sensor_mapping,
+    test_factory_reset_failure_keeps_runtime_configuration};
   for (auto test : tests) {
     if (test() == 0) {
       ++passed;

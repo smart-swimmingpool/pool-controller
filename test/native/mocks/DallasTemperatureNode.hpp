@@ -36,6 +36,7 @@ public:
   }
   bool hasAddressFilter() const { return _hasFilter; }
   const uint8_t *getDeviceAddress() const { return _filterAddress; }
+  void copySelectedAddress(DeviceAddress out) const { std::memcpy(out, _filterAddress, sizeof(_filterAddress)); }
 
   void getDeviceAddressString(char *buf, size_t size) const {
     if (!_hasFilter) {
