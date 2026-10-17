@@ -87,6 +87,8 @@ set(TEST_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_local_settings_menu.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_ky040_decoder.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_calibration_manager.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_ota_download_guard.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_ota_download_session.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_sensor_slots.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_sensor_cycle.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_core_scheduler.cpp
