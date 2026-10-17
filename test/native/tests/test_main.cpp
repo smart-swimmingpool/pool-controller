@@ -57,6 +57,7 @@ extern int run_controller_contract_tests();
 extern int run_controller_snapshot_diagnostics_tests();
 extern int run_controller_snapshot_store_tests();
 extern int run_controller_command_queue_tests();
+extern int run_degradation_tests();
 
 int main() {
   printf("\n══════════════════════════════════════════════════\n");
@@ -87,6 +88,7 @@ int main() {
   total += run_controller_snapshot_store_tests();
   total += run_controller_command_queue_tests();
   (void)total;
+  total += run_degradation_tests();
 
   printf("\n══════════════════════════════════════════════════\n");
   printf("  Results: %d suites passed, %d suites failed\n", g_testsPassed, g_testsFailed);
