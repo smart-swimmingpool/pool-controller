@@ -92,8 +92,12 @@ bleibt erhalten.
 
 ### NVS-CRC-Schutz
 
-Die im ESP32-NVS gespeicherte Konfiguration enthält eine CRC32-Prüfsumme. Bei
-Fehlern wird die Konfiguration auf Werkseinstellungen zurückgesetzt.
+Die Konfiguration liegt im ESP32-NVS als ein einziger versionierter Datensatz
+mit CRC32-Prüfsumme. Er wird in einem NVS-Vorgang geschrieben, sodass ein
+Stromausfall beim Speichern entweder die alte oder die neue Konfiguration
+hinterlässt, nie eine Mischung. Besteht der Datensatz beim Boot die Prüfsummen-
+oder Versionsprüfung nicht, wird er ignoriert: Die Firmware lädt die
+Einzel-Keys älterer Firmware, falls vorhanden, sonst die Werkseinstellungen.
 
 ### Typsicherheit
 
@@ -181,7 +185,7 @@ Dreistufige Fallback-Logik für die Zeitsynchronisation:
 | -------------------- | ------------------------ | ------------------------ | --------------------------- |
 | ESP32-Absturz        | Relais aus, Pumpen stopp | Hardware                 | Failsafe-Relais (NO)        |
 | Software-Hang        | Keine Relais-Updates     | WDT                      | 30s-Reset                   |
-| Konfigurationsfehler | Ungültige Einstellungen  | Firmware                 | NVS CRC → Werksreset        |
+| Konfigurationsfehler | Ungültige Einstellungen  | Firmware                 | NVS CRC → verworfen         |
 | Wiederholte Abstürze | Unsicherer Zustand       | Bootloop                 | Safe Mode → Relais AUS      |
 | Heap-Erschöpfung     | Unvorhersehbar           | Speicher-Monitor         | Graceful-Reboot             |
 | Sensor-Ausfall       | Keine Temperaturdaten    | Sensor-Wiederherstellung | Schnelles Nachfragen        |

@@ -9,6 +9,7 @@
 
 #include <cstdio>
 #include <cstring>
+#include <vector>
 
 #include "ConfigManager.hpp"
 
@@ -57,13 +58,13 @@ void storeCustomConfig() {
   EXPECT(ConfigManager::load());
 }
 
-void test_single_failed_put_fails_save() {
-  section("save() reports a single failed put");
+void test_failed_record_write_fails_save() {
+  section("save() reports a failed record write");
   resetStore();
   ConfigManager::getSettings() = PoolController::ControllerSettings{};
   EXPECT(ConfigManager::save());
 
-  Preferences::s_failingPutKeys.insert("set_hyst");
+  Preferences::s_failingPutKeys.insert("cfg_record");
   EXPECT(!ConfigManager::save());
 
   Preferences::s_failingPutKeys.clear();
@@ -75,8 +76,7 @@ void test_failed_factory_reset_restores_nvs() {
   resetStore();
   storeCustomConfig();
 
-  // The hysteresis write fails; every other key would already hold its default.
-  Preferences::s_failingPutKeys.insert("set_hyst");
+  Preferences::s_failingPutKeys.insert("cfg_record");
   EXPECT(!ConfigManager::resetToDefaults());
   EXPECT(ConfigManager::getSettings().tempMaxPool == 30.5);
   EXPECT(ConfigManager::isConfigured());
@@ -90,6 +90,141 @@ void test_failed_factory_reset_restores_nvs() {
   EXPECT(ConfigManager::getSettings().tempHysteresis == 2.0);
   EXPECT(ConfigManager::getWiFi().ssid == "pool-net");
   EXPECT(ConfigManager::isConfigured());
+}
+
+void test_record_round_trips_every_field() {
+  section("the record restores every persisted field");
+  resetStore();
+  ConfigManager::getWiFi().ssid = "pool-net";
+  ConfigManager::getWiFi().password = "w1f1-secret";
+  ConfigManager::getMqtt().host = "broker.local";
+  ConfigManager::getMqtt().port = 8883;
+  ConfigManager::getMqtt().username = "pool";
+  ConfigManager::getMqtt().password = "mqtt-secret";
+  ConfigManager::getNtp().server = "ntp.example.org";
+  ConfigManager::getNtp().timezone = -3600;
+  PoolController::ControllerSettings &s = ConfigManager::getSettings();
+  s.loopInterval = 15;
+  s.tempMaxPool = 29.25;
+  s.tempMinSolar = 48.5;
+  s.tempHysteresis = 0.75;
+  s.tempCircThreshold = 26.5;
+  s.tempCircFactor = 42;
+  s.tempCircMaxRuntime = 600;
+  s.opMode = "timer";
+  s.timeLossGreenHours = 2;
+  s.timeLossRedHours = 36;
+  s.timezoneIndex = 3;
+  s.btn1Min = 3000;
+  s.btn1Max = 3400;
+  s.btn2Min = 3400;
+  s.btn2Max = 3800;
+  s.btn3Min = 3800;
+  s.btn3Max = 4000;
+  s.btnNoPress = 4090;
+  ConfigManager::setAdminPassword("pool-admin");
+  const String adminHash = ConfigManager::getAdminPasswordHash();
+  ConfigManager::setConfigured(true);
+  EXPECT(ConfigManager::save());
+
+  // Start from defaults so every field below must come from the record.
+  ConfigManager::getWiFi() = PoolController::WiFiConfig{};
+  ConfigManager::getMqtt() = PoolController::MqttConfig{};
+  ConfigManager::getNtp() = PoolController::NtpConfig{};
+  s = PoolController::ControllerSettings{};
+  ConfigManager::setAdminPassword("admin");
+  ConfigManager::setConfigured(false);
+  EXPECT(ConfigManager::load());
+
+  EXPECT(ConfigManager::getWiFi().ssid == "pool-net");
+  EXPECT(ConfigManager::getWiFi().password == "w1f1-secret");
+  EXPECT(ConfigManager::getMqtt().host == "broker.local");
+  EXPECT(ConfigManager::getMqtt().port == 8883);
+  EXPECT(ConfigManager::getMqtt().username == "pool");
+  EXPECT(ConfigManager::getMqtt().password == "mqtt-secret");
+  EXPECT(ConfigManager::getNtp().server == "ntp.example.org");
+  EXPECT(ConfigManager::getNtp().timezone == -3600);
+  EXPECT(s.loopInterval == 15);
+  EXPECT(s.tempMaxPool == 29.25);
+  EXPECT(s.tempMinSolar == 48.5);
+  EXPECT(s.tempHysteresis == 0.75);
+  EXPECT(s.tempCircThreshold == 26.5);
+  EXPECT(s.tempCircFactor == 42);
+  EXPECT(s.tempCircMaxRuntime == 600);
+  EXPECT(s.opMode == "timer");
+  EXPECT(s.timeLossGreenHours == 2);
+  EXPECT(s.timeLossRedHours == 36);
+  EXPECT(s.timezoneIndex == 3);
+  EXPECT(s.btn1Min == 3000);
+  EXPECT(s.btn1Max == 3400);
+  EXPECT(s.btn2Min == 3400);
+  EXPECT(s.btn2Max == 3800);
+  EXPECT(s.btn3Min == 3800);
+  EXPECT(s.btn3Max == 4000);
+  EXPECT(s.btnNoPress == 4090);
+  EXPECT(ConfigManager::getAdminPasswordHash() == adminHash);
+  EXPECT(ConfigManager::verifyAdminPassword("pool-admin"));
+  EXPECT(ConfigManager::isConfigured());
+}
+
+void writeLegacyKeys() {
+  Preferences prefs;
+  prefs.begin("config", false);
+  prefs.putString("wifi_ssid", "legacy-net");
+  prefs.putDouble("set_maxpool", 27.0);
+  prefs.putString("set_opmode", "manu");
+  prefs.putBool("cfg_configured", true);
+  prefs.end();
+}
+
+void test_legacy_keys_are_migrated() {
+  section("older per-key configuration is read until the first record is saved");
+  resetStore();
+  writeLegacyKeys();
+  ConfigManager::getSettings() = PoolController::ControllerSettings{};
+  EXPECT(ConfigManager::load());
+  EXPECT(ConfigManager::getWiFi().ssid == "legacy-net");
+  EXPECT(ConfigManager::getSettings().tempMaxPool == 27.0);
+  EXPECT(ConfigManager::getSettings().opMode == "manu");
+  EXPECT(ConfigManager::getSettings().tempHysteresis == 1.0);  // absent key keeps its default
+  EXPECT(ConfigManager::isConfigured());
+
+  ConfigManager::getSettings().tempMaxPool = 31.0;
+  EXPECT(ConfigManager::save());
+  EXPECT(ConfigManager::load());
+  EXPECT(ConfigManager::getSettings().tempMaxPool == 31.0);  // the record wins over the old key
+  EXPECT(ConfigManager::getWiFi().ssid == "legacy-net");
+}
+
+/** Overwrite one byte of the stored record. */
+void corruptRecord(size_t offset, uint8_t value) {
+  Preferences prefs;
+  prefs.begin("config", false);
+  const size_t length = prefs.getBytesLength("cfg_record");
+  std::vector<uint8_t> record(length);
+  prefs.getBytes("cfg_record", record.data(), length);
+  record[offset] = value;
+  prefs.putBytes("cfg_record", record.data(), length);
+  prefs.end();
+}
+
+void test_invalid_record_falls_back_to_legacy_keys() {
+  section("a corrupted or unknown record is never applied");
+  resetStore();
+  writeLegacyKeys();
+  EXPECT(ConfigManager::load());
+  ConfigManager::getSettings().tempMaxPool = 31.0;
+  EXPECT(ConfigManager::save());
+
+  corruptRecord(12, 0x5A);  // payload byte: CRC mismatch
+  EXPECT(ConfigManager::load());
+  EXPECT(ConfigManager::getSettings().tempMaxPool == 27.0);
+
+  EXPECT(ConfigManager::save());
+  corruptRecord(4, 0x7F);  // version written by unknown firmware
+  EXPECT(ConfigManager::load());
+  EXPECT(ConfigManager::getSettings().tempMaxPool == 27.0);
+  EXPECT(ConfigManager::getWiFi().ssid == "legacy-net");
 }
 
 void test_mapping_is_written_as_one_record() {
@@ -140,8 +275,11 @@ void test_legacy_mapping_keys_are_migrated() {
 }  // namespace
 
 int main() {
-  test_single_failed_put_fails_save();
+  test_failed_record_write_fails_save();
   test_failed_factory_reset_restores_nvs();
+  test_record_round_trips_every_field();
+  test_legacy_keys_are_migrated();
+  test_invalid_record_falls_back_to_legacy_keys();
   test_mapping_is_written_as_one_record();
   test_legacy_mapping_keys_are_migrated();
 
