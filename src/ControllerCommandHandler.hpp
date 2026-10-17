@@ -67,7 +67,10 @@ public:
   /**
    * @brief Apply a batch of commands atomically on the owning application task.
    *
-   * FACTORY_RESET must be sent alone. `result` (optional) receives the
+   * FACTORY_RESET must be sent alone, and a batch may change either the
+   * sensor mapping or persisted settings, not both: they are stored in two
+   * NVS records that a power loss could leave out of step. `result`
+   * (optional) receives the
    * resolved mode and the last toggled pump state.
    */
   CommandStatus execute(const ControllerCommand *commands, std::size_t count, ControllerCommandResult *result = nullptr);

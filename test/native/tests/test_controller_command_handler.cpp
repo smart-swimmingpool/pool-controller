@@ -513,8 +513,8 @@ static int test_sensor_mapping_persist_failure_leaves_runtime_unchanged() {
   return 0;
 }
 
-static int test_batch_settings_failure_restores_sensor_mapping() {
-  test_begin("ControllerCommandHandler", "settings write failure in a mapping batch restores the old mapping");
+static int test_mixed_mapping_and_settings_batch_is_rejected() {
+  test_begin("ControllerCommandHandler", "a batch changing mapping and settings is rejected unchanged");
   HandlerFixture fixture;
   const std::uint8_t oldSolar[8] = {0x28, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01};
   const std::uint8_t oldPool[8] = {0x28, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02};
@@ -530,7 +530,7 @@ static int test_batch_settings_failure_restores_sensor_mapping() {
   batch[1].type = ControllerCommandType::SET_BUTTON_1_MIN;
   batch[1].integerValue = 1000;
 
-  ASSERT_EQ(executeWithFailingSave(fixture.handler, batch, 2), CommandStatus::PERSIST_FAILED);
+  ASSERT_EQ(fixture.handler.execute(batch, 2), CommandStatus::INVALID);
   std::uint8_t savedSolar[8] = {0};
   std::uint8_t savedPool[8] = {0};
   ASSERT_TRUE(PoolController::ConfigManager::loadSensorMapping(savedSolar, savedPool));
@@ -563,7 +563,7 @@ int run_controller_command_handler_tests() {
     test_factory_reset_owns_runtime_reset_mutation, test_status_separates_invalid_rejected_and_persist_failures,
     test_batch_is_all_or_nothing, test_persist_failure_rolls_back_every_setting_kind, test_enter_manual_toggle_is_atomic,
     test_time_loss_bounds_can_move_together, test_factory_reset_keeps_relay_state_when_save_fails,
-    test_sensor_mapping_persist_failure_leaves_runtime_unchanged, test_batch_settings_failure_restores_sensor_mapping,
+    test_sensor_mapping_persist_failure_leaves_runtime_unchanged, test_mixed_mapping_and_settings_batch_is_rejected,
     test_factory_reset_failure_keeps_runtime_configuration};
   for (auto test : tests) {
     if (test() == 0) {
