@@ -2,13 +2,13 @@
 #include <string>
 #include <functional>
 #include "Arduino.h"
-#include "AsyncMqttClient.h"
+#include "espMqttClientAsync.h"
 
 namespace PoolController {
 
 class NetworkManager {
 public:
-  using MqttMessageCallback = std::function<void(char *, char *, AsyncMqttClientMessageProperties, size_t, size_t, size_t)>;
+  using MqttMessageCallback = MqttMessageHandler;
 
   static bool begin() { return true; }
   static void loop() {}
@@ -35,22 +35,15 @@ public:
   static bool subscribe(const char *topic) { return _mqttClient.subscribe(topic) > 0; }
 
   static void setMqttCallback(MqttMessageCallback cb) {
-    // Mirrors the real NetworkManager: a single dispatcher is registered
-    // on the client so a later setMqttCallback() replaces the active
-    // handler instead of appending a second callback. Re-register after
-    // mqttCapture.clear() wiped previous registrations.
+    // Mirrors espMqttClient: onMessage() replaces the previous handler.
     _mqttCallback = cb;
-    if (mqttCapture.onMessageCbs.empty()) {
-      _mqttClient.onMessage(
-        [](char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total) {
-          if (_mqttCallback) {
-            _mqttCallback(topic, payload, properties, len, index, total);
-          }
-        });
-    }
+    _mqttClient.onMessage(cb);
   }
 
-  static void clearMqttCallback() { _mqttCallback = nullptr; }
+  static void clearMqttCallback() {
+    _mqttCallback = nullptr;
+    _mqttClient.onMessage(nullptr);
+  }
 
   static void disconnectMqtt() {
     _mqttClient.disconnect();
@@ -65,10 +58,10 @@ public:
   static void setApMode(bool v) { _apMode = v; }
   static void setWiFiRSSI(int rssi) { _wifiRssi = rssi; }
   static void setLocalIP(const IPAddress &ip) { _localIp = ip; }
-  // Simulate AsyncMqttClient refusing to enqueue (publish returns false).
+  // Simulate the MQTT client refusing to enqueue (publish returns false).
   static void setPublishOk(bool ok) { _publishOk = ok; }
   // One-shot hook fired when the next publish() targets `topic` — lets a test
-  // simulate a reentrant publishStates() from the AsyncMqttClient callback
+  // simulate a reentrant publishStates() from the MQTT client callback
   // path while an export on that topic is already in progress.
   static void setPublishHook(const char *topic, std::function<void()> cb) {
     _publishHookTopic = topic ? topic : "";
@@ -79,10 +72,10 @@ public:
     _publishHookTopic.clear();
   }
 
-  static AsyncMqttClient &getClient() { return _mqttClient; }
+  static espMqttClientAsync &getClient() { return _mqttClient; }
 
 private:
-  static AsyncMqttClient _mqttClient;
+  static espMqttClientAsync _mqttClient;
   static bool _wifiConnected;
   static bool _mqttConnected;
   static bool _apMode;

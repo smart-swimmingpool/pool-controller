@@ -9,7 +9,7 @@
 #include "Arduino.h"
 #include "ArduinoJson.h"
 
-#include "AsyncMqttClient.h"
+#include "espMqttClientAsync.h"
 #include "MqttPublisher.hpp"
 #include "LogCapture.hpp"
 #include "ConfigManager.hpp"
@@ -311,13 +311,12 @@ int run_mqttpublisher_tests() {
     test_begin("MqttPublisher", "handleMqttMessage ignores runtime topics and validates firmware commands");
 
     operationModeNode.setMode("auto");
-    AsyncMqttClientMessageProperties props{0, false, false};
     int missing = 0;
 
     // Runtime topics belong to MqttRuntimeCommandAdapter; this path must not apply them.
     char modeTopic[] = "homeassistant/select/pool-controller/mode/set";
     char modePayload[] = "boost";
-    MqttPublisher::handleMqttMessage(modeTopic, modePayload, props, strlen(modePayload), 0, strlen(modePayload));
+    MqttPublisher::handleMqttMessage(modeTopic, modePayload, strlen(modePayload), 0, strlen(modePayload));
     if (operationModeNode.getMode() == "auto") {
       test_pass(__FILE__, __LINE__);
     } else {
@@ -328,10 +327,10 @@ int run_mqttpublisher_tests() {
     // Only "INSTALL" starts the updater; without a release it reports so.
     char firmwareTopic[] = "homeassistant/update/pool-controller/firmware-update/set";
     char invalid[] = "REBOOT";
-    MqttPublisher::handleMqttMessage(firmwareTopic, invalid, props, strlen(invalid), 0, strlen(invalid));
+    MqttPublisher::handleMqttMessage(firmwareTopic, invalid, strlen(invalid), 0, strlen(invalid));
     const String statusBefore = OtaUpdater::getStatusMessage();
     char install[] = "INSTALL";
-    MqttPublisher::handleMqttMessage(firmwareTopic, install, props, strlen(install), 0, strlen(install));
+    MqttPublisher::handleMqttMessage(firmwareTopic, install, strlen(install), 0, strlen(install));
     if (statusBefore != String("No update available") && OtaUpdater::getStatusMessage() == String("No update available")) {
       test_pass(__FILE__, __LINE__);
     } else {
@@ -738,7 +737,7 @@ int run_mqttpublisher_tests() {
 
     mqttCapture.clear();
     NetworkManager::setMqttConnected(true);
-    NetworkManager::setPublishOk(false);  // simulate AsyncMqttClient refusing to enqueue
+    NetworkManager::setPublishOk(false);  // simulate the MQTT client refusing to enqueue
     LogCapture::begin();
     MqttPublisher::begin();
 

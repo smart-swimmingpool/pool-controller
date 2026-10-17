@@ -819,7 +819,7 @@ void MqttPublisher::publishStates() {
 // ═══════════════════════════════════════════════════════════════════════
 
 void MqttPublisher::exportLogEvents() {
-  // Only one export may run at a time: AsyncMqttClient callbacks (handleMqttMessage
+  // Only one export may run at a time: MQTT client callbacks (handleMqttMessage
   // → publishStates) run on the AsyncTCP task and can preempt the loop task's
   // periodic export. Both share the static snapshot buffer and the watermark, so a
   // concurrent entry would clobber the snapshot or regress s_lastExportedSeq and
@@ -914,7 +914,7 @@ void MqttPublisher::exportLogEvents() {
       ok = NetworkManager::publish("pool-controller/log", rawBuf, false) && ok;
     }
 
-    // A required publish failed (e.g. AsyncMqttClient refused to enqueue
+    // A required publish failed (e.g. the MQTT client refused to enqueue
     // during the discovery/state burst right after reconnect): keep the
     // watermark before this entry so the whole tail is retried next pass.
     // Do not drop the event by marking it exported without a successful queue.
@@ -1018,9 +1018,7 @@ bool MqttPublisher::isCommandAuthorized() {
   return !kEnforceMqttAuth || ConfigManager::getMqtt().username.length() > 0;
 }
 
-void MqttPublisher::handleMqttMessage(
-  char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total) {
-  (void)properties;
+void MqttPublisher::handleMqttMessage(const char *topic, const char *payload, size_t len, size_t index, size_t total) {
   (void)total;
   // Only process complete messages (single-chunk delivery for typical HA commands)
   if (index != 0) {

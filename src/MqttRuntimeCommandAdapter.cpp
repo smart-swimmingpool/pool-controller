@@ -49,14 +49,12 @@ bool parseTime(const char *value, std::size_t length, std::uint8_t &hour, std::u
 }  // namespace
 
 void MqttRuntimeCommandAdapter::begin() {
-  NetworkManager::setMqttCallback(
-    [this](char *topic, char *payload, AsyncMqttClientMessageProperties properties, std::size_t len, std::size_t index,
-      std::size_t total) { onMqttMessage(topic, payload, properties, len, index, total); });
+  NetworkManager::setMqttCallback([this](const char *topic, const char *payload, std::size_t len, std::size_t index,
+                                    std::size_t total) { onMqttMessage(topic, payload, len, index, total); });
 }
 
-void MqttRuntimeCommandAdapter::onMqttMessage(char *topic, char *payload, AsyncMqttClientMessageProperties properties,
-  std::size_t len, std::size_t index, std::size_t total) {
-  (void)properties;
+void MqttRuntimeCommandAdapter::onMqttMessage(
+  const char *topic, const char *payload, std::size_t len, std::size_t index, std::size_t total) {
   if (index != 0 || len != total) {
     LOG_WARN("MQTT runtime adapter: ignoring chunked message on %s\n", topic);
     return;
@@ -230,8 +228,7 @@ void MqttRuntimeCommandAdapter::processPendingCommands() {
     ControllerCommand command{};
     const ParseResult result = parseRuntimeCommand(message, command);
     if (result == ParseResult::NOT_RUNTIME) {
-      AsyncMqttClientMessageProperties properties{};
-      MqttPublisher::handleMqttMessage(message.topic, message.payload, properties, message.payloadLen, 0, message.payloadLen);
+      MqttPublisher::handleMqttMessage(message.topic, message.payload, message.payloadLen, 0, message.payloadLen);
       continue;
     }
 

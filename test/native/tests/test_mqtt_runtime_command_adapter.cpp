@@ -44,8 +44,7 @@ struct AdapterFixture {
   MqttRuntimeCommandAdapter adapter{handler};
 
   void begin() {
-    // AsyncMqttClient appends callbacks with no removal API: clear stale
-    // registrations from previous fixtures before wiring this instance.
+    // Clear stale registrations from previous fixtures before wiring this instance.
     mqttCapture.clear();
     PoolController::NetworkManager::clearMqttCallback();
     // Production order (main.cpp): the adapter claims the callback before
@@ -160,9 +159,8 @@ static int test_second_registration_replaces_first_callback() {
   fixture.operation.setMode(OperationMode::AUTO);
   fixture.begin();
   auto &client = PoolController::NetworkManager::getClient();
-  // AsyncMqttClient appends callbacks: the publisher's and the adapter's
-  // registrations must not both dispatch the same message.
-  ASSERT_EQ(mqttCapture.onMessageCbs.size(), static_cast<size_t>(1));
+  // The publisher's and the adapter's registrations must not both dispatch
+  // the same message: the client holds exactly one message handler.
   client.simulateMessage("homeassistant/select/pool-controller/mode/set", "boost");
   fixture.adapter.processPendingCommands();
   // Exactly one queued translation: mode applied once, generation advanced once.

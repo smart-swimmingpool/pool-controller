@@ -6,25 +6,24 @@
 #include <map>
 #include "Arduino.h"
 
-struct AsyncMqttClientMessageProperties {
-  uint8_t qos = 0;
-  bool retain = false;
-  bool dup = false;
-};
+// Minimal stand-in for bertmelis/espMqttClient's espMqttClientAsync.
+// Only the parts NetworkManager's test double uses are modelled.
 
-enum class AsyncMqttClientDisconnectReason : uint8_t {
-  TCP_DISCONNECTED = 0,
+namespace espMqttClientTypes {
+enum class DisconnectReason : uint8_t {
+  USER_OK = 0,
   MQTT_UNACCEPTABLE_PROTOCOL_VERSION = 1,
   MQTT_IDENTIFIER_REJECTED = 2,
   MQTT_SERVER_UNAVAILABLE = 3,
   MQTT_MALFORMED_CREDENTIALS = 4,
   MQTT_NOT_AUTHORIZED = 5,
   TLS_BAD_FINGERPRINT = 6,
-  TLS_BAD_CA_CERT = 7,
-  TLS_CONNECTION_LOST = 8,
-  TLS_CERTIFICATE_REQUIRED = 9,
-  TLS_INVALID_CERTIFICATE = 10
+  TCP_DISCONNECTED = 7
 };
+}  // namespace espMqttClientTypes
+
+// Message callback as NetworkManager::MqttMessageCallback forwards it.
+using MqttMessageHandler = std::function<void(const char *, const char *, size_t, size_t, size_t)>;
 
 // MQTT message record for test assertions
 struct MqttMessage {
@@ -48,10 +47,8 @@ struct MqttClientCapture {
   std::vector<std::string> subscribed;
   bool connected = false;
   std::function<void(bool)> onConnectCb;
-  std::function<void(AsyncMqttClientDisconnectReason)> onDisconnectCb;
-  std::function<void(char *, char *, AsyncMqttClientMessageProperties, size_t, size_t, size_t)> onMessageCb;
-  // Mirrors AsyncMqttClient: onMessage() APPENDS to an internal vector with no removal API.
-  std::vector<std::function<void(char *, char *, AsyncMqttClientMessageProperties, size_t, size_t, size_t)>> onMessageCbs;
+  std::function<void(espMqttClientTypes::DisconnectReason)> onDisconnectCb;
+  MqttMessageHandler onMessageCb;
 
   void clear() {
     lastServerHost.clear();
@@ -68,7 +65,6 @@ struct MqttClientCapture {
     onConnectCb = nullptr;
     onDisconnectCb = nullptr;
     onMessageCb = nullptr;
-    onMessageCbs.clear();
   }
 
   const MqttMessage *findPublished(const char *topic) const {
@@ -82,9 +78,9 @@ struct MqttClientCapture {
 
 extern MqttClientCapture mqttCapture;
 
-class AsyncMqttClient {
+class espMqttClientAsync {
 public:
-  AsyncMqttClient() {}
+  espMqttClientAsync() {}
 
   void setServer(const char *host, uint16_t port) {
     mqttCapture.lastServerHost = host;
@@ -135,39 +131,18 @@ public:
 
   void onConnect(std::function<void(bool sessionPresent)> callback) { mqttCapture.onConnectCb = callback; }
 
-  void onDisconnect(std::function<void(AsyncMqttClientDisconnectReason reason)> callback) {
+  void onDisconnect(std::function<void(espMqttClientTypes::DisconnectReason reason)> callback) {
     mqttCapture.onDisconnectCb = callback;
   }
 
-  void onMessage(std::function<void(char *, char *, AsyncMqttClientMessageProperties, size_t, size_t, size_t)> callback) {
-    mqttCapture.onMessageCb = callback;
-    mqttCapture.onMessageCbs.push_back(callback);
-  }
+  void onMessage(MqttMessageHandler callback) { mqttCapture.onMessageCb = callback; }
 
   // Test helper: simulate an incoming message
   void simulateMessage(const char *topic, const char *payload) {
-    if (!mqttCapture.onMessageCbs.empty()) {
-      AsyncMqttClientMessageProperties props;
-      size_t len = strlen(payload);
-      char *t = strdup(topic);
-      char *p = strdup(payload);
-      for (auto &cb : mqttCapture.onMessageCbs) {
-        cb(t, p, props, len, 0, len);
-      }
-      free(t);
-      free(p);
-      return;
-    }
     if (mqttCapture.onMessageCb) {
-      AsyncMqttClientMessageProperties props;
       size_t len = strlen(payload);
-      // Note: AsyncMqttClient typically provides chunked delivery
-      // For tests, we deliver as single chunk
-      char *t = strdup(topic);
-      char *p = strdup(payload);
-      mqttCapture.onMessageCb(t, p, props, len, 0, len);
-      free(t);
-      free(p);
+      // The real client may deliver chunks; tests deliver a single chunk.
+      mqttCapture.onMessageCb(topic, payload, len, 0, len);
     }
   }
 };

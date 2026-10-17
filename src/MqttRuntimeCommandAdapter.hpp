@@ -8,7 +8,6 @@
 
 #pragma once
 
-#include <AsyncMqttClient.h>
 #include <cstddef>
 
 #include "ControllerCommand.hpp"
@@ -44,8 +43,7 @@ private:
     INVALID,
   };
 
-  void onMqttMessage(char *topic, char *payload, AsyncMqttClientMessageProperties properties, std::size_t len, std::size_t index,
-    std::size_t total);
+  void onMqttMessage(const char *topic, const char *payload, std::size_t len, std::size_t index, std::size_t total);
   ParseResult parseRuntimeCommand(const MqttCommandQueue::Message &message, ControllerCommand &command) const;
 
   ControllerCommandHandler &handler_;

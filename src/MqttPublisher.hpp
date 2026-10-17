@@ -11,7 +11,6 @@
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
-#include <AsyncMqttClient.h>
 #include <cstdint>
 
 #include "ControllerSettingLimits.hpp"
@@ -41,13 +40,11 @@ public:
    * task; runtime commands never reach this function.
    * @param topic   The MQTT topic the message was received on.
    * @param payload Payload bytes (not NUL-terminated).
-   * @param properties  Message properties (QoS, retain, dup).
    * @param len     Payload length.
    * @param index   Chunk index (0 for single-chunk messages).
    * @param total   Total payload size across all chunks.
    */
-  static void handleMqttMessage(
-    char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total);
+  static void handleMqttMessage(const char *topic, const char *payload, size_t len, size_t index, size_t total);
 
   /** @brief MQTT command policy: true when commands may change the controller. */
   static bool isCommandAuthorized();
