@@ -15,6 +15,12 @@
 
 #include "SensorSlots.hpp"
 
+#if ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(5, 0, 0)
+extern "C" {
+uint8_t temprature_sens_read();
+}
+#endif
+
 /**
  * @brief Reads the ESP32 internal chip temperature sensor.
  *

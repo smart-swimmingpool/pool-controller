@@ -11,10 +11,7 @@
 #include "Utils.hpp"
 #include "LogCapture.hpp"
 
-#include <soc/soc_caps.h>
-
-#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0) && SOC_TEMP_SENSOR_SUPPORTED
-#define POOL_USE_TSENS_DRIVER 1
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
 #include <driver/temperature_sensor.h>
 
 namespace {
@@ -74,7 +71,7 @@ void ESP32TemperatureNode::loop() {
   if (Utils::shouldMeasure(_lastMeasurement, measurementInterval)) {
     _lastMeasurement = millis();
 
-#if defined(POOL_USE_TSENS_DRIVER)
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
     float temperatureCelsius = NAN;
     if (readInternalTemperatureCelsius(temperatureCelsius)) {
       _temperature = temperatureCelsius;
@@ -82,9 +79,13 @@ void ESP32TemperatureNode::loop() {
       _temperature = NAN;
     }
 #else
-    // Classic ESP32 has no temperature_sensor driver; the Arduino core wraps
-    // the legacy ROM reader and returns Celsius.
-    _temperature = temperatureRead();
+    // Read internal temp of ESP32 (returns Fahrenheit)
+    const uint8_t temp_farenheit = temprature_sens_read();
+
+    // Convert to Celsius
+    // Note: If the sensor reads 0 or is uncalibrated, it may return a value of 128
+    // standard conversion is: C = (F - 32) / 1.8
+    _temperature = (temp_farenheit - 32.0f) / 1.8f;
 #endif
 
     const bool valid = !isnan(_temperature);
