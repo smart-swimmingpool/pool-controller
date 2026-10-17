@@ -168,7 +168,10 @@ identifizierst du, welche Adresse zu Solar und welche zu Pool gehört.
 #### Funktionsweise
 
 Die 8-Byte-ROM-Adresse jedes Sensors wird im NVS gespeichert (Preferences-Namespace
-`ds18b20`, Keys `solar_adr` und `pool_adr`). Bei jedem folgenden Boot sucht die
+`ds18b20`, Key `mapping`: Solar-ROM gefolgt von Pool-ROM, in einem einzigen
+NVS-Schreibvorgang gespeichert, damit das Paar nie halb aktualisiert ist; ältere
+Firmware nutzte die Keys `solar_adr` und `pool_adr`, die weiterhin gelesen
+werden). Bei jedem folgenden Boot sucht die
 Firmware auf dem Bus nach einem Gerät mit der gespeicherten Adresse. Wird es
 gefunden, wird es unabhängig von der Scan-Reihenfolge verwendet. Wird es nicht
 gefunden (z. B. nach Austausch), erscheint eine Warnung und die Rolle meldet

@@ -145,6 +145,11 @@ CommandStatus ControllerCommandHandler::execute(
       LOG_ERROR("Controller command: failed to persist runtime settings\n");
       liveSettings = previousSettings;
       liveNtp = previousNtp;
+      // A single failed put may have stored part of the batch; rewrite the
+      // previous values so NVS matches the unchanged runtime again.
+      if (!ConfigManager::save()) {
+        LOG_ERROR("Controller command: could not restore previous settings in NVS\n");
+      }
       if (plan.mappingChanged && !ConfigManager::saveSensorMapping(previousSolar, previousPool)) {
         LOG_ERROR("Controller command: could not restore previous sensor mapping\n");
       }
