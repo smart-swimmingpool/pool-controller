@@ -34,11 +34,8 @@ namespace PoolController {
 String MqttPublisher::deviceId_ = "";
 std::uint32_t MqttPublisher::s_lastExportedSeq = 0;
 
-// Hand-over of incoming MQTT commands from the AsyncTCP task to the loop task
-static MqttCommandQueue s_commandQueue;
-
 // Reentrancy guard for the log-event export (see exportLogEvents). MQTT commands are
-// now handled on the loop task (processPendingCommands), but the guard is kept so a
+// now handled on the loop task (MqttRuntimeCommandAdapter), but the guard is kept so a
 // future caller on another task cannot corrupt the shared snapshot buffer and
 // s_lastExportedSeq. Native tests (no ESP32 macros) compile the guard to a no-op.
 #if defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
@@ -70,9 +67,8 @@ void MqttPublisher::begin() {
 
   LOG_INFO("✓ HA Discovery Device ID set to: %s\n", deviceId_.c_str());
 
-  // Register callback in NetworkManager. The callback runs on the AsyncTCP
-  // task and only queues the message; processPendingCommands() handles it.
-  NetworkManager::setMqttCallback(onMqttMessage);
+  // Incoming commands are received by MqttRuntimeCommandAdapter, which owns
+  // the MQTT callback and forwards non-runtime topics to handleMqttMessage().
 }
 
 void MqttPublisher::addDeviceInfo(JsonDocument &doc) {
@@ -223,7 +219,7 @@ void MqttPublisher::publishSelectDiscovery(const char *objectId, const char *nam
   NetworkManager::publish(cfgTopic.build("select", objectId, "/config"), payloadBuf, true);
 }
 
-void MqttPublisher::publishNumberDiscovery(const char *objectId, const char *name, double minVal, double maxVal, double step,
+void MqttPublisher::publishNumberDiscovery(const char *objectId, const char *name, const SettingRange &range, double step,
   const char *unit, const char *icon, const char *entityCategory) {
   TopicBuilder cfgTopic, stateTopic, cmdTopic;
 
@@ -233,8 +229,8 @@ void MqttPublisher::publishNumberDiscovery(const char *objectId, const char *nam
   doc["state_topic"] = stateTopic.build("number", objectId, "/state");
   doc["command_topic"] = cmdTopic.build("number", objectId, "/set");
   doc["availability_topic"] = "homeassistant/sensor/pool-controller/availability";
-  doc["min"] = minVal;
-  doc["max"] = maxVal;
+  doc["min"] = range.min;
+  doc["max"] = range.max;
   doc["step"] = step;
   doc["mode"] = "slider";
 
@@ -375,8 +371,8 @@ void MqttPublisher::publishClimateDiscovery() {
   doc["action_topic"] = actionTopic.build("climate", "thermostat", "/action/state");
 
   // Temp range
-  doc["min_temp"] = 0.0;
-  doc["max_temp"] = 40.0;
+  doc["min_temp"] = SettingLimits::kPoolMaxTemperature.min;
+  doc["max_temp"] = SettingLimits::kPoolMaxTemperature.max;
   doc["temp_step"] = 0.5;
 
   // Preset modes (sub-modes: manual/schedule/boost)
@@ -533,19 +529,20 @@ void MqttPublisher::publishDiscovery() {
 
   // ── Configuration (entity_category: "config") ──
   // Parameter Numbers
+  publishNumberDiscovery("pool-max-temp", "Maximum Pool Temperature", SettingLimits::kPoolMaxTemperature, 0.1, "°C",
+    "mdi:thermometer-chevron-up", "config");
+  publishNumberDiscovery("solar-min-temp", "Minimum Solar Temperature", SettingLimits::kSolarMinTemperature, 0.1, "°C",
+    "mdi:thermometer-chevron-down", "config");
   publishNumberDiscovery(
-    "pool-max-temp", "Maximum Pool Temperature", 0.0, 40.0, 0.1, "°C", "mdi:thermometer-chevron-up", "config");
-  publishNumberDiscovery(
-    "solar-min-temp", "Minimum Solar Temperature", 0.0, 100.0, 0.1, "°C", "mdi:thermometer-chevron-down", "config");
-  publishNumberDiscovery("hysteresis", "Temperature Hysteresis", 0.0, 10.0, 0.1, "K", "mdi:delta", "config");
+    "hysteresis", "Temperature Hysteresis", SettingLimits::kTemperatureHysteresis, 0.1, "K", "mdi:delta", "config");
 
   // Temperature-based circulation parameters
-  publishNumberDiscovery(
-    "temp-circ-threshold", "Circulation Temperature Threshold", 0.0, 40.0, 0.5, "°C", "mdi:thermometer-auto", "config");
-  publishNumberDiscovery(
-    "temp-circ-factor", "Circulation Temperature Factor", 0.0, 120.0, 5.0, "min/°C", "mdi:plus-minus", "config");
-  publishNumberDiscovery(
-    "temp-circ-max-runtime", "Circulation Maximum Runtime", 60.0, 1440.0, 15.0, "min", "mdi:timer-outline", "config");
+  publishNumberDiscovery("temp-circ-threshold", "Circulation Temperature Threshold", SettingLimits::kCirculationThreshold, 0.5,
+    "°C", "mdi:thermometer-auto", "config");
+  publishNumberDiscovery("temp-circ-factor", "Circulation Temperature Factor", SettingLimits::kCirculationFactor, 5.0, "min/°C",
+    "mdi:plus-minus", "config");
+  publishNumberDiscovery("temp-circ-max-runtime", "Circulation Maximum Runtime", SettingLimits::kCirculationMaxRuntime, 15.0,
+    "min", "mdi:timer-outline", "config");
 
   // Timer as Time entities (HH:MM:SS format)
   publishTimeDiscovery("timer-start", "Timer Start", "mdi:clock-start", "config");
@@ -999,14 +996,6 @@ void MqttPublisher::publishSensorMappingDiscovery() {
   LOG_INFO("• HA: Sensor mapping select entities published (%u options)\n", solarOptCount);
 }
 
-// Helper function to check if MQTT authentication is configured
-static bool isMqttAuthenticated() {
-  // Check if MQTT connection is using authentication
-  const MqttConfig &config = ConfigManager::getMqtt();
-  // If MQTT username is set, we consider it authenticated
-  return config.username.length() > 0;
-}
-
 // Command validation - public static method for testing
 bool MqttPublisher::isValidCommand(const char *value, const char *const validCommands[], size_t count) {
   for (size_t i = 0; i < count; i++) {
@@ -1021,73 +1010,22 @@ bool MqttPublisher::isValidCommand(const String &value, const char *const validC
   return isValidCommand(value.c_str(), validCommands, count);
 }
 
-// ── Non-owning helpers for the command parser (no heap allocation on the loop task) ──
-
-static bool topicEndsWith(const char *topic, size_t topicLen, const char *suffix) {
-  size_t suffixLen = strlen(suffix);
-  return topicLen >= suffixLen && memcmp(topic + topicLen - suffixLen, suffix, suffixLen) == 0;
-}
-
-// Integer of the field [offset, offset + width) — same result as
-// String::substring(offset, offset + width).toInt() for "HH:MM:SS" payloads.
-static int fieldToInt(const char *value, size_t len, size_t offset, size_t width) {
-  if (offset >= len) {
-    return 0;
-  }
-  char field[4] = {0};
-  size_t n = (len - offset < width) ? len - offset : width;
-  if (n >= sizeof(field)) {
-    n = sizeof(field) - 1;
-  }
-  memcpy(field, value + offset, n);
-  return atoi(field);
-}
-
-// Helper function to check if MQTT authentication is required for sensitive commands
-static bool shouldEnforceMqttAuth() {
-  // For now, we make MQTT authentication optional but recommended
-  // Users can enable it by setting a username in MQTT config
-  // In the future, this could be made configurable via settings
-  return false;  // Made optional as per user request
-}
-
-void MqttPublisher::onMqttMessage(const char *topic, const char *payload, size_t len, size_t index, size_t total) {
-  // Only complete single-chunk messages are supported (HA commands are tiny)
-  if (index != 0 || len != total) {
-    LOG_WARN(
-      "MQTT: Ignoring chunked message on %s (%u of %u bytes)\n", topic, static_cast<unsigned>(len), static_cast<unsigned>(total));
-    return;
-  }
-
-  switch (s_commandQueue.push(topic, payload, len)) {
-  case MqttCommandQueue::PushResult::OK:
-    break;
-  case MqttCommandQueue::PushResult::FULL:
-    LOG_WARN("MQTT: Command queue full — dropping message on %s\n", topic);
-    break;
-  case MqttCommandQueue::PushResult::TOO_LARGE:
-    LOG_WARN("MQTT: Message too large — dropping message on %s\n", topic);
-    break;
-  }
-}
-
-void MqttPublisher::processPendingCommands() {
-  // Bounded per loop iteration: commands may write NVS and publish states, so
-  // a burst is spread over several iterations instead of stalling the loop.
-  MqttCommandQueue::Message msg;
-  for (size_t handled = 0; handled < kMaxCommandsPerLoop && s_commandQueue.pop(msg); handled++) {
-    handleMqttMessage(msg.topic, msg.payload, msg.payloadLen, 0, msg.payloadLen);
-  }
+bool MqttPublisher::isCommandAuthorized() {
+  // MQTT authentication is optional but recommended. Once enforced, a broker
+  // login (username set) is required for every controller command. The
+  // switch stays off until it becomes a user setting.
+  constexpr bool kEnforceMqttAuth = false;
+  return !kEnforceMqttAuth || ConfigManager::getMqtt().username.length() > 0;
 }
 
 void MqttPublisher::handleMqttMessage(const char *topic, const char *payload, size_t len, size_t index, size_t total) {
+  (void)total;
   // Only process complete messages (single-chunk delivery for typical HA commands)
   if (index != 0) {
     return;
   }
 
-  // Copy the payload into a NUL-terminated stack buffer — the parser below
-  // works on plain char data and does not allocate (Clean-Code K1).
+  // Copy the payload into a NUL-terminated stack buffer (no allocation).
   char value[MqttCommandQueue::kPayloadSize];
   if (len >= sizeof(value)) {
     LOG_WARN("MQTT: Payload too large on %s — ignoring\n", topic);
@@ -1097,285 +1035,28 @@ void MqttPublisher::handleMqttMessage(const char *topic, const char *payload, si
     memcpy(value, payload, len);
   }
   value[len] = '\0';
+
+  static const char kFirmwareUpdateSuffix[] = "/firmware-update/set";
   const size_t topicLen = strlen(topic);
-  auto topicIs = [topic, topicLen](const char *suffix) { return topicEndsWith(topic, topicLen, suffix); };
-
-  if (topicIs("/firmware-update/set")) {
-    // MQTT authentication is optional, but if configured, we check it
-    if (shouldEnforceMqttAuth() && !isMqttAuthenticated()) {
-      LOG_WARN("MQTT: Firmware update command rejected - MQTT authentication required\n");
-      return;
-    }
-
-    // Always validate command value for security
-    static const char *validFirmwareCommands[] = {"INSTALL"};
-    if (!MqttPublisher::isValidCommand(value, validFirmwareCommands, 1)) {
-      LOG_WARN("MQTT: Invalid firmware command: %s\n", value);
-      return;
-    }
-
-    if (strcmp(value, "INSTALL") == 0) {
-      LOG_INFO("MQTT: Firmware update triggered from Home Assistant\n");
-      OtaUpdater::startUpdate();
-    }
+  const size_t suffixLen = sizeof(kFirmwareUpdateSuffix) - 1;
+  if (topicLen < suffixLen || memcmp(topic + topicLen - suffixLen, kFirmwareUpdateSuffix, suffixLen) != 0) {
+    LOG_DEBUG("MQTT: No handler for %s\n", topic);
     return;
   }
 
-  // Climate thermostat commands (mode + temperature + preset)
-  if (topicIs("/thermostat/preset/set")) {
-    const char *poolMode = nullptr;
-    if (strcmp(value, "none") == 0)
-      poolMode = "auto";
-    else if (strcmp(value, "manual") == 0)
-      poolMode = "manu";
-    else if (strcmp(value, "schedule") == 0)
-      poolMode = "timer";
-    else if (strcmp(value, "boost") == 0)
-      poolMode = "boost";
-    else {
-      LOG_WARN("MQTT: Unknown preset \"%s\" — ignoring\n", value);
-      publishStates();
-      return;
-    }
-    LOG_INFO("MQTT: Climate preset → pool mode \"%s\"\n", poolMode);
-    operationModeNode.setMode(poolMode, "mqtt:thermostat/preset");
-    ConfigManager::getSettings().opMode = poolMode;
-    ConfigManager::save();
-    publishStates();
+  if (!isCommandAuthorized()) {
+    LOG_WARN("MQTT: Firmware update command rejected - MQTT authentication required\n");
     return;
   }
 
-  if (topicIs("/thermostat/mode/set")) {
-    const char *poolMode = nullptr;
-    if (strcmp(value, "off") == 0)
-      poolMode = "manu";
-    else if (strcmp(value, "auto") == 0)
-      poolMode = "auto";
-    else if (strcmp(value, "heat") == 0)
-      poolMode = "boost";
-    else {
-      LOG_WARN("MQTT: Unknown climate mode \"%s\" — ignoring\n", value);
-      publishStates();
-      return;
-    }
-    LOG_INFO("MQTT: Climate mode → pool mode \"%s\"\n", poolMode);
-    operationModeNode.setMode(poolMode, "mqtt:thermostat/mode");
-    ConfigManager::getSettings().opMode = poolMode;
-    ConfigManager::save();
-    publishStates();
+  static const char *validFirmwareCommands[] = {"INSTALL"};
+  if (!MqttPublisher::isValidCommand(value, validFirmwareCommands, 1)) {
+    LOG_WARN("MQTT: Invalid firmware command: %s\n", value);
     return;
   }
 
-  if (topicIs("/thermostat/temperature/set")) {
-    float val = strtof(value, nullptr);
-    LOG_INFO("MQTT: Climate target temperature → %.1f\n", val);
-    operationModeNode.setPoolMaxTemperature(val);
-    ConfigManager::getSettings().tempMaxPool = val;
-    ConfigManager::save();
-    publishStates();
-    return;
-  }
-
-  if (topicIs("/pool-pump/set") || topicIs("/solar-pump/set")) {
-    // MQTT authentication is optional, but if configured, we check it
-    if (shouldEnforceMqttAuth() && !isMqttAuthenticated()) {
-      LOG_WARN("MQTT: Pump command rejected - MQTT authentication required\n");
-      publishStates();
-      return;
-    }
-
-    // Always validate payload for security
-    static const char *validPumpCommands[] = {"ON", "OFF"};
-    if (!MqttPublisher::isValidCommand(value, validPumpCommands, 2)) {
-      LOG_WARN("MQTT: Invalid pump command: %s\n", value);
-      publishStates();
-      return;
-    }
-
-    // Only allow pump control from HA in manual mode
-    if (strcmp(operationModeNode.getModeCStr(), "manu") != 0) {
-      LOG_WARN("MQTT: Ignoring pump command — not in manual mode (current: %s)\n", operationModeNode.getModeCStr());
-      publishStates();
-      return;
-    }
-    if (topicIs("/pool-pump/set")) {
-      poolPumpNode.setSwitch(strcmp(value, "ON") == 0);
-    } else {
-      solarPumpNode.setSwitch(strcmp(value, "ON") == 0);
-    }
-  } else if (topicIs("/mode/set")) {
-    // MQTT authentication is optional, but if configured, we check it
-    if (shouldEnforceMqttAuth() && !isMqttAuthenticated()) {
-      LOG_WARN("MQTT: Mode command rejected - MQTT authentication required\n");
-      publishStates();
-      return;
-    }
-
-    // Always validate mode value for security
-    static const char *validModes[] = {"auto", "manu", "boost", "timer"};
-    if (!MqttPublisher::isValidCommand(value, validModes, 4)) {
-      LOG_WARN("MQTT: Invalid mode command: %s\n", value);
-      publishStates();
-      return;
-    }
-
-    operationModeNode.setMode(value, "mqtt:mode/set");
-    ConfigManager::getSettings().opMode = value;
-    ConfigManager::save();
-  } else if (topicIs("/pool-max-temp/set")) {
-    // MQTT authentication is optional, but if configured, we check it
-    if (shouldEnforceMqttAuth() && !isMqttAuthenticated()) {
-      LOG_WARN("MQTT: Config command rejected - MQTT authentication required\n");
-      publishStates();
-      return;
-    }
-
-    float val = strtof(value, nullptr);
-    // Always validate range for security
-    if (val < 0.0f || val > 40.0f) {
-      LOG_WARN("MQTT: Invalid pool-max-temp value: %.1f\n", val);
-      publishStates();
-      return;
-    }
-    operationModeNode.setPoolMaxTemperature(val);
-    ConfigManager::getSettings().tempMaxPool = val;
-    ConfigManager::save();
-  } else if (topicIs("/solar-min-temp/set")) {
-    // MQTT authentication is optional, but if configured, we check it
-    if (shouldEnforceMqttAuth() && !isMqttAuthenticated()) {
-      LOG_WARN("MQTT: Config command rejected - MQTT authentication required\n");
-      publishStates();
-      return;
-    }
-
-    float val = strtof(value, nullptr);
-    // Always validate range for security
-    if (val < 0.0f || val > 100.0f) {
-      LOG_WARN("MQTT: Invalid solar-min-temp value: %.1f\n", val);
-      publishStates();
-      return;
-    }
-    operationModeNode.setSolarMinTemperature(val);
-    ConfigManager::getSettings().tempMinSolar = val;
-    ConfigManager::save();
-  } else if (topicIs("/hysteresis/set")) {
-    // MQTT authentication is optional, but if configured, we check it
-    if (shouldEnforceMqttAuth() && !isMqttAuthenticated()) {
-      LOG_WARN("MQTT: Config command rejected - MQTT authentication required\n");
-      publishStates();
-      return;
-    }
-
-    float val = strtof(value, nullptr);
-    // Always validate range for security
-    if (val < 0.0f || val > 10.0f) {
-      LOG_WARN("MQTT: Invalid hysteresis value: %.1f\n", val);
-      publishStates();
-      return;
-    }
-    operationModeNode.setTemperatureHysteresis(val);
-    ConfigManager::getSettings().tempHysteresis = val;
-    ConfigManager::save();
-  } else if (topicIs("/temp-circ-threshold/set")) {
-    float val = strtof(value, nullptr);
-    if (val >= 0.0f && val <= 40.0f) {
-      ConfigManager::getSettings().tempCircThreshold = val;
-      ConfigManager::save();
-    }
-  } else if (topicIs("/temp-circ-factor/set")) {
-    uint16_t val = static_cast<uint16_t>(atoi(value));
-    if (val <= 120) {
-      ConfigManager::getSettings().tempCircFactor = val;
-      ConfigManager::save();
-    }
-  } else if (topicIs("/temp-circ-max-runtime/set")) {
-    uint16_t val = static_cast<uint16_t>(atoi(value));
-    if (val >= 60 && val <= 1440) {
-      ConfigManager::getSettings().tempCircMaxRuntime = val;
-      ConfigManager::save();
-    }
-  } else if (topicIs("/timer-start/set")) {
-    // Payload format: HH:MM:SS
-    int h = fieldToInt(value, len, 0, 2);
-    int m = fieldToInt(value, len, 3, 2);
-    if (h >= 0 && h <= 23 && m >= 0 && m <= 59) {
-      TimerSetting ts = operationModeNode.getTimerSetting();
-      ts.timerStartHour = h;
-      ts.timerStartMinutes = m;
-      operationModeNode.setTimerSetting(ts);
-    }
-  } else if (topicIs("/timer-end/set")) {
-    int h = fieldToInt(value, len, 0, 2);
-    int m = fieldToInt(value, len, 3, 2);
-    if (h >= 0 && h <= 23 && m >= 0 && m <= 59) {
-      TimerSetting ts = operationModeNode.getTimerSetting();
-      ts.timerEndHour = h;
-      ts.timerEndMinutes = m;
-      operationModeNode.setTimerSetting(ts);
-    }
-  } else if (topicIs("/timezone/set")) {
-    int idx = getTimezoneIndexFromLabel(value);
-    if (idx < 0) {
-      LOG_WARN("MQTT: Unknown timezone label \"%s\" — ignoring\n", value);
-      publishStates();
-      return;
-    }
-    ConfigManager::getSettings().timezoneIndex = idx;
-    ConfigManager::save();
-    // Apply timezone change to running clock immediately (P2 review fix)
-    setTimezoneIndex(idx);
-  } else if (topicIs("/ntp-server/set")) {
-    if (len > 0 && len < 128) {
-      ConfigManager::getNtp().server = value;
-      ConfigManager::save();
-      // Restart NTP client with new server immediately
-      timeClientSetup(ConfigManager::getNtp().server.c_str());
-    }
-  } else if (topicIs("/solar-sensor/set") || topicIs("/pool-sensor/set")) {
-    // Handle select entity: value is hex address or "— Not configured —"
-    uint8_t addr[8] = {0};
-    bool hasAddr = (len >= 16);
-
-    if (hasAddr) {
-      // Extract address from first 16 hex chars of the option value
-      for (uint8_t i = 0; i < 8; i++) {
-        char byteStr[3] = {value[i * 2], value[i * 2 + 1], '\0'};
-        char *end = nullptr;
-        unsigned long val = strtoul(byteStr, &end, 16);
-        if (end != byteStr + 2) {
-          LOG_WARN("MQTT: Invalid hex in sensor selection — ignoring\n");
-          publishStates();
-          return;
-        }
-        addr[i] = static_cast<uint8_t>(val);
-      }
-    }
-
-    // Save to NVS
-    {
-      Preferences prefs;
-      prefs.begin("ds18b20", false);
-      if (topicIs("/solar-sensor/set")) {
-        prefs.putBytes("solar_adr", addr, 8);
-        if (hasAddr)
-          solarTemperatureNode.setAddressFilter(addr);
-        else
-          solarTemperatureNode.clearAddressFilter();
-        LOG_INFO("MQTT: Solar sensor %s via HA\n", hasAddr ? "assigned" : "cleared");
-      } else {
-        prefs.putBytes("pool_adr", addr, 8);
-        if (hasAddr)
-          poolTemperatureNode.setAddressFilter(addr);
-        else
-          poolTemperatureNode.clearAddressFilter();
-        LOG_INFO("MQTT: Pool sensor %s via HA\n", hasAddr ? "assigned" : "cleared");
-      }
-      prefs.end();
-    }
-  }
-
-  // Refresh states to confirm changes to Home Assistant
-  publishStates();
+  LOG_INFO("MQTT: Firmware update triggered from Home Assistant\n");
+  OtaUpdater::startUpdate();
 }
 
 }  // namespace PoolController

@@ -10,9 +10,11 @@
 #pragma once
 
 #include <Arduino.h>
+#include <cstddef>
 #include <WebServer.h>
 #include <DNSServer.h>
 
+#include "ControllerCommandHandler.hpp"
 #include "LogCapture.hpp"
 
 namespace PoolController {
@@ -28,6 +30,11 @@ namespace PoolController {
 class WebPortal {
 public:
   WebPortal() = default;
+
+  static void setCommandDispatcher(CommandDispatcher dispatcher) { commandDispatcher_ = dispatcher; }
+#if !defined(ESP32) && !defined(ARDUINO_ARCH_ESP32)
+  static bool invokeRouteForTest(const char *uri, int method) { return server_.invokeRoute(uri, method); }
+#endif
 
   /** @brief Start the HTTP server and optional DNS captive portal. @return true if server started successfully. */
   static bool begin();
@@ -106,6 +113,12 @@ private:
   static void apiGetConfig();
   /** @brief POST /api/config — save configuration from JSON body. */
   static void apiSaveConfig();
+  /** @brief Settings branch of apiSaveConfig(): the form becomes one atomic command batch. */
+  static void saveSettingsForm();
+  /** @brief Hand a batch to the dispatcher; REJECTED if none is installed. */
+  static CommandStatus dispatch(const ControllerCommand *commands, std::size_t count, ControllerCommandResult *result);
+  /** @brief HTTP status code for a command outcome (200/400/409/500). */
+  static int httpStatusFor(CommandStatus status);
   /** @brief POST /api/mode — set the operation mode. */
   static void apiSetMode();
   /** @brief POST /api/pump/toggle — toggle a specific relay. */
@@ -141,6 +154,7 @@ private:
 
   static WebServer server_;
   static DNSServer dnsServer_;
+  static CommandDispatcher commandDispatcher_;
   static bool dnsServerStarted_;
 
   static String activeSessionToken_;

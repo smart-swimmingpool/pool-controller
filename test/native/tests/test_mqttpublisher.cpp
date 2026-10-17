@@ -18,6 +18,7 @@
 #include "ESP32TemperatureNode.hpp"
 #include "RelayModuleNode.hpp"
 #include "OperationModeNode.hpp"
+#include "OtaUpdater.hpp"
 
 using namespace PoolController;  // NOLINT(build/namespaces)
 
@@ -305,191 +306,35 @@ int run_mqttpublisher_tests() {
     test_suite_end("MqttPublisher::publishStates", missing == 0 ? 1 : 0, missing);
   }
 
-  // ── Test: Handle MQTT mode command ──
+  // ── Test: MqttPublisher only handles the firmware-update command ──
   {
-    test_begin("MqttPublisher", "handle mode command from HA");
+    test_begin("MqttPublisher", "handleMqttMessage ignores runtime topics and validates firmware commands");
 
-    mqttCapture.clear();
     operationModeNode.setMode("auto");
-
-    // Simulate incoming MQTT message setting mode to "boost"
-    MqttPublisher::handleMqttMessage("homeassistant/select/pool-controller/mode/set", "boost", 5, 0, 5);
-
-    // The mode should have been set to "boost" and tagged with its MQTT source.
-    std::string mode = operationModeNode.getMode().c_str();
     int missing = 0;
-    if (mode == "boost") {
-      test_pass(__FILE__, __LINE__);
-    } else {
-      char msg[64];
-      snprintf(msg, sizeof(msg), "Expected mode=boost, got %s", mode.c_str());
-      test_fail(__FILE__, __LINE__, msg);
-      missing++;
-    }
-    if (strcmp(operationModeNode.getLastModeSource(), "mqtt:mode/set") == 0) {
-      test_pass(__FILE__, __LINE__);
-    } else {
-      test_fail(__FILE__, __LINE__, "Mode source not tagged as mqtt:mode/set");
-      missing++;
-    }
 
-    rc = (missing == 0) ? 0 : 1;
-    if (rc == 0)
-      passed++;
-    else
-      failed++;
-    test_suite_end("MqttPublisher::handle_mode_command", missing == 0 ? 1 : 0, missing);
-  }
-
-  // ── Test: Handle MQTT climate commands with mode source tags ──
-  {
-    test_begin("MqttPublisher", "handle climate mode/preset commands tags source");
-
-    operationModeNode.setMode("auto");
-
-    char modeTopic[] = "homeassistant/climate/pool-controller/thermostat/mode/set";
-    char modePayload[] = "heat";
+    // Runtime topics belong to MqttRuntimeCommandAdapter; this path must not apply them.
+    char modeTopic[] = "homeassistant/select/pool-controller/mode/set";
+    char modePayload[] = "boost";
     MqttPublisher::handleMqttMessage(modeTopic, modePayload, strlen(modePayload), 0, strlen(modePayload));
-
-    int missing = 0;
-    if (strcmp(operationModeNode.getLastModeSource(), "mqtt:thermostat/mode") == 0) {
-      test_pass(__FILE__, __LINE__);
-    } else {
-      test_fail(__FILE__, __LINE__, "Climate mode source not tagged as mqtt:thermostat/mode");
-      missing++;
-    }
-
-    char presetTopic[] = "homeassistant/climate/pool-controller/thermostat/preset/set";
-    char presetPayload[] = "schedule";
-    MqttPublisher::handleMqttMessage(presetTopic, presetPayload, strlen(presetPayload), 0, strlen(presetPayload));
-
-    if (strcmp(operationModeNode.getLastModeSource(), "mqtt:thermostat/preset") == 0) {
-      test_pass(__FILE__, __LINE__);
-    } else {
-      test_fail(__FILE__, __LINE__, "Climate preset source not tagged as mqtt:thermostat/preset");
-      missing++;
-    }
-
-    rc = (missing == 0) ? 0 : 1;
-    if (rc == 0)
-      passed++;
-    else
-      failed++;
-    test_suite_end("MqttPublisher::handle_climate_mode_sources", missing == 0 ? 1 : 0, missing);
-  }
-
-  // ── Test: MQTT callback only queues; the loop task applies the command (#195) ──
-  {
-    test_begin("MqttPublisher", "MQTT callback defers commands to the loop task");
-
-    operationModeNode.setMode("auto");
-    char topic[] = "homeassistant/select/pool-controller/mode/set";
-    char payload[] = "manu";
-
-    // Callback (AsyncTCP task in production) must not change state itself
-    MqttPublisher::onMqttMessage(topic, payload, strlen(payload), 0, strlen(payload));
-    int missing = 0;
     if (operationModeNode.getMode() == "auto") {
       test_pass(__FILE__, __LINE__);
     } else {
-      test_fail(__FILE__, __LINE__, "onMqttMessage changed the mode directly on the MQTT task");
+      test_fail(__FILE__, __LINE__, "handleMqttMessage applied a runtime command");
       missing++;
     }
 
-    // Loop task processes the queue
-    MqttPublisher::processPendingCommands();
-    if (operationModeNode.getMode() == "manu") {
+    // Only "INSTALL" starts the updater; without a release it reports so.
+    char firmwareTopic[] = "homeassistant/update/pool-controller/firmware-update/set";
+    char invalid[] = "REBOOT";
+    MqttPublisher::handleMqttMessage(firmwareTopic, invalid, strlen(invalid), 0, strlen(invalid));
+    const String statusBefore = OtaUpdater::getStatusMessage();
+    char install[] = "INSTALL";
+    MqttPublisher::handleMqttMessage(firmwareTopic, install, strlen(install), 0, strlen(install));
+    if (statusBefore != String("No update available") && OtaUpdater::getStatusMessage() == String("No update available")) {
       test_pass(__FILE__, __LINE__);
     } else {
-      test_fail(__FILE__, __LINE__, "processPendingCommands did not apply the queued mode command");
-      missing++;
-    }
-
-    // Chunked messages are not queued
-    char chunk[] = "boost";
-    MqttPublisher::onMqttMessage(topic, chunk, strlen(chunk), 0, strlen(chunk) + 10);
-    MqttPublisher::processPendingCommands();
-    if (operationModeNode.getMode() == "manu") {
-      test_pass(__FILE__, __LINE__);
-    } else {
-      test_fail(__FILE__, __LINE__, "Incomplete (chunked) message was applied");
-      missing++;
-    }
-    operationModeNode.setMode("auto");
-
-    rc = (missing == 0) ? 0 : 1;
-    if (rc == 0)
-      passed++;
-    else
-      failed++;
-    test_suite_end("MqttPublisher::commands_deferred_to_loop", missing == 0 ? 1 : 0, missing);
-  }
-
-  // ── Test: queued commands are processed in bounded batches per loop iteration (#195) ──
-  {
-    test_begin("MqttPublisher", "processPendingCommands handles a bounded number of commands");
-
-    operationModeNode.setMode("auto");
-    char topic[] = "homeassistant/select/pool-controller/mode/set";
-    const char *modes[] = {"manu", "boost", "timer"};
-    for (const char *mode : modes) {
-      char payload[8];
-      snprintf(payload, sizeof(payload), "%s", mode);
-      MqttPublisher::onMqttMessage(topic, payload, strlen(payload), 0, strlen(payload));
-    }
-
-    int missing = 0;
-    MqttPublisher::processPendingCommands();
-    // kMaxCommandsPerLoop == 2: "manu" and "boost" applied, "timer" still queued
-    if (MqttPublisher::kMaxCommandsPerLoop == 2 && operationModeNode.getMode() == "boost") {
-      test_pass(__FILE__, __LINE__);
-    } else {
-      test_fail(__FILE__, __LINE__, "Expected exactly kMaxCommandsPerLoop commands in the first pass");
-      missing++;
-    }
-    MqttPublisher::processPendingCommands();
-    if (operationModeNode.getMode() == "timer") {
-      test_pass(__FILE__, __LINE__);
-    } else {
-      test_fail(__FILE__, __LINE__, "Remaining command was not handled in the next pass");
-      missing++;
-    }
-    operationModeNode.setMode("auto");
-
-    rc = (missing == 0) ? 0 : 1;
-    if (rc == 0)
-      passed++;
-    else
-      failed++;
-    test_suite_end("MqttPublisher::commands_bounded_per_loop", missing == 0 ? 1 : 0, missing);
-  }
-
-  // ── Test: char-based parser handles timer payloads like the former String parser ──
-  {
-    test_begin("MqttPublisher", "timer-start payload HH:MM:SS is parsed without String");
-
-    char topic[] = "homeassistant/time/pool-controller/timer-start/set";
-    char payload[] = "07:45:00";
-    MqttPublisher::handleMqttMessage(topic, payload, strlen(payload), 0, strlen(payload));
-    TimerSetting ts = operationModeNode.getTimerSetting();
-    int missing = 0;
-    if (ts.timerStartHour == 7 && ts.timerStartMinutes == 45) {
-      test_pass(__FILE__, __LINE__);
-    } else {
-      test_fail(__FILE__, __LINE__, "timer-start 07:45:00 not applied");
-      missing++;
-    }
-
-    // Oversized payloads are ignored instead of being truncated
-    char big[200];
-    memset(big, '1', sizeof(big) - 1);
-    big[sizeof(big) - 1] = '\0';
-    MqttPublisher::handleMqttMessage(topic, big, strlen(big), 0, strlen(big));
-    ts = operationModeNode.getTimerSetting();
-    if (ts.timerStartHour == 7 && ts.timerStartMinutes == 45) {
-      test_pass(__FILE__, __LINE__);
-    } else {
-      test_fail(__FILE__, __LINE__, "Oversized payload changed the timer");
+      test_fail(__FILE__, __LINE__, "INSTALL did not reach OtaUpdater (or REBOOT did)");
       missing++;
     }
 
@@ -498,53 +343,7 @@ int run_mqttpublisher_tests() {
       passed++;
     else
       failed++;
-    test_suite_end("MqttPublisher::timer_payload_char_parser", missing == 0 ? 1 : 0, missing);
-  }
-
-  // ── Test: Handle MQTT pump command in manual mode ──
-  {
-    test_begin("MqttPublisher", "handle pump command in manual mode");
-
-    mqttCapture.clear();
-    operationModeNode.setMode("manu");
-    poolPumpNode.setSwitch(false);
-
-    MqttPublisher::handleMqttMessage("homeassistant/switch/pool-controller/pool-pump/set", "ON", 2, 0, 2);
-
-    // Pump should have turned ON
-    bool pumpState = poolPumpNode.getSwitch();
-    rc = (pumpState) ? 0 : 1;
-    if (rc == 0) {
-      test_pass(__FILE__, __LINE__);
-      passed++;
-    } else {
-      test_fail(__FILE__, __LINE__, "Expected pool-pump ON, got OFF");
-      failed++;
-    }
-    test_suite_end("MqttPublisher::handle_pump_command", rc == 0 ? 1 : 0, rc != 0 ? 1 : 0);
-  }
-
-  // ── Test: Reject pump command in auto mode ──
-  {
-    test_begin("MqttPublisher", "reject pump command in auto mode");
-
-    mqttCapture.clear();
-    operationModeNode.setMode("auto");
-    poolPumpNode.setSwitch(false);
-
-    MqttPublisher::handleMqttMessage("homeassistant/switch/pool-controller/pool-pump/set", "ON", 2, 0, 2);
-
-    // Pump should still be OFF (rejected because not in manual mode)
-    bool pumpState = poolPumpNode.getSwitch();
-    rc = (!pumpState) ? 0 : 1;
-    if (rc == 0) {
-      test_pass(__FILE__, __LINE__);
-      passed++;
-    } else {
-      test_fail(__FILE__, __LINE__, "Expected pool-pump OFF (rejected in auto mode)");
-      failed++;
-    }
-    test_suite_end("MqttPublisher::reject_pump_auto", rc == 0 ? 1 : 0, rc != 0 ? 1 : 0);
+    test_suite_end("MqttPublisher::maintenance_commands", missing == 0 ? 1 : 0, missing);
   }
 
   // ── Test: Discovery payload switches have no entity_category ──

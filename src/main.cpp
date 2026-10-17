@@ -4,25 +4,58 @@
 
 /**
  * @file main.cpp
- * @brief Main entry point for the Pool Controller firmware.
+ * @brief Main entry point and composition root for the Pool Controller firmware.
  *
  * Arduino entry point: setup() initializes all subsystems, loop() runs
  * the control, monitoring, and network stack indefinitely.
  */
 
 #include <Arduino.h>
-#include "LogCapture.hpp"
-#include "PoolController.hpp"
 
-/** @brief Singleton context owning all controller subsystems. */
+#include "ControllerCommandHandler.hpp"
+#include "DisplayCoordinator.hpp"
+#include "LogCapture.hpp"
+#include "MqttRuntimeCommandAdapter.hpp"
+#include "Nodes.hpp"
+#include "OlimexLocalUi.hpp"
+#include "PoolController.hpp"
+#include "WebPortal.hpp"
+
+/** @brief Singleton context owning the existing controller lifecycle. */
 static PoolController::PoolControllerContext context{};
+
+namespace {
+
+/**
+ * Construct application services only after the legacy global nodes completed
+ * static initialization. Function-local statics avoid cross-TU initialization
+ * order dependencies while keeping ownership explicit at the composition root.
+ */
+PoolController::ControllerCommandHandler &controllerCommandHandler() {
+  static PoolController::ControllerCommandHandler handler(PoolController::ControllerNodes{PoolController::operationModeNode,
+    PoolController::poolPumpNode, PoolController::solarPumpNode, PoolController::solarTemperatureNode,
+    PoolController::poolTemperatureNode, PoolController::ctrlTemperatureNode});
+  return handler;
+}
+
+PoolController::CommandStatus dispatchControllerCommands(
+  const PoolController::ControllerCommand *commands, std::size_t count, PoolController::ControllerCommandResult *result) {
+  return controllerCommandHandler().execute(commands, count, result);
+}
+
+PoolController::MqttRuntimeCommandAdapter &mqttRuntimeCommandAdapter() {
+  static PoolController::MqttRuntimeCommandAdapter adapter(controllerCommandHandler());
+  return adapter;
+}
+
+}  // namespace
 
 /**
  * @brief Arduino setup() — initializes serial and delegates to PoolControllerContext.
  *
  * Waits up to 3 seconds for a USB serial connection (non-blocking fallback
  * for headless operation), then calls context.setup() to initialize all
- * subsystems.
+ * subsystems and installs the typed MQTT runtime-command adapter.
  */
 auto setup() -> void {
   Serial.begin(SERIAL_SPEED);
@@ -39,15 +72,26 @@ auto setup() -> void {
   // export watermark sees the pre-boot sequence. Serial is already up here.
   PoolController::LogCapture::begin();
 
+  // Every adapter mutates controller state only through the command handler.
+  PoolController::WebPortal::setCommandDispatcher(dispatchControllerCommands);
+  PoolController::DisplayCoordinator::setCommandDispatcher(dispatchControllerCommands);
+  PoolController::OlimexLocalUi::setCommandDispatcher(dispatchControllerCommands);
+
+  // Register the only MQTT callback before context.setup() starts the MQTT
+  // connection, so the handler is never swapped while the AsyncTCP task may
+  // dispatch messages. The callback only copies bytes; mutation happens in loop().
+  mqttRuntimeCommandAdapter().begin();
+
   context.setup();
 }
 
 /**
- * @brief Arduino loop() — runs the control, monitoring, and network stack.
+ * @brief Arduino loop() — runs typed adapter hand-over and controller stack.
  *
- * Called continuously after setup(). Delegates to context.loop() which
- * handles watchdog feeding, memory checks, node updates, MQTT, and OTA.
+ * Runtime MQTT commands are drained on the same Arduino/Core-1 loop task that
+ * owns mutable controller state.
  */
 auto loop() -> void {
+  mqttRuntimeCommandAdapter().processPendingCommands();
   context.loop();
 }

@@ -103,7 +103,8 @@ constexpr bool TFT_DRIVER_ILI9341{true};
 constexpr bool TFT_DRIVER_ST7789{false};
 ```
 
-Do not use GPIO1/2/3/15 for UI; those are Olimex opto inputs. Do not use GPIO10/11/22/23 except for relays. GPIO12/13/14 are not useful defaults because they are not exposed on the standard EVB headers. The defaults above intentionally keep the encoder on UEXT UART1 pins GPIO4/GPIO5 plus EXT1 GPIO0, keep TFT SPI on UEXT SPI, and avoid display reset by requiring the concrete TFT module to tie reset high or expose a reset pad that can be wired later.
+Do not use GPIO1/2/3/15 for UI; those are Olimex opto inputs. Do not use GPIO10/11/22/23 except for relays.
+GPIO12/13/14 are not useful defaults because they are not exposed on the standard EVB headers. The defaults above intentionally keep the encoder on UEXT UART1 pins GPIO4/GPIO5 plus EXT1 GPIO0, keep TFT SPI on UEXT SPI, and avoid display reset by requiring the concrete TFT module to tie reset high or expose a reset pad that can be wired later.
 
 - [ ] **Step 2: Add static assertions for display driver selection**
 

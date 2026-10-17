@@ -265,6 +265,7 @@ void CalibrationManager::saveThresholds() {
     s.btn3Min = prevBtn3Min;
     s.btn3Max = prevBtn3Max;
     s.btnNoPress = prevBtnNoPress;
+    ConfigManager::save();  // best effort: undo keys a partial write already stored
 
     status_.step = Step::ERROR;
     status_.message = "Failed to save thresholds — please retry";

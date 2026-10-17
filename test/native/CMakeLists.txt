@@ -32,15 +32,16 @@ include_directories(
 )
 
 # ── Wrappers ──────────────────────────────────────────────────────────────
-# WebPortal, MqttPublisher, Timer, and CalibrationManager include class
-# headers whose mock layout differs from production. Compiling from
-# wrappers/ avoids GCC's "current-file-directory first" rule for
-# #include "..." so the mock headers take effect.
+# Sources that include production class headers are compiled from wrappers/
+# so mocks/ remains first in the include search path.
 file(COPY ${PROJ_ROOT}/src/WebPortal.cpp DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/wrappers)
 file(COPY ${PROJ_ROOT}/src/MqttPublisher.cpp DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/wrappers)
 file(COPY ${PROJ_ROOT}/src/Timer.cpp DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/wrappers)
 file(COPY ${PROJ_ROOT}/src/CalibrationManager.cpp DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/wrappers)
 file(COPY ${PROJ_ROOT}/src/NorviButtonHandler.cpp DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/wrappers)
+file(COPY ${PROJ_ROOT}/src/ControllerCommandHandler.cpp DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/wrappers)
+file(COPY ${PROJ_ROOT}/src/MqttRuntimeCommandAdapter.cpp DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/wrappers)
+file(COPY ${PROJ_ROOT}/src/ControllerSnapshotPublisher.cpp DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/wrappers)
 
 set(WRAPPER_SOURCES
   ${CMAKE_CURRENT_BINARY_DIR}/wrappers/WebPortal.cpp
@@ -48,6 +49,9 @@ set(WRAPPER_SOURCES
   ${CMAKE_CURRENT_BINARY_DIR}/wrappers/Timer.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/wrappers/CalibrationManager.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/wrappers/NorviButtonHandler.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/wrappers/ControllerCommandHandler.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/wrappers/MqttRuntimeCommandAdapter.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/wrappers/ControllerSnapshotPublisher.cpp
 )
 
 # ── Service classes ───────────────────────────────────────────────────────
@@ -77,6 +81,7 @@ set(TEST_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_rules.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_config_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_webportal_json.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_web_runtime_commands.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mqttpublisher.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mqtt_command_queue.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_security.cpp
@@ -96,6 +101,9 @@ set(TEST_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_controller_snapshot_diagnostics.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_controller_snapshot_store.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_controller_command_queue.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_controller_command_handler.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mqtt_runtime_command_adapter.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_controller_snapshot_publisher.cpp
 )
 
 add_executable(test_runner

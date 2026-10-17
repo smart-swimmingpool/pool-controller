@@ -111,30 +111,26 @@ static void addressToString(const uint8_t addr[8], char *buf, size_t size) {
  * can resolve the address filter during bus scan.
  */
 static void loadSensorAddressMapping() {
-  Preferences prefs;
-  prefs.begin("ds18b20", true);  // read-only
-
+  // ConfigManager reads the combined record and falls back to the legacy keys;
+  // an absent role is returned as an all-zero address.
   uint8_t solarAddr[8], poolAddr[8];
-  size_t slen = prefs.getBytes("solar_adr", solarAddr, 8);
-  size_t plen = prefs.getBytes("pool_adr", poolAddr, 8);
+  ConfigManager::loadSensorMapping(solarAddr, poolAddr);
 
-  prefs.end();
-
-  if (slen == 8 && !isAddressZero(solarAddr)) {
+  if (!isAddressZero(solarAddr)) {
     solarTemperatureNode.setAddressFilter(solarAddr);
     char buf[17];
     addressToString(solarAddr, buf, sizeof(buf));
     LOG_INFO("• Sensor mapping: Solar address loaded [%s]\n", buf);
   }
 
-  if (plen == 8 && !isAddressZero(poolAddr)) {
+  if (!isAddressZero(poolAddr)) {
     poolTemperatureNode.setAddressFilter(poolAddr);
     char buf[17];
     addressToString(poolAddr, buf, sizeof(buf));
     LOG_INFO("• Sensor mapping: Pool address loaded [%s]\n", buf);
   }
 
-  if ((slen == 8 && !isAddressZero(solarAddr)) || (plen == 8 && !isAddressZero(poolAddr))) {
+  if (!isAddressZero(solarAddr) || !isAddressZero(poolAddr)) {
     LOG_INFO("• Sensor mapping: address filters applied (one or both sensors)\n");
   } else {
     LOG_WARN("• Sensor mapping: no addresses configured — using default device indices\n");
@@ -361,9 +357,9 @@ auto PoolControllerContext::loop() -> void {
     lastBootClear = millis();
   }
 
-  // Network callback only queues commands; state mutations are serialized here.
+  // MQTT commands are queued by the callback and applied by
+  // MqttRuntimeCommandAdapter::processPendingCommands() in main.cpp's loop().
   NetworkManager::loop();
-  MqttPublisher::processPendingCommands();
   WebPortal::loop();
   OtaUpdater::loop();
 

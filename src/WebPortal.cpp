@@ -14,7 +14,6 @@
 
 #include <ArduinoJson.h>
 #include <LittleFS.h>
-#include <Preferences.h>
 #include <Update.h>
 
 // ESP32 specific headers
@@ -25,6 +24,7 @@
 #include <ctime>    // for time() in native tests
 #endif
 
+#include "CommandParsing.hpp"
 #include "ConfigManager.hpp"
 #include "DegradationManager.hpp"
 #include "DallasTemperatureNode.hpp"
@@ -41,7 +41,6 @@
 #include "LogCapture.hpp"
 
 #ifdef NORVI_AE01_R
-#include "NorviButtonHandler.hpp"
 #include "CalibrationManager.hpp"
 #endif
 
@@ -52,6 +51,7 @@ static File fsUploadFile;
 
 WebServer WebPortal::server_(80);
 DNSServer WebPortal::dnsServer_;
+CommandDispatcher WebPortal::commandDispatcher_ = nullptr;
 bool WebPortal::dnsServerStarted_ = false;
 String WebPortal::activeSessionToken_ = "";
 String WebPortal::csrfToken_ = "";
@@ -781,86 +781,7 @@ void WebPortal::apiSaveConfig() {
     server_.send(200, "text/plain", "OK");
     return;
   } else if (type == "settings") {
-    ConfigManager::getSettings().opMode = server_.arg("mode");
-    ConfigManager::getSettings().loopInterval = server_.arg("interval").toInt();
-    ConfigManager::getSettings().tempMaxPool = server_.arg("max_pool").toFloat();
-    ConfigManager::getSettings().tempMinSolar = server_.arg("min_solar").toFloat();
-    ConfigManager::getSettings().tempHysteresis = server_.arg("hysteresis").toFloat();
-    if (server_.hasArg("circ_threshold"))
-      ConfigManager::getSettings().tempCircThreshold = server_.arg("circ_threshold").toFloat();
-    if (server_.hasArg("circ_factor"))
-      ConfigManager::getSettings().tempCircFactor = server_.arg("circ_factor").toInt();
-    if (server_.hasArg("circ_max_runtime"))
-      ConfigManager::getSettings().tempCircMaxRuntime = server_.arg("circ_max_runtime").toInt();
-    if (server_.hasArg("btn1_min"))
-      ConfigManager::getSettings().btn1Min = server_.arg("btn1_min").toInt();
-    if (server_.hasArg("btn1_max"))
-      ConfigManager::getSettings().btn1Max = server_.arg("btn1_max").toInt();
-    if (server_.hasArg("btn2_min"))
-      ConfigManager::getSettings().btn2Min = server_.arg("btn2_min").toInt();
-    if (server_.hasArg("btn2_max"))
-      ConfigManager::getSettings().btn2Max = server_.arg("btn2_max").toInt();
-    if (server_.hasArg("btn3_min"))
-      ConfigManager::getSettings().btn3Min = server_.arg("btn3_min").toInt();
-    if (server_.hasArg("btn3_max"))
-      ConfigManager::getSettings().btn3Max = server_.arg("btn3_max").toInt();
-    if (server_.hasArg("btn_no_press"))
-      ConfigManager::getSettings().btnNoPress = server_.arg("btn_no_press").toInt();
-    ConfigManager::getSettings().timezoneIndex = server_.arg("timezone").toInt();
-    ConfigManager::getSettings().timeLossGreenHours = server_.arg("green").toInt();
-    ConfigManager::getSettings().timeLossRedHours = server_.arg("red").toInt();
-
-    ConfigManager::save();
-
-#ifdef NORVI_AE01_R
-    // Apply button thresholds to the running handler immediately so the
-    // new values take effect without a reboot (P2 review fix).
-    NorviButtonHandler::applySettings();
-#endif
-
-    // Apply timezone change to running clock immediately (P2)
-    setTimezoneIndex(ConfigManager::getSettings().timezoneIndex);
-
-    // Apply time-loss degradation thresholds immediately (P2 review fix)
-    setTimeDegradationGreenHours(static_cast<uint8_t>(ConfigManager::getSettings().timeLossGreenHours));
-    setTimeDegradationRedHours(static_cast<uint8_t>(ConfigManager::getSettings().timeLossRedHours));
-
-    // Propagate loop interval to all running nodes (P2 review fix)
-    solarTemperatureNode.setMeasurementInterval(ConfigManager::getSettings().loopInterval);
-    poolTemperatureNode.setMeasurementInterval(ConfigManager::getSettings().loopInterval);
-    ctrlTemperatureNode.setMeasurementInterval(ConfigManager::getSettings().loopInterval);
-    poolPumpNode.setMeasurementInterval(ConfigManager::getSettings().loopInterval);
-    solarPumpNode.setMeasurementInterval(ConfigManager::getSettings().loopInterval);
-    operationModeNode.setMeasurementInterval(ConfigManager::getSettings().loopInterval);
-
-    // Propagate changes directly into runtime parameters
-    operationModeNode.setMode(ConfigManager::getSettings().opMode.c_str(), "web:settings");
-    operationModeNode.setPoolMaxTemperature(ConfigManager::getSettings().tempMaxPool);
-    operationModeNode.setSolarMinTemperature(ConfigManager::getSettings().tempMinSolar);
-    operationModeNode.setTemperatureHysteresis(ConfigManager::getSettings().tempHysteresis);
-
-    // NTP server live update
-    if (server_.hasArg("ntp_server")) {
-      ConfigManager::getNtp().server = server_.arg("ntp_server");
-      ConfigManager::save();
-      timeClientSetup(ConfigManager::getNtp().server.c_str());
-    }
-
-    // Apply timer settings
-    {
-      TimerSetting ts = operationModeNode.getTimerSetting();
-      if (server_.hasArg("timer_start_h"))
-        ts.timerStartHour = server_.arg("timer_start_h").toInt();
-      if (server_.hasArg("timer_start_m"))
-        ts.timerStartMinutes = server_.arg("timer_start_m").toInt();
-      if (server_.hasArg("timer_end_h"))
-        ts.timerEndHour = server_.arg("timer_end_h").toInt();
-      if (server_.hasArg("timer_end_m"))
-        ts.timerEndMinutes = server_.arg("timer_end_m").toInt();
-      operationModeNode.setTimerSetting(ts);
-    }
-
-    server_.send(200, "text/plain", "OK");
+    saveSettingsForm();
     return;
   } else if (type == "password") {
     String currentPassword = server_.arg("current_password");
@@ -931,20 +852,230 @@ void WebPortal::apiCalibrateCancel() {
 }
 #endif  // NORVI_AE01_R
 
+namespace {
+
+/** @brief Collects the settings form into one command batch; any malformed field invalidates it. */
+class SettingsFormCommands final {
+public:
+  static constexpr std::size_t kCapacity = 24;
+
+  explicit SettingsFormCommands(WebServer &server) : server_(server) {}
+
+  /** @brief An empty field means "keep the current value", like a missing one. */
+  bool has(const char *arg) const { return server_.hasArg(arg) && server_.arg(arg).length() > 0; }
+
+  void addMode(const char *arg) {
+    if (!has(arg)) {
+      return;
+    }
+    OperationMode mode;
+    if (!tryParseOperationMode(server_.arg(arg).c_str(), mode)) {
+      valid_ = false;
+      return;
+    }
+    add(ControllerCommandType::SET_MODE).mode = mode;
+  }
+
+  void addFloat(const char *arg, ControllerCommandType type) {
+    float value = 0.0F;
+    if (has(arg) && parse(arg, value)) {
+      add(type).value = value;
+    }
+  }
+
+  void addInt(const char *arg, ControllerCommandType type) {
+    std::int32_t value = 0;
+    if (has(arg) && parse(arg, value)) {
+      add(type).integerValue = value;
+    }
+  }
+
+  void addTime(const char *hourArg, const char *minuteArg, ControllerCommandType type, std::uint8_t hour, std::uint8_t minute) {
+    if (!has(hourArg) && !has(minuteArg)) {
+      return;
+    }
+    if (!parseTimePart(hourArg, hour) || !parseTimePart(minuteArg, minute)) {
+      return;
+    }
+    ControllerCommand &command = add(type);
+    command.hour = hour;
+    command.minute = minute;
+  }
+
+  void addNtpServer(const char *arg) {
+    if (!has(arg)) {
+      return;
+    }
+    const String server = server_.arg(arg);
+    ControllerCommand &command = add(ControllerCommandType::SET_NTP_SERVER);
+    if (!command.ntpServer.assign(server.c_str(), server.length())) {
+      valid_ = false;
+    }
+  }
+
+  bool valid() const { return valid_ && count_ > 0; }
+  const ControllerCommand *commands() const { return commands_; }
+  std::size_t count() const { return count_; }
+
+private:
+  ControllerCommand &add(ControllerCommandType type) {
+    ControllerCommand &command = commands_[count_++];
+    command = ControllerCommand{};
+    command.type = type;
+    command.source = CommandSource::WEB;
+    return command;
+  }
+
+  bool parse(const char *arg, float &value) {
+    valid_ = valid_ && CommandParsing::parseFloatStrict(server_.arg(arg).c_str(), value);
+    return valid_;
+  }
+
+  bool parse(const char *arg, std::int32_t &value) {
+    valid_ = valid_ && CommandParsing::parseIntStrict(server_.arg(arg).c_str(), value);
+    return valid_;
+  }
+
+  /** @brief Missing parts keep the current value; the handler checks 0-23 / 0-59. */
+  bool parseTimePart(const char *arg, std::uint8_t &part) {
+    if (!has(arg)) {
+      return true;
+    }
+    std::int32_t value = 0;
+    if (!parse(arg, value) || value < 0 || value > UINT8_MAX) {
+      valid_ = false;
+      return false;
+    }
+    part = static_cast<std::uint8_t>(value);
+    return true;
+  }
+
+  WebServer &server_;
+  // Static storage: ~24 x 100 bytes is too much for the loop task stack, and
+  // the web server only ever runs on that one task.
+  static ControllerCommand commands_[kCapacity];
+  std::size_t count_{0};
+  bool valid_{true};
+};
+
+ControllerCommand SettingsFormCommands::commands_[SettingsFormCommands::kCapacity];
+
+String jsonError(const char *message) {
+  return String("{\"status\":\"error\",\"message\":\"") + message + "\"}";
+}
+
+}  // namespace
+
+CommandStatus WebPortal::dispatch(const ControllerCommand *commands, std::size_t count, ControllerCommandResult *result) {
+  if (commandDispatcher_ == nullptr) {
+    LOG_ERROR("WebPortal: no command dispatcher installed\n");
+    return CommandStatus::REJECTED;
+  }
+  return commandDispatcher_(commands, count, result);
+}
+
+int WebPortal::httpStatusFor(CommandStatus status) {
+  switch (status) {
+  case CommandStatus::APPLIED:
+    return 200;
+  case CommandStatus::INVALID:
+    return 400;
+  case CommandStatus::REJECTED:
+    return 409;
+  case CommandStatus::PERSIST_FAILED:
+    return 500;
+  }
+  return 500;
+}
+
+void WebPortal::saveSettingsForm() {
+  SettingsFormCommands form(server_);
+  form.addMode("mode");
+  form.addInt("interval", ControllerCommandType::SET_LOOP_INTERVAL);
+  form.addFloat("max_pool", ControllerCommandType::SET_POOL_MAX_TEMPERATURE);
+  form.addFloat("min_solar", ControllerCommandType::SET_SOLAR_MIN_TEMPERATURE);
+  form.addFloat("hysteresis", ControllerCommandType::SET_TEMPERATURE_HYSTERESIS);
+  form.addFloat("circ_threshold", ControllerCommandType::SET_TEMPERATURE_CIRCULATION_THRESHOLD);
+  form.addInt("circ_factor", ControllerCommandType::SET_TEMPERATURE_CIRCULATION_FACTOR);
+  form.addInt("circ_max_runtime", ControllerCommandType::SET_TEMPERATURE_CIRCULATION_MAX_RUNTIME);
+  form.addInt("btn1_min", ControllerCommandType::SET_BUTTON_1_MIN);
+  form.addInt("btn1_max", ControllerCommandType::SET_BUTTON_1_MAX);
+  form.addInt("btn2_min", ControllerCommandType::SET_BUTTON_2_MIN);
+  form.addInt("btn2_max", ControllerCommandType::SET_BUTTON_2_MAX);
+  form.addInt("btn3_min", ControllerCommandType::SET_BUTTON_3_MIN);
+  form.addInt("btn3_max", ControllerCommandType::SET_BUTTON_3_MAX);
+  form.addInt("btn_no_press", ControllerCommandType::SET_BUTTON_NO_PRESS);
+  form.addInt("timezone", ControllerCommandType::SET_TIMEZONE);
+  form.addInt("green", ControllerCommandType::SET_TIME_LOSS_GREEN_HOURS);
+  form.addInt("red", ControllerCommandType::SET_TIME_LOSS_RED_HOURS);
+  form.addNtpServer("ntp_server");
+  const TimerSetting timer = operationModeNode.getTimerSetting();
+  form.addTime(
+    "timer_start_h", "timer_start_m", ControllerCommandType::SET_TIMER_START, timer.timerStartHour, timer.timerStartMinutes);
+  form.addTime("timer_end_h", "timer_end_m", ControllerCommandType::SET_TIMER_END, timer.timerEndHour, timer.timerEndMinutes);
+
+  if (!form.valid()) {
+    server_.send(400, "text/plain", "Invalid settings value");
+    return;
+  }
+
+  switch (dispatch(form.commands(), form.count(), nullptr)) {
+  case CommandStatus::APPLIED:
+    server_.send(200, "text/plain", "OK");
+    return;
+  case CommandStatus::INVALID:
+    server_.send(400, "text/plain", "Invalid settings value");
+    return;
+  case CommandStatus::REJECTED:
+    server_.send(409, "text/plain", "Settings rejected");
+    return;
+  case CommandStatus::PERSIST_FAILED:
+    server_.send(500, "text/plain", "Failed to save settings");
+    return;
+  }
+}
+
 void WebPortal::apiSetMode() {
   if (!server_.hasArg("mode")) {
     server_.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Missing mode\"}");
     return;
   }
 
-  String mode = server_.arg("mode");
-  if (operationModeNode.setMode(mode, "web:apiSetMode")) {
-    ConfigManager::getSettings().opMode = mode;
-    ConfigManager::save();
-    server_.send(200, "application/json", "{\"status\":\"ok\",\"mode\":\"" + mode + "\"}");
+  const String requestedMode = server_.arg("mode");
+  ControllerCommand command{};
+  command.source = CommandSource::WEB;
+
+  if (requestedMode == "cycle") {
+    command.type = ControllerCommandType::CYCLE_MODE;
   } else {
-    server_.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Invalid mode\"}");
+    OperationMode parsedMode;
+    if (!tryParseOperationMode(requestedMode.c_str(), parsedMode)) {
+      server_.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Invalid mode\"}");
+      return;
+    }
+    command.type = ControllerCommandType::SET_MODE;
+    command.mode = parsedMode;
   }
+
+  ControllerCommandResult result{};
+  const CommandStatus status = dispatch(&command, 1, &result);
+  if (status != CommandStatus::APPLIED) {
+    const char *message = status == CommandStatus::PERSIST_FAILED ? "Failed to save mode"
+      : status == CommandStatus::REJECTED                         ? "Mode change rejected"
+                                                                  : "Invalid mode";
+    server_.send(httpStatusFor(status), "application/json", jsonError(message));
+    return;
+  }
+
+  const char *resolvedMode = requestedMode.c_str();
+  if (command.type == ControllerCommandType::CYCLE_MODE) {
+    if (!result.hasMode) {
+      server_.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Missing command result\"}");
+      return;
+    }
+    resolvedMode = toString(result.mode);
+  }
+  server_.send(200, "application/json", "{\"status\":\"ok\",\"mode\":\"" + String(resolvedMode) + "\"}");
 }
 
 void WebPortal::apiTogglePump() {
@@ -953,27 +1084,34 @@ void WebPortal::apiTogglePump() {
     return;
   }
 
-  // Only allow pump toggling in manual mode
-  if (operationModeNode.getMode() != "manu") {
-    server_.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Pump control only available in manual mode\"}");
-    return;
-  }
-
-  String pump = server_.arg("pump");
-  bool newState;
-
+  const String pump = server_.arg("pump");
+  ControllerCommand command{};
+  command.source = CommandSource::WEB;
+  command.toggleModePolicy = PumpToggleModePolicy::REQUIRE_MANUAL;
   if (pump == "pool") {
-    newState = !poolPumpNode.getSwitch();
-    poolPumpNode.setSwitch(newState);
+    command.type = ControllerCommandType::TOGGLE_POOL_PUMP;
   } else if (pump == "solar") {
-    newState = !solarPumpNode.getSwitch();
-    solarPumpNode.setSwitch(newState);
+    command.type = ControllerCommandType::TOGGLE_SOLAR_PUMP;
   } else {
     server_.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Invalid pump. Use 'pool' or 'solar'\"}");
     return;
   }
 
-  String json = "{\"status\":\"ok\",\"state\":" + String(newState ? "true" : "false") + "}";
+  ControllerCommandResult result{};
+  const CommandStatus status = dispatch(&command, 1, &result);
+  if (status != CommandStatus::APPLIED) {
+    const char *message = status == CommandStatus::PERSIST_FAILED ? "Failed to save pump state"
+      : status == CommandStatus::REJECTED                         ? "Pump control only available in manual mode"
+                                                                  : "Invalid pump command";
+    server_.send(httpStatusFor(status), "application/json", jsonError(message));
+    return;
+  }
+  if (!result.hasPumpState) {
+    server_.send(500, "application/json", "{\"status\":\"error\",\"message\":\"Missing command result\"}");
+    return;
+  }
+
+  String json = "{\"status\":\"ok\",\"state\":" + String(result.pumpState ? "true" : "false") + "}";
   server_.send(200, "application/json", json);
 }
 
@@ -1041,23 +1179,15 @@ void WebPortal::apiRestart() {
 }
 
 void WebPortal::apiFactoryReset() {
+  ControllerCommand command{};
+  command.type = ControllerCommandType::FACTORY_RESET;
+  command.source = CommandSource::WEB;
+  const CommandStatus status = dispatch(&command, 1, nullptr);
+  if (status != CommandStatus::APPLIED) {
+    server_.send(httpStatusFor(status), "text/plain", "Factory reset failed");
+    return;
+  }
   server_.send(200, "text/plain", "OK");
-
-  // Clear NVS Preferences (relay states, operation mode, timer settings)
-  // that survive a config.json wipe (P2 review fix)
-  Preferences prefs;
-  prefs.begin("pool-pump", false);
-  prefs.clear();
-  prefs.end();
-  prefs.begin("solar-pump", false);
-  prefs.clear();
-  prefs.end();
-  prefs.begin("pool-controller", false);
-  prefs.clear();
-  prefs.end();
-
-  ConfigManager::reset();
-  ConfigManager::save();
   NetworkManager::restart();
 }
 
@@ -1123,28 +1253,6 @@ void WebPortal::apiUpdateInstall() {
 
   OtaUpdater::startUpdate();
   // If we return here, the update failed (success reboots)
-}
-
-// ── Sensor mapping helpers ─────────────────────────────────────────────
-
-/**
- * @brief Parse a 16-character hex string into an 8-byte DeviceAddress.
- * @param hex  Hex string like "28AABBCCDDEEFF11" (case-insensitive).
- * @param addr Output buffer for the 8-byte address.
- * @return true on success, false if the string is malformed.
- */
-static bool hexStringToAddress(const String &hex, uint8_t addr[8]) {
-  if (hex.length() != 16)
-    return false;
-  for (uint8_t i = 0; i < 8; i++) {
-    char byteStr[3] = {hex[i * 2], hex[i * 2 + 1], '\0'};
-    char *end = nullptr;
-    unsigned long val = strtoul(byteStr, &end, 16);
-    if (end != byteStr + 2)
-      return false;
-    addr[i] = static_cast<uint8_t>(val);
-  }
-  return true;
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -1235,42 +1343,42 @@ void WebPortal::apiGetSensors() {
 }
 
 void WebPortal::apiSaveSensorMapping() {
-  uint8_t solarAddr[8] = {0};
-  uint8_t poolAddr[8] = {0};
-  bool hasSolar = false, hasPool = false;
+  ControllerCommand commands[2]{};
+  std::size_t count = 0;
+  const struct {
+    const char *arg;
+    SensorRole role;
+    const char *invalidMessage;
+  } roles[] = {
+    {"solar_addr", SensorRole::SOLAR, "Invalid solar address format"},
+    {"pool_addr", SensorRole::POOL, "Invalid pool address format"},
+  };
 
-  if (server_.hasArg("solar_addr") && server_.arg("solar_addr").length() > 0) {
-    if (!hexStringToAddress(server_.arg("solar_addr"), solarAddr)) {
-      server_.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Invalid solar address format\"}");
+  for (const auto &role : roles) {
+    const String address = server_.hasArg(role.arg) ? server_.arg(role.arg) : String();
+    if (address.length() == 0) {
+      continue;
+    }
+    ControllerCommand &command = commands[count++];
+    command.type = ControllerCommandType::SET_SENSOR_MAPPING;
+    command.source = CommandSource::WEB;
+    command.sensorRole = role.role;
+    if (!CommandParsing::parseSensorAddress(address.c_str(), address.length(), command.sensorAddress)) {
+      server_.send(400, "application/json", jsonError(role.invalidMessage));
       return;
     }
-    hasSolar = true;
   }
 
-  if (server_.hasArg("pool_addr") && server_.arg("pool_addr").length() > 0) {
-    if (!hexStringToAddress(server_.arg("pool_addr"), poolAddr)) {
-      server_.send(400, "application/json", "{\"status\":\"error\",\"message\":\"Invalid pool address format\"}");
-      return;
-    }
-    hasPool = true;
-  }
-
-  if (!hasSolar && !hasPool) {
-    server_.send(400, "application/json", "{\"status\":\"error\",\"message\":\"At least one sensor address required\"}");
+  if (count == 0) {
+    server_.send(400, "application/json", jsonError("At least one sensor address required"));
     return;
   }
 
-  // Save to NVS (persistent across reboots)
-  ConfigManager::saveSensorMapping(solarAddr, poolAddr);
-
-  // Apply to running instances immediately
-  if (hasSolar) {
-    solarTemperatureNode.setAddressFilter(solarAddr);
+  const CommandStatus status = dispatch(commands, count, nullptr);
+  if (status != CommandStatus::APPLIED) {
+    server_.send(httpStatusFor(status), "application/json", jsonError("Failed to save sensor mapping"));
+    return;
   }
-  if (hasPool) {
-    poolTemperatureNode.setAddressFilter(poolAddr);
-  }
-
   server_.send(200, "application/json", "{\"status\":\"ok\",\"message\":\"Sensor mapping saved. Reboot to apply.\"}");
 }
 

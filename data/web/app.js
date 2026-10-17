@@ -526,9 +526,13 @@ function highlightMode(mode) {
 // ── Helper: timer params ──
 
 function timerParams() {
+  // An empty time input is left out so the controller keeps its current value.
   const [sh, sm] = document.getElementById('timerStart').value.split(':');
   const [eh, em] = document.getElementById('timerEnd').value.split(':');
-  return '&timer_start_h=' + sh + '&timer_start_m=' + sm + '&timer_end_h=' + eh + '&timer_end_m=' + em;
+  let params = '';
+  if (sh && sm) params += '&timer_start_h=' + sh + '&timer_start_m=' + sm;
+  if (eh && em) params += '&timer_end_h=' + eh + '&timer_end_m=' + em;
+  return params;
 }
 
 // ── Set Temperatures ──

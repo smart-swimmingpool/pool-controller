@@ -169,7 +169,9 @@ you can find the ROM addresses in the boot log and configure them via the Web UI
 #### How the Mapping Works
 
 The 8-byte ROM address of each sensor is stored in NVS (Preferences namespace
-`ds18b20`, keys `solar_adr` and `pool_adr`). On every subsequent boot, the
+`ds18b20`, key `mapping`: solar ROM followed by pool ROM, written in one NVS
+operation so the pair is never half updated; older firmware used the keys
+`solar_adr` and `pool_adr`, which are still read). On every subsequent boot, the
 firmware scans the bus for a device matching the stored address. If found, that
 device is used — regardless of its bus scan position. If the stored sensor is
 not found (e.g., it was replaced), the firmware prints a warning and reports
