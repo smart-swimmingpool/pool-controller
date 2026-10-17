@@ -21,6 +21,7 @@
 #endif
 
 #include "SensorSlots.hpp"
+#include "TemperatureReadingFilter.hpp"
 
 /**
  * @brief Reads temperature from a DS18B20 sensor on a OneWire bus.
@@ -80,7 +81,8 @@ public:
 private:
   static const int MIN_INTERVAL = 10;
   static const int MEASUREMENT_INTERVAL = 300;
-  static const int RECOVERY_INTERVAL = 5;
+  static const int RECOVERY_INTERVAL = 5;          // seconds
+  static const uint8_t RESCAN_AFTER_FAILURES = 3;  // failed reads before the bus is rescanned
   static constexpr uint8_t MAX_DETECTED_DEVICES = 20;
 
   const PoolController::SensorId slot_;
@@ -90,6 +92,8 @@ private:
   std::atomic<unsigned long> _measurementInterval{MEASUREMENT_INTERVAL};
   bool _sensorFound = false;
   float _temperature = NAN;
+  PoolController::TemperatureReadingFilter filter_;  ///< Plausibility filter (85 °C power-on, range)
+  uint8_t consecutiveFailures_ = 0;                  ///< Failed reads since the last valid one
 
   OneWire oneWire;
   DallasTemperature sensor;
@@ -127,9 +131,24 @@ private:
   void refreshDetectedSnapshot(bool includeTemperatures);
   void publishSelectedAddress();
 
+  /** @brief Apply the plausibility filter to a raw reading and update the
+   *  temperature and sensor health.
+   *  @return true when repeated failures call for a bus rescan. */
+  bool handleReading(float raw);
+
+  /** @brief Address this node must find on the bus: the configured filter,
+   *  else the previously resolved device. @return false if neither exists. */
+  bool targetAddress(DeviceAddress target) const;
+
+  /** @brief Rescan the bus and find this node's sensor again by address
+   *  (e.g. after the sensor was disconnected or replaced). */
+  void rescanBus();
+
   void lockCache() const;
   void unlockCache() const;
 
   PoolController::SensorId slotId() const { return slot_; }
+
+  /** @brief Format a DeviceAddress as a hex string. */
   void address2String(const DeviceAddress deviceAddress, char *buffer, size_t size) const;
 };

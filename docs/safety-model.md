@@ -138,9 +138,19 @@ corrective action.
 
 ### Sensor Auto-Recovery
 
-- DS18B20 read failure triggers fast re-polling (5s instead of 300s)
-- After 3 consecutive successful reads, back to normal interval
-- Prevents unnecessary alerts from transient sensor glitches
+- DS18B20 read failure triggers fast re-polling (5s instead of the measurement interval)
+- Back to the normal interval as soon as a valid reading arrives
+- Plausibility filter: readings outside -55…125 °C are treated as failures
+- The 85.0 °C power-on value (after a supply glitch) is only accepted when it continues a reading
+  close to 85 °C. Otherwise the last temperature is kept for at most 3 readings; after that, or
+  right after a failed reading, 85.0 °C yields no temperature (without counting as a failed
+  reading). Repetition never confirms it, so a recurring brownout cannot start the solar pump
+- After a sensor-mapping change selects a different probe, the filter history is cleared and the
+  temperature stays invalid until the new probe delivers its first valid reading
+- After 3 consecutive failed readings the OneWire bus is rescanned, so a reconnected or replaced
+  sensor is found again without a reboot. On the shared NORVI bus a node only accepts its own sensor
+  address again, so a missing solar probe is never replaced by the pool probe; a replaced probe
+  there needs a new sensor mapping
 
 ### NTP Graceful Degradation
 
