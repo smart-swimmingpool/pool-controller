@@ -308,25 +308,40 @@ bool ConfigManager::load() {
 
   const size_t recordLength = prefs.getBytesLength(kConfigRecord);
   if (recordLength > 0) {
-    std::vector<std::uint8_t> record(recordLength);
     ConfigImage image;
-    if (recordLength <= kRecordMaxSize && prefs.getBytes(kConfigRecord, record.data(), recordLength) == recordLength &&
-      decodeRecord(record.data(), recordLength, image)) {
-      prefs.end();
-      wifi_ = image.wifi;
-      mqtt_ = image.mqtt;
-      ntp_ = image.ntp;
-      settings_ = image.settings;
-      adminPasswordHash_ = image.adminPasswordHash;
-      configured_ = image.configured;
-      LOG_INFO("✓ Configuration loaded from NVS\n");
-      return true;
+    bool valid = false;
+    // Check the stored length before allocating: a bogus length must not
+    // exhaust the heap at boot.
+    if (recordLength <= kRecordMaxSize) {
+      std::vector<std::uint8_t> record(recordLength);
+      valid = prefs.getBytes(kConfigRecord, record.data(), recordLength) == recordLength &&
+        decodeRecord(record.data(), recordLength, image);
     }
-    // Unreadable record (corrupted, or written by newer firmware): the legacy
-    // keys hold the configuration from before the first record was written.
-    LOG_ERROR("✖ Configuration record invalid — falling back to legacy keys\n");
+    prefs.end();
+    if (!valid) {
+      // A record exists but cannot be trusted (corrupted, or written by newer
+      // firmware). The legacy keys may hold older credentials, such as an admin
+      // password changed since, so they are not used. The device starts like a
+      // factory-new one instead: defaults in RAM, unconfigured, and the stored
+      // record stays untouched until the next save replaces it.
+      LOG_ERROR("✖ Configuration record invalid — starting unconfigured with defaults\n");
+      image = ConfigImage{};
+      image.adminPasswordHash = kDefaultPasswordHash;
+    }
+    wifi_ = image.wifi;
+    mqtt_ = image.mqtt;
+    ntp_ = image.ntp;
+    settings_ = image.settings;
+    adminPasswordHash_ = image.adminPasswordHash;
+    configured_ = image.configured;
+    if (valid) {
+      LOG_INFO("✓ Configuration loaded from NVS\n");
+    }
+    return valid;
   }
 
+  // No record yet: a device updated from older firmware still has its
+  // configuration in the per-key layout. The next save() migrates it.
   wifi_.ssid = prefs.getString(kWifiSsid, "");
   wifi_.password = prefs.getString(kWifiPass, "");
 

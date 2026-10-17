@@ -208,23 +208,48 @@ void corruptRecord(size_t offset, uint8_t value) {
   prefs.end();
 }
 
-void test_invalid_record_falls_back_to_legacy_keys() {
-  section("a corrupted or unknown record is never applied");
+void test_invalid_record_never_reactivates_legacy_keys() {
+  section("a corrupted or unknown record never brings back older credentials");
   resetStore();
   writeLegacyKeys();
   EXPECT(ConfigManager::load());
+  ConfigManager::setAdminPassword("new-admin");  // changed after the migration
   ConfigManager::getSettings().tempMaxPool = 31.0;
   EXPECT(ConfigManager::save());
 
   corruptRecord(12, 0x5A);  // payload byte: CRC mismatch
-  EXPECT(ConfigManager::load());
-  EXPECT(ConfigManager::getSettings().tempMaxPool == 27.0);
+  EXPECT(!ConfigManager::load());
+  EXPECT(!ConfigManager::isConfigured());                    // starts like a new device
+  EXPECT(ConfigManager::getSettings().tempMaxPool == 28.5);  // default, not the legacy 27.0
+  EXPECT(ConfigManager::getWiFi().ssid == "");               // legacy SSID not revived
+  EXPECT(!ConfigManager::verifyAdminPassword("new-admin"));
+  // The factory default hash (SHA-256 of "admin"); the mbedtls mock hashes differently. gitleaks:allow
+  EXPECT(ConfigManager::getAdminPasswordHash() == "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918");
 
+  // A version from unknown firmware is treated the same way.
+  ConfigManager::getSettings().tempMaxPool = 31.0;
+  ConfigManager::setConfigured(true);
   EXPECT(ConfigManager::save());
-  corruptRecord(4, 0x7F);  // version written by unknown firmware
-  EXPECT(ConfigManager::load());
-  EXPECT(ConfigManager::getSettings().tempMaxPool == 27.0);
-  EXPECT(ConfigManager::getWiFi().ssid == "legacy-net");
+  corruptRecord(4, 0x7F);
+  EXPECT(!ConfigManager::load());
+  EXPECT(!ConfigManager::isConfigured());
+  EXPECT(ConfigManager::getSettings().tempMaxPool == 28.5);
+}
+
+void test_oversized_record_is_rejected_before_reading() {
+  section("an oversized stored record is rejected without reading it");
+  resetStore();
+  ConfigManager::setConfigured(true);
+  EXPECT(ConfigManager::save());
+  {
+    Preferences prefs;
+    prefs.begin("config", false);
+    std::vector<uint8_t> huge(64 * 1024, 0xAB);
+    prefs.putBytes("cfg_record", huge.data(), huge.size());
+    prefs.end();
+  }
+  EXPECT(!ConfigManager::load());
+  EXPECT(!ConfigManager::isConfigured());
 }
 
 void test_mapping_is_written_as_one_record() {
@@ -279,7 +304,8 @@ int main() {
   test_failed_factory_reset_restores_nvs();
   test_record_round_trips_every_field();
   test_legacy_keys_are_migrated();
-  test_invalid_record_falls_back_to_legacy_keys();
+  test_invalid_record_never_reactivates_legacy_keys();
+  test_oversized_record_is_rejected_before_reading();
   test_mapping_is_written_as_one_record();
   test_legacy_mapping_keys_are_migrated();
 

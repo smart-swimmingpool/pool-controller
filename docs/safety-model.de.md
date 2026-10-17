@@ -95,9 +95,13 @@ bleibt erhalten.
 Die Konfiguration liegt im ESP32-NVS als ein einziger versionierter Datensatz
 mit CRC32-Prüfsumme. Er wird in einem NVS-Vorgang geschrieben, sodass ein
 Stromausfall beim Speichern entweder die alte oder die neue Konfiguration
-hinterlässt, nie eine Mischung. Besteht der Datensatz beim Boot die Prüfsummen-
-oder Versionsprüfung nicht, wird er ignoriert: Die Firmware lädt die
-Einzel-Keys älterer Firmware, falls vorhanden, sonst die Werkseinstellungen.
+hinterlässt, nie eine Mischung. Besteht der Datensatz beim Boot die Größen-,
+Prüfsummen- oder Versionsprüfung nicht, wird er nie übernommen. Auch die
+Einzel-Keys älterer Firmware werden dann nicht genutzt, weil sie inzwischen
+geänderte Zugangsdaten enthalten können. Das Gerät startet unkonfiguriert mit
+Werkseinstellungen wie ein neues Gerät. Die Einzel-Keys werden nur gelesen,
+solange noch kein Datensatz existiert, um Geräte mit älterer Firmware zu
+migrieren.
 
 ### Typsicherheit
 

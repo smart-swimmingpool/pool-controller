@@ -93,9 +93,11 @@ Invalid configurations are **rejected** and the previous value is preserved.
 The configuration is stored in ESP32 NVS as a single versioned record with a
 CRC32 checksum. It is written in one NVS operation, so a power loss during a
 save keeps either the old or the new configuration, never a mix. If the record
-fails its checksum or version check on boot, it is ignored: the firmware loads
-the per-key configuration of older firmware if present, otherwise the factory
-defaults.
+fails its size, checksum or version check on boot, it is never applied and the
+per-key configuration of older firmware is not used either, because it may
+hold credentials changed since. The device starts unconfigured with factory
+defaults, like a new device. The per-key layout is read only when no record
+exists yet, to migrate devices from older firmware.
 
 ### Type Safety
 
