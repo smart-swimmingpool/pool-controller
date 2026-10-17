@@ -9,7 +9,7 @@
 #include "Arduino.h"
 #include "ArduinoJson.h"
 
-#include "AsyncMqttClient.h"
+#include "espMqttClientAsync.h"
 #include "MqttPublisher.hpp"
 #include "LogCapture.hpp"
 #include "ConfigManager.hpp"
@@ -313,8 +313,7 @@ int run_mqttpublisher_tests() {
     operationModeNode.setMode("auto");
 
     // Simulate incoming MQTT message setting mode to "boost"
-    MqttPublisher::handleMqttMessage(const_cast<char *>("homeassistant/select/pool-controller/mode/set"),
-      const_cast<char *>("boost"), AsyncMqttClientMessageProperties{0, false, false}, 5, 0, 5);
+    MqttPublisher::handleMqttMessage("homeassistant/select/pool-controller/mode/set", "boost", 5, 0, 5);
 
     // The mode should have been set to "boost" and tagged with its MQTT source.
     std::string mode = operationModeNode.getMode().c_str();
@@ -347,11 +346,10 @@ int run_mqttpublisher_tests() {
     test_begin("MqttPublisher", "handle climate mode/preset commands tags source");
 
     operationModeNode.setMode("auto");
-    AsyncMqttClientMessageProperties props{0, false, false};
 
     char modeTopic[] = "homeassistant/climate/pool-controller/thermostat/mode/set";
     char modePayload[] = "heat";
-    MqttPublisher::handleMqttMessage(modeTopic, modePayload, props, strlen(modePayload), 0, strlen(modePayload));
+    MqttPublisher::handleMqttMessage(modeTopic, modePayload, strlen(modePayload), 0, strlen(modePayload));
 
     int missing = 0;
     if (strcmp(operationModeNode.getLastModeSource(), "mqtt:thermostat/mode") == 0) {
@@ -363,7 +361,7 @@ int run_mqttpublisher_tests() {
 
     char presetTopic[] = "homeassistant/climate/pool-controller/thermostat/preset/set";
     char presetPayload[] = "schedule";
-    MqttPublisher::handleMqttMessage(presetTopic, presetPayload, props, strlen(presetPayload), 0, strlen(presetPayload));
+    MqttPublisher::handleMqttMessage(presetTopic, presetPayload, strlen(presetPayload), 0, strlen(presetPayload));
 
     if (strcmp(operationModeNode.getLastModeSource(), "mqtt:thermostat/preset") == 0) {
       test_pass(__FILE__, __LINE__);
@@ -385,12 +383,11 @@ int run_mqttpublisher_tests() {
     test_begin("MqttPublisher", "MQTT callback defers commands to the loop task");
 
     operationModeNode.setMode("auto");
-    AsyncMqttClientMessageProperties props{0, false, false};
     char topic[] = "homeassistant/select/pool-controller/mode/set";
     char payload[] = "manu";
 
     // Callback (AsyncTCP task in production) must not change state itself
-    MqttPublisher::onMqttMessage(topic, payload, props, strlen(payload), 0, strlen(payload));
+    MqttPublisher::onMqttMessage(topic, payload, strlen(payload), 0, strlen(payload));
     int missing = 0;
     if (operationModeNode.getMode() == "auto") {
       test_pass(__FILE__, __LINE__);
@@ -410,7 +407,7 @@ int run_mqttpublisher_tests() {
 
     // Chunked messages are not queued
     char chunk[] = "boost";
-    MqttPublisher::onMqttMessage(topic, chunk, props, strlen(chunk), 0, strlen(chunk) + 10);
+    MqttPublisher::onMqttMessage(topic, chunk, strlen(chunk), 0, strlen(chunk) + 10);
     MqttPublisher::processPendingCommands();
     if (operationModeNode.getMode() == "manu") {
       test_pass(__FILE__, __LINE__);
@@ -433,13 +430,12 @@ int run_mqttpublisher_tests() {
     test_begin("MqttPublisher", "processPendingCommands handles a bounded number of commands");
 
     operationModeNode.setMode("auto");
-    AsyncMqttClientMessageProperties props{0, false, false};
     char topic[] = "homeassistant/select/pool-controller/mode/set";
     const char *modes[] = {"manu", "boost", "timer"};
     for (const char *mode : modes) {
       char payload[8];
       snprintf(payload, sizeof(payload), "%s", mode);
-      MqttPublisher::onMqttMessage(topic, payload, props, strlen(payload), 0, strlen(payload));
+      MqttPublisher::onMqttMessage(topic, payload, strlen(payload), 0, strlen(payload));
     }
 
     int missing = 0;
@@ -472,10 +468,9 @@ int run_mqttpublisher_tests() {
   {
     test_begin("MqttPublisher", "timer-start payload HH:MM:SS is parsed without String");
 
-    AsyncMqttClientMessageProperties props{0, false, false};
     char topic[] = "homeassistant/time/pool-controller/timer-start/set";
     char payload[] = "07:45:00";
-    MqttPublisher::handleMqttMessage(topic, payload, props, strlen(payload), 0, strlen(payload));
+    MqttPublisher::handleMqttMessage(topic, payload, strlen(payload), 0, strlen(payload));
     TimerSetting ts = operationModeNode.getTimerSetting();
     int missing = 0;
     if (ts.timerStartHour == 7 && ts.timerStartMinutes == 45) {
@@ -489,7 +484,7 @@ int run_mqttpublisher_tests() {
     char big[200];
     memset(big, '1', sizeof(big) - 1);
     big[sizeof(big) - 1] = '\0';
-    MqttPublisher::handleMqttMessage(topic, big, props, strlen(big), 0, strlen(big));
+    MqttPublisher::handleMqttMessage(topic, big, strlen(big), 0, strlen(big));
     ts = operationModeNode.getTimerSetting();
     if (ts.timerStartHour == 7 && ts.timerStartMinutes == 45) {
       test_pass(__FILE__, __LINE__);
@@ -514,8 +509,7 @@ int run_mqttpublisher_tests() {
     operationModeNode.setMode("manu");
     poolPumpNode.setSwitch(false);
 
-    MqttPublisher::handleMqttMessage(const_cast<char *>("homeassistant/switch/pool-controller/pool-pump/set"),
-      const_cast<char *>("ON"), AsyncMqttClientMessageProperties{0, false, false}, 2, 0, 2);
+    MqttPublisher::handleMqttMessage("homeassistant/switch/pool-controller/pool-pump/set", "ON", 2, 0, 2);
 
     // Pump should have turned ON
     bool pumpState = poolPumpNode.getSwitch();
@@ -538,8 +532,7 @@ int run_mqttpublisher_tests() {
     operationModeNode.setMode("auto");
     poolPumpNode.setSwitch(false);
 
-    MqttPublisher::handleMqttMessage(const_cast<char *>("homeassistant/switch/pool-controller/pool-pump/set"),
-      const_cast<char *>("ON"), AsyncMqttClientMessageProperties{0, false, false}, 2, 0, 2);
+    MqttPublisher::handleMqttMessage("homeassistant/switch/pool-controller/pool-pump/set", "ON", 2, 0, 2);
 
     // Pump should still be OFF (rejected because not in manual mode)
     bool pumpState = poolPumpNode.getSwitch();
@@ -945,7 +938,7 @@ int run_mqttpublisher_tests() {
 
     mqttCapture.clear();
     NetworkManager::setMqttConnected(true);
-    NetworkManager::setPublishOk(false);  // simulate AsyncMqttClient refusing to enqueue
+    NetworkManager::setPublishOk(false);  // simulate the MQTT client refusing to enqueue
     LogCapture::begin();
     MqttPublisher::begin();
 
