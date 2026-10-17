@@ -19,15 +19,12 @@ menu:
 
 ## Required Libraries
 
-- [AsyncMqttClient](https://github.com/marvinroger/async-mqtt-client) @ 0.9.0
+- [espMqttClient](https://github.com/bertmelis/espMqttClient) @ 1.7 (async variant on [AsyncTCP](https://github.com/ESP32Async/AsyncTCP) 3.x)
 - [DallasTemperature](https://github.com/milesburton/Arduino-Temperature-Control-Library)
 - [OneWire](https://github.com/PaulStoffregen/OneWire)
-- [Adafruit Unified Sensor](https://github.com/adafruit/Adafruit_Sensor)
-- [DHT sensor library](https://github.com/adafruit/DHT-sensor-library)
 - [NTPClient](https://github.com/arduino-libraries/NTPClient) @ 3.2.1
 - [Timezone](https://github.com/JChristensen/Timezone) @ 1.2.6
-- [ArduinoJson](https://github.com/bblanchon/ArduinoJson) @ 7.3.2
-- [Bounce2](https://github.com/thomasfredericks/Bounce2)
+- [ArduinoJson](https://github.com/bblanchon/ArduinoJson) @ 7.4.3
 - [Wire](https://github.com/espressif/arduino-esp32/tree/master/libraries/Wire)
 
 Many thanks to the maintainers of these libraries!
