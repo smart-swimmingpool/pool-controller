@@ -9,7 +9,10 @@
 
 #include "ConfigManager.hpp"
 
+#include <cstdint>
 #include <cstring>
+#include <string>
+#include <vector>
 
 #include <Preferences.h>
 #include <mbedtls/md.h>
@@ -80,6 +83,214 @@ static constexpr const char *kSetBtnNoPress = "set_btnnop";
 static constexpr const char *kAdmPass = "adm_pass";
 static constexpr const char *kCfgConfigured = "cfg_configured";
 
+// ── Configuration Record ──
+//
+// The whole configuration is stored as one NVS blob. NVS writes a blob
+// completely before it drops the previous one, so a power loss during save()
+// leaves either the old or the new configuration, never a mix. The per-key
+// layout above is still read once to migrate devices from older firmware.
+//
+// Layout (little-endian): magic u32, version u16, payload length u16,
+// payload, CRC-32 u32 over everything before it.
+
+static constexpr const char *kConfigRecord = "cfg_record";
+static constexpr std::uint32_t kRecordMagic = 0x47464350;  // "PCFG"
+static constexpr std::uint16_t kRecordVersion = 1;
+static constexpr size_t kRecordHeaderSize = 8;
+static constexpr size_t kRecordMaxSize = 2048;
+
+namespace {
+
+std::uint32_t crc32(const std::uint8_t *data, size_t length) {
+  std::uint32_t crc = 0xFFFFFFFFu;
+  for (size_t i = 0; i < length; ++i) {
+    crc ^= data[i];
+    for (int bit = 0; bit < 8; ++bit) {
+      crc = (crc >> 1) ^ (0xEDB88320u & (0u - (crc & 1u)));
+    }
+  }
+  return ~crc;
+}
+
+class RecordWriter final {
+public:
+  void u8(std::uint8_t value) { bytes_.push_back(value); }
+  void u16(std::uint16_t value) {
+    u8(static_cast<std::uint8_t>(value));
+    u8(static_cast<std::uint8_t>(value >> 8));
+  }
+  void u32(std::uint32_t value) {
+    u16(static_cast<std::uint16_t>(value));
+    u16(static_cast<std::uint16_t>(value >> 16));
+  }
+  void i32(long value) { u32(static_cast<std::uint32_t>(static_cast<std::int32_t>(value))); }
+  void f64(double value) {
+    std::uint64_t raw = 0;
+    memcpy(&raw, &value, sizeof(raw));
+    u32(static_cast<std::uint32_t>(raw));
+    u32(static_cast<std::uint32_t>(raw >> 32));
+  }
+  void str(const String &value) {
+    const size_t length = value.length();
+    u16(static_cast<std::uint16_t>(length > 0xFFFF ? 0xFFFF : length));
+    bytes_.insert(bytes_.end(), value.c_str(), value.c_str() + (length > 0xFFFF ? 0xFFFF : length));
+  }
+  std::vector<std::uint8_t> &bytes() { return bytes_; }
+
+private:
+  std::vector<std::uint8_t> bytes_;
+};
+
+class RecordReader final {
+public:
+  RecordReader(const std::uint8_t *data, size_t length) : data_(data), length_(length) {}
+  bool ok() const { return ok_; }
+  bool atEnd() const { return pos_ == length_; }
+
+  std::uint8_t u8() {
+    if (!ok_ || pos_ + 1 > length_) {
+      ok_ = false;
+      return 0;
+    }
+    return data_[pos_++];
+  }
+  std::uint16_t u16() {
+    const std::uint16_t low = u8();
+    return static_cast<std::uint16_t>(low | (static_cast<std::uint16_t>(u8()) << 8));
+  }
+  std::uint32_t u32() {
+    const std::uint32_t low = u16();
+    return low | (static_cast<std::uint32_t>(u16()) << 16);
+  }
+  long i32() { return static_cast<long>(static_cast<std::int32_t>(u32())); }
+  double f64() {
+    const std::uint64_t low = u32();
+    const std::uint64_t raw = low | (static_cast<std::uint64_t>(u32()) << 32);
+    double value = 0;
+    memcpy(&value, &raw, sizeof(value));
+    return value;
+  }
+  String str() {
+    const std::uint16_t length = u16();
+    if (!ok_ || pos_ + length > length_) {
+      ok_ = false;
+      return String("");
+    }
+    std::string text(reinterpret_cast<const char *>(data_ + pos_), length);
+    pos_ += length;
+    return String(text.c_str());
+  }
+
+private:
+  const std::uint8_t *data_;
+  size_t length_;
+  size_t pos_{0};
+  bool ok_{true};
+};
+
+/** Everything save() persists, so decoding can fail without touching the live state. */
+struct ConfigImage final {
+  WiFiConfig wifi;
+  MqttConfig mqtt;
+  NtpConfig ntp;
+  ControllerSettings settings;
+  String adminPasswordHash;
+  bool configured{false};
+};
+
+std::vector<std::uint8_t> encodeRecord(const ConfigImage &image) {
+  RecordWriter payload;
+  payload.str(image.wifi.ssid);
+  payload.str(image.wifi.password);
+  payload.str(image.mqtt.host);
+  payload.u16(image.mqtt.port);
+  payload.str(image.mqtt.username);
+  payload.str(image.mqtt.password);
+  payload.str(image.ntp.server);
+  payload.i32(image.ntp.timezone);
+  const ControllerSettings &s = image.settings;
+  payload.i32(s.loopInterval);
+  payload.f64(s.tempMaxPool);
+  payload.f64(s.tempMinSolar);
+  payload.f64(s.tempHysteresis);
+  payload.f64(s.tempCircThreshold);
+  payload.u16(s.tempCircFactor);
+  payload.u16(s.tempCircMaxRuntime);
+  payload.str(s.opMode);
+  payload.i32(s.timeLossGreenHours);
+  payload.i32(s.timeLossRedHours);
+  payload.i32(s.timezoneIndex);
+  payload.u16(s.btn1Min);
+  payload.u16(s.btn1Max);
+  payload.u16(s.btn2Min);
+  payload.u16(s.btn2Max);
+  payload.u16(s.btn3Min);
+  payload.u16(s.btn3Max);
+  payload.u16(s.btnNoPress);
+  payload.str(image.adminPasswordHash);
+  payload.u8(image.configured ? 1 : 0);
+
+  RecordWriter record;
+  record.u32(kRecordMagic);
+  record.u16(kRecordVersion);
+  record.u16(static_cast<std::uint16_t>(payload.bytes().size()));
+  std::vector<std::uint8_t> &bytes = record.bytes();
+  bytes.insert(bytes.end(), payload.bytes().begin(), payload.bytes().end());
+  record.u32(crc32(bytes.data(), bytes.size()));
+  return bytes;
+}
+
+bool decodeRecord(const std::uint8_t *data, size_t length, ConfigImage &image) {
+  if (length < kRecordHeaderSize + 4) {
+    return false;
+  }
+  RecordReader header(data, kRecordHeaderSize);
+  const std::uint32_t magic = header.u32();
+  const std::uint16_t version = header.u16();
+  const std::uint16_t payloadLength = header.u16();
+  if (magic != kRecordMagic || version != kRecordVersion || kRecordHeaderSize + payloadLength + 4 != length) {
+    return false;
+  }
+  RecordReader trailer(data + length - 4, 4);
+  if (trailer.u32() != crc32(data, length - 4)) {
+    return false;
+  }
+
+  RecordReader payload(data + kRecordHeaderSize, payloadLength);
+  image.wifi.ssid = payload.str();
+  image.wifi.password = payload.str();
+  image.mqtt.host = payload.str();
+  image.mqtt.port = payload.u16();
+  image.mqtt.username = payload.str();
+  image.mqtt.password = payload.str();
+  image.ntp.server = payload.str();
+  image.ntp.timezone = payload.i32();
+  ControllerSettings &s = image.settings;
+  s.loopInterval = payload.i32();
+  s.tempMaxPool = payload.f64();
+  s.tempMinSolar = payload.f64();
+  s.tempHysteresis = payload.f64();
+  s.tempCircThreshold = payload.f64();
+  s.tempCircFactor = payload.u16();
+  s.tempCircMaxRuntime = payload.u16();
+  s.opMode = payload.str();
+  s.timeLossGreenHours = payload.i32();
+  s.timeLossRedHours = payload.i32();
+  s.timezoneIndex = static_cast<int>(payload.i32());
+  s.btn1Min = payload.u16();
+  s.btn1Max = payload.u16();
+  s.btn2Min = payload.u16();
+  s.btn2Max = payload.u16();
+  s.btn3Min = payload.u16();
+  s.btn3Max = payload.u16();
+  s.btnNoPress = payload.u16();
+  image.adminPasswordHash = payload.str();
+  image.configured = payload.u8() != 0;
+  return payload.ok() && payload.atEnd();
+}
+
+}  // namespace
+
 // ── Lifecycle ──
 
 bool ConfigManager::begin() {
@@ -95,6 +306,42 @@ bool ConfigManager::load() {
     return false;
   }
 
+  const size_t recordLength = prefs.getBytesLength(kConfigRecord);
+  if (recordLength > 0) {
+    ConfigImage image;
+    bool valid = false;
+    // Check the stored length before allocating: a bogus length must not
+    // exhaust the heap at boot.
+    if (recordLength <= kRecordMaxSize) {
+      std::vector<std::uint8_t> record(recordLength);
+      valid = prefs.getBytes(kConfigRecord, record.data(), recordLength) == recordLength &&
+        decodeRecord(record.data(), recordLength, image);
+    }
+    prefs.end();
+    if (!valid) {
+      // A record exists but cannot be trusted (corrupted, or written by newer
+      // firmware). The legacy keys may hold older credentials, such as an admin
+      // password changed since, so they are not used. The device starts like a
+      // factory-new one instead: defaults in RAM, unconfigured, and the stored
+      // record stays untouched until the next save replaces it.
+      LOG_ERROR("✖ Configuration record invalid — starting unconfigured with defaults\n");
+      image = ConfigImage{};
+      image.adminPasswordHash = kDefaultPasswordHash;
+    }
+    wifi_ = image.wifi;
+    mqtt_ = image.mqtt;
+    ntp_ = image.ntp;
+    settings_ = image.settings;
+    adminPasswordHash_ = image.adminPasswordHash;
+    configured_ = image.configured;
+    if (valid) {
+      LOG_INFO("✓ Configuration loaded from NVS\n");
+    }
+    return valid;
+  }
+
+  // No record yet: a device updated from older firmware still has its
+  // configuration in the per-key layout. The next save() migrates it.
   wifi_.ssid = prefs.getString(kWifiSsid, "");
   wifi_.password = prefs.getString(kWifiPass, "");
 
@@ -134,58 +381,31 @@ bool ConfigManager::load() {
   return true;
 }
 
-// Preferences::putString() returns the stored length, so 0 is a failure only
-// for a non-empty value; an empty string cannot be told apart from an error.
-static bool putStringChecked(Preferences &prefs, const char *key, const String &value) {
-  return prefs.putString(key, value) == value.length();
-}
-
 bool ConfigManager::save() {
+  ConfigImage image;
+  image.wifi = wifi_;
+  image.mqtt = mqtt_;
+  image.ntp = ntp_;
+  image.settings = settings_;
+  image.adminPasswordHash = adminPasswordHash_;
+  image.configured = configured_;
+  const std::vector<std::uint8_t> record = encodeRecord(image);
+  if (record.size() > kRecordMaxSize) {
+    LOG_ERROR("✖ Configuration record too large (%u bytes)\n", static_cast<unsigned>(record.size()));
+    return false;
+  }
+
   Preferences prefs;
   if (!prefs.begin(kNvsNamespace, false)) {  // read-write mode
     LOG_ERROR("✖ Failed to open NVS config namespace for writing\n");
     return false;
   }
-
-  // Every key is written even after a failure, so a retry or rollback rewrites
-  // the whole namespace; the result reports whether all writes succeeded.
-  bool ok = true;
-  ok = putStringChecked(prefs, kWifiSsid, wifi_.ssid) && ok;
-  ok = putStringChecked(prefs, kWifiPass, wifi_.password) && ok;
-
-  ok = putStringChecked(prefs, kMqttHost, mqtt_.host) && ok;
-  ok = prefs.putUInt(kMqttPort, mqtt_.port) != 0 && ok;
-  ok = putStringChecked(prefs, kMqttUser, mqtt_.username) && ok;
-  ok = putStringChecked(prefs, kMqttPass, mqtt_.password) && ok;
-
-  ok = putStringChecked(prefs, kNtpServer, ntp_.server) && ok;
-  ok = prefs.putLong(kNtpTz, ntp_.timezone) != 0 && ok;
-
-  ok = prefs.putLong(kSetInterval, settings_.loopInterval) != 0 && ok;
-  ok = prefs.putDouble(kSetMaxPool, settings_.tempMaxPool) != 0 && ok;
-  ok = prefs.putDouble(kSetMinSolar, settings_.tempMinSolar) != 0 && ok;
-  ok = prefs.putDouble(kSetHyst, settings_.tempHysteresis) != 0 && ok;
-  ok = putStringChecked(prefs, kSetOpMode, settings_.opMode) && ok;
-  ok = prefs.putInt(kSetTzIdx, settings_.timezoneIndex) != 0 && ok;
-  ok = prefs.putUChar(kSetGreen, settings_.timeLossGreenHours) != 0 && ok;
-  ok = prefs.putUChar(kSetRed, settings_.timeLossRedHours) != 0 && ok;
-  ok = prefs.putDouble(kSetCircThresh, settings_.tempCircThreshold) != 0 && ok;
-  ok = prefs.putUShort(kSetCircFactor, settings_.tempCircFactor) != 0 && ok;
-  ok = prefs.putUShort(kSetCircMax, settings_.tempCircMaxRuntime) != 0 && ok;
-  ok = prefs.putUShort(kSetBtn1Min, settings_.btn1Min) != 0 && ok;
-  ok = prefs.putUShort(kSetBtn1Max, settings_.btn1Max) != 0 && ok;
-  ok = prefs.putUShort(kSetBtn2Min, settings_.btn2Min) != 0 && ok;
-  ok = prefs.putUShort(kSetBtn2Max, settings_.btn2Max) != 0 && ok;
-  ok = prefs.putUShort(kSetBtn3Min, settings_.btn3Min) != 0 && ok;
-  ok = prefs.putUShort(kSetBtn3Max, settings_.btn3Max) != 0 && ok;
-  ok = prefs.putUShort(kSetBtnNoPress, settings_.btnNoPress) != 0 && ok;
-
-  ok = putStringChecked(prefs, kAdmPass, adminPasswordHash_) && ok;
-  ok = prefs.putBool(kCfgConfigured, configured_) != 0 && ok;
-
+  // One putBytes() replaces the whole configuration at once; the legacy keys
+  // are left untouched and are no longer read once the record exists.
+  const bool written = prefs.putBytes(kConfigRecord, record.data(), record.size()) == record.size();
   prefs.end();
 
-  if (!ok) {
+  if (!written) {
     LOG_ERROR("✖ Failed to write configuration to NVS\n");
     return false;
   }

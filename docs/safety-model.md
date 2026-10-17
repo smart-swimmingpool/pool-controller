@@ -90,8 +90,14 @@ Invalid configurations are **rejected** and the previous value is preserved.
 
 ### NVS CRC Protection
 
-Configuration stored in ESP32 NVS includes a CRC32 checksum. If the
-checksum doesn't match on boot, the configuration is reset to factory defaults.
+The configuration is stored in ESP32 NVS as a single versioned record with a
+CRC32 checksum. It is written in one NVS operation, so a power loss during a
+save keeps either the old or the new configuration, never a mix. If the record
+fails its size, checksum or version check on boot, it is never applied and the
+per-key configuration of older firmware is not used either, because it may
+hold credentials changed since. The device starts unconfigured with factory
+defaults, like a new device. The per-key layout is read only when no record
+exists yet, to migrate devices from older firmware.
 
 ### Type Safety
 
@@ -178,7 +184,7 @@ Three-stage fallback for time synchronization:
 | ----------------- | ---------------------- | --------------- | ---------------------------- |
 | ESP32 crash       | Relays off, pumps stop | Hardware        | Failsafe relay behavior (NO) |
 | Software hang     | No relay updates       | WDT             | 30s reboot                   |
-| Config corruption | Invalid settings       | Firmware        | NVS CRC → factory reset      |
+| Config corruption | Invalid settings       | Firmware        | NVS CRC → record ignored     |
 | Repeated crashes  | Unsafe state           | Boot-loop       | Safe Mode → relays OFF       |
 | Heap exhaustion   | Unpredictable          | Memory monitor  | Graceful reboot              |
 | Sensor failure    | No temperature data    | Sensor recovery | Fast re-polling              |
