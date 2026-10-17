@@ -110,9 +110,32 @@ void test_unconfirmed_power_on_value_is_not_a_failure() {
   CHECK(std::isnan(solar.getTemperature()));
   CHECK(bus.beginCalls() == beginsAfterSetup);
 
-  measure(solar);  // third consecutive 85 °C confirms the value
-  CHECK(solar.getTemperature() == 85.0f);
+  measure(solar);  // repetition never confirms the power-on value
+  CHECK(std::isnan(solar.getTemperature()));
   CHECK(bus.beginCalls() == beginsAfterSetup);
+
+  bus.setReading(kSolarProbe, 42.0f);
+  measure(solar);  // supply recovered
+  CHECK(solar.getTemperature() == 42.0f);
+}
+
+void test_mapping_change_resets_filter_history() {
+  section("a mapping change to another probe does not hold the previous probe's value");
+  PoolController::SensorSlots::reset();
+  DallasTemperature bus;
+  bus.addDevice(kSolarProbe, 40.0f);
+  bus.addDevice(kPoolProbe, 24.0f);
+  DallasTemperatureNode solar(SensorId::SOLAR, "solar-temp", "Solar", &bus, 0);
+  solar.begin();
+  measure(solar);
+  CHECK(solar.getTemperature() == 40.0f);
+
+  // Re-map the role to the other probe, which reports its power-on value.
+  bus.setReading(kPoolProbe, 85.0f);
+  solar.setAddressFilter(kPoolProbe);
+  measure(solar);
+  CHECK(std::isnan(solar.getTemperature()));  // not HOLD of the old probe's 40 °C
+  CHECK(!solar.isSensorFound());
 }
 
 }  // namespace
@@ -121,6 +144,7 @@ int main() {
   test_shared_bus_never_hands_pool_probe_to_solar();
   test_three_failed_reads_trigger_one_rescan();
   test_unconfirmed_power_on_value_is_not_a_failure();
+  test_mapping_change_resets_filter_history();
 
   printf("\n══════════════════════════════════════════════════\n");
   printf("  Dallas Node Results: %d passed, %d failed\n", g_passed, g_failed);
