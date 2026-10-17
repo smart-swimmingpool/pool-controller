@@ -146,8 +146,20 @@ void DallasTemperatureNode::applyPendingAddressFilter() {
   if (!mappingDirty_.exchange(false, std::memory_order_acq_rel)) {
     return;
   }
-  if (numberOfDevices > 0) {
-    resolveFilter();
+  if (numberOfDevices == 0) {
+    return;
+  }
+  DeviceAddress previous;
+  memcpy(previous, deviceAddress_, sizeof(DeviceAddress));
+  resolveFilter();
+  if (memcmp(previous, deviceAddress_, sizeof(DeviceAddress)) != 0) {
+    // A different probe now feeds this node: its readings must not be judged
+    // against the previous probe's history, and the old temperature no
+    // longer describes this role.
+    filter_.reset();
+    consecutiveFailures_ = 0;
+    _temperature = NAN;
+    PoolController::SensorSlots::write(slotId(), NAN, false);
   }
 }
 

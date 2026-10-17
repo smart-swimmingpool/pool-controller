@@ -70,14 +70,19 @@ static int test_power_on_value_without_history_rejected() {
   return 0;
 }
 
-static int test_power_on_value_confirmed_by_repetition() {
-  test_begin("TemperatureFilter", "repeated 85 °C is accepted as real value");
+// Review #208 (safety): a recurring brownout repeats the power-on value; it
+// must never become a valid hot-collector reading.
+static int test_power_on_value_never_confirmed_by_repetition() {
+  test_begin("TemperatureFilter", "repeated 85 C holds briefly, then yields no value and is never accepted");
   TemperatureReadingFilter filter;
   ASSERT_TRUE(filter.apply(30.0f) == Action::ACCEPT);
-  ASSERT_TRUE(filter.apply(85.0f) == Action::HOLD);
-  ASSERT_TRUE(filter.apply(85.0f) == Action::HOLD);
-  ASSERT_TRUE(filter.apply(85.0f) == Action::ACCEPT);
-  ASSERT_TRUE(filter.apply(85.0f) == Action::ACCEPT);  // continues the accepted value
+  for (uint8_t i = 0; i < TemperatureReadingFilter::kMaxPowerOnHolds; i++) {
+    ASSERT_TRUE(filter.apply(85.0f) == Action::HOLD);
+  }
+  for (int i = 0; i < 20; i++) {
+    ASSERT_TRUE(filter.apply(85.0f) == Action::UNCONFIRMED);
+  }
+  ASSERT_TRUE(filter.apply(31.0f) == Action::ACCEPT);  // supply recovered
   return 0;
 }
 
@@ -106,7 +111,9 @@ static int test_power_on_after_failure_hot_collector() {
   ASSERT_TRUE(filter.apply(-127.0f) == Action::REJECT);
   ASSERT_TRUE(filter.apply(85.0f) == Action::UNCONFIRMED);  // no valid previous value to hold
   ASSERT_TRUE(filter.apply(85.0f) == Action::UNCONFIRMED);
-  ASSERT_TRUE(filter.apply(85.0f) == Action::ACCEPT);  // confirmed by consecutive reads
+  ASSERT_TRUE(filter.apply(85.0f) == Action::UNCONFIRMED);  // repetition does not confirm
+  ASSERT_TRUE(filter.apply(84.0f) == Action::ACCEPT);
+  ASSERT_TRUE(filter.apply(85.0f) == Action::ACCEPT);  // continues a real reading
   return 0;
 }
 
@@ -125,7 +132,7 @@ int run_temperature_filter_tests() {
   int passed = 0;
   int failed = 0;
   int (*tests[])() = {test_normal_values_accepted, test_invalid_values_rejected, test_power_on_value_held,
-    test_power_on_value_without_history_rejected, test_power_on_value_confirmed_by_repetition,
+    test_power_on_value_without_history_rejected, test_power_on_value_never_confirmed_by_repetition,
     test_power_on_value_continuing_hot_collector, test_reset_forgets_history, test_power_on_after_failure_hot_collector,
     test_power_on_after_failure_normal};
   for (auto test : tests) {

@@ -144,10 +144,12 @@ und das System kann Korrekturmaßnahmen ergreifen.
 - Fehlerhafter DS18B20-Leseversuch löst schnelles Nachfragen aus (5s statt Messintervall)
 - Zurück zum normalen Intervall, sobald ein gültiger Messwert vorliegt
 - Plausibilitätsfilter: Werte außerhalb von -55…125 °C gelten als Fehlmessung
-- Der Einschaltwert 85,0 °C (nach einer Spannungsspitze) wird ignoriert und der letzte Wert gehalten,
-  außer er schließt an einen Messwert nahe 85 °C an oder tritt dreimal hintereinander auf. Direkt nach
-  einer Fehlmessung gibt es keinen gültigen Wert zum Halten, 85,0 °C liefert dann bis zur Bestätigung keinen
-  Wert (zählt aber nicht als Fehlmessung)
+- Der Einschaltwert 85,0 °C (nach einer Spannungsspitze) wird nur akzeptiert, wenn er an einen Messwert
+  nahe 85 °C anschließt. Sonst wird der letzte Wert höchstens 3 Messungen lang gehalten; danach, oder direkt
+  nach einer Fehlmessung, liefert 85,0 °C keinen Wert (zählt aber nicht als Fehlmessung). Wiederholung
+  bestätigt den Wert nie, ein wiederkehrender Brownout kann die Solarpumpe also nicht starten
+- Wählt eine geänderte Sensorzuordnung einen anderen Fühler, wird die Filterhistorie gelöscht und die
+  Temperatur bleibt bis zum ersten gültigen Messwert des neuen Fühlers ungültig
 - Nach 3 Fehlmessungen in Folge wird der OneWire-Bus neu durchsucht, sodass ein wieder angeschlossener
   oder getauschter Fühler ohne Neustart gefunden wird. Am gemeinsamen NORVI-Bus akzeptiert ein Knoten
   dabei nur seine eigene Fühleradresse, ein fehlender Solarfühler wird also nie durch den Poolfühler

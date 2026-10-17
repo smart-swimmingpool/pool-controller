@@ -11,11 +11,14 @@
  * - 85.0 °C is the DS18B20 power-on reset value, typically read after a
  *   supply glitch on long outdoor cables. A solar collector can really reach
  *   85 °C, so the value is only accepted when it continues a nearby previous
- *   reading or is confirmed by consecutive reads; otherwise the previous
- *   temperature is held.
- * - An unconfirmed 85 °C without a valid previous value yields no
- *   temperature (UNCONFIRMED) but is not a sensor failure, so it does not
- *   count towards a bus rescan.
+ *   reading. Repetition never confirms it: a recurring brownout delivers the
+ *   same power-on value every time and must not turn into a hot collector
+ *   that starts the solar pump.
+ * - A non-continuing 85 °C holds the previous temperature for at most
+ *   kMaxPowerOnHolds reads. After that, or without a valid previous value,
+ *   it yields no temperature (UNCONFIRMED) and forgets the previous value.
+ *   UNCONFIRMED is not a sensor failure, so it does not count towards a bus
+ *   rescan.
  * - A rejected reading interrupts the valid sequence: continuity is not
  *   carried across a sensor failure, because a reconnect is exactly when the
  *   power-on value appears. HOLD is therefore only returned while the
@@ -44,7 +47,7 @@ public:
   static constexpr float kMaxValidC = 125.0f;
   static constexpr float kPowerOnResetC = 85.0f;
   static constexpr float kPowerOnContinuityC = 5.0f;  ///< 85 °C is plausible within this distance
-  static constexpr uint8_t kPowerOnConfirmReads = 3;  ///< Consecutive 85 °C reads that confirm it
+  static constexpr uint8_t kMaxPowerOnHolds = 3;      ///< Consecutive 85 °C reads that may hold the previous value
 
   Action apply(float raw) {
     if (std::isnan(raw) || raw < kMinValidC || raw > kMaxValidC) {
@@ -52,12 +55,17 @@ public:
       return Action::REJECT;
     }
     if (raw == kPowerOnResetC) {
-      bool continuesPrevious = !std::isnan(lastAccepted_) && std::fabs(lastAccepted_ - kPowerOnResetC) <= kPowerOnContinuityC;
+      const bool continuesPrevious =
+        !std::isnan(lastAccepted_) && std::fabs(lastAccepted_ - kPowerOnResetC) <= kPowerOnContinuityC;
       if (!continuesPrevious) {
-        powerOnReads_++;
-        if (powerOnReads_ < kPowerOnConfirmReads) {
-          return std::isnan(lastAccepted_) ? Action::UNCONFIRMED : Action::HOLD;
+        if (!std::isnan(lastAccepted_) && powerOnReads_ < kMaxPowerOnHolds) {
+          powerOnReads_++;
+          return Action::HOLD;
         }
+        // The held value is too old to trust: drop it so a later 85 °C
+        // cannot be accepted as continuing it.
+        reset();
+        return Action::UNCONFIRMED;
       }
     }
     powerOnReads_ = 0;
