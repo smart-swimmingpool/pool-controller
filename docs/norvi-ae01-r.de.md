@@ -171,8 +171,11 @@ Die 8-Byte-ROM-Adresse jedes Sensors wird im NVS gespeichert (Preferences-Namesp
 `ds18b20`, Keys `solar_adr` und `pool_adr`). Bei jedem folgenden Boot sucht die
 Firmware auf dem Bus nach einem Gerät mit der gespeicherten Adresse. Wird es
 gefunden, wird es unabhängig von der Scan-Reihenfolge verwendet. Wird es nicht
-gefunden (z. B. nach Austausch), erscheint eine Warnung und der Standard-Index
-kommt zum Einsatz.
+gefunden (z. B. nach Austausch), erscheint eine Warnung und die Rolle meldet
+einen ungültigen Wert (NaN), statt einen anderen Sensor zu lesen. Die Firmware
+spricht weiter die gespeicherte ROM an, sodass die Rolle wieder gültig wird,
+sobald dieser Sensor antwortet. Nach einem Austausch muss der neue Sensor im
+Sensor-Setup zugeordnet werden.
 
 ---
 
