@@ -135,9 +135,16 @@ und das System kann Korrekturmaßnahmen ergreifen.
 - Bei **kritischem Schwellwert** (8 KB freier Heap):
   - Warnung wird protokolliert
   - Graceful-Auto-Reboot wird eingeleitet
-- Bei **Warnschwellwert** (15 KB freier Heap):
+- Bei **Warnschwellwert** (16 KB freier Heap):
   - Warnung wird protokolliert
-  - Kein Neustart — Überwachung läuft weiter
+  - Safe-Mode (Relais aus), solange der Heap unter dem Schwellwert bleibt
+  - Automatischer Neustart, wenn der Heap 5 Minuten lang unter dem Schwellwert bleibt
+
+### Degradation ohne Safe-Mode
+
+Probleme mit WLAN, NTP oder Temperaturfühlern — auch mehrere gleichzeitig — führen **nicht** in den Safe-Mode.
+Die Filterpumpe läuft weiter nach Zeitplan (oder durchgehend, solange die Uhrzeit unbekannt ist); die Solarpumpe
+wird von den Regeln abgeschaltet, wenn die Temperaturwerte ungültig sind.
 
 ### Sensor-Auto-Wiederherstellung
 
