@@ -6,6 +6,25 @@ Dieses Dokument beschreibt die Coding-Richtlinien für das Pool-Controller Proje
 Super-Linter Fehler zu vermeiden und Best Practices für ESP32 Entwicklung mit PlatformIO
 zu befolgen.
 
+## 0. Sprachstandard: C++11
+
+Firmware-Code in `src/` muss C++11 sein. Die ESP32-Toolchain von PlatformIO
+kompiliert als `gnu++11`, obwohl `platformio.ini` `-std=c++17` setzt. Die
+nativen Tests bauen mit C++17 und fangen neuere Sprachmittel deshalb nicht ab.
+
+Nicht verwenden:
+
+- Type-Trait-Aliase wie `std::remove_reference_t` (stattdessen `std::remove_reference<T>::type`)
+- `std::make_unique`, `std::optional`, `std::string_view`, `if constexpr`, Structured Bindings
+- Brace-Initialisierung von Structs mit Default-Member-Initialisierern (`Plan{a, b}`);
+  solche Structs bekommen einen Konstruktor
+
+Vor dem Push lässt sich eine Datei schnell prüfen:
+
+```bash
+g++ -std=gnu++11 -fsyntax-only -Itest/native/mocks -Isrc src/<Datei>.cpp
+```
+
 ## 1. C++ Code-Formatierung (clang-format)
 
 ### 1.1 Grundlegende Regeln
