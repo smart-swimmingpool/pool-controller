@@ -111,14 +111,13 @@ bool DallasTemperatureNode::resolveFilter() {
       }
     }
 
-    LOG_ERROR("  ✖ %s: filter address not found on bus! Falling back to device index %d\n", _id, deviceIndex_);
-    if (activeSensor->getAddress(deviceAddress_, deviceIndex_)) {
-      publishSelectedAddress();
-      _sensorFound = true;
-      return true;
-    }
-
-    memset(deviceAddress_, 0, sizeof(deviceAddress_));
+    // An explicitly mapped role accepts only its own ROM. Falling back to the
+    // device index could hand the pool probe to the solar role on a shared bus.
+    // Keep addressing the configured ROM so it is read again once it responds.
+    char adr[18];
+    address2String(filter, adr, sizeof(adr));
+    LOG_ERROR("  ✖ %s: configured sensor [%s] not found on bus\n", _id, adr);
+    memcpy(deviceAddress_, filter, sizeof(DeviceAddress));
     publishSelectedAddress();
     _sensorFound = false;
     return false;
