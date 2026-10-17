@@ -64,11 +64,22 @@ public:
 #else
     esp_task_wdt_init(30, true);
 #endif
-    esp_task_wdt_add(NULL);
+    registerCurrentTaskWithWatchdog();
+  }
+
+  /** Subscribe the calling FreeRTOS task to the task watchdog. */
+  static bool registerCurrentTaskWithWatchdog() {
+    const esp_err_t err = esp_task_wdt_add(NULL);
+    if (err == ESP_OK) {
+      return true;
+    }
+    LOG_ERROR("Task watchdog registration failed: 0x%x\n", static_cast<unsigned>(err));
+    return false;
   }
 
   /**
-   * Feed the watchdog — call this regularly in main loop
+   * Feed the watchdog for the calling task — call this regularly from every
+   * task that registered itself (main loop and SensorTask).
    */
   static void feedWatchdog() { esp_task_wdt_reset(); }
 

@@ -20,11 +20,11 @@
 
 namespace PoolController {
 
-DallasTemperatureNode solarTemperatureNode("solar-temp", "Solar Temperature", 0, 300);
-DallasTemperatureNode poolTemperatureNode("pool-temp", "Pool Temperature", 1, 300);
+DallasTemperatureNode solarTemperatureNode(PoolController::SensorId::SOLAR, "solar-temp", "Solar Temperature", 0, 300);
+DallasTemperatureNode poolTemperatureNode(PoolController::SensorId::POOL, "pool-temp", "Pool Temperature", 1, 300);
 ESP32TemperatureNode ctrlTemperatureNode("ctrl-temp", "Controller Temperature");
 RelayModuleNode poolPumpNode("pool-pump", "Pool Pump", 25);
 RelayModuleNode solarPumpNode("solar-pump", "Solar Pump", 26);
 OperationModeNode operationModeNode("operation-mode", "Operation Mode", 300);
 
-} // namespace PoolController
+}  // namespace PoolController

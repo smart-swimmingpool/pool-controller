@@ -29,6 +29,8 @@
 
 #include <Arduino.h>
 
+#include <atomic>
+
 namespace PoolController {
 
 /**
@@ -102,11 +104,13 @@ public:
   static void unforceSafeMode();
 
 private:
-  static bool sensorsEverReported_;
+  // Cross-core status: SensorTask writes on Core 0, control loop reads on
+  // Core 1. std::atomic gives the inter-core visibility volatile does not.
+  static std::atomic<bool> sensorsEverReported_;
   static DegradationLevel currentLevel_;
   static DegradationLevel previousLevel_;
-  static bool poolSensorOk_;
-  static bool solarSensorOk_;
+  static std::atomic<bool> poolSensorOk_;
+  static std::atomic<bool> solarSensorOk_;
   static bool forcedSafeMode_;
   static unsigned long lastEvaluationMs_;
 

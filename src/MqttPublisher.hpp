@@ -11,7 +11,6 @@
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
-#include <AsyncMqttClient.h>
 #include <cstdint>
 
 namespace PoolController {
@@ -39,22 +38,19 @@ public:
    * Changes controller state — call only on the loop task (via
    * processPendingCommands()), never from the MQTT client callback.
    * @param topic   The MQTT topic the message was received on.
-   * @param payload Null-terminated payload string.
-   * @param properties  Message properties (QoS, retain, dup).
+   * @param payload Payload bytes (not NUL-terminated).
    * @param len     Payload length.
    * @param index   Chunk index (0 for single-chunk messages).
    * @param total   Total payload size across all chunks.
    */
-  static void handleMqttMessage(
-    char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total);
+  static void handleMqttMessage(const char *topic, const char *payload, size_t len, size_t index, size_t total);
 
   /**
    * MQTT client callback — runs on the AsyncTCP task. Only copies the message
    * into the command queue; it is handled by processPendingCommands() on the
    * loop task. Incomplete (chunked) or oversized messages are dropped.
    */
-  static void onMqttMessage(
-    char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total);
+  static void onMqttMessage(const char *topic, const char *payload, size_t len, size_t index, size_t total);
 
   /// Maximum number of queued commands handled per loop iteration.
   static constexpr size_t kMaxCommandsPerLoop = 2;
