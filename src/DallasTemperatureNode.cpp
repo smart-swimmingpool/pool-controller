@@ -110,14 +110,13 @@ bool DallasTemperatureNode::resolveFilter() {
       return true;
     }
 
-    LOG_ERROR("  ✖ %s: filter address not found on bus! Falling back to device index %d\n", _id, deviceIndex_);
-    if (activeSensor->getAddress(deviceAddress_, deviceIndex_)) {
-      publishSelectedAddress();
-      _sensorFound = true;
-      return true;
-    }
-
-    memset(deviceAddress_, 0, sizeof(deviceAddress_));
+    // An explicitly mapped role accepts only its own ROM. Falling back to the
+    // device index could hand the pool probe to the solar role on a shared bus.
+    // Keep addressing the configured ROM so it is read again once it responds.
+    char adr[18];
+    address2String(filter, adr, sizeof(adr));
+    LOG_ERROR("  ✖ %s: configured sensor [%s] not found on bus\n", _id, adr);
+    memcpy(deviceAddress_, filter, sizeof(DeviceAddress));
     publishSelectedAddress();
     _sensorFound = false;
     return false;
@@ -207,11 +206,15 @@ uint8_t DallasTemperatureNode::getDeviceCount() const {
   return count;
 }
 
+void DallasTemperatureNode::copySelectedAddress(DeviceAddress out) const {
+  lockCache();
+  memcpy(out, cachedSelectedAddress_, sizeof(DeviceAddress));
+  unlockCache();
+}
+
 void DallasTemperatureNode::getDeviceAddressString(char *buffer, size_t size) const {
   DeviceAddress addr;
-  lockCache();
-  memcpy(addr, cachedSelectedAddress_, sizeof(DeviceAddress));
-  unlockCache();
+  copySelectedAddress(addr);
   address2String(addr, buffer, size);
 }
 
@@ -395,8 +398,8 @@ void DallasTemperatureNode::rescanBus() {
   DeviceAddress target;
   if (!sharedSensor_ || !targetAddress(target)) {
     // A dedicated bus belongs to this node alone, so the usual resolution
-    // (including index fallback) also picks up a replaced sensor. The same
-    // applies to a shared-bus node that never resolved a device.
+    // also picks up a replaced sensor when no ROM is mapped. The same applies
+    // to a shared-bus node that never resolved a device.
     if (numberOfDevices > 0) {
       resolveFilter();
     }

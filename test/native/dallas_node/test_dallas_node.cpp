@@ -138,6 +138,34 @@ void test_mapping_change_resets_filter_history() {
   CHECK(!solar.isSensorFound());
 }
 
+void test_missing_mapped_probe_is_not_replaced_at_boot() {
+  section("boot: a mapped probe that is missing is not replaced by another probe");
+  PoolController::SensorSlots::reset();
+  DallasTemperature bus;
+  bus.addDevice(kPoolProbe, 24.0f);  // the configured solar probe is absent
+  DallasTemperatureNode solar(SensorId::SOLAR, "solar-temp", "Solar", &bus, 0);
+  DallasTemperatureNode pool(SensorId::POOL, "pool-temp", "Pool", &bus, 1);
+  solar.setAddressFilter(kSolarProbe);
+  pool.setAddressFilter(kPoolProbe);
+  solar.begin();
+  pool.begin();
+  CHECK(!solar.isSensorFound());
+
+  for (int cycle = 0; cycle < 6; ++cycle) {
+    measure(solar);
+    measure(pool);
+    CHECK(std::isnan(solar.getTemperature()));  // never the pool probe's 24 °C
+    CHECK(!solar.isSensorFound());
+    CHECK(pool.getTemperature() == 24.0f);
+  }
+
+  // The configured probe responds again: the role recovers by its own ROM.
+  bus.addDevice(kSolarProbe, 41.0f);
+  measure(solar);
+  CHECK(solar.getTemperature() == 41.0f);
+  CHECK(solar.isSensorFound());
+}
+
 }  // namespace
 
 int main() {
@@ -145,6 +173,7 @@ int main() {
   test_three_failed_reads_trigger_one_rescan();
   test_unconfirmed_power_on_value_is_not_a_failure();
   test_mapping_change_resets_filter_history();
+  test_missing_mapped_probe_is_not_replaced_at_boot();
 
   printf("\n══════════════════════════════════════════════════\n");
   printf("  Dallas Node Results: %d passed, %d failed\n", g_passed, g_failed);

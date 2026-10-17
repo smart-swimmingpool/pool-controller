@@ -26,6 +26,20 @@ während die blockierende DS18B20-Konvertierung auf Kern 0 isoliert wird.
 | **Kern 0** (PRO_CPU) | Sensor-I/O | `SensorTask`: DS18B20-Konvertierung/-Auslesen und interne ESP32-Temperatur |
 | **Kern 1** (APP_CPU) | Regelung und zustandsbehaftete I/O | Arduino-`loop()`: Watchdog, Degradation, Regeln, Relais, Status-LED, Netzwerk/OTA, MQTT-Serialisierung, Frontpanel-UI und OLED-Rendering |
 
+## Unterschiede je Board
+
+| Board | Kerne | SensorTask | Arduino-`loop()` |
+| ----- | ----- | ---------- | ---------------- |
+| `esp32dev`, `norvi_ae01_r` (ESP32) | 2 | Kern 0, Priorität 2 | Kern 1, Priorität 1 |
+| `olimex_esp32_c6_evb` (ESP32-C6) | 1 | Kern 0, Priorität 2 | Kern 0, Priorität 1 |
+
+Auf dem ESP32-C6 ist das Pinning kein zweiter, isolierter Kern. Das Ownership-Modell bleibt gleich
+(Single-Writer, Snapshots), aber `SensorTask` verdrängt die Regelschleife, sobald er lauffähig ist. Die
+750-ms-Konvertierung wird mit `vTaskDelay()` abgewartet, die Loop läuft währenddessen weiter; die
+OneWire-Transaktionen selbst (Bus-Scan, Rescan nach Fehlmessungen, Auslesen) blockieren die Loop für ihre
+Dauer. Die Worst-Case-Loop-Latenz auf dem C6 bei DS18B20-Recovery, MQTT-Reconnect und Display-Aktivität
+sowie die Watchdog-Reserve müssen auf dem Gerät gemessen werden; sie gehören zum Hardware-Test-Gate.
+
 ## Warum diese Grenze
 
 Eine 12-Bit-DS18B20-Konvertierung kann ungefähr 750 ms dauern. In der Arduino-Loop würde sie
