@@ -3,7 +3,7 @@
 #include <string>
 #include "Arduino.h"
 #include "WebServer.h"
-#include "AsyncMqttClient.h"
+#include "espMqttClientAsync.h"
 #include "HTTPClient.h"
 
 WebServerCapture wsCapture;

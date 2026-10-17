@@ -19,7 +19,7 @@ menu:
 
 ## Required Libraries
 
-- [AsyncMqttClient](https://github.com/marvinroger/async-mqtt-client) @ 0.9.0
+- [espMqttClient](https://github.com/bertmelis/espMqttClient) @ 1.7 (async variant on [AsyncTCP](https://github.com/ESP32Async/AsyncTCP) 3.x)
 - [DallasTemperature](https://github.com/milesburton/Arduino-Temperature-Control-Library)
 - [OneWire](https://github.com/PaulStoffregen/OneWire)
 - [Adafruit Unified Sensor](https://github.com/adafruit/Adafruit_Sensor)
