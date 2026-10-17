@@ -3,7 +3,7 @@
 
 /**
  * @file CoreScheduler.cpp
- * @brief Starts and monitors the dedicated Core-0 sensor task.
+ * @brief Starts and monitors the sensor task (Core 0; the only core on ESP32-C6).
  */
 
 #include "CoreScheduler.hpp"
@@ -18,7 +18,10 @@
 namespace PoolController {
 
 void CoreScheduler::begin() {
-  // Core 0 = PRO_CPU_NUM (sensor I/O); Core 1 = APP_CPU_NUM (control loop).
+  // Dual-core ESP32 (esp32dev, NORVI): SensorTask on PRO_CPU (Core 0), the
+  // Arduino loop on APP_CPU (Core 1). The ESP32-C6 has a single application
+  // core, so both tasks share it and SensorTask (priority 2) preempts the
+  // loop (priority 1) while it runs; see docs/multicore-architecture.md.
   const BaseType_t core0 = PRO_CPU_NUM;
 
   if (!SensorTask::start(TASK_PRIORITY_SENSOR, TASK_STACK_SENSOR, core0)) {
