@@ -121,16 +121,16 @@ CommandStatus ControllerCommandHandler::execute(
     return CommandStatus::INVALID;
   }
 
-  // Persist everything before touching the runtime: the mapping first, then
-  // the settings. A failed settings write restores the previous mapping so a
-  // batch is either stored completely or not at all.
-  std::uint8_t previousSolar[8]{};
-  std::uint8_t previousPool[8]{};
+  // The sensor mapping and the settings live in separate NVS records. A batch
+  // that changes both could be left half stored by a power loss between the
+  // two writes, so it is rejected; no client sends such a batch.
+  if (plan.mappingChanged && plan.settingsChanged) {
+    LOG_WARN("Controller command: sensor mapping and settings must be sent in separate batches\n");
+    return CommandStatus::INVALID;
+  }
+
+  // Persist before touching the runtime, so a failed write changes nothing.
   if (plan.mappingChanged) {
-    if (!ConfigManager::loadSensorMappingCached(previousSolar, previousPool)) {
-      LOG_ERROR("Controller command: cannot read current sensor mapping\n");
-      return CommandStatus::PERSIST_FAILED;
-    }
     if (!ConfigManager::saveSensorMapping(plan.solarAddress, plan.poolAddress)) {
       LOG_ERROR("Controller command: failed to persist sensor mapping\n");
       return CommandStatus::PERSIST_FAILED;
@@ -149,9 +149,6 @@ CommandStatus ControllerCommandHandler::execute(
       // previous values so NVS matches the unchanged runtime again.
       if (!ConfigManager::save()) {
         LOG_ERROR("Controller command: could not restore previous settings in NVS\n");
-      }
-      if (plan.mappingChanged && !ConfigManager::saveSensorMapping(previousSolar, previousPool)) {
-        LOG_ERROR("Controller command: could not restore previous sensor mapping\n");
       }
       return CommandStatus::PERSIST_FAILED;
     }
