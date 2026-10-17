@@ -26,6 +26,20 @@ DS18B20 conversion is isolated on Core 0.
 | **Core 0** (PRO_CPU) | Sensor I/O | `SensorTask`: DS18B20 conversion/readout and internal ESP32 temperature |
 | **Core 1** (APP_CPU) | Control and stateful I/O | Arduino `loop()`: watchdog, degradation, rules, relays, StatusLED, network/OTA, MQTT serialization, front-panel UI and OLED rendering |
 
+## Board differences
+
+| Board | Cores | SensorTask | Arduino `loop()` |
+| ----- | ----- | ---------- | ---------------- |
+| `esp32dev`, `norvi_ae01_r` (ESP32) | 2 | Core 0, priority 2 | Core 1, priority 1 |
+| `olimex_esp32_c6_evb` (ESP32-C6) | 1 | Core 0, priority 2 | Core 0, priority 1 |
+
+On the ESP32-C6 the pinning is not a second isolated core. The ownership model is unchanged (single
+writer, snapshots), but `SensorTask` preempts the control loop whenever it is runnable. The 750 ms
+conversion is waited out with `vTaskDelay()`, so the loop runs during it; the OneWire transactions
+themselves (bus scan, rescan after failures, readout) do block the loop for their duration. Worst-case
+loop latency on the C6 during DS18B20 recovery, MQTT reconnect and display activity, and the
+watchdog margin, have to be measured on the device; they are part of the hardware test gate.
+
 ## Why this boundary
 
 A 12-bit DS18B20 conversion can take roughly 750 ms. Running it in the Arduino loop stalls rule
