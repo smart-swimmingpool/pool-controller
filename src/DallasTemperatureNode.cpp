@@ -196,11 +196,15 @@ uint8_t DallasTemperatureNode::getDeviceCount() const {
   return count;
 }
 
+void DallasTemperatureNode::copySelectedAddress(DeviceAddress out) const {
+  lockCache();
+  memcpy(out, cachedSelectedAddress_, sizeof(DeviceAddress));
+  unlockCache();
+}
+
 void DallasTemperatureNode::getDeviceAddressString(char *buffer, size_t size) const {
   DeviceAddress addr;
-  lockCache();
-  memcpy(addr, cachedSelectedAddress_, sizeof(DeviceAddress));
-  unlockCache();
+  copySelectedAddress(addr);
   address2String(addr, buffer, size);
 }
 
