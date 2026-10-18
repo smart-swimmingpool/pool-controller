@@ -220,6 +220,7 @@ void test_invalid_record_never_reactivates_legacy_keys() {
   corruptRecord(12, 0x5A);  // payload byte: CRC mismatch
   EXPECT(!ConfigManager::load());
   EXPECT(!ConfigManager::isConfigured());                    // starts like a new device
+  EXPECT(ConfigManager::isRecordInvalid());                  // setup AP stays behind the default login
   EXPECT(ConfigManager::getSettings().tempMaxPool == 28.5);  // default, not the legacy 27.0
   EXPECT(ConfigManager::getWiFi().ssid == "");               // legacy SSID not revived
   EXPECT(!ConfigManager::verifyAdminPassword("new-admin"));
@@ -234,6 +235,13 @@ void test_invalid_record_never_reactivates_legacy_keys() {
   EXPECT(!ConfigManager::load());
   EXPECT(!ConfigManager::isConfigured());
   EXPECT(ConfigManager::getSettings().tempMaxPool == 28.5);
+
+  // Saving a fresh configuration replaces the bad record and ends the lockdown.
+  EXPECT(ConfigManager::isRecordInvalid());
+  EXPECT(ConfigManager::save());
+  EXPECT(!ConfigManager::isRecordInvalid());
+  EXPECT(ConfigManager::load());
+  EXPECT(!ConfigManager::isRecordInvalid());
 }
 
 void test_oversized_record_is_rejected_before_reading() {

@@ -28,6 +28,7 @@ NtpConfig ConfigManager::ntp_;
 ControllerSettings ConfigManager::settings_;
 String ConfigManager::adminPasswordHash_ = "";
 bool ConfigManager::configured_ = false;
+bool ConfigManager::recordInvalid_ = false;
 
 // Default password is "admin" (SHA-256 hash, not a real secret)
 // This hash is intentionally hardcoded for first-time setup
@@ -324,7 +325,8 @@ bool ConfigManager::load() {
       // password changed since, so they are not used. The device starts like a
       // factory-new one instead: defaults in RAM, unconfigured, and the stored
       // record stays untouched until the next save replaces it.
-      LOG_ERROR("✖ Configuration record invalid — starting unconfigured with defaults\n");
+      LOG_ERROR(
+        "✖ Configuration record invalid — starting unconfigured with defaults; setup AP requires the default admin login\n");
       image = ConfigImage{};
       image.adminPasswordHash = kDefaultPasswordHash;
     }
@@ -334,6 +336,7 @@ bool ConfigManager::load() {
     settings_ = image.settings;
     adminPasswordHash_ = image.adminPasswordHash;
     configured_ = image.configured;
+    recordInvalid_ = !valid;
     if (valid) {
       LOG_INFO("✓ Configuration loaded from NVS\n");
     }
@@ -410,6 +413,7 @@ bool ConfigManager::save() {
     return false;
   }
 
+  recordInvalid_ = false;
   LOG_INFO("✓ Configuration saved to NVS\n");
   return true;
 }
@@ -428,6 +432,7 @@ void ConfigManager::reset() {
   settings_ = ControllerSettings{};
   adminPasswordHash_ = kDefaultPasswordHash;  // Reset to default "admin" password
   configured_ = false;
+  recordInvalid_ = false;
 
   LOG_INFO("✓ Configuration reset to factory defaults\n");
 }
