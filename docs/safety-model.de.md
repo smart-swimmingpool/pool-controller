@@ -143,15 +143,32 @@ und das System kann Korrekturmaßnahmen ergreifen.
 - Bei **kritischem Schwellwert** (8 KB freier Heap):
   - Warnung wird protokolliert
   - Graceful-Auto-Reboot wird eingeleitet
-- Bei **Warnschwellwert** (15 KB freier Heap):
+- Bei **Warnschwellwert** (16 KB freier Heap):
   - Warnung wird protokolliert
-  - Kein Neustart — Überwachung läuft weiter
+  - Safe-Mode (Relais aus), solange der Heap unter dem Schwellwert bleibt
+  - Automatischer Neustart, wenn der Heap 5 Minuten lang unter dem Schwellwert bleibt
+
+### Degradation ohne Safe-Mode
+
+Probleme mit WLAN, NTP oder Temperaturfühlern — auch mehrere gleichzeitig — führen **nicht** in den Safe-Mode.
+Die Filterpumpe läuft weiter nach Zeitplan (oder durchgehend, solange die Uhrzeit unbekannt ist); die Solarpumpe
+wird von den Regeln abgeschaltet, wenn die Temperaturwerte ungültig sind.
 
 ### Sensor-Auto-Wiederherstellung
 
-- Fehlerhafter DS18B20-Leseversuch löst schnelles Nachfragen aus (5s statt 300s)
-- Nach 3 erfolgreichen Leseversuchen zurück zum normalen Intervall
-- Verhindert unnötige Warnungen durch kurzzeitige Sensor-Aussetzer
+- Fehlerhafter DS18B20-Leseversuch löst schnelles Nachfragen aus (5s statt Messintervall)
+- Zurück zum normalen Intervall, sobald ein gültiger Messwert vorliegt
+- Plausibilitätsfilter: Werte außerhalb von -55…125 °C gelten als Fehlmessung
+- Der Einschaltwert 85,0 °C (nach einer Spannungsspitze) wird nur akzeptiert, wenn er an einen Messwert
+  nahe 85 °C anschließt. Sonst wird der letzte Wert höchstens 3 Messungen lang gehalten; danach, oder direkt
+  nach einer Fehlmessung, liefert 85,0 °C keinen Wert (zählt aber nicht als Fehlmessung). Wiederholung
+  bestätigt den Wert nie, ein wiederkehrender Brownout kann die Solarpumpe also nicht starten
+- Wählt eine geänderte Sensorzuordnung einen anderen Fühler, wird die Filterhistorie gelöscht und die
+  Temperatur bleibt bis zum ersten gültigen Messwert des neuen Fühlers ungültig
+- Nach 3 Fehlmessungen in Folge wird der OneWire-Bus neu durchsucht, sodass ein wieder angeschlossener
+  oder getauschter Fühler ohne Neustart gefunden wird. Am gemeinsamen NORVI-Bus akzeptiert ein Knoten
+  dabei nur seine eigene Fühleradresse, ein fehlender Solarfühler wird also nie durch den Poolfühler
+  ersetzt; ein getauschter Fühler braucht dort eine neue Sensorzuordnung
 
 ### NTP-Graceful-Degradation
 
