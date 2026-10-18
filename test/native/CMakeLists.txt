@@ -96,6 +96,7 @@ set(TEST_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_controller_snapshot_diagnostics.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_controller_snapshot_store.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_controller_command_queue.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_degradation.cpp
 )
 
 add_executable(test_runner
