@@ -316,9 +316,9 @@ int run_web_runtime_command_tests() {
   PoolController::WebPortal::begin();
   int passed = 0;
   int failed = 0;
-  int (*tests[])() = {test_mode_validation, test_absolute_mode, test_invalid_config_record_keeps_setup_ap_behind_login, test_cycle_mode, test_pump_validation, test_relative_pumps,
-    test_owner_rejection, test_status_codes_are_distinct, test_settings_form_is_one_batch,
-    test_settings_form_rejects_malformed_numbers, test_factory_reset_restarts_only_when_applied,
+  int (*tests[])() = {test_mode_validation, test_absolute_mode, test_invalid_config_record_keeps_setup_ap_behind_login,
+    test_cycle_mode, test_pump_validation, test_relative_pumps, test_owner_rejection, test_status_codes_are_distinct,
+    test_settings_form_is_one_batch, test_settings_form_rejects_malformed_numbers, test_factory_reset_restarts_only_when_applied,
     test_sensor_mapping_is_a_command_batch, test_adapter_does_not_mutate_nodes};
   for (auto test : tests) {
     if (test() == 0) {
