@@ -119,26 +119,27 @@ static int test_low_memory_is_critical() {
   return 0;
 }
 
-static int test_two_failures_are_critical() {
-  test_begin("DegradationManager", "WiFi loss plus sensor fault escalates to CRITICAL");
+static int test_combined_nonmemory_faults_keep_pump_running() {
+  test_begin("DegradationManager", "WiFi loss plus sensor fault stays degraded, not CRITICAL");
   resetDegradationState();
+  poolPumpNode.setSwitch(true);
+  solarPumpNode.setSwitch(false);
   NetworkManager::setWiFiConnected(false);
   DegradationManager::reportSensorStatus("pool-temp", false);
   DegradationManager::reportSensorStatus("solar-temp", true);
   DegradationManager::evaluate();
-  ASSERT_EQ(DegradationManager::getLevel(), DegradationLevel::CRITICAL);
-  ASSERT_TRUE(DegradationManager::isSafe());
+  ASSERT_EQ(DegradationManager::getLevel(), DegradationLevel::NO_SENSOR);
+  ASSERT_TRUE(!DegradationManager::isSafe());
+  ASSERT_TRUE(poolPumpNode.getSwitch());
   return 0;
 }
 
 static int test_critical_deenergizes_relays() {
-  test_begin("DegradationManager", "entering safe mode de-energizes both pumps");
+  test_begin("DegradationManager", "critically low heap de-energizes both pumps");
   resetDegradationState();
   poolPumpNode.setSwitch(true);
   solarPumpNode.setSwitch(true);
-  NetworkManager::setWiFiConnected(false);
-  DegradationManager::reportSensorStatus("pool-temp", false);
-  DegradationManager::reportSensorStatus("solar-temp", true);
+  ESP.setFreeHeapForTest(1000);
   DegradationManager::evaluate();
   ASSERT_EQ(DegradationManager::getLevel(), DegradationLevel::CRITICAL);
   ASSERT_TRUE(!poolPumpNode.getSwitch());
@@ -233,7 +234,7 @@ int run_degradation_manager_tests() {
     test_sensor_fault_is_single_failure,
     test_silent_sensors_treated_as_ok,
     test_low_memory_is_critical,
-    test_two_failures_are_critical,
+    test_combined_nonmemory_faults_keep_pump_running,
     test_critical_deenergizes_relays,
     test_recovery_downgrades_level,
     test_forced_safe_mode_never_downgrades,

@@ -324,17 +324,18 @@ int run_mqttpublisher_tests() {
       missing++;
     }
 
-    // Only "INSTALL" starts the updater; without a release it reports so.
+    // Only INSTALL is allowed, and even that must not download in the MQTT callback.
+    OtaUpdater::begin();
     char firmwareTopic[] = "homeassistant/update/pool-controller/firmware-update/set";
     char invalid[] = "REBOOT";
     MqttPublisher::handleMqttMessage(firmwareTopic, invalid, strlen(invalid), 0, strlen(invalid));
-    const String statusBefore = OtaUpdater::getStatusMessage();
+    const bool invalidRejected = !OtaUpdater::isUpdateRequested();
     char install[] = "INSTALL";
     MqttPublisher::handleMqttMessage(firmwareTopic, install, strlen(install), 0, strlen(install));
-    if (statusBefore != String("No update available") && OtaUpdater::getStatusMessage() == String("No update available")) {
+    if (invalidRejected && OtaUpdater::isUpdateRequested() && OtaUpdater::getStatusMessage() == String("Idle")) {
       test_pass(__FILE__, __LINE__);
     } else {
-      test_fail(__FILE__, __LINE__, "INSTALL did not reach OtaUpdater (or REBOOT did)");
+      test_fail(__FILE__, __LINE__, "REBOOT was accepted or INSTALL started synchronously");
       missing++;
     }
 
@@ -349,6 +350,7 @@ int run_mqttpublisher_tests() {
   // ── Test: Firmware INSTALL only requests the update (#196) ──
   {
     test_begin("MqttPublisher", "firmware INSTALL is deferred to the loop task");
+    OtaUpdater::begin();  // independent of the preceding maintenance-command test
 
     char topic[] = "homeassistant/update/pool-controller/firmware-update/set";
     char payload[] = "INSTALL";
