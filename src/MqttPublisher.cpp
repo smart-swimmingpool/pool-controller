@@ -1055,8 +1055,8 @@ void MqttPublisher::handleMqttMessage(const char *topic, const char *payload, si
     return;
   }
 
-  LOG_INFO("MQTT: Firmware update triggered from Home Assistant\n");
-  OtaUpdater::startUpdate();
+  LOG_INFO("MQTT: Firmware update requested from Home Assistant\n");
+  OtaUpdater::requestUpdate();
 }
 
 }  // namespace PoolController
