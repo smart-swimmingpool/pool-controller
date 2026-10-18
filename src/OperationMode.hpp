@@ -41,6 +41,21 @@ inline const char *toString(OperationMode mode) noexcept {
   return "auto";
 }
 
+/** @brief Mode reached by one "cycle" step: auto → manual → boost → timer → auto. */
+inline OperationMode nextOperationMode(OperationMode current) noexcept {
+  switch (current) {
+  case OperationMode::AUTO:
+    return OperationMode::MANUAL;
+  case OperationMode::MANUAL:
+    return OperationMode::BOOST;
+  case OperationMode::BOOST:
+    return OperationMode::TIMER;
+  case OperationMode::TIMER:
+    return OperationMode::AUTO;
+  }
+  return OperationMode::AUTO;
+}
+
 /**
  * @brief Parse an external operation-mode value without allocating memory.
  * @return true when @p value contains a known mode.

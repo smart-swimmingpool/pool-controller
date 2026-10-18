@@ -46,8 +46,13 @@ jobs:
         uses: ./.github/actions/setup-platformio
         with:
           python-version: "3.11"
+      # Cached objects can make PlatformIO finish without invoking a compiler.
+      # CodeQL's C++ extractor needs an actual compilation during this job.
+      - name: Clean cached PlatformIO objects for CodeQL
+        run: platformio run --environment norvi_ae01_r --target clean
+
       - name: Run PlatformIO
-        run: platformio run
+        run: platformio run --environment norvi_ae01_r
 
       # NOTE: For compiled languages (cpp), `paths-ignore` in a CodeQL config
       # file does NOT exclude third-party build dependencies — the build

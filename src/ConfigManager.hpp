@@ -74,6 +74,13 @@ public:
   static bool save();
   /** @brief Reset config to factory defaults and save. */
   static void reset();
+  /**
+   * @brief Write factory defaults to NVS without clearing it first.
+   * On a write error the previous in-RAM configuration is restored, so a
+   * failed reset leaves the running device unchanged.
+   * @return true when the defaults were persisted.
+   */
+  static bool resetToDefaults();
 
   static WiFiConfig &getWiFi() { return wifi_; }
   static MqttConfig &getMqtt() { return mqtt_; }
@@ -86,12 +93,28 @@ public:
 
   static bool isConfigured() { return configured_; }
   static void setConfigured(bool configured) { configured_ = configured; }
+  /** @brief True when load() found a stored record it could not trust.
+   *  The device then runs on defaults and the setup AP stays behind the
+   *  default admin login instead of being open. Cleared by a successful save() or reset(). */
+  static bool isRecordInvalid() { return recordInvalid_; }
 
   // ── Sensor Address Mapping ──
-  /** @brief Save DS18B20 sensor address mapping to NVS. */
-  static void saveSensorMapping(const uint8_t solarAddr[8], const uint8_t poolAddr[8]);
-  /** @brief Load DS18B20 sensor address mapping from NVS. @return true if both addresses loaded. */
+  /** @brief Save DS18B20 sensor address mapping to NVS. @return true when both roles were written. */
+  static bool saveSensorMapping(const uint8_t solarAddr[8], const uint8_t poolAddr[8]);
+  /** @brief Load DS18B20 mappings from NVS. Missing roles remain zeroed.
+   *  @return true if at least one role mapping was loaded.
+   */
   static bool loadSensorMapping(uint8_t solarAddr[8], uint8_t poolAddr[8]);
+  /** @brief Load the sensor mapping through a process-wide cache.
+   *
+   * The first successful call reads NVS; subsequent calls serve the cached
+   * pair. Transient NVS-open failures are not cached and are retried later.
+   * The cache is invalidated by saveSensorMapping() so hot loops never touch
+   * NVS for unchanged mappings.
+   * @return true when NVS was read successfully or a valid cache exists;
+   *         false on a transient read failure. Empty mappings are successful.
+   */
+  static bool loadSensorMappingCached(uint8_t solarAddr[8], uint8_t poolAddr[8]);
 
   // ── Boot Version Tracking ──
   /// Call once after loading config to log OTA transition status.
@@ -104,6 +127,7 @@ private:
   static ControllerSettings settings_;
   static String adminPasswordHash_;
   static bool configured_;
+  static bool recordInvalid_;
 };
 
 }  // namespace PoolController

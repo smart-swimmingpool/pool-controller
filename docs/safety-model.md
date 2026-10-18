@@ -90,8 +90,14 @@ Invalid configurations are **rejected** and the previous value is preserved.
 
 ### NVS CRC Protection
 
-Configuration stored in ESP32 NVS includes a CRC32 checksum. If the
-checksum doesn't match on boot, the configuration is reset to factory defaults.
+The configuration is stored in ESP32 NVS as a single versioned record with a
+CRC32 checksum. It is written in one NVS operation, so a power loss during a
+save keeps either the old or the new configuration, never a mix. If the record
+fails its size, checksum or version check on boot, it is never applied and the
+per-key configuration of older firmware is not used either, because it may
+hold credentials changed since. The device starts unconfigured with factory
+defaults, like a new device. The per-key layout is read only when no record
+exists yet, to migrate devices from older firmware.
 
 ### Type Safety
 
@@ -132,15 +138,32 @@ corrective action.
 - At **critical threshold** (8 KB free heap):
   - Warning logged
   - Graceful auto-reboot initiated
-- At **warning threshold** (15 KB free heap):
+- At **warning threshold** (16 KB free heap):
   - Warning logged
-  - No reboot — system continues monitoring
+  - Safe mode (relays off) while the heap stays below the threshold
+  - Auto-reboot if the heap stays below the threshold for 5 minutes
+
+### Degradation Without Safe Mode
+
+WiFi, NTP or temperature sensor problems — also several at the same time — do **not** enter safe mode.
+The filter pump keeps running on its schedule (or continuously while the time is unknown); the solar pump
+is switched off by the rules when temperature readings are invalid.
 
 ### Sensor Auto-Recovery
 
-- DS18B20 read failure triggers fast re-polling (5s instead of 300s)
-- After 3 consecutive successful reads, back to normal interval
-- Prevents unnecessary alerts from transient sensor glitches
+- DS18B20 read failure triggers fast re-polling (5s instead of the measurement interval)
+- Back to the normal interval as soon as a valid reading arrives
+- Plausibility filter: readings outside -55…125 °C are treated as failures
+- The 85.0 °C power-on value (after a supply glitch) is only accepted when it continues a reading
+  close to 85 °C. Otherwise the last temperature is kept for at most 3 readings; after that, or
+  right after a failed reading, 85.0 °C yields no temperature (without counting as a failed
+  reading). Repetition never confirms it, so a recurring brownout cannot start the solar pump
+- After a sensor-mapping change selects a different probe, the filter history is cleared and the
+  temperature stays invalid until the new probe delivers its first valid reading
+- After 3 consecutive failed readings the OneWire bus is rescanned, so a reconnected or replaced
+  sensor is found again without a reboot. On the shared NORVI bus a node only accepts its own sensor
+  address again, so a missing solar probe is never replaced by the pool probe; a replaced probe
+  there needs a new sensor mapping
 
 ### NTP Graceful Degradation
 
@@ -178,7 +201,7 @@ Three-stage fallback for time synchronization:
 | ----------------- | ---------------------- | --------------- | ---------------------------- |
 | ESP32 crash       | Relays off, pumps stop | Hardware        | Failsafe relay behavior (NO) |
 | Software hang     | No relay updates       | WDT             | 30s reboot                   |
-| Config corruption | Invalid settings       | Firmware        | NVS CRC → factory reset      |
+| Config corruption | Invalid settings       | Firmware        | NVS CRC → record ignored     |
 | Repeated crashes  | Unsafe state           | Boot-loop       | Safe Mode → relays OFF       |
 | Heap exhaustion   | Unpredictable          | Memory monitor  | Graceful reboot              |
 | Sensor failure    | No temperature data    | Sensor recovery | Fast re-polling              |

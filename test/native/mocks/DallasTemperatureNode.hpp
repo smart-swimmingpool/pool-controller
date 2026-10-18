@@ -1,34 +1,67 @@
 #pragma once
 #include "Arduino.h"
 #include "DallasTemperature.h"
+#include <array>
+#include <cstring>
+#include "SensorSlots.hpp"
 
 class DallasTemperatureNode {
 public:
-  DallasTemperatureNode(const char *id, const char *name, uint8_t pin, int interval = 300)
-    : _id(id), _name(name), _pin(pin), _measurementInterval(interval) {}
-  DallasTemperatureNode(const char *id, const char *name, DallasTemperature*, uint8_t, int = 300)
-    : _id(id), _name(name), _pin(0), _measurementInterval(300) {}
+  DallasTemperatureNode(PoolController::SensorId, const char *id, const char *name, uint8_t pin, int interval = 300)
+      : _id(id), _name(name), _pin(pin), _measurementInterval(interval) {}
+  DallasTemperatureNode(PoolController::SensorId, const char *id, const char *name, DallasTemperature *, uint8_t, int = 300)
+      : _id(id), _name(name), _pin(0), _measurementInterval(300) {}
 
   void begin() {}
-  void loop() {}
+  void beginMeasurement() {}
+  void finishMeasurement() {}
 
   float getTemperature() const { return _temperature; }
   void setTemperature(float t) { _temperature = t; }
   bool isSensorFound() const { return _sensorFound; }
   void setSensorFound(bool f) { _sensorFound = f; }
-  uint8_t getDeviceCount() const { return 0; }
+  uint8_t getDeviceCount() const { return _detectedCount; }
   const char *getId() const { return _id; }
   uint8_t getPin() const { return _pin; }
   unsigned long getMeasurementInterval() const { return _measurementInterval; }
   void setMeasurementInterval(unsigned long interval) { _measurementInterval = interval; }
 
-  void setAddressFilter(const DeviceAddress) {}
-  void clearAddressFilter() {}
-  bool hasAddressFilter() const { return false; }
+  void setAddressFilter(const DeviceAddress address) {
+    std::memcpy(_filterAddress, address, sizeof(_filterAddress));
+    _hasFilter = true;
+  }
+  void clearAddressFilter() {
+    std::memset(_filterAddress, 0, sizeof(_filterAddress));
+    _hasFilter = false;
+  }
+  bool hasAddressFilter() const { return _hasFilter; }
+  const uint8_t *getDeviceAddress() const { return _filterAddress; }
+  void copySelectedAddress(DeviceAddress out) const { std::memcpy(out, _filterAddress, sizeof(_filterAddress)); }
 
-  void getDeviceAddressString(char *buf, size_t size) const { snprintf(buf, size, "NONE"); }
-  bool getDetectedDeviceAddress(uint8_t, DeviceAddress) const { return false; }
-  float getDetectedDeviceTemperature(uint8_t) const { return 0.0f; }
+  void getDeviceAddressString(char *buf, size_t size) const {
+    if (!_hasFilter) {
+      snprintf(buf, size, "NONE");
+      return;
+    }
+    snprintf(buf, size, "%02X%02X%02X%02X%02X%02X%02X%02X", _filterAddress[0], _filterAddress[1], _filterAddress[2],
+      _filterAddress[3], _filterAddress[4], _filterAddress[5], _filterAddress[6], _filterAddress[7]);
+  }
+  bool getDetectedDeviceAddress(uint8_t index, DeviceAddress address) const {
+    if (index >= _detectedCount) return false;
+    std::memcpy(address, _detectedAddresses[index].data(), 8);
+    return true;
+  }
+  float getDetectedDeviceTemperature(uint8_t index) const {
+    ++_detectedTemperatureReadCount;
+    return index < _detectedCount ? _detectedTemperatures[index] : NAN;
+  }
+  uint32_t getDetectedTemperatureReadCount() const { return _detectedTemperatureReadCount; }
+  void setDetectedDevice(uint8_t index, const DeviceAddress address, float temperature) {
+    if (index >= _detectedAddresses.size()) return;
+    std::memcpy(_detectedAddresses[index].data(), address, 8);
+    _detectedTemperatures[index] = temperature;
+    if (_detectedCount <= index) _detectedCount = index + 1;
+  }
 
 private:
   const char *_id;
@@ -38,4 +71,10 @@ private:
   unsigned long _lastMeasurement = 0;
   bool _sensorFound = false;
   float _temperature = 25.0f;
+  bool _hasFilter = false;
+  DeviceAddress _filterAddress{};
+  std::array<std::array<uint8_t, 8>, 24> _detectedAddresses{};
+  std::array<float, 24> _detectedTemperatures{};
+  uint8_t _detectedCount = 0;
+  mutable uint32_t _detectedTemperatureReadCount = 0;
 };

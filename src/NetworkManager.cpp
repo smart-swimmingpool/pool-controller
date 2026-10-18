@@ -12,6 +12,7 @@
 #include <esp_wifi.h>
 #include <esp_wps.h>
 #include <ESPmDNS.h>
+#include <espMqttClientAsync.h>
 
 #include "ConfigManager.hpp"
 #include "WpsProvisioner.hpp"
@@ -19,7 +20,11 @@
 
 namespace PoolController {
 
-AsyncMqttClient NetworkManager::mqttClient_;
+namespace {
+// espMqttClient serialises its internal state with a mutex, so publish() is
+// safe from the loop task while callbacks run on the AsyncTCP task.
+espMqttClientAsync mqttClient_;
+}  // namespace
 
 NetworkManager::MqttMessageCallback NetworkManager::mqttCallback_ = nullptr;
 
@@ -47,7 +52,7 @@ bool NetworkManager::begin() {
     // Publish online to LWT topic immediately (async, non-blocking)
     mqttClient_.publish("homeassistant/sensor/pool-controller/availability", 1, true, "online");
   });
-  mqttClient_.onDisconnect([](AsyncMqttClientDisconnectReason reason) {
+  mqttClient_.onDisconnect([](espMqttClientTypes::DisconnectReason reason) {
     LOG_ERROR("✖ MQTT disconnected, reason=%d\n", static_cast<int>(reason));
     LogCapture::logEvent("MQTT_DISCONNECTED", "MQTT disconnected, reason %d", static_cast<int>(reason));
   });
@@ -183,7 +188,7 @@ void NetworkManager::connectMqtt() {
     return;
   }
 
-  // AsyncMqttClient remembers previous config; re-apply for safety
+  // The client keeps the host pointer; ConfigManager owns the string. Re-apply for safety.
   mqttClient_.setServer(config.host.c_str(), config.port);
 
   // Generate standard unique client ID (static to survive async CONNECT packet)
@@ -201,8 +206,7 @@ void NetworkManager::connectMqtt() {
   // LWT — broker publishes "offline" if we disconnect unexpectedly
   mqttClient_.setWill("homeassistant/sensor/pool-controller/availability", 1, true, "offline");
 
-  // onMessage callback is registered once in setMqttCallback() — do NOT re-add here
-  // to avoid accumulating duplicates in AsyncMqttClient's internal vector.
+  // onMessage callback is registered once in setMqttCallback() — do NOT re-add here.
 
   // Initiate async connection
   mqttClient_.connect();
@@ -224,8 +228,14 @@ bool NetworkManager::subscribe(const char *topic) {
 
 void NetworkManager::setMqttCallback(MqttMessageCallback callback) {
   mqttCallback_ = callback;
-  // AsyncMqttClient onMessage is persistent (not connection-bound)
-  mqttClient_.onMessage(callback);
+  // onMessage is persistent (not connection-bound) and replaces any earlier handler
+  mqttClient_.onMessage([](const espMqttClientTypes::MessageProperties &properties, const char *topic, const uint8_t *payload,
+                          size_t len, size_t index, size_t total) {
+    (void)properties;
+    if (mqttCallback_) {
+      mqttCallback_(topic, reinterpret_cast<const char *>(payload), len, index, total);
+    }
+  });
 }
 
 void NetworkManager::publishOffline() {

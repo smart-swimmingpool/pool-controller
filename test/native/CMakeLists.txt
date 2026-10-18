@@ -32,15 +32,16 @@ include_directories(
 )
 
 # ── Wrappers ──────────────────────────────────────────────────────────────
-# WebPortal, MqttPublisher, Timer, and CalibrationManager include class
-# headers whose mock layout differs from production.  Compiling from
-# wrappers/ avoids GCC's "current-file-directory first" rule for
-# #include "..." so the mock headers take effect.
-file(COPY ${PROJ_ROOT}/src/WebPortal.cpp     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/wrappers)
+# Sources that include production class headers are compiled from wrappers/
+# so mocks/ remains first in the include search path.
+file(COPY ${PROJ_ROOT}/src/WebPortal.cpp DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/wrappers)
 file(COPY ${PROJ_ROOT}/src/MqttPublisher.cpp DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/wrappers)
-file(COPY ${PROJ_ROOT}/src/Timer.cpp         DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/wrappers)
+file(COPY ${PROJ_ROOT}/src/Timer.cpp DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/wrappers)
 file(COPY ${PROJ_ROOT}/src/CalibrationManager.cpp DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/wrappers)
 file(COPY ${PROJ_ROOT}/src/NorviButtonHandler.cpp DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/wrappers)
+file(COPY ${PROJ_ROOT}/src/ControllerCommandHandler.cpp DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/wrappers)
+file(COPY ${PROJ_ROOT}/src/MqttRuntimeCommandAdapter.cpp DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/wrappers)
+file(COPY ${PROJ_ROOT}/src/ControllerSnapshotPublisher.cpp DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/wrappers)
 
 set(WRAPPER_SOURCES
   ${CMAKE_CURRENT_BINARY_DIR}/wrappers/WebPortal.cpp
@@ -48,11 +49,12 @@ set(WRAPPER_SOURCES
   ${CMAKE_CURRENT_BINARY_DIR}/wrappers/Timer.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/wrappers/CalibrationManager.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/wrappers/NorviButtonHandler.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/wrappers/ControllerCommandHandler.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/wrappers/MqttRuntimeCommandAdapter.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/wrappers/ControllerSnapshotPublisher.cpp
 )
 
 # ── Service classes ───────────────────────────────────────────────────────
-# Compiled from src/ directly (their own headers are in src/, so they find
-# the production header first — only Arduino-level mocks are needed).
 set(SERVICE_SOURCES
   ${PROJ_ROOT}/src/StateManager.cpp
   ${PROJ_ROOT}/src/DegradationManager.cpp
@@ -60,26 +62,28 @@ set(SERVICE_SOURCES
   ${PROJ_ROOT}/src/OtaUpdater.cpp
   ${PROJ_ROOT}/src/LogCapture.cpp
   ${PROJ_ROOT}/src/LocalSettingsMenu.cpp
-${PROJ_ROOT}/src/Ky040Decoder.cpp
+  ${PROJ_ROOT}/src/Ky040Decoder.cpp
   ${PROJ_ROOT}/src/OlimexEncoderHandler.cpp
+  ${PROJ_ROOT}/src/SensorSlots.cpp
 )
 
-# Mock sources (compiled once)
 set(MOCK_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/mocks/captures.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mocks/NetworkManager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mocks/ConfigManager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mocks/globals.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mocks/stubs.cpp
+  ${PROJ_ROOT}/src/CoreScheduler.cpp
 )
 
-# Test sources
 set(TEST_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_main.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_rules.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_config_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_webportal_json.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_web_runtime_commands.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mqttpublisher.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mqtt_command_queue.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_security.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_state_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_timer.cpp
@@ -88,11 +92,23 @@ set(TEST_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_local_settings_menu.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_ky040_decoder.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_calibration_manager.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mqtt_command_queue.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_ota_download_guard.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_ota_download_session.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_temperature_filter.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dallas_address_lookup.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_sensor_slots.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_sensor_cycle.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_core_scheduler.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_degradation_manager.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_ota_updater.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_controller_contracts.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_controller_snapshot_diagnostics.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_controller_snapshot_store.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_controller_command_queue.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_controller_command_handler.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mqtt_runtime_command_adapter.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_controller_snapshot_publisher.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_degradation.cpp
 )
 
 add_executable(test_runner
@@ -108,8 +124,5 @@ target_include_directories(test_runner PRIVATE
   ${CMAKE_CURRENT_BINARY_DIR}/wrappers
 )
 
-# Link gcov
 target_link_libraries(test_runner gcov)
-
-# Test command
 add_test(NAME pool_controller_test COMMAND test_runner)
