@@ -89,6 +89,8 @@ set(TEST_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_calibration_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_ota_download_guard.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_ota_download_session.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_temperature_filter.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dallas_address_lookup.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_sensor_slots.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_sensor_cycle.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_core_scheduler.cpp
@@ -98,6 +100,7 @@ set(TEST_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_controller_snapshot_diagnostics.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_controller_snapshot_store.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_controller_command_queue.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_degradation.cpp
 )
 
 add_executable(test_runner
