@@ -63,3 +63,15 @@ jobs:
 
       - name: Build PlatformIO Project
         run: platformio run --environment ${{ matrix.environment }}
+
+      - name: Publish test firmware binaries
+        if: github.event_name == 'pull_request' && github.head_ref == 'test/integration-2026-10-18'
+        uses: actions/upload-artifact@v4
+        with:
+          name: pool-controller-test-${{ matrix.environment }}
+          path: |
+            .pio/build/${{ matrix.environment }}/firmware.bin
+            .pio/build/${{ matrix.environment }}/bootloader.bin
+            .pio/build/${{ matrix.environment }}/partitions.bin
+          if-no-files-found: error
+          retention-days: 14
