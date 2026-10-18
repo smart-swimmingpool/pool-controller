@@ -49,6 +49,8 @@ struct NtpConfig {
 class ConfigManager {
 public:
   static bool isConfigured() { return _configured; }
+  static bool isRecordInvalid() { return _recordInvalid; }
+  static bool _recordInvalid;  // test hook
   static void setConfigured(bool configured) { _configured = configured; }
   static bool begin() { return true; }
   static bool load() { return true; }
