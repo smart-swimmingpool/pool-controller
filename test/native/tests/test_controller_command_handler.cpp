@@ -506,6 +506,25 @@ static int test_timer_persist_failure_is_reported_and_keeps_runtime() {
   return 0;
 }
 
+static int test_mode_persist_failure_is_reported_and_keeps_runtime() {
+  test_begin("ControllerCommandHandler", "a failed mode write reports PERSIST_FAILED and keeps the previous mode");
+  HandlerFixture fixture;
+  const String before = fixture.operation.getMode();
+
+  ControllerCommand command{};
+  command.type = ControllerCommandType::SET_MODE;
+  command.mode = before == "manual" ? OperationMode::AUTO : OperationMode::MANUAL;
+  Preferences::s_failingPutKeys.insert("opmode");
+  const CommandStatus failed = fixture.handler.execute(command);
+  Preferences::s_failingPutKeys.clear();
+  ASSERT_EQ(failed, CommandStatus::PERSIST_FAILED);
+  ASSERT_TRUE(fixture.operation.getMode() == before);
+
+  ASSERT_EQ(fixture.handler.execute(command), CommandStatus::APPLIED);
+  ASSERT_TRUE(fixture.operation.getMode() != before);
+  return 0;
+}
+
 static int test_factory_reset_keeps_relay_state_when_save_fails() {
   test_begin("ControllerCommandHandler", "factory reset clears relay/mode NVS only after the defaults were saved");
   HandlerFixture fixture;
@@ -608,9 +627,9 @@ int run_controller_command_handler_tests() {
     test_factory_reset_owns_runtime_reset_mutation, test_status_separates_invalid_rejected_and_persist_failures,
     test_batch_is_all_or_nothing, test_persist_failure_rolls_back_every_setting_kind, test_enter_manual_toggle_is_atomic,
     test_time_loss_bounds_can_move_together, test_time_loss_runtime_follows_validated_pair_in_any_order,
-    test_timer_persist_failure_is_reported_and_keeps_runtime, test_factory_reset_keeps_relay_state_when_save_fails,
-    test_sensor_mapping_persist_failure_leaves_runtime_unchanged, test_mixed_mapping_and_settings_batch_is_rejected,
-    test_factory_reset_failure_keeps_runtime_configuration};
+    test_timer_persist_failure_is_reported_and_keeps_runtime, test_mode_persist_failure_is_reported_and_keeps_runtime,
+    test_factory_reset_keeps_relay_state_when_save_fails, test_sensor_mapping_persist_failure_leaves_runtime_unchanged,
+    test_mixed_mapping_and_settings_batch_is_rejected, test_factory_reset_failure_keeps_runtime_configuration};
   for (auto test : tests) {
     if (test() == 0) {
       ++passed;

@@ -68,6 +68,11 @@ bool persistTimer(const TimerSetting &timer) {
   return ok;
 }
 
+/** @brief Writes the legacy mode key that boot reads back after the settings record. */
+bool persistMode(const String &mode) {
+  return StateManager::saveString("opmode", mode);
+}
+
 bool isValidTime(const ControllerCommand &command) {
   return command.hour <= 23 && command.minute <= 59;
 }
@@ -157,6 +162,17 @@ CommandStatus ControllerCommandHandler::execute(
     }
     return CommandStatus::PERSIST_FAILED;
   }
+  const String previousMode = dependencies_.operationMode.getMode();
+  if (plan.modeChanged && !persistMode(toString(plan.mode))) {
+    LOG_ERROR("Controller command: failed to persist operation mode\n");
+    if (!persistMode(previousMode)) {
+      LOG_ERROR("Controller command: could not restore the previous mode in NVS\n");
+    }
+    if (plan.timerChanged && !persistTimer(previousTimer)) {
+      LOG_ERROR("Controller command: could not restore the previous timer in NVS\n");
+    }
+    return CommandStatus::PERSIST_FAILED;
+  }
   if (plan.settingsChanged) {
     const Settings previousSettings = liveSettings;
     const NtpSettings previousNtp = liveNtp;
@@ -173,6 +189,9 @@ CommandStatus ControllerCommandHandler::execute(
       }
       if (plan.timerChanged && !persistTimer(previousTimer)) {
         LOG_ERROR("Controller command: could not restore the previous timer in NVS\n");
+      }
+      if (plan.modeChanged && !persistMode(previousMode)) {
+        LOG_ERROR("Controller command: could not restore the previous mode in NVS\n");
       }
       return CommandStatus::PERSIST_FAILED;
     }

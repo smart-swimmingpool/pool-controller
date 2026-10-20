@@ -278,7 +278,7 @@ void test_mapping_is_written_as_one_record() {
 }
 
 void test_legacy_mapping_keys_are_migrated() {
-  section("legacy per-role keys are read and replaced by the record");
+  section("legacy per-role keys are read and kept in step with the record");
   resetStore();
   {
     Preferences prefs;
@@ -297,8 +297,12 @@ void test_legacy_mapping_keys_are_migrated() {
   EXPECT(ConfigManager::saveSensorMapping(kSolarB, kPoolB));
   Preferences prefs;
   prefs.begin("ds18b20", true);
-  EXPECT(!prefs.isKey("solar_adr"));
-  EXPECT(!prefs.isKey("pool_adr"));
+  uint8_t legacy[8];
+  // Legacy keys mirror the record so a firmware rollback keeps the mapping.
+  EXPECT(prefs.getBytes("solar_adr", legacy, 8) == 8);
+  EXPECT(memcmp(legacy, kSolarB, 8) == 0);
+  EXPECT(prefs.getBytes("pool_adr", legacy, 8) == 8);
+  EXPECT(memcmp(legacy, kPoolB, 8) == 0);
   prefs.end();
   EXPECT(ConfigManager::loadSensorMapping(solar, pool));
   EXPECT(memcmp(solar, kSolarB, 8) == 0);

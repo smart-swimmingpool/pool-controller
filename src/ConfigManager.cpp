@@ -577,9 +577,11 @@ bool ConfigManager::saveSensorMapping(const uint8_t solarAddr[8], const uint8_t 
   memcpy(record + 8, poolAddr, 8);
   const bool written = prefs.putBytes(kSensorMappingKey, record, sizeof(record)) == sizeof(record);
   if (written) {
-    // The record takes precedence; dropping the legacy keys only tidies up.
-    prefs.remove("solar_adr");
-    prefs.remove("pool_adr");
+    // The record takes precedence. The legacy per-role keys stay in step so a
+    // rollback to firmware that only reads them still sees the current pair.
+    // A failed legacy write is harmless here because the record wins.
+    prefs.putBytes("solar_adr", solarAddr, 8);
+    prefs.putBytes("pool_adr", poolAddr, 8);
   }
   prefs.end();
   if (!written) {
