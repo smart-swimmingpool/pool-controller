@@ -1243,16 +1243,15 @@ void WebPortal::apiUpdateInstall() {
     return;
   }
 
-  if (OtaUpdater::isUpdateInProgress()) {
+  if (OtaUpdater::isUpdateInProgress() || OtaUpdater::isUpdateRequested()) {
     server_.send(409, "application/json", "{\"status\":\"error\",\"message\":\"Already installing\"}");
     return;
   }
 
-  // Send immediate response before update starts
+  // Same path as the MQTT install command: OtaUpdater::loop() starts the
+  // update on its next iteration and then streams the firmware.
+  OtaUpdater::requestUpdate();
   server_.send(200, "application/json", "{\"status\":\"started\"}");
-
-  OtaUpdater::startUpdate();
-  // If we return here, the update failed (success reboots)
 }
 
 // ═══════════════════════════════════════════════════════════════════════
