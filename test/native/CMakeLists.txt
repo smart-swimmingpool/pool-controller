@@ -92,6 +92,8 @@ set(TEST_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_local_settings_menu.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_ky040_decoder.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_calibration_manager.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_temperature_filter.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dallas_address_lookup.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_sensor_slots.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_sensor_cycle.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_core_scheduler.cpp
@@ -104,6 +106,7 @@ set(TEST_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_controller_command_handler.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_mqtt_runtime_command_adapter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_controller_snapshot_publisher.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_degradation.cpp
 )
 
 add_executable(test_runner
