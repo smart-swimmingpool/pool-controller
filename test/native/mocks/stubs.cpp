@@ -27,7 +27,8 @@
 extern "C" size_t strlcat(char *dst, const char *src, size_t siz) {
   size_t dlen = strlen(dst);
   size_t slen = strlen(src);
-  if (dlen >= siz) return siz + slen;
+  if (dlen >= siz)
+    return siz + slen;
   size_t n = siz - dlen - 1;
   strncat(dst + dlen, src, n);
   dst[dlen + (n < slen ? n : slen)] = '\0';
@@ -83,13 +84,21 @@ time_t getLastValidSyncTime() {
 bool forceNtpUpdate() {
   return true;
 }
-void setTimeDegradationGreenHours(uint8_t) {}
-uint8_t getTimeDegradationGreenHours() {
-  return 1;
+// Mirrors the clamping of the real setters (red must stay above green).
+static uint8_t g_greenMaxHours = 1;
+static uint8_t g_redAfterHours = 24;
+void setTimeDegradationGreenHours(uint8_t hours) {
+  g_greenMaxHours = (hours > 0) ? hours : 1;
 }
-void setTimeDegradationRedHours(uint8_t) {}
+uint8_t getTimeDegradationGreenHours() {
+  return g_greenMaxHours;
+}
+void setTimeDegradationRedHours(uint8_t hours) {
+  uint8_t minRed = g_greenMaxHours + 1;
+  g_redAfterHours = (hours >= minRed && hours <= 72) ? hours : (minRed < 72 ? minRed : 72);
+}
 uint8_t getTimeDegradationRedHours() {
-  return 24;
+  return g_redAfterHours;
 }
 
 // Controllable mock clock for timer-window tests. Defaults to epoch 0
@@ -110,8 +119,16 @@ time_t getTimeFor(int tzIndex, TimeChangeRule **tcr) {
 String getTimeInfoFor(int) {
   return String("UTC");
 }
+namespace {
+TimeDegradation g_mockTimeDegradation = TimeDegradation::GREEN;
+}
+
 TimeDegradation getTimeDegradation() {
-  return TimeDegradation::GREEN;
+  return g_mockTimeDegradation;
+}
+
+void setTimeDegradationStateForTest(TimeDegradation state) {
+  g_mockTimeDegradation = state;
 }
 void setTimezoneIndex(int) {}
 void timeClientSetup(const char *) {}

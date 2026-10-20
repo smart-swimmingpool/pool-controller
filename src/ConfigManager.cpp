@@ -9,6 +9,8 @@
 
 #include "ConfigManager.hpp"
 
+#include <cstring>
+
 #include <Preferences.h>
 #include <mbedtls/md.h>
 
@@ -132,6 +134,18 @@ bool ConfigManager::load() {
   return true;
 }
 
+// Preferences::putString() returns the stored length, so 0 means a failure only
+// for a non-empty value. An empty string returns 0 on success and on failure,
+// so it is verified by reading it back: a failed write leaves the old value
+// (or the sentinel default) behind.
+static bool putStringChecked(Preferences &prefs, const char *key, const String &value) {
+  const size_t written = prefs.putString(key, value);
+  if (value.length() > 0) {
+    return written == value.length();
+  }
+  return prefs.getString(key, "\x01") == value;
+}
+
 bool ConfigManager::save() {
   Preferences prefs;
   if (!prefs.begin(kNvsNamespace, false)) {  // read-write mode
@@ -139,40 +153,48 @@ bool ConfigManager::save() {
     return false;
   }
 
-  prefs.putString(kWifiSsid, wifi_.ssid);
-  prefs.putString(kWifiPass, wifi_.password);
+  // Every key is written even after a failure, so a retry or rollback rewrites
+  // the whole namespace; the result reports whether all writes succeeded.
+  bool ok = true;
+  ok = putStringChecked(prefs, kWifiSsid, wifi_.ssid) && ok;
+  ok = putStringChecked(prefs, kWifiPass, wifi_.password) && ok;
 
-  prefs.putString(kMqttHost, mqtt_.host);
-  prefs.putUInt(kMqttPort, mqtt_.port);
-  prefs.putString(kMqttUser, mqtt_.username);
-  prefs.putString(kMqttPass, mqtt_.password);
+  ok = putStringChecked(prefs, kMqttHost, mqtt_.host) && ok;
+  ok = prefs.putUInt(kMqttPort, mqtt_.port) != 0 && ok;
+  ok = putStringChecked(prefs, kMqttUser, mqtt_.username) && ok;
+  ok = putStringChecked(prefs, kMqttPass, mqtt_.password) && ok;
 
-  prefs.putString(kNtpServer, ntp_.server);
-  prefs.putLong(kNtpTz, ntp_.timezone);
+  ok = putStringChecked(prefs, kNtpServer, ntp_.server) && ok;
+  ok = prefs.putLong(kNtpTz, ntp_.timezone) != 0 && ok;
 
-  prefs.putLong(kSetInterval, settings_.loopInterval);
-  prefs.putDouble(kSetMaxPool, settings_.tempMaxPool);
-  prefs.putDouble(kSetMinSolar, settings_.tempMinSolar);
-  prefs.putDouble(kSetHyst, settings_.tempHysteresis);
-  prefs.putString(kSetOpMode, settings_.opMode);
-  prefs.putInt(kSetTzIdx, settings_.timezoneIndex);
-  prefs.putUChar(kSetGreen, settings_.timeLossGreenHours);
-  prefs.putUChar(kSetRed, settings_.timeLossRedHours);
-  prefs.putDouble(kSetCircThresh, settings_.tempCircThreshold);
-  prefs.putUShort(kSetCircFactor, settings_.tempCircFactor);
-  prefs.putUShort(kSetCircMax, settings_.tempCircMaxRuntime);
-  prefs.putUShort(kSetBtn1Min, settings_.btn1Min);
-  prefs.putUShort(kSetBtn1Max, settings_.btn1Max);
-  prefs.putUShort(kSetBtn2Min, settings_.btn2Min);
-  prefs.putUShort(kSetBtn2Max, settings_.btn2Max);
-  prefs.putUShort(kSetBtn3Min, settings_.btn3Min);
-  prefs.putUShort(kSetBtn3Max, settings_.btn3Max);
-  prefs.putUShort(kSetBtnNoPress, settings_.btnNoPress);
+  ok = prefs.putLong(kSetInterval, settings_.loopInterval) != 0 && ok;
+  ok = prefs.putDouble(kSetMaxPool, settings_.tempMaxPool) != 0 && ok;
+  ok = prefs.putDouble(kSetMinSolar, settings_.tempMinSolar) != 0 && ok;
+  ok = prefs.putDouble(kSetHyst, settings_.tempHysteresis) != 0 && ok;
+  ok = putStringChecked(prefs, kSetOpMode, settings_.opMode) && ok;
+  ok = prefs.putInt(kSetTzIdx, settings_.timezoneIndex) != 0 && ok;
+  ok = prefs.putUChar(kSetGreen, settings_.timeLossGreenHours) != 0 && ok;
+  ok = prefs.putUChar(kSetRed, settings_.timeLossRedHours) != 0 && ok;
+  ok = prefs.putDouble(kSetCircThresh, settings_.tempCircThreshold) != 0 && ok;
+  ok = prefs.putUShort(kSetCircFactor, settings_.tempCircFactor) != 0 && ok;
+  ok = prefs.putUShort(kSetCircMax, settings_.tempCircMaxRuntime) != 0 && ok;
+  ok = prefs.putUShort(kSetBtn1Min, settings_.btn1Min) != 0 && ok;
+  ok = prefs.putUShort(kSetBtn1Max, settings_.btn1Max) != 0 && ok;
+  ok = prefs.putUShort(kSetBtn2Min, settings_.btn2Min) != 0 && ok;
+  ok = prefs.putUShort(kSetBtn2Max, settings_.btn2Max) != 0 && ok;
+  ok = prefs.putUShort(kSetBtn3Min, settings_.btn3Min) != 0 && ok;
+  ok = prefs.putUShort(kSetBtn3Max, settings_.btn3Max) != 0 && ok;
+  ok = prefs.putUShort(kSetBtnNoPress, settings_.btnNoPress) != 0 && ok;
 
-  prefs.putString(kAdmPass, adminPasswordHash_);
-  prefs.putBool(kCfgConfigured, configured_);
+  ok = putStringChecked(prefs, kAdmPass, adminPasswordHash_) && ok;
+  ok = prefs.putBool(kCfgConfigured, configured_) != 0 && ok;
 
   prefs.end();
+
+  if (!ok) {
+    LOG_ERROR("✖ Failed to write configuration to NVS\n");
+    return false;
+  }
 
   LOG_INFO("✓ Configuration saved to NVS\n");
   return true;
@@ -194,6 +216,39 @@ void ConfigManager::reset() {
   configured_ = false;
 
   LOG_INFO("✓ Configuration reset to factory defaults\n");
+}
+
+bool ConfigManager::resetToDefaults() {
+  const WiFiConfig previousWifi = wifi_;
+  const MqttConfig previousMqtt = mqtt_;
+  const NtpConfig previousNtp = ntp_;
+  const ControllerSettings previousSettings = settings_;
+  const String previousAdminHash = adminPasswordHash_;
+  const bool previousConfigured = configured_;
+
+  // save() rewrites every key, so the namespace holds the defaults afterwards
+  // without the window an up-front clear() would open.
+  wifi_ = WiFiConfig{};
+  mqtt_ = MqttConfig{};
+  ntp_ = NtpConfig{};
+  settings_ = ControllerSettings{};
+  adminPasswordHash_ = kDefaultPasswordHash;
+  configured_ = false;
+  if (!save()) {
+    wifi_ = previousWifi;
+    mqtt_ = previousMqtt;
+    ntp_ = previousNtp;
+    settings_ = previousSettings;
+    adminPasswordHash_ = previousAdminHash;
+    configured_ = previousConfigured;
+    // A single failed put may have left some keys at their defaults.
+    if (!save()) {
+      LOG_ERROR("✖ Could not restore the previous configuration in NVS\n");
+    }
+    return false;
+  }
+  LOG_INFO("✓ Configuration reset to factory defaults\n");
+  return true;
 }
 
 // ── Boot Version Tracking ──
@@ -234,12 +289,86 @@ bool ConfigManager::verifyAdminPassword(const String &password) {
   return adminPasswordHash_ == hash;
 }
 
-void ConfigManager::saveSensorMapping(const uint8_t solarAddr[8], const uint8_t poolAddr[8]) {
+namespace {
+// Process-wide sensor-mapping cache so hot loops avoid NVS traffic.
+bool s_mappingCacheValid = false;
+std::uint8_t s_cachedSolarAddress[8] = {0};
+std::uint8_t s_cachedPoolAddress[8] = {0};
+
+// Both roles in one value: solar ROM followed by pool ROM.
+constexpr const char *kSensorMappingKey = "mapping";
+constexpr size_t kSensorMappingRecordSize = 16;
+
+struct SensorMappingReadResult final {
+  bool readSucceeded{false};
+  bool hasMapping{false};
+};
+
+SensorMappingReadResult readSensorMappingFromNvs(uint8_t solarAddr[8], uint8_t poolAddr[8]) {
+  memset(solarAddr, 0, 8);
+  memset(poolAddr, 0, 8);
+
   Preferences prefs;
-  prefs.begin("ds18b20", false);  // read-write
-  prefs.putBytes("solar_adr", solarAddr, 8);
-  prefs.putBytes("pool_adr", poolAddr, 8);
+  if (!prefs.begin("ds18b20", true)) {
+    return {};
+  }
+
+  // The combined record is written in one NVS operation, so it always holds a
+  // consistent pair. The legacy per-role keys are read only when it is absent.
+  std::uint8_t record[kSensorMappingRecordSize] = {0};
+  if (prefs.getBytes(kSensorMappingKey, record, sizeof(record)) == sizeof(record)) {
+    prefs.end();
+    memcpy(solarAddr, record, 8);
+    memcpy(poolAddr, record + 8, 8);
+    SensorMappingReadResult result;
+    result.readSucceeded = true;
+    result.hasMapping = true;
+    return result;
+  }
+
+  const size_t solarLength = prefs.getBytes("solar_adr", solarAddr, 8);
+  const size_t poolLength = prefs.getBytes("pool_adr", poolAddr, 8);
   prefs.end();
+
+  if (solarLength != 8) {
+    memset(solarAddr, 0, 8);
+  }
+  if (poolLength != 8) {
+    memset(poolAddr, 0, 8);
+  }
+
+  SensorMappingReadResult result;
+  result.readSucceeded = true;
+  result.hasMapping = solarLength == 8 || poolLength == 8;
+  return result;
+}
+}  // namespace
+
+bool ConfigManager::saveSensorMapping(const uint8_t solarAddr[8], const uint8_t poolAddr[8]) {
+  s_mappingCacheValid = false;
+  Preferences prefs;
+  if (!prefs.begin("ds18b20", false)) {  // read-write
+    LOG_ERROR("✖ Failed to open NVS sensor-mapping namespace for writing\n");
+    return false;
+  }
+  // A single putBytes() is all-or-nothing in NVS, so a failed write leaves the
+  // previous pair in place instead of a new solar and an old pool ROM.
+  std::uint8_t record[kSensorMappingRecordSize];
+  memcpy(record, solarAddr, 8);
+  memcpy(record + 8, poolAddr, 8);
+  const bool written = prefs.putBytes(kSensorMappingKey, record, sizeof(record)) == sizeof(record);
+  if (written) {
+    // The record takes precedence. The legacy per-role keys stay in step so a
+    // rollback to firmware that only reads them still sees the current pair.
+    // A failed legacy write is harmless here because the record wins.
+    prefs.putBytes("solar_adr", solarAddr, 8);
+    prefs.putBytes("pool_adr", poolAddr, 8);
+  }
+  prefs.end();
+  if (!written) {
+    LOG_ERROR("✖ Failed to write sensor mapping to NVS\n");
+    return false;
+  }
 
   char buf[17];
   snprintf(buf, sizeof(buf), "%02X%02X%02X%02X%02X%02X%02X%02X", solarAddr[0], solarAddr[1], solarAddr[2], solarAddr[3],
@@ -248,19 +377,32 @@ void ConfigManager::saveSensorMapping(const uint8_t solarAddr[8], const uint8_t 
   snprintf(buf, sizeof(buf), "%02X%02X%02X%02X%02X%02X%02X%02X", poolAddr[0], poolAddr[1], poolAddr[2], poolAddr[3], poolAddr[4],
     poolAddr[5], poolAddr[6], poolAddr[7]);
   LOG_INFO(", Pool [%s]\n", buf);
+  return true;
 }
 
 bool ConfigManager::loadSensorMapping(uint8_t solarAddr[8], uint8_t poolAddr[8]) {
-  Preferences prefs;
-  prefs.begin("ds18b20", true);  // read-only
+  // Preserve the legacy return contract: true means at least one role exists.
+  return readSensorMappingFromNvs(solarAddr, poolAddr).hasMapping;
+}
 
-  size_t slen = prefs.getBytes("solar_adr", solarAddr, 8);
-  size_t plen = prefs.getBytes("pool_adr", poolAddr, 8);
-
-  prefs.end();
-
-  // Return true if both addresses were read successfully
-  return (slen == 8 && plen == 8);
+bool ConfigManager::loadSensorMappingCached(uint8_t solarAddr[8], uint8_t poolAddr[8]) {
+  if (!s_mappingCacheValid) {
+    std::uint8_t solarCandidate[8] = {0};
+    std::uint8_t poolCandidate[8] = {0};
+    const SensorMappingReadResult readResult = readSensorMappingFromNvs(solarCandidate, poolCandidate);
+    if (!readResult.readSucceeded) {
+      // Do not poison the process-wide cache on a transient NVS failure.
+      memset(solarAddr, 0, 8);
+      memset(poolAddr, 0, 8);
+      return false;
+    }
+    memcpy(s_cachedSolarAddress, solarCandidate, 8);
+    memcpy(s_cachedPoolAddress, poolCandidate, 8);
+    s_mappingCacheValid = true;
+  }
+  memcpy(solarAddr, s_cachedSolarAddress, 8);
+  memcpy(poolAddr, s_cachedPoolAddress, 8);
+  return true;
 }
 
 /** @brief Check if an 8-byte address is all zeros. */

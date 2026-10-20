@@ -68,6 +68,18 @@ jobs:
         working-directory: test/native/relay_safety
         run: ASAN_OPTIONS="detect_stack_use_after_return=1" ./build/test_relay_safety
 
+      - name: Configure CMake (config persistence tests)
+        working-directory: test/native/config_persistence
+        run: cmake -B build -S .
+
+      - name: Build config persistence tests
+        working-directory: test/native/config_persistence
+        run: cmake --build build
+
+      - name: Run config persistence tests
+        working-directory: test/native/config_persistence
+        run: ASAN_OPTIONS="detect_stack_use_after_return=1" ./build/test_config_persistence
+
       - name: Configure CMake (DallasTemperatureNode tests)
         working-directory: test/native/dallas_node
         run: cmake -B build -S .

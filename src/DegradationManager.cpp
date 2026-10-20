@@ -41,6 +41,7 @@ void DegradationManager::begin() {
   previousLevel_ = DegradationLevel::NORMAL;
   poolSensorOk_ = false;  // Pessimistic — both probes must report healthy
   solarSensorOk_ = false;
+  sensorsEverReported_ = false;  // A fresh boot requires probes to report again
   forcedSafeMode_ = false;
   lastEvaluationMs_ = 0;
 

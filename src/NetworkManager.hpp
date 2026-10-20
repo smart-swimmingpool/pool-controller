@@ -63,7 +63,8 @@ public:
 
   // Getters for status monitoring
   static int getWiFiRSSI() { return WiFi.status() == WL_CONNECTED ? WiFi.RSSI() : 0; }
-  static String getLocalIP() { return isApMode() ? WiFi.softAPIP().toString() : WiFi.localIP().toString(); }
+  static IPAddress getLocalIPAddress() { return isApMode() ? WiFi.softAPIP() : WiFi.localIP(); }
+  static String getLocalIP() { return getLocalIPAddress().toString(); }
 
 private:
   static void handleWiFiEvent(WiFiEvent_t event);

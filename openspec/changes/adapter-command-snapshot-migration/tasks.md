@@ -1,0 +1,28 @@
+# Tasks
+
+- [x] Introduce a single Core-1 controller command handler for the complete runtime command contract.
+- [x] Route processed MQTT runtime commands through typed `ControllerCommand` values.
+- [x] Preserve independent MQTT timer-start and timer-end updates without stale-state reconstruction.
+- [x] Route `/api/mode` and `/api/pump` Web mutations through the same command handler using owner-resolved relative actions.
+- [x] Route the remaining Web runtime mutations (settings form, factory reset, sensor mapping) through the same command handler.
+- [x] Route local UI runtime mutations (NORVI menu, Olimex encoder UI) through the same command handler.
+- [x] Report command outcomes as `CommandStatus` (invalid / rejected / persist failed) and apply multi-field forms as one atomic batch.
+- [x] Remove the legacy `MqttPublisher` runtime-command path so MQTT commands have a single parser.
+- [x] Keep provisioning/authentication secrets and specialized calibration workflows behind their dedicated service boundaries.
+- [ ] Publish `SystemSnapshot` from the Core-1 owner after state updates (publisher built and tested; wired into `loop()` together with its first reader).
+- [x] Populate sensor mapping address/configured/found state in the snapshot.
+- [x] Preserve independently configured sensor mappings when the other role is absent.
+- [x] Populate detected-sensor inventory, local IPv4 state and configured NTP server in the snapshot.
+- [x] Bound detected-sensor inventory refreshes so snapshot publication does not poll Dallas devices on every loop.
+- [x] Keep transient sensor-mapping NVS failures retryable and reject updates that cannot preserve the other role.
+- [x] Populate GREEN/YELLOW/RED time degradation and runtime controller settings in the snapshot.
+- [x] Enforce the persisted/runtime degradation invariant `1 <= green < red <= 72`.
+- [x] Keep failed persisted runtime mutations atomic by rolling back owner state and settings.
+- [x] Keep snapshot publication free of active-rule debug-log side effects.
+- [ ] Migrate MQTT state/discovery reads to snapshot values where applicable.
+- [ ] Migrate Web status/config read paths to snapshot values where applicable.
+- [ ] Migrate OLED/TFT read paths to snapshot values.
+- [ ] Remove direct mutable `Nodes.hpp` and runtime-setting access from migrated adapters.
+- [ ] Remove `MqttCommandQueue` after typed callback hand-over has equivalent tests.
+- [x] Add native regression tests for dispatch, overflow, partial timer updates and MQTT compatibility.
+- [ ] Verify all PlatformIO environments and existing API/MQTT contract tests.

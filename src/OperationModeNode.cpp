@@ -86,12 +86,20 @@ void OperationModeNode::addRule(Rule *rule) {
 }
 
 Rule *OperationModeNode::getRule() {
+  return getRule(true);
+}
+
+Rule *OperationModeNode::getRule(bool emitDebugLogs) {
   const char *mode = PoolController::toString(_mode);
-  LOG_DEBUG("getRule: mode = %s\n", mode);
+  if (emitDebugLogs) {
+    LOG_DEBUG("getRule: mode = %s\n", mode);
+  }
 
   for (size_t i = 0; i < _ruleVec.size(); i++) {
     if (std::strcmp(mode, _ruleVec[i]->getMode()) == 0) {
-      LOG_DEBUG("getRule: Active Rule: %s\n", _ruleVec[i]->getMode());
+      if (emitDebugLogs) {
+        LOG_DEBUG("getRule: Active Rule: %s\n", _ruleVec[i]->getMode());
+      }
 
       // Update ruleset properties
       _ruleVec[i]->setPoolMaxTemperature(getPoolMaxTemperature());

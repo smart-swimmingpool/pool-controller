@@ -228,7 +228,7 @@ bool NetworkManager::subscribe(const char *topic) {
 
 void NetworkManager::setMqttCallback(MqttMessageCallback callback) {
   mqttCallback_ = callback;
-  // onMessage is persistent (not connection-bound)
+  // onMessage is persistent (not connection-bound) and replaces any earlier handler
   mqttClient_.onMessage([](const espMqttClientTypes::MessageProperties &properties, const char *topic, const uint8_t *payload,
                           size_t len, size_t index, size_t total) {
     (void)properties;

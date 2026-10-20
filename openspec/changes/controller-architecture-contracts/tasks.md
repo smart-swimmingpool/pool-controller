@@ -21,6 +21,7 @@
 - [x] Project the detected inventory with a 20-device cap, ROMs and independent temperature validity.
 - [x] Add native tests for compatibility, text boundaries, full/empty inventory, diagnostics and copy semantics.
 - [x] Document the minimal dependency graph, current #218 progress, #170 ownership gate and sensor projection bridge.
+- [x] Store operation mode internally as the typed enum while preserving String compatibility at boundaries.
 - [x] Add a bounded, allocation-free `ControllerCommandQueue` for adapter-to-loop hand-over.
 - [x] Add a synchronized `ControllerSnapshotStore` for complete read-model publication.
 - [ ] In #216/#217, verify the expanded payloads and transport resource budgets.

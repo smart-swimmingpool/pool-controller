@@ -5,6 +5,7 @@
 #include "LocalSettingsMenu.hpp"
 #include "OlimexEncoderHandler.hpp"
 #include "OlimexTftDisplay.hpp"
+#include "LogCapture.hpp"
 #include "Nodes.hpp"
 
 namespace PoolController {
@@ -21,36 +22,32 @@ bool isLivePage(LocalUiPage page) {
 
 namespace {
 
-void cycleOperationMode() {
-  const String currentMode = operationModeNode.getMode();
-  if (currentMode == "auto") {
-    operationModeNode.setMode("manu");
-  } else if (currentMode == "manu") {
-    operationModeNode.setMode("boost");
-  } else if (currentMode == "boost") {
-    operationModeNode.setMode("timer");
-  } else {
-    operationModeNode.setMode("auto");
-  }
-}
+CommandDispatcher commandDispatcher = nullptr;
 
 void executePendingAction(LocalMenuAction action) {
+  ControllerCommand command{};
+  command.source = CommandSource::LOCAL_UI;
   switch (action) {
   case LocalMenuAction::CYCLE_MODE:
-    cycleOperationMode();
+    command.type = ControllerCommandType::CYCLE_MODE;
     break;
   case LocalMenuAction::TOGGLE_PUMP:
-    if (operationModeNode.getMode() != "manu") {
-      operationModeNode.setMode("manu");
-    }
-    poolPumpNode.setSwitch(!poolPumpNode.getSwitch());
+    command.type = ControllerCommandType::TOGGLE_POOL_PUMP;
+    command.toggleModePolicy = PumpToggleModePolicy::ENTER_MANUAL;
     break;
   case LocalMenuAction::NONE:
-    break;
+    return;
+  }
+  if (dispatchCommand(commandDispatcher, command) != CommandStatus::APPLIED) {
+    LOG_WARN("Local UI: menu action was not applied\n");
   }
 }
 
 }  // namespace
+
+void OlimexLocalUi::setCommandDispatcher(CommandDispatcher dispatcher) {
+  commandDispatcher = dispatcher;
+}
 
 void OlimexLocalUi::begin() {
   OlimexTftDisplay::begin();
@@ -95,6 +92,7 @@ namespace PoolController {
 void OlimexLocalUi::begin() {}
 void OlimexLocalUi::loop() {}
 void OlimexLocalUi::requestRedraw() {}
+void OlimexLocalUi::setCommandDispatcher(CommandDispatcher) {}
 
 }  // namespace PoolController
 

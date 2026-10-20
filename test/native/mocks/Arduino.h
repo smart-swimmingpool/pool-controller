@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <string>
 #include <map>
+#include <set>
 #include <vector>
 #include <chrono>
 
@@ -325,7 +326,7 @@ public:
   }
 
   size_t putBytes(const char *key, const void *value, size_t len) {
-    if (!started_)
+    if (!started_ || putFails(key))
       return 0;
     std::string &v = s_data[key];
     v.assign((const char *)value, len);
@@ -342,7 +343,7 @@ public:
   }
 
   size_t putString(const char *key, const char *val) {
-    if (!started_)
+    if (!started_ || putFails(key))
       return 0;
     s_data[key] = val;
     return strlen(val);
@@ -355,7 +356,7 @@ public:
   }
 
   size_t putInt(const char *key, int val) {
-    if (!started_)
+    if (!started_ || putFails(key))
       return 0;
     s_data[key] = std::to_string(val);
     return sizeof(int);
@@ -372,7 +373,7 @@ public:
   unsigned int getUInt(const char *key, unsigned int defaultVal = 0) { return (unsigned int)getInt(key, (int)defaultVal); }
 
   size_t putFloat(const char *key, float val) {
-    if (!started_)
+    if (!started_ || putFails(key))
       return 0;
     s_data[key] = std::to_string(val);
     return sizeof(float);
@@ -385,7 +386,7 @@ public:
   }
 
   size_t putLong(const char *key, long val) {
-    if (!started_)
+    if (!started_ || putFails(key))
       return 0;
     s_data[key] = std::to_string(val);
     return sizeof(long);
@@ -398,7 +399,7 @@ public:
   }
 
   size_t putDouble(const char *key, double val) {
-    if (!started_)
+    if (!started_ || putFails(key))
       return 0;
     s_data[key] = std::to_string(val);
     return sizeof(double);
@@ -411,7 +412,7 @@ public:
   }
 
   size_t putBool(const char *key, bool val) {
-    if (!started_)
+    if (!started_ || putFails(key))
       return 0;
     s_data[key] = val ? "1" : "0";
     return 1;
@@ -434,6 +435,10 @@ public:
   size_t putString(const char *key, const String &val) { return putString(key, val.c_str()); }
 
   bool isKey(const char *key) { return s_data.find(key) != s_data.end(); }
+
+  // Fault injection: a put to any of these keys fails without storing anything.
+  inline static std::set<std::string> s_failingPutKeys;
+  static bool putFails(const char *key) { return s_failingPutKeys.count(key) != 0; }
 
 private:
   bool started_;

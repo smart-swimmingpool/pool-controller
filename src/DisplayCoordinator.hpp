@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include "ControllerCommandHandler.hpp"
+
 namespace PoolController {
 
 class DisplayCoordinator {
@@ -17,6 +19,9 @@ public:
 
   /** Poll buttons, apply UI events and render on the control-loop task. */
   static void loop();
+
+  /** Route menu actions (mode, pump, sensor mapping) through the command handler. */
+  static void setCommandDispatcher(CommandDispatcher dispatcher);
 };
 
 }  // namespace PoolController
