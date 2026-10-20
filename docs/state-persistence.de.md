@@ -94,13 +94,14 @@ durch Speichererschöpfung zu verhindern.
 
 **ESP32**:
 
-- **Speicherwarnung (niedrig)**: < 16 KB (16.384 Bytes)
+- **Niedriger Speicher**: < 16 KB (16.384 Bytes) → Safe-Mode; automatischer Neustart, wenn er 5 Minuten anhält
 - **Kritischer Speicher**: < 8 KB (8.192 Bytes) → Automatischer Neustart
 
 #### Verhalten
 
 1. **Alle 10 Sekunden**: Speicherprüfung wird durchgeführt
-2. **Niedriger Speicher**: Warnung wird an Seriell und MQTT protokolliert
+2. **Niedriger Speicher**: Warnung wird an Seriell und MQTT protokolliert, Safe-Mode solange unter dem
+   Schwellwert, automatischer Neustart nach 5 Minuten ohne Erholung
 3. **Kritischer Speicher**: Controller startet automatisch neu
 4. **Minimum-Tracking**: Zeichnet den niedrigsten Speicherstand seit Boot auf
 
@@ -145,7 +146,7 @@ Zustandsspeicherung und Systemüberwachung sind **automatisch aktiviert**. Keine
 Zum Anpassen der Speicherschwellwerte `src/SystemMonitor.hpp` ändern:
 
 ```cpp
-// Speicherschwelle (niedrig) — nur Warnung
+// Speicherschwelle (niedrig) — Safe-Mode, Neustart nach LOW_MEMORY_REBOOT_AFTER_MS
 static constexpr uint32_t LOW_MEMORY_THRESHOLD = 8192;  // 8 KB
 
 // Kritische Speicherschwelle (automatischer Neustart)
