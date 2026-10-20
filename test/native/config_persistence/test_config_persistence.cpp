@@ -70,6 +70,20 @@ void test_single_failed_put_fails_save() {
   EXPECT(ConfigManager::save());
 }
 
+void test_failed_empty_string_write_is_detected() {
+  section("a failed write of an empty string fails save()");
+  resetStore();
+  storeCustomConfig();
+  EXPECT(ConfigManager::getWiFi().ssid == "pool-net");
+
+  ConfigManager::getWiFi().ssid = "";
+  Preferences::s_failingPutKeys.insert("wifi_ssid");
+  EXPECT(!ConfigManager::save());  // the old SSID would be loaded again on boot
+
+  Preferences::s_failingPutKeys.clear();
+  EXPECT(ConfigManager::save());
+}
+
 void test_failed_factory_reset_restores_nvs() {
   section("failed factory reset leaves the previous configuration in NVS");
   resetStore();
@@ -141,6 +155,7 @@ void test_legacy_mapping_keys_are_migrated() {
 
 int main() {
   test_single_failed_put_fails_save();
+  test_failed_empty_string_write_is_detected();
   test_failed_factory_reset_restores_nvs();
   test_mapping_is_written_as_one_record();
   test_legacy_mapping_keys_are_migrated();

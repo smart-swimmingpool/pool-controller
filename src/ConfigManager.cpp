@@ -134,10 +134,16 @@ bool ConfigManager::load() {
   return true;
 }
 
-// Preferences::putString() returns the stored length, so 0 is a failure only
-// for a non-empty value; an empty string cannot be told apart from an error.
+// Preferences::putString() returns the stored length, so 0 means a failure only
+// for a non-empty value. An empty string returns 0 on success and on failure,
+// so it is verified by reading it back: a failed write leaves the old value
+// (or the sentinel default) behind.
 static bool putStringChecked(Preferences &prefs, const char *key, const String &value) {
-  return prefs.putString(key, value) == value.length();
+  const size_t written = prefs.putString(key, value);
+  if (value.length() > 0) {
+    return written == value.length();
+  }
+  return prefs.getString(key, "\x01") == value;
 }
 
 bool ConfigManager::save() {
