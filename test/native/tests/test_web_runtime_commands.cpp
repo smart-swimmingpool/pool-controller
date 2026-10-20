@@ -56,6 +56,7 @@ const ControllerCommand *findCaptured(ControllerCommandType type) {
 void resetRequest() {
   wsCapture.clear();
   PoolController::ConfigManager::setConfigured(false);
+  PoolController::ConfigManager::_recordInvalid = false;
   PoolController::NetworkManager::setApMode(true);
   PoolController::WebPortal::setCommandDispatcher(captureDispatch);
   dispatchCalled = false;
@@ -92,6 +93,17 @@ int test_absolute_mode() {
   ASSERT_EQ(capturedCommand.mode, PoolController::OperationMode::BOOST);
   ASSERT_EQ(wsCapture.lastStatusCode, 200);
   ASSERT_STREQ(wsCapture.lastBody.c_str(), "{\"status\":\"ok\",\"mode\":\"boost\"}");
+  return 0;
+}
+
+int test_invalid_config_record_keeps_setup_ap_behind_login() {
+  test_begin("WebRuntimeCommands", "invalid config record keeps the setup AP behind the admin login");
+  resetRequest();
+  PoolController::ConfigManager::_recordInvalid = true;
+  wsCapture.args["mode"] = "boost";
+  ASSERT_TRUE(PoolController::WebPortal::invokeRouteForTest("/api/mode", HTTP_POST));
+  ASSERT_TRUE(!dispatchCalled);
+  PoolController::ConfigManager::_recordInvalid = false;
   return 0;
 }
 
@@ -327,9 +339,10 @@ int run_web_runtime_command_tests() {
   PoolController::WebPortal::begin();
   int passed = 0;
   int failed = 0;
-  int (*tests[])() = {test_mode_validation, test_absolute_mode, test_sensor_mapping_empty_role_clears_old_assignment,
-    test_cycle_mode, test_pump_validation, test_relative_pumps, test_owner_rejection, test_status_codes_are_distinct,
-    test_settings_form_is_one_batch, test_settings_form_rejects_malformed_numbers, test_factory_reset_restarts_only_when_applied,
+  int (*tests[])() = {test_mode_validation, test_absolute_mode, test_invalid_config_record_keeps_setup_ap_behind_login,
+    test_sensor_mapping_empty_role_clears_old_assignment, test_cycle_mode, test_pump_validation, test_relative_pumps,
+    test_owner_rejection, test_status_codes_are_distinct, test_settings_form_is_one_batch,
+    test_settings_form_rejects_malformed_numbers, test_factory_reset_restarts_only_when_applied,
     test_sensor_mapping_is_a_command_batch, test_adapter_does_not_mutate_nodes};
   for (auto test : tests) {
     if (test() == 0) {

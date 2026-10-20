@@ -157,7 +157,9 @@ bool WebPortal::isClientAuthenticated() {
   if (NetworkManager::isApMode()) {
     // In AP fallback mode with saved credentials, require admin password.
     // Only allow unauthenticated AP access for truly unconfigured devices.
-    if (!ConfigManager::isConfigured()) {
+    // A device whose stored configuration was unreadable also starts
+    // unconfigured, but keeps the default admin login in front of the AP.
+    if (!ConfigManager::isConfigured() && !ConfigManager::isRecordInvalid()) {
       return true;  // Initial setup — no password set yet
     }
     // Fall through to session-cookie check below

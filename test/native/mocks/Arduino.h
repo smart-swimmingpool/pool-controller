@@ -333,6 +333,12 @@ public:
     return len;
   }
 
+  size_t getBytesLength(const char *key) {
+    if (!started_ || s_data.find(key) == s_data.end())
+      return 0;
+    return s_data[key].size();
+  }
+
   size_t getBytes(const char *key, void *buf, size_t maxLen) {
     if (!started_ || s_data.find(key) == s_data.end())
       return 0;

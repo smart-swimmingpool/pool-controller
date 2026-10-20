@@ -93,6 +93,10 @@ public:
 
   static bool isConfigured() { return configured_; }
   static void setConfigured(bool configured) { configured_ = configured; }
+  /** @brief True when load() found a stored record it could not trust.
+   *  The device then runs on defaults and the setup AP stays behind the
+   *  default admin login instead of being open. Cleared by a successful save() or reset(). */
+  static bool isRecordInvalid() { return recordInvalid_; }
 
   // ── Sensor Address Mapping ──
   /** @brief Save DS18B20 sensor address mapping to NVS. @return true when both roles were written. */
@@ -123,6 +127,7 @@ private:
   static ControllerSettings settings_;
   static String adminPasswordHash_;
   static bool configured_;
+  static bool recordInvalid_;
 };
 
 }  // namespace PoolController
