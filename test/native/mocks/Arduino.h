@@ -125,13 +125,20 @@ public:
   // Disabled by default so existing tests are unaffected.
   static std::string s_capture;
   static bool s_captureEnabled;
-  static void enableCapture() { s_captureEnabled = true; s_capture.clear(); }
-  static void disableCapture() { s_captureEnabled = false; s_capture.clear(); }
+  static void enableCapture() {
+    s_captureEnabled = true;
+    s_capture.clear();
+  }
+  static void disableCapture() {
+    s_captureEnabled = false;
+    s_capture.clear();
+  }
   static const std::string &capture() { return s_capture; }
 
   void begin(int) {}
   void print(const char *s) {
-    if (s_captureEnabled) s_capture += s;
+    if (s_captureEnabled)
+      s_capture += s;
     fprintf(stdout, "%s", s);
     fflush(stdout);
   }
@@ -190,10 +197,21 @@ public:
 static SerialClass Serial;
 
 // ---- Time functions ----
+// Test-controllable offset added to the wall-clock based millis().
+extern uint32_t g_millisOffset;
+
 inline uint32_t millis() {
   static auto start = std::chrono::steady_clock::now();
   auto now = std::chrono::steady_clock::now();
-  return std::chrono::duration_cast<std::chrono::milliseconds>(now - start).count();
+  return std::chrono::duration_cast<std::chrono::milliseconds>(now - start).count() + g_millisOffset;
+}
+
+// Test hook: fast-forward the Arduino clock for rate-limit tests.
+inline void advanceMillisForTest(uint32_t delta) {
+  g_millisOffset += delta;
+}
+inline void resetMillisOffsetForTest() {
+  g_millisOffset = 0;
 }
 
 inline void delay(uint32_t) {}
@@ -276,10 +294,13 @@ static WiFiClass WiFi;
 // ---- ESP class mock ----
 class ESPClass {
 public:
-  static uint32_t getFreeHeap() { return 180000; }
+  static uint32_t s_mockFreeHeap;
+  static uint32_t getFreeHeap() { return s_mockFreeHeap; }
+  static void setFreeHeapForTest(uint32_t v) { s_mockFreeHeap = v; }
   static uint32_t getMaxAllocHeap() { return 45000; }
   static uint32_t getEfuseMac() { return 0xDEADBEEF; }
-  static void restart() {}
+  static int s_restartCount;  ///< Incremented by restart() so tests can assert reboots
+  static void restart() { ++s_restartCount; }
   static uint32_t getFlashChipSize() { return 4 * 1024 * 1024; }
   static uint32_t getSketchSize() { return 1200000; }
   static uint32_t getFreeSketchSpace() { return 800000; }
@@ -681,16 +702,50 @@ public:
 static HardwareSerial Serial0;
 
 // ---- WiFiClient ----
+// Shared stream position for the mock WiFiClient, fed from httpCapture.
+#include <cstddef>
+struct MockStreamState {
+  std::size_t position = 0;
+  void reset() { position = 0; }
+};
+extern MockStreamState mockStreamState;
+
+// Response body shared with the HTTPClient mock (defined in captures.cpp).
+const std::string &httpResponseBody();
+
 class WiFiClient {
 public:
   int connect(const char *, uint16_t) { return 1; }
   int connected() { return 1; }
   size_t write(const uint8_t *, size_t) { return 0; }
-  int read() { return -1; }
-  int available() { return 0; }
+  int read() {
+    const std::string &body = httpResponseBody();
+    if (mockStreamState.position >= body.size()) {
+      return -1;
+    }
+    return static_cast<unsigned char>(body[mockStreamState.position++]);
+  }
+  int available() {
+    const std::string &body = httpResponseBody();
+    if (body.empty()) {
+      return 0;
+    }
+    return static_cast<int>(body.size() - mockStreamState.position % body.size());
+  }
   size_t readBytes(uint8_t *buf, size_t len) {
-    memset(buf, 0, len);
+    const std::string &body = httpResponseBody();
+    if (body.empty()) {
+      return 0;
+    }
+    for (size_t i = 0; i < len; ++i) {
+      buf[i] = body[(mockStreamState.position + i) % body.size()];
+    }
+    mockStreamState.position += len;
     return len;
+  }
+  // Client::read(buf, len): non-blocking, returns the bytes handed over.
+  int read(uint8_t *buf, size_t len) {
+    return static_cast<int>(readBytes(buf, len));
   }
   void stop() {}
   void setTimeout(uint32_t) {}
