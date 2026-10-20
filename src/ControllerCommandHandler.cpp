@@ -15,6 +15,7 @@
 #include "LogCapture.hpp"
 #include "OperationModeNode.hpp"
 #include "RelayModuleNode.hpp"
+#include "StateManager.hpp"
 #include "TimeClientHelper.hpp"
 
 #ifdef NORVI_AE01_R
@@ -57,6 +58,16 @@ std::uint16_t *buttonThreshold(Settings &settings, ControllerCommandType type) {
   }
 }
 
+/** @brief Writes the four timer keys; the timer lives outside the settings record. */
+bool persistTimer(const TimerSetting &timer) {
+  bool ok = true;
+  ok = StateManager::saveInt("timerStartH", timer.timerStartHour) && ok;
+  ok = StateManager::saveInt("timerStartM", timer.timerStartMinutes) && ok;
+  ok = StateManager::saveInt("timerEndH", timer.timerEndHour) && ok;
+  ok = StateManager::saveInt("timerEndM", timer.timerEndMinutes) && ok;
+  return ok;
+}
+
 bool isValidTime(const ControllerCommand &command) {
   return command.hour <= 23 && command.minute <= 59;
 }
@@ -77,6 +88,8 @@ struct ControllerCommandHandler::Plan final {
   bool timeLossChanged{false};
   bool mappingLoaded{false};
   bool mappingChanged{false};
+  bool timerChanged{false};
+  TimerSetting timer{};
   std::uint8_t solarAddress[8]{};
   std::uint8_t poolAddress[8]{};
 };
@@ -136,6 +149,14 @@ CommandStatus ControllerCommandHandler::execute(
       return CommandStatus::PERSIST_FAILED;
     }
   }
+  const TimerSetting previousTimer = dependencies_.operationMode.getTimerSetting();
+  if (plan.timerChanged && !persistTimer(plan.timer)) {
+    LOG_ERROR("Controller command: failed to persist timer\n");
+    if (!persistTimer(previousTimer)) {
+      LOG_ERROR("Controller command: could not restore the previous timer in NVS\n");
+    }
+    return CommandStatus::PERSIST_FAILED;
+  }
   if (plan.settingsChanged) {
     const Settings previousSettings = liveSettings;
     const NtpSettings previousNtp = liveNtp;
@@ -149,6 +170,9 @@ CommandStatus ControllerCommandHandler::execute(
       // previous values so NVS matches the unchanged runtime again.
       if (!ConfigManager::save()) {
         LOG_ERROR("Controller command: could not restore previous settings in NVS\n");
+      }
+      if (plan.timerChanged && !persistTimer(previousTimer)) {
+        LOG_ERROR("Controller command: could not restore the previous timer in NVS\n");
       }
       return CommandStatus::PERSIST_FAILED;
     }
@@ -166,6 +190,15 @@ CommandStatus ControllerCommandHandler::execute(
   }
   for (std::size_t i = 0; i < count; ++i) {
     applySensorMapping(commands[i], plan);
+  }
+  for (std::size_t i = 0; i < count; ++i) {
+    if (commands[i].type == ControllerCommandType::SET_TIME_LOSS_GREEN_HOURS ||
+      commands[i].type == ControllerCommandType::SET_TIME_LOSS_RED_HOURS) {
+      // The validated pair from the plan, green first so red clamps against it.
+      setTimeDegradationGreenHours(static_cast<std::uint8_t>(plan.settings.timeLossGreenHours));
+      setTimeDegradationRedHours(static_cast<std::uint8_t>(plan.settings.timeLossRedHours));
+      break;
+    }
   }
   return CommandStatus::APPLIED;
 }
@@ -240,7 +273,21 @@ CommandStatus ControllerCommandHandler::stage(const ControllerCommand &command, 
 
   case ControllerCommandType::SET_TIMER_START:
   case ControllerCommandType::SET_TIMER_END:
-    return isValidTime(command) ? CommandStatus::APPLIED : CommandStatus::INVALID;
+    if (!isValidTime(command)) {
+      return CommandStatus::INVALID;
+    }
+    if (!plan.timerChanged) {
+      plan.timer = dependencies_.operationMode.getTimerSetting();
+      plan.timerChanged = true;
+    }
+    if (command.type == ControllerCommandType::SET_TIMER_START) {
+      plan.timer.timerStartHour = command.hour;
+      plan.timer.timerStartMinutes = command.minute;
+    } else {
+      plan.timer.timerEndHour = command.hour;
+      plan.timer.timerEndMinutes = command.minute;
+    }
+    return CommandStatus::APPLIED;
 
   case ControllerCommandType::SET_SENSOR_MAPPING:
   case ControllerCommandType::CLEAR_SENSOR_MAPPING:
@@ -318,10 +365,9 @@ void ControllerCommandHandler::applyRuntime(const ControllerCommand &command, Co
     setTimezoneIndex(command.integerValue);
     break;
   case ControllerCommandType::SET_TIME_LOSS_GREEN_HOURS:
-    setTimeDegradationGreenHours(static_cast<std::uint8_t>(command.integerValue));
-    break;
   case ControllerCommandType::SET_TIME_LOSS_RED_HOURS:
-    setTimeDegradationRedHours(static_cast<std::uint8_t>(command.integerValue));
+    // Applied as a pair once the whole batch is replayed (see execute()): the
+    // runtime setters clamp each bound against the other one.
     break;
   case ControllerCommandType::SET_BUTTON_1_MIN:
   case ControllerCommandType::SET_BUTTON_1_MAX:

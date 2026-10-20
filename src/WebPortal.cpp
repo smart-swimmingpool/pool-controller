@@ -1356,22 +1356,30 @@ void WebPortal::apiSaveSensorMapping() {
     {"pool_addr", SensorRole::POOL, "Invalid pool address format"},
   };
 
+  std::size_t assigned = 0;
   for (const auto &role : roles) {
-    const String address = server_.hasArg(role.arg) ? server_.arg(role.arg) : String();
-    if (address.length() == 0) {
-      continue;
+    if (!server_.hasArg(role.arg)) {
+      continue;  // role not part of this request
     }
+    const String address = server_.arg(role.arg);
     ControllerCommand &command = commands[count++];
-    command.type = ControllerCommandType::SET_SENSOR_MAPPING;
     command.source = CommandSource::WEB;
     command.sensorRole = role.role;
+    if (address.length() == 0) {
+      // An empty field is sent when the UI moved this role's probe elsewhere;
+      // keeping the old mapping would assign one probe to both roles.
+      command.type = ControllerCommandType::CLEAR_SENSOR_MAPPING;
+      continue;
+    }
+    command.type = ControllerCommandType::SET_SENSOR_MAPPING;
     if (!CommandParsing::parseSensorAddress(address.c_str(), address.length(), command.sensorAddress)) {
       server_.send(400, "application/json", jsonError(role.invalidMessage));
       return;
     }
+    ++assigned;
   }
 
-  if (count == 0) {
+  if (assigned == 0) {
     server_.send(400, "application/json", jsonError("At least one sensor address required"));
     return;
   }

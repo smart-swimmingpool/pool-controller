@@ -10,6 +10,7 @@
 #include "ESP32TemperatureNode.hpp"
 #include "OperationModeNode.hpp"
 #include "RelayModuleNode.hpp"
+#include "TimeClientHelper.hpp"
 #include "test_assert.h"
 
 extern void test_begin(const char *suite, const char *name);
@@ -461,6 +462,50 @@ static int test_time_loss_bounds_can_move_together() {
   return 0;
 }
 
+static int test_time_loss_runtime_follows_validated_pair_in_any_order() {
+  test_begin("ControllerCommandHandler", "RED listed before GREEN still leaves the runtime on the persisted pair");
+  HandlerFixture fixture;
+  auto &settings = PoolController::ConfigManager::getSettings();
+  settings.timeLossGreenHours = 30;
+  settings.timeLossRedHours = 48;
+  setTimeDegradationGreenHours(30);
+  setTimeDegradationRedHours(48);
+
+  ControllerCommand batch[2]{};
+  batch[0].type = ControllerCommandType::SET_TIME_LOSS_RED_HOURS;
+  batch[0].integerValue = 12;
+  batch[1].type = ControllerCommandType::SET_TIME_LOSS_GREEN_HOURS;
+  batch[1].integerValue = 10;
+  ASSERT_EQ(fixture.handler.execute(batch, 2), CommandStatus::APPLIED);
+  ASSERT_EQ(settings.timeLossGreenHours, 10);
+  ASSERT_EQ(settings.timeLossRedHours, 12);
+  ASSERT_EQ(getTimeDegradationGreenHours(), 10);
+  ASSERT_EQ(getTimeDegradationRedHours(), 12);
+  return 0;
+}
+
+static int test_timer_persist_failure_is_reported_and_keeps_runtime() {
+  test_begin("ControllerCommandHandler", "a failed timer write reports PERSIST_FAILED and keeps the previous timer");
+  HandlerFixture fixture;
+  TimerSetting before = fixture.operation.getTimerSetting();
+
+  ControllerCommand command{};
+  command.type = ControllerCommandType::SET_TIMER_START;
+  command.hour = (before.timerStartHour + 1) % 24;
+  command.minute = 5;
+  Preferences::s_failingPutKeys.insert("timerStartH");
+  const CommandStatus failed = fixture.handler.execute(command);
+  Preferences::s_failingPutKeys.clear();
+  ASSERT_EQ(failed, CommandStatus::PERSIST_FAILED);
+  ASSERT_EQ(fixture.operation.getTimerSetting().timerStartHour, before.timerStartHour);
+  ASSERT_EQ(fixture.operation.getTimerSetting().timerStartMinutes, before.timerStartMinutes);
+
+  ASSERT_EQ(fixture.handler.execute(command), CommandStatus::APPLIED);
+  ASSERT_EQ(fixture.operation.getTimerSetting().timerStartHour, command.hour);
+  ASSERT_EQ(fixture.operation.getTimerSetting().timerStartMinutes, 5);
+  return 0;
+}
+
 static int test_factory_reset_keeps_relay_state_when_save_fails() {
   test_begin("ControllerCommandHandler", "factory reset clears relay/mode NVS only after the defaults were saved");
   HandlerFixture fixture;
@@ -562,7 +607,8 @@ int run_controller_command_handler_tests() {
     test_loop_interval_persistence_failure_keeps_runtime_unchanged, test_time_loss_thresholds_preserve_ordering,
     test_factory_reset_owns_runtime_reset_mutation, test_status_separates_invalid_rejected_and_persist_failures,
     test_batch_is_all_or_nothing, test_persist_failure_rolls_back_every_setting_kind, test_enter_manual_toggle_is_atomic,
-    test_time_loss_bounds_can_move_together, test_factory_reset_keeps_relay_state_when_save_fails,
+    test_time_loss_bounds_can_move_together, test_time_loss_runtime_follows_validated_pair_in_any_order,
+    test_timer_persist_failure_is_reported_and_keeps_runtime, test_factory_reset_keeps_relay_state_when_save_fails,
     test_sensor_mapping_persist_failure_leaves_runtime_unchanged, test_mixed_mapping_and_settings_batch_is_rejected,
     test_factory_reset_failure_keeps_runtime_configuration};
   for (auto test : tests) {
