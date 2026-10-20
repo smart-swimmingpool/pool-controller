@@ -11,6 +11,7 @@
 
 #include "espMqttClientAsync.h"
 #include "MqttPublisher.hpp"
+#include "OtaUpdater.hpp"
 #include "LogCapture.hpp"
 #include "ConfigManager.hpp"
 #include "NetworkManager.hpp"
@@ -324,17 +325,23 @@ int run_mqttpublisher_tests() {
       missing++;
     }
 
-    // Only "INSTALL" starts the updater; without a release it reports so.
+    // Only "INSTALL" requests the update, and it only requests it: the download is
+    // started by OtaUpdater::loop() on the loop task, never in the MQTT callback.
     char firmwareTopic[] = "homeassistant/update/pool-controller/firmware-update/set";
     char invalid[] = "REBOOT";
     MqttPublisher::handleMqttMessage(firmwareTopic, invalid, strlen(invalid), 0, strlen(invalid));
-    const String statusBefore = OtaUpdater::getStatusMessage();
-    char install[] = "INSTALL";
-    MqttPublisher::handleMqttMessage(firmwareTopic, install, strlen(install), 0, strlen(install));
-    if (statusBefore != String("No update available") && OtaUpdater::getStatusMessage() == String("No update available")) {
+    if (!OtaUpdater::isUpdateRequested()) {
       test_pass(__FILE__, __LINE__);
     } else {
-      test_fail(__FILE__, __LINE__, "INSTALL did not reach OtaUpdater (or REBOOT did)");
+      test_fail(__FILE__, __LINE__, "REBOOT must not request an update");
+      missing++;
+    }
+    char install[] = "INSTALL";
+    MqttPublisher::handleMqttMessage(firmwareTopic, install, strlen(install), 0, strlen(install));
+    if (OtaUpdater::isUpdateRequested()) {
+      test_pass(__FILE__, __LINE__);
+    } else {
+      test_fail(__FILE__, __LINE__, "INSTALL must only request the update (requestUpdate), not start it");
       missing++;
     }
 

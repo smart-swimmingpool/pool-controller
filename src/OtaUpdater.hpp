@@ -11,6 +11,11 @@
 
 #include <Arduino.h>
 
+#include <atomic>
+#include <memory>
+
+#include "OtaDownloadSession.hpp"
+
 namespace PoolController {
 
 /**
@@ -36,7 +41,7 @@ public:
   /// True if a newer release was found on GitHub.
   static bool isUpdateAvailable();
 
-  /// True while downloading and flashing.
+  /// True while downloading and flashing (until reboot or failure).
   static bool isUpdateInProgress();
 
   /// Current running firmware version (FW_VERSION).
@@ -60,8 +65,19 @@ public:
   /// Check GitHub for a newer release. Returns true if update available.
   static bool checkForUpdate();
 
-  /// Start the OTA download + flash. Returns true if started.
+  /// Start the OTA update now: connect and request the firmware, then return.
+  /// The TLS connect blocks once, bounded by the client timeout; the body is
+  /// then streamed by loop(), one bounded step per iteration.
+  /// Returns true if the download started. Call only from the loop task.
+  /// Web UI and MQTT use requestUpdate(); this is the step loop() runs.
   static bool startUpdate();
+
+  /// Request an OTA update (Web UI, MQTT). loop() starts it on its next
+  /// iteration. Ignored while an update is already requested or running.
+  static void requestUpdate();
+
+  /// True while a requested update has not yet been started by loop().
+  static bool isUpdateRequested();
 
   // ── Space and Size Verification ──
 
@@ -86,7 +102,23 @@ private:
   static bool fetchLatestRelease();
 
   // ── OTA ──
-  static bool downloadAndApply(const String &url);
+  struct DownloadContext;
+  /// Connect, validate the firmware size and start the flash write.
+  /// @return nullptr on success, otherwise the user-facing error message.
+  static const char *beginDownload(const String &url);
+  static void stepDownload();
+  static void completeDownload();
+  static void abortDownload(OtaDownloadSession::Result result, size_t written, size_t total);
+  static void failUpdate(const char *message);
+
+  /// Update lifecycle. REQUESTED → CONNECTING → DOWNLOADING → reboot,
+  /// or back to IDLE on failure.
+  enum class State : uint8_t {
+    IDLE,         ///< Nothing to do; periodic release checks may run
+    REQUESTED,    ///< requestUpdate() was called; loop() starts it next
+    CONNECTING,   ///< startUpdate() is connecting and validating the firmware
+    DOWNLOADING,  ///< download_ streams the firmware, one step per loop()
+  };
 
   // ── State ──
   static String currentVersion_;
@@ -94,7 +126,8 @@ private:
   static String releaseUrl_;
   static String downloadUrl_;
   static bool updateAvailable_;
-  static bool updateInProgress_;
+  static std::atomic<State> state_;
+  static std::unique_ptr<DownloadContext> download_;
   static int progress_;
   static String statusMessage_;
   static unsigned long lastCheckTime_;
@@ -105,8 +138,11 @@ private:
   static constexpr unsigned long kClockSyncBackoffMs = 5UL * 60UL * 1000UL;  // 5 minutes backoff
   static constexpr uint8_t kMaxClockSyncRetries = 3;
   static constexpr int kOtaBufferSize = 4096;
-  static constexpr float kSpaceSafetyMargin = 0.15f;    // 15% safety margin for OTA
-  static constexpr size_t kMinFreeSpace = 1024 * 1024;  // 1MB minimum free space
+  static constexpr uint32_t kDownloadStallTimeoutMs = 30UL * 1000UL;         // abort after 30 s without data
+  static constexpr uint32_t kDownloadTotalTimeoutMs = 10UL * 60UL * 1000UL;  // abort after 10 min overall
+  static constexpr float kSpaceSafetyMargin = 0.15f;                         // 15% safety margin for OTA
+  static constexpr size_t kMinFreeSpace = 1024 * 1024;                       // 1MB minimum free space
+  static constexpr const char *kInsufficientSpaceMessage = "Error: Insufficient flash space";
 };
 
 }  // namespace PoolController
