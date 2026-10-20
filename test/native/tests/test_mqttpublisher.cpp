@@ -19,7 +19,6 @@
 #include "ESP32TemperatureNode.hpp"
 #include "RelayModuleNode.hpp"
 #include "OperationModeNode.hpp"
-#include "OtaUpdater.hpp"
 
 using namespace PoolController;  // NOLINT(build/namespaces)
 
