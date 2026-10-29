@@ -73,7 +73,8 @@ document.addEventListener('keydown', e => {
   const card = e.target.closest && e.target.closest('.pump-switch-card');
   if (card && e.target === card && (e.key === ' ' || e.key === 'Enter')) {
     e.preventDefault();
-    card.click();
+    // One toggle per key press: auto-repeat would flip the pump back and forth.
+    if (!e.repeat) card.click();
   }
 });
 
