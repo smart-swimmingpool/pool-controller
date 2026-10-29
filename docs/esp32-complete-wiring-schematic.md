@@ -35,53 +35,72 @@ The standard pins used in the firmware are:
 - 1x Power Supply 5V DC (sufficiently rated)
 - Wiring cables, terminals, optionally fuse/protection circuit on load side
 
-## 2) Complete Schematic (Text Representation)
+## 2) Complete Schematic
 
-```text
-+----------------------------------+
-|              ESP32               |
-|                                  |
-| DS18B20 Solar DATA ---- GPIO32   |
-| DS18B20 Pool  DATA ---- GPIO33   |
-| Relay IN1 (Pool)  ----- GPIO25   |
-| Relay IN2 (Solar) ----- GPIO26   |
-| RTC SDA --------------- GPIO21   |
-| RTC SCL --------------- GPIO22   |
-| 3V3 ------------------- 3V3      |
-| GND ------------------- GND      |
-+----------------+-----------------+
-|
-| common ground (GND)
-v
-+----------------------+    +------------------------------+
-| DS18B20 Solar        |    | DS18B20 Pool                 |
-| VDD -> 3V3           |    | VDD -> 3V3                   |
-| GND -> GND           |    | GND -> GND                   |
-| DATA -> GPIO32       |    | DATA -> GPIO33               |
-+----------+-----------+    +----------+-------------------+
-|                           |
-+--[4.7kΩ]---> 3V3          +--[4.7kΩ]---> 3V3
+### Sensors (DS18B20, 4.7kΩ pull-up between DATA and 3V3)
 
-+----------------------------------+
-| 2-Channel Relay Module (5V, opto)|
-| IN1    <- GPIO25                 |
-| IN2    <- GPIO26                 |
-| VCC    <- 5V (or module logic)   |
-| JD-VCC <- 5V (if separate)       |
-| GND    <- GND                    |
-+----------------+-----------------+
-|
-| Switching contacts
-v
-        Pool Pump / Solar Pump (AC)
+Each sensor has its own wire for DATA, VDD and GND. The 4.7kΩ resistor is the only link between DATA and 3V3.
 
-+--------------------------------------+
-| RTC DS3231 (optional, clock)         |
-| VCC <- 3V3 (or 5V depending on module type) |
-| GND <- GND                           |
-| SDA <- GPIO21                        |
-| SCL <- GPIO22                        |
-+--------------------------------------+
+```svgbob
+ .---------------------.             .--------------------.
+ |        ESP32        |             |   DS18B20 Solar    |
+ |                     |             |                    |
+ |           GPIO32 o--+----*--------+--o DATA            |
+ |                     |    |        |                    |
+ |                     | .--+--.     |                    |
+ |                     | |4.7k |     |                    |
+ |                     | '--+--'     |                    |
+ |                     |    |        |                    |
+ |              3V3 o--+----*--------+--o VDD             |
+ |                     |             |                    |
+ |              GND o--+-------------+--o GND             |
+ '---------------------'             '--------------------'
+```
+
+```svgbob
+ .---------------------.             .--------------------.
+ |        ESP32        |             |    DS18B20 Pool    |
+ |                     |             |                    |
+ |           GPIO33 o--+----*--------+--o DATA            |
+ |                     |    |        |                    |
+ |                     | .--+--.     |                    |
+ |                     | |4.7k |     |                    |
+ |                     | '--+--'     |                    |
+ |                     |    |        |                    |
+ |              3V3 o--+----*--------+--o VDD             |
+ |                     |             |                    |
+ |              GND o--+-------------+--o GND             |
+ '---------------------'             '--------------------'
+```
+
+### Relay module
+
+The relay contacts switch the pump circuit (230V AC). It is not part of this low-voltage drawing; see the [Electrical Safety](/docs/electrical-safety/) guide.
+
+```svgbob
+ .---------------------.        .--------------------.
+ |        ESP32        |        |    Relay module    |
+ |                     |        |   2 channels, 5V   |
+ |           GPIO25 o--+--------+--o IN1             |
+ |           GPIO26 o--+--------+--o IN2             |
+ |               5V o--+--------+--o VCC             |
+ |              GND o--+--------+--o GND             |
+ '---------------------'        '--------------------'
+```
+
+### RTC DS3231 (optional)
+
+Supply the RTC with 3V3 or 5V, depending on the module type.
+
+```svgbob
+ .---------------------.        .--------------------.
+ |        ESP32        |        |     RTC DS3231     |
+ |                     |        |                    |
+ |           GPIO21 o--+--------+--o SDA             |
+ |           GPIO22 o--+--------+--o SCL             |
+ |              3V3 o--+--------+--o VCC             |
+ |              GND o--+--------+--o GND             |
+ '---------------------'        '--------------------'
 ```
 
 ## 3) Wiring Table
