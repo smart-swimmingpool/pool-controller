@@ -46,8 +46,14 @@ jobs:
         uses: ./.github/actions/setup-platformio
         with:
           python-version: "3.11"
+      # The restored PlatformIO cache includes .pio/build. With up-to-date objects
+      # nothing is recompiled, so the CodeQL tracer sees no C/C++ sources and
+      # finalize fails ("could not process any code written in C/C++"). Drop the
+      # build outputs (keeping .pio/libdeps) to force a real compilation.
       - name: Run PlatformIO
-        run: platformio run
+        run: |
+          rm -rf .pio/build
+          platformio run
 
       # NOTE: For compiled languages (cpp), `paths-ignore` in a CodeQL config
       # file does NOT exclude third-party build dependencies — the build
