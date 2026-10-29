@@ -180,7 +180,7 @@ Before soldering or installing permanently, build the circuit on a breadboard.
  .---------------------.             .--------------------.
  |        ESP32        |             |   DS18B20 Solar    |
  |                     |             |                    |
- |           GPIO15 o--+----*--------+--o DATA            |
+ |           GPIO32 o--+----*--------+--o DATA            |
  |                     |    |        |                    |
  |                     | .--+--.     |                    |
  |                     | |4.7k |     |                    |
@@ -196,7 +196,7 @@ Before soldering or installing permanently, build the circuit on a breadboard.
  .---------------------.             .--------------------.
  |        ESP32        |             |    DS18B20 Pool    |
  |                     |             |                    |
- |           GPIO16 o--+----*--------+--o DATA            |
+ |           GPIO33 o--+----*--------+--o DATA            |
  |                     |    |        |                    |
  |                     | .--+--.     |                    |
  |                     | |4.7k |     |                    |
@@ -212,8 +212,8 @@ Before soldering or installing permanently, build the circuit on a breadboard.
  .---------------------.        .--------------------.
  |        ESP32        |        |    Relay module    |
  |                     |        |     2 channels     |
- |           GPIO18 o--+--------+--o IN1             |
- |           GPIO19 o--+--------+--o IN2             |
+ |           GPIO25 o--+--------+--o IN1             |
+ |           GPIO26 o--+--------+--o IN2             |
  |               5V o--+--------+--o VCC             |
  |              GND o--+--------+--o GND             |
  '---------------------'        '--------------------'
