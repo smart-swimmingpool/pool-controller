@@ -72,25 +72,25 @@ Beide Sensoren teilen sich einen **gemeinsamen OneWire-Bus auf GPIO25** am
 2,54 mm Raster). DATA, 3,3V und GND sind alle auf diesem Stecker verfügbar
 — kein Löten nötig.
 
+```svgbob
+ .----------------------------------.                        .------------------.
+ | NORVI AE01R Erweiterungsport     |                        |     DS18B20      |
+ |                                  |                        |                  |
+ |  Pin 1                   IO25 o--+------*-----------------+--o DATA          |
+ |  Pin 2                      TXD0 |      |                 |                  |
+ |  Pin 3                        NC |   .--+--.              |                  |
+ |  Pin 4                      RXD0 |   |4.7k |              |                  |
+ |  Pin 5                 IO0 flash |   '--+--'              |                  |
+ |  Pin 6               IO32 Taster |      |                 |                  |
+ |  Pin 7                    3V3 o--+------*-----------------+--o VCC           |
+ |  Pin 8                  SCL OLED |                        |                  |
+ |  Pin 9                    GND o--+------------------------+--o GND           |
+ |  Pin 10                 SDA OLED |                        |                  |
+ |                                  |                        |                  |
+ '----------------------------------'                        '------------------'
 ```
-   NORVI AE01-R — Erweiterungsport (10-polige Stiftleiste, 2,54 mm)
-   ┌─────────────────────────────────────────────────────────────────┐
-   │                                                                 │
-   │  Pin 1  ◄─────── IO25 ──── DS18B20 DATA (gelb)                 │
-   │  Pin 2         TXD0                                            │
-   │  Pin 3         NC                                              │
-   │  Pin 4         RXD0                                            │
-   │  Pin 5         IO0 (BOOT)                                      │
-   │  Pin 6         IO32 (Taster)                                    │
-   │  Pin 7  ◄─────── 3,3V ──── DS18B20 VCC (rot)                   │
-   │  Pin 8         SCL (OLED)                                       │
-   │  Pin 9  ◄─────── GND  ──── DS18B20 GND (schwarz)               │
-   │  Pin 10        SDA (OLED)                                       │
-   │                                                                 │
-   └─────────────────────────────────────────────────────────────────┘
-                              ↑
-                  3× Female-Female Dupont-Kabel
-```
+
+3× Female-Female Dupont-Kabel.
 
 **Anschlusstabelle:**
 

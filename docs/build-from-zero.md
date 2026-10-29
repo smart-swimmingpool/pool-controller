@@ -176,23 +176,47 @@ Before soldering or installing permanently, build the circuit on a breadboard.
 
 ### Wiring Diagram
 
-```text
-ESP32 DevKit V1          DS18B20 Sensors
-┌─────────────┐
-│ GPIO15 ─────┼────┬──── Data (solar)
-│ GPIO16 ─────┼────┬──── Data (pool)
-│ 3.3V  ─────┼────┼──── VCC (both sensors)
-│ GND   ─────┼────┼──── GND (both sensors)
-│             │    │
-│             │   4.7kΩ
-│             │    │
-│             └────┴──────────────── 3.3V
-│
-│ GPIO18 ───── IN1  (relay module)
-│ GPIO19 ───── IN2  (relay module)
-│ 5V    ───── VCC  (relay module)
-│ GND   ───── GND  (relay module)
-└─────────────┘
+```svgbob
+ .---------------------.             .--------------------.
+ |        ESP32        |             |   DS18B20 Solar    |
+ |                     |             |                    |
+ |           GPIO15 o--+----*--------+--o DATA            |
+ |                     |    |        |                    |
+ |                     | .--+--.     |                    |
+ |                     | |4.7k |     |                    |
+ |                     | '--+--'     |                    |
+ |                     |    |        |                    |
+ |              3V3 o--+----*--------+--o VDD             |
+ |                     |             |                    |
+ |              GND o--+-------------+--o GND             |
+ '---------------------'             '--------------------'
+```
+
+```svgbob
+ .---------------------.             .--------------------.
+ |        ESP32        |             |    DS18B20 Pool    |
+ |                     |             |                    |
+ |           GPIO16 o--+----*--------+--o DATA            |
+ |                     |    |        |                    |
+ |                     | .--+--.     |                    |
+ |                     | |4.7k |     |                    |
+ |                     | '--+--'     |                    |
+ |                     |    |        |                    |
+ |              3V3 o--+----*--------+--o VDD             |
+ |                     |             |                    |
+ |              GND o--+-------------+--o GND             |
+ '---------------------'             '--------------------'
+```
+
+```svgbob
+ .---------------------.        .--------------------.
+ |        ESP32        |        |    Relay module    |
+ |                     |        |     2 channels     |
+ |           GPIO18 o--+--------+--o IN1             |
+ |           GPIO19 o--+--------+--o IN2             |
+ |               5V o--+--------+--o VCC             |
+ |              GND o--+--------+--o GND             |
+ '---------------------'        '--------------------'
 ```
 
 > **Important**: The DS18B20 data line requires a **4.7 kΩ pull-up resistor**

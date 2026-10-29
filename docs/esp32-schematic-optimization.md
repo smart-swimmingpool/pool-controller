@@ -104,35 +104,49 @@ carries higher boot/noise risk.
 
 ### 3.4 Wiring (Visualization)
 
-```text
-                          +---------------------+
-                          |        ESP32        |
-                          |                     |
-DS18B20 Solar DATA  <---->| GPIO32              |
-DS18B20 Pool  DATA  <---->| GPIO33              |
-Relay IN1 (Pool)    <---->| GPIO25              |
-Relay IN2 (Solar)   <---->| GPIO26              |
-                          |                     |
-3V3 --------------------->| 3V3                 |
-GND --------------------->| GND                 |
-                          +----------+----------+
-                                    |
-                                    | common ground
-                                    v
-                    +----------------+----------------+
-                    | 2-Channel Relay Module (5V, opto) |
-                    | VCC (Logic)  <- 3V3/5V*         |
-                    | JD-VCC (Coil)<- 5V              |
-                    | GND           <- GND            |
-                    | IN1           <- GPIO25         |
-                    | IN2           <- GPIO26         |
-                    +----------------+----------------+
-
-DS18B20 Solar: VDD -> 3V3, GND -> GND, DATA -> GPIO32, Pull-up 4.7k to 3V3
-DS18B20 Pool : VDD -> 3V3, GND -> GND, DATA -> GPIO33, Pull-up 4.7k to 3V3
-
-* depends on the relay module used (check logic level)
+```svgbob
+ .---------------------.             .--------------------.
+ |        ESP32        |             |   DS18B20 Solar    |
+ |                     |             |                    |
+ |           GPIO32 o--+----*--------+--o DATA            |
+ |                     |    |        |                    |
+ |                     | .--+--.     |                    |
+ |                     | |4.7k |     |                    |
+ |                     | '--+--'     |                    |
+ |                     |    |        |                    |
+ |              3V3 o--+----*--------+--o VDD             |
+ |                     |             |                    |
+ |              GND o--+-------------+--o GND             |
+ '---------------------'             '--------------------'
 ```
+```svgbob
+ .---------------------.             .--------------------.
+ |        ESP32        |             |    DS18B20 Pool    |
+ |                     |             |                    |
+ |           GPIO33 o--+----*--------+--o DATA            |
+ |                     |    |        |                    |
+ |                     | .--+--.     |                    |
+ |                     | |4.7k |     |                    |
+ |                     | '--+--'     |                    |
+ |                     |    |        |                    |
+ |              3V3 o--+----*--------+--o VDD             |
+ |                     |             |                    |
+ |              GND o--+-------------+--o GND             |
+ '---------------------'             '--------------------'
+```
+
+```svgbob
+ .---------------------.        .--------------------.
+ |        ESP32        |        |    Relay module    |
+ |                     |        |   2 channels, 5V   |
+ |           GPIO25 o--+--------+--o IN1             |
+ |           GPIO26 o--+--------+--o IN2             |
+ |               5V o--+--------+--o VCC             |
+ |              GND o--+--------+--o GND             |
+ '---------------------'        '--------------------'
+```
+
+The relay logic level (3V3 or 5V) depends on the relay module used, check its datasheet.
 
 ## 4) Firmware Reference for Rewiring
 
