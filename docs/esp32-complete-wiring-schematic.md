@@ -75,7 +75,8 @@ Each sensor has its own wire for DATA, VDD and GND. The 4.7kΩ resistor is the o
 
 ### Relay module
 
-The relay contacts switch the pump circuit (230V AC). It is not part of this low-voltage drawing; see the [Electrical Safety](/docs/electrical-safety/) guide.
+The relay contacts switch the pump circuit (230V AC).
+It is not part of this low-voltage drawing; see the [Electrical Safety](/docs/electrical-safety/) guide.
 
 ```svgbob
  .---------------------.        .--------------------.
