@@ -138,15 +138,17 @@ höheres Boot-/Störrisiko mitbringt.
 ```svgbob
  .---------------------.        .--------------------.
  |        ESP32        |        |    Relaismodul     |
- |                     |        |      2 Kanal       |
+ |                     |        |   2 Kanal, Opto    |
  |           GPIO25 o--+--------+--o IN1             |
  |           GPIO26 o--+--------+--o IN2             |
- |               5V o--+--------+--o VCC             |
+ |              3V3 o--+--------+--o VCC             |
+ |               5V o--+--------+--o JD-VCC          |
  |              GND o--+--------+--o GND             |
  '---------------------'        '--------------------'
 ```
 
-Der Logikpegel des Relais (3V3 oder 5V) hängt vom verwendeten Relaismodul ab, siehe Datenblatt.
+Die Logikversorgung VCC hängt vom Relaismodul ab (3V3 oder 5V, siehe Datenblatt).
+Den JD-VCC-Jumper entfernen, damit die Spulen getrennt aus 5V versorgt werden.
 
 ## 4) Firmware-Bezug bei Umverdrahtung
 

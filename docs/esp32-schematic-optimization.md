@@ -138,15 +138,16 @@ carries higher boot/noise risk.
 ```svgbob
  .---------------------.        .--------------------.
  |        ESP32        |        |    Relay module    |
- |                     |        |   2 channels, 5V   |
+ |                     |        |  2 channels, opto  |
  |           GPIO25 o--+--------+--o IN1             |
  |           GPIO26 o--+--------+--o IN2             |
- |               5V o--+--------+--o VCC             |
+ |              3V3 o--+--------+--o VCC             |
+ |               5V o--+--------+--o JD-VCC          |
  |              GND o--+--------+--o GND             |
  '---------------------'        '--------------------'
 ```
 
-The relay logic level (3V3 or 5V) depends on the relay module used, check its datasheet.
+The logic supply VCC depends on the relay module (3V3 or 5V, check its datasheet). Keep the JD-VCC jumper removed to power the coils separately from 5V.
 
 ## 4) Firmware Reference for Rewiring
 
