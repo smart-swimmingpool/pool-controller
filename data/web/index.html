@@ -88,24 +88,24 @@
 </div>
 
 <!-- Bottom Tab Bar (iOS 26 Style) -->
-<nav class="tab-bar" id="tabBar">
-  <button class="tab-bar-item active" data-tab="dashboard" onclick="switchTab('dashboard')">
+<nav class="tab-bar" id="tabBar" aria-label="Main navigation">
+  <button type="button" class="tab-bar-item active" data-tab="dashboard" aria-current="page" onclick="switchTab('dashboard')">
     <span class="tab-icon">🏠</span>
     <span class="tab-label">Dashboard</span>
   </button>
-  <button class="tab-bar-item" data-tab="pool" onclick="switchTab('pool')">
+  <button type="button" class="tab-bar-item" data-tab="pool" onclick="switchTab('pool')">
     <span class="tab-icon">🌊</span>
     <span class="tab-label">Pool</span>
   </button>
-  <button class="tab-bar-item" data-tab="time" onclick="switchTab('time')">
+  <button type="button" class="tab-bar-item" data-tab="time" onclick="switchTab('time')">
     <span class="tab-icon">🕐</span>
     <span class="tab-label">Time</span>
   </button>
-  <button class="tab-bar-item" data-tab="sensors" onclick="switchTab('sensors')">
+  <button type="button" class="tab-bar-item" data-tab="sensors" onclick="switchTab('sensors')">
     <span class="tab-icon">🔬</span>
     <span class="tab-label">Sensors</span>
   </button>
-  <button class="tab-bar-item" data-tab="more" onclick="toggleMoreMenu()">
+  <button type="button" class="tab-bar-item" data-tab="more" onclick="toggleMoreMenu()" aria-haspopup="true" aria-expanded="false" aria-controls="moreMenu">
     <span class="tab-icon">⚙️</span>
     <span class="tab-label">More</span>
   </button>
@@ -113,25 +113,25 @@
 
 <!-- More-Menü (Bottom Sheet) -->
 <div id="moreMenu" class="more-sheet" style="display: none;">
-  <div class="more-sheet-overlay" onclick="toggleMoreMenu()"></div>
-  <div class="more-sheet-panel">
-    <div class="more-sheet-handle"></div>
-    <div class="more-sheet-item" onclick="switchTab('logs')">
+  <div class="more-sheet-overlay" onclick="toggleMoreMenu()" aria-hidden="true"></div>
+  <div class="more-sheet-panel" role="menu" aria-label="More">
+    <div class="more-sheet-handle" aria-hidden="true"></div>
+    <button type="button" class="more-sheet-item" role="menuitem" onclick="switchTab('logs')">
       <span class="more-sheet-icon">📜</span> Logs
-    </div>
-    <div class="more-sheet-item" onclick="switchTab('wifi')">
+    </button>
+    <button type="button" class="more-sheet-item" role="menuitem" onclick="switchTab('wifi')">
       <span class="more-sheet-icon">📶</span> WiFi
-    </div>
-    <div class="more-sheet-item" onclick="switchTab('mqtt')">
+    </button>
+    <button type="button" class="more-sheet-item" role="menuitem" onclick="switchTab('mqtt')">
       <span class="more-sheet-icon">🔌</span> MQTT
-    </div>
-    <div class="more-sheet-item" onclick="switchTab('system')">
+    </button>
+    <button type="button" class="more-sheet-item" role="menuitem" onclick="switchTab('system')">
       <span class="more-sheet-icon">🔒</span> System
-    </div>
-    <div class="more-sheet-divider"></div>
-    <div class="more-sheet-item" onclick="switchTab('about')">
+    </button>
+    <div class="more-sheet-divider" role="separator"></div>
+    <button type="button" class="more-sheet-item" role="menuitem" onclick="switchTab('about')">
       <span class="more-sheet-icon">ℹ️</span> About
-    </div>
+    </button>
   </div>
 </div>
 
@@ -160,7 +160,7 @@
 
     <!-- Pumpen -->
     <div class="pump-switches">
-      <div class="pump-switch-card" onclick="togglePump('pool')">
+      <div class="pump-switch-card" id="poolPumpCard" role="switch" aria-checked="false" tabindex="0" onclick="togglePump(\'pool\')">
         <div class="pump-switch-header">
           <span class="pump-switch-name">Pool Pump</span>
           <span class="pump-switch-toggle" id="poolPumpToggle">
@@ -171,7 +171,7 @@
         </div>
         <div class="pump-switch-status off" id="poolPumpStatus">OFF</div>
       </div>
-      <div class="pump-switch-card" onclick="togglePump('solar')">
+      <div class="pump-switch-card" id="solarPumpCard" role="switch" aria-checked="false" tabindex="0" onclick="togglePump(\'solar\')">
         <div class="pump-switch-header">
           <span class="pump-switch-name">Solar Pump</span>
           <span class="pump-switch-toggle" id="solarPumpToggle">
@@ -187,23 +187,23 @@
     <!-- Modus-Auswahl -->
     <div style="background: var(--glass-bg); padding: 1rem; border-radius: 12px; border: 1px solid var(--panel-border);">
       <label style="font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Operating Mode</label>
-      <div class="mode-selector" id="modeSelector">
-        <div class="mode-card active" data-mode="auto" onclick="setMode('auto')">
-          <div class="mode-icon">☀️</div>
-          <div class="mode-name">Auto</div>
-        </div>
-        <div class="mode-card" data-mode="manu" onclick="setMode('manu')">
-          <div class="mode-icon">🔧</div>
-          <div class="mode-name">Manual</div>
-        </div>
-        <div class="mode-card" data-mode="boost" onclick="setMode('boost')">
-          <div class="mode-icon">🚀</div>
-          <div class="mode-name">Boost</div>
-        </div>
-        <div class="mode-card" data-mode="timer" onclick="setMode('timer')">
-          <div class="mode-icon">⏱️</div>
-          <div class="mode-name">Timer</div>
-        </div>
+      <div class="mode-selector" id="modeSelector" role="group" aria-label="Operating Mode">
+        <button type="button" class="mode-card active" data-mode="auto" aria-pressed="true" onclick="setMode('auto')">
+          <span class="mode-icon">☀️</span>
+          <span class="mode-name">Auto</span>
+        </button>
+        <button type="button" class="mode-card" data-mode="manu" aria-pressed="false" onclick="setMode('manu')">
+          <span class="mode-icon">🔧</span>
+          <span class="mode-name">Manual</span>
+        </button>
+        <button type="button" class="mode-card" data-mode="boost" aria-pressed="false" onclick="setMode('boost')">
+          <span class="mode-icon">🚀</span>
+          <span class="mode-name">Boost</span>
+        </button>
+        <button type="button" class="mode-card" data-mode="timer" aria-pressed="false" onclick="setMode('timer')">
+          <span class="mode-icon">⏱️</span>
+          <span class="mode-name">Timer</span>
+        </button>
       </div>
       <div id="modeFeedback" class="mode-feedback" style="display: none; margin-top: 0.5rem; padding: 0.4rem; border-radius: 6px; text-align: center; font-size: 0.8rem;"></div>
     </div>

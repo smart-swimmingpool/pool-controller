@@ -125,6 +125,9 @@ input:focus, select:focus {
   bottom: 0;
   left: 0;
   right: 0;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
   z-index: 999;
   display: flex;
   justify-content: space-around;
@@ -201,6 +204,9 @@ input:focus, select:focus {
 }
 .more-sheet-panel {
   position: relative;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
   background: rgba(10, 30, 48, 0.96);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
@@ -654,3 +660,42 @@ input:focus, select:focus {
 }
 
 .calib-cancel:hover { color: #e2f0f7; border-color: rgba(226, 240, 247, 0.35); }
+
+/* ── Accessibility ── */
+/* Buttons used as cards/list items: reset UA button styling */
+button.mode-card,
+button.more-sheet-item {
+  font: inherit;
+  color: inherit;
+  width: 100%;
+}
+button.more-sheet-item {
+  background: none;
+  border: none;
+  text-align: left;
+}
+.mode-card .mode-icon,
+.mode-card .mode-name {
+  display: block;
+}
+:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+.tab-bar-item:focus-visible,
+.more-sheet-item:focus-visible {
+  border-radius: 10px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+@media (min-width: 640px) {
+  .tab-bar {
+    border-radius: 16px 16px 0 0;
+    border-left: 1px solid rgba(0, 200, 220, 0.12);
+    border-right: 1px solid rgba(0, 200, 220, 0.12);
+  }
+}

@@ -15,12 +15,16 @@ function switchTab(tabName) {
   const moreTabs = ['logs', 'wifi', 'mqtt', 'system', 'about'];
   const barTab = moreTabs.includes(tabName) ? 'more' : tabName;
   document.querySelectorAll('.tab-bar-item').forEach(item => {
-    item.classList.toggle('active', item.dataset.tab === barTab);
+    const isActive = item.dataset.tab === barTab;
+    item.classList.toggle('active', isActive);
+    if (isActive) item.setAttribute('aria-current', 'page');
+    else item.removeAttribute('aria-current');
   });
 
   // Close more menu if open
   const moreMenu = document.getElementById('moreMenu');
   if (moreMenu) moreMenu.style.display = 'none';
+  setMoreExpanded(false);
 
   // Lazy-load tab data on first activation instead of at page load: the
   // single-threaded device server would otherwise queue config/sensor
@@ -38,9 +42,40 @@ function switchTab(tabName) {
 function toggleMoreMenu() {
   const menu = document.getElementById('moreMenu');
   if (menu) {
-    menu.style.display = menu.style.display === 'none' || menu.style.display === '' ? 'flex' : 'none';
+    const open = menu.style.display === 'none' || menu.style.display === '';
+    menu.style.display = open ? 'flex' : 'none';
+    setMoreExpanded(open);
+    if (open) {
+      const first = menu.querySelector('.more-sheet-item');
+      if (first) first.focus();
+    }
   }
 }
+
+function setMoreExpanded(expanded) {
+  const btn = document.querySelector('.tab-bar-item[data-tab="more"]');
+  if (btn) btn.setAttribute('aria-expanded', String(expanded));
+}
+
+// Escape closes the More sheet and returns focus to its trigger.
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  const menu = document.getElementById('moreMenu');
+  if (menu && menu.style.display === 'flex') {
+    toggleMoreMenu();
+    const btn = document.querySelector('.tab-bar-item[data-tab="more"]');
+    if (btn) btn.focus();
+  }
+});
+
+// Pump cards are role="switch" divs: Space/Enter activate them like a button.
+document.addEventListener('keydown', e => {
+  const card = e.target.closest && e.target.closest('.pump-switch-card');
+  if (card && e.target === card && (e.key === ' ' || e.key === 'Enter')) {
+    e.preventDefault();
+    card.click();
+  }
+});
 
 // ── Telemetry ──
 
@@ -262,6 +297,7 @@ function updateAuthUI() {
           el.setAttribute('onclick', el.dataset.origOnclick);
         }
         el.classList.remove('disabled');
+        el.removeAttribute('aria-disabled');
       } else {
         if (!el.dataset.origCursor) el.dataset.origCursor = el.style.cursor;
         if (el.getAttribute('onclick')) {
@@ -270,6 +306,7 @@ function updateAuthUI() {
         }
         el.style.cursor = 'default';
         el.classList.add('disabled');
+        el.setAttribute('aria-disabled', 'true');
       }
     }
   }
@@ -449,6 +486,8 @@ function setPumpSwitch(pump, isOn) {
   if (toggle) {
     toggle.classList.toggle('on', isOn);
   }
+  const card = document.getElementById(pump + 'PumpCard');
+  if (card) card.setAttribute('aria-checked', String(isOn));
   if (status) {
     status.textContent = isOn ? 'ON' : 'OFF';
     status.className = 'pump-switch-status ' + (isOn ? 'on' : 'off');
@@ -512,12 +551,14 @@ async function setMode(mode) {
 function highlightMode(mode) {
   document.querySelectorAll('.mode-card').forEach(c => {
     c.classList.remove('active');
+    c.setAttribute('aria-pressed', 'false');
     c.style.background = 'var(--panel-bg)';
     c.style.borderColor = 'var(--panel-border)';
   });
   const card = document.querySelector('.mode-card[data-mode="' + mode + '"]');
   if (card) {
     card.classList.add('active');
+    card.setAttribute('aria-pressed', 'true');
     card.style.background = 'rgba(0, 229, 255, 0.12)';
     card.style.borderColor = 'var(--accent-solar)';
   }
