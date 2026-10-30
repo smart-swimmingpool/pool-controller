@@ -71,17 +71,17 @@ Um **80 % Line Coverage** zu erreichen, müssen ~5.330 der 6.664 Zeilen abgedeck
 
 ### 2.1 Testpyramide
 
-```
-         ┌──────────┐
-         │   E2E    │ ← Hardware-in-the-Loop (Integration auf echter HW)
-         │  (5 %)   │
-        ┌┴──────────┴┐
-        │Integration  │ ← Modulübergreifend (MQTT→Rule→Relay)
-        │  (15 %)     │
-       ┌┴─────────────┴┐
-       │  Unit-Tests    │ ← Der Kern: native, isoliert, schnell
-       │    (80 %)       │
-       └────────────────┘
+```svgbob
+          .----------.
+          |   E2E    |  Hardware-in-the-Loop (Integration auf echter HW)
+          |  (5 %)   |
+        .-+----------+-.
+        | Integration  |  Modulübergreifend (MQTT→Rule→Relay)
+        |   (15 %)     |
+      .-+--------------+-.
+      |    Unit-Tests    |  Der Kern: native, isoliert, schnell
+      |      (80 %)      |
+      '------------------'
 ```
 
 **Fokus:** Native Unit-Tests auf x86_64 (wie bisher) — schnell, deterministisch, mit Coverage-Analyse.
