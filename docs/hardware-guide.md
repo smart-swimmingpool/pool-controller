@@ -92,52 +92,68 @@ for details). Defined in `src/Config.hpp`:
 
 ## Wiring Diagram
 
+### Power supply
+
+```svgbob
+ .---------------.        .---------------------.        .------------------.
+ |    USB PSU    |        |        ESP32        |        |   Relay module   |
+ |    5V, 1A+    |        |                     |        |    2 channels    |
+ |               |        |                     |        |                  |
+ |         5V o--+--------+--o VIN        5V o--+--------+--o VCC           |
+ |               |        |                     |        |                  |
+ |        GND o--+--------+--o GND       GND o--+--------+--o GND           |
+ '---------------'        '---------------------'        '------------------'
 ```
- ─── POWER SUPPLY ──────────────────────────────────────────────────
 
-  [USB PSU 5V/1A+]           [ESP32 Board]           [Relay Module]
-   ┌──────────┐              ┌─────────────┐          ┌────────────┐
-   │ 5V (+) ──┼──────────────┤ VIN         │          │ VCC        │
-   │          │              │  (powers    │      ┌───┤ (powers    │
-   │          │              │   board)    │      │   │  coils)    │
-   │          │              │             │      │   │            │
-   │          │              │ 3V3 ───┬────┘      │   │ GND ◄──────┼──┐
-   │          │              │        │           │   └────────────┘  │
-   │ GND ─────┼──────────────┤ GND ◄──┼───────────┼──────────────────┘
-   └──────────┘              └────────┘           │
+### Sensors
 
- ─── SENSORS ──────────────────────────────────────────────────────
+Both sensors share the 3.3V rail. The 4.7kΩ resistor is the only link between DATA and 3.3V.
 
-  [DS18B20 Solar]                               [DS18B20 Pool]
-   ┌───────────┐                                 ┌───────────┐
-   │ VDD (red) ─┼── 3.3V ─────────────────────────┼── VDD (red)│
-   │           │                                 │           │
-   │ GND (blk) ─┼── GND ──────────────────────────┼── GND (blk)│
-   │           │                                 │           │
-   │DATA (yel) ─┼── GPIO32 (PIN_DS_SOLAR)         │           │
-   │           │  │                              │           │
-   │           │  └──[4.7kΩ]── 3.3V ← pull-up    │           │
-   │           │                   resistor      │           │
-   │           │                                 │DATA (yel) ─┼── GPIO33 (PIN_DS_POOL)
-   │           │                                 │           │  │
-   │           │                                 │           │  └──[4.7kΩ]── 3.3V
-   └───────────┘                                 └───────────┘
-
- ─── RELAY CONTROL SIGNALS ────────────────────────────────────────
-
-  ESP32 GPIO25 ────────────────────────────────── Relay IN1 (Pool)
-  ESP32 GPIO26 ────────────────────────────────── Relay IN2 (Solar)
-
- ─── STATUS INDICATION ────────────────────────────────────────────
-
-  ESP32 Built-in LED (GPIO2) ── Status blink codes (Homie)
-
- ─── RELAY LOAD SIDE (230V AC) ────────────────────────────────────
-
-  L (mains) ─── RCD ─── MCB ──┬── Relay COM1 ── Pool Pump
-                               └── Relay COM2 ── Solar Pump
-  N (neutral) ───────────────────────── Neutral bar ── Pump N
+```svgbob
+ .---------------------.             .--------------------.
+ |        ESP32        |             |   DS18B20 Solar    |
+ |                     |             |                    |
+ |           GPIO32 o--+----*--------+--o DATA            |
+ |                     |    |        |                    |
+ |                     | .--+--.     |                    |
+ |                     | |4.7k |     |                    |
+ |                     | '--+--'     |                    |
+ |                     |    |        |                    |
+ |              3V3 o--+----*--------+--o VDD             |
+ |                     |             |                    |
+ |              GND o--+-------------+--o GND             |
+ '---------------------'             '--------------------'
 ```
+```svgbob
+ .---------------------.             .--------------------.
+ |        ESP32        |             |    DS18B20 Pool    |
+ |                     |             |                    |
+ |           GPIO33 o--+----*--------+--o DATA            |
+ |                     |    |        |                    |
+ |                     | .--+--.     |                    |
+ |                     | |4.7k |     |                    |
+ |                     | '--+--'     |                    |
+ |                     |    |        |                    |
+ |              3V3 o--+----*--------+--o VDD             |
+ |                     |             |                    |
+ |              GND o--+-------------+--o GND             |
+ '---------------------'             '--------------------'
+```
+
+### Relay control signals
+
+```svgbob
+ .---------------------.        .--------------------.
+ |        ESP32        |        |    Relay module    |
+ |                     |        |   2 channels, 5V   |
+ |           GPIO25 o--+--------+--o IN1             |
+ |           GPIO26 o--+--------+--o IN2             |
+ |               5V o--+--------+--o VCC             |
+ |              GND o--+--------+--o GND             |
+ '---------------------'        '--------------------'
+```
+
+Status indication: the built-in LED (GPIO2) shows the status blink codes (Homie).
 
 ### Wire Connections (Step by Step)
 
@@ -158,9 +174,9 @@ datasheet**):
 Each sensor DATA line **must** have a **4.7kΩ resistor** connecting it to
 **3.3V**. Without it, the sensor will not be detected.
 
-```
-   Solar DATA ──── 4.7kΩ ──── 3.3V
-   Pool  DATA ──── 4.7kΩ ──── 3.3V
+```svgbob
+ Solar DATA o----[ 4.7k ]----o 3V3
+ Pool  DATA o----[ 4.7k ]----o 3V3
 ```
 
 Solder the resistor as close to the ESP32 pin header as possible, connecting
@@ -183,13 +199,16 @@ set its **HIGH/LOW jumper** to LOW or choose a standard active-low module.
 
 **Load wiring (230V side) — Standard external relay module:**
 
-```
-   L (mains live) ─── RCD ─── MCB ──┬── Relay COM1 ── Pool Pump
-                                     │       NO1 ─────┘
-                                     │
-                                     └── Relay COM2 ── Solar Pump
-                                             NO2 ─────┘
-   N (neutral) ───────────────────────── Neutral bar ── Pump N
+Relay load side (230V AC), channel 1 shown.
+Channel 2 (solar pump) is wired identically. The neutral wire goes directly from the neutral bar to the pump and is not switched.
+
+```svgbob
+ .-------------.   .---------------.   .---------------.   .----------------.   .-------------.
+ |    Mains    |   |      RCD      |   |      MCB      |   |  Relay module  |   |     Pump    |
+ |   230V AC   |   |               |   |               |   |    contact     |   |             |
+ |             |   |               |   |               |   |                |   |             |
+ |        L o--+---+--o in  out o--+---+--o in  out o--+---+--o COM   NO o--+---+--o L        |
+ '-------------'   '---------------'   '---------------'   '----------------'   '-------------'
 ```
 
 - Connect the pump's live wire to the relay's **COM** (common) terminal.

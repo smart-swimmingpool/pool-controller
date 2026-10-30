@@ -77,19 +77,15 @@ A **contactor** is a heavy-duty relay built for motor loads. The NORVI relay
 switches only the **contactor's coil** (a few mA at 24V DC) — the contactor's
 main contacts handle the 230V AC load.
 
- ```
-  NORVI Relay            Contactor (external)           Pump
-  ┌──────────┐          ┌────────────────────┐      ┌────────┐
-  │          │  24V DC  │  A1 (+)            │      │        │
-  │ COM ─────┼──────────┤  (coil)            │      │        │
-  │          │          │          A2 (-) ───┼── GND│        │
-  │ NO  ─────┼──────┐   │                    │      │        │
-  └──────────┘      │   │ 1 (L-input) ───────┤─── 2 │        │
-                    │   └────────────────────┘      │  L-N  │
-  24V DC (+) ───────┘                               └────────┘
-  230V L (via contactor) ─────────────────────────────┘
-  230V N ─────────────────────────────────────────────────┘
-  GND ────────────────────────────────────────────────────┘
+The NORVI relay only switches the coil of the contactor (mA at 24V DC). The contactor contacts switch the 230V pump.
+
+```svgbob
+ .-------------.      .-----------------.      .-------------.
+ | NORVI relay |      |    Contactor    |      |     Pump    |
+ |   mA, 24V   |      | coil + contacts |      |     230V    |
+ |             |      |                 |      |             |
+ |       NO o--+------+--o A1      2 o--+------+--o L        |
+ '-------------'      '-----------------'      '-------------'
 ```
 
 ### Benefits
@@ -144,15 +140,16 @@ For maximum space saving:
 
 ### 24V Control Circuit
 
+```svgbob
+ .-------------.      .---------------.      .-----------------.      .-----------.
+ |  24V supply |      |  NORVI relay  |      |  Contactor coil |      |    GND    |
+ |             |      |    R0 or R2   |      |                 |      |           |
+ |             |      |               |      |                 |      |           |
+ |        + o--+------+--o COM  NO o--+------+--o A1     A2 o--+------+--o in     |
+ '-------------'      '---------------'      '-----------------'      '-----------'
 ```
- 24V DC (+) ──┬── NORVI R0 COM ── NO ──┬── Contactor Pool A1 ── A2 ──┬── GND
-              │                        │                            │
-              ├── NORVI R2 COM ── NO ──┤── Contactor Solar A1 ── A2 ──┤
-              │                        │                            │
-              └───── NORVI 24V IN ─────┘                            │
-                                                                    │
- GND ───────────────────────────────────────────────────────────────┘
-```
+
+Control circuit for one pump, repeat it for the second relay and contactor. Fit a 1N4007 flyback diode across each coil (cathode to A1, anode to A2).
 
 **Flyback diodes 1N4007** across each contactor coil:
 - Cathode (banded end) to **A1 (+)**
@@ -163,13 +160,17 @@ Without them, the voltage spike can damage the NORVI relay driver.
 
 ### 230V Power Circuit
 
+```svgbob
+ .-------------.   .---------------.   .---------------.   .----------------.   .-------------.
+ |    Mains    |   |      RCD      |   |      MCB      |   |   Contactor    |   |     Pump    |
+ |   230V AC   |   |               |   |               |   |    contacts    |   |             |
+ |             |   |               |   |               |   |                |   |             |
+ |        L o--+---+--o in  out o--+---+--o in  out o--+---+--o 1      2 o--+---+--o L        |
+ '-------------'   '---------------'   '---------------'   '----------------'   '-------------'
 ```
-230V L (Live) ─── RCD ─── MCB ──┬── Contactor Solar 1-2 ── Solar Pump L
-                                 │
-                                 └── Contactor Pool 1-2 ─── Pool Pump L
 
-230V N (Neutral) ──────────────────────── Both Pump N
-```
+Power circuit for one pump, the second contactor is wired identically.
+The neutral wire goes directly from the neutral bar to the pumps and is not switched.
 
 Always protect the 230V side with an RCD (30mA) and MCB (B10A or appropriate).
 

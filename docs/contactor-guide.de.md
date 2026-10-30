@@ -82,19 +82,15 @@ robustes Relais in Hutschienenbauweise. Das NORVI-Relais schaltet nur noch
 die **Steuerspule des Schützes** (einige mA bei 24V DC) — die Hauptkontakte
 des Schützes schalten die 230V-Last.
 
- ```
-  NORVI-Relais           Schütz (extern)            Pumpe
-  ┌──────────┐          ┌──────────────────┐      ┌────────┐
-  │          │  24V DC  │  A1 (+)          │      │        │
-  │ COM ─────┼──────────┤  (Spule)         │      │        │
-  │          │          │         A2 (-) ──┼── GND│        │
-  │ NO  ─────┼──────┐   │                  │      │        │
-  └──────────┘      │   │ 1 (L-Eingang) ───┤─── 2 │        │
-                    │   └──────────────────┘      │  L-N  │
-  24V DC (+) ───────┘                             └────────┘
-  230V L (via Schütz) ──────────────────────────────┘
-  230V N ──────────────────────────────────────────────┘
-  GND ───────────────────────────────────────────────────┘
+Das NORVI-Relais schaltet nur die Spule des Schützes (mA bei 24V DC). Die Schützkontakte schalten die 230V-Pumpe.
+
+```svgbob
+ .-------------.      .-----------------.      .-------------.
+ | NORVI-Relais|      |      Schütz     |      |    Pumpe    |
+ |   mA, 24V   |      | coil + contacts |      |     230V    |
+ |             |      |                 |      |             |
+ |       NO o--+------+--o A1      2 o--+------+--o L        |
+ '-------------'      '-----------------'      '-------------'
 ```
 
 ### Vorteile
@@ -150,15 +146,17 @@ Wenn du maximale Platzersparnis brauchst:
 
 ### 24V-Steuerkreis
 
+```svgbob
+ .-------------.      .---------------.      .-----------------.      .-----------.
+ | 24V-Netzteil|      |  NORVI-Relais |      |   Schütz Spule  |      |    GND    |
+ |             |      |    R0 or R2   |      |                 |      |           |
+ |             |      |               |      |                 |      |           |
+ |        + o--+------+--o COM  NO o--+------+--o A1     A2 o--+------+--o in     |
+ '-------------'      '---------------'      '-----------------'      '-----------'
 ```
-24V DC (+) ──┬── NORVI R0 COM ── NO ──┬── Schütz Pool A1 ── A2 ──┬── GND
-             │                        │                          │
-             ├── NORVI R2 COM ── NO ──┤── Schütz Solar A1 ── A2 ──┤
-             │                        │                          │
-             └───── NORVI 24V IN ─────┘                          │
-                                                          │
-GND ─────────────────────────────────────────────────────┘
-```
+
+Steuerstromkreis für eine Pumpe, für das zweite Relais und den zweiten Schütz wiederholen.
+Eine 1N4007-Freilaufdiode über jede Spule setzen (Kathode an A1, Anode an A2).
 
 **Freilaufdioden 1N4007** parallel zu jeder Schützspule:
 - Kathode (Strichseite) an **A1 (+)**
@@ -169,13 +167,17 @@ Abschalten. Ohne Diode kann der Spannungsstoß das NORVI-Relais beschädigen.
 
 ### 230V-Leistungskreis
 
+```svgbob
+ .-------------.   .---------------.   .---------------.   .----------------.   .-------------.
+ |     Netz    |   |       FI      |   |       LS      |   |     Schütz     |   |    Pumpe    |
+ |   230V AC   |   |               |   |               |   |    Kontakte    |   |             |
+ |             |   |               |   |               |   |                |   |             |
+ |        L o--+---+--o in  out o--+---+--o in  out o--+---+--o 1      2 o--+---+--o L        |
+ '-------------'   '---------------'   '---------------'   '----------------'   '-------------'
 ```
-230V L (Phase) ─── RCD ─── MCB ──┬── Schütz Solar 1-2 ── Solarpumpe L
-                                  │
-                                  └── Schütz Pool 1-2 ─── Poolpumpe L
 
-230V N (Neutral) ────────────────────────── Beide Pumpen N
-```
+Leistungsstromkreis für eine Pumpe, der zweite Schütz wird identisch verdrahtet.
+Der Neutralleiter geht direkt von der Neutralschiene zu den Pumpen und wird nicht geschaltet.
 
 Die 230V-Seite gehört **immer** hinter FI (RCD, 30mA) und
 Leitungsschutzschalter (MCB, B10A).
