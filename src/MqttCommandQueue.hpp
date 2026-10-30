@@ -7,7 +7,7 @@
  * @brief Fixed-size, thread-safe hand-over of MQTT commands from the
  *        AsyncTCP task to the loop task.
  *
- * AsyncMqttClient delivers messages on the AsyncTCP task. Handling them there
+ * The MQTT client (espMqttClientAsync) delivers messages on the AsyncTCP task. Handling them there
  * changed controller state (operation mode String, settings, relays, NVS)
  * concurrently with the loop task. The MQTT callback therefore only copies
  * topic and payload into this queue; the loop task processes them.

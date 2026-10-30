@@ -1,16 +1,18 @@
 #pragma once
 #include "Arduino.h"
 #include "DallasTemperature.h"
+#include "SensorSlots.hpp"
 
 class DallasTemperatureNode {
 public:
-  DallasTemperatureNode(const char *id, const char *name, uint8_t pin, int interval = 300)
-    : _id(id), _name(name), _pin(pin), _measurementInterval(interval) {}
-  DallasTemperatureNode(const char *id, const char *name, DallasTemperature*, uint8_t, int = 300)
-    : _id(id), _name(name), _pin(0), _measurementInterval(300) {}
+  DallasTemperatureNode(PoolController::SensorId, const char *id, const char *name, uint8_t pin, int interval = 300)
+      : _id(id), _name(name), _pin(pin), _measurementInterval(interval) {}
+  DallasTemperatureNode(PoolController::SensorId, const char *id, const char *name, DallasTemperature *, uint8_t, int = 300)
+      : _id(id), _name(name), _pin(0), _measurementInterval(300) {}
 
   void begin() {}
-  void loop() {}
+  void beginMeasurement() {}
+  void finishMeasurement() {}
 
   float getTemperature() const { return _temperature; }
   void setTemperature(float t) { _temperature = t; }

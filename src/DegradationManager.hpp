@@ -29,19 +29,11 @@
 
 #include <Arduino.h>
 
-namespace PoolController {
+#include <atomic>
 
-/**
- * System degradation levels.
- * Order matters: higher numeric value = worse state.
- */
-enum class DegradationLevel : uint8_t {
-  NORMAL = 0,     // Everything nominal
-  NO_WIFI = 1,    // WiFi/MQTT disconnected — local operation still works
-  NO_TIME = 2,    // NTP sync lost — timer-based scheduling degraded
-  NO_SENSOR = 3,  // One or more temperature sensors failed — cautious defaults
-  CRITICAL = 4,   // Multiple failures or critically low memory — safe mode
-};
+#include "DegradationPolicy.hpp"
+
+namespace PoolController {
 
 /**
  * Central health monitor.
@@ -74,8 +66,9 @@ public:
   static DegradationLevel getLevel();
 
   /**
-   * True when level >= CRITICAL — system should enter safe mode
-   * (all relays off, minimal operations only).
+   * True when level >= CRITICAL — system is in safe mode
+   * (all relays off, minimal operations only). Only critically low memory
+   * or a forced safe mode (boot loop) lead to CRITICAL.
    */
   static bool isSafe();
 
@@ -102,11 +95,13 @@ public:
   static void unforceSafeMode();
 
 private:
-  static bool sensorsEverReported_;
+  // Cross-core status: SensorTask writes on Core 0, control loop reads on
+  // Core 1. std::atomic gives the inter-core visibility volatile does not.
+  static std::atomic<bool> sensorsEverReported_;
   static DegradationLevel currentLevel_;
   static DegradationLevel previousLevel_;
-  static bool poolSensorOk_;
-  static bool solarSensorOk_;
+  static std::atomic<bool> poolSensorOk_;
+  static std::atomic<bool> solarSensorOk_;
   static bool forcedSafeMode_;
   static unsigned long lastEvaluationMs_;
 

@@ -16,9 +16,12 @@
 #include <WiFiClientSecure.h>
 #include <time.h>
 
+#include <memory>
+#include <new>
+#include <utility>
+
 #include "ConfigManager.hpp"
 #include "NetworkManager.hpp"
-#include "SystemMonitor.hpp"
 #include "TimeClientHelper.hpp"
 #include "LogCapture.hpp"
 
@@ -32,7 +35,7 @@ namespace PoolController {
 //   openssl s_client -connect api.github.com:443 -showcerts
 // The previously pinned ISRG Root X1 (Let's Encrypt) does NOT appear anywhere
 // in GitHub's chain and caused every OTA check/download to fail TLS
-// verification silently (fetchLatestRelease()/downloadAndApply() both
+// verification silently (fetchLatestRelease() and the firmware download both
 // returned false with no HTTP-level diagnostic beyond "connection failed").
 // Valid until 2038-01-18; if GitHub rotates its CA again, this constant
 // needs updating (see openspec/specs/github-ca-chain.spec.md for the
@@ -56,6 +59,27 @@ static const char kGitHubRootCA[] PROGMEM = "-----BEGIN CERTIFICATE-----\n"
                                             "RNZu9YO6bVi9JNlWSOrvxKJGgYhqOkbRqZtNyWHa0V1Xahg=\n"
                                             "-----END CERTIFICATE-----\n";
 
+namespace {
+
+// Pin the root CA GitHub's chain terminates at (see kGitHubRootCA above).
+// A CA bundle (setCACertBundle) is not embedded in this project yet — see
+// openspec/specs/github-ca-chain.spec.md, tasks T1/T2.
+void configureGitHubClient(WiFiClientSecure &client) {
+  client.setCACert(kGitHubRootCA);
+  client.setTimeout(10000);
+}
+
+}  // namespace
+
+// Connection, HTTP client and download progress, kept across loop()
+// iterations while the firmware streams in. Allocated only for the duration
+// of an update.
+struct OtaUpdater::DownloadContext {
+  WiFiClientSecure client;
+  HTTPClient http;
+  OtaDownloadSession session{0, 0, kDownloadStallTimeoutMs, kDownloadTotalTimeoutMs};
+};
+
 // ── Statics ──
 
 String OtaUpdater::currentVersion_ = FW_VERSION;
@@ -63,7 +87,8 @@ String OtaUpdater::latestVersion_;
 String OtaUpdater::releaseUrl_;
 String OtaUpdater::downloadUrl_;
 bool OtaUpdater::updateAvailable_ = false;
-bool OtaUpdater::updateInProgress_ = false;
+std::atomic<OtaUpdater::State> OtaUpdater::state_{OtaUpdater::State::IDLE};
+std::unique_ptr<OtaUpdater::DownloadContext> OtaUpdater::download_;
 int OtaUpdater::progress_ = 0;
 String OtaUpdater::statusMessage_;
 unsigned long OtaUpdater::lastCheckTime_ = 0;
@@ -74,12 +99,42 @@ uint8_t OtaUpdater::clockSyncFailCount_ = 0;
 
 void OtaUpdater::begin() {
   LOG_INFO("✓ OTA Updater initialized (current: %s)\n", currentVersion_.c_str());
+  state_ = State::IDLE;
+  progress_ = 0;
   statusMessage_ = "Idle";
 }
 
+void OtaUpdater::requestUpdate() {
+  State expected = State::IDLE;
+  state_.compare_exchange_strong(expected, State::REQUESTED);
+}
+
+bool OtaUpdater::isUpdateRequested() {
+  return state_.load() == State::REQUESTED;
+}
+
 void OtaUpdater::loop() {
+  switch (state_.load()) {
+  case State::DOWNLOADING:
+    // Stream a running download: one bounded step, then back to the main loop.
+    // After a complete flash download_ is gone and the device reboots.
+    if (download_) {
+      stepDownload();
+    }
+    return;
+  case State::REQUESTED:
+    state_ = State::IDLE;
+    startUpdate();
+    return;
+  case State::CONNECTING:
+    // Only set inside startUpdate(), which returns in another state
+    return;
+  case State::IDLE:
+    break;
+  }
+
   // Periodic check when WiFi is connected and no update is in progress
-  if (NetworkManager::isWiFiConnected() && !updateInProgress_) {
+  if (NetworkManager::isWiFiConnected()) {
     unsigned long now = millis();
 
     // Check if we're in clock sync backoff period
@@ -132,7 +187,8 @@ bool OtaUpdater::isUpdateAvailable() {
 }
 
 bool OtaUpdater::isUpdateInProgress() {
-  return updateInProgress_;
+  const State state = state_.load();
+  return state == State::CONNECTING || state == State::DOWNLOADING;
 }
 
 String OtaUpdater::getCurrentVersion() {
@@ -165,7 +221,7 @@ String OtaUpdater::getStatusMessage() {
 // ── Check for Update ──
 
 bool OtaUpdater::checkForUpdate() {
-  if (updateInProgress_)
+  if (isUpdateInProgress())
     return false;
 
   statusMessage_ = "Checking for updates...";
@@ -194,7 +250,7 @@ bool OtaUpdater::checkForUpdate() {
 // ── Start Update ──
 
 bool OtaUpdater::startUpdate() {
-  if (updateInProgress_) {
+  if (isUpdateInProgress()) {
     LOG_WARN("OTA: Update already in progress\n");
     return false;
   }
@@ -225,25 +281,21 @@ bool OtaUpdater::startUpdate() {
   }
 
   // Config persists in NVS — survives OTA natively, no backup needed
-  updateInProgress_ = true;
+  state_ = State::CONNECTING;
   // Don't clear updateAvailable_ yet — preserved so UI can retry on failure (P2 review fix)
   progress_ = 0;
-  statusMessage_ = "Downloading... 0%";
+  statusMessage_ = "Connecting...";
 
   LOG_INFO("OTA: Starting download from %s\n", downloadUrl_.c_str());
 
-  bool ok = downloadAndApply(downloadUrl_);
-  if (!ok) {
-    updateInProgress_ = false;
-    statusMessage_ = "Update failed!";
-    LOG_ERROR("OTA: Update failed!\n");
-    // updateAvailable_ stays true so the user can retry
-  } else {
-    // On success, clear the flag before reboot
-    updateAvailable_ = false;
+  if (const char *error = beginDownload(downloadUrl_)) {
+    failUpdate(error);
+    return false;
   }
-  // If success, ESP will reboot — we never reach here
-  return ok;
+  // The firmware is streamed by loop() — one bounded step per iteration
+  state_ = State::DOWNLOADING;
+  statusMessage_ = "Downloading... 0%";
+  return true;
 }
 
 // ── Private: GitHub API ──
@@ -277,16 +329,7 @@ bool OtaUpdater::fetchLatestRelease() {
   }
 
   WiFiClientSecure client;
-  // Pin the actual root CA GitHub's chain terminates at (see kGitHubRootCA
-  // comment above). NOTE: `setCACertBundle(x509_crt_bundle)` was previously
-  // attempted here behind an `#if defined(x509_crt_bundle)` guard, but
-  // that symbol is never actually defined in this project (it requires
-  // generating and embedding a CA bundle binary — see
-  // openspec/specs/github-ca-chain.spec.md, tasks T1/T2, still open) — the
-  // guard was always false and silently fell back to this same single-cert
-  // path, so it was removed as dead code (YAGNI).
-  client.setCACert(kGitHubRootCA);
-  client.setTimeout(10000);
+  configureGitHubClient(client);
 
   // Build API URL
   String url = String("https://api.github.com/repos/") + GITHUB_REPO + "/releases/latest";
@@ -412,36 +455,33 @@ bool OtaUpdater::isNewerVersion(const String &current, const String &latest) {
 
 // ── OTA Download + Flash ──
 
-bool OtaUpdater::downloadAndApply(const String &url) {
-  WiFiClientSecure client;
-  // Pin the actual root CA GitHub's chain terminates at (see kGitHubRootCA
-  // comment above). NOTE: `setCACertBundle(x509_crt_bundle)` was previously
-  // attempted here behind an `#if defined(x509_crt_bundle)` guard, but
-  // that symbol is never actually defined in this project (it requires
-  // generating and embedding a CA bundle binary — see
-  // openspec/specs/github-ca-chain.spec.md, tasks T1/T2, still open) — the
-  // guard was always false and silently fell back to this same single-cert
-  // path, so it was removed as dead code (YAGNI).
-  client.setCACert(kGitHubRootCA);
-  client.setTimeout(10000);
+const char *OtaUpdater::beginDownload(const String &url) {
+  std::unique_ptr<DownloadContext> ctx(new (std::nothrow) DownloadContext());
+  if (!ctx) {
+    LOG_ERROR("OTA: Not enough memory to start the download\n");
+    return "Error: Not enough memory";
+  }
+  configureGitHubClient(ctx->client);
 
-  HTTPClient http;
-  http.begin(client, url);
+  HTTPClient &http = ctx->http;
+  http.begin(ctx->client, url);
   http.setUserAgent("PoolController/1.0");
   http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
 
+  // TLS handshake and request headers — the only blocking part, bounded by
+  // the client timeout. The body is streamed incrementally by stepDownload().
   int httpCode = http.GET();
   if (httpCode != 200) {
     LOG_ERROR("OTA: Download returned HTTP %d\n", httpCode);
     http.end();
-    return false;
+    return "Error: Download failed";
   }
 
   int totalSize = http.getSize();
   if (totalSize <= 0) {
     LOG_ERROR("OTA: Invalid content size\n");
     http.end();
-    return false;
+    return "Error: Invalid firmware size";
   }
 
   // Verify firmware size is reasonable (prevents integer overflow and bad downloads)
@@ -451,23 +491,21 @@ bool OtaUpdater::downloadAndApply(const String &url) {
 
   if (static_cast<size_t>(totalSize) > kMaxFirmwareSize) {
     LOG_ERROR("OTA: Firmware too large: %d bytes (max %u)\n", totalSize, kMaxFirmwareSize);
-    statusMessage_ = "Error: Firmware too large";
     http.end();
-    return false;
+    return "Error: Firmware too large";
   }
 
   if (static_cast<size_t>(totalSize) < kMinFirmwareSize) {
     LOG_ERROR("OTA: Firmware too small: %d bytes (min %u)\n", totalSize, kMinFirmwareSize);
-    statusMessage_ = "Error: Firmware too small";
     http.end();
-    return false;
+    return "Error: Firmware too small";
   }
 
   // Verify we have sufficient space for this specific firmware size
   if (!hasSufficientSpace(static_cast<size_t>(totalSize))) {
     LOG_ERROR("OTA: Insufficient space for this firmware\n");
     http.end();
-    return false;
+    return kInsufficientSpaceMessage;
   }
 
   LOG_DEBUG("OTA: Download size: %d bytes\n", totalSize);
@@ -475,61 +513,89 @@ bool OtaUpdater::downloadAndApply(const String &url) {
   if (!Update.begin(totalSize)) {
     LOG_ERROR("OTA: Update.begin() failed: %s\n", Update.errorString());
     http.end();
-    return false;
+    return "Error: Could not start flash write";
   }
 
-  // Stream download in chunks
-  WiFiClient *stream = http.getStreamPtr();
+  ctx->session = OtaDownloadSession(millis(), static_cast<size_t>(totalSize), kDownloadStallTimeoutMs, kDownloadTotalTimeoutMs);
+  download_ = std::move(ctx);
+  return nullptr;
+}
+
+void OtaUpdater::stepDownload() {
+  DownloadContext &ctx = *download_;
   uint8_t buffer[kOtaBufferSize];
-  int totalRead = 0;
+  const OtaDownloadSession::Result result =
+    ctx.session.step(*ctx.http.getStreamPtr(), Update, ctx.http.connected(), millis(), buffer, sizeof(buffer));
 
-  while (http.connected() && totalRead < totalSize) {
-    // Feed watchdog to prevent 30s timeout reset during long downloads
-    PoolController::SystemMonitor::feedWatchdog();
-
-    size_t available = stream->available();
-    if (available == 0) {
-      delay(1);
-      continue;
+  if (result == OtaDownloadSession::Result::IN_PROGRESS) {
+    const int progress = ctx.session.progressPercent();
+    if (progress != progress_) {
+      progress_ = progress;
+      statusMessage_ = "Downloading... " + String(progress_) + "%";
     }
-    size_t toRead = min(available, sizeof(buffer));
-    size_t read = stream->readBytes(buffer, toRead);
-    if (read == 0) {
-      delay(10);
-      continue;
-    }
-
-    size_t written = Update.write(buffer, read);
-    if (written != read) {
-      LOG_ERROR("OTA: Write error at byte %d: %s\n", totalRead, Update.errorString());
-      Update.end(false);
-      http.end();
-      return false;
-    }
-
-    totalRead += read;
-    progress_ = (totalRead * 100) / totalSize;
-    statusMessage_ = "Downloading... " + String(progress_) + "%";
+    return;
   }
 
-  http.end();
+  const size_t written = ctx.session.bytesWritten();
+  const size_t total = ctx.session.totalSize();
+  ctx.http.end();
+  download_.reset();
 
-  if (totalRead != totalSize) {
-    LOG_ERROR("OTA: Incomplete download (%d / %d)\n", totalRead, totalSize);
-    Update.end(false);
-    return false;
+  if (result == OtaDownloadSession::Result::COMPLETE) {
+    completeDownload();
+  } else {
+    abortDownload(result, written, total);
   }
+}
 
+void OtaUpdater::completeDownload() {
   if (!Update.end(true)) {
     LOG_ERROR("OTA: Update.end() failed: %s\n", Update.errorString());
-    return false;
+    failUpdate("Update failed!");
+    return;
   }
-
   LOG_INFO("OTA: Update successful! Rebooting...\n");
+  progress_ = 100;
   statusMessage_ = "Update successful! Rebooting...";
+  updateAvailable_ = false;
   Serial.flush();
   NetworkManager::restart();
-  return true;  // Never actually reached
+}
+
+void OtaUpdater::abortDownload(OtaDownloadSession::Result result, size_t written, size_t total) {
+  const char *reason = "failed";
+  const char *message = "Update failed!";
+  // No default: the compiler flags a new Result value that is not classified here.
+  switch (result) {
+  case OtaDownloadSession::Result::STALLED:
+    reason = "stalled";
+    message = "Error: Download stalled";
+    break;
+  case OtaDownloadSession::Result::TIMED_OUT:
+    reason = "timed out";
+    message = "Error: Download timed out";
+    break;
+  case OtaDownloadSession::Result::WRITE_ERROR:
+    reason = "write error";
+    break;
+  case OtaDownloadSession::Result::DISCONNECTED:
+    reason = "connection closed";
+    break;
+  case OtaDownloadSession::Result::IN_PROGRESS:
+  case OtaDownloadSession::Result::COMPLETE:
+    break;  // handled by stepDownload()
+  }
+  LOG_ERROR("OTA: Download %s at byte %u of %u — aborting (%s)\n", reason, static_cast<unsigned>(written),
+    static_cast<unsigned>(total), Update.errorString());
+  Update.end(false);
+  failUpdate(message);
+}
+
+void OtaUpdater::failUpdate(const char *message) {
+  state_ = State::IDLE;
+  statusMessage_ = message;
+  LOG_ERROR("OTA: Update failed!\n");
+  // updateAvailable_ stays true so the user can retry
 }
 
 // ── Space and Size Verification ──
@@ -558,7 +624,7 @@ bool OtaUpdater::hasSufficientSpace(size_t firmwareSize) {
 
   if (availableSpace < requiredSpace) {
     LOG_ERROR("OTA: Insufficient flash space. Need %u bytes, have %u bytes\n", requiredSpace, availableSpace);
-    statusMessage_ = "Error: Insufficient flash space";
+    statusMessage_ = kInsufficientSpaceMessage;
     return false;
   }
 
