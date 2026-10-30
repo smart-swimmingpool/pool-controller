@@ -100,7 +100,7 @@ smart-swimmingpool/pool-controller/settings
 | 2-Channel 5V Relay Module | 1 | 5–8€ | With optocoupler isolation |
 | Resistor 4.7kΩ | 2 | < 1€ | Pull-up for OneWire |
 | USB Power Supply 5V/≥1A | 1 | 5–10€ | For ESP32 |
-| **Total** | | **~45–75€** | Without pumps |
+| **Total** | | **~35–55€** | Without pumps |
 
 ## 🚀 Getting Started
 
