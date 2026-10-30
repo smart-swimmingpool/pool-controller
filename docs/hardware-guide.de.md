@@ -42,7 +42,7 @@ richtig zusammenzubauen.
 | ---------- | ----------------------------------------------------------------------------------------------------------------- | :---: | :---------: | ---------------------------------------------- |
 | 1          | ESP32-Entwicklungsboard (z.B. ESP32 DevKit V1, NodeMCU-32S)                                                       |   1   |   10–15€    | Mindestens 4MB Flash                           |
 | 2          | DS18B20-Temperatursensor (wasserfest, Edelstahl, 1m Kabel)                                                        |   2   |    8–12€    | Einer für Poolwasser, einer für Solarkollektor |
-| 3          | 2-Kanal-5V-Relaismodul (mit Optokoppler)                                                                          |   1   |    5–8€     | **Muss** active-high sein (siehe Hinweise)     |
+| 3          | 2-Kanal-5V-Relaismodul (mit Optokoppler)                                                                          |   1   |    5–8€     | Standard-Modul **active-low** (siehe Hinweise)     |
 | 4          | Widerstand 4,7kΩ (¼W oder ⅛W, Metall- oder Kohleschicht)                                                          |   2   |    < 1€     | Pull-up für die OneWire-Datenleitungen         |
 | 5          | Breadboard + Jumper-Kabel (zum Testen) **ODER** Lochrasterplatine + Stiftleisten/Schraubklemmen (für Daueraufbau) |   1   |    3–8€     |                                                |
 | 6          | USB-Netzteil 5V/≥1A (z.B. Handy-Ladegerät)                                                                        |   1   |    5–10€    | Für den ESP32 allein                           |
@@ -50,7 +50,7 @@ richtig zusammenzubauen.
 | 8          | Optional: Gehäuse (ABS/PVC-Projektbox, IP54 oder besser)                                                          |   1   |    5–10€    | Schutz vor Spritzwasser/Staub                  |
 | 9          | Optional: Schraubklemmen (2-polig, 5mm Raster)                                                                    |  4–6  |    2–3€     | Für steckbare Sensor-/Stromanschlüsse          |
 | 10         | Optional: DS3231 RTC-Modul                                                                                        |   1   |    3–5€     | Backup-Uhr (nicht nötig bei NTP-Betrieb)       |
-| **Gesamt** |                                                                                                                   |       | **~45–75€** | Ohne Gehäuse; deutlich unter 100€              |
+| **Gesamt** |                                                                                                                   |       | **~45–75€** | Inkl. optionaler Teile 8–10; Pflichtteile 1–7 ca. 35–60€              |
 
 ### Bezugsquellen
 
@@ -68,9 +68,10 @@ Suchbegriffe:
   kaufen — die Firmware läuft auf dem Standard-ESP32 (Xtensa Dual-Core).
 - **DS18B20**: **Edelstahl, wasserdicht** mit 1m Kabel. Günstige
   Kunststoff-Varianten gehen auch, sind aber weniger haltbar im Außeneinsatz.
-- **Relaismodul**: **Achtung: Logikpegel prüfen!** Die Firmware schaltet per
-  **active-high** (GPIO HIGH → Relais EIN). Viele günstige Module sind
-  active-low (mit Jumper zum Umschalten). Vor dem Festlöten prüfen.
+- **Relaismodul**: **Achtung: Logikpegel prüfen!** Die Firmware steuert Standard-Relaismodule
+  **active-low** an (GPIO LOW → Relais EIN). Das entspricht den meisten
+  günstigen 2-Kanal-Modulen. Ein Modul mit HIGH/LOW-Jumper muss auf LOW stehen.
+  Vor dem Festlöten mit dem Multimeter prüfen.
 
 ---
 
@@ -184,10 +185,10 @@ Metall- oder Kohleschicht).
 | Steuereingang 1  |   `IN1` oder `D1`    | **GPIO25** (Pool-Pumpe)                          | **Gelb/Blau** |
 | Steuereingang 2  |   `IN2` oder `D2`    | **GPIO26** (Solar-Pumpe)                         | **Grün/Blau** |
 
-**Wichtig — Logikpegel**: Die Firmware setzt den GPIO-Pin auf **HIGH (3,3V)**
-um das Relais zu aktivieren (active-high). Wenn dein Modul bei LOW schaltet
-(active-low), suche nach einem **Jumper** auf der Modulplatine, um den Modus
-zu wechseln. Active-high-Module sind einfacher in der Handhabung.
+**Wichtig — Logikpegel**: Die Firmware setzt den GPIO-Pin auf **LOW**, um das
+Relais zu aktivieren (schließen), und auf **HIGH**, um es zu lösen (active-low,
+das übliche Verhalten von 2-Kanal-5V-Modulen). Schaltet dein Modul bei HIGH,
+stelle den **HIGH/LOW-Jumper** auf LOW oder nimm ein Standard-Modul (active-low).
 
 **Lastseite (230V-Seite) — Standard-Relaismodul:**
 
@@ -430,7 +431,7 @@ Solar pump: ON → Relais klickt hörbar, Pumpe läuft an
 Wenn das Relais nicht klickt:
 
 - [ ] Ist das Relaismodul mit Strom versorgt (5V zwischen VCC und GND)?
-- [ ] Stimmt der Logikpegel (active-high vs. active-low)?
+- [ ] Stimmt der Logikpegel (Modul muss active-low sein)?
 - [ ] Leuchtet die LED auf dem Relaismodul, wenn GPIO auf HIGH geht?
 
 ---
@@ -458,7 +459,7 @@ schalten die 230V-Last. Siehe die separate Anleitung:
 | "Sensor error" oder `-127°C`       | Pull-up-Widerstand fehlt            | 4,7kΩ zwischen DATA und 3,3V einlöten                               |
 | "Sensor error"                     | Falscher GPIO-Pin                   | `PIN_DS_SOLAR`/`PIN_DS_POOL` in `src/Config.hpp` prüfen             |
 | Unbeständige Messwerte             | Wackelkontakt oder Einstreuungen    | Lötstellen prüfen, Daten- und Relaisleitungen trennen               |
-| Relais schaltet nicht              | Falscher Logikpegel                 | Active-high vs. active-low prüfen; Jumper umstecken                 |
+| Relais schaltet nicht              | Falscher Logikpegel                 | Prüfen, dass das Modul active-low ist (Jumper auf LOW)                 |
 | Relais klickt, Pumpe läuft nicht   | 230V-Verdrahtungsfehler             | COM/NO-Kontakte prüfen, Pumpenanschluss kontrollieren               |
 | Pumpe läuft trotz AUS-Anzeige      | Relaiskontakt verschweißt (Motorlast) | **Schütz zwischenschalten** (siehe [Schütz-Anleitung](contactor-guide.de.md)) |
 | ESP32 startet nicht (Brownout)     | Zu schwache Stromversorgung         | 5V/≥1A-Netzteil verwenden; 100µF-Kondensator nahe VIN               |

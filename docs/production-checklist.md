@@ -95,7 +95,7 @@ and as an annual maintenance reference.
 - [ ] Timer settings match desired schedule
 - [ ] Temperature thresholds configured
 - [ ] Operation mode tested (Auto, Manual, Boost, Timer)
-- [ ] `relay-invert` matches relay module type (active-low vs active-high)
+- [ ] Relay module is active-low (HIGH/LOW jumper on LOW)
 
 ---
 

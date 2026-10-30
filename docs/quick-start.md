@@ -43,7 +43,7 @@ Use the following table to order all required components.
 |---|-----------|:---:|:------------:|-------|------------------|
 | 1 | ESP32 Development Board (e.g., ESP32 DevKit V1, NodeMCU-32S) | 1 | 10–15€ | **Must have 4MB+ flash** | [Amazon DE](https://www.amazon.de/s?k=ESP32+DevKit+V1), [Reichelt](https://www.reichelt.de/) |
 | 2 | DS18B20 Temperature Sensor (waterproof, stainless steel, 1m cable) | 2 | 8–12€ | One for pool, one for solar collector | [Amazon DE](https://www.amazon.de/s?k=DS18B20+wasserfest), [AliExpress](https://www.aliexpress.com/) |
-| 3 | 2-Channel 5V Relay Module (with optocoupler isolation) | 1 | 5–8€ | **Must be active-high trigger!** (relay activates when GPIO signal is HIGH) | [Amazon DE](https://www.amazon.de/s?k=2+Channel+5V+Relay+Module), [Reichelt](https://www.reichelt.de/) |
+| 3 | 2-Channel 5V Relay Module (with optocoupler isolation) | 1 | 5–8€ | **Must be active-low** (relay activates when GPIO signal is LOW) | [Amazon DE](https://www.amazon.de/s?k=2+Channel+5V+Relay+Module), [Reichelt](https://www.reichelt.de/) |
 | 4 | Resistor 4.7kΩ (¼W, metal film) | 2 | < 1€ | Pull-up for OneWire data lines | [Reichelt](https://www.reichelt.de/), [Conrad](https://www.conrad.de/) |
 | 5 | Breadboard + jumper wires (for prototyping) **OR** Perfboard + pin headers (for permanent build) | 1 | 3–8€ | Breadboard for testing, perfboard for final build | [Amazon DE](https://www.amazon.de/s?k=breadboard), [Reichelt](https://www.reichelt.de/) |
 | 6 | USB Power Supply 5V/≥1A (e.g., phone charger) | 1 | 5–10€ | Powers ESP32 + relay module | Any USB charger |
@@ -52,7 +52,9 @@ Use the following table to order all required components.
 | 9 | Screw terminals (2-pin, 5mm pitch) | 4–6 | 2–3€ | For removable connections | [Reichelt](https://www.reichelt.de/) |
 | **Total** | | | **~45–75€** | Without pumps/pool infrastructure | |
 
-> **ℹ Note:** The relay module **must** be **active-high** (relay ON when GPIO = HIGH). Many cheap modules are active-low by default but have a jumper to switch the logic. Verify this before permanent installation!
+> **ℹ Note:** The firmware drives the relay module **active-low** (relay ON when GPIO = LOW),
+> like most cheap 2-channel modules. If your module has a HIGH/LOW jumper, set it to LOW.
+> Verify this before permanent installation!
 
 ### 🔌 ESP32 Board Selection
 
@@ -69,20 +71,19 @@ Use the following table to order all required components.
 
 ### 🌐 Relay Module Selection
 
-**Critical:** The relay module **must** have **optocoupler isolation** for safety and **active-high logic** for compatibility with the firmware.
+**Critical:** The relay module **must** have **optocoupler isolation** for safety and
+**active-low logic** (the common default) for compatibility with the firmware.
 
-**How to verify active-high logic:**
+**How to verify active-low logic:**
 1. Connect relay VCC to 5V and GND to GND
-2. Connect IN1 to 3.3V (from ESP32)
-3. Measure between COM1 and NO1 — should show continuity when IN1 = HIGH
+2. Connect IN1 to GND — the relay must click and COM1–NO1 must show continuity
+3. Connect IN1 to 3.3V (or leave it open) — the relay must release
 
 **Recommended modules:**
-- **Songle SRD-05VDC-SL-C** — Active-high, optocoupler isolated
-- **Any module labeled "High Level Trigger" or "Active High"**
+- **Any 2-channel 5V module with optocoupler isolation labeled "Low Level Trigger" or "Active Low"** (e.g., HW-279, HW-316)
 
-> **⚠️ Important:** If your module is active-low, you can either:
-> 1. Find a module with a jumper to switch between active-high/active-low
-> 2. Modify the firmware to invert the relay logic (change `RELAY_ON` from `HIGH` to `LOW` in `Config.hpp`)
+> **⚠️ Important:** If your module is active-high, set its HIGH/LOW jumper to LOW or use a
+> standard active-low module. The firmware has no setting to invert the relay logic at runtime.
 
 ---
 
@@ -445,7 +446,7 @@ for ready-to-use `.things` and `.items` examples.
 | No WiFi connection | Wrong credentials | Reconfigure via AP mode or serial |
 | No MQTT connection | Wrong broker settings | Verify broker IP/port, check firewall |
 | No temperature readings | Sensor wiring issue | Check DS18B20 connections, pull-up resistors |
-| Relays don't switch | Wiring issue | Check relay connections, verify active-high logic |
+| Relays don't switch | Wiring issue | Check relay connections, verify active-low logic |
 | Pumps don't start | Mains wiring issue | Check relay wiring, RCD, pump power |
 
 **Complete Troubleshooting:** [FAQ](faq.md) and [Troubleshooting Guide](troubleshooting.md)
@@ -560,7 +561,7 @@ automation:
 
 ### ⚡ Common Pitfalls
 
-1. **Active-low vs active-high relays** — Verify your relay logic!
+1. **Relay logic** — The module must be active-low; verify it before connecting pumps!
 2. **Missing pull-up resistors** — DS18B20 sensors won't work without them
 3. **Insufficient power supply** — Use 5V/≥1A for ESP32 + relay
 4. **WiFi range issues** — Ensure good signal at installation location

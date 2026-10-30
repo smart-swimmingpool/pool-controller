@@ -64,7 +64,8 @@ Hier ist die **komplette Teileliste** mit direkten Links zu empfohlenen Shops (S
 - **Alle Teile sind bei Amazon, Reichelt, Conrad oder AliExpress verfügbar.**
 - **ESP32:** Achte auf **"ESP32 DevKit V1"** oder **"NodeMCU-32S"** (nicht ESP32-S2/S3/C3, da nicht kompatibel mit der Firmware).
 - **DS18B20:** Suche nach **"wasserdicht" und "Edelstahl"** für Langlebigkeit.
-- **Relay-Modul:** **Aktiv-High** ist entscheidend! Teste das Modul vor dem Einbau mit einem einfachen Arduino-Sketch.
+- **Relay-Modul:** **Aktiv-Low** ist entscheidend (die Firmware schaltet das Relais mit GPIO LOW).
+  Teste das Modul vor dem Einbau mit einem Multimeter; ein HIGH/LOW-Jumper muss auf LOW stehen.
 
 ---
 
@@ -487,7 +488,7 @@ _Beispielaufbau auf einem Breadboard_
 | **WiFi verbindet sich nicht**               | Prüfe WiFi-Passwort. Starte im **AP-Modus** neu und konfiguriere WiFi.                         |
 | **MQTT verbindet sich nicht**               | Prüfe **MQTT-Broker-IP/Port**. Prüfe, ob der Broker läuft (`sudo systemctl status mosquitto`). |
 | **Sensoren werden nicht erkannt**           | Prüfe **Pull-Up-Widerstände** (4.7kΩ). Prüfe **GPIO-Pins** in `Config.hpp`.                    |
-| **Relays schalten nicht**                   | Prüfe **Aktiv-High/Aktiv-Low**. Prüfe **Stromversorgung des Relay-Moduls (5V)**.               |
+| **Relays schalten nicht**                   | Prüfe, dass das Modul **Aktiv-Low** ist (Jumper auf LOW). Prüfe **Stromversorgung des Relay-Moduls (5V)**.               |
 | **Home Assistant erkennt Controller nicht** | Prüfe **MQTT Discovery** (ab v3.3.0). Lösche alte Homie-Nachrichten vom Broker.                |
 
 **📌 Ausführliche FAQ findest du hier:** [FAQ: Häufige Probleme & Lösungen](faq.md)

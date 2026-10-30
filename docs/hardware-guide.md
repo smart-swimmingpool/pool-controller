@@ -41,7 +41,7 @@ step-by-step instructions will help you get it right.
 | --------- | ---------------------------------------------------------------------------------------------------------------- | :-: | :----------: | ---------------------------------------------------------- |
 | 1         | ESP32 Development Board (e.g. ESP32 DevKit V1, NodeMCU-32S)                                                      |  1  |    10–15€    | Ensure it has at least 4MB flash                           |
 | 2         | DS18B20 Temperature Sensor (waterproof, stainless steel probe, 1m cable)                                         |  2  |    8–12€     | One for pool water, one for solar collector                |
-| 3         | 2-Channel 5V Relay Module (with optocoupler isolation)                                                           |  1  |     5–8€     | **Must** be active-high (see notes below)                  |
+| 3         | 2-Channel 5V Relay Module (with optocoupler isolation)                                                           |  1  |     5–8€     | Standard **active-low** module (see notes below)                  |
 | 4         | Resistor 4.7kΩ (¼W or ⅛W, metal film or carbon film)                                                             |  2  |     < 1€     | Pull-up for the OneWire data lines                         |
 | 5         | Breadboard + jumper wires (for prototyping) **OR** Perfboard + pin headers/screw terminals (for permanent build) |  1  |     3–8€     |                                                            |
 | 6         | USB power supply 5V/≥1A (e.g. phone charger)                                                                     |  1  |    5–10€     | For the ESP32 alone                                        |
@@ -49,7 +49,7 @@ step-by-step instructions will help you get it right.
 | 8         | Optional: enclosure (ABS/PVC project box, IP54 or better)                                                        |  1  |    5–10€     | Protect from splashes/dust                                 |
 | 9         | Optional: screw terminals (2-pin, 5mm pitch)                                                                     | 4–6 |     2–3€     | For removable sensor/power connections                     |
 | 10        | Optional: DS3231 RTC module                                                                                      |  1  |     3–5€     | Backup timekeeping (not required for normal NTP operation) |
-| **Total** |                                                                                                                  |     | **~45–75€**  | Without enclosure; well under 100€                         |
+| **Total** |                                                                                                                  |     | **~45–75€**  | Incl. optional parts 8–10; required parts 1–7 about 35–60€                         |
 
 ### Where to Buy
 
@@ -62,9 +62,9 @@ distributors like Reichelt, Pollin, Conrad (DE/AT/CH).
 - **DS18B20**: Look for **stainless steel, waterproof** probes with 1m cable.
   Cheaper plastic-encapsulated sensors work too but are less durable outdoors.
 - **Relay Module**: **Read the module specification carefully.** The firmware
-  uses **active-high logic** (GPIO HIGH → relay ON). Many cheap modules are
-  active-low with a jumper to switch. Check the documentation or use a jumper
-  wire to verify before wiring permanently.
+  drives standard relay modules **active-low** (GPIO LOW → relay ON), which
+  matches most cheap 2-channel modules. A module with a HIGH/LOW jumper must
+  be set to LOW. Verify with a multimeter before wiring permanently.
 - **Resistors**: Any 4.7kΩ ±5% resistor works. Buy a 100-pack for < 3€.
 
 ---
@@ -176,10 +176,10 @@ between the DATA pin and the 3.3V rail. The resistor can be any 4.7kΩ ±5%
 | Control input 1 | `IN1` or `D1`  | **GPIO25** (Pool Pump)                     | **Yellow/Blue** |
 | Control input 2 | `IN2` or `D2`  | **GPIO26** (Solar Pump)                    | **Green/Blue**  |
 
-**Important — Logic Level**: The firmware sets the GPIO pin **HIGH (3.3V)**
-to activate (close) the relay. If your relay module switches with LOW instead
-(active-low), look for a **jumper** on the module to change the mode, or choose
-a different module — active-high modules are easier to work with.
+**Important — Logic Level**: The firmware sets the GPIO pin **LOW** to
+activate (close) the relay and **HIGH** to release it (active-low, the common
+behavior of 2-channel 5V modules). If your module switches with HIGH instead,
+set its **HIGH/LOW jumper** to LOW or choose a standard active-low module.
 
 **Load wiring (230V side) — Standard external relay module:**
 
@@ -406,7 +406,7 @@ Solar pump: ON → relay should click, pump starts
 If relay doesn't click:
 
 - [ ] Is the relay module powered (5V between VCC and GND)?
-- [ ] Is the logic level correct (active-high vs active-low)?
+- [ ] Is the logic level correct (module must be active-low)?
 - [ ] Does the LED on the relay module light up when GPIO goes HIGH?
 
 ---
@@ -434,7 +434,7 @@ the 230V load. See the dedicated guide:
 | "Sensor error" or `-127°C`               | Missing pull-up resistor    | Add 4.7kΩ between DATA and 3.3V                                             |
 | "Sensor error"                           | Wrong GPIO pin              | Check `PIN_DS_SOLAR`/`PIN_DS_POOL` in `src/Config.hpp`                      |
 | Intermittent sensor readings             | Loose connection or noise   | Check solder joints, separate data from relay wires                         |
-| Relay doesn't activate                   | Wrong logic level           | Check active-high vs active-low; add jumper or change firmware              |
+| Relay doesn't activate                   | Wrong logic level           | Check that the module is active-low (set jumper to LOW)              |
 | Relay clicks but pump doesn't run        | 230V wiring issue           | Check COM/NO terminals, verify pump connection                              |
 | **Pump runs despite OFF display**        | **Welded relay contact (motor load)** | **Use external contactor** (see [Contactor Guide](contactor-guide.md)) |
 | ESP32 won't boot (brownout)              | Insufficient power          | Use 5V/≥1A power supply; add 100µF capacitor near VIN                       |

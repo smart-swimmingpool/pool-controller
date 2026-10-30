@@ -204,10 +204,11 @@ ESP32 DevKit V1          DS18B20 Sensoren
 ### Relaismodul anschließen
 
 Active-Low-Relaismodule schalten, wenn der GPIO auf LOW geht. Die Firmware
-ist standardmäßig für **active-low** eingestellt (`relay-invert = false`).
+steuert Standard-Relaismodule **active-low** an; eine Laufzeit-Einstellung zum
+Invertieren gibt es nicht.
 
-Falls dein Relaismodul **active-high** ist, setze `relay-invert = true` in der
-Konfiguration (siehe Schritt 5).
+Falls dein Relaismodul **active-high** ist, stelle den HIGH/LOW-Jumper auf LOW
+oder nimm ein Standard-Modul (active-low).
 
 ---
 
@@ -317,8 +318,8 @@ Relais-Funktion mit einem Multimeter oder einer 5V LED + Widerstand prüfen.
 | AUS (inaktiv)  | Offen       | Geschlossen |
 | AN (aktiv)     | Geschlossen | Offen       |
 
-Falls das Relais **invertiert** schaltet (AN = COM–NC geschlossen),
-`relay-invert = true` in Configuration → Advanced setzen.
+Falls das Relais **invertiert** schaltet (AN = COM–NC geschlossen), prüfen,
+dass das Modul active-low ist (HIGH/LOW-Jumper auf LOW).
 
 ---
 
