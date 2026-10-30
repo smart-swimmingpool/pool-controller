@@ -265,6 +265,7 @@ Relay COM ----- Mains L (Phase)
 ### ⚡ Build and Flash
 
 #### Using PlatformIO CLI
+
 ```bash
 # Navigate to project directory
 cd pool-controller
@@ -280,6 +281,7 @@ pio run --target monitor --upload-port COM3
 ```
 
 #### Using PlatformIO VS Code Extension
+
 1. Open the project folder in VS Code
 2. Click PlatformIO icon in activity bar
 3. Select your environment (e.g., `esp32dev`)
@@ -622,6 +624,6 @@ If you encounter issues:
 
 ---
 
-<p align="center">
-  ✅ Congratulations! You now have a smart swimming pool! ✅\n  \n  Made with ❤️ by the Smart Swimming Pool community
-</p>
+**✅ Congratulations! You now have a smart swimming pool! ✅**
+
+Made with ❤️ by the Smart Swimming Pool community
