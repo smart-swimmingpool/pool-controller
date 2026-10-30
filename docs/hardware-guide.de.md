@@ -97,52 +97,68 @@ ADC2-Probleme vermeidet (Details siehe
 
 ## Schaltplan
 
+### Stromversorgung
+
+```svgbob
+ .---------------.        .---------------------.        .------------------.
+ |  USB-Netzteil |        |        ESP32        |        |   Relaismodul    |
+ |    5V, 1A+    |        |                     |        |     2 Kanal      |
+ |               |        |                     |        |                  |
+ |         5V o--+--------+--o VIN        5V o--+--------+--o VCC           |
+ |               |        |                     |        |                  |
+ |        GND o--+--------+--o GND       GND o--+--------+--o GND           |
+ '---------------'        '---------------------'        '------------------'
 ```
- ─── STROMVERSORGUNG ──────────────────────────────────────────────
 
-  [USB-Netzteil 5V/1A+]      [ESP32 Board]           [Relaismodul]
-   ┌──────────┐              ┌─────────────┐          ┌────────────┐
-   │ 5V (+) ──┼──────────────┤ VIN         │          │ VCC        │
-   │          │              │  (versorgt  │      ┌───┤ (versorgt  │
-   │          │              │   Board)    │      │   │  Spulen)   │
-   │          │              │             │      │   │            │
-   │          │              │ 3V3 ───┬────┘      │   │ GND ◄──────┼──┐
-   │          │              │        │           │   └────────────┘  │
-   │ GND ─────┼──────────────┤ GND ◄──┼───────────┼──────────────────┘
-   └──────────┘              └────────┘           │
+### Sensoren
 
- ─── SENSOREN ─────────────────────────────────────────────────────
+Beide Sensoren teilen sich die 3,3V-Schiene. Der 4,7kΩ-Widerstand ist die einzige Verbindung zwischen DATA und 3,3V.
 
-  [DS18B20 Solar]                               [DS18B20 Pool]
-   ┌───────────┐                                 ┌───────────┐
-   │ VDD (rot) ─┼── 3,3V ─────────────────────────┼── VDD (rot)│
-   │           │                                 │           │
-   │ GND (sw) ─┼── GND ──────────────────────────┼── GND (sw)│
-   │           │                                 │           │
-   │DATA (ge) ─┼── GPIO32 (PIN_DS_SOLAR)          │           │
-   │           │  │                              │           │
-   │           │  └──[4,7kΩ]── 3,3V ← Pull-up    │           │
-   │           │                   Widerstand    │           │
-   │           │                                 │DATA (ge) ─┼── GPIO33 (PIN_DS_POOL)
-   │           │                                 │           │  │
-   │           │                                 │           │  └──[4,7kΩ]── 3,3V
-   └───────────┘                                 └───────────┘
-
- ─── RELAIS-STEUERSIGNALE ─────────────────────────────────────────
-
-  ESP32 GPIO25 ────────────────────────────── Relais IN1 (Pool)
-  ESP32 GPIO26 ────────────────────────────── Relais IN2 (Solar)
-
- ─── STATUS-ANZEIGE ───────────────────────────────────────────────
-
-  ESP32 eingebaute LED (GPIO2) ── Status-Blinkcodes (Homie)
-
- ─── RELAIS-LASTSEITE (230V AC) ───────────────────────────────────
-
-  L (Außenleiter) ─── RCD ─── MCB ──┬── Relais COM1 ── Pool-Pumpe
-                                     └── Relais COM2 ── Solar-Pumpe
-  N (Neutralleiter) ───────────────────── Neutralleiter ── Pumpen N
+```svgbob
+ .---------------------.             .--------------------.
+ |        ESP32        |             |   DS18B20 Solar    |
+ |                     |             |                    |
+ |           GPIO32 o--+----*--------+--o DATA            |
+ |                     |    |        |                    |
+ |                     | .--+--.     |                    |
+ |                     | |4.7k |     |                    |
+ |                     | '--+--'     |                    |
+ |                     |    |        |                    |
+ |              3V3 o--+----*--------+--o VDD             |
+ |                     |             |                    |
+ |              GND o--+-------------+--o GND             |
+ '---------------------'             '--------------------'
 ```
+```svgbob
+ .---------------------.             .--------------------.
+ |        ESP32        |             |    DS18B20 Pool    |
+ |                     |             |                    |
+ |           GPIO33 o--+----*--------+--o DATA            |
+ |                     |    |        |                    |
+ |                     | .--+--.     |                    |
+ |                     | |4.7k |     |                    |
+ |                     | '--+--'     |                    |
+ |                     |    |        |                    |
+ |              3V3 o--+----*--------+--o VDD             |
+ |                     |             |                    |
+ |              GND o--+-------------+--o GND             |
+ '---------------------'             '--------------------'
+```
+
+### Relais-Steuersignale
+
+```svgbob
+ .---------------------.        .--------------------.
+ |        ESP32        |        |    Relaismodul     |
+ |                     |        |      2 Kanal       |
+ |           GPIO25 o--+--------+--o IN1             |
+ |           GPIO26 o--+--------+--o IN2             |
+ |               5V o--+--------+--o VCC             |
+ |              GND o--+--------+--o GND             |
+ '---------------------'        '--------------------'
+```
+
+Statusanzeige: Die eingebaute LED (GPIO2) zeigt die Status-Blinkcodes (Homie).
 
 ---
 
@@ -166,9 +182,9 @@ Jede DATA-Leitung **muss** über einen **4,7kΩ-Widerstand** mit **3,3V**
 verbunden werden. Ohne diesen Widerstand wird der Sensor nicht erkannt —
 das ist die **häufigste Fehlerquelle**.
 
-```
-   Solar DATA ──── 4,7kΩ ──── 3,3V
-   Pool  DATA ──── 4,7kΩ ──── 3,3V
+```svgbob
+ Solar DATA o----[ 4.7k ]----o 3V3
+ Pool  DATA o----[ 4.7k ]----o 3V3
 ```
 
 Löte den Widerstand möglichst nahe am ESP32-Pin-Header, zwischen DATA-Pin
@@ -191,13 +207,16 @@ zu wechseln. Active-high-Module sind einfacher in der Handhabung.
 
 **Lastseite (230V-Seite) — Standard-Relaismodul:**
 
-```
-   L (Außenleiter) ─── FI ─── LS ──┬── Relais COM1 ── Pool-Pumpe
-                                    │       NO1 ─────┘
-                                    │
-                                    └── Relais COM2 ── Solar-Pumpe
-                                            NO2 ─────┘
-   N (Neutralleiter) ───────────────────── Neutralleiter ── Pumpen N
+Lastseite des Relais (230V AC), dargestellt ist Kanal 1.
+Kanal 2 (Solarpumpe) wird identisch verdrahtet. Der Neutralleiter geht direkt von der Neutralschiene zur Pumpe und wird nicht geschaltet.
+
+```svgbob
+ .-------------.   .---------------.   .---------------.   .----------------.   .-------------.
+ |     Netz    |   |       FI      |   |       LS      |   |  Relaismodul   |   |    Pumpe    |
+ |   230V AC   |   |               |   |               |   |    Kontakt     |   |             |
+ |             |   |               |   |               |   |                |   |             |
+ |        L o--+---+--o in  out o--+---+--o in  out o--+---+--o COM   NO o--+---+--o L        |
+ '-------------'   '---------------'   '---------------'   '----------------'   '-------------'
 ```
 
 - Den Außenleiter (L) der Pumpe an den **COM**-Kontakt (Mitte) des Relais.

@@ -70,25 +70,25 @@ Both sensors share a **single OneWire bus on GPIO25** on the **Expansion Port**
 (a 10-pin male header on the side of the NORVI enclosure, 2.54 mm pitch).
 DATA, 3.3V, and GND are all available on this header — no soldering needed.
 
+```svgbob
+ .----------------------------------.                        .------------------.
+ | NORVI AE01R expansion port       |                        |     DS18B20      |
+ |                                  |                        |                  |
+ |  Pin 1                   IO25 o--+------*-----------------+--o DATA          |
+ |  Pin 2                      TXD0 |      |                 |                  |
+ |  Pin 3                        NC |   .--+--.              |                  |
+ |  Pin 4                      RXD0 |   |4.7k |              |                  |
+ |  Pin 5                 IO0 flash |   '--+--'              |                  |
+ |  Pin 6              IO32 buttons |      |                 |                  |
+ |  Pin 7                    3V3 o--+------*-----------------+--o VCC           |
+ |  Pin 8                  SCL OLED |                        |                  |
+ |  Pin 9                    GND o--+------------------------+--o GND           |
+ |  Pin 10                 SDA OLED |                        |                  |
+ |                                  |                        |                  |
+ '----------------------------------'                        '------------------'
 ```
-   NORVI AE01-R — Expansion Port (10-pin male header, 2.54 mm)
-   ┌───────────────────────────────────────────────────────────┐
-   │                                                           │
-   │  Pin 1  ◄─────── IO25 ──── DS18B20 DATA (yellow)         │
-   │  Pin 2         TXD0                                      │
-   │  Pin 3         NC                                        │
-   │  Pin 4         RXD0                                      │
-   │  Pin 5         IO0 (BOOT)                                │
-   │  Pin 6         IO32 (buttons)                             │
-   │  Pin 7  ◄─────── 3.3V ──── DS18B20 VCC (red)             │
-   │  Pin 8         SCL (OLED)                                 │
-   │  Pin 9  ◄─────── GND  ──── DS18B20 GND (black)           │
-   │  Pin 10        SDA (OLED)                                 │
-   │                                                           │
-   └───────────────────────────────────────────────────────────┘
-                             ↑
-               3× Female-Female Dupont cables
-```
+
+3x female-female Dupont cables.
 
 **Wiring table:**
 

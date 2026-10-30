@@ -67,15 +67,16 @@ damage. Read this document carefully before connecting mains power.
 The relay module switches the **Live (phase)** conductor only. The Neutral
 and Protective Earth connect directly to the pump.
 
-```text
-AC Mains        Relay Module         Pump
-┌────────┐     ┌──────────────┐     ┌─────┐
-│ Live   ──────┤ COM    NO    ──────┤ L   │
-│ (230V) │     │              │     │     │
-│ Neutr. ───────────────────────────┤ N   │
-│        │     │              │     │     │
-│ Earth  ───────────────────────────┤ PE  │
-└────────┘     └──────────────┘     └─────┘
+```svgbob
+ .-------------.     .-------------------.     .-------------.
+ |   AC mains  |     |    Relay module   |     |     Pump    |
+ |   230V AC   |     |                   |     |             |
+ |        L o--+-----+--o COM     NO o---+-----+--o L        |
+ |             |     '-------------------'     |             |
+ |        N o--+-------------------------------+--o N        |
+ |             |                               |             |
+ |       PE o--+-------------------------------+--o PE       |
+ '-------------'                               '-------------'
 ```
 
 ### Wire Sizing

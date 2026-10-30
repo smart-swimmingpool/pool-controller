@@ -67,15 +67,16 @@ oder Geräteschäden. Bitte vor dem Anschließen der Netzspannung sorgfältig le
 Das Relaismodul schaltet nur den **Außenleiter (Phase)**. Der Neutralleiter
 und Schutzleiter werden direkt zur Pumpe geführt.
 
-```text
-AC Netz          Relaismodul           Pumpe
-┌────────┐     ┌──────────────┐     ┌─────┐
-│ Phase  ──────┤ COM    NO    ──────┤ L   │
-│ (230V) │     │              │     │     │
-│ Neutr. ───────────────────────────┤ N   │
-│        │     │              │     │     │
-│ Erde   ───────────────────────────┤ PE  │
-└────────┘     └──────────────┘     └─────┘
+```svgbob
+ .-------------.     .-------------------.     .-------------.
+ |   AC-Netz   |     |    Relaismodul    |     |    Pumpe    |
+ |   230V AC   |     |                   |     |             |
+ |        L o--+-----+--o COM     NO o---+-----+--o L        |
+ |             |     '-------------------'     |             |
+ |        N o--+-------------------------------+--o N        |
+ |             |                               |             |
+ |       PE o--+-------------------------------+--o PE       |
+ '-------------'                               '-------------'
 ```
 
 ### Leitungsquerschnitte

@@ -104,35 +104,51 @@ höheres Boot-/Störrisiko mitbringt.
 
 ### 3.4 Verdrahtung (Visualisierung)
 
-```text
-                          +---------------------+
-                          |        ESP32        |
-                          |                     |
-DS18B20 Solar DATA  <---->| GPIO32              |
-DS18B20 Pool  DATA  <---->| GPIO33              |
-Relay IN1 (Pool)    <---->| GPIO25              |
-Relay IN2 (Solar)   <---->| GPIO26              |
-                          |                     |
-3V3 --------------------->| 3V3                 |
-GND --------------------->| GND                 |
-                          +----------+----------+
-                                    |
-                                    | gemeinsame Masse
-                                    v
-                    +----------------+----------------+
-                    | 2-Kanal Relaismodul (5V, opto) |
-                    | VCC (Logik)  <- 3V3/5V*        |
-                    | JD-VCC (Spule)<- 5V            |
-                    | GND           <- GND           |
-                    | IN1           <- GPIO25        |
-                    | IN2           <- GPIO26        |
-                    +----------------+----------------+
-
-DS18B20 Solar: VDD -> 3V3, GND -> GND, DATA -> GPIO32, Pull-up 4.7k nach 3V3
-DS18B20 Pool : VDD -> 3V3, GND -> GND, DATA -> GPIO33, Pull-up 4.7k nach 3V3
-
-* abhängig vom eingesetzten Relaismodul (Logikpegel beachten)
+```svgbob
+ .---------------------.             .--------------------.
+ |        ESP32        |             |   DS18B20 Solar    |
+ |                     |             |                    |
+ |           GPIO32 o--+----*--------+--o DATA            |
+ |                     |    |        |                    |
+ |                     | .--+--.     |                    |
+ |                     | |4.7k |     |                    |
+ |                     | '--+--'     |                    |
+ |                     |    |        |                    |
+ |              3V3 o--+----*--------+--o VDD             |
+ |                     |             |                    |
+ |              GND o--+-------------+--o GND             |
+ '---------------------'             '--------------------'
 ```
+```svgbob
+ .---------------------.             .--------------------.
+ |        ESP32        |             |    DS18B20 Pool    |
+ |                     |             |                    |
+ |           GPIO33 o--+----*--------+--o DATA            |
+ |                     |    |        |                    |
+ |                     | .--+--.     |                    |
+ |                     | |4.7k |     |                    |
+ |                     | '--+--'     |                    |
+ |                     |    |        |                    |
+ |              3V3 o--+----*--------+--o VDD             |
+ |                     |             |                    |
+ |              GND o--+-------------+--o GND             |
+ '---------------------'             '--------------------'
+```
+
+```svgbob
+ .---------------------.        .--------------------.
+ |        ESP32        |        |    Relaismodul     |
+ |                     |        |   2 Kanal, Opto    |
+ |           GPIO25 o--+--------+--o IN1             |
+ |           GPIO26 o--+--------+--o IN2             |
+ |              3V3 o--+--------+--o VCC             |
+ |               5V o--+--------+--o JD-VCC          |
+ |              GND o--+--------+--o GND             |
+ '---------------------'        '--------------------'
+```
+
+Die Logikversorgung VCC hängt vom Relaismodul ab (3V3 oder 5V, siehe Datenblatt).
+Den JD-VCC-Jumper entfernen, damit die Spulen getrennt aus 5V versorgt werden.
 
 ## 4) Firmware-Bezug bei Umverdrahtung
 
