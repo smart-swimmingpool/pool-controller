@@ -624,6 +624,6 @@ If you encounter issues:
 
 ---
 
-**✅ Congratulations! You now have a smart swimming pool! ✅**
+✅ Congratulations! You now have a smart swimming pool! ✅
 
 Made with ❤️ by the Smart Swimming Pool community
