@@ -4,7 +4,8 @@
 
 **Goal:** Add a guided calibration wizard to the web UI that measures the NORVI AE01-R front-panel button ADC levels and derives the button thresholds automatically.
 
-**Architecture:** A separate `CalibrationManager` module owns a calibration state machine (IDLE → RESTING → BTN1 → BTN2 → BTN3 → COMPUTE → SAVE → DONE/ERROR) with injectable ADC-read and time functions for native testing. `NorviButtonHandler::loop()` early-returns while calibration is active. WebPortal exposes three auth-protected REST endpoints; the web UI shows a modal wizard that polls the status endpoint.
+**Architecture:** A separate `CalibrationManager` module owns a calibration state machine (IDLE → RESTING → BTN1 → BTN2 → BTN3 → COMPUTE → SAVE → DONE/ERROR) with injectable ADC-read and time functions for native testing. `NorviButtonHandler::loop()` early-returns while calibration is active.
+WebPortal exposes three auth-protected REST endpoints; the web UI shows a modal wizard that polls the status endpoint.
 
 **Tech Stack:** C++17 (ESP32/Arduino, PlatformIO env `norvi_ae01_r`), ArduinoJson, native CMake test runner (`test/native`), vanilla JS/CSS web assets on LittleFS.
 

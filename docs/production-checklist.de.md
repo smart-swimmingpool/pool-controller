@@ -95,7 +95,7 @@ Inbetriebnahme und als jährliche Wartungsreferenz.
 - [ ] Timer-Einstellungen entsprechen dem gewünschten Zeitplan
 - [ ] Temperatur-Schwellwerte konfiguriert
 - [ ] Betriebsarten getestet (Auto, Manual, Boost, Timer)
-- [ ] `relay-invert` passend zum Relaismodul-Typ (active-low vs active-high)
+- [ ] Relaismodul ist active-low (HIGH/LOW-Jumper auf LOW)
 
 ---
 

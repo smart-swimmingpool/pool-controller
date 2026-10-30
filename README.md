@@ -41,8 +41,8 @@ The **Pool Controller** is an **ESP32-based control unit** that automates your s
 
 **New to the project?** Begin with these resources:
 
-- [📖 **Quick Start Guide**](docs/quick-start.md) – Step-by-step setup for beginners
-- [❓ **Frequently Asked Questions**](docs/faq.md) – Troubleshooting common issues
+- [📖 **Quick Start Guide**](https://www.smart-swimmingpool.com/docs/quickstart/) – Step-by-step setup for beginners
+- [❓ **Frequently Asked Questions**](https://www.smart-swimmingpool.com/docs/faq/) – Troubleshooting common issues
 - [🌐 **MQTT Configuration**](docs/mqtt-configuration.md) – Home Assistant integration
 
 ---
@@ -140,8 +140,8 @@ All settings survive reboots and power failures:
 
 | Guide | Description | Audience |
 |-------|-------------|----------|
-| [Quick Start Guide](docs/quick-start.md) | Step-by-step setup for beginners | 🆕 New users |
-| [FAQ](docs/faq.md) | Troubleshooting common issues | ❓ All users |
+| [Quick Start Guide](https://www.smart-swimmingpool.com/docs/quickstart/) | Step-by-step setup for beginners | 🆕 New users |
+| [FAQ](https://www.smart-swimmingpool.com/docs/faq/) | Troubleshooting common issues | ❓ All users |
 | [Users Guide](docs/users-guide.md) | Web dashboard, operation modes, MQTT | 🎛️ Intermediate users |
 | [Hardware Guide](docs/hardware-guide.md) | Assembly, wiring, parts list | 🔧 Builders |
 | [MQTT Configuration](docs/mqtt-configuration.md) | Home Assistant Discovery, entity reference | 🌐 Smart home integrators |
@@ -214,7 +214,7 @@ We welcome contributions! Please follow these steps:
 - **Home Assistant Community:** [community.home-assistant.io](https://community.home-assistant.io/)
 
 **Need Help?**
-1. Check the [FAQ](docs/faq.md)
+1. Check the [FAQ](https://www.smart-swimmingpool.com/docs/faq/)
 2. Search [Discussions](https://github.com/smart-swimmingpool/smart-swimmingpool.github.io/discussions)
 3. Open a [new issue](https://github.com/smart-swimmingpool/pool-controller/issues/new)
 

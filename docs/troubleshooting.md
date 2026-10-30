@@ -25,7 +25,7 @@ menu:
 | ----------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
 | **-127 °C** temperature reading     | DS18B20 not detected                                        | Check 4.7 kΩ pull-up resistor, wiring, and solder joints                                    |
 | **HA finds no device**              | MQTT Discovery payload not published                        | Verify `mqtt-protocol = "homeassistant"`, check MQTT broker connectivity, use MQTT Explorer |
-| **Relay behavior inverted**         | Active-low module configured as active-high (or vice versa) | Set `relay-invert = true` or `false` in Configuration → Advanced                            |
+| **Relay behavior inverted**         | Active-high module connected (the firmware drives active-low)  | Set the module's HIGH/LOW jumper to LOW or use an active-low module                          |
 | **Safe Mode active**                | Boot-loop detected (4 consecutive short boots < 5 min)      | Check serial log for crash reason, fix issue, reboot                                        |
 | **OTA update fails**                | TLS issue or insufficient flash space                       | Use USB flashing fallback, check free space on device                                       |
 | **Web UI not loading**              | ESP32 not on network or wrong IP                            | Check router DHCP list, verify WiFi connection, try `pool-controller.local`                 |

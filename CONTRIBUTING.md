@@ -455,7 +455,7 @@ make build
 ### Documentation
 
 - **[README.md](README.md)** - Project overview and quick start
-- **[Quick Start Guide](docs/quick-start.md)** - Step-by-step setup
+- **[Quick Start Guide](https://www.smart-swimmingpool.com/docs/quickstart/)** - Step-by-step setup
 - **[Hardware Guide](docs/hardware-guide.md)** - Assembly and wiring
 - **[MQTT Configuration](docs/mqtt-configuration.md)** - Home Assistant setup
 - **[Coding Guidelines](.github/CODING_GUIDELINES.md)** - Detailed coding standards

@@ -224,12 +224,11 @@ Before soldering or installing permanently, build the circuit on a breadboard.
 
 ### Connect the Relay Module
 
-Active-low relay modules trigger when the GPIO goes LOW. The firmware
-defaults to **active-low** (use `relay-invert = false` in configuration if
-your module is active-low).
+Active-low relay modules trigger when the GPIO goes LOW. The firmware drives
+standard relay modules **active-low**; there is no runtime setting to invert it.
 
-If your relay module is **active-high**, set `relay-invert = true` in the
-configuration (see Step 5).
+If your relay module is **active-high**, set its HIGH/LOW jumper to LOW or use
+a standard active-low module.
 
 ---
 
@@ -337,8 +336,8 @@ operation with a multimeter or a 5V LED + resistor.
 | OFF (inactive) | Open   | Closed |
 | ON (active)    | Closed | Open   |
 
-If the relay behavior is **inverted** (ON = COM–NC closed), set
-`relay-invert = true` in Configuration → Advanced.
+If the relay behavior is **inverted** (ON = COM–NC closed), check that the
+module is active-low (HIGH/LOW jumper on LOW).
 
 ---
 
