@@ -25,20 +25,20 @@ The Pool Controller is designed with a **defense-in-depth** safety model.
 Safety is not a single feature but a multi-layer architecture spanning
 hardware, firmware, and operational procedures.
 
-```text
-┌──────────────────────────────────────────────┐
-│              Operational Layer                │
-│  (User procedures, checklists, maintenance)  │
-├──────────────────────────────────────────────┤
-│               Software Layer                  │
-│  (Watchdog, boot-loop detection, Safe Mode)  │
-├──────────────────────────────────────────────┤
-│              Firmware Layer                   │
-│  (Config validation, type safety, NVS CRC)   │
-├──────────────────────────────────────────────┤
-│              Hardware Layer                   │
-│  (Relay isolation, fuses, enclosure IP65)    │
-└──────────────────────────────────────────────┘
+```svgbob
+.--------------------------------------------.
+|             Operational Layer              |
+| (User procedures, checklists, maintenance) |
++--------------------------------------------+
+|               Software Layer               |
+| (Watchdog, boot-loop detection, Safe Mode) |
++--------------------------------------------+
+|               Firmware Layer               |
+| (Config validation, type safety, NVS CRC)  |
++--------------------------------------------+
+|               Hardware Layer               |
+|  (Relay isolation, fuses, enclosure IP65)  |
+'--------------------------------------------'
 ```
 
 ---

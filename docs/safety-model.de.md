@@ -25,20 +25,20 @@ Der Pool-Controller ist nach dem **Defense-in-Depth**-Prinzip (mehrschichtige
 Sicherheitsarchitektur) aufgebaut. Sicherheit ist keine einzelne Funktion,
 sondern ein mehrschichtiges System aus Hardware, Firmware und Betriebsanweisungen.
 
-```text
-┌──────────────────────────────────────────────┐
-│            Betriebsebene                      │
-│  (Benutzerverfahren, Checklisten, Wartung)   │
-├──────────────────────────────────────────────┤
-│            Software-Ebene                     │
-│  (Watchdog, Bootloop-Erkennung, Safe Mode)   │
-├──────────────────────────────────────────────┤
-│            Firmware-Ebene                     │
-│  (Konfigurationsprüfung, Typsicherheit, CRC) │
-├──────────────────────────────────────────────┤
-│            Hardware-Ebene                     │
-│  (Relais-Trennung, Sicherungen, IP65-Gehäuse)│
-└──────────────────────────────────────────────┘
+```svgbob
+.--------------------------------------------.
+|               Betriebsebene                |
+| (Benutzerverfahren, Checklisten, Wartung)  |
++--------------------------------------------+
+|               Software-Ebene               |
+| (Watchdog, Bootloop-Erkennung, Safe Mode)  |
++--------------------------------------------+
+|               Firmware-Ebene               |
+|(Konfigurationsprüfung, Typsicherheit, CRC) |
++--------------------------------------------+
+|               Hardware-Ebene               |
+|(Relais-Trennung, Sicherungen, IP65-Gehäuse)|
+'--------------------------------------------'
 ```
 
 ---

@@ -159,18 +159,13 @@ settings survive reboots and power failures:
 
 ### Data Flow on Settings Changes
 
-```text
-Web UI / REST API            MQTT (Home Assistant)
-        │                            │
-        ▼                            ▼
-────────┴────── ConfigManager ───────┴────
-                save() → /config.json (LittleFS)
-                ↓
-        OperationModeNode
-        (runtime parameters)
-                ↓
-        MqttPublisher::publishStates()
-        → MQTT topics → Home Assistant
+```mermaid
+flowchart TD
+    UI["Web UI / REST API"] --> CM
+    HA["MQTT (Home Assistant)"] --> CM
+    CM["ConfigManager<br/>save() → /config.json (LittleFS)"] --> OM
+    OM["OperationModeNode<br/>(runtime parameters)"] --> PUB
+    PUB["MqttPublisher::publishStates()"] --> OUT["MQTT topics → Home Assistant"]
 ```
 
 > **Note:** When settings are changed via the Web UI, Home Assistant is updated
@@ -211,18 +206,13 @@ for immediate recovery after power loss.
 
 ### Data Flow on Settings Changes
 
-```text
-Web UI / REST API            MQTT (Home Assistant)
-        │                            │
-        ▼                            ▼
-────────┴────── ConfigManager ───────┴────
-                save() → /config.json (LittleFS)
-                ↓
-        OperationModeNode
-        (runtime parameters)
-                ↓
-        MqttPublisher::publishStates()
-        → MQTT topics → Home Assistant
+```mermaid
+flowchart TD
+    UI["Web UI / REST API"] --> CM
+    HA["MQTT (Home Assistant)"] --> CM
+    CM["ConfigManager<br/>save() → /config.json (LittleFS)"] --> OM
+    OM["OperationModeNode<br/>(runtime parameters)"] --> PUB
+    PUB["MqttPublisher::publishStates()"] --> OUT["MQTT topics → Home Assistant"]
 ```
 
 > **Note:** When settings are changed via the Web UI, Home Assistant is updated

@@ -137,21 +137,12 @@ Für fortgeschrittene Aufbauten:
 
 ## Netzwerksicherheit-Übersicht
 
-```text
-Internet
-    │
-    │ (blockiert)
-    ▼
-┌──────────────┐     ┌────────────┐     ┌──────────────────┐
-│ Heimrouter   │─────│ Lokales LAN│─────│ Pool Controller   │
-│ (Firewall)   │     │ 192.168.x.x│     │ ESP32             │
-└──────────────┘     └────────────┘     └──────────────────┘
-                            │                    │
-                            ▼                    ▼
-                      ┌──────────────┐     ┌──────────────┐
-                      │ MQTT-Broker  │     │ Home Assistant│
-                      │ (nur lokal)  │     │ (nur lokal)   │
-                      └──────────────┘     └──────────────┘
+```mermaid
+flowchart TD
+    Internet(("Internet")) -.-x|blockiert| Router
+    Router["Heimrouter<br/>(Firewall)"] --- LAN["Lokales LAN<br/>192.168.x.x"] --- PC["Pool Controller<br/>ESP32"]
+    LAN --- MQTT["MQTT-Broker<br/>(nur lokal)"]
+    PC --- HA["Home Assistant<br/>(nur lokal)"]
 ```
 
 ### Empfohlene Firewall-Regeln

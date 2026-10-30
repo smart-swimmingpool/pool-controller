@@ -124,22 +124,18 @@ menu:
 
 #### **🔹 Grundlegende Verdrahtung für Pumpen**
 
-```text
-  ── 230V VERSORGUNG ────────────────────────────────────────────────
-
-  [Stromnetz]
-   │
-   ├── L (Phase) ──── RCD ──── MCB ────┬── Relay COM1 ── Pool-Pumpe
-   │                                    │       NO1 ─────┘
-   │                                    │
-   │                                    └── Relay COM2 ── Solar-Pumpe
-   │                                            NO2 ─────┘
-   │
-   ├── N (Nullleiter) ────────────────── Neutralleiste ──┬── Pool-Pumpe
-   │                                                    └── Solar-Pumpe
-   │
-   └── PE (Erde) ─────────────────────── Erdungsleiste ──┬── Pool-Pumpe (Metallgehäuse)
-                                                           └── Controller-Gehäuse
+```svgbob
+ Stromnetz
+    |
+    +-- L (Phase) ---- RCD ---- MCB ---+--- Relay COM1 --- NO1 --- Pool-Pumpe
+    |                                  |
+    |                                  '--- Relay COM2 --- NO2 --- Solar-Pumpe
+    |
+    +-- N (Nullleiter) ----- Neutralleiste ---+--- Pool-Pumpe
+    |                                         '--- Solar-Pumpe
+    |
+    '-- PE (Erde) ---------- Erdungsleiste ---+--- Pool-Pumpe (Metallgehäuse)
+                                              '--- Controller-Gehäuse
 ```
 
 #### **🔹 Erläuterung der Anschlüsse**
@@ -182,35 +178,36 @@ menu:
 
 #### **🔹 Stromversorgung**
 
-```text
-  ── STROMVERSORGUNG ─────────────────────────────────────────────────
+```svgbob
+ .------------------------.          .-----------------.
+ | USB-Netzteil 5V/2A+    |          |   ESP32 Board   |
+ |                        |          |                 |
+ |               5V (+) o-+----------+-o VIN            |
+ |                        |          |                 |
+ |                  GND o-+----------+-o GND            |
+ '------------------------'          '-----------------'
 
-  [USB-Netzteil 5V/2A+]       [ESP32 Board]
-   ┌──────────┐              ┌─────────────┐
-   │ 5V (+) ──┼──────────────┤ VIN         │
-   │          │              │             │
-   │ GND ─────┼──────────────┤ GND         │
-   └──────────┘              └────────┘
-
-  [ESP32 Board]               [Relay-Modul]
-   ┌─────────────┐              ┌────────────┐
-   │ 5V ─────────┼──────────────┤ VCC        │
-   │             │              │            │
-   │ GND ────────┼──────────────┤ GND        │
-   └─────────────┘              └────────────┘
+ .-----------------.                 .-----------------.
+ |   ESP32 Board   |                 |   Relay-Modul   |
+ |                 |                 |                 |
+ |          5V   o-+-----------------+-o VCC            |
+ |                 |                 |                 |
+ |          GND  o-+-----------------+-o GND            |
+ '-----------------'                 '-----------------'
 ```
 
 #### **🔹 Sensoren (DS18B20)**
 
-```text
-  [ESP32 Board]               [DS18B20 Sensor]
-   ┌─────────────┐              ┌───────────┐
-   │ 3.3V ───────┼──────────────┤ VDD (rot)  │
-   │             │              │           │
-   │ GND ────────┼──────────────┤ GND (schwarz)│
-   │             │              │           │
-   │ GPIO32/33 ──┼──[4.7kΩ]──────┤ DATA (gelb)│
-   └─────────────┘              └───────────┘
+```svgbob
+ .-----------------.                 .---------------------.
+ |   ESP32 Board   |                 |   DS18B20 Sensor    |
+ |                 |                 |                     |
+ |        3.3V   o-+-----------------+-o VDD (rot)         |
+ |                 |                 |                     |
+ |        GND    o-+-----------------+-o GND (schwarz)      |
+ |                 |                 |                     |
+ |   GPIO32/33   o-+-----[ 4.7k ]----+-o DATA (gelb)        |
+ '-----------------'                 '---------------------'
 ```
 
 #### **🔹 Wichtige Hinweise zur Niedervolt-Verdrahtung**

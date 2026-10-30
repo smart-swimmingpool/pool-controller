@@ -159,18 +159,13 @@ alle Einstellungen Neustarts und Stromausfälle überdauern:
 
 ### Datenfluss bei Konfigurationsänderungen
 
-```text
-Web UI / REST API            MQTT (Home Assistant)
-        │                            │
-        ▼                            ▼
-────────┴────── ConfigManager ───────┴────
-                save() → /config.json (LittleFS)
-                ↓
-        OperationModeNode
-        (Laufzeitparameter)
-                ↓
-        MqttPublisher::publishStates()
-        → MQTT Topics → Home Assistant
+```mermaid
+flowchart TD
+    UI["Web UI / REST API"] --> CM
+    HA["MQTT (Home Assistant)"] --> CM
+    CM["ConfigManager<br/>save() → /config.json (LittleFS)"] --> OM
+    OM["OperationModeNode<br/>(Laufzeitparameter)"] --> PUB
+    PUB["MqttPublisher::publishStates()"] --> OUT["MQTT topics → Home Assistant"]
 ```
 
 > **Hinweis:** Werden Einstellungen über die Weboberfläche geändert, wird
@@ -211,18 +206,13 @@ gespeichert für sofortige Wiederherstellung nach Stromausfall.
 
 ### Datenfluss bei Konfigurationsänderungen
 
-```text
-Web UI / REST API            MQTT (Home Assistant)
-        │                            │
-        ▼                            ▼
-────────┴────── ConfigManager ───────┴────
-                save() → /config.json (LittleFS)
-                ↓
-        OperationModeNode
-        (Laufzeitparameter)
-                ↓
-        MqttPublisher::publishStates()
-        → MQTT Topics → Home Assistant
+```mermaid
+flowchart TD
+    UI["Web UI / REST API"] --> CM
+    HA["MQTT (Home Assistant)"] --> CM
+    CM["ConfigManager<br/>save() → /config.json (LittleFS)"] --> OM
+    OM["OperationModeNode<br/>(Laufzeitparameter)"] --> PUB
+    PUB["MqttPublisher::publishStates()"] --> OUT["MQTT topics → Home Assistant"]
 ```
 
 > **Hinweis:** Werden Einstellungen über die Weboberfläche geändert, wird

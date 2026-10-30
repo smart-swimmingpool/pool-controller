@@ -130,21 +130,12 @@ For advanced setups:
 
 ## Network Security Overview
 
-```text
-Internet
-    │
-    │ (blocked)
-    ▼
-┌──────────────┐     ┌────────────┐     ┌──────────────────┐
-│ Home Router  │─────│ Local LAN  │─────│ Pool Controller  │
-│ (Firewall)   │     │ 192.168.x.x│     │ ESP32            │
-└──────────────┘     └────────────┘     └──────────────────┘
-                            │                    │
-                            ▼                    ▼
-                      ┌──────────────┐     ┌──────────────┐
-                      │ MQTT Broker  │     │ Home Assistant│
-                      │ (local only) │     │ (local only)  │
-                      └──────────────┘     └──────────────┘
+```mermaid
+flowchart TD
+    Internet(("Internet")) -.-x|blocked| Router
+    Router["Home Router<br/>(Firewall)"] --- LAN["Local LAN<br/>192.168.x.x"] --- PC["Pool Controller<br/>ESP32"]
+    LAN --- MQTT["MQTT Broker<br/>(local only)"]
+    PC --- HA["Home Assistant<br/>(local only)"]
 ```
 
 ### Recommended Firewall Rules
