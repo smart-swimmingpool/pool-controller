@@ -64,7 +64,7 @@ The **Pool Controller** is the **central control unit** for your smart swimming 
 
 ## 📦 Quick Start
 
-**New users:** Begin with the [Quick Start Guide](quick-start.md) for step-by-step setup instructions.
+**New users:** Begin with the [Quick Start Guide](https://www.smart-swimmingpool.com/docs/quickstart/) for step-by-step setup instructions.
 
 **Experienced users:** See the [Hardware Guide](hardware-guide.md) for parts list and wiring, or the [MQTT Configuration](mqtt-configuration.md) for smart home integration.
 
