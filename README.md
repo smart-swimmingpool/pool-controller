@@ -33,7 +33,7 @@ The **Pool Controller** is an **ESP32-based control unit** that automates your s
 - ✅ System health monitoring with auto-recovery
 - ✅ OTA firmware updates
 
-**Cost:** ~45–75€ (excluding pumps and pool infrastructure)
+**Cost:** ~35–55€ for the controller electronics (excluding pumps and pool infrastructure) — see the [Bill of Materials](https://www.smart-swimmingpool.com/docs/bom/)
 
 ---
 
@@ -56,7 +56,7 @@ The **Pool Controller** is an **ESP32-based control unit** that automates your s
 | 2-Channel 5V Relay Module | 1 | 5–8€ | With optocoupler isolation |
 | Resistor 4.7kΩ | 2 | < 1€ | Pull-up for OneWire |
 | USB Power Supply 5V/≥1A | 1 | 5–10€ | For ESP32 |
-| **Total** | | **~45–75€** | Without pumps |
+| **Total** | | **~35–55€** | Without pumps |
 
 **Recommended Shops:** Amazon, AliExpress, Reichelt, Pollin, Conrad (DE/AT/CH)
 
