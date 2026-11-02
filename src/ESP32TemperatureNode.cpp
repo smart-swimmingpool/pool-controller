@@ -55,17 +55,20 @@ auto readInternalTemperatureCelsius(float &temperatureCelsius) -> bool {
 ESP32TemperatureNode::ESP32TemperatureNode(const char *id, const char *name, const int measurementInterval) {
   _id = id;
   _name = name;
-  _measurementInterval = (measurementInterval > MIN_INTERVAL) ? measurementInterval : MIN_INTERVAL;
+  _measurementInterval.store(
+    (measurementInterval > MIN_INTERVAL) ? measurementInterval : MIN_INTERVAL, std::memory_order_relaxed);
   _lastMeasurement = millis();
   _temperature = NAN;
 }
 
 void ESP32TemperatureNode::begin() {
+  PoolController::SensorSlots::write(PoolController::SensorId::CONTROLLER, NAN, false);
   LOG_INFO("• ESP32 Internal Temp sensor '%s' initialized.\n", _id);
 }
 
 void ESP32TemperatureNode::loop() {
-  if (Utils::shouldMeasure(_lastMeasurement, _measurementInterval)) {
+  const unsigned long measurementInterval = getMeasurementInterval();
+  if (Utils::shouldMeasure(_lastMeasurement, measurementInterval)) {
     _lastMeasurement = millis();
 
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
@@ -85,6 +88,8 @@ void ESP32TemperatureNode::loop() {
     _temperature = (temp_farenheit - 32.0f) / 1.8f;
 #endif
 
+    const bool valid = !isnan(_temperature);
+    PoolController::SensorSlots::write(PoolController::SensorId::CONTROLLER, _temperature, valid);
     LOG_DEBUG("〽 ESP32 internal temp: %f °C\n", _temperature);
   }
 }

@@ -822,7 +822,7 @@ void MqttPublisher::publishStates() {
 // ═══════════════════════════════════════════════════════════════════════
 
 void MqttPublisher::exportLogEvents() {
-  // Only one export may run at a time: AsyncMqttClient callbacks (handleMqttMessage
+  // Only one export may run at a time: MQTT client callbacks (handleMqttMessage
   // → publishStates) run on the AsyncTCP task and can preempt the loop task's
   // periodic export. Both share the static snapshot buffer and the watermark, so a
   // concurrent entry would clobber the snapshot or regress s_lastExportedSeq and
@@ -917,7 +917,7 @@ void MqttPublisher::exportLogEvents() {
       ok = NetworkManager::publish("pool-controller/log", rawBuf, false) && ok;
     }
 
-    // A required publish failed (e.g. AsyncMqttClient refused to enqueue
+    // A required publish failed (e.g. the MQTT client refused to enqueue
     // during the discovery/state burst right after reconnect): keep the
     // watermark before this entry so the whole tail is retried next pass.
     // Do not drop the event by marking it exported without a successful queue.
@@ -1051,9 +1051,7 @@ static bool shouldEnforceMqttAuth() {
   return false;  // Made optional as per user request
 }
 
-void MqttPublisher::onMqttMessage(
-  char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total) {
-  (void)properties;
+void MqttPublisher::onMqttMessage(const char *topic, const char *payload, size_t len, size_t index, size_t total) {
   // Only complete single-chunk messages are supported (HA commands are tiny)
   if (index != 0 || len != total) {
     LOG_WARN(
@@ -1078,13 +1076,11 @@ void MqttPublisher::processPendingCommands() {
   // a burst is spread over several iterations instead of stalling the loop.
   MqttCommandQueue::Message msg;
   for (size_t handled = 0; handled < kMaxCommandsPerLoop && s_commandQueue.pop(msg); handled++) {
-    AsyncMqttClientMessageProperties properties{};
-    handleMqttMessage(msg.topic, msg.payload, properties, msg.payloadLen, 0, msg.payloadLen);
+    handleMqttMessage(msg.topic, msg.payload, msg.payloadLen, 0, msg.payloadLen);
   }
 }
 
-void MqttPublisher::handleMqttMessage(
-  char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total) {
+void MqttPublisher::handleMqttMessage(const char *topic, const char *payload, size_t len, size_t index, size_t total) {
   // Only process complete messages (single-chunk delivery for typical HA commands)
   if (index != 0) {
     return;
@@ -1119,8 +1115,10 @@ void MqttPublisher::handleMqttMessage(
     }
 
     if (strcmp(value, "INSTALL") == 0) {
-      LOG_INFO("MQTT: Firmware update triggered from Home Assistant\n");
-      OtaUpdater::startUpdate();
+      LOG_INFO("MQTT: Firmware update requested from Home Assistant\n");
+      // Only request it here: the download is started and streamed step by
+      // step by OtaUpdater::loop(), so this handler never blocks the loop task.
+      OtaUpdater::requestUpdate();
     }
     return;
   }

@@ -1,15 +1,8 @@
 #pragma once
 #include "Arduino.h"
+#include "DegradationPolicy.hpp"
 
 namespace PoolController {
-
-enum class DegradationLevel : uint8_t {
-  NORMAL = 0,
-  NO_WIFI = 1,
-  NO_TIME = 2,
-  NO_SENSOR = 3,
-  CRITICAL = 4,
-};
 
 /**
  * @brief Minimal mock DegradationManager for native tests.

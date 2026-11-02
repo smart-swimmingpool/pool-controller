@@ -2,13 +2,13 @@
 #include <string>
 #include <functional>
 #include "Arduino.h"
-#include "AsyncMqttClient.h"
+#include "espMqttClientAsync.h"
 
 namespace PoolController {
 
 class NetworkManager {
 public:
-  using MqttMessageCallback = std::function<void(char*, char*, AsyncMqttClientMessageProperties, size_t, size_t, size_t)>;
+  using MqttMessageCallback = MqttMessageHandler;
 
   static bool begin() { return true; }
   static void loop() {}
@@ -20,7 +20,8 @@ public:
   static String getLocalIP() { return String("192.168.1.100"); }
 
   static bool publish(const char *topic, const char *payload, bool retained = false) {
-    if (!_publishOk) return false;
+    if (!_publishOk)
+      return false;
     bool ok = _mqttClient.publish(topic, 1, retained, payload) > 0;
     if (_publishHook && _publishHookTopic == topic) {
       auto hook = std::move(_publishHook);  // one-shot: prevents recursion
@@ -32,11 +33,12 @@ public:
   }
   static bool subscribe(const char *topic) { return _mqttClient.subscribe(topic) > 0; }
 
-  static void setMqttCallback(MqttMessageCallback cb) {
-    _mqttClient.onMessage(cb);
-  }
+  static void setMqttCallback(MqttMessageCallback cb) { _mqttClient.onMessage(cb); }
 
-  static void disconnectMqtt() { _mqttClient.disconnect(); _mqttConnected = false; }
+  static void disconnectMqtt() {
+    _mqttClient.disconnect();
+    _mqttConnected = false;
+  }
   static void startAPMode() { _apMode = true; }
   static void restart() { ESP.restart(); }
 
@@ -45,10 +47,10 @@ public:
   static void setMqttConnected(bool v) { _mqttConnected = v; }
   static void setApMode(bool v) { _apMode = v; }
   static void setWiFiRSSI(int rssi) { _wifiRssi = rssi; }
-  // Simulate AsyncMqttClient refusing to enqueue (publish returns false).
+  // Simulate the MQTT client refusing to enqueue (publish returns false).
   static void setPublishOk(bool ok) { _publishOk = ok; }
   // One-shot hook fired when the next publish() targets `topic` — lets a test
-  // simulate a reentrant publishStates() from the AsyncMqttClient callback
+  // simulate a reentrant publishStates() from the MQTT client callback
   // path while an export on that topic is already in progress.
   static void setPublishHook(const char *topic, std::function<void()> cb) {
     _publishHookTopic = topic ? topic : "";
@@ -59,10 +61,10 @@ public:
     _publishHookTopic.clear();
   }
 
-  static AsyncMqttClient &getClient() { return _mqttClient; }
+  static espMqttClientAsync &getClient() { return _mqttClient; }
 
 private:
-  static AsyncMqttClient _mqttClient;
+  static espMqttClientAsync _mqttClient;
   static bool _wifiConnected;
   static bool _mqttConnected;
   static bool _apMode;
@@ -72,4 +74,4 @@ private:
   static std::string _publishHookTopic;
 };
 
-} // namespace PoolController
+}  // namespace PoolController

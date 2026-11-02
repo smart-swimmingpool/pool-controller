@@ -172,8 +172,10 @@ The 8-byte ROM address of each sensor is stored in NVS (Preferences namespace
 `ds18b20`, keys `solar_adr` and `pool_adr`). On every subsequent boot, the
 firmware scans the bus for a device matching the stored address. If found, that
 device is used — regardless of its bus scan position. If the stored sensor is
-not found (e.g., it was replaced), the firmware prints a warning and falls back
-to the default device index.
+not found (e.g., it was replaced), the firmware prints a warning and reports
+that role as invalid (NaN) instead of reading another sensor. It keeps
+addressing the stored ROM, so the role recovers as soon as that sensor responds
+again. After replacing a sensor, assign the new one in the sensor setup.
 
 ---
 

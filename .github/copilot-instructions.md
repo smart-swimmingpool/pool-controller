@@ -3,7 +3,7 @@
 ## Project Overview
 
 This repository contains PlatformIO-based IoT firmware for the ESP32 platform.
-It uses C++17, follows strict standards for architecture, memory management,
+It uses C++17 (`-std=gnu++17` on all boards; see `.github/CODING_GUIDELINES.md`), follows strict standards for architecture, memory management,
 maintainability, security, and 24/7 reliability.
 
 ## General Coding Standards
