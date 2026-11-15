@@ -241,6 +241,7 @@ C++-Standards.
 - **Anmeldedaten**: Commiten Sie niemals Passwörter, API-Schlüssel oder Geheimnisse
 - **Gitleaks**: Führen Sie `gitleaks detect --source .` vor dem Commit aus
 - **CodeQL**: Sicherheitsanalyse läuft automatisch in CI
+- **OSV-Scanner**: Bekannte Schwachstellen in Abhängigkeiten werden automatisch in CI gescannt ([google/osv-scanner](https://github.com/google/osv-scanner))
 - **Abhängigkeiten**: Halten Sie Abhängigkeiten aktuell (Dependabot aktiviert)
 
 ### Sicherheits-Checkliste für PRs
