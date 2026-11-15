@@ -235,6 +235,7 @@ See [CODING_GUIDELINES.md](.github/CODING_GUIDELINES.md) for detailed C++ standa
 - **Credentials**: Never commit passwords, API keys, or secrets
 - **Gitleaks**: Run `gitleaks detect --source .` before committing
 - **CodeQL**: Security analysis runs automatically in CI
+- **OSV-Scanner**: Known vulnerabilities in dependencies are scanned automatically in CI ([google/osv-scanner](https://github.com/google/osv-scanner))
 - **Dependencies**: Keep dependencies updated (Dependabot enabled)
 
 ### Security Checklist for PRs
