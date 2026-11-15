@@ -1,0 +1,95 @@
+name: OSV-Scanner
+
+# Vulnerability scan of the resolved PlatformIO dependencies against the OSV database.
+# platformio.ini has no lockfile, so the dependencies are resolved with
+# `pio pkg install` into .pio/libdeps/<env> and scanned from there. Git-based
+# dependencies keep their .git directory and are matched by commit.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "platformio.ini"
+      - "lib/**"
+      - ".github/workflows/osv-scanner.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "platformio.ini"
+      - "lib/**"
+      - ".github/workflows/osv-scanner.yml"
+  schedule:
+    # Weekly scan every Monday at 08:00 UTC (same day as the PlatformIO dependency check)
+    - cron: "0 8 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Cancel in-progress runs for the same workflow+ref when new commits are pushed
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  extract-deps:
+    name: Resolve PlatformIO dependencies (${{ matrix.environment }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - environment: esp32dev
+            pio-core-dir: ~/.platformio
+          - environment: norvi_ae01_r
+            pio-core-dir: ~/.platformio
+          - environment: olimex_esp32_c6_evb
+            pio-core-dir: ~/.platformio-olimex-c6
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up PlatformIO
+        uses: ./.github/actions/setup-platformio
+        with:
+          pio-core-dir: ${{ matrix.pio-core-dir }}
+          cache-key: ${{ runner.os }}-pio-${{ matrix.environment }}-${{ hashFiles('**/platformio.ini') }}
+          restore-key: ${{ runner.os }}-pio-${{ matrix.environment }}-
+
+      - name: Install project dependencies
+        run: pio pkg install --environment ${{ matrix.environment }}
+
+      - name: Upload resolved libraries
+        uses: actions/upload-artifact@v7
+        with:
+          name: pio-libdeps-${{ matrix.environment }}
+          path: .pio/libdeps/${{ matrix.environment }}
+          retention-days: 2
+          if-no-files-found: error
+
+  osv-scan:
+    name: OSV-Scanner (${{ matrix.environment }})
+    needs: extract-deps
+
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [esp32dev, norvi_ae01_r, olimex_esp32_c6_evb]
+
+    permissions:
+      actions: read
+      contents: read
+      # Required to upload SARIF results to the Security > Code Scanning tab
+      security-events: write
+
+    uses: "google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.7.1"
+    with:
+      download-artifact: pio-libdeps-${{ matrix.environment }}
+      matrix-property: ${{ matrix.environment }}-
+      scan-args: |-
+        --include-git-root
+        --allow-no-lockfiles
+        --recursive
+        ./pio-libdeps-${{ matrix.environment }}
