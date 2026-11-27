@@ -13,128 +13,141 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
+#include <atomic>
+
+#if defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
+#include <freertos/FreeRTOS.h>
+#include <freertos/portmacro.h>
+#endif
+
+#include "SensorSlots.hpp"
+#include "TemperatureReadingFilter.hpp"
+
 /**
  * @brief Reads temperature from a DS18B20 sensor on a OneWire bus.
  *
- * Supports automatic recovery: if the sensor disappears, it uses a shorter
- * polling interval (RECOVERY_INTERVAL) and rescans the bus each cycle.
- * Reports sensor status to the DegradationManager for system health tracking.
- *
- * ### Shared Bus Mode (NORVI AE01-R)
- *
- * When constructed with the shared-bus constructor, two nodes can share a
- * single OneWire bus. The "master" node (deviceIndex == 0) drives
- * requestTemperatures() while the "slave" (deviceIndex > 0) reads its
- * specific device address from the already-completed conversion.
- *
- * @note Shared bus mode is only enabled when `NORVI_AE01_R` is defined.
+ * OneWire/DallasTemperature access is owned by SensorTask after startup.
+ * Cross-core consumers only read SensorSlots or the small cached discovery
+ * snapshot maintained by this class.
  */
 class DallasTemperatureNode {
 public:
-  /**
-   * @brief Construct a DallasTemperature node (dedicated bus).
-   * @param id  Unique node identifier (e.g. "solar-temp").
-   * @param name  Human-readable name (e.g. "Solar Temperature").
-   * @param pin  GPIO pin for the OneWire data line.
-   * @param measurementInterval  Minimum interval between sensor reads (seconds).
-   */
-  DallasTemperatureNode(
-    const char *id, const char *name, const uint8_t pin, const int measurementInterval = MEASUREMENT_INTERVAL);
-
-  /**
-   * @brief Construct a DallasTemperature node on a shared OneWire bus.
-   * @param id  Unique node identifier (e.g. "solar-temp").
-   * @param name  Human-readable name (e.g. "Solar Temperature").
-   * @param sharedSensor  Pointer to an externally owned DallasTemperature instance.
-   * @param deviceIndex  Index of this node's sensor on the shared bus (0 = master, 1 = slave).
-   * @param measurementInterval  Minimum interval between sensor reads (seconds).
-   *
-   * The master (index 0) calls requestTemperatures(). All nodes read their
-   * respective device address from the conversion result. Requires a prior
-   * call to sharedSensor->begin() before calling node.begin().
-   */
-  DallasTemperatureNode(const char *id, const char *name, DallasTemperature *sharedSensor, uint8_t deviceIndex,
+  DallasTemperatureNode(PoolController::SensorId slot, const char *id, const char *name, const uint8_t pin,
     const int measurementInterval = MEASUREMENT_INTERVAL);
 
-  /** @brief Get the node identifier. */
+  DallasTemperatureNode(PoolController::SensorId slot, const char *id, const char *name, DallasTemperature *sharedSensor,
+    uint8_t deviceIndex, const int measurementInterval = MEASUREMENT_INTERVAL);
+
   const char *getId() const { return _id; }
-  /** @brief Get the OneWire GPIO pin number. */
   uint8_t getPin() const { return _pin; }
 
-  /** @brief Set the measurement interval (seconds). */
-  void setMeasurementInterval(unsigned long interval) { _measurementInterval = interval; }
-  /** @brief Get the measurement interval (seconds). */
-  unsigned long getMeasurementInterval() const { return _measurementInterval; }
+  void setMeasurementInterval(unsigned long interval) { _measurementInterval.store(interval, std::memory_order_relaxed); }
+  unsigned long getMeasurementInterval() const { return _measurementInterval.load(std::memory_order_relaxed); }
 
-  /** @brief Get the last successfully read temperature. @return Temperature in °C, or NAN if no valid read. */
-  float getTemperature() const { return _temperature; }
-  /** @brief Check if a sensor was found on the bus. @return true if at least one device is present. */
-  bool isSensorFound() const { return _sensorFound; }
+  /** @brief Measurement interval including the 5 s recovery cadence. */
+  unsigned long getEffectiveMeasurementInterval() const {
+    return PoolController::SensorSlots::isFound(slotId()) ? getMeasurementInterval() : RECOVERY_INTERVAL;
+  }
 
-  /** @brief Get number of devices detected on this node's bus. */
-  uint8_t getDeviceCount() const { return numberOfDevices; }
-  /** @brief Get the 8-byte ROM address of the device this node reads from. */
-  const uint8_t *getDeviceAddress() const { return deviceAddress_; }
-  /** @brief Format the node's device address into a hex string (17 chars). */
+  float getTemperature() const { return PoolController::SensorSlots::read(slotId()); }
+  bool isSensorFound() const { return PoolController::SensorSlots::isFound(slotId()); }
+
+  /** @brief Get number of devices from the thread-safe discovery snapshot. */
+  uint8_t getDeviceCount() const;
+  /** @brief Copy the selected ROM from the published cache (safe from any task). */
+  void copySelectedAddress(DeviceAddress out) const;
   void getDeviceAddressString(char *buffer, size_t size) const;
-  /** @brief Get the address of a detected device by index. @return true if index is valid. */
   bool getDetectedDeviceAddress(uint8_t index, DeviceAddress addr) const;
-  /** @brief Get temperature for any device on this node's bus by index. */
   float getDetectedDeviceTemperature(uint8_t index) const;
 
   /**
-   * @brief Set a preferred device address filter.
+   * @brief Queue a preferred address for application by SensorTask.
    *
-   * During begin(), the node scans the bus and finds the device whose ROM
-   * address matches \p addr. If found, that device is used regardless of
-   * deviceIndex. If not found, a warning is printed and deviceIndex is
-   * used as fallback.
+   * Before SensorTask starts, begin() resolves the queued filter during boot.
+   * At runtime this method never touches OneWire; the next measurement cycle
+   * applies the pending mapping on the sensor task.
    */
   void setAddressFilter(const DeviceAddress addr);
-  /** @brief Clear the address filter — reverts to deviceIndex-based selection. */
   void clearAddressFilter();
-  /** @brief Check if an address filter is configured. */
-  bool hasAddressFilter() const { return hasFilter_; }
+  bool hasAddressFilter() const { return hasFilter_.load(std::memory_order_acquire); }
 
-  /** @brief Initialize the OneWire bus and discover connected sensors. */
+  /** Minimum wait between beginMeasurement() and finishMeasurement() (12-bit DS18B20 conversion). */
+  static constexpr uint32_t CONVERSION_DELAY_MS = 800;
+
   void begin();
-  /** @brief Read temperature periodically (respects measurementInterval). */
-  void loop();
+  void beginMeasurement();
+  void finishMeasurement();
 
 private:
-  static const int MIN_INTERVAL = 10;  // in seconds (more granular loop support)
+  static const int MIN_INTERVAL = 10;
   static const int MEASUREMENT_INTERVAL = 300;
-  static const int RECOVERY_INTERVAL = 5;  // seconds
+  static const int RECOVERY_INTERVAL = 5;          // seconds
+  static const uint8_t RESCAN_AFTER_FAILURES = 3;  // failed reads before the bus is rescanned
+  static constexpr uint8_t MAX_DETECTED_DEVICES = 20;
 
+  const PoolController::SensorId slot_;
   const char *_id;
   const char *_name;
   uint8_t _pin = 0;
-  unsigned long _measurementInterval;
-  unsigned long _lastMeasurement;
+  std::atomic<unsigned long> _measurementInterval{MEASUREMENT_INTERVAL};
   bool _sensorFound = false;
-
   float _temperature = NAN;
+  PoolController::TemperatureReadingFilter filter_;  ///< Plausibility filter (85 °C power-on, range)
+  uint8_t consecutiveFailures_ = 0;                  ///< Failed reads since the last valid one
 
-  // Own OneWire bus (dedicated mode) or nullptr (shared mode)
   OneWire oneWire;
   DallasTemperature sensor;
 
-  // Address filter (persistent mapping across reboots)
-  bool hasFilter_ = false;      ///< Whether an address filter is configured
-  DeviceAddress filterAddr_{};  ///< Address to match during begin()
+  std::atomic<bool> hasFilter_{false};
+  std::atomic<bool> mappingDirty_{false};
+  DeviceAddress filterAddr_{};
 
-  // Shared bus members (only used in shared mode)
-  DallasTemperature *sharedSensor_ = nullptr;  ///< External shared sensor (shared mode only)
-  uint8_t deviceIndex_ = 0;                    ///< Device index on the shared bus
-  bool isBusMaster_ = false;                   ///< True if this node drives requestTemperatures()
-  DeviceAddress deviceAddress_{};              ///< Cached device address for shared bus reads
+  DallasTemperature *sharedSensor_ = nullptr;
+  /** The bus this node reads: the shared NORVI bus or its own dedicated one. */
+  DallasTemperature *bus() { return sharedSensor_ ? sharedSensor_ : &sensor; }
+  uint8_t deviceIndex_ = 0;
+  bool isBusMaster_ = false;
+  DeviceAddress deviceAddress_{};
+  uint8_t numberOfDevices = 0;
 
-  uint8_t numberOfDevices;
+  // Cross-core metadata cache. The lock only protects short memory copies;
+  // OneWire operations are always performed without holding it.
+  // On ESP32 a portMUX critical section is used instead of a yield()-spinning
+  // atomic_flag: on single-core targets (ESP32-C6) the higher-priority
+  // SensorTask could otherwise spin forever on a lock held by the preempted
+  // loop task, because yield() never hands the CPU to a lower priority.
+#if defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
+  mutable portMUX_TYPE cacheMux_ = portMUX_INITIALIZER_UNLOCKED;
+#else
+  mutable std::atomic_flag cacheLock_ = ATOMIC_FLAG_INIT;
+#endif
+  DeviceAddress cachedSelectedAddress_{};
+  DeviceAddress detectedAddresses_[MAX_DETECTED_DEVICES]{};
+  float detectedTemperatures_[MAX_DETECTED_DEVICES]{};
+  uint8_t detectedCount_ = 0;
 
-  /** @brief Scan the bus for the current filter and update deviceAddress_.
-   *  Called by begin(), setAddressFilter(), and clearAddressFilter().
-   *  @return true if the device was found, false if fallback was used. */
   bool resolveFilter();
+  void applyPendingAddressFilter();
+  void refreshDetectedSnapshot(bool includeTemperatures);
+  void publishSelectedAddress();
+
+  /** @brief Apply the plausibility filter to a raw reading and update the
+   *  temperature and sensor health.
+   *  @return true when repeated failures call for a bus rescan. */
+  bool handleReading(float raw);
+
+  /** @brief Address this node must find on the bus: the configured filter,
+   *  else the previously resolved device. @return false if neither exists. */
+  bool targetAddress(DeviceAddress target) const;
+
+  /** @brief Rescan the bus and find this node's sensor again by address
+   *  (e.g. after the sensor was disconnected or replaced). */
+  void rescanBus();
+
+  void lockCache() const;
+  void unlockCache() const;
+
+  PoolController::SensorId slotId() const { return slot_; }
 
   /** @brief Format a DeviceAddress as a hex string. */
   void address2String(const DeviceAddress deviceAddress, char *buffer, size_t size) const;

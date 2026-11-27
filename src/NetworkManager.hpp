@@ -12,7 +12,6 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <functional>
-#include <AsyncMqttClient.h>
 
 namespace PoolController {
 
@@ -26,8 +25,11 @@ namespace PoolController {
  */
 class NetworkManager {
 public:
-  using MqttMessageCallback = std::function<void(
-    char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total)>;
+  /**
+   * Incoming MQTT message chunk. @p payload is not NUL-terminated; @p len bytes
+   * at offset @p index of a @p total byte message. Runs on the AsyncTCP task.
+   */
+  using MqttMessageCallback = std::function<void(const char *topic, const char *payload, size_t len, size_t index, size_t total)>;
 
   NetworkManager() = default;
 
@@ -67,8 +69,6 @@ private:
   static void handleWiFiEvent(WiFiEvent_t event);
   static void connectWiFi();
   static void connectMqtt();
-
-  static AsyncMqttClient mqttClient_;
 
   static MqttMessageCallback mqttCallback_;
 

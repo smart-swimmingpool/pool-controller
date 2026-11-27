@@ -91,13 +91,14 @@ memory exhaustion.
 
 **ESP32**:
 
-- **Low Memory Warning**: < 16 KB (16,384 bytes)
+- **Low Memory**: < 16 KB (16,384 bytes) → safe mode; auto-reboot if it persists for 5 minutes
 - **Critical Memory**: < 8 KB (8,192 bytes) → Auto-reboot
 
 #### Behavior
 
 1. **Every 10 seconds**: Memory check performed
-2. **Low memory**: Warning logged to serial and MQTT
+2. **Low memory**: Warning logged to serial and MQTT, safe mode while below the threshold,
+   auto-reboot after 5 minutes without recovery
 3. **Critical memory**: Controller automatically reboots to recover
 4. **Minimum tracking**: Tracks lowest memory point since boot
 
@@ -142,7 +143,7 @@ Both state persistence and system monitoring are **automatically enabled**. No c
 To customize memory thresholds, modify `src/SystemMonitor.hpp`:
 
 ```cpp
-// Low memory threshold (warning only)
+// Low memory threshold (safe mode, reboot after LOW_MEMORY_REBOOT_AFTER_MS)
 static constexpr uint32_t LOW_MEMORY_THRESHOLD = 8192;  // 8 KB
 
 // Critical memory threshold (auto-reboot)

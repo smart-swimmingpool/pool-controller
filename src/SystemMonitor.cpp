@@ -15,5 +15,6 @@ namespace PoolController {
 uint32_t SystemMonitor::lastMemoryCheck = 0;
 uint32_t SystemMonitor::minFreeHeap = 0;
 bool SystemMonitor::lowMemoryWarning = false;
+PersistentConditionTimer SystemMonitor::lowMemoryTimer;
 
 }  // namespace PoolController

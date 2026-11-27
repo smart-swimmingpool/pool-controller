@@ -18,6 +18,9 @@
  */
 
 #include "Arduino.h"
+
+// Definition for the test-hook offset declared in mocks/Arduino.h.
+uint32_t g_millisOffset = 0;
 #include "ConfigManager.hpp"
 #include "DegradationManager.hpp"
 #include "TimeClientHelper.hpp"

@@ -43,7 +43,7 @@ DISABLE_LINTERS:
 
 # Exclude third-party and generated files from all applicable linters
 # This prevents false positives from ESP-IDF, PlatformIO, and other dependencies
-FILTER_REGEX_EXCLUDE: (\.pio|\.vscode|\.platformio|build|lib|test/native/(build|mocks)|node_modules|\.git)/.*
+FILTER_REGEX_EXCLUDE: (\.pio|\.vscode|\.platformio|build|lib|test/native/(build|mocks|[^/]+/fakes)|node_modules|\.git)/.*
 
 # C/C++ cpplint settings
 # Use filters matching SuperLinter defaults to avoid flagging pre-existing code

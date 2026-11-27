@@ -6,6 +6,21 @@ Dieses Dokument beschreibt die Coding-Richtlinien für das Pool-Controller Proje
 Super-Linter Fehler zu vermeiden und Best Practices für ESP32 Entwicklung mit PlatformIO
 zu befolgen.
 
+## 0. Sprachstandard: C++17
+
+Firmware-Code in `src/` ist C++17 (`-std=gnu++17`) auf allen drei Boards.
+`platformio.ini` nimmt dafür die Standard-Flags der Plattformen
+(`-std=gnu++11` bei espressif32 7.x, `-std=gnu++2b` bei pioarduino) per
+`build_unflags` heraus. Ohne diese Zeilen gewinnt der Default der Toolchain.
+
+C++17 ist der gemeinsame Nenner: `esp32dev` und `norvi_ae01_r` laufen auf
+espressif32 7.0.1 (Arduino 2.0.17, GCC 8.4), das C++20/23 nicht vollständig
+kann. C++23 kommt erst mit dem Umstieg dieser Boards auf pioarduino
+(Arduino Core 3.x), der eine eigene Migration ist.
+
+Die nativen Tests bauen ebenfalls mit C++17. Funktionen aus C++20 und neuer
+(`std::span`, Concepts, `std::expected`) nicht verwenden.
+
 ## 1. C++ Code-Formatierung (clang-format)
 
 ### 1.1 Grundlegende Regeln

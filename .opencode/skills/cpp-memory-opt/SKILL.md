@@ -30,7 +30,7 @@ Optimizing memory for the ESP32-based pool-controller firmware (PlatformIO, Ardu
 - **Platform**: ESP32 (esp32dev), ~320KB SRAM, ~4MB flash
 - **Framework**: Arduino + ESP-IDF (FreeRTOS)
 - **Critical**: 24/7 operation with no memory leaks
-- **Heap threshold**: Warning at <16KB free, reboot at <8KB free (`SystemMonitor.hpp:26-27`)
+- **Heap threshold**: Safe mode at <16KB free (reboot if it persists for 5 min), immediate reboot at <8KB free (`SystemMonitor.hpp`)
 - **Watchdog**: TWDT with 30s timeout (`SystemMonitor.hpp:49-54`)
 
 ## Common Memory Issues & Fixes in This Project

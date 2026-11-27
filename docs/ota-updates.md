@@ -50,6 +50,10 @@ Firmware is built and published automatically on each GitHub release:
 3. Click to download and flash the latest firmware directly from GitHub
 4. Progress is shown in the UI; device reboots on completion
 
+The download runs in small steps inside the main loop, so pumps, rules and sensors keep working
+while the firmware is transferred. A download is aborted (and can be retried) if no data arrives
+for 30 seconds or if it takes longer than 10 minutes in total.
+
 ### Method 3: PlatformIO Serial Upload
 
 For development:
